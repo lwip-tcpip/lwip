@@ -1023,7 +1023,10 @@
 #define DNS_MAX_NAME_LENGTH             256
 #endif
 
-/** The maximum of DNS servers */
+/** The maximum of DNS servers
+ * The first server can be initialized automatically by defining
+ * DNS_SERVER_ADDRESS(ipaddr), where 'ipaddr' is an 'ip_addr_t*'
+ */
 #ifndef DNS_MAX_SERVERS
 #define DNS_MAX_SERVERS                 2
 #endif
@@ -1032,6 +1035,18 @@
 #ifndef DNS_DOES_NAME_CHECK
 #define DNS_DOES_NAME_CHECK             1
 #endif
+
+/** LWIP_DNS_SECURE: controls the security level of the DNS implementation
+ * Use all DNS security features by default.
+ * This is overridable but should only be needed by very small targets
+ * or when using against non standard DNS servers. */
+#ifndef LWIP_DNS_SECURE
+#define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT)
+#endif
+/* A list of DNS security features follows */
+#define LWIP_DNS_SECURE_RAND_XID                1
+#define LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING 2
+#define LWIP_DNS_SECURE_RAND_SRC_PORT           4
 
 /** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled,
  *  you have to define

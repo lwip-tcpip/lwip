@@ -85,17 +85,6 @@
 
 #include <string.h>
 
-/* A list of DNS security features follows */
-#define LWIP_DNS_SECURE_RAND_XID                1
-#define LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING 2
-#define LWIP_DNS_SECURE_RAND_SRC_PORT           4
-/** Use all DNS security features by default.
- * This is overridable but should only be needed by very small targets
- * or when using against non standard DNS servers. */
-#ifndef LWIP_DNS_SECURE
-#define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT)
-#endif
-
 /** Random generator function to create random TXIDs and source ports for queries */
 #ifndef DNS_RAND_TXID
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_XID) != 0)
@@ -109,15 +98,6 @@ static u16_t dns_txid;
 /** Limits the source port to be >= 1024 by default */
 #ifndef DNS_PORT_ALLOWED
 #define DNS_PORT_ALLOWED(port) ((port) >= 1024)
-#endif
-
-/** DNS server IP address */
-#ifndef DNS_SERVER_ADDRESS
-#if LWIP_IPV4
-#define DNS_SERVER_ADDRESS(ipaddr)        ip_addr_set_ip4_u32(ipaddr, ipaddr_addr("208.67.222.222")) /* resolver1.opendns.com */
-#else
-#define DNS_SERVER_ADDRESS(ipaddr)        ipaddr_aton("2001:4860:4860::8888", ipaddr)
-#endif
 #endif
 
 /** DNS server port address */
@@ -384,20 +364,22 @@ dns_stricmp(const char* str1, const char* str2)
 
 /**
  * Initialize the resolver: set up the UDP pcb and configure the default server
- * (DNS_SERVER_ADDRESS).
+ * (if DNS_SERVER_ADDRESS is set).
  */
 void
 dns_init(void)
 {
+#ifdef DNS_SERVER_ADDRESS
+  /* initialize default DNS server address */
   ip_addr_t dnsserver;
+  DNS_SERVER_ADDRESS(&dnsserver);
+  dns_setserver(0, &dnsserver);
+#endif /* DNS_SERVER_ADDRESS */
 
   LWIP_ASSERT("sanity check SIZEOF_DNS_QUERY",
     sizeof(struct dns_query) == SIZEOF_DNS_QUERY);
   LWIP_ASSERT("sanity check SIZEOF_DNS_ANSWER",
     sizeof(struct dns_answer) <= SIZEOF_DNS_ANSWER_ASSERT);
-
-  /* initialize default DNS server address */
-  DNS_SERVER_ADDRESS(&dnsserver);
 
   LWIP_DEBUGF(DNS_DEBUG, ("dns_init: initializing\n"));
 
@@ -417,8 +399,7 @@ dns_init(void)
     udp_recv(dns_pcbs[0], dns_recv, NULL);
   }
 #endif
-  /* initialize default DNS primary server */
-  dns_setserver(0, &dnsserver);
+
 #if DNS_LOCAL_HOSTLIST
   dns_init_local();
 #endif
