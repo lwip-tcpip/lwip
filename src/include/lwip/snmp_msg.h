@@ -297,11 +297,6 @@ extern const char *snmp_community_trap;
 
 extern struct snmp_msg_trap trap_msg;
 
-/** Agent setup, start listening to port 161. */
-void snmp_init(void);
-void snmp_trap_dst_enable(u8_t dst_idx, u8_t enable);
-void snmp_trap_dst_ip_set(u8_t dst_idx, ip_addr_t *dst);
-
 /** Varbind-list functions. */
 struct snmp_varbind* snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len);
 void snmp_varbind_free(struct snmp_varbind *vb);

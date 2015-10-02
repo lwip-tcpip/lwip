@@ -52,6 +52,11 @@ struct snmp_obj_id
   s32_t id[LWIP_SNMP_OBJ_ID_LEN];
 };
 
+/** Agent setup, start listening to port 161. */
+void snmp_init(void);
+void snmp_trap_dst_enable(u8_t dst_idx, u8_t enable);
+void snmp_trap_dst_ip_set(u8_t dst_idx, ip_addr_t *dst);
+
 const char * snmp_get_community(void);
 void snmp_set_community(const char * const community);
 #if SNMP_COMMUNITY_EXT
