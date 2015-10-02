@@ -172,7 +172,7 @@ static struct mib_list_rootnode udp_root = {
     &noleafs_get_object_def,
     &noleafs_get_value,
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
   },
   NULL,
   NULL,
@@ -199,7 +199,7 @@ static const struct mib_scalar_node udp_scalar = {
   &udp_get_object_def,
   &udp_get_value,
   &noleafs_set_test,
-  &noleafs_set_value,
+  &noleafs_set_value
 };
 static const struct mib_array_node_entry udp_nodes[] = {
   {1, &udp_scalar.node}, {2, &udp_scalar.node},
@@ -222,7 +222,7 @@ static struct mib_list_rootnode tcpconntree_root = {
     &noleafs_get_object_def,
     &noleafs_get_value,
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
   },
   NULL,
   NULL,
@@ -253,7 +253,7 @@ static const struct mib_scalar_node tcp_scalar = {
   &tcp_get_object_def,
   &tcp_get_value,
   &noleafs_set_test,
-  &noleafs_set_value,
+  &noleafs_set_value
 };
 static const struct mib_array_node_entry tcp_nodes[] = {
   {1, &tcp_scalar.node}, {2, &tcp_scalar.node},
@@ -278,7 +278,7 @@ static const struct mib_scalar_node icmp_scalar = {
   &icmp_get_object_def,
   &icmp_get_value,
   &noleafs_set_test,
-  &noleafs_set_value,
+  &noleafs_set_value
 };
 static const struct mib_array_node_entry icmp_nodes[] = {
   {1, &icmp_scalar.node}, {2, &icmp_scalar.node},
@@ -308,7 +308,7 @@ static struct mib_list_rootnode ipntomtree_root = {
     &noleafs_get_object_def,
     &noleafs_get_value,
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
   },
   NULL,
   NULL,
@@ -338,7 +338,7 @@ static struct mib_list_rootnode iprtetree_root = {
     &noleafs_get_object_def,
     &noleafs_get_value,
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
   },
   NULL,
   NULL,
@@ -373,7 +373,7 @@ static struct mib_list_rootnode ipaddrtree_root = {
     &noleafs_get_object_def,
     &noleafs_get_value,
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
   },
   NULL,
   NULL,
@@ -405,7 +405,7 @@ static const struct mib_scalar_node ip_scalar = {
   &ip_get_object_def,
   &ip_get_value,
   &ip_set_test,
-  &noleafs_set_value,
+  &noleafs_set_value
 };
 static const struct mib_array_node_entry ip_nodes[] = {
   {1, &ip_scalar.node}, {2, &ip_scalar.node},
@@ -434,7 +434,7 @@ static struct mib_list_rootnode arptree_root = {
     &noleafs_get_object_def,
     &noleafs_get_value,
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
   },
   NULL,
   NULL,
@@ -474,10 +474,10 @@ static struct mib_list_rootnode iflist_root = {
     &ifentry_get_value,
 #if SNMP_SAFE_REQUESTS
     &noleafs_set_test,
-    &noleafs_set_value,
+    &noleafs_set_value
 #else /* SNMP_SAFE_REQUESTS */
     &ifentry_set_test,
-    &ifentry_set_value,
+    &ifentry_set_value
 #endif /* SNMP_SAFE_REQUESTS */
   },
   NULL,
@@ -516,7 +516,7 @@ static const struct mib_scalar_node interfaces_scalar = {
   &interfaces_get_object_def,
   &interfaces_get_value,
   &noleafs_set_test,
-  &noleafs_set_value,
+  &noleafs_set_value
 };
 static const struct mib_array_node_entry interfaces_nodes[] = {
   {1, &interfaces_scalar.node}, {2, &iftable.node}
@@ -535,7 +535,7 @@ static const struct mib_scalar_node system_scalar = {
   &system_get_object_def,
   &system_get_value,
   &system_set_test,
-  &system_set_value,
+  &system_set_value
 };
 static const struct mib_array_node_entry system_nodes[] = {
   {1, &system_scalar.node}, {2, &system_scalar.node},
