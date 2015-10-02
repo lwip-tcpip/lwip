@@ -254,7 +254,7 @@ struct netif {
 #endif /* LWIP_IPV6_DHCP6 */
 #if LWIP_NETIF_HOSTNAME
   /* the hostname for this netif, NULL is a valid value */
-  char*  hostname;
+  const char*  hostname;
 #endif /* LWIP_NETIF_HOSTNAME */
 #if LWIP_CHECKSUM_CTRL_PER_NETIF
   u16_t chksum_flags;
