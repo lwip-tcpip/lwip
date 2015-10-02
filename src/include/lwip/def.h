@@ -49,6 +49,9 @@ extern "C" {
 #define LWIP_MAX(x , y)  (((x) > (y)) ? (x) : (y))
 #define LWIP_MIN(x , y)  (((x) < (y)) ? (x) : (y))
 
+/* Get the number of entries in an array ('x' must NOT be a pointer!) */
+#define LWIP_ARRAYSIZE(x) (sizeof(x)/sizeof((x)[0]))
+
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
