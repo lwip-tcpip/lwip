@@ -103,6 +103,15 @@ struct snmp_name_ptr
 /** node "base class" layout, the mandatory fields for a node  */
 struct mib_node
 {
+  /** One out of MIB_NODE_AR, MIB_NODE_LR or MIB_NODE_EX */
+  u8_t node_type;
+};
+
+/** derived node for scalars .0 index */
+struct mib_scalar_node
+{
+  /* inherited "base class" members */
+  struct mib_node node;
   /** returns struct obj_def for the given object identifier */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   /** returns object value for the given object identifier */
@@ -111,17 +120,6 @@ struct mib_node
   u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
   /** sets object value, only to be called when set_test()  */
   void (*set_value)(struct obj_def *od, u16_t len, void *value);  
-  /** One out of MIB_NODE_AR, MIB_NODE_LR or MIB_NODE_EX */
-  u8_t node_type;
-  /* array or max list length */
-  u16_t maxlength;
-};
-
-/** derived node for scalars .0 index */
-struct mib_scalar_node
-{
-  /* inherited "base class" members */
-  struct mib_node node;
 };
 
 /** describes an array entry (objid/node pair) */
@@ -139,7 +137,8 @@ struct mib_array_node
   struct mib_node node;
 
   /* additional struct members */
-  const struct mib_array_node_entry * const entries;
+  u16_t maxlength;
+  const struct mib_array_node_entry *entries;
 };
 
 /** derived node, points to a fixed size mem_malloced array
@@ -149,7 +148,8 @@ struct mib_ram_array_node
   /* inherited "base class" members */
   struct mib_node node;
 
-  /* aditional struct members */
+  /* additional struct members */
+  u16_t maxlength;
   struct mib_array_node_entry *entries;
 };
 
@@ -166,7 +166,7 @@ struct mib_list_node
 struct mib_list_rootnode
 {
   /* inherited "base class" members */
-  struct mib_node node;
+  struct mib_scalar_node scalar;
 
   /* additional struct members */
   struct mib_list_node *head;

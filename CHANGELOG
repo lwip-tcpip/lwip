@@ -279,9 +279,9 @@ HISTORY
 
   ++ Bugfixes:
 
-  2015-10-01: Dirk Ziegelmeier:
-  * snmp: fixed bug #46089: snmp: race condition on length change between
-    get_object_def() and get_value()
+  2015-10-02: Dirk Ziegelmeier/Simon Goldschmidt
+  * snmp: cleaned up snmp structs API (fixed race conditions from bug #46089,
+    reduce ram/rom usage of tables): incompatible change for private MIBs
 
   2015-09-30: Simon Goldschmidt
   * ip4_addr.c: fixed bug #46072: ip4addr_aton() does not check the number range

@@ -344,7 +344,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     /** test object identifier for .iso.org.dod.internet prefix */
     if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
     {
-      mn = snmp_search_tree((const struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
+      mn = snmp_search_tree(&internet.node, msg_ps->vb_ptr->ident_len - 4,
                              msg_ps->vb_ptr->ident + 4, &np);
       if (mn != NULL)
       {
@@ -360,23 +360,20 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
           en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);
         }
-        else
+        else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR))
         {
           /* internal object */
           struct obj_def object_def;
+          const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
 
           msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
-          mn->get_object_def(np.ident_len, np.ident, &object_def);
-          if (object_def.instance != MIB_OBJECT_NONE)
-          {
-            mn = mn;
-          }
-          else
+          msn->get_object_def(np.ident_len, np.ident, &object_def);
+          if (object_def.instance == MIB_OBJECT_NONE)
           {
             /* search failed, object id points to unknown object (nosuchname) */
             mn =  NULL;
           }
-          if (mn != NULL)
+          else
           {
             struct snmp_varbind *vb;
 
@@ -400,7 +397,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
               vb->value = memp_malloc(MEMP_SNMP_VALUE);
               if (vb->value != NULL)
               {
-                 vb->value_len = mn->get_value(&object_def, vb->value);
+                 vb->value_len = msn->get_value(&object_def, vb->value);
                  LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
                  if(vb->value_len == 0)
                  {
@@ -553,20 +550,21 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
         en->get_object_def_q(en->addr_inf, request_id, 1, &oid.id[oid.len - 1]);
       }
-      else
+      else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR))
       {
         /* internal object */
         struct obj_def object_def;
         struct snmp_varbind *vb;
+        const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
 
         msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
-        mn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
+        msn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
 
         vb = snmp_varbind_alloc(&oid, object_def.asn_type, SNMP_MAX_VALUE_SIZE);
         if (vb != NULL)
         {
           msg_ps->state = SNMP_MSG_INTERNAL_GET_VALUE;
-          vb->value_len = mn->get_value(&object_def, vb->value);
+          vb->value_len = msn->get_value(&object_def, vb->value);
           snmp_varbind_tail_add(&msg_ps->outvb, vb);
           msg_ps->state = SNMP_MSG_SEARCH_OBJ;
           msg_ps->vb_idx += 1;
@@ -576,6 +574,10 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate outvb space\n"));
           snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
         }
+      }
+      else
+      {
+        mn = NULL;
       }
     }
     if (mn == NULL)
@@ -727,30 +729,27 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
           en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);
         }
-        else
+        else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR))
         {
           /* internal object */
           struct obj_def object_def;
+          const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
 
           msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
-          mn->get_object_def(np.ident_len, np.ident, &object_def);
-          if (object_def.instance != MIB_OBJECT_NONE)
-          {
-            mn = mn;
-          }
-          else
+          msn->get_object_def(np.ident_len, np.ident, &object_def);
+          if (object_def.instance == MIB_OBJECT_NONE)
           {
             /* search failed, object id points to unknown object (nosuchname) */
             mn = NULL;
           }
-          if (mn != NULL)
+          else
           {
             msg_ps->state = SNMP_MSG_INTERNAL_SET_TEST;
 
             if (object_def.access & MIB_ACCESS_WRITE)
             {
               if ((object_def.asn_type == msg_ps->vb_ptr->value_type) &&
-                  (mn->set_test(&object_def,msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
+                  (msn->set_test(&object_def,msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
               {
                 msg_ps->state = SNMP_MSG_SEARCH_OBJ;
                 msg_ps->vb_idx += 1;
@@ -767,6 +766,10 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
               snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
             }
           }
+        }
+        else
+        {
+          mn = NULL;
         }
       }
     }
@@ -822,15 +825,16 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
         en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);
       }
-      else
+      else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR))
       {
         /* internal object */
         struct obj_def object_def;
+        const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
 
         msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF_S;
-        mn->get_object_def(np.ident_len, np.ident, &object_def);
+        msn->get_object_def(np.ident_len, np.ident, &object_def);
         msg_ps->state = SNMP_MSG_INTERNAL_SET_VALUE;
-        mn->set_value(&object_def,msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value);
+        msn->set_value(&object_def,msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value);
         msg_ps->vb_idx += 1;
       }
     }
