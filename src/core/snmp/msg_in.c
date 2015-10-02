@@ -351,7 +351,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         if (mn->node_type == MIB_NODE_EX)
         {
           /* external object */
-          const struct mib_external_node *en = (const struct mib_external_node*)mn;
+          const struct mib_external_node *en = (const struct mib_external_node*)(const void*)mn;
 
           msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
           /* save en && args in msg_ps!! */
@@ -364,7 +364,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         {
           /* internal object */
           struct obj_def object_def;
-          const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
+          const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
 
           msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
           msn->get_object_def(np.ident_len, np.ident, &object_def);
@@ -541,7 +541,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       if (mn->node_type == MIB_NODE_EX)
       {
         /* external object */
-        const struct mib_external_node *en = (const struct mib_external_node*)mn;
+        const struct mib_external_node *en = (const struct mib_external_node*)(const void*)mn;
 
         msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
         /* save en && args in msg_ps!! */
@@ -555,7 +555,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         /* internal object */
         struct obj_def object_def;
         struct snmp_varbind *vb;
-        const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
+        const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
 
         msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
         msn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
@@ -720,7 +720,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         if (mn->node_type == MIB_NODE_EX)
         {
           /* external object */
-          const struct mib_external_node *en = (const struct mib_external_node*)mn;
+          const struct mib_external_node *en = (const struct mib_external_node*)(const void*)mn;
 
           msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
           /* save en && args in msg_ps!! */
@@ -733,7 +733,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         {
           /* internal object */
           struct obj_def object_def;
-          const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
+          const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
 
           msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
           msn->get_object_def(np.ident_len, np.ident, &object_def);
@@ -816,7 +816,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       if (mn->node_type == MIB_NODE_EX)
       {
         /* external object */
-        const struct mib_external_node *en = (const struct mib_external_node*)mn;
+        const struct mib_external_node *en = (const struct mib_external_node*)(const void*)mn;
 
         msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF_S;
         /* save en && args in msg_ps!! */
@@ -829,7 +829,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       {
         /* internal object */
         struct obj_def object_def;
-        const struct mib_scalar_node *msn = (const struct mib_scalar_node*)mn;
+        const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
 
         msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF_S;
         msn->get_object_def(np.ident_len, np.ident, &object_def);

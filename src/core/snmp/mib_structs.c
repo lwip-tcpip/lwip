@@ -361,7 +361,7 @@ snmp_mib_node_find(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_no
 
     if (n->nptr->node_type == MIB_NODE_LR)
     {
-      r = (struct mib_list_rootnode *)n->nptr;
+      r = (struct mib_list_rootnode*)(void*)n->nptr;
       if (r->count > 1)
       {
         /* can't delete node */
@@ -400,7 +400,7 @@ snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n)
   LWIP_ASSERT("n != NULL",n != NULL);
 
   /* caller must remove this sub-tree */
-  next = (struct mib_list_rootnode*)(n->nptr);
+  next = (struct mib_list_rootnode*)(void*)n->nptr;
   rn->count -= 1;
 
   if (n == rn->head)
@@ -466,7 +466,7 @@ snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
       if (ident_len > 0)
       {
         /* array node (internal ROM or RAM, fixed length) */
-        an = (const struct mib_array_node *)node;
+        an = (const struct mib_array_node*)(const void*)node;
         i = 0;
         while ((i < an->maxlength) && (an->entries[i].objid != *ident))
         {
@@ -514,7 +514,7 @@ snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
       if (ident_len > 0)
       {
         /* list root node (internal 'RAM', variable length) */
-        lrn = (const struct mib_list_rootnode *)node;
+        lrn = (const struct mib_list_rootnode*)(const void*)node;
         ln = lrn->head;
         /* iterate over list, head to tail */
         while ((ln != NULL) && (ln->objid != *ident))
@@ -561,7 +561,7 @@ snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
       if (ident_len > 0)
       {
         /* external node (addressing and access via functions) */
-        en = (const struct mib_external_node *)node;
+        en = (const struct mib_external_node*)(const void*)node;
 
         i = 0;
         len = en->level_length(en->addr_inf,ext_level);
@@ -646,7 +646,7 @@ empty_table(const struct mib_node *node)
     if (node_type == MIB_NODE_LR)
     {
       const struct mib_list_rootnode *lrn;
-      lrn = (const struct mib_list_rootnode *)node;
+      lrn = (const struct mib_list_rootnode*)(const void*)node;
       if ((lrn->count == 0) || (lrn->head == NULL))
       {
         empty = 1;
@@ -655,7 +655,7 @@ empty_table(const struct mib_node *node)
     else if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
     {
       const struct mib_array_node *an;
-      an = (const struct mib_array_node *)node;
+      an = (const struct mib_array_node*)(const void*)node;
       if ((an->maxlength == 0) || (an->entries == NULL))
       {
         empty = 1;
@@ -664,7 +664,7 @@ empty_table(const struct mib_node *node)
     else if (node_type == MIB_NODE_EX)
     {
       const struct mib_external_node *en;
-      en = (const struct mib_external_node *)node;
+      en = (const struct mib_external_node*)(const void*)node;
       if (en->tree_levels == 0)
       {
         empty = 1;
@@ -695,7 +695,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
       u16_t i;
 
       /* array node (internal ROM or RAM, fixed length) */
-      an = (const struct mib_array_node *)node;
+      an = (const struct mib_array_node*)(const void*)node;
       if (ident_len > 0)
       {
         i = 0;
@@ -815,7 +815,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
       struct mib_list_node *ln;
 
       /* list root node (internal 'RAM', variable length) */
-      lrn = (const struct mib_list_rootnode *)node;
+      lrn = (const struct mib_list_rootnode*)(const void*)node;
       if (ident_len > 0)
       {
         ln = lrn->head;
@@ -933,7 +933,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
       s32_t ex_id;
 
       /* external node (addressing and access via functions) */
-      en = (const struct mib_external_node *)node;
+      en = (const struct mib_external_node*)(const void*)node;
       if (ident_len > 0)
       {
         u16_t i, len;

@@ -833,7 +833,7 @@ void mib2_add_arp_entry(struct netif *ni, ip4_addr_t *ip)
         }
         else
         {
-          at_rn = (struct mib_list_rootnode*)at_node->nptr;
+          at_rn = (struct mib_list_rootnode*)(void*)at_node->nptr;
         }
       }
     }
@@ -884,13 +884,13 @@ void mib2_remove_arp_entry(struct netif *ni, ip4_addr_t *ip)
         del_rn[del_cnt] = at_rn;
         del_n[del_cnt] = at_n;
         del_cnt++;
-        at_rn = (struct mib_list_rootnode*)(at_n->nptr);
+        at_rn = (struct mib_list_rootnode*)(void*)at_n->nptr;
       }
       else if (fc == 2)
       {
         /* reset delete (2 or more childs) */
         del_cnt = 0;
-        at_rn = (struct mib_list_rootnode*)(at_n->nptr);
+        at_rn = (struct mib_list_rootnode*)(void*)at_n->nptr;
       }
       level++;
     }
@@ -960,7 +960,7 @@ void mib2_add_ip4(struct netif *ni)
       }
       else
       {
-        ipa_rn = (struct mib_list_rootnode*)ipa_node->nptr;
+        ipa_rn = (struct mib_list_rootnode*)(void*)ipa_node->nptr;
       }
     }
     level++;
@@ -1001,13 +1001,13 @@ void mib2_remove_ip4(struct netif *ni)
       del_rn[del_cnt] = ipa_rn;
       del_n[del_cnt] = ipa_n;
       del_cnt++;
-      ipa_rn = (struct mib_list_rootnode*)(ipa_n->nptr);
+      ipa_rn = (struct mib_list_rootnode*)(void*)ipa_n->nptr;
     }
     else if (fc == 2)
     {
       /* reset delete (2 or more childs) */
       del_cnt = 0;
-      ipa_rn = (struct mib_list_rootnode*)(ipa_n->nptr);
+      ipa_rn = (struct mib_list_rootnode*)(void*)ipa_n->nptr;
     }
     level++;
   }
@@ -1099,7 +1099,7 @@ void mib2_add_route_ip4(u8_t dflt, struct netif *ni)
         }
         else
         {
-          iprte_rn = (struct mib_list_rootnode*)iprte_node->nptr;
+          iprte_rn = (struct mib_list_rootnode*)(void*)iprte_node->nptr;
         }
       }
       level++;
@@ -1163,13 +1163,13 @@ void mib2_remove_route_ip4(u8_t dflt, struct netif *ni)
         del_rn[del_cnt] = iprte_rn;
         del_n[del_cnt] = iprte_n;
         del_cnt++;
-        iprte_rn = (struct mib_list_rootnode*)(iprte_n->nptr);
+        iprte_rn = (struct mib_list_rootnode*)(void*)iprte_n->nptr;
       }
       else if (fc == 2)
       {
         /* reset delete (2 or more childs) */
         del_cnt = 0;
-        iprte_rn = (struct mib_list_rootnode*)(iprte_n->nptr);
+        iprte_rn = (struct mib_list_rootnode*)(void*)iprte_n->nptr;
       }
       level++;
     }
@@ -1243,7 +1243,7 @@ void mib2_udp_bind(struct udp_pcb *pcb)
       }
       else
       {
-        udp_rn = (struct mib_list_rootnode*)udp_node->nptr;
+        udp_rn = (struct mib_list_rootnode*)(void*)udp_node->nptr;
       }
     }
   }
@@ -1304,13 +1304,13 @@ void mib2_udp_unbind(struct udp_pcb *pcb)
         del_rn[del_cnt] = udp_rn;
         del_n[del_cnt] = udp_n;
         del_cnt++;
-        udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
+        udp_rn = (struct mib_list_rootnode*)(void*)udp_n->nptr;
       }
       else if (fc == 2)
       {
         /* reset delete (2 or more childs) */
         del_cnt = 0;
-        udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
+        udp_rn = (struct mib_list_rootnode*)(void*)udp_n->nptr;
       }
       level++;
     }
