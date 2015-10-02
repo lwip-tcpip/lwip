@@ -50,7 +50,7 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp_impl.h"
-#include "lwip/snmp_msg.h"
+#include "lwip/snmp.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
