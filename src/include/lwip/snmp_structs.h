@@ -124,6 +124,13 @@ struct mib_scalar_node
   struct mib_node node;
 };
 
+/** describes an array entry (objid/node pair) */
+struct mib_array_node_entry
+{
+  s32_t objid;
+  const struct mib_node *nptr;
+};
+
 /** derived node, points to a fixed size const array
     of sub-identifiers plus a 'child' pointer */
 struct mib_array_node
@@ -132,8 +139,7 @@ struct mib_array_node
   struct mib_node node;
 
   /* additional struct members */
-  const s32_t *objid;
-  const struct mib_node* const *nptr;
+  const struct mib_array_node_entry * const entries;
 };
 
 /** derived node, points to a fixed size mem_malloced array
@@ -144,13 +150,12 @@ struct mib_ram_array_node
   struct mib_node node;
 
   /* aditional struct members */
-  s32_t *objid;
-  struct mib_node **nptr;
+  struct mib_array_node_entry *entries;
 };
 
 struct mib_list_node
 {
-  struct mib_list_node *prev;  
+  struct mib_list_node *prev;
   struct mib_list_node *next;
   s32_t objid;
   struct mib_node *nptr;
