@@ -305,8 +305,7 @@ static const int err_to_errno_table[] = {
   -1,            /* ERR_IF         -16     Low-level netif error    */
 };
 
-#define ERR_TO_ERRNO_TABLE_SIZE \
-  (sizeof(err_to_errno_table)/sizeof(err_to_errno_table[0]))
+#define ERR_TO_ERRNO_TABLE_SIZE LWIP_ARRAYSIZE(err_to_errno_table)
 
 #define err_to_errno(err) \
   ((unsigned)(-(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
