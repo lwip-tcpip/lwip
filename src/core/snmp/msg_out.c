@@ -100,7 +100,7 @@ snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
  * @param dst IPv4 address in host order.
  */
 void
-snmp_trap_dst_ip_set(u8_t dst_idx, ip_addr_t *dst)
+snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
 {
   if (dst_idx < SNMP_TRAP_DESTINATIONS)
   {

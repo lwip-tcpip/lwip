@@ -55,7 +55,7 @@ struct snmp_obj_id
 /** Agent setup, start listening to port 161. */
 void snmp_init(void);
 void snmp_trap_dst_enable(u8_t dst_idx, u8_t enable);
-void snmp_trap_dst_ip_set(u8_t dst_idx, ip_addr_t *dst);
+void snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst);
 
 const char * snmp_get_community(void);
 void snmp_set_community(const char * const community);
