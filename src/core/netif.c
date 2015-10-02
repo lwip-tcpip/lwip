@@ -524,11 +524,6 @@ netif_set_default(struct netif *netif)
 /**
  * Bring an interface up, available for processing
  * traffic.
- * 
- * @note: Enabling DHCP on a down interface will make it come
- * up once configured.
- * 
- * @see dhcp_start()
  */ 
 void netif_set_up(struct netif *netif)
 {
@@ -585,11 +580,6 @@ netif_issue_reports(struct netif* netif, u8_t report_type)
 
 /**
  * Bring an interface down, disabling any traffic processing.
- *
- * @note: Enabling DHCP on a down interface will make it come
- * up once configured.
- * 
- * @see dhcp_start()
  */ 
 void netif_set_down(struct netif *netif)
 {
