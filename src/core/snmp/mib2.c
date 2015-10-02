@@ -131,33 +131,35 @@ static void snmp_set_value(struct obj_def *od, u16_t len, void *value);
 
 
 /* snmp .1.3.6.1.2.1.11 */
-static const mib_scalar_node snmp_scalar = {
-  &snmp_get_object_def,
-  &snmp_get_value,
-  &snmp_set_test,
-  &snmp_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node snmp_scalar = {
+  {
+    &snmp_get_object_def,
+    &snmp_get_value,
+    &snmp_set_test,
+    &snmp_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t snmp_ids[28] = {
   1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16,
   17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30
 };
 static const struct mib_node* const snmp_nodes[28] = {
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar,
-  &snmp_scalar, &snmp_scalar
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node,
+  &snmp_scalar.node, &snmp_scalar.node
 };
 static const struct mib_array_node snmp = {
   {
@@ -223,18 +225,20 @@ static struct mib_ram_array_node udptable = {
   &udptable_node
 };
 
-static const mib_scalar_node udp_scalar = {
-  &udp_get_object_def,
-  &udp_get_value,
-  &noleafs_set_test,
-  &noleafs_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node udp_scalar = {
+  {
+    &udp_get_object_def,
+    &udp_get_value,
+    &noleafs_set_test,
+    &noleafs_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t udp_ids[5] = { 1, 2, 3, 4, 5 };
 static const struct mib_node* const udp_nodes[5] = {
-  &udp_scalar, &udp_scalar,
-  &udp_scalar, &udp_scalar,
+  &udp_scalar.node, &udp_scalar.node,
+  &udp_scalar.node, &udp_scalar.node,
   &udptable.node
 };
 static const struct mib_array_node udp = {
@@ -303,24 +307,26 @@ static struct mib_ram_array_node tcpconntable = {
   &tcpconntable_node
 };
 
-static const mib_scalar_node tcp_scalar = {
-  &tcp_get_object_def,
-  &tcp_get_value,
-  &noleafs_set_test,
-  &noleafs_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node tcp_scalar = {
+  {
+    &tcp_get_object_def,
+    &tcp_get_value,
+    &noleafs_set_test,
+    &noleafs_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t tcp_ids[15] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 static const struct mib_node* const tcp_nodes[15] = {
-  &tcp_scalar, &tcp_scalar,
-  &tcp_scalar, &tcp_scalar,
-  &tcp_scalar, &tcp_scalar,
-  &tcp_scalar, &tcp_scalar,
-  &tcp_scalar, &tcp_scalar,
-  &tcp_scalar, &tcp_scalar,
-  &tcpconntable.node, &tcp_scalar,
-  &tcp_scalar
+  &tcp_scalar.node, &tcp_scalar.node,
+  &tcp_scalar.node, &tcp_scalar.node,
+  &tcp_scalar.node, &tcp_scalar.node,
+  &tcp_scalar.node, &tcp_scalar.node,
+  &tcp_scalar.node, &tcp_scalar.node,
+  &tcp_scalar.node, &tcp_scalar.node,
+  &tcpconntable.node, &tcp_scalar.node,
+  &tcp_scalar.node
 };
 static const struct mib_array_node tcp = {
   {
@@ -337,29 +343,31 @@ static const struct mib_array_node tcp = {
 #endif
 
 /* icmp .1.3.6.1.2.1.5 */
-static const mib_scalar_node icmp_scalar = {
-  &icmp_get_object_def,
-  &icmp_get_value,
-  &noleafs_set_test,
-  &noleafs_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node icmp_scalar = {
+  {
+    &icmp_get_object_def,
+    &icmp_get_value,
+    &noleafs_set_test,
+    &noleafs_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t icmp_ids[26] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
 static const struct mib_node* const icmp_nodes[26] = {
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar,
-  &icmp_scalar, &icmp_scalar
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node,
+  &icmp_scalar.node, &icmp_scalar.node
 };
 static const struct mib_array_node icmp = {
   {
@@ -524,28 +532,30 @@ static struct mib_ram_array_node ipaddrtable = {
 };
 
 /* ip .1.3.6.1.2.1.4 */
-static const mib_scalar_node ip_scalar = {
-  &ip_get_object_def,
-  &ip_get_value,
-  &ip_set_test,
-  &noleafs_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node ip_scalar = {
+  {
+    &ip_get_object_def,
+    &ip_get_value,
+    &ip_set_test,
+    &noleafs_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t ip_ids[23] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
 static const struct mib_node* const ip_nodes[23] = {
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ip_scalar,
-  &ip_scalar, &ipaddrtable.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ip_scalar.node,
+  &ip_scalar.node, &ipaddrtable.node,
   &iprtetable.node, &ipntomtable.node,
-  &ip_scalar
+  &ip_scalar.node
 };
 static const struct mib_array_node mib2_ip = {
   {
@@ -686,17 +696,19 @@ static struct mib_ram_array_node iftable = {
 };
 
 /* interfaces .1.3.6.1.2.1.2 */
-static const mib_scalar_node interfaces_scalar = {
-  &interfaces_get_object_def,
-  &interfaces_get_value,
-  &noleafs_set_test,
-  &noleafs_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node interfaces_scalar = {
+  {
+    &interfaces_get_object_def,
+    &interfaces_get_value,
+    &noleafs_set_test,
+    &noleafs_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t interfaces_ids[2] = { 1, 2 };
 static const struct mib_node* const interfaces_nodes[2] = {
-  &interfaces_scalar, &iftable.node
+  &interfaces_scalar.node, &iftable.node
 };
 static const struct mib_array_node interfaces = {
   {
@@ -714,20 +726,22 @@ static const struct mib_array_node interfaces = {
 
 /*             0 1 2 3 4 5 6 */
 /* system .1.3.6.1.2.1.1 */
-static const mib_scalar_node system_scalar = {
-  &system_get_object_def,
-  &system_get_value,
-  &system_set_test,
-  &system_set_value,
-  MIB_NODE_SC,
-  0
+static const struct mib_scalar_node system_scalar = {
+  {
+    &system_get_object_def,
+    &system_get_value,
+    &system_set_test,
+    &system_set_value,
+    MIB_NODE_SC,
+    0
+  }
 };
 static const s32_t system_ids[7] = { 1, 2, 3, 4, 5, 6, 7 };
 static const struct mib_node* const system_nodes[7] = {
-  &system_scalar, &system_scalar,
-  &system_scalar, &system_scalar,
-  &system_scalar, &system_scalar,
-  &system_scalar
+  &system_scalar.node, &system_scalar.node,
+  &system_scalar.node, &system_scalar.node,
+  &system_scalar.node, &system_scalar.node,
+  &system_scalar.node
 };
 /* work around name issue with 'sys_tem', some compiler(s?) seem to reserve 'system' */
 static const struct mib_array_node sys_tem = {
@@ -775,7 +789,7 @@ static const struct mib_node* const mib2_nodes[MIB2_GROUPS] = {
   &snmp.node
 };
 
-const struct mib_array_node mib2 = {
+static const struct mib_array_node mib2 = {
   {
     &noleafs_get_object_def,
     &noleafs_get_value,

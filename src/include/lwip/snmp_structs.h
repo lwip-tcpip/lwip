@@ -118,7 +118,11 @@ struct mib_node
 };
 
 /** derived node for scalars .0 index */
-typedef struct mib_node mib_scalar_node;
+struct mib_scalar_node
+{
+  /* inherited "base class" members */
+  struct mib_node node;
+};
 
 /** derived node, points to a fixed size const array
     of sub-identifiers plus a 'child' pointer */
