@@ -597,7 +597,7 @@ const struct mib_array_node internet = {
 static const struct snmp_obj_id sysobjid_default = {SNMP_SYSOBJID_LEN, SNMP_SYSOBJID};
 static const struct snmp_obj_id* sysobjid_ptr = &sysobjid_default;
 /** enterprise ID for generic TRAPs, .iso.org.dod.internet.mgmt.mib-2.snmp */
-static struct snmp_obj_id snmpgrp_id = {7,{1,3,6,1,2,1,11}};
+static const struct snmp_obj_id snmpgrp_id = {7,{1,3,6,1,2,1,11}};
 /** mib-2.system.sysServices */
 static const s32_t sysservices = SNMP_SYSSERVICES;
 
