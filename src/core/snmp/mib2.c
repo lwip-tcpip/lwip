@@ -181,13 +181,13 @@ static struct mib_list_rootnode udp_root = {
 static const struct mib_array_node_entry udpentry_nodes[] = {
   {1, &udp_root.scalar.node}, {2, &udp_root.scalar.node}
 };
-static struct mib_array_node udpentry = {
+static const struct mib_array_node udpentry = {
   { MIB_NODE_AR },
   LWIP_ARRAYSIZE(udpentry_nodes),
   udpentry_nodes
 };
 
-static struct mib_array_node_entry udptable_node = {1, &udpentry.node};
+static const struct mib_array_node_entry udptable_node = {1, &udpentry.node};
 static struct mib_array_node udptable = {
   { MIB_NODE_AR },
   0,
@@ -239,7 +239,7 @@ static struct mib_array_node tcpconnentry = {
   tcpconnentry_nodes
 };
 
-static struct mib_array_node_entry tcpconntable_node = {1, &tcpconnentry.node};
+static const struct mib_array_node_entry tcpconntable_node = {1, &tcpconnentry.node};
 static struct mib_array_node tcpconntable = {
   { MIB_NODE_AR },
 /** @todo update maxlength when inserting / deleting from table
@@ -318,13 +318,13 @@ static const struct mib_array_node_entry ipntomentry_nodes[] = {
   {1, &ipntomtree_root.scalar.node}, {2, &ipntomtree_root.scalar.node},
   {3, &ipntomtree_root.scalar.node}, {4, &ipntomtree_root.scalar.node}
 };
-static struct mib_array_node ipntomentry = {
+static const struct mib_array_node ipntomentry = {
   { MIB_NODE_AR },
   LWIP_ARRAYSIZE(ipntomentry_nodes),
   ipntomentry_nodes
 };
 
-static struct mib_array_node_entry ipntomtable_node = {1, &ipntomentry.node};
+static const struct mib_array_node_entry ipntomtable_node = {1, &ipntomentry.node};
 static struct mib_array_node ipntomtable = {
   { MIB_NODE_AR },
   0,
@@ -353,13 +353,13 @@ static const struct mib_array_node_entry iprteentry_nodes[] = {
   {11, &iprtetree_root.scalar.node}, {12, &iprtetree_root.scalar.node},
   {13, &iprtetree_root.scalar.node}
 };
-static struct mib_array_node iprteentry = {
+static const struct mib_array_node iprteentry = {
   { MIB_NODE_AR },
   LWIP_ARRAYSIZE(iprteentry_nodes),
   iprteentry_nodes
 };
 
-static struct mib_array_node_entry iprtetable_node = {1, &iprteentry.node};
+static const struct mib_array_node_entry iprtetable_node = {1, &iprteentry.node};
 static struct mib_array_node iprtetable = {
   { MIB_NODE_AR },
   0,
@@ -386,13 +386,13 @@ static const struct mib_array_node_entry ipaddrentry_nodes[] = {
   {4, &ipaddrtree_root.scalar.node},
   {5, &ipaddrtree_root.scalar.node}
 };
-static struct mib_array_node ipaddrentry = {
+static const struct mib_array_node ipaddrentry = {
   { MIB_NODE_AR },
   LWIP_ARRAYSIZE(ipaddrentry_nodes),
   ipaddrentry_nodes
 };
 
-static struct mib_array_node_entry ipaddrtable_node = {1, &ipaddrentry.node};
+static const struct mib_array_node_entry ipaddrtable_node = {1, &ipaddrentry.node};
 static struct mib_array_node ipaddrtable = {
   { MIB_NODE_AR },
   0,
@@ -452,14 +452,14 @@ static const struct mib_array_node atentry = {
 };
 
 static const struct mib_array_node_entry attable_node = {1, &atentry.node};
-static struct mib_array_node attable = {
+static const struct mib_array_node attable = {
   { MIB_NODE_AR },
   1,
   &attable_node
 };
 
 /* at .1.3.6.1.2.1.3 */
-static struct mib_array_node_entry mib2_at_node = {1, &attable.node};
+static const struct mib_array_node_entry mib2_at_node = {1, &attable.node};
 static struct mib_array_node at = {
   { MIB_NODE_AR },
   0,
@@ -497,13 +497,13 @@ static const struct mib_array_node_entry ifentry_nodes[] = {
   {19, &iflist_root.scalar.node}, {20, &iflist_root.scalar.node},
   {21, &iflist_root.scalar.node}, {22, &iflist_root.scalar.node}
 };
-static struct mib_array_node ifentry = {
+static const struct mib_array_node ifentry = {
   { MIB_NODE_AR },
   LWIP_ARRAYSIZE(ifentry_nodes),
   ifentry_nodes
 };
 
-static struct mib_array_node_entry iftable_node = {1, &ifentry.node};
+static const struct mib_array_node_entry iftable_node = {1, &ifentry.node};
 static struct mib_array_node iftable = {
   { MIB_NODE_AR },
   0,
