@@ -458,7 +458,7 @@ snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
   while (node != NULL)
   {
     node_type = node->node_type;
-    if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
+    if (node_type == MIB_NODE_AR)
     {
       const struct mib_array_node *an;
       u16_t i;
@@ -652,7 +652,7 @@ empty_table(const struct mib_node *node)
         empty = 1;
       }
     }
-    else if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
+    else if (node_type == MIB_NODE_AR)
     {
       const struct mib_array_node *an;
       an = (const struct mib_array_node*)(const void*)node;
@@ -689,7 +689,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
   {
     climb_tree = 0;
     node_type = node->node_type;
-    if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
+    if (node_type == MIB_NODE_AR)
     {
       const struct mib_array_node *an;
       u16_t i;

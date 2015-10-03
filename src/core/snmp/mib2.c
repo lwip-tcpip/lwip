@@ -188,8 +188,8 @@ static struct mib_array_node udpentry = {
 };
 
 static struct mib_array_node_entry udptable_node = {1, &udpentry.node};
-static struct mib_ram_array_node udptable = {
-  { MIB_NODE_RA },
+static struct mib_array_node udptable = {
+  { MIB_NODE_AR },
   0,
   &udptable_node
 };
@@ -240,8 +240,8 @@ static struct mib_array_node tcpconnentry = {
 };
 
 static struct mib_array_node_entry tcpconntable_node = {1, &tcpconnentry.node};
-static struct mib_ram_array_node tcpconntable = {
-  { MIB_NODE_RA },
+static struct mib_array_node tcpconntable = {
+  { MIB_NODE_AR },
 /** @todo update maxlength when inserting / deleting from table
    0 when table is empty, 1 when more than one entry */
   0,
@@ -325,8 +325,8 @@ static struct mib_array_node ipntomentry = {
 };
 
 static struct mib_array_node_entry ipntomtable_node = {1, &ipntomentry.node};
-static struct mib_ram_array_node ipntomtable = {
-  { MIB_NODE_RA },
+static struct mib_array_node ipntomtable = {
+  { MIB_NODE_AR },
   0,
   &ipntomtable_node
 };
@@ -360,8 +360,8 @@ static struct mib_array_node iprteentry = {
 };
 
 static struct mib_array_node_entry iprtetable_node = {1, &iprteentry.node};
-static struct mib_ram_array_node iprtetable = {
-  { MIB_NODE_RA },
+static struct mib_array_node iprtetable = {
+  { MIB_NODE_AR },
   0,
   &iprtetable_node
 };
@@ -393,8 +393,8 @@ static struct mib_array_node ipaddrentry = {
 };
 
 static struct mib_array_node_entry ipaddrtable_node = {1, &ipaddrentry.node};
-static struct mib_ram_array_node ipaddrtable = {
-  { MIB_NODE_RA },
+static struct mib_array_node ipaddrtable = {
+  { MIB_NODE_AR },
   0,
   &ipaddrtable_node
 };
@@ -460,8 +460,8 @@ static struct mib_array_node attable = {
 
 /* at .1.3.6.1.2.1.3 */
 static struct mib_array_node_entry mib2_at_node = {1, &attable.node};
-static struct mib_ram_array_node at = {
-  { MIB_NODE_RA },
+static struct mib_array_node at = {
+  { MIB_NODE_AR },
   0,
   &mib2_at_node
 };
@@ -504,8 +504,8 @@ static struct mib_array_node ifentry = {
 };
 
 static struct mib_array_node_entry iftable_node = {1, &ifentry.node};
-static struct mib_ram_array_node iftable = {
-  { MIB_NODE_RA },
+static struct mib_array_node iftable = {
+  { MIB_NODE_AR },
   0,
   &iftable_node
 };

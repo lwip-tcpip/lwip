@@ -93,9 +93,7 @@ struct snmp_name_ptr
 #define MIB_NODE_SC 0x01
 /** MIB const array node */
 #define MIB_NODE_AR 0x02
-/** MIB array node (mem_malloced from RAM) */
-#define MIB_NODE_RA 0x03
-/** MIB list root node (mem_malloced from RAM) */
+/** MIB list root node (memp_malloced from RAM) */
 #define MIB_NODE_LR 0x04
 /** MIB node for external objects */
 #define MIB_NODE_EX 0x05
@@ -129,7 +127,7 @@ struct mib_array_node_entry
   const struct mib_node *nptr;
 };
 
-/** derived node, points to a fixed size const array
+/** derived node, points to a fixed size array
     of sub-identifiers plus a 'child' pointer */
 struct mib_array_node
 {
@@ -139,18 +137,6 @@ struct mib_array_node
   /* additional struct members */
   u16_t maxlength;
   const struct mib_array_node_entry *entries;
-};
-
-/** derived node, points to a fixed size mem_malloced array
-    of sub-identifiers plus a 'child' pointer */
-struct mib_ram_array_node
-{
-  /* inherited "base class" members */
-  struct mib_node node;
-
-  /* additional struct members */
-  u16_t maxlength;
-  struct mib_array_node_entry *entries;
 };
 
 struct mib_list_node
