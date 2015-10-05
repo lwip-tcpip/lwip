@@ -102,13 +102,13 @@ static u32_t magic_randomseed;    /* Seed used for random number generation. */
  * Ref: Applied Cryptography 2nd Ed. by Bruce Schneier p. 427
  */
 static void magic_churnrand(char *rand_data, u32_t rand_len) {
-  md5_context md5;
+  md5_context md5_ctx;
 
   /* LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: %u@%P\n", rand_len, rand_data)); */
-  md5_starts(&md5);
-  md5_update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
+  md5_starts(&md5_ctx);
+  md5_update(&md5_ctx, (u_char *)magic_randpool, sizeof(magic_randpool));
   if (rand_data) {
-    md5_update(&md5, (u_char *)rand_data, rand_len);
+    md5_update(&md5_ctx, (u_char *)rand_data, rand_len);
   } else {
     struct {
       /* INCLUDE fields for any system sources of randomness */
@@ -123,9 +123,9 @@ static void magic_churnrand(char *rand_data, u32_t rand_len) {
     sys_data.rand = LWIP_RAND();
 #endif /* LWIP_RAND */
     /* Load sys_data fields here. */
-    md5_update(&md5, (u_char *)&sys_data, sizeof(sys_data));
+    md5_update(&md5_ctx, (u_char *)&sys_data, sizeof(sys_data));
   }
-  md5_finish(&md5, (u_char *)magic_randpool);
+  md5_finish(&md5_ctx, (u_char *)magic_randpool);
 /*  LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: -> 0\n")); */
 }
 
