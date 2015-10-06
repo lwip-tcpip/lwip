@@ -47,10 +47,10 @@
  *           packets and puts completed packets on a queue which is fed into
  *           the stack from the main loop (needs SYS_LIGHTWEIGHT_PROT for
  *           pbuf_alloc to work on ISR level!).
- *     
+ *
  */
 
-/* 
+/*
  * This is an arch independent SLIP netif. The specific serial hooks must be
  * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send
  */

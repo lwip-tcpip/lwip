@@ -73,7 +73,7 @@
 #error "If you want to use LWIP_ASSERT, LWIP_PLATFORM_ASSERT(message) needs to be defined in your arch/cc.h"
 #endif
 #else  /* LWIP_NOASSERT */
-#define LWIP_ASSERT(message, assertion) 
+#define LWIP_ASSERT(message, assertion)
 #endif /* LWIP_NOASSERT */
 
 /** if "expression" isn't true, then print "message" and execute "handler" expression */
@@ -110,7 +110,7 @@
                              } while(0)
 
 #else  /* LWIP_DEBUG */
-#define LWIP_DEBUGF(debug, message) 
+#define LWIP_DEBUGF(debug, message)
 #endif /* LWIP_DEBUG */
 
 #endif /* LWIP_HDR_DEBUG_H */

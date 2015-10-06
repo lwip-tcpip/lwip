@@ -211,7 +211,7 @@ static void
 dhcp_handle_nak(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n", 
+  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n",
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
   /* remove IP address from interface (must no longer be used, as per RFC2131) */
   netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
@@ -394,7 +394,7 @@ dhcp_fine_tmr(void)
   while (netif != NULL) {
     /* only act on DHCP configured interfaces */
     if (netif->dhcp != NULL) {
-      /* timer is active (non zero), and is about to trigger now */      
+      /* timer is active (non zero), and is about to trigger now */
       if (netif->dhcp->request_timeout > 1) {
         netif->dhcp->request_timeout--;
       }

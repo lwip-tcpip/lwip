@@ -201,14 +201,14 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 
 /**
  * Set the callback function for received packets that match the
- * raw PCB's protocol and binding. 
- * 
+ * raw PCB's protocol and binding.
+ *
  * The callback function MUST either
  * - eat the packet by calling pbuf_free() and returning non-zero. The
  *   packet will not be passed to other raw PCBs or other protocol layers.
  * - not free the packet, and return zero. The packet will be matched
  *   against further PCBs and/or forwarded to another protocol layers.
- * 
+ *
  * @return non-zero if the packet was free()d, zero if the packet remains
  * available for others.
  */

@@ -103,7 +103,7 @@ udp_new_port(void)
 {
   u16_t n = 0;
   struct udp_pcb *pcb;
-  
+
 again:
   if (udp_port++ == UDP_LOCAL_PORT_RANGE_END) {
     udp_port = UDP_LOCAL_PORT_RANGE_START;
@@ -276,7 +276,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_IPV4 */
               ) {
           local_match = 1;
-          if ((uncon_pcb == NULL) && 
+          if ((uncon_pcb == NULL) &&
               ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
             /* the first unconnected matching PCB */
             uncon_pcb = pcb;
@@ -549,7 +549,7 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
  *
  * If the PCB already has a remote address association, it will
  * be restored after the data is sent.
- * 
+ *
  * @return lwIP error code (@see udp_send for possible error codes)
  *
  * @see udp_disconnect() udp_send()

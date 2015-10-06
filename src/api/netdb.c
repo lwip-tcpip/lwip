@@ -256,7 +256,7 @@ lwip_freeaddrinfo(struct addrinfo *ai)
  *
  * @param nodename descriptive name or address string of the host
  *                 (may be NULL -> local address)
- * @param servname port number as string of NULL 
+ * @param servname port number as string of NULL
  * @param hints structure containing input values that set socktype and protocol
  * @param res pointer to a pointer where to store the result (set to NULL on failure)
  * @return 0 on success, non-zero on failure
@@ -286,7 +286,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
 
   if (hints != NULL) {
     ai_family = hints->ai_family;
-    if ((ai_family != AF_UNSPEC) 
+    if ((ai_family != AF_UNSPEC)
 #if LWIP_IPV4
       && (ai_family != AF_INET)
 #endif /* LWIP_IPV4 */

@@ -771,7 +771,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       buf = sock->lastdata;
     } else {
       /* If this is non-blocking call, then check first */
-      if (((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) && 
+      if (((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) &&
           (sock->rcvevent <= 0)) {
         if (off > 0) {
           /* update receive window */
@@ -847,9 +847,9 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
       LWIP_ASSERT("invalid copylen, len would underflow", len >= copylen);
       len -= copylen;
-      if ( (len <= 0) || 
-           (p->flags & PBUF_FLAG_PUSH) || 
-           (sock->rcvevent <= 0) || 
+      if ( (len <= 0) ||
+           (p->flags & PBUF_FLAG_PUSH) ||
+           (sock->rcvevent <= 0) ||
            ((flags & MSG_PEEK)!=0)) {
         done = 1;
       }
@@ -1274,7 +1274,7 @@ int
 lwip_writev(int s, const struct iovec *iov, int iovcnt)
 {
   struct msghdr msg;
-  
+
   msg.msg_name = NULL;
   msg.msg_namelen = 0;
   /* Hack: we have to cast via number to cast from 'const' pointer to non-const.

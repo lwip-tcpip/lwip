@@ -256,7 +256,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     } else if(type == ICMP_AMR) {
       MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
     }
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", 
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",
                 (s16_t)type, (s16_t)code));
     ICMP_STATS_INC(icmp.proterr);
     ICMP_STATS_INC(icmp.drop);

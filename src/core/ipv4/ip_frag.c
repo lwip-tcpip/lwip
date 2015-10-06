@@ -187,7 +187,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
   }
 #endif /* LWIP_ICMP */
 
-  /* First, free all received pbufs.  The individual pbufs need to be released 
+  /* First, free all received pbufs.  The individual pbufs need to be released
      separately as they have not yet been chained */
   p = ipr->p;
   while (p != NULL) {
@@ -308,7 +308,6 @@ ip_reass_enqueue_new_datagram(struct ip_hdr *fraghdr, int clen)
 static void
 ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
 {
-  
   /* dequeue the reass struct  */
   if (reassdatagrams == ipr) {
     /* it was the first in the list */
@@ -342,7 +341,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   int valid = 1;
 
   /* Extract length and fragment offset from current fragment */
-  fraghdr = (struct ip_hdr*)new_p->payload; 
+  fraghdr = (struct ip_hdr*)new_p->payload;
   len = ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;
   offset = (ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;
 
@@ -489,7 +488,7 @@ ip4_reass(struct pbuf *p)
 
   IPFRAG_STATS_INC(ip_frag.recv);
   MIB2_STATS_INC(mib2.ipreasmreqds);
-  
+
   fraghdr = (struct ip_hdr*)p->payload;
 
   if ((IPH_HL(fraghdr) * 4) != IP_HLEN) {
@@ -541,7 +540,7 @@ ip4_reass(struct pbuf *p)
       goto nullreturn;
     }
   } else {
-    if (((ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) == 0) && 
+    if (((ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) == 0) &&
       ((ntohs(IPH_OFFSET(&ipr->iphdr)) & IP_OFFMASK) != 0)) {
       /* ipr->iphdr is not the header from the first fragment, but fraghdr is
        * -> copy fraghdr into ipr->iphdr since we want to have the header
@@ -550,11 +549,11 @@ ip4_reass(struct pbuf *p)
       SMEMCPY(&ipr->iphdr, fraghdr, IP_HLEN);
     }
   }
-  /* Track the current number of pbufs current 'in-flight', in order to limit 
+  /* Track the current number of pbufs current 'in-flight', in order to limit
   the number of fragments that may be enqueued at any one time */
   ip_reass_pbufcount += clen;
 
-  /* At this point, we have either created a new entry or pointing 
+  /* At this point, we have either created a new entry or pointing
    * to an existing one */
 
   /* check for 'no more fragments', and update queue entry*/
@@ -874,7 +873,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
      * will have already sent the packet, the free will really free, and
      * there will be zero memory penalty.
      */
-    
+
     pbuf_free(rambuf);
 #endif /* IP_FRAG_USES_STATIC_BUF */
     left -= cop;

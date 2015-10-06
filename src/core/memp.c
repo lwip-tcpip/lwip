@@ -163,19 +163,19 @@ static const char *memp_desc[MEMP_MAX] = {
  *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_UDP_PCB_base[];
  */
 #define LWIP_MEMPOOL(name,num,size,desc) u8_t memp_memory_ ## name ## _base \
-  [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))];   
+  [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))];
 #include "lwip/memp_std.h"
 
 /** This array holds the base of each memory pool. */
-static u8_t *const memp_bases[] = { 
-#define LWIP_MEMPOOL(name,num,size,desc) memp_memory_ ## name ## _base,   
+static u8_t *const memp_bases[] = {
+#define LWIP_MEMPOOL(name,num,size,desc) memp_memory_ ## name ## _base,
 #include "lwip/memp_std.h"
 };
 
 #else /* MEMP_SEPARATE_POOLS */
 
 /** This is the actual memory used by the pools (all pools in one big block). */
-static u8_t memp_memory[MEM_ALIGNMENT - 1 
+static u8_t memp_memory[MEM_ALIGNMENT - 1
 #define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
 #include "lwip/memp_std.h"
 ];
@@ -351,7 +351,7 @@ memp_overflow_init(void)
 
 /**
  * Initialize this module.
- * 
+ *
  * Carves out memp_memory into linked lists for each pool-type.
  */
 void
@@ -414,7 +414,7 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
 {
   struct memp *memp;
   SYS_ARCH_DECL_PROTECT(old_level);
- 
+
   LWIP_ERROR("memp_malloc: type < MEMP_MAX", (type < MEMP_MAX), return NULL;);
 
   SYS_ARCH_PROTECT(old_level);
@@ -423,7 +423,7 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 
   memp = memp_tab[type];
-  
+
   if (memp != NULL) {
     memp_tab[type] = memp->next;
 #if MEMP_OVERFLOW_CHECK

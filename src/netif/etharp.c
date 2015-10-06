@@ -42,7 +42,7 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
- 
+
 #include "lwip/opt.h"
 
 #if LWIP_ARP || LWIP_ETHERNET
@@ -87,7 +87,7 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 /** the time an ARP entry stays pending after first request,
  *  for ARP_TMR_INTERVAL = 1000, this is
  *  10 seconds.
- * 
+ *
  *  @internal Keep this number at least 2, otherwise it might
  *  run out instantly if the timeout occurs directly after a request.
  */
@@ -249,14 +249,14 @@ etharp_tmr(void)
 
 /**
  * Search the ARP table for a matching or new entry.
- * 
+ *
  * If an IP address is given, return a pending or stable ARP entry that matches
  * the address. If no match is found, create a new entry with this address set,
  * but in state ETHARP_EMPTY. The caller must check and possibly change the
  * state of the returned entry.
- * 
+ *
  * If ipaddr is NULL, return a initialized new entry in state ETHARP_EMPTY.
- * 
+ *
  * In all cases, attempt to create new entries from an empty entry. If no
  * empty entries are available and ETHARP_FLAG_TRY_HARD flag is set, recycle
  * old entries. Heuristic choose the least important entry for recycling.
@@ -264,7 +264,7 @@ etharp_tmr(void)
  * @param ipaddr IP address to find in ARP cache, or to add if not found.
  * @param flags @see definition of ETHARP_FLAG_*
  * @param netif netif related to this address (used for NETIF_HWADDRHINT)
- *  
+ *
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
@@ -349,7 +349,7 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
     }
   }
   /* { we have no match } => try to create a new entry */
-   
+
   /* don't create new entry, only search? */
   if (((flags & ETHARP_FLAG_FIND_ONLY) != 0) ||
       /* or no empty entry found and not allowed to recycle? */
@@ -357,15 +357,15 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_find_entry: no empty entry found and not allowed to recycle\n"));
     return (s8_t)ERR_MEM;
   }
-  
+
   /* b) choose the least destructive entry to recycle:
    * 1) empty entry
    * 2) oldest stable entry
    * 3) oldest pending entry without queued packets
    * 4) oldest pending entry with queued packets
-   * 
+   *
    * { ETHARP_FLAG_TRY_HARD is set at this point }
-   */ 
+   */
 
   /* 1) empty entry available? */
   if (empty < ARP_TABLE_SIZE) {
@@ -462,7 +462,7 @@ etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, const 
  *
  * If a pending entry is resolved, any queued packets will be sent
  * at this point.
- * 
+ *
  * @param netif netif related to this entry (used for NETIF_ADDRHINT)
  * @param ipaddr IP address of the inserted ARP entry.
  * @param ethaddr Ethernet address of the inserted ARP entry.
@@ -701,7 +701,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
 #endif /* ETHARP_TRUST_IP_MAC */
 
 /**
- * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache  
+ * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache
  * send out queued IP packets. Updates cache with snooped address pairs.
  *
  * Should be called for incoming ARP packets. The pbuf in the argument
@@ -890,7 +890,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
       }
     }
   }
-  
+
   return etharp_send_ip(netif, q, (struct eth_addr*)(netif->hwaddr),
     &arp_table[arp_idx].ethaddr);
 }
@@ -1043,11 +1043,11 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
  * is sent for the given address. The packet is queued on this entry.
  *
  * If the IP address was already stable in the cache, and a packet is
- * given, it is directly sent and no ARP request is sent out. 
- * 
+ * given, it is directly sent and no ARP request is sent out.
+ *
  * If the IP address was already stable in the cache, and no packet is
  * given, an ARP request is sent out.
- * 
+ *
  * @param netif The lwIP network interface on which ipaddr
  * must be queried for.
  * @param ipaddr The IP address to be resolved.
@@ -1136,7 +1136,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     struct pbuf *p;
     int copy_needed = 0;
     /* IF q includes a PBUF_REF, PBUF_POOL or PBUF_RAM, we have no choice but
-     * to copy the whole queue into a new PBUF_RAM (see bug #11400) 
+     * to copy the whole queue into a new PBUF_RAM (see bug #11400)
      * PBUF_ROMs can be left as they are, since ROM must not get changed. */
     p = q;
     while (p) {
@@ -1294,7 +1294,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);
   ETHADDR16_COPY(&hdr->dhwaddr, hwdst_addr);
   /* Copy struct ip4_addr2 to aligned ip4_addr, to support compilers without
-   * structure packing. */ 
+   * structure packing. */
   IPADDR2_COPY(&hdr->sipaddr, ipsrc_addr);
   IPADDR2_COPY(&hdr->dipaddr, ipdst_addr);
 
@@ -1479,7 +1479,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
         ip4_input(p, netif);
       }
       break;
-      
+
     case PP_HTONS(ETHTYPE_ARP):
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;

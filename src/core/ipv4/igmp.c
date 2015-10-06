@@ -92,7 +92,7 @@ Steve Reynolds
 
 #include "string.h"
 
-/* 
+/*
  * IGMP constants
  */
 #define IGMP_TTL                       1
@@ -371,7 +371,7 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
 
   IGMP_STATS_INC(igmp.recv);
 
-  /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */    
+  /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */
   if (p->len < IGMP_MINLEN) {
     pbuf_free(p);
     IGMP_STATS_INC(igmp.lenerr);

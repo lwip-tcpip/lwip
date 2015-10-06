@@ -350,7 +350,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
       API_EVENT(conn, NETCONN_EVT_SENDPLUS, len);
     }
   }
-  
+
   return ERR_OK;
 }
 
@@ -1466,7 +1466,7 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
     if (available < len) {
       /* don't try to write more than sendbuf */
       len = available;
-      if (dontblock) { 
+      if (dontblock) {
         if (!len) {
           err = ERR_WOULDBLOCK;
           goto err_mem;
@@ -1760,7 +1760,7 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
  */
 void
 lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
-{ 
+{
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {

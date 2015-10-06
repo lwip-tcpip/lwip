@@ -57,7 +57,7 @@ static const char *err_strerr[] = {
            "Connection reset.",      /* ERR_RST        -13 */
            "Connection closed.",     /* ERR_CLSD       -14 */
            "Illegal argument.",      /* ERR_ARG        -15 */
-           "Low-level netif error.", /* ERR_IF         -16 */
+           "Low-level netif error."  /* ERR_IF         -16 */
 };
 
 /**
@@ -70,7 +70,6 @@ const char *
 lwip_strerr(err_t err)
 {
   return err_strerr[-err];
-
 }
 
 #endif /* LWIP_DEBUG */

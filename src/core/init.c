@@ -228,7 +228,7 @@
 #if NETCONN_MORE != TCP_WRITE_FLAG_MORE
   #error "NETCONN_MORE != TCP_WRITE_FLAG_MORE"
 #endif
-#endif /* LWIP_NETCONN && LWIP_TCP */ 
+#endif /* LWIP_NETCONN && LWIP_TCP */
 #if LWIP_SOCKET
 /* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
 #if SO_REUSEADDR != SOF_REUSEADDR

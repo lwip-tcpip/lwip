@@ -120,7 +120,7 @@ struct tcp_pcb *tcp_tmp_pcb;
 
 u8_t tcp_active_pcbs_changed;
 
-/** Timer counter to handle calling slow-timer from tcp_tmr() */ 
+/** Timer counter to handle calling slow-timer from tcp_tmr() */
 static u8_t tcp_timer;
 static u8_t tcp_timer_ctr;
 static u16_t tcp_new_port(void);
@@ -209,7 +209,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
      * however, it is in this state once allocated and as yet unused
      * and the user needs some way to free it should the need arise.
      * Calling tcp_close() with a pcb that has already been closed, (i.e. twice)
-     * or for a pcb that has been used and then entered the CLOSED state 
+     * or for a pcb that has been used and then entered the CLOSED state
      * is erroneous, but this should never happen as the pcb has in those cases
      * been freed, and so any remaining handles are bogus. */
     err = ERR_OK;
@@ -716,7 +716,7 @@ tcp_new_port(void)
   u8_t i;
   u16_t n = 0;
   struct tcp_pcb *pcb;
-  
+
 again:
   if (tcp_port++ == TCP_LOCAL_PORT_RANGE_END) {
     tcp_port = TCP_LOCAL_PORT_RANGE_START;
@@ -981,11 +981,11 @@ tcp_slowtmr_start:
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to "));
         ip_addr_debug_print(TCP_DEBUG, &pcb->remote_ip);
         LWIP_DEBUGF(TCP_DEBUG, ("\n"));
-        
+
         ++pcb_remove;
         ++pcb_reset;
       }
-      else if((u32_t)(tcp_ticks - pcb->tmr) > 
+      else if((u32_t)(tcp_ticks - pcb->tmr) >
               (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEP_INTVL(pcb))
               / TCP_SLOW_INTERVAL)
       {
@@ -1080,7 +1080,7 @@ tcp_slowtmr_start:
     }
   }
 
-  
+
   /* Steps through all of the TIME-WAIT PCBs. */
   prev = NULL;
   pcb = tcp_tw_pcbs;
@@ -1092,8 +1092,6 @@ tcp_slowtmr_start:
     if ((u32_t)(tcp_ticks - pcb->tmr) > 2 * TCP_MSL / TCP_SLOW_INTERVAL) {
       ++pcb_remove;
     }
-    
-
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
@@ -1290,7 +1288,7 @@ tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
  *
  * @param seg the old tcp_seg
  * @return a copy of seg
- */ 
+ */
 struct tcp_seg *
 tcp_seg_copy(struct tcp_seg *seg)
 {
@@ -1300,7 +1298,7 @@ tcp_seg_copy(struct tcp_seg *seg)
   if (cseg == NULL) {
     return NULL;
   }
-  SMEMCPY((u8_t *)cseg, (const u8_t *)seg, sizeof(struct tcp_seg)); 
+  SMEMCPY((u8_t *)cseg, (const u8_t *)seg, sizeof(struct tcp_seg));
   pbuf_ref(cseg->p);
   return cseg;
 }
@@ -1339,7 +1337,7 @@ tcp_kill_prio(u8_t prio)
   u8_t mprio;
 
   mprio = TCP_PRIO_MAX;
-  
+
   /* We kill the oldest active connection that has lower priority than prio. */
   inactivity = 0;
   inactive = NULL;
@@ -1501,7 +1499,7 @@ tcp_alloc(u8_t prio)
     pcb->snd_wl2 = iss;
     pcb->snd_nxt = iss;
     pcb->lastack = iss;
-    pcb->snd_lbb = iss;   
+    pcb->snd_lbb = iss;
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
@@ -1509,11 +1507,11 @@ tcp_alloc(u8_t prio)
 
 #if LWIP_CALLBACK_API
     pcb->recv = tcp_recv_null;
-#endif /* LWIP_CALLBACK_API */  
-    
+#endif /* LWIP_CALLBACK_API */
+
     /* Init KEEPALIVE timer */
     pcb->keep_idle  = TCP_KEEPIDLE_DEFAULT;
-    
+
 #if LWIP_TCP_KEEPALIVE
     pcb->keep_intvl = TCP_KEEPINTVL_DEFAULT;
     pcb->keep_cnt   = TCP_KEEPCNT_DEFAULT;
@@ -1568,7 +1566,7 @@ tcp_new_ip6(void)
  *
  * @param pcb tcp_pcb to set the callback argument
  * @param arg void pointer argument to pass to callback functions
- */ 
+ */
 void
 tcp_arg(struct tcp_pcb *pcb, void *arg)
 {
@@ -1584,7 +1582,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
  *
  * @param pcb tcp_pcb to set the recv callback
  * @param recv callback function to call for this pcb when data is received
- */ 
+ */
 void
 tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 {
@@ -1598,7 +1596,7 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
  *
  * @param pcb tcp_pcb to set the sent callback
  * @param sent callback function to call for this pcb when data is successfully sent
- */ 
+ */
 void
 tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 {
@@ -1613,7 +1611,7 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
  * @param pcb tcp_pcb to set the err callback
  * @param err callback function to call for this pcb when a fatal error
  *        has occurred on the connection
- */ 
+ */
 void
 tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 {
@@ -1628,7 +1626,7 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
  * @param pcb tcp_pcb to set the accept callback
  * @param accept callback function to call for this pcb when LISTENing
  *        connection has been connected to another host
- */ 
+ */
 void
 tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 {
@@ -1644,16 +1642,16 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
  * from TCP. The interval is specified in terms of the TCP coarse
  * timer interval, which is called twice a second.
  *
- */ 
+ */
 void
 tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
 {
   LWIP_ASSERT("invalid socket state for poll", pcb->state != LISTEN);
 #if LWIP_CALLBACK_API
   pcb->poll = poll;
-#else /* LWIP_CALLBACK_API */  
+#else /* LWIP_CALLBACK_API */
   LWIP_UNUSED_ARG(poll);
-#endif /* LWIP_CALLBACK_API */  
+#endif /* LWIP_CALLBACK_API */
   pcb->pollinterval = interval;
 }
 
@@ -1771,7 +1769,7 @@ u32_t
 tcp_next_iss(void)
 {
   static u32_t iss = 6510;
-  
+
   iss += tcp_ticks;       /* XXX */
   return iss;
 }
@@ -2004,14 +2002,14 @@ tcp_debug_print_pcbs(void)
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
-  }    
+  }
   LWIP_DEBUGF(TCP_DEBUG, ("Listen PCB states:\n"));
   for(pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
-  }    
+  }
   LWIP_DEBUGF(TCP_DEBUG, ("TIME-WAIT PCB states:\n"));
   for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",

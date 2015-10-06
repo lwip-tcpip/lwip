@@ -53,7 +53,7 @@ extern "C" {
 #else
 #define STAT_COUNTER     u16_t
 #define STAT_COUNTER_F   U16_F
-#endif 
+#endif
 
 struct stats_proto {
   STAT_COUNTER xmit;             /* Transmitted packets. */

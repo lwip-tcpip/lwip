@@ -64,7 +64,7 @@ extern "C" {
  * these should really be linked from the interface, but
  * if we keep them separate we will not affect the lwip original code
  * too much
- * 
+ *
  * There will be a group for the all systems group address but this 
  * will not run the state machine as it is used to kick off reports
  * from all the other groups

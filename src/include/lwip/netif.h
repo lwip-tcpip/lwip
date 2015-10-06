@@ -364,7 +364,7 @@ void netif_set_remove_callback(struct netif *netif, netif_status_callback_fn rem
 
 void netif_set_link_up(struct netif *netif);
 void netif_set_link_down(struct netif *netif);
-/** Ask if a link is up */ 
+/** Ask if a link is up */
 #define netif_is_link_up(netif) (((netif)->flags & NETIF_FLAG_LINK_UP) ? (u8_t)1 : (u8_t)0)
 
 #if LWIP_NETIF_LINK_CALLBACK

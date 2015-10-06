@@ -85,7 +85,7 @@ static void
 low_level_init(struct netif *netif)
 {
   struct ethernetif *ethernetif = netif->state;
-  
+
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
@@ -96,11 +96,11 @@ low_level_init(struct netif *netif)
 
   /* maximum transfer unit */
   netif->mtu = 1500;
-  
+
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
   netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
- 
+
 #if LWIP_IPV6 && LWIP_IPV6_MLD
   /*
    * For hardware/netifs that implement MAC filtering.
@@ -114,7 +114,7 @@ low_level_init(struct netif *netif)
   }
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
-  /* Do whatever else is needed to initialize interface. */  
+  /* Do whatever else is needed to initialize interface. */
 }
 
 /**
@@ -140,7 +140,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   struct pbuf *q;
 
   initiate transfer();
-  
+
 #if ETH_PAD_SIZE
   pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
@@ -157,7 +157,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
 #if ETH_PAD_SIZE
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
-  
+
   LINK_STATS_INC(link.xmit);
 
   return ERR_OK;
@@ -188,7 +188,7 @@ low_level_input(struct netif *netif)
 
   /* We allocate a pbuf chain of pbufs from the pool. */
   p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
-  
+
   if (p != NULL) {
 
 #if ETH_PAD_SIZE
@@ -221,7 +221,7 @@ low_level_input(struct netif *netif)
     LINK_STATS_INC(link.drop);
   }
 
-  return p;  
+  return p;
 }
 
 /**
@@ -292,7 +292,7 @@ ethernetif_init(struct netif *netif)
   struct ethernetif *ethernetif;
 
   LWIP_ASSERT("netif != NULL", (netif != NULL));
-    
+
   ethernetif = mem_malloc(sizeof(struct ethernetif));
   if (ethernetif == NULL) {
     LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
@@ -323,9 +323,9 @@ ethernetif_init(struct netif *netif)
   netif->output_ip6 = ethip6_output;
 #endif /* LWIP_IPV6 */
   netif->linkoutput = low_level_output;
-  
+
   ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
-  
+
   /* initialize the hardware */
   low_level_init(netif);
 

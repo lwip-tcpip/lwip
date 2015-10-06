@@ -49,8 +49,8 @@
  * aim of being simple, correct and fully portable. Checksumming is the
  * first thing you would want to optimize for your platform. If you create
  * your own version, link it in and in your cc.h put:
- * 
- * #define LWIP_CHKSUM <your_checksum_routine> 
+ *
+ * #define LWIP_CHKSUM <your_checksum_routine>
  *
  * Or you can select from the implementations below by defining
  * LWIP_CHKSUM_ALGORITHM to 1, 2 or 3.
@@ -74,7 +74,7 @@ u16_t lwip_standard_chksum(const void *dataptr, int len);
  *
  * @param dataptr points to start of data to be summed at any boundary
  * @param len length of data to be summed
- * @return host order (!) lwip checksum (non-inverted Internet sum) 
+ * @return host order (!) lwip checksum (non-inverted Internet sum)
  *
  * @note accumulator size limits summable length to 64k
  * @note host endianess is irrelevant (p3 RFC1071)
@@ -130,9 +130,8 @@ lwip_standard_chksum(const void *dataptr, int len)
  *
  * @param dataptr points to start of data to be summed at any boundary
  * @param len length of data to be summed
- * @return host order (!) lwip checksum (non-inverted Internet sum) 
+ * @return host order (!) lwip checksum (non-inverted Internet sum)
  */
-
 u16_t
 lwip_standard_chksum(const void *dataptr, int len)
 {
@@ -181,15 +180,14 @@ lwip_standard_chksum(const void *dataptr, int len)
 /**
  * An optimized checksum routine. Basically, it uses loop-unrolling on
  * the checksum loop, treating the head and tail bytes specially, whereas
- * the inner loop acts on 8 bytes at a time. 
+ * the inner loop acts on 8 bytes at a time.
  *
  * @arg start of buffer to be checksummed. May be an odd byte address.
  * @len number of bytes in the buffer to be checksummed.
- * @return host order (!) lwip checksum (non-inverted Internet sum) 
- * 
+ * @return host order (!) lwip checksum (non-inverted Internet sum)
+ *
  * by Curt McDowell, Broadcom Corp. December 8th, 2005
  */
-
 u16_t
 lwip_standard_chksum(const void *dataptr, int len)
 {

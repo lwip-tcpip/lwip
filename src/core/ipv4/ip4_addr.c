@@ -48,8 +48,8 @@ const ip_addr_t ip_addr_any = IPADDR4_INIT(IPADDR_ANY);
 const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
 
 /**
- * Determine if an address is a broadcast address on a network interface 
- * 
+ * Determine if an address is a broadcast address on a network interface
+ *
  * @param addr address to be checked
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address

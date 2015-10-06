@@ -40,7 +40,7 @@
  * Please coordinate changes and requests with Dominik Spies
  * <kontakt@dspies.de>
  */
- 
+
 #ifndef LWIP_HDR_AUTOIP_H
 #define LWIP_HDR_AUTOIP_H
 

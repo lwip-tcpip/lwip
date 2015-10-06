@@ -84,7 +84,7 @@ typedef u8_t sys_mbox_t;
 /** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
-#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
+#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT
 
 #include "lwip/err.h"
 #include "arch/sys_arch.h"
@@ -123,7 +123,7 @@ void sys_mutex_lock(sys_mutex_t *mutex);
 void sys_mutex_unlock(sys_mutex_t *mutex);
 /** Delete a semaphore
  * @param mutex the mutex to delete */
-void sys_mutex_free(sys_mutex_t *mutex); 
+void sys_mutex_free(sys_mutex_t *mutex);
 #ifndef sys_mutex_valid
 /** Check if a mutex is valid/allocated: return 1 for valid, 0 for invalid */
 int sys_mutex_valid(sys_mutex_t *mutex);

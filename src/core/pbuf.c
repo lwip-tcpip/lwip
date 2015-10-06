@@ -521,7 +521,7 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
   if ((header_size_increment == 0) || (p == NULL)) {
     return 0;
   }
- 
+
   if (header_size_increment < 0){
     increment_magnitude = -header_size_increment;
     /* Check that we aren't going to move off the end of the pbuf */
@@ -532,7 +532,7 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
     /* Can't assert these as some callers speculatively call
          pbuf_header() to see if it's OK.  Will return 1 below instead. */
     /* Check that we've got the correct type of pbuf to work with */
-    LWIP_ASSERT("p->type == PBUF_RAM || p->type == PBUF_POOL", 
+    LWIP_ASSERT("p->type == PBUF_RAM || p->type == PBUF_POOL",
                 p->type == PBUF_RAM || p->type == PBUF_POOL);
     /* Check that we aren't going to move off the beginning of the pbuf */
     LWIP_ASSERT("p->payload - increment_magnitude >= p + SIZEOF_STRUCT_PBUF",

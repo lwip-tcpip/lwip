@@ -374,7 +374,7 @@ tcpip_apimsg(struct api_msg *apimsg)
   /* catch functions that don't set err */
   apimsg->msg.err = ERR_VAL;
 #endif
-  
+
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_ALLOC(msg);
     TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
@@ -417,7 +417,7 @@ tcpip_netifapi(struct netifapi_msg* netifapimsg)
       netifapimsg->msg.err = err;
       return err;
     }
-    
+
     TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_NETIFAPI;
     TCPIP_MSG_VAR_REF(msg).msg.netifapimsg = netifapimsg;
     sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
@@ -440,7 +440,7 @@ tcpip_netifapi(struct netifapi_msg* netifapimsg)
 err_t
 tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
 {
-  LOCK_TCPIP_CORE();  
+  LOCK_TCPIP_CORE();
   netifapimsg->function(&(netifapimsg->msg));
   UNLOCK_TCPIP_CORE();
   return netifapimsg->msg.err;

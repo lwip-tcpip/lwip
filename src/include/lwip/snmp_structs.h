@@ -54,7 +54,7 @@ extern "C" {
 #endif
 
 /* MIB object instance */
-#define MIB_OBJECT_NONE 0 
+#define MIB_OBJECT_NONE 0
 #define MIB_OBJECT_SCALAR 1
 #define MIB_OBJECT_TAB 2
 
@@ -117,7 +117,7 @@ struct mib_scalar_node
   /** tests length and/or range BEFORE setting */
   u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
   /** sets object value, only to be called when set_test()  */
-  void (*set_value)(struct obj_def *od, u16_t len, void *value);  
+  void (*set_value)(struct obj_def *od, u16_t len, void *value);
 };
 
 /** describes an array entry (objid/node pair) */
@@ -191,7 +191,7 @@ struct mib_external_node
   u16_t (*get_value_a)(u8_t rid, struct obj_def *od, void *value);
   u8_t (*set_test_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
   void (*set_value_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
-  /** async Panic Close (agent returns error reply, 
+  /** async Panic Close (agent returns error reply,
       e.g. used for external transaction cleanup) */
   void (*get_object_def_pc)(u8_t rid, u8_t ident_len, s32_t *ident);
   void (*get_value_pc)(u8_t rid, struct obj_def *od);

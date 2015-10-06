@@ -24,7 +24,6 @@
  * This file is part of the lwIP TCP/IP stack.
  * 
  */
- 
 #ifndef LWIP_HDR_NETIFAPI_H
 #define LWIP_HDR_NETIFAPI_H
 
