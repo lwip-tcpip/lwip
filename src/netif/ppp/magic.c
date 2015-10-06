@@ -162,15 +162,15 @@ void magic_randomize(void) {
  *  it was documented.
  */
 void magic_random_bytes(unsigned char *buf, u32_t buf_len) {
-  md5_context md5;
+  md5_context md5_ctx;
   u_char tmp[MD5_HASH_SIZE];
   u32_t n;
 
   while (buf_len > 0) {
-    md5_starts(&md5);
-    md5_update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
-    md5_update(&md5, (u_char *)&magic_randcount, sizeof(magic_randcount));
-    md5_finish(&md5, tmp);
+    md5_starts(&md5_ctx);
+    md5_update(&md5_ctx, (u_char *)magic_randpool, sizeof(magic_randpool));
+    md5_update(&md5_ctx, (u_char *)&magic_randcount, sizeof(magic_randcount));
+    md5_finish(&md5_ctx, tmp);
     magic_randcount++;
     n = LWIP_MIN(buf_len, MD5_HASH_SIZE);
     MEMCPY(buf, tmp, n);
