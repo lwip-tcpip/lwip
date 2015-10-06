@@ -43,9 +43,9 @@
 
 /*******************************************************************************
  * USAGE:
- * 
+ *
  * define LWIP_AUTOIP 1  in your lwipopts.h
- * 
+ *
  * If you don't use tcpip.c (so, don't call, you don't call tcpip_init):
  * - First, call autoip_init().
  * - call autoip_tmr() all AUTOIP_TMR_INTERVAL msces,
@@ -55,7 +55,7 @@
  *
  * Without DHCP:
  * - Call autoip_start() after netif_add().
- * 
+ *
  * With DHCP:
  * - define LWIP_DHCP_AUTOIP_COOP 1 in your lwipopts.h.
  * - Configure your DHCP Client.
