@@ -71,19 +71,19 @@
  */
 static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 {
-	sha1_context sha1;
+	sha1_context sha1_ctx;
 	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
 
 	/*
 	 * Key Derivation, from RFC 3078, RFC 3079.
 	 * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
 	 */
-	sha1_starts(&sha1);
-	sha1_update(&sha1, state->master_key, state->keylen);
-	sha1_update(&sha1, mppe_sha1_pad1, SHA1_PAD_SIZE);
-	sha1_update(&sha1, state->session_key, state->keylen);
-	sha1_update(&sha1, mppe_sha1_pad2, SHA1_PAD_SIZE);
-	sha1_finish(&sha1, sha1_digest);
+	sha1_starts(&sha1_ctx);
+	sha1_update(&sha1_ctx, state->master_key, state->keylen);
+	sha1_update(&sha1_ctx, mppe_sha1_pad1, SHA1_PAD_SIZE);
+	sha1_update(&sha1_ctx, state->session_key, state->keylen);
+	sha1_update(&sha1_ctx, mppe_sha1_pad2, SHA1_PAD_SIZE);
+	sha1_finish(&sha1_ctx, sha1_digest);
 	MEMCPY(state->session_key, sha1_digest, state->keylen);
 
 	if (!initial_key) {
