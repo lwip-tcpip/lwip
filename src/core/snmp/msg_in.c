@@ -1415,12 +1415,22 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
     vb->ident_len = i;
     if (i > 0)
     {
-      LWIP_ASSERT("SNMP_MAX_TREE_DEPTH is configured too low", i <= SNMP_MAX_TREE_DEPTH);
-      /* allocate array of s32_t for our object identifier */
-      vb->ident = (s32_t*)memp_malloc(MEMP_SNMP_VALUE);
+      if (i <= SNMP_MAX_TREE_DEPTH)
+      {
+        /* allocate array of s32_t for our object identifier */
+        vb->ident = (s32_t*)memp_malloc(MEMP_SNMP_VALUE);
+        if (vb->ident == NULL)
+        {
+          LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: couldn't allocate ident value space\n"));
+        }
+      }
+      else
+      {
+        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: SNMP_MAX_TREE_DEPTH is configured too low\n"));
+        vb->ident = NULL;
+      }
       if (vb->ident == NULL)
       {
-        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: couldn't allocate ident value space\n"));
         memp_free(MEMP_SNMP_VARBIND, vb);
         return NULL;
       }
@@ -1439,12 +1449,22 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
     vb->value_len = len;
     if (len > 0)
     {
-      LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
-      /* allocate raw bytes for our object value */
-      vb->value = memp_malloc(MEMP_SNMP_VALUE);
+      if (vb->value_len <= SNMP_MAX_VALUE_SIZE)
+      {
+        /* allocate raw bytes for our object value */
+        vb->value = memp_malloc(MEMP_SNMP_VALUE);
+        if (vb->value == NULL)
+        {
+          LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: couldn't allocate value space\n"));
+        }
+      }
+      else
+      {
+        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: SNMP_MAX_OCTET_STRING_LEN is configured too low\n"));
+        vb->value = NULL;
+      }
       if (vb->value == NULL)
       {
-        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: couldn't allocate value space\n"));
         if (vb->ident != NULL)
         {
           memp_free(MEMP_SNMP_VALUE, vb->ident);
