@@ -559,11 +559,11 @@ tcpip_init(tcpip_init_done_fn initfunc, void *arg)
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
-  if(sys_mbox_new(&mbox, TCPIP_MBOX_SIZE) != ERR_OK) {
+  if (sys_mbox_new(&mbox, TCPIP_MBOX_SIZE) != ERR_OK) {
     LWIP_ASSERT("failed to create tcpip_thread mbox", 0);
   }
 #if LWIP_TCPIP_CORE_LOCKING
-  if(sys_mutex_new(&lock_tcpip_core) != ERR_OK) {
+  if (sys_mutex_new(&lock_tcpip_core) != ERR_OK) {
     LWIP_ASSERT("failed to create lock_tcpip_core", 0);
   }
 #endif /* LWIP_TCPIP_CORE_LOCKING */

@@ -883,7 +883,8 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 #endif /* LWIP_DNS*/
 
 #if LWIP_NETCONN_SEM_PER_THREAD
-void netconn_thread_init(void)
+void
+netconn_thread_init(void)
 {
   sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
   if ((sem == NULL) || !sys_sem_valid(sem)) {
@@ -893,7 +894,8 @@ void netconn_thread_init(void)
   }
 }
 
-void netconn_thread_cleanup(void)
+void
+netconn_thread_cleanup(void)
 {
   sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
   if ((sem != NULL) && sys_sem_valid(sem)) {

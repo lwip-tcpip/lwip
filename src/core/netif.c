@@ -525,7 +525,8 @@ netif_set_default(struct netif *netif)
  * Bring an interface up, available for processing
  * traffic.
  */
-void netif_set_up(struct netif *netif)
+void
+netif_set_up(struct netif *netif)
 {
   if (!(netif->flags & NETIF_FLAG_UP)) {
     netif->flags |= NETIF_FLAG_UP;
@@ -581,7 +582,8 @@ netif_issue_reports(struct netif* netif, u8_t report_type)
 /**
  * Bring an interface down, disabling any traffic processing.
  */
-void netif_set_down(struct netif *netif)
+void
+netif_set_down(struct netif *netif)
 {
   if (netif->flags & NETIF_FLAG_UP) {
     netif->flags &= ~NETIF_FLAG_UP;
@@ -600,7 +602,8 @@ void netif_set_down(struct netif *netif)
 /**
  * Set callback to be called when interface is brought up/down or address is changed while up
  */
-void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback)
+void
+netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback)
 {
   if (netif) {
     netif->status_callback = status_callback;
@@ -652,7 +655,8 @@ netif_set_link_up(struct netif *netif)
 /**
  * Called by a driver when its link goes down
  */
-void netif_set_link_down(struct netif *netif )
+void
+netif_set_link_down(struct netif *netif )
 {
   if (netif->flags & NETIF_FLAG_LINK_UP) {
     netif->flags &= ~NETIF_FLAG_LINK_UP;
@@ -664,7 +668,8 @@ void netif_set_link_down(struct netif *netif )
 /**
  * Set callback to be called when link is brought up/down
  */
-void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback)
+void
+netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback)
 {
   if (netif) {
     netif->link_callback = link_callback;

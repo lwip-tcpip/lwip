@@ -497,8 +497,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
     else {
       netif = NULL;
     }
-  }
-  else {
+  } else {
     /* start trying with inp. if that's not acceptable, start walking the
        list of configured netifs.
        'first' is used as a boolean to mark whether we started walking the list */

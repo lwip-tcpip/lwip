@@ -313,7 +313,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     /* service location specified, try to resolve */
     if ((hints != NULL) && (hints->ai_flags & AI_NUMERICHOST)) {
       /* no DNS lookup, just parse for an address string */
-      if(!ipaddr_aton(nodename, &addr)) {
+      if (!ipaddr_aton(nodename, &addr)) {
         return EAI_NONAME;
       }
 #if LWIP_IPV4 && LWIP_IPV6
@@ -328,7 +328,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
       u8_t type = NETCONN_DNS_IPV4_IPV6;
       if (ai_family == AF_INET) {
         type = NETCONN_DNS_IPV4;
-      } else if(ai_family == AF_INET6) {
+      } else if (ai_family == AF_INET6) {
         type = NETCONN_DNS_IPV6;
       }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */

@@ -187,7 +187,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* We generate an answer by switching the dest and src ip addresses,
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
     iecho = (struct icmp_echo_hdr *)p->payload;
-    if(pbuf_header(p, hlen)) {
+    if (pbuf_header(p, hlen)) {
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
       err_t ret;
@@ -239,21 +239,21 @@ icmp_input(struct pbuf *p, struct netif *inp)
   default:
     if (type == ICMP_DUR) {
       MIB2_STATS_INC(mib2.icmpindestunreachs);
-    } else if(type == ICMP_TE) {
+    } else if (type == ICMP_TE) {
       MIB2_STATS_INC(mib2.icmpindestunreachs);
-    } else if(type == ICMP_PP) {
+    } else if (type == ICMP_PP) {
       MIB2_STATS_INC(mib2.icmpinparmprobs);
-    } else if(type == ICMP_SQ) {
+    } else if (type == ICMP_SQ) {
       MIB2_STATS_INC(mib2.icmpinsrcquenchs);
-    } else if(type == ICMP_RD) {
+    } else if (type == ICMP_RD) {
       MIB2_STATS_INC(mib2.icmpinredirects);
-    } else if(type == ICMP_TS) {
+    } else if (type == ICMP_TS) {
       MIB2_STATS_INC(mib2.icmpintimestamps);
-    } else if(type == ICMP_TSR) {
+    } else if (type == ICMP_TSR) {
       MIB2_STATS_INC(mib2.icmpintimestampreps);
-    } else if(type == ICMP_AM) {
+    } else if (type == ICMP_AM) {
       MIB2_STATS_INC(mib2.icmpinaddrmasks);
-    } else if(type == ICMP_AMR) {
+    } else if (type == ICMP_AMR) {
       MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
     }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",

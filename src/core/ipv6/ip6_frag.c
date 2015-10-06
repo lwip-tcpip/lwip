@@ -418,12 +418,12 @@ ip6_reass(struct pbuf *p)
         ipr->p = p;
       }
       break;
-    } else if(iprh->start == iprh_tmp->start) {
+    } else if (iprh->start == iprh_tmp->start) {
       /* received the same datagram twice: no need to keep the datagram */
       IP6_FRAG_STATS_INC(ip6_frag.drop);
       goto nullreturn;
 #if IP_REASS_CHECK_OVERLAP
-    } else if(iprh->start < iprh_tmp->end) {
+    } else if (iprh->start < iprh_tmp->end) {
       /* overlap: no need to keep the new datagram */
       IP6_FRAG_STATS_INC(ip6_frag.proterr);
       IP6_FRAG_STATS_INC(ip6_frag.drop);

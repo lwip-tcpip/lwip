@@ -272,10 +272,10 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
     }
     /* { first pbuf q points to header pbuf } */
     LWIP_DEBUGF(RAW_DEBUG, ("raw_sendto: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
-  }  else {
+  } else {
     /* first pbuf q equals given pbuf */
     q = p;
-    if(pbuf_header(q, -header_size)) {
+    if (pbuf_header(q, -header_size)) {
       LWIP_ASSERT("Can't restore header we just removed!", 0);
       return ERR_MEM;
     }

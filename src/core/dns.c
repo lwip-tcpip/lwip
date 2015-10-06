@@ -1120,7 +1120,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
 
         /* check if "question" part matches the request */
         pbuf_copy_partial(p, &qry, SIZEOF_DNS_QUERY, res_idx);
-        if((qry.cls != PP_HTONS(DNS_RRCLASS_IN)) ||
+        if ((qry.cls != PP_HTONS(DNS_RRCLASS_IN)) ||
           (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_AAAA))) ||
           (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_A)))) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
@@ -1138,7 +1138,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
           pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx);
           if (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) {
 #if LWIP_IPV4
-            if((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.len == PP_HTONS(sizeof(ip4_addr_t)))) {
+            if ((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.len == PP_HTONS(sizeof(ip4_addr_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
               if (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
@@ -1171,7 +1171,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             }
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
-            if((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_t)))) {
+            if ((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
               if (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
@@ -1457,7 +1457,7 @@ dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_call
     }
   }
   /* already have this address cached? */
-  if(dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK) {
+  if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(dns_addrtype)) == ERR_OK) {
     return ERR_OK;
   }
 #if LWIP_IPV4 && LWIP_IPV6
@@ -1469,7 +1469,7 @@ dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_call
     } else {
       fallback = LWIP_DNS_ADDRTYPE_IPV4;
     }
-    if(dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == ERR_OK) {
+    if (dns_lookup(hostname, addr LWIP_DNS_ADDRTYPE_ARG(fallback)) == ERR_OK) {
       return ERR_OK;
     }
   }

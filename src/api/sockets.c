@@ -142,7 +142,7 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #define IS_SOCK_ADDR_ALIGNED(name)      ((((mem_ptr_t)(name)) % 4) == 0)
 
 
-#define LWIP_SOCKOPT_CHECK_OPTLEN(optlen, opttype) do { if((optlen) < sizeof(opttype)) { return EINVAL; }}while(0)
+#define LWIP_SOCKOPT_CHECK_OPTLEN(optlen, opttype) do { if ((optlen) < sizeof(opttype)) { return EINVAL; }}while(0)
 #define LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, opttype) do { \
   LWIP_SOCKOPT_CHECK_OPTLEN(optlen, opttype); \
   if ((sock)->conn == NULL) { return EINVAL; } }while(0)
@@ -635,7 +635,7 @@ lwip_close(int s)
     return -1;
   }
 
-  if(sock->conn != NULL) {
+  if (sock->conn != NULL) {
     is_tcp = NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP;
   } else {
     LWIP_ASSERT("sock->lastdata == NULL", sock->lastdata == NULL);
@@ -1702,7 +1702,7 @@ lwip_shutdown(int s, int how)
     shut_rx = 1;
   } else if (how == SHUT_WR) {
     shut_tx = 1;
-  } else if(how == SHUT_RDWR) {
+  } else if (how == SHUT_RDWR) {
     shut_rx = 1;
     shut_tx = 1;
   } else {
@@ -2391,7 +2391,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct ip_mreq, NETCONN_UDP);
         inet_addr_to_ipaddr(&if_addr, &imr->imr_interface);
         inet_addr_to_ipaddr(&multi_addr, &imr->imr_multiaddr);
-        if(optname == IP_ADD_MEMBERSHIP) {
+        if (optname == IP_ADD_MEMBERSHIP) {
           if (!lwip_socket_register_membership(s, &if_addr, &multi_addr)) {
             /* cannot track membership (out of memory) */
             err = ENOMEM;

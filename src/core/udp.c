@@ -363,7 +363,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
     }
 #endif /* CHECKSUM_CHECK_UDP */
-    if(pbuf_header(p, -UDP_HLEN)) {
+    if (pbuf_header(p, -UDP_HLEN)) {
       /* Can we cope with this failing? Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
       UDP_STATS_INC(udp.drop);

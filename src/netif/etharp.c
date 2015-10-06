@@ -642,7 +642,7 @@ etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
   LWIP_UNUSED_ARG(netif);
 
   i = etharp_find_entry(ipaddr, ETHARP_FLAG_FIND_ONLY, netif);
-  if((i >= 0) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
+  if ((i >= 0) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
       *eth_ret = &arp_table[i].ethaddr;
       *ip_ret = &arp_table[i].ipaddr;
       return i;
@@ -979,7 +979,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
         /* For advanced routing, a single default gateway might not be enough, so get
            the IP address of the gateway to handle the current destination address. */
         dst_addr = LWIP_HOOK_ETHARP_GET_GW(netif, ipaddr);
-        if(dst_addr == NULL)
+        if (dst_addr == NULL)
 #endif /* LWIP_HOOK_ETHARP_GET_GW */
         {
           /* interface has default gateway? */
@@ -1141,16 +1141,16 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     p = q;
     while (p) {
       LWIP_ASSERT("no packet queues allowed!", (p->len != p->tot_len) || (p->next == 0));
-      if(p->type != PBUF_ROM) {
+      if (p->type != PBUF_ROM) {
         copy_needed = 1;
         break;
       }
       p = p->next;
     }
-    if(copy_needed) {
+    if (copy_needed) {
       /* copy the whole packet into new pbufs */
       p = pbuf_alloc(PBUF_RAW_TX, p->tot_len, PBUF_RAM);
-      if(p != NULL) {
+      if (p != NULL) {
         if (pbuf_copy(p, q) != ERR_OK) {
           pbuf_free(p);
           p = NULL;
@@ -1172,7 +1172,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
         unsigned int qlen = 0;
         new_entry->next = 0;
         new_entry->p = p;
-        if(arp_table[i].q != NULL) {
+        if (arp_table[i].q != NULL) {
           /* queue was already existent, append the new entry to the end */
           struct etharp_q_entry *r;
           r = arp_table[i].q;
@@ -1501,7 +1501,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_IPV6
     case PP_HTONS(ETHTYPE_IPV6): /* IPv6 */
       /* skip Ethernet header */
-      if((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+      if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
           ("ethernet_input: IPv6 packet dropped, too short (%"S16_F"/%"S16_F")\n",
           p->tot_len, ip_hdr_offset));

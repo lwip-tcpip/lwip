@@ -678,7 +678,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   pcb->rcv_wnd += len;
   if (pcb->rcv_wnd > TCP_WND_MAX(pcb)) {
     pcb->rcv_wnd = TCP_WND_MAX(pcb);
-  } else if(pcb->rcv_wnd == 0) {
+  } else if (pcb->rcv_wnd == 0) {
     /* rcv_wnd overflowed */
     if ((pcb->state == CLOSE_WAIT) || (pcb->state == LAST_ACK)) {
       /* In passive close, we allow this, since the FIN bit is added to rcv_wnd
@@ -921,7 +921,7 @@ tcp_slowtmr_start:
         }
       } else {
         /* Increase the retransmission timer if it is running */
-        if(pcb->rtime >= 0) {
+        if (pcb->rtime >= 0) {
           ++pcb->rtime;
         }
 
@@ -972,10 +972,10 @@ tcp_slowtmr_start:
     }
 
     /* Check if KEEPALIVE should be sent */
-    if(ip_get_option(pcb, SOF_KEEPALIVE) &&
+    if (ip_get_option(pcb, SOF_KEEPALIVE) &&
        ((pcb->state == ESTABLISHED) ||
         (pcb->state == CLOSE_WAIT))) {
-      if((u32_t)(tcp_ticks - pcb->tmr) >
+      if ((u32_t)(tcp_ticks - pcb->tmr) >
          (pcb->keep_idle + TCP_KEEP_DUR(pcb)) / TCP_SLOW_INTERVAL)
       {
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to "));
@@ -984,10 +984,9 @@ tcp_slowtmr_start:
 
         ++pcb_remove;
         ++pcb_reset;
-      }
-      else if((u32_t)(tcp_ticks - pcb->tmr) >
-              (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEP_INTVL(pcb))
-              / TCP_SLOW_INTERVAL)
+      } else if ((u32_t)(tcp_ticks - pcb->tmr) >
+                (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEP_INTVL(pcb))
+                / TCP_SLOW_INTERVAL)
       {
         err = tcp_keepalive(pcb);
         if (err == ERR_OK) {
@@ -1894,7 +1893,7 @@ void tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* n
            * is set to listen to the new one instead */
               ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
         }
-        }
+      }
     }
   }
 }

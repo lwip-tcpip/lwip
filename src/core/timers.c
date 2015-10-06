@@ -447,8 +447,7 @@ sys_check_timeouts(void)
     now = sys_now();
     /* this cares for wraparounds */
     diff = now - timeouts_last_time;
-    do
-    {
+    do {
 #if PBUF_POOL_FREE_OOSEQ
       PBUF_CHECK_FREE_OOSEQ();
 #endif /* PBUF_POOL_FREE_OOSEQ */

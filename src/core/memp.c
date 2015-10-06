@@ -194,7 +194,7 @@ memp_sanity(void)
 
   for (i = 0; i < MEMP_MAX; i++) {
     t = memp_tab[i];
-    if(t != NULL) {
+    if (t != NULL) {
       for (h = t->next; (t != NULL) && (h != NULL); t = t->next,
         h = (((h->next != NULL) && (h->next->next != NULL)) ? h->next->next : NULL)) {
         if (t == h) {
@@ -232,7 +232,7 @@ memp_overflow_check_element_overflow(struct memp *p, u16_t memp_type)
     if (m[k] != 0xcd) {
       char errstr[128] = "detected memp overflow in pool ";
       char digit[] = "0";
-      if(memp_type >= 10) {
+      if (memp_type >= 10) {
         digit[0] = '0' + (memp_type/10);
         strcat(errstr, digit);
       }
@@ -265,7 +265,7 @@ memp_overflow_check_element_underflow(struct memp *p, u16_t memp_type)
     if (m[k] != 0xcd) {
       char errstr[128] = "detected memp underflow in pool ";
       char digit[] = "0";
-      if(memp_type >= 10) {
+      if (memp_type >= 10) {
         digit[0] = '0' + (memp_type/10);
         strcat(errstr, digit);
       }

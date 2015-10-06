@@ -91,7 +91,7 @@
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
 #include "lwip/tcpip.h"
 #define PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()  do { \
-  if(tcpip_callback_with_block(pbuf_free_ooseq_callback, NULL, 0) != ERR_OK) { \
+  if (tcpip_callback_with_block(pbuf_free_ooseq_callback, NULL, 0) != ERR_OK) { \
       SYS_ARCH_PROTECT(old_level); \
       pbuf_free_ooseq_pending = 0; \
       SYS_ARCH_UNPROTECT(old_level); \
@@ -163,7 +163,7 @@ pbuf_pool_is_empty(void)
   pbuf_free_ooseq_pending = 1;
   SYS_ARCH_UNPROTECT(old_level);
 
-  if(!queued) {
+  if (!queued) {
     /* queue a call to pbuf_free_ooseq if not already queued */
     PBUF_POOL_FREE_OOSEQ_QUEUE_CALL();
   }
@@ -522,7 +522,7 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
     return 0;
   }
 
-  if (header_size_increment < 0){
+  if (header_size_increment < 0) {
     increment_magnitude = -header_size_increment;
     /* Check that we aren't going to move off the end of the pbuf */
     LWIP_ERROR("increment_magnitude <= p->len", (increment_magnitude <= p->len), return 1;);
@@ -929,12 +929,12 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       LWIP_ERROR("p_to != NULL", (p_to != NULL) || (p_from == NULL) , return ERR_ARG;);
     }
 
-    if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
+    if ((p_from != NULL) && (p_from->len == p_from->tot_len)) {
       /* don't copy more than one packet! */
       LWIP_ERROR("pbuf_copy() does not allow packet queues!",
                  (p_from->next == NULL), return ERR_VAL;);
     }
-    if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
+    if ((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
       LWIP_ERROR("pbuf_copy() does not allow packet queues!",
                   (p_to->next == NULL), return ERR_VAL;);
@@ -968,7 +968,7 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
 
   left = 0;
 
-  if((buf == NULL) || (dataptr == NULL)) {
+  if ((buf == NULL) || (dataptr == NULL)) {
     return 0;
   }
 

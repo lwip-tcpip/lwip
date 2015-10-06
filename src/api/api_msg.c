@@ -58,7 +58,7 @@
 /* netconns are polled once per second (e.g. continue write on memory error) */
 #define NETCONN_TCP_POLL_INTERVAL 2
 
-#define SET_NONBLOCKING_CONNECT(conn, val)  do { if(val) { \
+#define SET_NONBLOCKING_CONNECT(conn, val)  do { if (val) { \
   (conn)->flags |= NETCONN_FLAG_IN_NONBLOCKING_CONNECT; \
 } else { \
   (conn)->flags &= ~ NETCONN_FLAG_IN_NONBLOCKING_CONNECT; }} while(0)
@@ -106,7 +106,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 #endif /* LWIP_SO_RCVBUF */
     /* copy the whole packet into new pbufs */
     q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-    if(q != NULL) {
+    if (q != NULL) {
       if (pbuf_copy(q, p) != ERR_OK) {
         pbuf_free(q);
         q = NULL;
@@ -519,7 +519,7 @@ pcb_new(struct api_msg_msg *msg)
 #if LWIP_RAW
   case NETCONN_RAW:
     msg->conn->pcb.raw = raw_new(msg->msg.n.proto);
-    if(msg->conn->pcb.raw != NULL) {
+    if (msg->conn->pcb.raw != NULL) {
       raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
     }
     break;
@@ -527,7 +527,7 @@ pcb_new(struct api_msg_msg *msg)
 #if LWIP_UDP
   case NETCONN_UDP:
     msg->conn->pcb.udp = udp_new();
-    if(msg->conn->pcb.udp != NULL) {
+    if (msg->conn->pcb.udp != NULL) {
 #if LWIP_UDPLITE
       if (NETCONNTYPE_ISUDPLITE(msg->conn->type)) {
         udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
@@ -543,7 +543,7 @@ pcb_new(struct api_msg_msg *msg)
 #if LWIP_TCP
   case NETCONN_TCP:
     msg->conn->pcb.tcp = tcp_new();
-    if(msg->conn->pcb.tcp != NULL) {
+    if (msg->conn->pcb.tcp != NULL) {
       setup_tcp(msg->conn);
     }
     break;
@@ -723,7 +723,7 @@ netconn_drain(struct netconn *conn)
     while (sys_mbox_tryfetch(&conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
 #if LWIP_TCP
       if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
-        if(mem != NULL) {
+        if (mem != NULL) {
           p = (struct pbuf*)mem;
           /* pcb might be set to NULL already by err_tcp() */
           if (conn->pcb.tcp != NULL) {
@@ -876,7 +876,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
     }
 #endif /* LWIP_SO_LINGER */
   } else {
-    if(err == ERR_MEM) {
+    if (err == ERR_MEM) {
       /* Closing failed because of memory shortage */
       if (netconn_is_nonblocking(conn)) {
         /* Nonblocking close failed */

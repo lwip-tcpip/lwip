@@ -210,7 +210,9 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
       if (current_block_index == 7) {
         /* special case, we must render a ':' for the last block. */
         buf[i++] = ':';
-        if (i >= buflen) return NULL;
+        if (i >= buflen) {
+          return NULL;
+        }
         break;
       }
       if (empty_block_flag == 0) {
@@ -224,41 +226,45 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
         if (next_block_value == 0) {
           empty_block_flag = 1;
           buf[i++] = ':';
-          if (i >= buflen) return NULL;
+          if (i >= buflen) {
+            return NULL;
+          }
           continue; /* move on to next block. */
         }
-      }
-      else if (empty_block_flag == 1) {
+      } else if (empty_block_flag == 1) {
         /* move on to next block. */
         continue;
       }
-    }
-    else if (empty_block_flag == 1) {
+    } else if (empty_block_flag == 1) {
       /* Set this flag value so we don't produce multiple empty blocks. */
       empty_block_flag = 2;
     }
 
     if (current_block_index > 0) {
       buf[i++] = ':';
-      if (i >= buflen) return NULL;
+      if (i >= buflen) {
+        return NULL;
+      }
     }
 
     if ((current_block_value & 0xf000) == 0) {
       zero_flag = 1;
-    }
-    else {
+    } else {
       buf[i++] = xchar(((current_block_value & 0xf000) >> 12));
       zero_flag = 0;
-      if (i >= buflen) return NULL;
+      if (i >= buflen) {
+        return NULL;
+      }
     }
 
     if (((current_block_value & 0xf00) == 0) && (zero_flag)) {
       /* do nothing */
-    }
-    else {
+    } else {
       buf[i++] = xchar(((current_block_value & 0xf00) >> 8));
       zero_flag = 0;
-      if (i >= buflen) return NULL;
+      if (i >= buflen) {
+        return NULL;
+      }
     }
 
     if (((current_block_value & 0xf0) == 0) && (zero_flag)) {
@@ -267,11 +273,15 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
     else {
       buf[i++] = xchar(((current_block_value & 0xf0) >> 4));
       zero_flag = 0;
-      if (i >= buflen) return NULL;
+      if (i >= buflen) {
+        return NULL;
+      }
     }
 
     buf[i++] = xchar((current_block_value & 0xf));
-    if (i >= buflen) return NULL;
+    if (i >= buflen) {
+      return NULL;
+    }
   }
 
   buf[i] = 0;

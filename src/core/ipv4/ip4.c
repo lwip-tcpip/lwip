@@ -575,8 +575,9 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
      )
 #endif /* LWIP_IGMP || IP_ACCEPT_LINK_LAYER_ADDRESSING */
-  {  if ((ip_addr_isbroadcast(ip_current_src_addr(), inp)) ||
-         (ip_addr_ismulticast(ip_current_src_addr()))) {
+  {
+    if ((ip_addr_isbroadcast(ip_current_src_addr(), inp)) ||
+        (ip_addr_ismulticast(ip_current_src_addr()))) {
       /* packet source is not valid */
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("ip_input: packet source is not valid.\n"));
       /* free (drop) packet pbufs */
@@ -634,7 +635,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
 
 #if LWIP_IGMP
   /* there is an extra "router alert" option in IGMP messages which we allow for but do not police */
-  if((iphdr_hlen > IP_HLEN) &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
+  if ((iphdr_hlen > IP_HLEN) &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
 #else
   if (iphdr_hlen > IP_HLEN) {
 #endif /* LWIP_IGMP */
