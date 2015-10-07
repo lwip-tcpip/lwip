@@ -930,7 +930,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   }
 #endif
 
-  netif = ip_route(PCB_ISIPV6(pcb), &pcb->remote_ip, &pcb->local_ip);
+  netif = ip_route(PCB_ISIPV6(pcb), &pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
