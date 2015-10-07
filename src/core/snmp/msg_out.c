@@ -128,7 +128,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
   tot_len = snmp_resp_header_sum(m_stat, tot_len);
 
   /* try allocating pbuf(s) for complete response */
-  p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_RAM);
   if (p == NULL) {
     LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_snd_response() tooBig\n"));
 
@@ -139,7 +139,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
     tot_len = snmp_varbind_list_sum(&emptyvb);
     tot_len = snmp_resp_header_sum(m_stat, tot_len);
     /* retry allocation once for header and empty varbind-list */
-    p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
+    p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_RAM);
   }
   if (p != NULL) {
     /* first pbuf alloc try or retry alloc success */
@@ -250,7 +250,7 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
         tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
 
         /* allocate pbuf(s) */
-        p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
+        p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_RAM);
         if (p != NULL) {
           u16_t ofs;
 
