@@ -286,7 +286,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       if (vb->value != NULL) {
          vb->value_len = en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value);
          LWIP_ASSERT("SNMP_MAX_VALUE_SIZE is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
-         if(vb->value_len == 0)
+         if (vb->value_len == 0)
          {
             memp_free(MEMP_SNMP_VALUE, vb->value);
             vb->value = NULL;
@@ -335,7 +335,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
           msg_ps->ext_name_ptr = np;
 
           en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);
-        } else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
+        } else if ((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
           /* internal object */
           struct obj_def object_def;
           const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
@@ -368,7 +368,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
               if (vb->value != NULL) {
                  vb->value_len = msn->get_value(&object_def, vb->value);
                  LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
-                 if(vb->value_len == 0) {
+                 if (vb->value_len == 0) {
                     memp_free(MEMP_SNMP_VALUE, vb->value);
                     vb->value = NULL;
                  }
@@ -488,7 +488,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         msg_ps->ext_oid = oid;
 
         en->get_object_def_q(en->addr_inf, request_id, 1, &oid.id[oid.len - 1]);
-      } else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
+      } else if ((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
         /* internal object */
         struct obj_def object_def;
         struct snmp_varbind *vb;
@@ -632,7 +632,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
           msg_ps->ext_name_ptr = np;
 
           en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);
-        } else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
+        } else if ((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
           /* internal object */
           struct obj_def object_def;
           const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
@@ -705,7 +705,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         msg_ps->ext_name_ptr = np;
 
         en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);
-      } else if((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
+      } else if ((mn->node_type == MIB_NODE_SC) || (mn->node_type == MIB_NODE_LR)) {
         /* internal object */
         struct obj_def object_def;
         const struct mib_scalar_node *msn = (const struct mib_scalar_node*)(const void*)mn;
@@ -749,7 +749,7 @@ snmp_msg_event(u8_t request_id)
       snmp_msg_getnext_event(request_id, msg_ps);
     } else if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ) {
       snmp_msg_get_event(request_id, msg_ps);
-    } else if(msg_ps->rt == SNMP_ASN1_PDU_SET_REQ) {
+    } else if (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ) {
       snmp_msg_set_event(request_id, msg_ps);
     }
   }

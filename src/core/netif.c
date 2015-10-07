@@ -722,7 +722,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 #if LWIP_LOOPBACK_MAX_PBUFS
   clen = pbuf_clen(r);
   /* check for overflow or too many pbuf on queue */
-  if(((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
+  if (((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
      ((netif->loop_cnt_current + clen) > LWIP_LOOPBACK_MAX_PBUFS)) {
     pbuf_free(r);
     LINK_STATS_INC(link.memerr);

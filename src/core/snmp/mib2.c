@@ -764,7 +764,7 @@ void mib2_netif_removed(struct netif *ni)
 
   snmp_mib_node_delete(&iflist_root, iflist_root.tail);
   /* disable getnext traversal on empty table */
-  if(iflist_root.count == 0) {
+  if (iflist_root.count == 0) {
     iftable.maxlength = 0;
   }
 }
@@ -881,10 +881,10 @@ void mib2_remove_arp_entry(struct netif *ni, ip4_addr_t *ip)
     }
   }
   /* disable getnext traversal on empty tables */
-  if(arptree_root.count == 0) {
+  if (arptree_root.count == 0) {
     at.maxlength = 0;
   }
-  if(ipntomtree_root.count == 0) {
+  if (ipntomtree_root.count == 0) {
     ipntomtable.maxlength = 0;
   }
 }

@@ -442,7 +442,7 @@ snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("an search failed, short object identifier\n"));
         return NULL;
       }
-    } else if(node_type == MIB_NODE_LR) {
+    } else if (node_type == MIB_NODE_LR) {
       const struct mib_list_rootnode *lrn;
       struct mib_list_node *ln;
 
@@ -477,7 +477,7 @@ snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("ln search failed, short object identifier\n"));
         return NULL;
       }
-    } else if(node_type == MIB_NODE_EX) {
+    } else if (node_type == MIB_NODE_EX) {
       const struct mib_external_node *en;
       u16_t i, len;
 
@@ -674,7 +674,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
           climb_tree = 1;
         }
       }
-    } else if(node_type == MIB_NODE_LR) {
+    } else if (node_type == MIB_NODE_LR) {
       const struct mib_list_rootnode *lrn;
       struct mib_list_node *ln;
 
@@ -760,7 +760,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
           climb_tree = 1;
         }
       }
-    } else if(node_type == MIB_NODE_EX) {
+    } else if (node_type == MIB_NODE_EX) {
       const struct mib_external_node *en;
       s32_t ex_id;
 
@@ -844,7 +844,7 @@ snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, stru
           ext_level++;
         }
       }
-    } else if(node_type == MIB_NODE_SC) {
+    } else if (node_type == MIB_NODE_SC) {
       /* scalar node  */
       if (ident_len > 0) {
         /* at .0 */
