@@ -1505,11 +1505,8 @@ system_get_value(struct obj_def *od, void *value)
     MEMCPY(value, syslocation_ptr, *syslocation_len_ptr);
     return *syslocation_len_ptr;
   case 7: /* sysServices */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      *sint_ptr = sysservices;
-      return sizeof(s32_t);
-    }
+    *(s32_t*)value = sysservices;
+    return sizeof(s32_t);
   default:
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_value(): unknown id: %d\n", id));
     break;
@@ -1661,14 +1658,9 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
       od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE);
       break;
     case 6: /* ifPhysAddress */
-      {
-        struct netif *netif;
-
-        snmp_ifindextonetif(ident[1], &netif);
-        od->instance = MIB_OBJECT_TAB;
-        od->access = MIB_OBJECT_READ_ONLY;
-        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
-      }
+      od->instance = MIB_OBJECT_TAB;
+      od->access = MIB_OBJECT_READ_ONLY;
+      od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
       break;
     case 7: /* ifAdminStatus */
       od->instance = MIB_OBJECT_TAB;
@@ -1720,154 +1712,109 @@ ifentry_get_value(struct obj_def *od, void *value)
 {
   struct netif *netif;
   u8_t id;
+  s32_t *sint_ptr;
+  u32_t *uint_ptr;
 
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
   id = (u8_t)od->id_inst_ptr[0];
   switch (id) {
   case 1: /* ifIndex */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      *sint_ptr = od->id_inst_ptr[1];
-      return sizeof(*sint_ptr);
-    }
+    sint_ptr = (s32_t*)value;
+    *sint_ptr = od->id_inst_ptr[1];
+    return sizeof(*sint_ptr);
   case 2: /* ifDescr */
     MEMCPY(value, netif->name, 2);
     /** @todo this should be some sort of sizeof(struct netif.name) */
     return 2;
   case 3: /* ifType */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      *sint_ptr = netif->link_type;
-      return sizeof(*sint_ptr);
-    }
+    sint_ptr = (s32_t*)value;
+    *sint_ptr = netif->link_type;
+    return sizeof(*sint_ptr);
   case 4: /* ifMtu */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      *sint_ptr = netif->mtu;
-      return sizeof(*sint_ptr);
-    }
+    sint_ptr = (s32_t*)value;
+    *sint_ptr = netif->mtu;
+    return sizeof(*sint_ptr);
   case 5: /* ifSpeed */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->link_speed;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->link_speed;
+    return sizeof(*uint_ptr);
   case 6: /* ifPhysAddress */
     MEMCPY(value, netif->hwaddr, netif->hwaddr_len);
     return netif->hwaddr_len;
   case 7: /* ifAdminStatus */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      if (netif_is_up(netif))
-      {
-        if (netif_is_link_up(netif))
-        {
-          *sint_ptr = 1; /* up */
-        }
-        else
-        {
-          *sint_ptr = 7; /* lowerLayerDown */
-        }
+    sint_ptr = (s32_t*)value;
+    if (netif_is_up(netif)) {
+      if (netif_is_link_up(netif)) {
+        *sint_ptr = 1; /* up */
+      } else {
+        *sint_ptr = 7; /* lowerLayerDown */
       }
-      else
-      {
-        *sint_ptr = 2; /* down */
-      }
-      return sizeof(*sint_ptr);
+    } else {
+      *sint_ptr = 2; /* down */
     }
+    return sizeof(*sint_ptr);
   case 8: /* ifOperStatus */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      if (netif_is_up(netif))
-      {
-        *sint_ptr = 1;
-      }
-      else
-      {
-        *sint_ptr = 2;
-      }
-      return sizeof(*sint_ptr);
+    sint_ptr = (s32_t*)value;
+    if (netif_is_up(netif)) {
+      *sint_ptr = 1;
+    } else {
+      *sint_ptr = 2;
     }
+    return sizeof(*sint_ptr);
   case 9: /* ifLastChange */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->ts;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->ts;
+    return sizeof(*uint_ptr);
   case 10: /* ifInOctets */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifinoctets;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifinoctets;
+    return sizeof(*uint_ptr);
   case 11: /* ifInUcastPkts */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifinucastpkts;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifinucastpkts;
+    return sizeof(*uint_ptr);
   case 12: /* ifInNUcastPkts */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifinnucastpkts;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifinnucastpkts;
+    return sizeof(*uint_ptr);
   case 13: /* ifInDiscards */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifindiscards;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifindiscards;
+    return sizeof(*uint_ptr);
   case 14: /* ifInErrors */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifinerrors;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifinerrors;
+    return sizeof(*uint_ptr);
   case 15: /* ifInUnkownProtos */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifinunknownprotos;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifinunknownprotos;
+    return sizeof(*uint_ptr);
   case 16: /* ifOutOctets */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifoutoctets;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifoutoctets;
+    return sizeof(*uint_ptr);
   case 17: /* ifOutUcastPkts */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifoutucastpkts;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifoutucastpkts;
+    return sizeof(*uint_ptr);
   case 18: /* ifOutNUcastPkts */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifoutnucastpkts;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifoutnucastpkts;
+    return sizeof(*uint_ptr);
   case 19: /* ifOutDiscarts */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifoutdiscards;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifoutdiscards;
+    return sizeof(*uint_ptr);
   case 20: /* ifOutErrors */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = netif->mib2_counters.ifouterrors;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = netif->mib2_counters.ifouterrors;
+    return sizeof(*uint_ptr);
   case 21: /* ifOutQLen */
     /** @todo figure out if this must be 0 (no queue) or 1? */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = 0;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = 0;
+    return sizeof(*uint_ptr);
   case 22: /* ifSpecific */
     MEMCPY(value, ifspecific.id, ifspecific.len * sizeof(s32_t));
     return ifspecific.len * sizeof(s32_t);
@@ -2083,140 +2030,102 @@ static u16_t
 ip_get_value(struct obj_def *od, void *value)
 {
   u8_t id;
+  s32_t *sint_ptr;
+  u32_t *uint_ptr;
 
   LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
   id = (u8_t)od->id_inst_ptr[0];
   switch (id) {
   case 1: /* ipForwarding */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
+    sint_ptr = (s32_t*)value;
 #if IP_FORWARD
-      /* forwarding */
-      *sint_ptr = 1;
+    /* forwarding */
+    *sint_ptr = 1;
 #else
-      /* not-forwarding */
-      *sint_ptr = 2;
+    /* not-forwarding */
+    *sint_ptr = 2;
 #endif
-      return sizeof(*sint_ptr);
-    }
+    return sizeof(*sint_ptr);
   case 2: /* ipDefaultTTL */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
-      *sint_ptr = IP_DEFAULT_TTL;
-      return sizeof(*sint_ptr);
-    }
+    sint_ptr = (s32_t*)value;
+    *sint_ptr = IP_DEFAULT_TTL;
+    return sizeof(*sint_ptr);
   case 3: /* ipInReceives */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipinreceives);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipinreceives);
+    return sizeof(*uint_ptr);
   case 4: /* ipInHdrErrors */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipinhdrerrors);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipinhdrerrors);
+    return sizeof(*uint_ptr);
   case 5: /* ipInAddrErrors */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipinaddrerrors);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipinaddrerrors);
+    return sizeof(*uint_ptr);
   case 6: /* ipForwDatagrams */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipforwdatagrams);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipforwdatagrams);
+    return sizeof(*uint_ptr);
   case 7: /* ipInUnknownProtos */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipinunknownprotos);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipinunknownprotos);
+    return sizeof(*uint_ptr);
   case 8: /* ipInDiscards */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipindiscards);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipindiscards);
+    return sizeof(*uint_ptr);
   case 9: /* ipInDelivers */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipindelivers);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipindelivers);
+    return sizeof(*uint_ptr);
   case 10: /* ipOutRequests */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipoutrequests);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipoutrequests);
+    return sizeof(*uint_ptr);
   case 11: /* ipOutDiscards */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipoutdiscards);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipoutdiscards);
+    return sizeof(*uint_ptr);
   case 12: /* ipOutNoRoutes */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipoutnoroutes);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipoutnoroutes);
+    return sizeof(*uint_ptr);
   case 13: /* ipReasmTimeout */
-    {
-      s32_t *sint_ptr = (s32_t*)value;
+    sint_ptr = (s32_t*)value;
 #if IP_REASSEMBLY
-      *sint_ptr = IP_REASS_MAXAGE;
+    *sint_ptr = IP_REASS_MAXAGE;
 #else
-      *sint_ptr = 0;
+    *sint_ptr = 0;
 #endif
-      return sizeof(*sint_ptr);
-    }
+    return sizeof(*sint_ptr);
   case 14: /* ipReasmReqds */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipreasmreqds);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipreasmreqds);
+    return sizeof(*uint_ptr);
   case 15: /* ipReasmOKs */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipreasmoks);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipreasmoks);
+    return sizeof(*uint_ptr);
   case 16: /* ipReasmFails */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipreasmfails);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipreasmfails);
+    return sizeof(*uint_ptr);
   case 17: /* ipFragOKs */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipfragoks);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipfragoks);
+    return sizeof(*uint_ptr);
   case 18: /* ipFragFails */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipfragfails);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipfragfails);
+    return sizeof(*uint_ptr);
   case 19: /* ipFragCreates */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = STATS_GET(mib2.ipfragcreates);
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = STATS_GET(mib2.ipfragcreates);
+    return sizeof(*uint_ptr);
   case 23: /* ipRoutingDiscards: not supported -> always 0 */
-    {
-      u32_t *uint_ptr = (u32_t*)value;
-      *uint_ptr = 0;
-      return sizeof(*uint_ptr);
-    }
+    uint_ptr = (u32_t*)value;
+    *uint_ptr = 0;
+    return sizeof(*uint_ptr);
   default:
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_value(): unknown id: %d\n", id));
     break;
@@ -2259,8 +2168,7 @@ ip_set_test(struct obj_def *od, u16_t len, void *value)
     }
     break;
   case 2: /* ipDefaultTTL */
-    if (*sint_ptr == IP_DEFAULT_TTL)
-    {
+    if (*sint_ptr == IP_DEFAULT_TTL) {
       set_ok = 1;
     }
     break;
