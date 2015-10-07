@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-10-07: Simon Goldschmidt
+  * added sntp client as first "supported" application layer protocol implementation
+    added 'apps' folder
+
   2015-09-30: Dirk Ziegelmeier
   * snmp_structs.h, mib_structs.c, mib2.c: snmp: fixed ugly inheritance
     implementation by aggregating the "base class" (struct mib_node) in all

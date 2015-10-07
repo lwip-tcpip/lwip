@@ -15,6 +15,9 @@
  */
 
 /*
+ * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
+ * All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without modification, 
  * are permitted provided that the following conditions are met:
  *
@@ -39,7 +42,7 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  * 
- * Author: Simon Goldschmidt (lwIP raw API part)
+ * Author: Frédéric Bernon, Simon Goldschmidt
  */
 
 #include "lwip/apps/sntp.h"
@@ -57,99 +60,18 @@
 
 #if LWIP_UDP
 
-/**
- * SNTP_DEBUG: Enable debugging for SNTP.
- */
-#ifndef SNTP_DEBUG
-#define SNTP_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/** SNTP server port */
-#ifndef SNTP_PORT
-#define SNTP_PORT                   123
-#endif
-
-/** Set this to 1 to allow config of SNTP server(s) by DNS name */
-#ifndef SNTP_SERVER_DNS
-#define SNTP_SERVER_DNS             0
-#endif
-
-/** Handle support for more than one server via NTP_MAX_SERVERS,
- * but catch legacy style of setting SNTP_SUPPORT_MULTIPLE_SERVERS, probably outside of this file
- */
-#ifndef SNTP_SUPPORT_MULTIPLE_SERVERS
+/* Handle support for more than one server via SNTP_MAX_SERVERS */
 #if SNTP_MAX_SERVERS > 1
 #define SNTP_SUPPORT_MULTIPLE_SERVERS 1
 #else /* NTP_MAX_SERVERS > 1 */
 #define SNTP_SUPPORT_MULTIPLE_SERVERS 0
 #endif /* NTP_MAX_SERVERS > 1 */
-#else /* SNTP_SUPPORT_MULTIPLE_SERVERS */
-/* The developer has defined SNTP_SUPPORT_MULTIPLE_SERVERS, probably from old code */
-#if SNTP_MAX_SERVERS <= 1
-#error "SNTP_MAX_SERVERS needs to be defined to the max amount of servers if SNTP_SUPPORT_MULTIPLE_SERVERS is defined"
-#endif /* SNTP_MAX_SERVERS <= 1 */
-#endif /* SNTP_SUPPORT_MULTIPLE_SERVERS */
 
-
-/** Sanity check:
- * Define this to
- * - 0 to turn off sanity checks (default; smaller code)
- * - >= 1 to check address and port of the response packet to ensure the
- *        response comes from the server we sent the request to.
- * - >= 2 to check returned Originate Timestamp against Transmit Timestamp
- *        sent to the server (to ensure response to older request).
- * - >= 3 @todo: discard reply if any of the LI, Stratum, or Transmit Timestamp
- *        fields is 0 or the Mode field is not 4 (unicast) or 5 (broadcast).
- * - >= 4 @todo: to check that the Root Delay and Root Dispersion fields are each
- *        greater than or equal to 0 and less than infinity, where infinity is
- *        currently a cozy number like one second. This check avoids using a
- *        server whose synchronization source has expired for a very long time.
- */
-#ifndef SNTP_CHECK_RESPONSE
-#define SNTP_CHECK_RESPONSE         0
+#if (SNTP_UPDATE_DELAY < 15000) && !defined(SNTP_SUPPRESS_DELAY_CHECK)
+#error "SNTPv4 RFC 4330 enforces a minimum update time of 15 seconds (define SNTP_SUPPRESS_DELAY_CHECK to disable this error)!"
 #endif
 
-/** According to the RFC, this shall be a random delay
- * between 1 and 5 minutes (in milliseconds) to prevent load peaks.
- * This can be defined to a random generation function,
- * which must return the delay in milliseconds as u32_t.
- * Turned off by default.
- */
-#ifndef SNTP_STARTUP_DELAY
-#define SNTP_STARTUP_DELAY          0
-#endif
-
-/** If you want the startup delay to be a function, define this
- * to a function (including the brackets) and define SNTP_STARTUP_DELAY to 1.
- */
-#ifndef SNTP_STARTUP_DELAY_FUNC
-#define SNTP_STARTUP_DELAY_FUNC     SNTP_STARTUP_DELAY
-#endif
-
-/** SNTP receive timeout - in milliseconds
- * Also used as retry timeout - this shouldn't be too low.
- * Default is 3 seconds.
- */
-#ifndef SNTP_RECV_TIMEOUT
-#define SNTP_RECV_TIMEOUT           3000
-#endif
-
-/** SNTP update delay - in milliseconds
- * Default is 1 hour.
- */
-#ifndef SNTP_UPDATE_DELAY
-#define SNTP_UPDATE_DELAY           3600000
-#endif
-#if (SNTP_UPDATE_DELAY < 15000) && !SNTP_SUPPRESS_DELAY_CHECK
-#error "SNTPv4 RFC 4330 enforces a minimum update time of 15 seconds!"
-#endif
-
-/** SNTP macro to change system time and/or the update the RTC clock */
-#ifndef SNTP_SET_SYSTEM_TIME
-#define SNTP_SET_SYSTEM_TIME(sec) ((void)sec)
-#endif
-
-/** SNTP macro to change system time including microseconds */
+/* Configure behaviour depending on microsecond or second precision */
 #ifdef SNTP_SET_SYSTEM_TIME_US
 #define SNTP_CALC_TIME_US           1
 #define SNTP_RECEIVE_TIME_SIZE      2
@@ -159,32 +81,6 @@
 #define SNTP_RECEIVE_TIME_SIZE      1
 #endif
 
-/** SNTP macro to get system time, used with SNTP_CHECK_RESPONSE >= 2
- * to send in request and compare in response.
- */
-#ifndef SNTP_GET_SYSTEM_TIME
-#define SNTP_GET_SYSTEM_TIME(sec, us)     do { (sec) = 0; (us) = 0; } while(0)
-#endif
-
-/** Default retry timeout (in milliseconds) if the response
- * received is invalid.
- * This is doubled with each retry until SNTP_RETRY_TIMEOUT_MAX is reached.
- */
-#ifndef SNTP_RETRY_TIMEOUT
-#define SNTP_RETRY_TIMEOUT          SNTP_RECV_TIMEOUT
-#endif
-
-/** Maximum retry timeout (in milliseconds). */
-#ifndef SNTP_RETRY_TIMEOUT_MAX
-#define SNTP_RETRY_TIMEOUT_MAX      (SNTP_RETRY_TIMEOUT * 10)
-#endif
-
-/** Increase retry timeout with every retry sent
- * Default is on to conform to RFC.
- */
-#ifndef SNTP_RETRY_TIMEOUT_EXP
-#define SNTP_RETRY_TIMEOUT_EXP      1
-#endif
 
 /* the various debug levels for this file */
 #define SNTP_DEBUG_TRACE        (SNTP_DEBUG | LWIP_DBG_TRACE)
@@ -206,7 +102,7 @@
 #define SNTP_LI_ALARM_CONDITION     0x03 /* (clock not synchronized) */
 
 #define SNTP_VERSION_MASK           0x38
-#define SNTP_VERSION                (4/* NTP Version 4*/<<3) 
+#define SNTP_VERSION                (4/* NTP Version 4*/<<3)
 
 #define SNTP_MODE_MASK              0x07
 #define SNTP_MODE_CLIENT            0x03
@@ -238,17 +134,17 @@
 #endif
 PACK_STRUCT_BEGIN
 struct sntp_msg {
-  PACK_STRUCT_FLD_8(u8_t           li_vn_mode);
-  PACK_STRUCT_FLD_8(u8_t           stratum);
-  PACK_STRUCT_FLD_8(u8_t           poll);
-  PACK_STRUCT_FLD_8(u8_t           precision);
-  PACK_STRUCT_FIELD(u32_t          root_delay);
-  PACK_STRUCT_FIELD(u32_t          root_dispersion);
-  PACK_STRUCT_FIELD(u32_t          reference_identifier);
-  PACK_STRUCT_FIELD(u32_t          reference_timestamp[2]);
-  PACK_STRUCT_FIELD(u32_t          originate_timestamp[2]);
-  PACK_STRUCT_FIELD(u32_t          receive_timestamp[2]);
-  PACK_STRUCT_FIELD(u32_t          transmit_timestamp[2]);
+  PACK_STRUCT_FLD_8(u8_t  li_vn_mode);
+  PACK_STRUCT_FLD_8(u8_t  stratum);
+  PACK_STRUCT_FLD_8(u8_t  poll);
+  PACK_STRUCT_FLD_8(u8_t  precision);
+  PACK_STRUCT_FIELD(u32_t root_delay);
+  PACK_STRUCT_FIELD(u32_t root_dispersion);
+  PACK_STRUCT_FIELD(u32_t reference_identifier);
+  PACK_STRUCT_FIELD(u32_t reference_timestamp[2]);
+  PACK_STRUCT_FIELD(u32_t originate_timestamp[2]);
+  PACK_STRUCT_FIELD(u32_t receive_timestamp[2]);
+  PACK_STRUCT_FIELD(u32_t transmit_timestamp[2]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
