@@ -55,12 +55,10 @@ snmp_asn1_dec_type(struct pbuf *p, u16_t ofs, u8_t *type)
   u8_t *msg_ptr;
 
   plen = 0;
-  while (p != NULL)
-  {
+  while (p != NULL) {
     base = plen;
     plen += p->len;
-    if (ofs < plen)
-    {
+    if (ofs < plen) {
       msg_ptr = (u8_t*)p->payload;
       msg_ptr += ofs - base;
       *type = *msg_ptr;
@@ -88,128 +86,104 @@ snmp_asn1_dec_length(struct pbuf *p, u16_t ofs, u8_t *octets_used, u16_t *length
   u8_t *msg_ptr;
 
   plen = 0;
-  while (p != NULL)
-  {
+  while (p != NULL) {
     base = plen;
     plen += p->len;
-    if (ofs < plen)
-    {
+    if (ofs < plen) {
       msg_ptr = (u8_t*)p->payload;
       msg_ptr += ofs - base;
 
-      if (*msg_ptr < 0x80)
-      {
+      if (*msg_ptr < 0x80) {
         /* primitive definite length format */
         *octets_used = 1;
         *length = *msg_ptr;
         return ERR_OK;
-      }
-      else if (*msg_ptr == 0x80)
-      {
+      } else if (*msg_ptr == 0x80) {
         /* constructed indefinite length format, termination with two zero octets */
         u8_t zeros;
         u8_t i;
 
         *length = 0;
         zeros = 0;
-        while (zeros != 2)
-        {
+        while (zeros != 2) {
           i = 2;
-          while (i > 0)
-          {
+          while (i > 0) {
             i--;
             (*length) += 1;
             ofs += 1;
-            if (ofs >= plen)
-            {
+            if (ofs >= plen) {
               /* next octet in next pbuf */
               p = p->next;
-              if (p == NULL) { return ERR_ARG; }
+              if (p == NULL) {
+                return ERR_ARG;
+              }
               msg_ptr = (u8_t*)p->payload;
               plen += p->len;
-            }
-            else
-            {
+            } else {
               /* next octet in same pbuf */
               msg_ptr++;
             }
-            if (*msg_ptr == 0)
-            {
+            if (*msg_ptr == 0) {
               zeros++;
-              if (zeros == 2)
-              {
+              if (zeros == 2) {
                 /* stop while (i > 0) */
                 i = 0;
               }
-            }
-            else
-            {
+            } else {
               zeros = 0;
             }
           }
         }
         *octets_used = 1;
         return ERR_OK;
-      }
-      else if (*msg_ptr == 0x81)
-      {
+      } else if (*msg_ptr == 0x81) {
         /* constructed definite length format, one octet */
         ofs += 1;
-        if (ofs >= plen)
-        {
+        if (ofs >= plen) {
           /* next octet in next pbuf */
           p = p->next;
-          if (p == NULL) { return ERR_ARG; }
+          if (p == NULL) {
+            return ERR_ARG;
+          }
           msg_ptr = (u8_t*)p->payload;
-        }
-        else
-        {
+        } else {
           /* next octet in same pbuf */
           msg_ptr++;
         }
         *length = *msg_ptr;
         *octets_used = 2;
         return ERR_OK;
-      }
-      else if (*msg_ptr == 0x82)
-      {
+      } else if (*msg_ptr == 0x82) {
         u8_t i;
 
         /* constructed definite length format, two octets */
         i = 2;
-        while (i > 0)
-        {
+        while (i > 0) {
           i--;
           ofs += 1;
-          if (ofs >= plen)
-          {
+          if (ofs >= plen) {
             /* next octet in next pbuf */
             p = p->next;
-            if (p == NULL) { return ERR_ARG; }
+            if (p == NULL) {
+              return ERR_ARG;
+            }
             msg_ptr = (u8_t*)p->payload;
             plen += p->len;
-          }
-          else
-          {
+          } else {
             /* next octet in same pbuf */
             msg_ptr++;
           }
-          if (i == 0)
-          {
+          if (i == 0) {
             /* least significant length octet */
             *length |= *msg_ptr;
-          }
-          else
-          {
+          } else {
             /* most significant length octet */
             *length = (*msg_ptr) << 8;
           }
         }
         *octets_used = 3;
         return ERR_OK;
-      }
-      else
-      {
+      } else {
         /* constructed definite length format 3..127 octets, this is too big (>64k) */
         /**  @todo: do we need to accept inefficient codings with many leading zero's? */
         *octets_used = 1 + ((*msg_ptr) & 0x7f);
@@ -243,72 +217,60 @@ snmp_asn1_dec_u32t(struct pbuf *p, u16_t ofs, u16_t len, u32_t *value)
   u8_t *msg_ptr;
 
   plen = 0;
-  while (p != NULL)
-  {
+  while (p != NULL) {
     base = plen;
     plen += p->len;
-    if (ofs < plen)
-    {
+    if (ofs < plen) {
       msg_ptr = (u8_t*)p->payload;
       msg_ptr += ofs - base;
-      if ((len > 0) && (len < 6))
-      {
+      if ((len > 0) && (len < 6)) {
         /* start from zero */
         *value = 0;
-        if (*msg_ptr & 0x80)
-        {
+        if (*msg_ptr & 0x80) {
           /* negative, expecting zero sign bit! */
           return ERR_ARG;
-        }
-        else
-        {
+        } else {
           /* positive */
-          if ((len > 1) && (*msg_ptr == 0))
-          {
+          if ((len > 1) && (*msg_ptr == 0)) {
             /* skip leading "sign byte" octet 0x00 */
             len--;
             ofs += 1;
-            if (ofs >= plen)
-            {
+            if (ofs >= plen) {
               /* next octet in next pbuf */
               p = p->next;
-              if (p == NULL) { return ERR_ARG; }
+              if (p == NULL) {
+                return ERR_ARG;
+              }
               msg_ptr = (u8_t*)p->payload;
               plen += p->len;
-            }
-            else
-            {
+            } else {
               /* next octet in same pbuf */
               msg_ptr++;
             }
           }
         }
         /* OR octets with value */
-        while (len > 1)
-        {
+        while (len > 1) {
           len--;
           *value |= *msg_ptr;
           *value <<= 8;
           ofs += 1;
-          if (ofs >= plen)
-          {
+          if (ofs >= plen) {
             /* next octet in next pbuf */
             p = p->next;
-            if (p == NULL) { return ERR_ARG; }
+            if (p == NULL) {
+              return ERR_ARG;
+            }
             msg_ptr = (u8_t*)p->payload;
             plen += p->len;
-          }
-          else
-          {
+          } else {
             /* next octet in same pbuf */
             msg_ptr++;
           }
         }
         *value |= *msg_ptr;
         return ERR_OK;
-      }
-      else
-      {
+      } else {
         return ERR_ARG;
       }
     }
@@ -343,70 +305,54 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
   u8_t sign;
 
   plen = 0;
-  while (p != NULL)
-  {
+  while (p != NULL) {
     base = plen;
     plen += p->len;
-    if (ofs < plen)
-    {
+    if (ofs < plen) {
       msg_ptr = (u8_t*)p->payload;
       msg_ptr += ofs - base;
-      if ((len > 0) && (len < 5))
-      {
-        if (*msg_ptr & 0x80)
-        {
+      if ((len > 0) && (len < 5)) {
+        if (*msg_ptr & 0x80) {
           /* negative, start from -1 */
           *value = -1;
           sign = 1;
-        }
-        else
-        {
+        } else {
           /* positive, start from 0 */
           *value = 0;
           sign = 0;
         }
         /* OR/AND octets with value */
-        while (len > 1)
-        {
+        while (len > 1) {
           len--;
-          if (sign)
-          {
+          if (sign) {
             *lsb_ptr &= *msg_ptr;
             *value <<= 8;
             *lsb_ptr |= 255;
-          }
-          else
-          {
+          } else {
             *lsb_ptr |= *msg_ptr;
             *value <<= 8;
           }
           ofs += 1;
-          if (ofs >= plen)
-          {
+          if (ofs >= plen) {
             /* next octet in next pbuf */
             p = p->next;
-            if (p == NULL) { return ERR_ARG; }
+            if (p == NULL) {
+              return ERR_ARG;
+            }
             msg_ptr = (u8_t*)p->payload;
             plen += p->len;
-          }
-          else
-          {
+          } else {
             /* next octet in same pbuf */
             msg_ptr++;
           }
         }
-        if (sign)
-        {
+        if (sign) {
           *lsb_ptr &= *msg_ptr;
-        }
-        else
-        {
+        } else {
           *lsb_ptr |= *msg_ptr;
         }
         return ERR_OK;
-      }
-      else
-      {
+      } else {
         return ERR_ARG;
       }
     }
@@ -433,129 +379,106 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
   s32_t *oid_ptr;
 
   plen = 0;
-  while (p != NULL)
-  {
+  while (p != NULL) {
     base = plen;
     plen += p->len;
-    if (ofs < plen)
-    {
+    if (ofs < plen) {
       msg_ptr = (u8_t*)p->payload;
       msg_ptr += ofs - base;
 
       oid->len = 0;
       oid_ptr = &oid->id[0];
-      if (len > 0)
-      {
+      if (len > 0) {
         /* first compressed octet */
-        if (*msg_ptr == 0x2B)
-        {
+        if (*msg_ptr == 0x2B) {
           /* (most) common case 1.3 (iso.org) */
           *oid_ptr = 1;
           oid_ptr++;
           *oid_ptr = 3;
           oid_ptr++;
-        }
-        else if (*msg_ptr < 40)
-        {
+        } else if (*msg_ptr < 40) {
           *oid_ptr = 0;
           oid_ptr++;
           *oid_ptr = *msg_ptr;
           oid_ptr++;
-        }
-        else if (*msg_ptr < 80)
-        {
+        } else if (*msg_ptr < 80) {
           *oid_ptr = 1;
           oid_ptr++;
           *oid_ptr = (*msg_ptr) - 40;
           oid_ptr++;
-        }
-        else
-        {
+        } else {
           *oid_ptr = 2;
           oid_ptr++;
           *oid_ptr = (*msg_ptr) - 80;
           oid_ptr++;
         }
         oid->len = 2;
-      }
-      else
-      {
+      } else {
         /* accepting zero length identifiers e.g. for
            getnext operation. uncommon but valid */
         return ERR_OK;
       }
       len--;
-      if (len > 0)
-      {
+      if (len > 0) {
         ofs += 1;
-        if (ofs >= plen)
-        {
+        if (ofs >= plen) {
           /* next octet in next pbuf */
           p = p->next;
-          if (p == NULL) { return ERR_ARG; }
+          if (p == NULL) {
+            return ERR_ARG;
+          }
           msg_ptr = (u8_t*)p->payload;
           plen += p->len;
-        }
-        else
-        {
+        } else {
           /* next octet in same pbuf */
           msg_ptr++;
         }
       }
-      while ((len > 0) && (oid->len < LWIP_SNMP_OBJ_ID_LEN))
-      {
+      while ((len > 0) && (oid->len < LWIP_SNMP_OBJ_ID_LEN)) {
         /* sub-identifier uses multiple octets */
-        if (*msg_ptr & 0x80)
-        {
+        if (*msg_ptr & 0x80) {
           s32_t sub_id = 0;
 
-          while ((*msg_ptr & 0x80) && (len > 1))
-          {
+          while ((*msg_ptr & 0x80) && (len > 1)) {
             len--;
             sub_id = (sub_id << 7) + (*msg_ptr & ~0x80);
             ofs += 1;
-            if (ofs >= plen)
-            {
+            if (ofs >= plen) {
               /* next octet in next pbuf */
               p = p->next;
-              if (p == NULL) { return ERR_ARG; }
+              if (p == NULL) {
+                return ERR_ARG;
+              }
               msg_ptr = (u8_t*)p->payload;
               plen += p->len;
-            }
-            else
-            {
+            } else {
               /* next octet in same pbuf */
               msg_ptr++;
             }
           }
-          if (!(*msg_ptr & 0x80) && (len > 0))
-          {
+          if (!(*msg_ptr & 0x80) && (len > 0)) {
             /* last octet sub-identifier */
             len--;
             sub_id = (sub_id << 7) + *msg_ptr;
             *oid_ptr = sub_id;
           }
-        }
-        else
-        {
+        } else {
           /* !(*msg_ptr & 0x80) sub-identifier uses single octet */
           len--;
           *oid_ptr = *msg_ptr;
         }
-        if (len > 0)
-        {
+        if (len > 0) {
           /* remaining oid bytes available ... */
           ofs += 1;
-          if (ofs >= plen)
-          {
+          if (ofs >= plen) {
             /* next octet in next pbuf */
             p = p->next;
-            if (p == NULL) { return ERR_ARG; }
+            if (p == NULL) {
+              return ERR_ARG;
+            }
             msg_ptr = (u8_t*)p->payload;
             plen += p->len;
-          }
-          else
-          {
+          } else {
             /* next octet in same pbuf */
             msg_ptr++;
           }
@@ -563,13 +486,10 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
         oid_ptr++;
         oid->len++;
       }
-      if (len == 0)
-      {
+      if (len == 0) {
         /* len == 0, end of oid */
         return ERR_OK;
-      }
-      else
-      {
+      } else {
         /* len > 0, oid->len == LWIP_SNMP_OBJ_ID_LEN or malformed encoding */
         return ERR_ARG;
       }
@@ -598,36 +518,30 @@ snmp_asn1_dec_raw(struct pbuf *p, u16_t ofs, u16_t len, u16_t raw_len, u8_t *raw
   u16_t plen, base;
   u8_t *msg_ptr;
 
-  if (len > 0)
-  {
+  if (len > 0) {
     plen = 0;
-    while (p != NULL)
-    {
+    while (p != NULL) {
       base = plen;
       plen += p->len;
-      if (ofs < plen)
-      {
+      if (ofs < plen) {
         msg_ptr = (u8_t*)p->payload;
         msg_ptr += ofs - base;
-        if (raw_len >= len)
-        {
-          while (len > 1)
-          {
+        if (raw_len >= len) {
+          while (len > 1) {
             /* copy len - 1 octets */
             len--;
             *raw = *msg_ptr;
             raw++;
             ofs += 1;
-            if (ofs >= plen)
-            {
+            if (ofs >= plen) {
               /* next octet in next pbuf */
               p = p->next;
-              if (p == NULL) { return ERR_ARG; }
+              if (p == NULL) {
+                return ERR_ARG;
+              }
               msg_ptr = (u8_t*)p->payload;
               plen += p->len;
-            }
-            else
-            {
+            } else {
               /* next octet in same pbuf */
               msg_ptr++;
             }
@@ -635,9 +549,7 @@ snmp_asn1_dec_raw(struct pbuf *p, u16_t ofs, u16_t len, u16_t raw_len, u8_t *raw
           /* copy last octet */
           *raw = *msg_ptr;
           return ERR_OK;
-        }
-        else
-        {
+        } else {
           /* raw_len < len, not enough dst space */
           return ERR_ARG;
         }
@@ -646,9 +558,7 @@ snmp_asn1_dec_raw(struct pbuf *p, u16_t ofs, u16_t len, u16_t raw_len, u8_t *raw
     }
     /* p == NULL, ofs >= plen */
     return ERR_ARG;
-  }
-  else
-  {
+  } else {
     /* len == 0, empty string */
     return ERR_OK;
   }
