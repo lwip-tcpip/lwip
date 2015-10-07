@@ -973,7 +973,7 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
   }
 
   /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
-  for(p = buf; len != 0 && p != NULL; p = p->next) {
+  for (p = buf; len != 0 && p != NULL; p = p->next) {
     if ((offset != 0) && (offset >= p->len)) {
       /* don't copy from this buffer -> on to the next */
       offset -= p->len;
@@ -1095,7 +1095,7 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
   }
 
   /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
-  for(p = buf; total_copy_len != 0; p = p->next) {
+  for (p = buf; total_copy_len != 0; p = p->next) {
     LWIP_ASSERT("pbuf_take: invalid pbuf", p != NULL);
     buf_copy_len = total_copy_len;
     if (buf_copy_len > p->len) {
@@ -1277,7 +1277,7 @@ pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
   /* return requested data if pbuf is OK */
   if ((q != NULL) && (q->len > start)) {
     u16_t i;
-    for(i = 0; i < n; i++) {
+    for (i = 0; i < n; i++) {
       u8_t a = pbuf_get_at(q, start + i);
       u8_t b = ((const u8_t*)s2)[i];
       if (a != b) {
@@ -1305,7 +1305,7 @@ pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
   u16_t i;
   u16_t max = p->tot_len - mem_len;
   if (p->tot_len >= mem_len + start_offset) {
-    for(i = start_offset; i <= max; i++) {
+    for (i = start_offset; i <= max; i++) {
       u16_t plus = pbuf_memcmp(p, i, mem, mem_len);
       if (plus == 0) {
         return i;

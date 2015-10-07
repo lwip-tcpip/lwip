@@ -374,7 +374,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
-    for(t = next_timeout; t != NULL; t = t->next) {
+    for (t = next_timeout; t != NULL; t = t->next) {
       timeout->time -= t->time;
       if (t->next == NULL || t->next->time > timeout->time) {
         if (t->next != NULL) {
@@ -473,7 +473,7 @@ sys_check_timeouts(void)
         }
       }
     /* repeat until all expired timers have been called */
-    } while(had_one);
+    } while (had_one);
   }
 }
 

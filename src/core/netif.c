@@ -396,7 +396,7 @@ netif_find(const char *name)
 
   num = name[2] - '0';
 
-  for(netif = netif_list; netif != NULL; netif = netif->next) {
+  for (netif = netif_list; netif != NULL; netif = netif->next) {
     if (num == netif->num &&
        name[0] == netif->name[0] &&
        name[1] == netif->name[1]) {

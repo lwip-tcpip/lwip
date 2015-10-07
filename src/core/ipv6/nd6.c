@@ -331,7 +331,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
 
       i = nd6_find_neighbor_cache_entry(ip6_current_src_addr());
-      if ( i>= 0) {
+      if (i>= 0) {
         /* We already have a record for the solicitor. */
         if (neighbor_cache[i].state == ND6_INCOMPLETE) {
           neighbor_cache[i].netif = inp;

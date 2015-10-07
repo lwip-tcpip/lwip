@@ -494,7 +494,7 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
 {
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
   struct local_hostlist_entry *entry = local_hostlist_dynamic;
-  while(entry != NULL) {
+  while (entry != NULL) {
     if ((LWIP_DNS_STRICMP(entry->name, hostname) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, entry->addr)) {
       if (addr) {
@@ -756,14 +756,14 @@ dns_send(u8_t idx)
     do {
       ++hostname;
       hostname_part = hostname;
-      for(n = 0; *hostname != '.' && *hostname != 0; ++hostname) {
+      for (n = 0; *hostname != '.' && *hostname != 0; ++hostname) {
         ++n;
       }
       copy_len = (u16_t)(hostname - hostname_part);
       pbuf_put_at(p, query_idx, n);
       pbuf_take_at(p, hostname_part, copy_len, query_idx + 1);
       query_idx += n + 1;
-    } while(*hostname != 0);
+    } while (*hostname != 0);
     pbuf_put_at(p, query_idx, 0);
     query_idx++;
 
@@ -815,7 +815,7 @@ dns_alloc_random_port(void)
       continue;
     }
     err = udp_bind(ret, IP_ADDR_ANY, port);
-  } while(err == ERR_USE);
+  } while (err == ERR_USE);
   if ((err != ERR_OK) && (err != ERR_USE)) {
     udp_remove(ret);
     return NULL;

@@ -266,7 +266,7 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
   u8_t swapped = 0;
 
   /* iterate through all pbuf in chain */
-  for(q = p; q != NULL; q = q->next) {
+  for (q = p; q != NULL; q = q->next) {
     LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
       (void *)q, (void *)q->next));
     acc += LWIP_CHKSUM(q->payload, q->len);
@@ -407,7 +407,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
   u16_t chklen;
 
   /* iterate through all pbuf in chain */
-  for(q = p; (q != NULL) && (chksum_len > 0); q = q->next) {
+  for (q = p; (q != NULL) && (chksum_len > 0); q = q->next) {
     LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
       (void *)q, (void *)q->next));
     chklen = q->len;
@@ -576,7 +576,7 @@ inet_chksum_pbuf(struct pbuf *p)
 
   acc = 0;
   swapped = 0;
-  for(q = p; q != NULL; q = q->next) {
+  for (q = p; q != NULL; q = q->next) {
     acc += LWIP_CHKSUM(q->payload, q->len);
     acc = FOLD_U32T(acc);
     if (q->len % 2 != 0) {

@@ -109,7 +109,7 @@ again:
     udp_port = UDP_LOCAL_PORT_RANGE_START;
   }
   /* Check all PCBs. */
-  for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
     if (pcb->local_port == udp_port) {
       if (++n > (UDP_LOCAL_PORT_RANGE_END - UDP_LOCAL_PORT_RANGE_START)) {
         return 0;
@@ -735,7 +735,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
 #if LWIP_IPV6
       !PCB_ISIPV6(pcb) &&
 #endif /* LWIP_IPV6 */
-      ip_addr_isbroadcast(dst_ip, netif) ) {
+      ip_addr_isbroadcast(dst_ip, netif)) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
       ("udp_sendto_if: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
     return ERR_VAL;

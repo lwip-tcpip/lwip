@@ -376,7 +376,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 #if TCP_DEBUG_PCB_LISTS
 #define TCP_REG(pcbs, npcb) do {\
                             LWIP_DEBUGF(TCP_DEBUG, ("TCP_REG %p local port %d\n", (npcb), (npcb)->local_port)); \
-                            for(tcp_tmp_pcb = *(pcbs); \
+                            for (tcp_tmp_pcb = *(pcbs); \
           tcp_tmp_pcb != NULL; \
         tcp_tmp_pcb = tcp_tmp_pcb->next) { \
                                 LWIP_ASSERT("TCP_REG: already registered\n", tcp_tmp_pcb != (npcb)); \
@@ -393,7 +393,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             LWIP_DEBUGF(TCP_DEBUG, ("TCP_RMV: removing %p from %p\n", (npcb), *(pcbs))); \
                             if(*(pcbs) == (npcb)) { \
                                *(pcbs) = (*pcbs)->next; \
-                            } else for(tcp_tmp_pcb = *(pcbs); tcp_tmp_pcb != NULL; tcp_tmp_pcb = tcp_tmp_pcb->next) { \
+                            } else for (tcp_tmp_pcb = *(pcbs); tcp_tmp_pcb != NULL; tcp_tmp_pcb = tcp_tmp_pcb->next) { \
                                if(tcp_tmp_pcb->next == (npcb)) { \
                                   tcp_tmp_pcb->next = (npcb)->next; \
                                   break; \
@@ -419,7 +419,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
       (*(pcbs)) = (*pcbs)->next;                   \
     }                                              \
     else {                                         \
-      for(tcp_tmp_pcb = *pcbs;                     \
+      for (tcp_tmp_pcb = *pcbs;                    \
           tcp_tmp_pcb != NULL;                     \
           tcp_tmp_pcb = tcp_tmp_pcb->next) {       \
         if(tcp_tmp_pcb->next == (npcb)) {          \

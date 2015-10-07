@@ -584,7 +584,7 @@ dhcp_handle_ack(struct netif *netif)
 
 #if LWIP_DHCP_GET_NTP_SRV
   /* NTP servers */
-  for(n = 0; (n < LWIP_DHCP_MAX_NTP_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_NTP_SERVER + n); n++) {
+  for (n = 0; (n < LWIP_DHCP_MAX_NTP_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_NTP_SERVER + n); n++) {
     ip4_addr_set_u32(&ntp_server_addrs[n], htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_NTP_SERVER + n)));
   }
   dhcp_set_ntp_servers(n, ntp_server_addrs);
@@ -592,7 +592,7 @@ dhcp_handle_ack(struct netif *netif)
 
 #if LWIP_DNS
   /* DNS servers */
-  for(n = 0; (n < DNS_MAX_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n); n++) {
+  for (n = 0; (n < DNS_MAX_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n); n++) {
     ip_addr_t dns_addr;
     ip_addr_set_ip4_u32(&dns_addr, htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n)));
     dns_setserver(n, &dns_addr);
@@ -1404,7 +1404,7 @@ dhcp_parse_reply(struct dhcp *dhcp, struct pbuf *p)
   options_idx_max = p->tot_len;
 again:
   q = p;
-  while((q != NULL) && (options_idx >= q->len)) {
+  while ((q != NULL) && (options_idx >= q->len)) {
     options_idx -= q->len;
     options_idx_max -= q->len;
     q = q->next;
@@ -1416,7 +1416,7 @@ again:
   offset_max = options_idx_max;
   options = (u8_t*)q->payload;
   /* at least 1 byte to read and no end marker, then at least 3 bytes to read? */
-  while((q != NULL) && (options[offset] != DHCP_OPTION_END) && (offset < offset_max)) {
+  while ((q != NULL) && (options[offset] != DHCP_OPTION_END) && (offset < offset_max)) {
     u8_t op = options[offset];
     u8_t len;
     u8_t decode_len = 0;

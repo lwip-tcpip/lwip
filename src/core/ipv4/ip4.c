@@ -538,7 +538,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
       if (netif == inp) {
         netif = netif->next;
       }
-    } while(netif != NULL);
+    } while (netif != NULL);
   }
 
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING

@@ -475,7 +475,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 
   /* Check if the address already is in use (on all lists) */
   for (i = 0; i < max_pcb_list; i++) {
-    for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
+    for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
       if (cpcb->local_port == port) {
 #if SO_REUSE
         /* Omit checking for the same port if both pcbs have REUSEADDR set.
@@ -551,7 +551,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
     /* Since SOF_REUSEADDR allows reusing a local address before the pcb's usage
        is declared (listen-/connection-pcb), we have to make sure now that
        this port is only used once for every local IP. */
-    for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if ((lpcb->local_port == pcb->local_port) &&
           IP_PCB_IPVER_EQ(pcb, lpcb)) {
         if (ip_addr_cmp(&lpcb->local_ip, &pcb->local_ip)) {
@@ -607,7 +607,7 @@ tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   if (pcb->local_port != 0) {
     /* Check that there's noone listening on this port already
        (don't check the IP address since we'll set it to ANY */
-    for(l = tcp_listen_pcbs.listen_pcbs; l != NULL; l = l->next) {
+    for (l = tcp_listen_pcbs.listen_pcbs; l != NULL; l = l->next) {
       if (l->local_port == pcb->local_port) {
         /* this port is already used */
         return NULL;
@@ -723,7 +723,7 @@ again:
   }
   /* Check all PCB lists. */
   for (i = 0; i < NUM_TCP_PCB_LISTS; i++) {
-    for(pcb = *tcp_pcb_lists[i]; pcb != NULL; pcb = pcb->next) {
+    for (pcb = *tcp_pcb_lists[i]; pcb != NULL; pcb = pcb->next) {
       if (pcb->local_port == tcp_port) {
         if (++n > (TCP_LOCAL_PORT_RANGE_END - TCP_LOCAL_PORT_RANGE_START)) {
           return 0;
@@ -800,7 +800,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
     int i;
     /* Don't check listen- and bound-PCBs, check active- and TIME-WAIT PCBs. */
     for (i = 2; i < NUM_TCP_PCB_LISTS; i++) {
-      for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
+      for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
         if ((cpcb->local_port == pcb->local_port) &&
             (cpcb->remote_port == port) &&
             IP_PCB_IPVER_EQ(cpcb, pcb) &&
@@ -1131,7 +1131,7 @@ tcp_fasttmr(void)
 tcp_fasttmr_start:
   pcb = tcp_active_pcbs;
 
-  while(pcb != NULL) {
+  while (pcb != NULL) {
     if (pcb->last_timer != tcp_timer_ctr) {
       struct tcp_pcb *next;
       pcb->last_timer = tcp_timer_ctr;
@@ -1340,7 +1340,7 @@ tcp_kill_prio(u8_t prio)
   /* We kill the oldest active connection that has lower priority than prio. */
   inactivity = 0;
   inactive = NULL;
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     if (pcb->prio <= prio &&
        pcb->prio <= mprio &&
        (u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
@@ -1372,7 +1372,7 @@ tcp_kill_state(enum tcp_state state)
   inactive = NULL;
   /* Go through the list of active pcbs and get the oldest pcb that is in state
      CLOSING/LAST_ACK. */
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     if (pcb->state == state) {
       if ((u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
         inactivity = tcp_ticks - pcb->tmr;
@@ -1401,7 +1401,7 @@ tcp_kill_timewait(void)
   inactivity = 0;
   inactive = NULL;
   /* Go through the list of TIME_WAIT pcbs and get the oldest pcb. */
-  for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
     if ((u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
       inactivity = tcp_ticks - pcb->tmr;
       inactive = pcb;
@@ -1996,21 +1996,21 @@ tcp_debug_print_pcbs(void)
 {
   struct tcp_pcb *pcb;
   LWIP_DEBUGF(TCP_DEBUG, ("Active PCB states:\n"));
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
   }
   LWIP_DEBUGF(TCP_DEBUG, ("Listen PCB states:\n"));
-  for(pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
   }
   LWIP_DEBUGF(TCP_DEBUG, ("TIME-WAIT PCB states:\n"));
-  for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
@@ -2025,12 +2025,12 @@ s16_t
 tcp_pcbs_sane(void)
 {
   struct tcp_pcb *pcb;
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_ASSERT("tcp_pcbs_sane: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_pcbs_sane: active pcb->state != LISTEN", pcb->state != LISTEN);
     LWIP_ASSERT("tcp_pcbs_sane: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
   }
-  for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_ASSERT("tcp_pcbs_sane: tw pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
   }
   return 1;

@@ -209,7 +209,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
      for an active connection. */
   prev = NULL;
 
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
@@ -237,7 +237,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (pcb == NULL) {
     /* If it did not go to an active connection, we check the connections
        in the TIME-WAIT state. */
-    for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
+    for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
       if (pcb->remote_port == tcphdr->src &&
           pcb->local_port == tcphdr->dest &&
@@ -256,7 +256,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* Finally, if we still did not get a match, we check all PCBs that
        are LISTENing for incoming connections. */
     prev = NULL;
-    for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if (lpcb->local_port == tcphdr->dest) {
 #if LWIP_IPV4 && LWIP_IPV6
         if (lpcb->accept_any_ip_version) {
@@ -378,7 +378,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           /* pcb->acked is u32_t but the sent callback only takes a u16_t,
              so we might have to call it multiple times. */
           u32_t pcb_acked = pcb->acked;
-          while(pcb_acked > 0) {
+          while (pcb_acked > 0) {
             acked = (u16_t)LWIP_MIN(pcb_acked, 0xffffu);
             pcb_acked -= acked;
 #else
@@ -1514,7 +1514,7 @@ tcp_receive(struct tcp_pcb *pcb)
              contains less data. */
 
           prev = NULL;
-          for(next = pcb->ooseq; next != NULL; next = next->next) {
+          for (next = pcb->ooseq; next != NULL; next = next->next) {
             if (seqno == next->tcphdr->seqno) {
               /* The sequence number of the incoming segment is the
                  same as the sequence number of the segment on
@@ -1623,7 +1623,7 @@ tcp_receive(struct tcp_pcb *pcb)
         ooseq_blen = 0;
         ooseq_qlen = 0;
         prev = NULL;
-        for(next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
+        for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
           struct pbuf *p = next->p;
           ooseq_blen += p->tot_len;
           ooseq_qlen += pbuf_clen(p);

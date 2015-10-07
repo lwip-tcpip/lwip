@@ -847,10 +847,10 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
       LWIP_ASSERT("invalid copylen, len would underflow", len >= copylen);
       len -= copylen;
-      if ( (len <= 0) ||
-           (p->flags & PBUF_FLAG_PUSH) ||
-           (sock->rcvevent <= 0) ||
-           ((flags & MSG_PEEK)!=0)) {
+      if ((len <= 0) ||
+          (p->flags & PBUF_FLAG_PUSH) ||
+          (sock->rcvevent <= 0) ||
+          ((flags & MSG_PEEK) != 0)) {
         done = 1;
       }
     } else {
@@ -1004,7 +1004,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     ((flags & MSG_MORE)     ? NETCONN_MORE      : 0) |
     ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
 
-    for(i = 0; i < msg->msg_iovlen; i++) {
+    for (i = 0; i < msg->msg_iovlen; i++) {
       written = 0;
       err = netconn_write_partly(sock->conn, msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len, write_flags, &written);
       if (err == ERR_OK) {
@@ -1049,7 +1049,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     netbuf_fromport(chain_buf) = remote_port;
   }
 #if LWIP_NETIF_TX_SINGLE_PBUF
-  for(i = 0; i < msg->msg_iovlen; i++) {
+  for (i = 0; i < msg->msg_iovlen; i++) {
     size += msg->msg_iov[i].iov_len;
   }
   /* Allocate a new netbuf and copy the data into it. */
@@ -1059,7 +1059,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   else {
     /* flatten the IO vectors */
     size_t offset = 0;
-    for(i = 0; i < msg->msg_iovlen; i++ ) {
+    for (i = 0; i < msg->msg_iovlen; i++) {
       MEMCPY(&((u8_t*)chain_buf->p->payload)[offset], msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
       offset += msg->msg_iov[i].iov_len;
     }
@@ -1078,7 +1078,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   if (err == ERR_OK) {
     struct netbuf *tail_buf;
     size = msg->msg_iov[0].iov_len;
-    for(i = 1; i < msg->msg_iovlen; i++) {
+    for (i = 1; i < msg->msg_iovlen; i++) {
       tail_buf = netbuf_new();
       if (!tail_buf) {
         err = ERR_MEM;
@@ -1318,7 +1318,7 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
 
   /* Go through each socket in each list to count number of sockets which
      currently match */
-  for(i = LWIP_SOCKET_OFFSET; i < maxfdp1; i++) {
+  for (i = LWIP_SOCKET_OFFSET; i < maxfdp1; i++) {
     void* lastdata = NULL;
     s16_t rcvevent = 0;
     u16_t sendevent = 0;

@@ -1396,7 +1396,7 @@ lwip_netconn_do_recv(struct api_msg_msg *msg)
           u16_t recved = (remaining > 0xffff) ? 0xffff : (u16_t)remaining;
           tcp_recved(msg->conn->pcb.tcp, recved);
           remaining -= recved;
-        }while(remaining != 0);
+        } while (remaining != 0);
       }
     }
   }

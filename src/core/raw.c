@@ -378,7 +378,7 @@ raw_remove(struct raw_pcb *pcb)
     raw_pcbs = raw_pcbs->next;
     /* pcb not 1st in list */
   } else {
-    for(pcb2 = raw_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
+    for (pcb2 = raw_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
       /* find pcb in raw_pcbs list */
       if (pcb2->next != NULL && pcb2->next == pcb) {
         /* remove pcb from list */

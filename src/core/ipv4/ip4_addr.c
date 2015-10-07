@@ -305,14 +305,14 @@ ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen)
 
   rp = buf;
   ap = (u8_t *)&s_addr;
-  for(n = 0; n < 4; n++) {
+  for (n = 0; n < 4; n++) {
     i = 0;
     do {
       rem = *ap % (u8_t)10;
       *ap /= (u8_t)10;
       inv[i++] = '0' + rem;
-    } while(*ap);
-    while(i--) {
+    } while (*ap);
+    while (i--) {
       if (len++ >= buflen) {
         return NULL;
       }

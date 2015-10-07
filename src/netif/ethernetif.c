@@ -145,7 +145,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
-  for(q = p; q != NULL; q = q->next) {
+  for (q = p; q != NULL; q = q->next) {
     /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
        variable. */
@@ -197,7 +197,7 @@ low_level_input(struct netif *netif)
 
     /* We iterate over the pbuf chain until we have read the entire
      * packet into the pbuf. */
-    for(q = p; q != NULL; q = q->next) {
+    for (q = p; q != NULL; q = q->next) {
       /* Read enough bytes to fill this pbuf in the chain. The
        * available data in the pbuf is given by the q->len
        * variable.

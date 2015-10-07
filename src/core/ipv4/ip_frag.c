@@ -591,7 +591,7 @@ ip4_reass(struct pbuf *p)
     p = ipr->p;
 
     /* chain together the pbufs contained within the reass_data list. */
-    while(r != NULL) {
+    while (r != NULL) {
       iprh = (struct ip_reass_helper*)r->payload;
 
       /* hide the ip header for every succeeding fragment */
