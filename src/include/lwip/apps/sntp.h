@@ -29,8 +29,8 @@
  * Author: Frédéric Bernon, Simon Goldschmidt
  *
  */
-#ifndef LWIP_SNTP_H
-#define LWIP_SNTP_H
+#ifndef LWIP_HDR_SNTP_H
+#define LWIP_HDR_SNTP_H
 
 #include "lwip/apps/sntp_opts.h"
 #include "lwip/ip_addr.h"
@@ -66,4 +66,4 @@ void sntp_servermode_dhcp(int set_servers_from_dhcp);
 }
 #endif
 
-#endif /* LWIP_SNTP_H */
+#endif /* LWIP_HDR_SNTP_H */
