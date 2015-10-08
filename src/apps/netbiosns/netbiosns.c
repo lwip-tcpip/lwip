@@ -1,11 +1,17 @@
 /**
  * @file
- * NetBIOS name service sample
+ * NetBIOS name service responder
  *
+ * This is an example implementation of a NetBIOS name server.
+ * It responds to name queries for a configurable name.
+ * Name resolving is not supported.
+ *
+ * Note that the device doesn't broadcast it's own name so can't
+ * detect duplicate names!
  */
 
 /*
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -14,24 +20,24 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  */
 
-#include "lwip/opt.h"
+#include "lwip/apps/netbiosns.h"
 
 #if LWIP_IPV4 && LWIP_UDP  /* don't build if not configured for use in lwipopts.h */
 
@@ -39,36 +45,6 @@
 #include "lwip/netif.h"
 
 #include <string.h>
-
-#include "netbios.h"
-
-/** This is an example implementation of a NetBIOS name server.
- * It responds to name queries for a configurable name.
- * Name resolving is not supported.
- *
- * Note that the device doesn't broadcast it's own name so can't
- * detect duplicate names!
- */
-
-/** NetBIOS name of LWIP device
- * This must be uppercase until NETBIOS_STRCMP() is defined to a string
- * comparision function that is case insensitive.
- * If you want to use the netif's hostname, use this (with LWIP_NETIF_HOSTNAME):
- * (ip_current_netif() != NULL ? ip_current_netif()->hostname != NULL ? ip_current_netif()->hostname : "" : "")
- */
-#ifndef NETBIOS_LWIP_NAME
-#define NETBIOS_LWIP_NAME "NETBIOSLWIPDEV"
-#endif
-
-/** Since there's no standard function for case-insensitive string comparision,
- * we need another define here:
- * define this to stricmp() for windows or strcasecmp() for linux.
- * If not defined, comparision is case sensitive and NETBIOS_LWIP_NAME must be
- * uppercase
- */
-#ifndef NETBIOS_STRCMP
-#define NETBIOS_STRCMP(str1, str2) strcmp(str1, str2)
-#endif
 
 /** default port number for "NetBIOS Name service */
 #define NETBIOS_PORT     137
@@ -153,9 +129,18 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-/** NetBIOS decoding name */
+#ifdef NETBIOS_LWIP_NAME
+#define NETBIOS_LOCAL_NAME NETBIOS_LWIP_NAME
+#else
+static char netbiosns_local_name[NETBIOS_NAME_LEN];
+#define NETBIOS_LOCAL_NAME netbiosns_local_name
+#endif
+
+struct udp_pcb *netbiosns_pcb;
+
+/** Decode a NetBIOS name (from packet to string) */
 static int
-netbios_name_decoding( char *name_enc, char *name_dec, int name_dec_len)
+netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
 {
   char *pname;
   char  cname;
@@ -207,15 +192,16 @@ netbios_name_decoding( char *name_enc, char *name_dec, int name_dec_len)
 }
 
 #if 0 /* function currently unused */
-/** NetBIOS encoding name */
+/** Encode a NetBIOS name (from string to packet) - currently unused because
+    we don't ask for names. */
 static int
-netbios_name_encoding(char *name_enc, char *name_dec, int name_dec_len)
+netbiosns_name_encode(char *name_enc, char *name_dec, int name_dec_len)
 {
   char         *pname;
   char          cname;
   unsigned char ucname;
   int           idx = 0;
-  
+
   /* Start encoding netbios name. */
   pname = name_enc;
 
@@ -259,7 +245,7 @@ netbios_name_encoding(char *name_enc, char *name_dec, int name_dec_len)
 
 /** NetBIOS Name service recv callback */
 static void
-netbios_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   LWIP_UNUSED_ARG(arg);
 
@@ -268,7 +254,7 @@ netbios_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *a
     char   netbios_name[NETBIOS_NAME_LEN+1];
     struct netbios_hdr*      netbios_hdr      = (struct netbios_hdr*)p->payload;
     struct netbios_name_hdr* netbios_name_hdr = (struct netbios_name_hdr*)(netbios_hdr+1);
-    
+
     /* we only answer if we got a default interface */
     if (netif_default != NULL) {
       /* @todo: do we need to check answerRRs/authorityRRs/additionalRRs? */
@@ -277,9 +263,9 @@ netbios_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *a
           ((netbios_hdr->flags & PP_NTOHS(NETB_HFLAG_RESPONSE)) == 0) &&
            (netbios_hdr->questions == PP_NTOHS(1))) {
         /* decode the NetBIOS name */
-        netbios_name_decoding( (char*)(netbios_name_hdr->encname), netbios_name, sizeof(netbios_name));
+        netbiosns_name_decode((char*)(netbios_name_hdr->encname), netbios_name, sizeof(netbios_name));
         /* if the packet is for us */
-        if (NETBIOS_STRCMP(netbios_name, NETBIOS_LWIP_NAME) == 0) {
+        if (NETBIOS_STRCMP(netbios_name, NETBIOS_LOCAL_NAME) == 0) {
           struct pbuf *q;
           struct netbios_resp *resp;
 
@@ -310,7 +296,7 @@ netbios_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *a
 
             /* send the NetBIOS response */
             udp_sendto(upcb, q, addr, port);
-            
+
             /* free the "reference" pbuf */
             pbuf_free(q);
           }
@@ -322,18 +308,43 @@ netbios_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *a
   }
 }
 
-void netbios_init(void)
+void
+netbiosns_init(void)
 {
-  struct udp_pcb *pcb;
-
+#ifdef NETBIOS_LWIP_NAME
   LWIP_ASSERT("NetBIOS name is too long!", strlen(NETBIOS_LWIP_NAME) < NETBIOS_NAME_LEN);
+#endif
 
-  pcb = udp_new();
-  if (pcb != NULL) {
+  netbiosns_pcb = udp_new();
+  if (netbiosns_pcb != NULL) {
     /* we have to be allowed to send broadcast packets! */
-    pcb->so_options |= SOF_BROADCAST;
-    udp_bind(pcb, IP_ADDR_ANY, NETBIOS_PORT);
-    udp_recv(pcb, netbios_recv, pcb);
+    netbiosns_pcb->so_options |= SOF_BROADCAST;
+    udp_bind(netbiosns_pcb, IP_ADDR_ANY, NETBIOS_PORT);
+    udp_recv(netbiosns_pcb, netbiosns_recv, netbiosns_pcb);
   }
 }
+
+#ifndef NETBIOS_LWIP_NAME
+/* ATTENTION: the hostname must be <= 15 characters! */
+void
+netbiosns_set_name(const char* hostname)
+{
+  size_t copy_len = strlen(hostname);
+  LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
+  if(copy_len >= NETBIOS_NAME_LEN) {
+    copy_len = NETBIOS_NAME_LEN - 1;
+  }
+  memcpy(netbiosns_local_name, hostname, copy_len + 1);
+}
+#endif
+
+void
+netbiosns_stop(void)
+{
+  if (netbiosns_pcb != NULL) {
+    udp_remove(netbiosns_pcb);
+    netbiosns_pcb = NULL;
+  }
+}
+
 #endif /* LWIP_IPV4 && LWIP_UDP */

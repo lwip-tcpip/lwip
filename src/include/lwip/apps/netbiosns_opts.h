@@ -24,16 +24,30 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-#ifndef LWIP_HDR_NETBIOS_H
-#define LWIP_HDR_NETBIOS_H
+#ifndef LWIP_HDR_NETBIOS_OPTS_H
+#define LWIP_HDR_NETBIOS_OPTS_H
 
-#include "lwip/apps/netbiosns_opts.h"
+#include "lwip/opt.h"
 
-void netbiosns_init(void);
-#ifndef NETBIOS_LWIP_NAME
-/* ATTENTION: the hostname must be <= 15 characters! */
-void netbiosns_set_name(const char* hostname);
+/** Since there's no standard function for case-insensitive string comparision,
+ * we need another define here:
+ * define this to stricmp() for windows or strcasecmp() for linux.
+ * If not defined, comparision is case sensitive and the provided hostname must be
+ * uppercase.
+ */
+#ifndef NETBIOS_STRCMP
+#define NETBIOS_STRCMP(str1, str2) strcmp(str1, str2)
 #endif
-void netbiosns_stop(void);
 
-#endif /* LWIP_HDR_NETBIOS_H */
+/** NetBIOS name of lwip device
+ * This must be uppercase until NETBIOS_STRCMP() is defined to a string
+ * comparision function that is case insensitive.
+ * If you want to use the netif's hostname, use this (with LWIP_NETIF_HOSTNAME):
+ * (ip_current_netif() != NULL ? ip_current_netif()->hostname != NULL ? ip_current_netif()->hostname : "" : "")
+ *
+ * If this is not defined, netbiosns_set_name() can be called at runtime to change the name.
+ */
+/*#define NETBIOS_LWIP_NAME "NETBIOSLWIPDEV"*/
+
+
+#endif /* LWIP_HDR_NETBIOS_OPTS_H */
