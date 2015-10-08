@@ -29,8 +29,8 @@
  * Author: Frédéric Bernon, Simon Goldschmidt
  *
  */
-#ifndef LWIP_SNTP_OPTS_H
-#define LWIP_SNTP_OPTS_H
+#ifndef LWIP_HDR_SNTP_OPTS_H
+#define LWIP_HDR_SNTP_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -156,4 +156,4 @@
 #define SNTP_RETRY_TIMEOUT_EXP      1
 #endif
 
-#endif /* LWIP_SNTP_OPTS_H */
+#endif /* LWIP_HDR_SNTP_OPTS_H */
