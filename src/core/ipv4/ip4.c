@@ -52,7 +52,7 @@
 #include "lwip/igmp.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "lwip/stats.h"

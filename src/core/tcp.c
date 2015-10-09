@@ -48,7 +48,7 @@
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/tcp.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 #include "lwip/ip6.h"

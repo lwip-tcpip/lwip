@@ -40,7 +40,7 @@
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/api_msg.h"
+#include "lwip/priv/api_msg.h"
 
 #include "lwip/ip.h"
 #include "lwip/udp.h"
@@ -48,10 +48,10 @@
 #include "lwip/raw.h"
 
 #include "lwip/memp.h"
-#include "lwip/tcpip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
 #include "lwip/mld6.h"
+#include "lwip/priv/tcpip_priv.h"
 
 #include <string.h>
 

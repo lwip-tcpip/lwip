@@ -70,7 +70,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #if LWIP_TCP && TCP_QUEUE_OOSEQ
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #endif
 #if LWIP_CHECKSUM_ON_COPY
 #include "lwip/inet_chksum.h"

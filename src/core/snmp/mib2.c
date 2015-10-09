@@ -56,7 +56,7 @@
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/mem.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/udp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_structs.h"

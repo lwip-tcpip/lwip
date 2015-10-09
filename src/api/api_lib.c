@@ -44,14 +44,13 @@
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/api.h"
-#include "lwip/tcpip.h"
 #include "lwip/memp.h"
 
 #include "lwip/ip.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
-#include "lwip/tcp.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
+#include "lwip/priv/tcpip_priv.h"
 
 #include <string.h>
 

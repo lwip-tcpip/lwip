@@ -42,7 +42,7 @@
 #include "lwip/ip_addr.h"
 #include "lwip/ip6_addr.h"
 #include "lwip/netif.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/udp.h"
 #include "lwip/snmp_mib2.h"
 #include "lwip/igmp.h"

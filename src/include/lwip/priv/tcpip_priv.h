@@ -29,14 +29,15 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCPIP_H
-#define LWIP_HDR_TCPIP_H
+#ifndef LWIP_HDR_TCPIP_PRIV_H
+#define LWIP_HDR_TCPIP_PRIV_H
 
 #include "lwip/opt.h"
 
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/api_msg.h"
+#include "lwip/tcpip.h"
+#include "lwip/priv/api_msg.h"
 #include "lwip/netifapi.h"
 #include "lwip/pppapi.h"
 #include "lwip/pbuf.h"
@@ -132,22 +133,9 @@ extern sys_mutex_t lock_tcpip_core;
 #endif /* LWIP_MPU_COMPATIBLE */
 
 
-
-/** Function prototype for the init_done function passed to tcpip_init */
-typedef void (*tcpip_init_done_fn)(void *arg);
-/** Function prototype for functions passed to tcpip_callback() */
-typedef void (*tcpip_callback_fn)(void *ctx);
-
-/* Forward declarations */
-struct tcpip_callback_msg;
-
-void tcpip_init(tcpip_init_done_fn tcpip_init_done, void *arg);
-
 #if LWIP_NETCONN || LWIP_SOCKET
 err_t tcpip_apimsg(struct api_msg *apimsg);
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
-
-err_t tcpip_input(struct pbuf *p, struct netif *inp);
 
 #if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
 err_t tcpip_pppos_input(struct pbuf *p, struct netif *inp);
@@ -167,21 +155,6 @@ err_t tcpip_pppapi_lock(struct pppapi_msg *pppapimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_PPP_API */
 
-err_t tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block);
-#define tcpip_callback(f, ctx)              tcpip_callback_with_block(f, ctx, 1)
-
-struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx);
-void   tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg);
-err_t  tcpip_trycallback(struct tcpip_callback_msg* msg);
-
-/* free pbufs or heap memory from another context without blocking */
-err_t pbuf_free_callback(struct pbuf *p);
-err_t mem_free_callback(void *m);
-
-#if LWIP_TCPIP_TIMEOUT
-err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
-err_t tcpip_untimeout(sys_timeout_handler h, void *arg);
-#endif /* LWIP_TCPIP_TIMEOUT */
 
 enum tcpip_msg_type {
 #if LWIP_NETCONN || LWIP_SOCKET
@@ -242,4 +215,4 @@ struct tcpip_msg {
 
 #endif /* !NO_SYS */
 
-#endif /* LWIP_HDR_TCPIP_H */
+#endif /* LWIP_HDR_TCPIP_PRIV_H */

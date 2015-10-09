@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-10-09: Simon Goldschmidt
+  * started to move "private" header files containing implementation details to
+    "lwip/priv/" include directory to seperate the API from the implementation.
+
   2015-10-07: Simon Goldschmidt
   * added sntp client as first "supported" application layer protocol implementation
     added 'apps' folder

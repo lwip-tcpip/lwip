@@ -40,11 +40,12 @@
 
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/tcpip.h"
+#include "lwip/priv/tcpip_priv.h"
 #include "lwip/sys.h"
 #include "lwip/memp.h"
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
-#include "lwip/tcpip.h"
 #include "lwip/init.h"
 #include "lwip/ip.h"
 #include "netif/etharp.h"
@@ -506,7 +507,8 @@ tcpip_pppapi_lock(struct pppapi_msg* pppapimsg)
  * @param ctx parameter passed to function
  * @return a struct pointer to pass to tcpip_trycallback().
  */
-struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx)
+struct tcpip_callback_msg*
+tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx)
 {
   struct tcpip_msg *msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
   if (msg == NULL) {
@@ -523,7 +525,8 @@ struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, voi
  *
  * @param msg the message to free
  */
-void tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg)
+void
+tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg)
 {
   memp_free(MEMP_TCPIP_MSG_API, msg);
 }

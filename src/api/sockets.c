@@ -50,9 +50,9 @@
 #include "lwip/tcp.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
-#include "lwip/tcpip.h"
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
+#include "lwip/priv/tcpip_priv.h"
 #if LWIP_CHECKSUM_ON_COPY
 #include "lwip/inet_chksum.h"
 #endif

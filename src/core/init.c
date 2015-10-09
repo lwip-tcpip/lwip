@@ -49,7 +49,7 @@
 #include "lwip/ip.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/snmp.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"

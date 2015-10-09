@@ -42,13 +42,13 @@
 #include "lwip/opt.h"
 
 #include "lwip/timers.h"
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 
 #if LWIP_TIMERS
 
 #include "lwip/def.h"
 #include "lwip/memp.h"
-#include "lwip/tcpip.h"
+#include "lwip/priv/tcpip_priv.h"
 
 #include "lwip/ip_frag.h"
 #include "netif/etharp.h"
