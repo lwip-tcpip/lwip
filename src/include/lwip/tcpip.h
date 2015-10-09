@@ -114,6 +114,11 @@ extern sys_mutex_t lock_tcpip_core;
                                         } while(0)
 #define API_VAR_FREE(pool, name)        memp_free(pool, name)
 #define API_EXPR_REF(expr)              &(expr)
+#if LWIP_NETCONN_SEM_PER_THREAD
+#define API_EXPR_REF_SEM(expr)          (expr)
+#else
+#define API_EXPR_REF_SEM(expr)          API_EXPR_REF(expr)
+#endif
 #define API_EXPR_DEREF(expr)            expr
 #else /* LWIP_MPU_COMPATIBLE */
 #define API_VAR_REF(name)               name
@@ -122,6 +127,7 @@ extern sys_mutex_t lock_tcpip_core;
 #define API_VAR_ALLOC_DONTFAIL(type, pool, name)
 #define API_VAR_FREE(pool, name)
 #define API_EXPR_REF(expr)              expr
+#define API_EXPR_REF_SEM(expr)          API_EXPR_REF(expr)
 #define API_EXPR_DEREF(expr)            *(expr)
 #endif /* LWIP_MPU_COMPATIBLE */
 

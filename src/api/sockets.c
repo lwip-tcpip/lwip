@@ -1841,7 +1841,12 @@ lwip_getsockopt_callback(void *arg)
   LWIP_ASSERT("arg != NULL", arg != NULL);
   data = (struct lwip_setgetsockopt_data*)arg;
 
-  data->err = lwip_getsockopt_impl(data->s, data->level, data->optname, data->optval.p,
+  data->err = lwip_getsockopt_impl(data->s, data->level, data->optname,
+#if LWIP_MPU_COMPATIBLE
+    data->optval,
+#else /* LWIP_MPU_COMPATIBLE */
+    data->optval.p,
+#endif /* LWIP_MPU_COMPATIBLE */
     &data->optlen);
 
   sys_sem_signal((sys_sem_t*)(data->completed_sem));
@@ -2233,7 +2238,12 @@ lwip_setsockopt_callback(void *arg)
   LWIP_ASSERT("arg != NULL", arg != NULL);
   data = (struct lwip_setgetsockopt_data*)arg;
 
-  data->err = lwip_setsockopt_impl(data->s, data->level, data->optname, data->optval.pc,
+  data->err = lwip_setsockopt_impl(data->s, data->level, data->optname,
+#if LWIP_MPU_COMPATIBLE
+    data->optval,
+#else /* LWIP_MPU_COMPATIBLE */
+    data->optval.pc,
+#endif /* LWIP_MPU_COMPATIBLE */
     data->optlen);
 
   sys_sem_signal((sys_sem_t*)(data->completed_sem));

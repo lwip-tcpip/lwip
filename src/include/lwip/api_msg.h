@@ -58,9 +58,15 @@ extern "C" {
 #if LWIP_MPU_COMPATIBLE
 #define API_MSG_M_DEF(m)      m
 #define API_MSG_M_DEF_C(t, m) t m
+#ifdef LWIP_NETCONN_SEM_PER_THREAD
+#define API_MSG_M_DEF_SEM(m)  *m
+#else
+#define API_MSG_M_DEF_SEM(m)  API_MSG_M_DEF(m)
+#endif
 #else /* LWIP_MPU_COMPATIBLE */
 #define API_MSG_M_DEF(m)      *m
 #define API_MSG_M_DEF_C(t, m) const t * m
+#define API_MSG_M_DEF_SEM(m)  API_MSG_M_DEF(m)
 #endif /* LWIP_MPU_COMPATIBLE */
 
 /* For the netconn API, these values are use as a bitmask! */
@@ -177,7 +183,7 @@ struct dns_api_msg {
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
   /** This semaphore is posted when the name is resolved, the application thread
       should wait on it. */
-  sys_sem_t API_MSG_M_DEF(sem);
+  sys_sem_t API_MSG_M_DEF_SEM(sem);
   /** Errors are given back here */
   err_t API_MSG_M_DEF(err);
 };

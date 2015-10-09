@@ -1827,7 +1827,7 @@ lwip_netconn_do_dns_found(const char *name, const ip_addr_t *ipaddr, void *arg)
     API_EXPR_DEREF(msg->addr) = *ipaddr;
   }
   /* wake up the application task waiting in netconn_gethostbyname */
-  sys_sem_signal(API_EXPR_REF(msg->sem));
+  sys_sem_signal(API_EXPR_REF_SEM(msg->sem));
 }
 
 /**
@@ -1852,7 +1852,7 @@ lwip_netconn_do_gethostbyname(void *arg)
   if (API_EXPR_DEREF(msg->err) != ERR_INPROGRESS) {
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */
-    sys_sem_signal(API_EXPR_REF(msg->sem));
+    sys_sem_signal(API_EXPR_REF_SEM(msg->sem));
   }
 }
 #endif /* LWIP_DNS */
