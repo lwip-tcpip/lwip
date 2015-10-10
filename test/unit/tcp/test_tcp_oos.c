@@ -1,6 +1,6 @@
 #include "test_tcp_oos.h"
 
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
 #include "tcp_helper.h"
 

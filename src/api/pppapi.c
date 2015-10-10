@@ -37,6 +37,7 @@
 
 #include "lwip/pppapi.h"
 #include "lwip/tcpip.h"
+#include "lwip/priv/tcpip_priv.h"
 #include "netif/ppp/pppoe.h"
 #include "netif/ppp/pppol2tp.h"
 #include "netif/ppp/pppos.h"

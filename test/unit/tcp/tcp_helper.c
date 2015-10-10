@@ -1,6 +1,6 @@
 #include "tcp_helper.h"
 
-#include "lwip/tcp_impl.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
 #include "lwip/pbuf.h"
 #include "lwip/inet_chksum.h"
