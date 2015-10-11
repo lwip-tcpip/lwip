@@ -42,7 +42,6 @@
 #include "lwip/memp.h"
 #include "lwip/netif.h"
 #include "lwip/snmp_mib2.h"
-#include "lwip/tcpip.h"
 #include "lwip/priv/tcpip_priv.h"
 #include "lwip/api.h"
 #include "lwip/ip4.h" /* for ip4_input() */
