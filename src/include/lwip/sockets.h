@@ -178,12 +178,12 @@ struct msghdr {
 #define SO_LINGER      0x0080 /* linger on close if data present */
 #define SO_DONTLINGER  ((int)(~SO_LINGER))
 #define SO_OOBINLINE   0x0100 /* Unimplemented: leave received OOB data in line */
-#define SO_REUSEPORT   0x0200 /* allow local address & port reuse */
+#define SO_REUSEPORT   0x0200 /* Unimplemented: allow local address & port reuse */
 #define SO_SNDBUF      0x1001 /* Unimplemented: send buffer size */
 #define SO_RCVBUF      0x1002 /* receive buffer size */
 #define SO_SNDLOWAT    0x1003 /* Unimplemented: send low-water mark */
 #define SO_RCVLOWAT    0x1004 /* Unimplemented: receive low-water mark */
-#define SO_SNDTIMEO    0x1005 /* Unimplemented: send timeout */
+#define SO_SNDTIMEO    0x1005 /* send timeout */
 #define SO_RCVTIMEO    0x1006 /* receive timeout */
 #define SO_ERROR       0x1007 /* get error status and clear */
 #define SO_TYPE        0x1008 /* get socket type */
