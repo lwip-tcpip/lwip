@@ -252,7 +252,7 @@ struct tcp_pcb {
 
   tcpwnd_size_t snd_buf;   /* Available buffer space for sending (in bytes). */
 #define TCP_SNDQUEUELEN_OVERFLOW (0xffffU-3)
-  u16_t snd_queuelen; /* Available buffer space for sending (in pbufs). */
+  u16_t snd_queuelen; /* Number of pbufs currently in the send buffer. */
 
 #if TCP_OVERSIZE
   /* Extra bytes available at the end of the last pbuf in unsent. */
