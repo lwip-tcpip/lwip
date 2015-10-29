@@ -1423,7 +1423,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       select_cb_list->prev = &select_cb;
     }
     select_cb_list = &select_cb;
-    /* Increasing this counter tells even_callback that the list has changed. */
+    /* Increasing this counter tells event_callback that the list has changed. */
     select_cb_ctr++;
 
     /* Now we can safely unprotect */
@@ -1508,7 +1508,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       LWIP_ASSERT("select_cb.prev != NULL", select_cb.prev != NULL);
       select_cb.prev->next = select_cb.next;
     }
-    /* Increasing this counter tells even_callback that the list has changed. */
+    /* Increasing this counter tells event_callback that the list has changed. */
     select_cb_ctr++;
     SYS_ARCH_UNPROTECT(lev);
 
