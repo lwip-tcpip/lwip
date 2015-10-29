@@ -1373,6 +1373,9 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   struct lwip_select_cb select_cb;
   int i;
   int maxfdp2;
+#if LWIP_NETCONN_SEM_PER_THREAD
+  int waited = 0;
+#endif
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
@@ -1470,6 +1473,9 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         }
 
         waitres = sys_arch_sem_wait(SELECT_SEM_PTR(select_cb.sem), msectimeout);
+#if LWIP_NETCONN_SEM_PER_THREAD
+        waited = 1;
+#endif
       }
     }
 
@@ -1512,7 +1518,12 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     select_cb_ctr++;
     SYS_ARCH_UNPROTECT(lev);
 
-#if !LWIP_NETCONN_SEM_PER_THREAD
+#if LWIP_NETCONN_SEM_PER_THREAD
+    if (select_cb.sem_signalled && (!waited || (waitres == SYS_ARCH_TIMEOUT))) {
+      /* don't leave the thread-local semaphore signalled */
+      sys_arch_sem_wait(select_cb.sem, 1);
+    }
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
     sys_sem_free(&select_cb.sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
