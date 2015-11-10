@@ -1747,7 +1747,6 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
   {
     msg->err = ERR_CONN;
   }
-  NETCONN_SET_SAFE_ERR(msg->conn, msg->err);
   TCPIP_APIMSG_ACK(msg);
 }
 
