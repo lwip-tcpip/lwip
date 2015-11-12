@@ -360,7 +360,6 @@ extern struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
               data. */
 extern struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
-extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 
 /* Axioms about the above lists:
    1) Every TCP PCB that is not CLOSED is in one of the lists.
@@ -375,6 +374,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 #endif
 #if TCP_DEBUG_PCB_LISTS
 #define TCP_REG(pcbs, npcb) do {\
+                            struct tcp_pcb *tcp_tmp_pcb; \
                             LWIP_DEBUGF(TCP_DEBUG, ("TCP_REG %p local port %d\n", (npcb), (npcb)->local_port)); \
                             for (tcp_tmp_pcb = *(pcbs); \
           tcp_tmp_pcb != NULL; \
@@ -389,6 +389,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
               tcp_timer_needed(); \
                             } while(0)
 #define TCP_RMV(pcbs, npcb) do { \
+                            struct tcp_pcb *tcp_tmp_pcb; \
                             LWIP_ASSERT("TCP_RMV: pcbs != NULL", *(pcbs) != NULL); \
                             LWIP_DEBUGF(TCP_DEBUG, ("TCP_RMV: removing %p from %p\n", (npcb), *(pcbs))); \
                             if(*(pcbs) == (npcb)) { \
@@ -419,6 +420,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
       (*(pcbs)) = (*pcbs)->next;                   \
     }                                              \
     else {                                         \
+      struct tcp_pcb *tcp_tmp_pcb;                 \
       for (tcp_tmp_pcb = *pcbs;                    \
           tcp_tmp_pcb != NULL;                     \
           tcp_tmp_pcb = tcp_tmp_pcb->next) {       \

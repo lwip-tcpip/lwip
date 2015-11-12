@@ -115,9 +115,6 @@ struct tcp_pcb *tcp_tw_pcbs;
 struct tcp_pcb ** const tcp_pcb_lists[] = {&tcp_listen_pcbs.pcbs, &tcp_bound_pcbs,
   &tcp_active_pcbs, &tcp_tw_pcbs};
 
-/** Only used for temporary storage. */
-struct tcp_pcb *tcp_tmp_pcb;
-
 u8_t tcp_active_pcbs_changed;
 
 /** Timer counter to handle calling slow-timer from tcp_tmr() */
