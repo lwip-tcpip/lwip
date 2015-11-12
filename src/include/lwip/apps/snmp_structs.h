@@ -41,7 +41,11 @@
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/snmp.h"
+#include "lwip/apps/snmp.h"
+#include "lwip/memp.h"
+
+LWIP_MEMPOOL_PROTOTYPE(SNMP_ROOTNODE);
+LWIP_MEMPOOL_PROTOTYPE(SNMP_NODE);
 
 #if SNMP_PRIVATE_MIB
 /* When using a private MIB, you have to create a file 'private_mib.h' that contains

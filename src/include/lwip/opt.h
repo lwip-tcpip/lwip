@@ -351,41 +351,6 @@
 #endif
 
 /**
- * MEMP_NUM_SNMP_NODE: the number of leafs in the SNMP tree.
- */
-#ifndef MEMP_NUM_SNMP_NODE
-#define MEMP_NUM_SNMP_NODE              50
-#endif
-
-/**
- * MEMP_NUM_SNMP_ROOTNODE: the number of branches in the SNMP tree.
- * Every branch has one leaf (MEMP_NUM_SNMP_NODE) at least!
- */
-#ifndef MEMP_NUM_SNMP_ROOTNODE
-#define MEMP_NUM_SNMP_ROOTNODE          30
-#endif
-
-/**
- * MEMP_NUM_SNMP_VARBIND: influences the number of concurrent requests:
- * 2 of these are used per request (1 for input, 1 for output), so this needs
- * to be increased only if you want to support concurrent requests or multiple
- * variables per request/response.
- */
-#ifndef MEMP_NUM_SNMP_VARBIND
-#define MEMP_NUM_SNMP_VARBIND           2
-#endif
-
-/**
- * MEMP_NUM_SNMP_VALUE: the number of OID or values concurrently used
- * (does not have to be changed normally) - >=3 of these are used per request
- * (1 for the value read and 2 for OIDs - input and output on getnext, or more
- * if you want to support multiple varibles per request/response)
- */
-#ifndef MEMP_NUM_SNMP_VALUE
-#define MEMP_NUM_SNMP_VALUE             3
-#endif
-
-/**
  * MEMP_NUM_NETDB: the number of concurrently running lwip_addrinfo() calls
  * (before freeing the corresponding memory using lwip_freeaddrinfo()).
  */
@@ -850,122 +815,14 @@
 #define LWIP_DHCP_AUTOIP_COOP_TRIES     9
 #endif
 
-/*
-   ----------------------------------
-   ---------- SNMP options ----------
-   ----------------------------------
-*/
-/**
- * LWIP_SNMP==1: This enables the lwIP SNMP agent. UDP must be available
- * for SNMP transport.
- * If you want to use your own SNMP agent, leave this disabled.
- * To integrate MIB2 of an external agent, you need to enable
- * LWIP_MIB2_CALLBACKS and MIB2_STATS. This will give you the callbacks
- * and statistics counters you need to get MIB2 working.
- */
-#ifndef LWIP_SNMP
-#define LWIP_SNMP                       0
-#endif
-
 /**
  * LWIP_MIB2_CALLBACKS==1: Turn on SNMP MIB2 callbacks.
  * Turn this on to get callbacks needed to implement MIB2.
  * Usually MIB2_STATS should be enabled, too.
  */
 #ifndef LWIP_MIB2_CALLBACKS
-#define LWIP_MIB2_CALLBACKS             LWIP_SNMP
+#define LWIP_MIB2_CALLBACKS             0
 #endif
-
-/**
- * SNMP_CONCURRENT_REQUESTS: Number of concurrent requests the module will
- * allow. At least one request buffer is required.
- * Does not have to be changed unless external MIBs answer request asynchronously
- */
-#ifndef SNMP_CONCURRENT_REQUESTS
-#define SNMP_CONCURRENT_REQUESTS        1
-#endif
-
-/**
- * SNMP_TRAP_DESTINATIONS: Number of trap destinations. At least one trap
- * destination is required
- */
-#ifndef SNMP_TRAP_DESTINATIONS
-#define SNMP_TRAP_DESTINATIONS          1
-#endif
-
-/**
- * SNMP_PRIVATE_MIB:
- * When using a private MIB, you have to create a file 'private_mib.h' that contains
- * a 'struct mib_array_node mib_private' which contains your MIB.
- */
-#ifndef SNMP_PRIVATE_MIB
-#define SNMP_PRIVATE_MIB                0
-#endif
-
-/**
- * Only allow SNMP write actions that are 'safe' (e.g. disabling netifs is not
- * a safe action and disabled when SNMP_SAFE_REQUESTS = 1).
- * Unsafe requests are disabled by default!
- */
-#ifndef SNMP_SAFE_REQUESTS
-#define SNMP_SAFE_REQUESTS              1
-#endif
-
-/**
- * The maximum length of strings used. This affects the size of
- * MEMP_SNMP_VALUE elements.
- */
-#ifndef SNMP_MAX_OCTET_STRING_LEN
-#define SNMP_MAX_OCTET_STRING_LEN       127
-#endif
-
-/**
- * The maximum depth of the SNMP tree.
- * With private MIBs enabled, this depends on your MIB!
- * This affects the size of MEMP_SNMP_VALUE elements.
- */
-#ifndef SNMP_MAX_TREE_DEPTH
-#define SNMP_MAX_TREE_DEPTH             15
-#endif
-
-/**
- * The size of the MEMP_SNMP_VALUE elements, normally calculated from
- * SNMP_MAX_OCTET_STRING_LEN and SNMP_MAX_TREE_DEPTH.
- */
-#ifndef SNMP_MAX_VALUE_SIZE
-#define SNMP_MAX_VALUE_SIZE             LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN)+1, sizeof(s32_t)*(SNMP_MAX_TREE_DEPTH))
-#endif
-
-/**
- * The snmp read-access community. Used for write-access and traps, too
- * unless SNMP_COMMUNITY_WRITE or SNMP_COMMUNITY_TRAP are enabled, respectively.
- */
-#ifndef SNMP_COMMUNITY
-#define SNMP_COMMUNITY                  "public"
-#endif
-
-/**
- * Set this to 1 to enable support for dedicated write-access and trap communities.
- */
-#ifndef SNMP_COMMUNITY_EXT
-#define SNMP_COMMUNITY_EXT              0
-#endif
-
-#if SNMP_COMMUNITY_EXT
-/**
- * The snmp write-access community.
- */
-#ifndef SNMP_COMMUNITY_WRITE
-#define SNMP_COMMUNITY_WRITE            "private"
-#endif
-
-/**
- * The snmp community used for sending traps.
- */
-#ifndef SNMP_COMMUNITY_TRAP
-#define SNMP_COMMUNITY_TRAP             "public"
-#endif
-#endif /* SNMP_COMMUNITY_EXT */
 
 /*
    ----------------------------------
@@ -1926,7 +1783,7 @@
  * MIB2_STATS==1: Stats for SNMP MIB2.
  */
 #ifndef MIB2_STATS
-#define MIB2_STATS                      (LWIP_SNMP)
+#define MIB2_STATS                      0
 #endif
 
 #else

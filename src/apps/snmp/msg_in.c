@@ -32,20 +32,33 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "lwip/opt.h"
+#include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/snmp.h"
-#include "lwip/snmp_asn1.h"
-#include "lwip/snmp_msg.h"
-#include "lwip/snmp_structs.h"
+#if (!LWIP_UDP && LWIP_SNMP)
+  #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
+#if (LWIP_SNMP && (SNMP_CONCURRENT_REQUESTS<=0))
+  #error "If you want to use SNMP, you have to define SNMP_CONCURRENT_REQUESTS>=1 in your lwipopts.h"
+#endif
+#if (LWIP_SNMP && (SNMP_TRAP_DESTINATIONS<=0))
+  #error "If you want to use SNMP, you have to define SNMP_TRAP_DESTINATIONS>=1 in your lwipopts.h"
+#endif
+
+#include "lwip/apps/snmp.h"
+#include "lwip/apps/snmp_asn1.h"
+#include "snmp_msg.h"
+#include "lwip/apps/snmp_structs.h"
 #include "lwip/ip_addr.h"
 #include "lwip/memp.h"
 #include "lwip/udp.h"
 #include "lwip/stats.h"
 
 #include <string.h>
+
+LWIP_MEMPOOL_DECLARE(SNMP_VARBIND, SNMP_NUM_VARBIND, sizeof(struct snmp_varbind), "SNMP_VARBIND")
+LWIP_MEMPOOL_DECLARE(SNMP_VALUE,   SNMP_NUM_VALUE,   SNMP_MAX_VALUE_SIZE,         "SNMP_VALUE")
 
 /* public (non-static) constants */
 /** SNMP v1 == 0 */
@@ -79,6 +92,11 @@ snmp_init(void)
   struct snmp_msg_pstat *msg_ps;
   u8_t i;
 
+  LWIP_MEMPOOL_INIT(SNMP_VARBIND);
+  LWIP_MEMPOOL_INIT(SNMP_VALUE);
+  LWIP_MEMPOOL_INIT(SNMP_ROOTNODE);
+  LWIP_MEMPOOL_INIT(SNMP_NODE);
+  
   snmp1_pcb = udp_new();
   if (snmp1_pcb != NULL) {
     udp_recv(snmp1_pcb, snmp_recv, (void *)SNMP_IN_PORT);
@@ -190,7 +208,7 @@ snmp_error_response(struct snmp_msg_pstat *msg_ps, u8_t error)
   for (v = 0; v < msg_ps->vb_idx; v++) {
     if (vbi->ident != NULL) {
       /* free previously allocated value before overwriting the pointer */
-      memp_free(MEMP_SNMP_VALUE, vbi->ident);
+      LWIP_MEMPOOL_FREE(SNMP_VALUE, vbi->ident);
     }
     vbi->ident_len = vbo->ident_len;
     vbo->ident_len = 0;
@@ -268,7 +286,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     en = msg_ps->ext_mib_node;
 
     /* allocate output varbind */
-    vb = (struct snmp_varbind *)memp_malloc(MEMP_SNMP_VARBIND);
+    vb = (struct snmp_varbind *)LWIP_MEMPOOL_ALLOC(SNMP_VARBIND);
     if (vb != NULL) {
       vb->next = NULL;
       vb->prev = NULL;
@@ -282,13 +300,13 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
       vb->value_type = msg_ps->ext_object_def.asn_type;
 
-      vb->value = memp_malloc(MEMP_SNMP_VALUE);
+      vb->value = LWIP_MEMPOOL_ALLOC(SNMP_VALUE);
       if (vb->value != NULL) {
          vb->value_len = en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value);
          LWIP_ASSERT("SNMP_MAX_VALUE_SIZE is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
          if (vb->value_len == 0)
          {
-            memp_free(MEMP_SNMP_VALUE, vb->value);
+            LWIP_MEMPOOL_FREE(SNMP_VALUE, vb->value);
             vb->value = NULL;
          }
          snmp_varbind_tail_add(&msg_ps->outvb, vb);
@@ -300,7 +318,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
          LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no variable space\n"));
          msg_ps->vb_ptr->ident = vb->ident;
          msg_ps->vb_ptr->ident_len = vb->ident_len;
-         memp_free(MEMP_SNMP_VARBIND, vb);
+         LWIP_MEMPOOL_FREE(SNMP_VARBIND, vb);
          snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
       }
     } else {
@@ -350,7 +368,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
             msg_ps->state = SNMP_MSG_INTERNAL_GET_VALUE;
             /* allocate output varbind */
-            vb = (struct snmp_varbind *)memp_malloc(MEMP_SNMP_VARBIND);
+            vb = (struct snmp_varbind *)LWIP_MEMPOOL_ALLOC(SNMP_VARBIND);
             if (vb != NULL) {
               vb->next = NULL;
               vb->prev = NULL;
@@ -364,12 +382,12 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
               vb->value_type = object_def.asn_type;
 
-              vb->value = memp_malloc(MEMP_SNMP_VALUE);
+              vb->value = LWIP_MEMPOOL_ALLOC(SNMP_VALUE);
               if (vb->value != NULL) {
                  vb->value_len = msn->get_value(&object_def, vb->value);
                  LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
                  if (vb->value_len == 0) {
-                    memp_free(MEMP_SNMP_VALUE, vb->value);
+                    LWIP_MEMPOOL_FREE(SNMP_VALUE, vb->value);
                     vb->value = NULL;
                  }
                  snmp_varbind_tail_add(&msg_ps->outvb, vb);
@@ -381,7 +399,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
                  msg_ps->vb_ptr->ident_len = vb->ident_len;
                  vb->ident = NULL;
                  vb->ident_len = 0;
-                 memp_free(MEMP_SNMP_VARBIND, vb);
+                 LWIP_MEMPOOL_FREE(SNMP_VARBIND, vb);
                  snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
               }
             } else {
@@ -1216,7 +1234,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
 {
   struct snmp_varbind *vb;
 
-  vb = (struct snmp_varbind *)memp_malloc(MEMP_SNMP_VARBIND);
+  vb = (struct snmp_varbind *)LWIP_MEMPOOL_ALLOC(SNMP_VARBIND);
   if (vb != NULL) {
     u8_t i;
 
@@ -1227,7 +1245,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
     if (i > 0) {
       if (i <= SNMP_MAX_TREE_DEPTH) {
         /* allocate array of s32_t for our object identifier */
-        vb->ident = (s32_t*)memp_malloc(MEMP_SNMP_VALUE);
+        vb->ident = (s32_t*)LWIP_MEMPOOL_ALLOC(SNMP_VALUE);
         if (vb->ident == NULL) {
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: couldn't allocate ident value space\n"));
         }
@@ -1236,7 +1254,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
         vb->ident = NULL;
       }
       if (vb->ident == NULL) {
-        memp_free(MEMP_SNMP_VARBIND, vb);
+        LWIP_MEMPOOL_FREE(SNMP_VARBIND, vb);
         return NULL;
       }
       while (i > 0) {
@@ -1252,7 +1270,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
     if (len > 0) {
       if (vb->value_len <= SNMP_MAX_VALUE_SIZE) {
         /* allocate raw bytes for our object value */
-        vb->value = memp_malloc(MEMP_SNMP_VALUE);
+        vb->value = LWIP_MEMPOOL_ALLOC(SNMP_VALUE);
         if (vb->value == NULL) {
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_varbind_alloc: couldn't allocate value space\n"));
         }
@@ -1262,9 +1280,9 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len)
       }
       if (vb->value == NULL) {
         if (vb->ident != NULL) {
-          memp_free(MEMP_SNMP_VALUE, vb->ident);
+          LWIP_MEMPOOL_FREE(SNMP_VALUE, vb->ident);
         }
-        memp_free(MEMP_SNMP_VARBIND, vb);
+        LWIP_MEMPOOL_FREE(SNMP_VARBIND, vb);
         return NULL;
       }
     } else {
@@ -1281,12 +1299,12 @@ void
 snmp_varbind_free(struct snmp_varbind *vb)
 {
   if (vb->value != NULL) {
-    memp_free(MEMP_SNMP_VALUE, vb->value);
+    LWIP_MEMPOOL_FREE(SNMP_VALUE, vb->value);
   }
   if (vb->ident != NULL) {
-    memp_free(MEMP_SNMP_VALUE, vb->ident);
+    LWIP_MEMPOOL_FREE(SNMP_VALUE, vb->ident);
   }
-  memp_free(MEMP_SNMP_VARBIND, vb);
+  LWIP_MEMPOOL_FREE(SNMP_VARBIND, vb);
 }
 
 void

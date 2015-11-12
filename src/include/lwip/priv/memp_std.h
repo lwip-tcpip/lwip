@@ -87,12 +87,6 @@ LWIP_MEMPOOL(IGMP_GROUP,     MEMP_NUM_IGMP_GROUP,      sizeof(struct igmp_group)
 LWIP_MEMPOOL(SYS_TIMEOUT,    MEMP_NUM_SYS_TIMEOUT,     sizeof(struct sys_timeo),      "SYS_TIMEOUT")
 #endif /* LWIP_TIMERS */
 
-#if LWIP_SNMP
-LWIP_MEMPOOL(SNMP_ROOTNODE,  MEMP_NUM_SNMP_ROOTNODE,   sizeof(struct mib_list_rootnode), "SNMP_ROOTNODE")
-LWIP_MEMPOOL(SNMP_NODE,      MEMP_NUM_SNMP_NODE,       sizeof(struct mib_list_node),     "SNMP_NODE")
-LWIP_MEMPOOL(SNMP_VARBIND,   MEMP_NUM_SNMP_VARBIND,    sizeof(struct snmp_varbind),      "SNMP_VARBIND")
-LWIP_MEMPOOL(SNMP_VALUE,     MEMP_NUM_SNMP_VALUE,      SNMP_MAX_VALUE_SIZE,              "SNMP_VALUE")
-#endif /* LWIP_SNMP */
 #if LWIP_DNS && LWIP_SOCKET
 LWIP_MEMPOOL(NETDB,          MEMP_NUM_NETDB,           NETDB_ELEM_SIZE,               "NETDB")
 #endif /* LWIP_DNS && LWIP_SOCKET */

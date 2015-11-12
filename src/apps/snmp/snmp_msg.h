@@ -35,9 +35,9 @@
 #ifndef LWIP_HDR_SNMP_MSG_H
 #define LWIP_HDR_SNMP_MSG_H
 
-#include "lwip/opt.h"
-#include "lwip/snmp.h"
-#include "lwip/snmp_structs.h"
+#include "lwip/apps/snmp_opts.h"
+#include "lwip/apps/snmp.h"
+#include "lwip/apps/snmp_structs.h"
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 

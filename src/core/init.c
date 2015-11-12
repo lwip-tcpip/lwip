@@ -50,7 +50,6 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/priv/tcp_priv.h"
-#include "lwip/snmp.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
@@ -79,9 +78,6 @@
 #endif
 #if (!LWIP_UDP && LWIP_MULTICAST_TX_OPTIONS)
   #error "If you want to use IGMP/LWIP_MULTICAST_TX_OPTIONS, you have to define LWIP_UDP=1 in your lwipopts.h"
-#endif
-#if (!LWIP_UDP && LWIP_SNMP)
-  #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP && LWIP_DNS)
   #error "If you want to use DNS, you have to define LWIP_UDP=1 in your lwipopts.h"
@@ -172,12 +168,6 @@
 #endif
 #if (!LWIP_ARP && LWIP_AUTOIP)
   #error "If you want to use AUTOIP, you have to define LWIP_ARP=1 in your lwipopts.h"
-#endif
-#if (LWIP_SNMP && (SNMP_CONCURRENT_REQUESTS<=0))
-  #error "If you want to use SNMP, you have to define SNMP_CONCURRENT_REQUESTS>=1 in your lwipopts.h"
-#endif
-#if (LWIP_SNMP && (SNMP_TRAP_DESTINATIONS<=0))
-  #error "If you want to use SNMP, you have to define SNMP_TRAP_DESTINATIONS>=1 in your lwipopts.h"
 #endif
 #if (LWIP_TCP && ((LWIP_EVENT_API && LWIP_CALLBACK_API) || (!LWIP_EVENT_API && !LWIP_CALLBACK_API)))
   #error "One and exactly one of LWIP_EVENT_API and LWIP_CALLBACK_API has to be enabled in your lwipopts.h"
@@ -343,9 +333,6 @@ lwip_init(void)
 #if LWIP_TCP
   tcp_init();
 #endif /* LWIP_TCP */
-#if LWIP_SNMP
-  snmp_init();
-#endif /* LWIP_SNMP */
 #if LWIP_AUTOIP
   autoip_init();
 #endif /* LWIP_AUTOIP */

@@ -64,7 +64,7 @@ typedef enum {
 
 extern const struct memp_desc *memp_pools[MEMP_MAX];
 
-#define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc *memp_ ## name
+#define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc memp_ ## name
 
 #if MEMP_MEM_MALLOC
 

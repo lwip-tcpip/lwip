@@ -35,11 +35,11 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "lwip/opt.h"
+#include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/snmp.h"
+#include "lwip/apps/snmp.h"
 #include "lwip/snmp_mib2.h"
 
 #if !LWIP_MIB2_CALLBACKS
@@ -58,8 +58,8 @@
 #include "lwip/mem.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/udp.h"
-#include "lwip/snmp_asn1.h"
-#include "lwip/snmp_structs.h"
+#include "lwip/apps/snmp_asn1.h"
+#include "lwip/apps/snmp_structs.h"
 #include "lwip/sys.h"
 #include "netif/etharp.h"
 #include "lwip/stats.h"

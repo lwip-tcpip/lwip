@@ -33,8 +33,7 @@
 #ifndef LWIP_HDR_SNMP_H
 #define LWIP_HDR_SNMP_H
 
-#include "lwip/opt.h"
-#include "lwip/snmp_mib2.h"
+#include "lwip/apps/snmp_opts.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,6 +41,8 @@ extern "C" {
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/ip.h"
+    
 /** fixed maximum length for object identifier type */
 #define LWIP_SNMP_OBJ_ID_LEN 32
 

@@ -34,11 +34,11 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "lwip/opt.h"
+#include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/snmp_asn1.h"
+#include "lwip/apps/snmp_asn1.h"
 
 /**
  * Retrieves type field from incoming pbuf chain.

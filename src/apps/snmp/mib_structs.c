@@ -32,13 +32,16 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "lwip/opt.h"
+#include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/snmp_structs.h"
+#include "lwip/apps/snmp_structs.h"
 #include "lwip/memp.h"
 #include "lwip/netif.h"
+
+LWIP_MEMPOOL_DECLARE(SNMP_ROOTNODE, SNMP_NUM_ROOTNODE, sizeof(struct mib_list_rootnode), "SNMP_ROOTNODE")
+LWIP_MEMPOOL_DECLARE(SNMP_NODE,     SNMP_NUM_NODE,     sizeof(struct mib_list_node),     "SNMP_NODE")
 
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
 const s32_t prefix[4] = {1, 3, 6, 1};
@@ -154,7 +157,7 @@ snmp_mib_ln_alloc(s32_t id)
 {
   struct mib_list_node *ln;
 
-  ln = (struct mib_list_node *)memp_malloc(MEMP_SNMP_NODE);
+  ln = (struct mib_list_node *)LWIP_MEMPOOL_ALLOC(SNMP_NODE);
   if (ln != NULL) {
     ln->prev = NULL;
     ln->next = NULL;
@@ -167,7 +170,7 @@ snmp_mib_ln_alloc(s32_t id)
 void
 snmp_mib_ln_free(struct mib_list_node *ln)
 {
-  memp_free(MEMP_SNMP_NODE, ln);
+  LWIP_MEMPOOL_FREE(SNMP_NODE, ln);
 }
 
 struct mib_list_rootnode *
@@ -175,7 +178,7 @@ snmp_mib_lrn_alloc(void)
 {
   struct mib_list_rootnode *lrn;
 
-  lrn = (struct mib_list_rootnode*)memp_malloc(MEMP_SNMP_ROOTNODE);
+  lrn = (struct mib_list_rootnode*)LWIP_MEMPOOL_ALLOC(SNMP_ROOTNODE);
   if (lrn != NULL) {
     lrn->scalar.get_object_def = noleafs_get_object_def;
     lrn->scalar.get_value = noleafs_get_value;
@@ -192,7 +195,7 @@ snmp_mib_lrn_alloc(void)
 void
 snmp_mib_lrn_free(struct mib_list_rootnode *lrn)
 {
-  memp_free(MEMP_SNMP_ROOTNODE, lrn);
+  LWIP_MEMPOOL_FREE(SNMP_ROOTNODE, lrn);
 }
 
 /**
