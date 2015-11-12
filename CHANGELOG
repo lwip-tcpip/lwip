@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2015-11-12: Dirk Ziegelmeier
+  * Implement possibility to declare private memory pools. This is useful to
+    decouple some apps from the core (SNMP stack) or make contrib app useage
+    simpler (httpserver_raw)
+
   2015-10-09: Simon Goldschmidt
   * started to move "private" header files containing implementation details to
     "lwip/priv/" include directory to seperate the API from the implementation.
@@ -286,6 +291,9 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2015-11-12: fix by Valery Ushakov
+  * tcp_in.c: fixed bug #46365 tcp_accept_null() should call tcp_abort()
 
   2015-10-02: Dirk Ziegelmeier/Simon Goldschmidt
   * snmp: cleaned up snmp structs API (fixed race conditions from bug #46089,
