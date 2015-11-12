@@ -49,7 +49,7 @@
 #include "lwip/udp.h"
 #include "lwip/netif.h"
 #include "lwip/apps/snmp.h"
-#include "lwip/snmp_mib2.h"
+#include "lwip/snmp.h"
 #include "lwip/apps/snmp_asn1.h"
 #include "snmp_msg.h"
 #include "lwip/sys.h"

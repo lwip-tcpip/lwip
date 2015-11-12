@@ -62,7 +62,7 @@
 #include "lwip/icmp.h"
 #include "lwip/icmp6.h"
 #include "lwip/stats.h"
-#include "lwip/snmp_mib2.h"
+#include "lwip/snmp.h"
 #include "lwip/dhcp.h"
 
 #include <string.h>

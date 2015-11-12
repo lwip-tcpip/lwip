@@ -57,7 +57,7 @@
 #include "lwip/memp.h"
 #include "lwip/netif.h"
 #include "lwip/udp.h"
-#include "lwip/snmp_mib2.h"
+#include "lwip/snmp.h"
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/lcp.h"

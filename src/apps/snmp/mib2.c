@@ -40,7 +40,7 @@
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/apps/snmp.h"
-#include "lwip/snmp_mib2.h"
+#include "lwip/snmp.h"
 
 #if !LWIP_MIB2_CALLBACKS
 #error LWIP_SNMP MIB2 needs LWIP_MIB2_CALLBACKS (for MIB2)
