@@ -33,8 +33,6 @@
 #ifndef LWIP_HDR_MEMP_H
 #define LWIP_HDR_MEMP_H
 
-#include "lwip/opt.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,48 +48,59 @@ typedef enum {
   MEMP_MAX
 } memp_t;
 
-#if MEM_USE_POOLS
-/* Use a helper type to get the start and end of the user "memory pools" for mem_malloc */
-typedef enum {
-    /* Get the first (via:
-       MEMP_POOL_HELPER_START = ((u8_t) 1*MEMP_POOL_A + 0*MEMP_POOL_B + 0*MEMP_POOL_C + 0)*/
-    MEMP_POOL_HELPER_FIRST = ((u8_t)
-#define LWIP_MEMPOOL(name,num,size,desc)
-#define LWIP_MALLOC_MEMPOOL_START 1
-#define LWIP_MALLOC_MEMPOOL(num, size) * MEMP_POOL_##size + 0
-#define LWIP_MALLOC_MEMPOOL_END
-#include "lwip/priv/memp_std.h"
-    ) ,
-    /* Get the last (via:
-       MEMP_POOL_HELPER_END = ((u8_t) 0 + MEMP_POOL_A*0 + MEMP_POOL_B*0 + MEMP_POOL_C*1) */
-    MEMP_POOL_HELPER_LAST = ((u8_t)
-#define LWIP_MEMPOOL(name,num,size,desc)
-#define LWIP_MALLOC_MEMPOOL_START
-#define LWIP_MALLOC_MEMPOOL(num, size) 0 + MEMP_POOL_##size *
-#define LWIP_MALLOC_MEMPOOL_END 1
-#include "lwip/priv/memp_std.h"
-    )
-} memp_pool_helper_t;
+#include "lwip/priv/memp_priv.h"
 
-/* The actual start and stop values are here (cast them over)
-   We use this helper type and these defines so we can avoid using const memp_t values */
-#define MEMP_POOL_FIRST ((memp_t) MEMP_POOL_HELPER_FIRST)
-#define MEMP_POOL_LAST   ((memp_t) MEMP_POOL_HELPER_LAST)
-#endif /* MEM_USE_POOLS */
+/* Private mempools example:
+ * .h: only when pool is used in multiple .c files: LWIP_MEMPOOL_PROTOTYPE(my_private_pool);
+ * .c:
+ *   - in global variables section: LWIP_MEMPOOL_DECLARE(my_private_pool, 10, sizeof(foo), "Some description")
+ *   - call ONCE before using pool (e.g. in some init() function): LWIP_MEMPOOL_INIT(my_private_pool);
+ *   - allocate: void* my_new_mem = LWIP_MEMPOOL_ALLOC(my_private_pool);
+ *   - free: LWIP_MEMPOOL_FREE(my_private_pool, my_new_mem);
+ *
+ * To relocate a pool, declare it as extern in cc.h. Example for GCC:
+ *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_my_private_pool[];
+ */
 
-#if MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS
-extern const u16_t memp_sizes[MEMP_MAX];
-#endif /* MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS */
+extern const struct memp_desc *memp_pools[MEMP_MAX];
+
+#define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc *memp_ ## name
 
 #if MEMP_MEM_MALLOC
 
-#include "mem.h"
+#include "lwip/mem.h"
 
 #define memp_init()
-#define memp_malloc(type)     mem_malloc(memp_sizes[type])
+#define memp_malloc(type)     mem_malloc(memp_pools[type]->size)
 #define memp_free(type, mem)  mem_free(mem)
 
+#define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
+  const struct memp_desc memp_ ## name = { \
+    LWIP_MEM_ALIGN_SIZE(size) \
+  };
+
+#define LWIP_MEMPOOL_INIT(name)
+#define LWIP_MEMPOOL_ALLOC(name)   mem_malloc(memp_ ## name.size)
+#define LWIP_MEMPOOL_FREE(name, x) mem_free(x)
+
 #else /* MEMP_MEM_MALLOC */
+
+#define LWIP_MEMPOOL_DECLARE(name,num,size,desc) u8_t memp_memory_ ## name ## _base \
+    [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))]; \
+    \
+  static struct memp *memp_tab_ ## name; \
+    \
+  const struct memp_desc memp_ ## name = { \
+    LWIP_MEM_ALIGN_SIZE(size), \
+    (num), \
+    DECLARE_LWIP_MEMPOOL_DESC(desc) \
+    memp_memory_ ## name ## _base, \
+    &memp_tab_ ## name \
+  };
+
+#define LWIP_MEMPOOL_INIT(name)    memp_init_pool(&memp_ ## name)
+#define LWIP_MEMPOOL_ALLOC(name)   memp_malloc_pool(&memp_ ## name)
+#define LWIP_MEMPOOL_FREE(name, x) memp_free_pool(&memp_ ## name, (x))
 
 #if MEM_USE_POOLS
 /** This structure is used to save the pool one element came from. */
@@ -102,6 +111,7 @@ struct memp_malloc_helper
    u16_t size;
 #endif /* MEMP_OVERFLOW_CHECK */
 };
+
 #endif /* MEM_USE_POOLS */
 
 void  memp_init(void);

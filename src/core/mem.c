@@ -66,6 +66,11 @@
 #include <string.h>
 
 #if MEM_USE_POOLS
+
+#if MEMP_MEM_MALLOC
+#error MEM_USE_POOLS and MEMP_MEM_MALLOC cannot be used together
+#endif
+
 /* lwIP head implemented with different sized pools */
 
 /**
@@ -89,7 +94,7 @@ again:
 #endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
     /* is this pool big enough to hold an element of the required size
        plus a struct memp_malloc_helper that saves the pool this element came from? */
-    if (required_size <= memp_sizes[poolnr]) {
+    if (required_size <= memp_pools[poolnr]->size) {
       break;
     }
   }
@@ -119,7 +124,7 @@ again:
 #if MEMP_OVERFLOW_CHECK
   /* initialize unused memory */
   element->size = size;
-  memset((u8_t*)ret + size, 0xcd, memp_sizes[poolnr] - size);
+  memset((u8_t*)ret + size, 0xcd, memp_pools[poolnr]->size - size);
 #endif /* MEMP_OVERFLOW_CHECK */
   return ret;
 }
@@ -150,9 +155,9 @@ mem_free(void *rmem)
   {
      u16_t i;
      LWIP_ASSERT("MEM_USE_POOLS: invalid chunk size",
-        hmem->size <= memp_sizes[hmem->poolnr]);
+        hmem->size <= memp_pools[hmem->poolnr]->size);
      /* check that unused memory remained untouched */
-     for (i = hmem->size; i < memp_sizes[hmem->poolnr]; i++) {
+     for (i = hmem->size; i < memp_pools[hmem->poolnr]->size; i++) {
         u8_t data = *((u8_t*)rmem + i);
         LWIP_ASSERT("MEM_USE_POOLS: mem overflow detected", data == 0xcd);
      }

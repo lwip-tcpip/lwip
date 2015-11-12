@@ -143,15 +143,6 @@
 #endif
 
 /**
- * MEMP_SEPARATE_POOLS: if defined to 1, each pool is placed in its own array.
- * This can be used to individually change the location of each pool.
- * Default is one big array for all pools
- */
-#ifndef MEMP_SEPARATE_POOLS
-#define MEMP_SEPARATE_POOLS             0
-#endif
-
-/**
  * MEMP_OVERFLOW_CHECK: memp overflow protection reserves a configurable
  * amount of bytes before and after each memp element in every pool and fills
  * it with a prominent default value.
