@@ -109,8 +109,6 @@ struct tcp_pcb *tcp_active_pcbs;
 /** List of all TCP PCBs in TIME-WAIT state */
 struct tcp_pcb *tcp_tw_pcbs;
 
-#define NUM_TCP_PCB_LISTS               4
-#define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
 /** An array with all (non-temporary) PCB lists, mainly used for smaller code size */
 struct tcp_pcb ** const tcp_pcb_lists[] = {&tcp_listen_pcbs.pcbs, &tcp_bound_pcbs,
   &tcp_active_pcbs, &tcp_tw_pcbs};

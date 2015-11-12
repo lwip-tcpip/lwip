@@ -360,6 +360,9 @@ extern struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
               data. */
 extern struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
+#define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
+#define NUM_TCP_PCB_LISTS               4
+extern struct tcp_pcb ** const tcp_pcb_lists[NUM_TCP_PCB_LISTS];
 
 /* Axioms about the above lists:
    1) Every TCP PCB that is not CLOSED is in one of the lists.
