@@ -851,8 +851,7 @@ dns_alloc_pcb(void)
   }
   /* if we come here, creating a new UDP pcb failed, so we have to use
      an already existing one */
-  idx = dns_last_pcb_idx + 1;
-  for (i = 0; i < DNS_MAX_SOURCE_PORTS; i++) {
+  for (i = 0, idx = dns_last_pcb_idx + 1; i < DNS_MAX_SOURCE_PORTS; i++, idx++) {
     if (idx >= DNS_MAX_SOURCE_PORTS) {
       idx = 0;
     }
