@@ -75,6 +75,9 @@ void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize);
 void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize);
 void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize);
 void snmp_set_snmpenableauthentraps(u8_t *value);
+void snmp_msg_event(u8_t request_id);
+void snmp_coldstart_trap(void);
+void snmp_authfail_trap(void);
 #else
 /* LWIP_SNMP support not available */
 /* define everything to be empty */

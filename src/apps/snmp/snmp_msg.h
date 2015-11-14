@@ -305,11 +305,8 @@ void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *
 struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
 
 /** Handle an internal (recv) or external (private response) event. */
-void snmp_msg_event(u8_t request_id);
 err_t snmp_send_response(struct snmp_msg_pstat *m_stat);
 err_t snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific_trap);
-void snmp_coldstart_trap(void);
-void snmp_authfail_trap(void);
 
 #ifdef __cplusplus
 }
