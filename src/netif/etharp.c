@@ -650,6 +650,32 @@ etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
   return -1;
 }
 
+/**
+ * Possibility to iterate over stable ARP table entries
+ *
+ * @param i entry number, 0 to ARP_TABLE_SIZE
+ * @param ipaddr return value: IP address
+ * @param netif return value: points to interface
+ * @param eth_ret return value: ETH address
+ * @return 1 on valid index, 0 otherwise
+ */
+u8_t
+etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_addr **eth_ret)
+{
+  LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ASSERT("eth_ret != NULL", eth_ret != NULL);
+
+  if((i < ARP_TABLE_SIZE) && (arp_table[i].state >= ETHARP_STATE_STABLE)) {
+    *ipaddr  = &arp_table[i].ipaddr;
+    *netif   = arp_table[i].netif;
+    *eth_ret = &arp_table[i].ethaddr;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 #if ETHARP_TRUST_IP_MAC
 /**
  * Updates the ARP table using the given IP packet.
