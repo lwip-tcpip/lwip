@@ -808,9 +808,9 @@ pppos_input_drop(pppos_pcb *pppos)
     PPPDEBUG(LOG_INFO, ("pppos_input_drop: pbuf len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
   }
   pppos_input_free_current_packet(pppos);
-#if VJ_SUPPORT
+#if VJ_SUPPORT && LWIP_TCP
   vj_uncompress_err(&pppos->ppp->vj_comp);
-#endif /* VJ_SUPPORT */
+#endif /* VJ_SUPPORT && LWIP_TCP */
 
   LINK_STATS_INC(link.drop);
   MIB2_STATS_NETIF_INC(pppos->ppp->netif, ifindiscards);

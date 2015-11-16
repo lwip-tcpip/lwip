@@ -118,6 +118,7 @@ struct api_msg_msg {
     struct {
       u32_t len;
     } r;
+#if LWIP_TCP
     /** used for lwip_netconn_do_close (/shutdown) */
     struct {
       u8_t shut;
@@ -127,6 +128,7 @@ struct api_msg_msg {
       u8_t polls_left;
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
     } sd;
+#endif /* LWIP_TCP */
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
     /** used for lwip_netconn_do_join_leave_group */
     struct {

@@ -29,7 +29,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPP_SUPPORT && VJ_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#if PPP_SUPPORT && VJ_SUPPORT && LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppdebug.h"
@@ -654,4 +654,4 @@ bad:
   return (-1);
 }
 
-#endif /* PPP_SUPPORT && VJ_SUPPORT */
+#endif /* PPP_SUPPORT && VJ_SUPPORT && LWIP_TCP */

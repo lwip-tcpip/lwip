@@ -721,11 +721,13 @@ netconn_close_shutdown(struct netconn *conn, u8_t how)
 {
   API_MSG_VAR_DECLARE(msg);
   err_t err;
+  LWIP_UNUSED_ARG(how);
 
   LWIP_ERROR("netconn_close: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).msg.conn = conn;
+#if LWIP_TCP
   /* shutting down both ends is the same as closing */
   API_MSG_VAR_REF(msg).msg.msg.sd.shut = how;
 #if LWIP_SO_SNDTIMEO || LWIP_SO_LINGER
@@ -736,6 +738,7 @@ netconn_close_shutdown(struct netconn *conn, u8_t how)
   API_MSG_VAR_REF(msg).msg.msg.sd.polls_left =
     ((LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT + TCP_SLOW_INTERVAL - 1) / TCP_SLOW_INTERVAL) + 1;
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
+#endif /* LWIP_TCP */
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_close, err);
   API_MSG_VAR_FREE(msg);
 
