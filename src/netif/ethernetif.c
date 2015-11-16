@@ -51,7 +51,7 @@
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
-#include "lwip/snmp_mib2.h"
+#include "lwip/snmp.h"
 #include "lwip/ethip6.h"
 #include "netif/etharp.h"
 #include "netif/ppp/pppoe.h"
