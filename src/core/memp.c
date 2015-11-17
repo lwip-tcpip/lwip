@@ -91,7 +91,7 @@ memp_sanity(const struct memp_desc *desc)
   t = *desc->tab;
   if (t != NULL) {
     for (h = t->next; (t != NULL) && (h != NULL); t = t->next,
-      h = (((h->next != NULL) && (h->next->next != NULL)) ? h->next->next : NULL)) {
+      h = ((h->next != NULL) ? h->next->next : NULL)) {
       if (t == h) {
         return 0;
       }
