@@ -35,8 +35,8 @@
  * Author: Dirk Ziegelmeier <dziegel@gmx.de>
  *
  */
-#ifndef LWIP_HDR_SNMP_MIB2_H
-#define LWIP_HDR_SNMP_MIB2_H
+#ifndef LWIP_HDR_SNMP_H
+#define LWIP_HDR_SNMP_H
 
 #include "lwip/opt.h"
 #include "lwip/ip_addr.h"
@@ -188,4 +188,4 @@ void mib2_udp_unbind(struct udp_pcb *pcb);
 }
 #endif
 
-#endif /* LWIP_HDR_SNMP_MIB2_H */
+#endif /* LWIP_HDR_SNMP_H */
