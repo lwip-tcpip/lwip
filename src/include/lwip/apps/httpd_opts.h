@@ -33,8 +33,8 @@
  * capability.
  */
 
-#ifndef LWIP_HTTPD_OPTS_H
-#define LWIP_HTTPD_OPTS_H
+#ifndef LWIP_HDR_APPS_HTTPD_OPTS_H
+#define LWIP_HDR_APPS_HTTPD_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -283,4 +283,4 @@
 #define HTTPD_USE_CUSTOM_FSDATA 0
 #endif
 
-#endif	/* LWIP_HTTPD_OPTS_H */
+#endif	/* LWIP_HDR_APPS_HTTPD_OPTS_H */

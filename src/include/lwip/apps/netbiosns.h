@@ -24,8 +24,8 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-#ifndef LWIP_HDR_NETBIOS_H
-#define LWIP_HDR_NETBIOS_H
+#ifndef LWIP_HDR_APPS_NETBIOS_H
+#define LWIP_HDR_APPS_NETBIOS_H
 
 #include "lwip/apps/netbiosns_opts.h"
 
@@ -36,4 +36,4 @@ void netbiosns_set_name(const char* hostname);
 #endif
 void netbiosns_stop(void);
 
-#endif /* LWIP_HDR_NETBIOS_H */
+#endif /* LWIP_HDR_APPS_NETBIOS_H */

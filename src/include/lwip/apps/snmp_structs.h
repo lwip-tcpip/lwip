@@ -34,8 +34,8 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#ifndef LWIP_HDR_SNMP_STRUCTS_H
-#define LWIP_HDR_SNMP_STRUCTS_H
+#ifndef LWIP_HDR_APPS_SNMP_STRUCTS_H
+#define LWIP_HDR_APPS_SNMP_STRUCTS_H
 
 #include "lwip/opt.h"
 
@@ -268,4 +268,4 @@ void mib2_get_snmpenableauthentraps(u8_t *value);
 
 #endif /* LWIP_SNMP */
 
-#endif /* LWIP_HDR_SNMP_STRUCTS_H */
+#endif /* LWIP_HDR_APPS_SNMP_STRUCTS_H */

@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef LWIP_HDR_SNMP_OPTS_H
-#define LWIP_HDR_SNMP_OPTS_H
+#ifndef LWIP_HDR_APPS_SNMP_OPTS_H
+#define LWIP_HDR_APPS_SNMP_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -192,4 +192,4 @@
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #endif
 
-#endif	/* LWIP_HDR_SNMP_OPTS_H */
+#endif	/* LWIP_HDR_APPS_SNMP_OPTS_H */

@@ -130,7 +130,7 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/asn1_dec.c \
 HTTPDFILES=$(LWIPDIR)/apps/httpd/fs.c \
 	$(LWIPDIR)/apps/httpd/httpd.c
 
-# LWIPERFFILES: IPERF client
+# LWIPERFFILES: IPERF server
 LWIPERFFILES=$(LWIPDIR)/apps/lwiperf/lwiperf.c
 
 # SNTPFILES: SNTP client

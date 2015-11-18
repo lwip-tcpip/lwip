@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
+ * Copyright (c) 2007-2009 Frï¿½dï¿½ric Bernon, Simon Goldschmidt
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -26,11 +26,11 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Frédéric Bernon, Simon Goldschmidt
+ * Author: Frï¿½dï¿½ric Bernon, Simon Goldschmidt
  *
  */
-#ifndef LWIP_HDR_SNTP_OPTS_H
-#define LWIP_HDR_SNTP_OPTS_H
+#ifndef LWIP_HDR_APPS_SNTP_OPTS_H
+#define LWIP_HDR_APPS_SNTP_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -156,4 +156,4 @@
 #define SNTP_RETRY_TIMEOUT_EXP      1
 #endif
 
-#endif /* LWIP_HDR_SNTP_OPTS_H */
+#endif /* LWIP_HDR_APPS_SNTP_OPTS_H */

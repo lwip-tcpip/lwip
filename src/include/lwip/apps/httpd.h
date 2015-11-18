@@ -33,8 +33,8 @@
  * capability.
  */
 
-#ifndef LWIP_HTTPD_H
-#define LWIP_HTTPD_H
+#ifndef LWIP_HDR_APPS_HTTPD_H
+#define LWIP_HDR_APPS_HTTPD_H
 
 #include "httpd_opts.h"
 #include "lwip/err.h"
@@ -196,4 +196,4 @@ void httpd_init(void);
 }
 #endif
 
-#endif /* LWIP_HTTPD_H */
+#endif /* LWIP_HDR_APPS_HTTPD_H */

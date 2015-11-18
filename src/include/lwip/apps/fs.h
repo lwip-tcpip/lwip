@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_FS_H
-#define LWIP_FS_H
+#ifndef LWIP_HDR_APPS_FS_H
+#define LWIP_HDR_APPS_FS_H
 
 #include "httpd_opts.h"
 #include "lwip/err.h"
@@ -97,4 +97,4 @@ void fs_state_free(struct fs_file *file, void *state);
 }
 #endif
 
-#endif /* LWIP_FS_H */
+#endif /* LWIP_HDR_APPS_FS_H */

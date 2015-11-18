@@ -24,8 +24,8 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-#ifndef LWIP_HDR_NETBIOS_OPTS_H
-#define LWIP_HDR_NETBIOS_OPTS_H
+#ifndef LWIP_HDR_APPS_NETBIOS_OPTS_H
+#define LWIP_HDR_APPS_NETBIOS_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -50,4 +50,4 @@
 /*#define NETBIOS_LWIP_NAME "NETBIOSLWIPDEV"*/
 
 
-#endif /* LWIP_HDR_NETBIOS_OPTS_H */
+#endif /* LWIP_HDR_APPS_NETBIOS_OPTS_H */

@@ -30,8 +30,8 @@
  * Author: Leon Woestenberg <leon.woestenberg@axon.tv>
  *
  */
-#ifndef LWIP_HDR_SNMP_H
-#define LWIP_HDR_SNMP_H
+#ifndef LWIP_HDR_APPS_SNMP_H
+#define LWIP_HDR_APPS_SNMP_H
 
 #include "lwip/apps/snmp_opts.h"
 
@@ -96,4 +96,4 @@ void snmp_authfail_trap(void);
 }
 #endif
 
-#endif /* LWIP_HDR_SNMP_H */
+#endif /* LWIP_HDR_APPS_SNMP_H */

@@ -29,8 +29,8 @@
  * Author: Simon Goldschmidt
  *
  */
-#ifndef LWIP_HDR_LWIPERF_H
-#define LWIP_HDR_LWIPERF_H
+#ifndef LWIP_HDR_APPS_LWIPERF_H
+#define LWIP_HDR_APPS_LWIPERF_H
 
 #include "lwip/opt.h"
 #include "lwip/ip_addr.h"
@@ -73,4 +73,4 @@ void  lwiperf_abort(void* lwiperf_session);
 }
 #endif
 
-#endif /* LWIP_HDR_LWIPERF_H */
+#endif /* LWIP_HDR_APPS_LWIPERF_H */
