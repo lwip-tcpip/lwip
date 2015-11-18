@@ -383,6 +383,7 @@ raw_remove(struct raw_pcb *pcb)
       if (pcb2->next != NULL && pcb2->next == pcb) {
         /* remove pcb from list */
         pcb2->next = pcb->next;
+        break;
       }
     }
   }
