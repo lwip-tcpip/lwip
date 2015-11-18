@@ -138,14 +138,18 @@ void mib2_remove_arp_entry(struct netif *ni, ip4_addr_t *ip);
 #endif /* LWIP_IPV4 && LWIP_ARP */
 
 /* IP */
+#if LWIP_IPV4
 void mib2_add_ip4(struct netif *ni);
 void mib2_remove_ip4(struct netif *ni);
 void mib2_add_route_ip4(u8_t dflt, struct netif *ni);
 void mib2_remove_route_ip4(u8_t dflt, struct netif *ni);
+#endif /* LWIP_IPV4 */
 
 /* UDP */
+#if LWIP_UDP
 void mib2_udp_bind(struct udp_pcb *pcb);
 void mib2_udp_unbind(struct udp_pcb *pcb);
+#endif /* LWIP_UDP */
 
 #else /* LWIP_MIB2_CALLBACKS */
 /* LWIP_MIB2_CALLBACKS support not available */
