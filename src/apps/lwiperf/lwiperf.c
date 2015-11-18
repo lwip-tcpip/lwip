@@ -85,14 +85,14 @@ typedef struct _lwiperf_settings {
 /** Basic connection handle */
 struct _lwiperf_state_base;
 typedef struct _lwiperf_state_base lwiperf_state_base_t;
-typedef struct _lwiperf_state_base {
+struct _lwiperf_state_base {
   /* 1=tcp, 0=udp */
   u8_t tcp;
   /* 1=server, 0=client */
   u8_t server;
   lwiperf_state_base_t* next;
   lwiperf_state_base_t* related_server_state;
-} lwiperf_state_base_t;
+};
 
 /** Connection handle for a TCP iperf session */
 typedef struct _lwiperf_state_tcp {

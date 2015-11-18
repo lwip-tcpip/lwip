@@ -31,7 +31,7 @@
 
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.
 COREFILES=$(LWIPDIR)/core/def.c \
-        $(LWIPDIR)/core/dns.c \
+	$(LWIPDIR)/core/dns.c \
 	$(LWIPDIR)/core/inet_chksum.c \
 	$(LWIPDIR)/core/init.c \
 	$(LWIPDIR)/core/mem.c \
@@ -129,7 +129,10 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/asn1_dec.c \
 # HTTPDFILES: HTTP server
 HTTPDFILES=$(LWIPDIR)/apps/httpd/fs.c \
 	$(LWIPDIR)/apps/httpd/httpd.c
-	
+
+# LWIPERFFILES: IPERF client
+LWIPERFFILES=$(LWIPDIR)/apps/lwiperf/lwiperf.c
+
 # SNTPFILES: SNTP client
 SNTPFILES=$(LWIPDIR)/apps/sntp/sntp.c
 
@@ -139,5 +142,6 @@ NETBIOSNSFILES=$(LWIPDIR)/apps/netbiosns/netbiosns.c
 # LWIPAPPFILES: All LWIP APPs
 LWIPAPPFILES=$(SNMPFILES) \
 	$(HTTPDFILES) \
+	$(LWIPERFFILES) \
 	$(SNTPFILES) \
 	$(NETBIOSNSFILES)
