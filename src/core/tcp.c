@@ -1331,14 +1331,13 @@ tcp_kill_prio(u8_t prio)
   u32_t inactivity;
   u8_t mprio;
 
-  mprio = TCP_PRIO_MAX;
+  mprio = LWIP_MIN(TCP_PRIO_MAX, prio);
 
   /* We kill the oldest active connection that has lower priority than prio. */
   inactivity = 0;
   inactive = NULL;
   for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    if (pcb->prio <= prio &&
-       pcb->prio <= mprio &&
+    if (pcb->prio <= mprio &&
        (u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
       inactivity = tcp_ticks - pcb->tmr;
       inactive = pcb;
