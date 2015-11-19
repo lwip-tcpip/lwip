@@ -363,7 +363,7 @@ memp_free_pool(const struct memp_desc* desc, void *mem)
 
   SYS_ARCH_PROTECT(old_level);
 
-#if MEMP_OVERFLOW_CHECK == 2
+#if MEMP_OVERFLOW_CHECK == 1
   memp_overflow_check_element_overflow(memp, desc);
   memp_overflow_check_element_underflow(memp, desc);
 #endif /* MEMP_OVERFLOW_CHECK */
