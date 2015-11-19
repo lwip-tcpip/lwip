@@ -296,6 +296,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-11-19: fix by Kerem Hadimli
+  * sockets.c: fixed bug #46471: lwip_accept() leaks socket descriptors if new
+    netconn was already closed because of peer behavior
+
   2015-11-12: fix by Valery Ushakov
   * tcp_in.c: fixed bug #46365 tcp_accept_null() should call tcp_abort()
 

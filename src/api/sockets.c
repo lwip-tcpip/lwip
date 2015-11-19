@@ -556,6 +556,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     if (err != ERR_OK) {
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): netconn_peer failed, err=%d\n", s, err));
       netconn_delete(newconn);
+      free_socket(nsock, 1);
       sock_set_errno(sock, err_to_errno(err));
       return -1;
     }
