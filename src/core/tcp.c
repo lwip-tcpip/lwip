@@ -141,7 +141,7 @@ tcp_tmr(void)
   tcp_fasttmr();
 
   if (++tcp_timer & 1) {
-    /* Call tcp_tmr() every 500 ms, i.e., every other timer
+    /* Call tcp_slowtmr() every 500 ms, i.e., every other timer
        tcp_tmr() is called. */
     tcp_slowtmr();
   }
