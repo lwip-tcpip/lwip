@@ -291,7 +291,7 @@ igmp_lookfor_group(struct netif *ifp, const ip4_addr_t *addr)
 struct igmp_group *
 igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
 {
-  struct igmp_group *group = igmp_group_list;
+  struct igmp_group *group;
 
   /* Search if the group already exists */
   group = igmp_lookfor_group(ifp, addr);
