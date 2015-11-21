@@ -283,10 +283,8 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
 err_t
 tcp_close(struct tcp_pcb *pcb)
 {
-#if TCP_DEBUG
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in "));
   tcp_debug_print_state(pcb->state);
-#endif /* TCP_DEBUG */
 
   if (pcb->state != LISTEN) {
     /* Set a flag not to receive any more data... */

@@ -325,9 +325,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (pcb != NULL) {
     /* The incoming segment belongs to a connection. */
 #if TCP_INPUT_DEBUG
-#if TCP_DEBUG
     tcp_debug_print_state(pcb->state);
-#endif /* TCP_DEBUG */
 #endif /* TCP_INPUT_DEBUG */
 
     /* Set up a tcp_seg structure. */
