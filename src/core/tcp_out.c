@@ -1597,6 +1597,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
     err = ip_output_if(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
       0, IP_PROTO_TCP, netif);
+    NETIF_SET_HWADDRHINT(netif, NULL);
   }
 
   pbuf_free(p);
