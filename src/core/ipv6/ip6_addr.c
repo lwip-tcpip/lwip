@@ -311,13 +311,10 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
         return ip6addr_aton(cp, ip_2_ip6(addr));
       } else if (*c == '.') {
         /* contains a dot: IPv4 address */
-        if (addr) {
-          IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
-        }
-        return ip4addr_aton(cp, ip_2_ip4(addr));
+        break;
       }
     }
-    /* nothing found, call ip4addr_aton as fallback */
+    /* call ip4addr_aton as fallback or if IPv4 was found */
     if (addr) {
       IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
     }
