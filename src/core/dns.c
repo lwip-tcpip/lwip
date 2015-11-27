@@ -816,7 +816,7 @@ dns_alloc_random_port(void)
     }
     err = udp_bind(ret, IP_ADDR_ANY, port);
   } while (err == ERR_USE);
-  if ((err != ERR_OK) && (err != ERR_USE)) {
+  if (err != ERR_OK) {
     udp_remove(ret);
     return NULL;
   }
