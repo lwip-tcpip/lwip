@@ -460,7 +460,6 @@ static void
 free_socket(struct lwip_sock *sock, int is_tcp)
 {
   void *lastdata;
-  SYS_ARCH_DECL_PROTECT(lev);
 
   lastdata         = sock->lastdata;
   sock->lastdata   = NULL;
@@ -468,9 +467,7 @@ free_socket(struct lwip_sock *sock, int is_tcp)
   sock->err        = 0;
 
   /* Protect socket array */
-  SYS_ARCH_PROTECT(lev);
-  sock->conn       = NULL;
-  SYS_ARCH_UNPROTECT(lev);
+  SYS_ARCH_SET(sock->conn, NULL);
   /* don't use 'sock' after this line, as another task might have allocated it */
 
   if (lastdata != NULL) {

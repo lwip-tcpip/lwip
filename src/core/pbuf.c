@@ -117,11 +117,7 @@ void
 pbuf_free_ooseq(void)
 {
   struct tcp_pcb* pcb;
-  SYS_ARCH_DECL_PROTECT(old_level);
-
-  SYS_ARCH_PROTECT(old_level);
-  pbuf_free_ooseq_pending = 0;
-  SYS_ARCH_UNPROTECT(old_level);
+  SYS_ARCH_SET(pbuf_free_ooseq_pending, 0);
 
   for (pcb = tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
     if (NULL != pcb->ooseq) {
@@ -151,10 +147,7 @@ static void
 pbuf_pool_is_empty(void)
 {
 #ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-  pbuf_free_ooseq_pending = 1;
-  SYS_ARCH_UNPROTECT(old_level);
+  SYS_ARCH_SET(pbuf_free_ooseq_pending, 1);
 #else /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
   u8_t queued;
   SYS_ARCH_DECL_PROTECT(old_level);

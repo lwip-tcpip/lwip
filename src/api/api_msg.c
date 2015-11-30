@@ -366,7 +366,6 @@ err_tcp(void *arg, err_t err)
 {
   struct netconn *conn;
   enum netconn_state old_state;
-  SYS_ARCH_DECL_PROTECT(lev);
 
   conn = (struct netconn *)arg;
   LWIP_ASSERT("conn != NULL", (conn != NULL));
@@ -374,9 +373,7 @@ err_tcp(void *arg, err_t err)
   conn->pcb.tcp = NULL;
 
   /* no check since this is always fatal! */
-  SYS_ARCH_PROTECT(lev);
-  conn->last_err = err;
-  SYS_ARCH_UNPROTECT(lev);
+  SYS_ARCH_SET(conn->last_err, err);
 
   /* reset conn->state now before waking up other threads */
   old_state = conn->state;
