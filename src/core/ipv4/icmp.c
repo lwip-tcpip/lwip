@@ -164,11 +164,13 @@ icmp_input(struct pbuf *p, struct netif *inp)
       /* switch r->payload back to icmp header */
       if (pbuf_header(r, -hlen)) {
         LWIP_ASSERT("icmp_input: moving r->payload to icmp header failed\n", 0);
+        pbuf_free(r);
         goto icmperr;
       }
       /* copy the rest of the packet without ip header */
       if (pbuf_copy(r, p) != ERR_OK) {
         LWIP_ASSERT("icmp_input: copying to new pbuf failed\n", 0);
+        pbuf_free(r);
         goto icmperr;
       }
       /* free the original p */
