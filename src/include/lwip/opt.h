@@ -2969,20 +2969,6 @@
 #endif
 
 /**
- * SNMP_MSG_DEBUG: Enable debugging for SNMP messages.
- */
-#ifndef SNMP_MSG_DEBUG
-#define SNMP_MSG_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/**
- * SNMP_MIB_DEBUG: Enable debugging for SNMP MIBs.
- */
-#ifndef SNMP_MIB_DEBUG
-#define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/**
  * DNS_DEBUG: Enable debugging for DNS.
  */
 #ifndef DNS_DEBUG
