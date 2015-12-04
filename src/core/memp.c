@@ -344,18 +344,16 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
   return memp;
 }
 
-void
-memp_free_pool(const struct memp_desc* desc, void *mem)
+static void
+#ifdef LWIP_HOOK_MEMP_AVAILABLE
+do_memp_free_pool(const struct memp_desc* desc, void *mem, struct memp **old_first)
+#else
+do_memp_free_pool(const struct memp_desc* desc, void *mem)
+#endif
 {
   struct memp *memp;
-#ifdef LWIP_HOOK_MEMP_AVAILABLE
-  struct memp *old_first;
-#endif
   SYS_ARCH_DECL_PROTECT(old_level);
 
-  if (mem == NULL) {
-    return;
-  }
   LWIP_ASSERT("memp_free: mem properly aligned",
                 ((mem_ptr_t)mem % MEM_ALIGNMENT) == 0);
 
@@ -369,9 +367,12 @@ memp_free_pool(const struct memp_desc* desc, void *mem)
 #endif /* MEMP_OVERFLOW_CHECK */
 
   memp->next = *desc->tab;
+
 #ifdef LWIP_HOOK_MEMP_AVAILABLE
-  old_first = *desc->tab;
+  if (old_first)
+    *old_first = *desc->tab;
 #endif
+
   *desc->tab = memp;
 
 #if MEMP_SANITY_CHECK
@@ -379,6 +380,20 @@ memp_free_pool(const struct memp_desc* desc, void *mem)
 #endif /* MEMP_SANITY_CHECK */
 
   SYS_ARCH_UNPROTECT(old_level);
+}
+
+void
+memp_free_pool(const struct memp_desc* desc, void *mem)
+{
+  if ((desc == NULL) || (mem == NULL)) {
+    return;
+  }
+
+#ifdef LWIP_HOOK_MEMP_AVAILABLE
+  do_memp_free_pool(desc, mem, NULL);
+#else
+  do_memp_free_pool(desc, mem);
+#endif
 }
 
 /**
@@ -405,7 +420,11 @@ memp_free(memp_t type, void *mem)
 
   MEMP_STATS_DEC(used, type);
 
-  memp_free_pool(memp_pools[type], mem);
+#ifdef LWIP_HOOK_MEMP_AVAILABLE
+  do_memp_free_pool(memp_pools[type], mem, &old_first);
+#else
+  do_memp_free_pool(memp_pools[type], mem);
+#endif
 
   SYS_ARCH_UNPROTECT(old_level);
 
