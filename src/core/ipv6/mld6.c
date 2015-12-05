@@ -536,11 +536,7 @@ mld6_send(struct mld_group *group, u8_t type)
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
   p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + sizeof(struct ip6_hbh_hdr), PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct mld_header) + sizeof(struct ip6_hbh_hdr)))) {
-    /* We couldn't allocate a suitable pbuf. drop it. */
-    if (p != NULL) {
-      pbuf_free(p);
-    }
+  if (p == NULL) {
     MLD6_STATS_INC(mld6.memerr);
     return;
   }

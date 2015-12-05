@@ -855,11 +855,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   /* Allocate a packet. */
   lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   p = pbuf_alloc(PBUF_IP, sizeof(struct ns_header) + (lladdr_opt_len << 3), PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct ns_header) + (lladdr_opt_len << 3)))) {
-    /* We couldn't allocate a suitable pbuf for the ns. drop it. */
-    if (p != NULL) {
-      pbuf_free(p);
-    }
+  if (p == NULL) {
     ND6_STATS_INC(nd6.memerr);
     return;
   }
@@ -923,11 +919,7 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   /* Allocate a packet. */
   lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   p = pbuf_alloc(PBUF_IP, sizeof(struct na_header) + (lladdr_opt_len << 3), PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct na_header) + (lladdr_opt_len << 3)))) {
-    /* We couldn't allocate a suitable pbuf for the ns. drop it. */
-    if (p != NULL) {
-      pbuf_free(p);
-    }
+  if (p == NULL) {
     ND6_STATS_INC(nd6.memerr);
     return;
   }
@@ -1005,11 +997,7 @@ nd6_send_rs(struct netif * netif)
     lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   }
   p = pbuf_alloc(PBUF_IP, sizeof(struct rs_header) + (lladdr_opt_len << 3), PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct rs_header) + (lladdr_opt_len << 3)))) {
-    /* We couldn't allocate a suitable pbuf for the ns. drop it. */
-    if (p != NULL) {
-      pbuf_free(p);
-    }
+  if (p == NULL) {
     ND6_STATS_INC(nd6.memerr);
     return ERR_BUF;
   }
