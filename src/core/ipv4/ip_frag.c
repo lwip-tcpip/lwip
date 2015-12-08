@@ -356,7 +356,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   iprh->end = offset + len;
 
   /* Iterate through until we either get to the end of the list (append),
-   * or we find on with a larger offset (insert). */
+   * or we find one with a larger offset (insert). */
   for (q = ipr->p; q != NULL;) {
     iprh_tmp = (struct ip_reass_helper*)q->payload;
     if (iprh->start < iprh_tmp->start) {
@@ -385,7 +385,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
       goto freepbuf;
 #endif /* IP_REASS_CHECK_OVERLAP */
     } else {
-      /* Check if the fragments received so far have no wholes. */
+      /* Check if the fragments received so far have no holes. */
       if (iprh_prev != NULL) {
         if (iprh_prev->end != iprh_tmp->start) {
           /* There is a fragment missing between the current
@@ -423,14 +423,14 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
   /* At this point, the validation part begins: */
   /* If we already received the last fragment */
   if ((ipr->flags & IP_REASS_FLAG_LASTFRAG) != 0) {
-    /* and had no wholes so far */
+    /* and had no holes so far */
     if (valid) {
       /* then check if the rest of the fragments is here */
       /* Check if the queue starts with the first datagram */
       if ((ipr->p == NULL) || (((struct ip_reass_helper*)ipr->p->payload)->start != 0)) {
         valid = 0;
       } else {
-        /* and check that there are no wholes after this datagram */
+        /* and check that there are no holes after this datagram */
         iprh_prev = iprh;
         q = iprh->next_pbuf;
         while (q != NULL) {
