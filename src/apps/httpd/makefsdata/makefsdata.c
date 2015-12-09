@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
   CHDIR(path);
 
-  fprintf(data_file, "#include \"fs.h\"" NEWLINE);
+  fprintf(data_file, "#include \"lwip/apps/fs.h\"" NEWLINE);
   fprintf(data_file, "#include \"lwip/def.h\"" NEWLINE);
   fprintf(data_file, "#include \"fsdata.h\"" NEWLINE NEWLINE NEWLINE);
 
