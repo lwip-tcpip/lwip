@@ -815,6 +815,11 @@
 #define LWIP_DHCP_AUTOIP_COOP_TRIES     9
 #endif
 
+/*
+   ----------------------------------
+   ----- SNMP MIB2 support      -----
+   ----------------------------------
+*/
 /**
  * LWIP_MIB2_CALLBACKS==1: Turn on SNMP MIB2 callbacks.
  * Turn this on to get callbacks needed to implement MIB2.
