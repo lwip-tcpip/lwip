@@ -886,7 +886,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
         /* this is kind of an lwip addition to the standard sockets: we wait
            for some time when failing to allocate a segment for the FIN */
 #if LWIP_SO_SNDTIMEO
-        if (conn->send_timeout >= 0) {
+        if (conn->send_timeout > 0) {
           close_timeout = conn->send_timeout;
         }
 #endif /* LWIP_SO_SNDTIMEO */
