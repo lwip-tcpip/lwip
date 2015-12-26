@@ -124,7 +124,7 @@
  * The maximum size of a value.
  */
 #ifndef SNMP_MAX_VALUE_SIZE
-#define SNMP_MIN_VALUE_SIZE             (2 * sizeof(u32_t*)) // size required to store the basic types (8 bytes for counter64)
+#define SNMP_MIN_VALUE_SIZE             (2 * sizeof(u32_t*)) /* size required to store the basic types (8 bytes for counter64) */
 #define SNMP_MAX_VALUE_SIZE             LWIP_MAX(LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN), sizeof(u32_t)*(SNMP_MAX_OBJ_ID_LEN)), SNMP_MIN_VALUE_SIZE)
 #endif
 

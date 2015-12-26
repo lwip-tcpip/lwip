@@ -55,7 +55,7 @@ static struct snmp_trap_dst trap_dst[SNMP_TRAP_DESTINATIONS];
 static u8_t snmp_auth_traps_enabled = 0;
 
 /** TRAP message structure */
-//struct snmp_msg_trap trap_msg;
+/*struct snmp_msg_trap trap_msg;*/
 
 /**
  * Sets enable switch for this trap destination.
@@ -118,6 +118,7 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
   LWIP_UNUSED_ARG(generic_trap);
   LWIP_UNUSED_ARG(specific_trap);
   return ERR_OK;
+#if 0
   //struct snmp_trap_dst *td;
   //struct netif *dst_if;
   //const ip_addr_t* dst_ip;
@@ -178,6 +179,7 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
   //  }
   //}
   //return err;
+#endif
 }
 
 err_t 
@@ -195,9 +197,6 @@ err_t snmp_send_trap_specific(s32_t specific_trap)
 void
 snmp_coldstart_trap(void)
 {
-  //trap_msg.outvb.head = NULL;
-  //trap_msg.outvb.tail = NULL;
-  //trap_msg.outvb.count = 0;
   snmp_send_trap_generic(SNMP_GENTRAP_COLDSTART);
 }
 
@@ -205,13 +204,11 @@ void
 snmp_authfail_trap(void)
 {
   if (snmp_auth_traps_enabled != 0) {
-    //trap_msg.outvb.head = NULL;
-    //trap_msg.outvb.tail = NULL;
-    //trap_msg.outvb.count = 0;
     snmp_send_trap_generic(SNMP_GENTRAP_AUTH_FAILURE);
   }
 }
 
+#if 0
 //extern struct snmp_msg_trap trap_msg;
 
 //struct snmp_msg_trap
@@ -409,5 +406,6 @@ snmp_authfail_trap(void)
 //
 //  return ofs;
 //}
-
 #endif
+
+#endif /* LWIP_SNMP */

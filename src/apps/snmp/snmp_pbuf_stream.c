@@ -43,7 +43,7 @@ snmp_pbuf_stream_init(struct snmp_pbuf_stream* pbuf_stream, struct pbuf* p, u16_
   pbuf_stream->offset = offset;
   pbuf_stream->length = length;
 
-  // skip to matching buffer
+  /* skip to matching buffer */
   while (offset >= p->len) {
     offset -= p->len;
     p = p->next;
@@ -214,7 +214,7 @@ snmp_pbuf_stream_seek(struct snmp_pbuf_stream* pbuf_stream, s32_t offset)
   pbuf_stream->offset += (u16_t)offset;
   pbuf_stream->length -= (u16_t)offset;
 
-  // skipt to matching buffer
+  /* skip to matching buffer */
   while (offset > pbuf_stream->pbuf_len) {
     offset -= pbuf_stream->pbuf_len;
 

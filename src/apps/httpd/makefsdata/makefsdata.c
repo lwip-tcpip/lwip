@@ -500,7 +500,7 @@ static void fix_filename_for_c(char* qualifiedName, size_t max_len)
          if (!strcmp(f->filename_c, new_name)) {
             filename_ok = 0;
             cnt++;
-            // try next unique file name
+            /* try next unique file name */
             sprintf(&new_name[len], "%d", cnt);
             break;
          }

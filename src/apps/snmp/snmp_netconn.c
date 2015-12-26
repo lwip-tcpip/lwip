@@ -53,8 +53,8 @@ snmp_netconn_thread(void *arg)
   conn = netconn_new(NETCONN_UDP);
   LWIP_ERROR("snmp_netconn: invalid conn", (conn != NULL), return;);
   
-  //trap_msg.handle = conn;
-  //trap_msg.lip = &conn->pcb.udp->local_ip;
+  /*trap_msg.handle = conn;*/
+  /*trap_msg.lip = &conn->pcb.udp->local_ip;*/
   
   /* Bind to SNMP port with default IP address */
   netconn_bind(conn, IP_ADDR_ANY, SNMP_IN_PORT);  

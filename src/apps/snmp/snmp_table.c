@@ -162,7 +162,7 @@ snmp_err_t snmp_table_get_next_instance(const u32_t *root_oid, u8_t root_oid_len
   }
   while (1);
 
-  // build resulting oid
+  /* build resulting oid */
   instance->instance_oid.len   = 2;
   instance->instance_oid.id[0] = 1;
   instance->instance_oid.id[1] = col_def->index;
@@ -218,7 +218,7 @@ snmp_err_t snmp_table_simple_get_instance(const u32_t *root_oid, u8_t root_oid_l
         {
           case SNMP_VARIANT_VALUE_TYPE_U32: instance->get_value = snmp_table_extract_value_from_u32ref; break;
           case SNMP_VARIANT_VALUE_TYPE_S32: instance->get_value = snmp_table_extract_value_from_s32ref; break;
-          case SNMP_VARIANT_VALUE_TYPE_PTR: // fall through
+          case SNMP_VARIANT_VALUE_TYPE_PTR: /* fall through */
           case SNMP_VARIANT_VALUE_TYPE_CONST_PTR: instance->get_value = snmp_table_extract_value_from_refconstptr; break;
           default:
             LWIP_DEBUGF(SNMP_DEBUG, ("snmp_table_simple_get_instance(): unknown column data_type: %d\n", col_def->data_type));
@@ -319,14 +319,14 @@ snmp_err_t snmp_table_simple_get_next_instance(const u32_t *root_oid, u8_t root_
   {
     case SNMP_VARIANT_VALUE_TYPE_U32: instance->get_value = snmp_table_extract_value_from_u32ref; break;
     case SNMP_VARIANT_VALUE_TYPE_S32: instance->get_value = snmp_table_extract_value_from_s32ref; break;
-    case SNMP_VARIANT_VALUE_TYPE_PTR: // fall through
+    case SNMP_VARIANT_VALUE_TYPE_PTR: /* fall through */
     case SNMP_VARIANT_VALUE_TYPE_CONST_PTR: instance->get_value = snmp_table_extract_value_from_refconstptr; break;
     default:
       LWIP_DEBUGF(SNMP_DEBUG, ("snmp_table_simple_get_instance(): unknown column data_type: %d\n", col_def->data_type));
       return SNMP_ERR_GENERROR;
   }
 
-  // build resulting oid
+  /* build resulting oid */
   instance->instance_oid.len   = 2;
   instance->instance_oid.id[0] = 1;
   instance->instance_oid.id[1] = col_def->index;

@@ -70,8 +70,8 @@ snmp_init(void)
   snmp_pcb = udp_new();
 
   if (snmp_pcb != NULL) {
-    //trap_msg.handle = snmp_pcb;
-    //trap_msg.lip = &snmp_pcb->local_ip;
+    /*trap_msg.handle = snmp_pcb;*/
+    /*trap_msg.lip = &snmp_pcb->local_ip;*/
 
     udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
     udp_bind(snmp_pcb, IP_ADDR_ANY, SNMP_IN_PORT);

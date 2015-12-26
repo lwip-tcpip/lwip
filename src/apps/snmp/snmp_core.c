@@ -526,7 +526,7 @@ snmp_get_next_node_instance_from_oid(const u32_t *oid, u8_t oid_len, snmp_valida
 
   if (mib == NULL)
   {
-    // loop is only left when mib == null (error) or mib_node != NULL (success)
+    /* loop is only left when mib == null (error) or mib_node != NULL (success) */
     return SNMP_ERR_ENDOFMIBVIEW;
   }
 

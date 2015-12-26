@@ -457,8 +457,6 @@ snmp_asn1_dec_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tl
   } else { /* data == 0x80 indefinite length form */
     /* (not allowed for SNMP; RFC 1157, 3.2.2) */
     return ERR_VAL;
-    //tlv->length_len = 1;
-    //tlv->value_len  = 0xFFFF;
   }
 
   return ERR_OK;
