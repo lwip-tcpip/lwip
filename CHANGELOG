@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2015-12-26: Martin Hentschel and Dirk Ziegelmeier
+  * Rewrite SNMP agent
+
   2015-11-12: Dirk Ziegelmeier
   * Decouple SNMP stack from lwIP core and move stack to apps/ directory.
     Breaking change: Users have to call snmp_init() now!
