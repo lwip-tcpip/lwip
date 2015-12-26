@@ -118,13 +118,18 @@ LWIPNOAPPSFILES=$(COREFILES) \
 	$(NETIFFILES) \
 	$(PPPFILES)
 
-# SNMPFILES: SNMPv1 agent
-SNMPFILES=$(LWIPDIR)/apps/snmp/asn1_dec.c \
-	$(LWIPDIR)/apps/snmp/asn1_enc.c \
-	$(LWIPDIR)/apps/snmp/mib2.c \
-	$(LWIPDIR)/apps/snmp/mib_structs.c \
-	$(LWIPDIR)/apps/snmp/msg_in.c \
-	$(LWIPDIR)/apps/snmp/msg_out.c
+# SNMPFILES: SNMPv2c agent
+SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
+	$(LWIPDIR)/apps/snmp/snmp_core.c \
+	$(LWIPDIR)/apps/snmp/snmp_mib2.c \
+	$(LWIPDIR)/apps/snmp/snmp_msg.c \
+	$(LWIPDIR)/apps/snmp/snmp_netconn.c \
+	$(LWIPDIR)/apps/snmp/snmp_pbuf_stream.c \
+	$(LWIPDIR)/apps/snmp/snmp_raw.c \
+	$(LWIPDIR)/apps/snmp/snmp_scalar.c \
+	$(LWIPDIR)/apps/snmp/snmp_table.c \
+	$(LWIPDIR)/apps/snmp/snmp_threadsync.c \
+	$(LWIPDIR)/apps/snmp/snmp_traps.c
 
 # HTTPDFILES: HTTP server
 HTTPDFILES=$(LWIPDIR)/apps/httpd/fs.c \

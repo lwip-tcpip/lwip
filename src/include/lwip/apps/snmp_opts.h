@@ -29,17 +29,11 @@
  * Author: Dirk Ziegelmeier
  *
  */
-
-#ifndef LWIP_HDR_APPS_SNMP_OPTS_H
-#define LWIP_HDR_APPS_SNMP_OPTS_H
+#ifndef LWIP_HDR_SNMP_OPTS_H
+#define LWIP_HDR_SNMP_OPTS_H
 
 #include "lwip/opt.h"
 
-/*
-   ----------------------------------
-   ---------- SNMP options ----------
-   ----------------------------------
-*/
 /**
  * LWIP_SNMP==1: This enables the lwIP SNMP agent. UDP must be available
  * for SNMP transport.
@@ -53,13 +47,46 @@
 #endif
 
 /**
- * SNMP_CONCURRENT_REQUESTS: Number of concurrent requests the module will
- * allow. At least one request buffer is required.
- * Does not have to be changed unless external MIBs answer request asynchronously
+ * SNMP_USE_NETCONN: Use netconn API instead of raw API.
+ * Makes SNMP agent run in a worker thread, so blocking operations
+ * can be done in MIB calls.
  */
-#ifndef SNMP_CONCURRENT_REQUESTS
-#define SNMP_CONCURRENT_REQUESTS        1
+#ifndef SNMP_USE_NETCONN
+#define SNMP_USE_NETCONN           0
 #endif
+
+/**
+ * SNMP_USE_RAW: Use raw API.
+ * SNMP agent does not run in a worker thread, so blocking operations
+ * should not be done in MIB calls.
+ */
+#ifndef SNMP_USE_RAW
+#define SNMP_USE_RAW               1
+#endif
+
+#if SNMP_USE_NETCONN && SNMP_USE_RAW
+#error SNMP stack can use only one of the APIs {raw, netconn}
+#endif
+
+#if LWIP_SNMP && !SNMP_USE_NETCONN && !SNMP_USE_RAW
+#error SNMP stack needs a receive API and UDP {raw, netconn}
+#endif
+
+#if SNMP_USE_NETCONN
+/**
+ * SNMP_STACK_SIZE: Stack size of SNMP worker thread
+ */
+#ifndef SNMP_STACK_SIZE
+#define SNMP_STACK_SIZE            DEFAULT_THREAD_STACKSIZE
+#endif
+
+/**
+ * SNMP_THREAD_PRIO: SNMP worker thread priority
+ */
+#ifndef SNMP_THREAD_PRIO
+#define SNMP_THREAD_PRIO           DEFAULT_THREAD_PRIO
+#endif
+#endif /* SNMP_USE_NETCONN */
 
 /**
  * SNMP_TRAP_DESTINATIONS: Number of trap destinations. At least one trap
@@ -67,15 +94,6 @@
  */
 #ifndef SNMP_TRAP_DESTINATIONS
 #define SNMP_TRAP_DESTINATIONS          1
-#endif
-
-/**
- * SNMP_PRIVATE_MIB:
- * When using a private MIB, you have to create a file 'private_mib.h' that contains
- * a 'struct mib_array_node mib_private' which contains your MIB.
- */
-#ifndef SNMP_PRIVATE_MIB
-#define SNMP_PRIVATE_MIB                0
 #endif
 
 /**
@@ -88,28 +106,26 @@
 #endif
 
 /**
- * The maximum length of strings used. This affects the size of
- * MEMP_SNMP_VALUE elements.
+ * The maximum length of strings used.
  */
 #ifndef SNMP_MAX_OCTET_STRING_LEN
 #define SNMP_MAX_OCTET_STRING_LEN       127
 #endif
 
 /**
- * The maximum depth of the SNMP tree.
- * With private MIBs enabled, this depends on your MIB!
- * This affects the size of MEMP_SNMP_VALUE elements.
+ * The maximum number of Sub ID's inside an object identifier.
+ * Indirectly this also limits the maximum depth of SNMP tree.
  */
-#ifndef SNMP_MAX_TREE_DEPTH
-#define SNMP_MAX_TREE_DEPTH             15
+#ifndef SNMP_MAX_OBJ_ID_LEN
+#define SNMP_MAX_OBJ_ID_LEN             32
 #endif
 
 /**
- * The size of the MEMP_SNMP_VALUE elements, normally calculated from
- * SNMP_MAX_OCTET_STRING_LEN and SNMP_MAX_TREE_DEPTH.
+ * The maximum size of a value.
  */
 #ifndef SNMP_MAX_VALUE_SIZE
-#define SNMP_MAX_VALUE_SIZE             LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN)+1, sizeof(s32_t)*(SNMP_MAX_TREE_DEPTH))
+#define SNMP_MIN_VALUE_SIZE             (2 * sizeof(u32_t*)) // size required to store the basic types (8 bytes for counter64)
+#define SNMP_MAX_VALUE_SIZE             LWIP_MAX(LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN), sizeof(u32_t)*(SNMP_MAX_OBJ_ID_LEN)), SNMP_MIN_VALUE_SIZE)
 #endif
 
 /**
@@ -121,15 +137,8 @@
 #endif
 
 /**
- * Set this to 1 to enable support for dedicated write-access and trap communities.
- */
-#ifndef SNMP_COMMUNITY_EXT
-#define SNMP_COMMUNITY_EXT              0
-#endif
-
-#if SNMP_COMMUNITY_EXT
-/**
  * The snmp write-access community.
+ * Set this community to "" in order to disallow any write access.
  */
 #ifndef SNMP_COMMUNITY_WRITE
 #define SNMP_COMMUNITY_WRITE            "private"
@@ -141,48 +150,43 @@
 #ifndef SNMP_COMMUNITY_TRAP
 #define SNMP_COMMUNITY_TRAP             "public"
 #endif
-#endif /* SNMP_COMMUNITY_EXT */
 
 /**
- * SNMP_NUM_NODE: the number of leafs in the SNMP tree.
+ * The maximum length of community string.
+ * If community names shall be adjusted at runtime via snmp_set_community() calls,
+ * enter here the possible maximum length (+1 for terminating null character).
  */
-#ifndef SNMP_NUM_NODE
-#define SNMP_NUM_NODE              50
+#ifndef SNMP_MAX_COMMUNITY_STR_LEN
+#define SNMP_MAX_COMMUNITY_STR_LEN LWIP_MAX(LWIP_MAX(sizeof(SNMP_COMMUNITY), sizeof(SNMP_COMMUNITY_WRITE)), sizeof(SNMP_COMMUNITY_TRAP))
 #endif
 
 /**
- * SNMP_NUM_ROOTNODE: the number of branches in the SNMP tree.
- * Every branch has one leaf (MEMP_NUM_SNMP_NODE) at least!
+ * The OID identifiying the device. This may be the enterprise OID itself or any OID located below it in tree.
  */
-#ifndef SNMP_NUM_ROOTNODE
-#define SNMP_NUM_ROOTNODE          30
+#ifndef SNMP_DEVICE_ENTERPRISE_OID
+/**
+ * IANA assigned enterprise ID for lwIP is 26381
+ * @see http://www.iana.org/assignments/enterprise-numbers
+ *
+ * @note this enterprise ID is assigned to the lwIP project,
+ * all object identifiers living under this ID are assigned
+ * by the lwIP maintainers!
+ * @note don't change this define, use snmp_set_device_enterprise_oid()
+ *
+ * If you need to create your own private MIB you'll need
+ * to apply for your own enterprise ID with IANA:
+ * http://www.iana.org/numbers.html
+ */
+#define SNMP_LWIP_ENTERPRISE_OID 26381
+#define SNMP_DEVICE_ENTERPRISE_OID {1, 3, 6, 1, 4, 1, SNMP_LWIP_ENTERPRISE_OID}
+#define SNMP_DEVICE_ENTERPRISE_OID_LEN 7
 #endif
 
 /**
- * SNMP_NUM_VARBIND: influences the number of concurrent requests:
- * 2 of these are used per request (1 for input, 1 for output), so this needs
- * to be increased only if you want to support concurrent requests or multiple
- * variables per request/response.
+ * SNMP_DEBUG: Enable debugging for SNMP messages.
  */
-#ifndef SNMP_NUM_VARBIND
-#define SNMP_NUM_VARBIND           2
-#endif
-
-/**
- * SNMP_NUM_VALUE: the number of OID or values concurrently used
- * (does not have to be changed normally) - >=3 of these are used per request
- * (1 for the value read and 2 for OIDs - input and output on getnext, or more
- * if you want to support multiple varibles per request/response)
- */
-#ifndef SNMP_NUM_VALUE
-#define SNMP_NUM_VALUE             3
-#endif
-
-/**
- * SNMP_MSG_DEBUG: Enable debugging for SNMP messages.
- */
-#ifndef SNMP_MSG_DEBUG
-#define SNMP_MSG_DEBUG                  LWIP_DBG_OFF
+#ifndef SNMP_DEBUG
+#define SNMP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 /**
@@ -192,4 +196,54 @@
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #endif
 
-#endif	/* LWIP_HDR_APPS_SNMP_OPTS_H */
+/**
+ * Indicates if the MIB2 implementation of LWIP SNMP stack is used.
+ */
+#ifndef SNMP_LWIP_MIB2
+#define SNMP_LWIP_MIB2                      LWIP_SNMP
+#endif
+
+/**
+ * Value return for sysDesc field of MIB2.
+ */
+#ifndef SNMP_LWIP_MIB2_SYSDESC
+#define SNMP_LWIP_MIB2_SYSDESC              "lwIP"
+#endif
+
+/**
+ * Value return for sysName field of MIB2.
+ * To make sysName field settable, call snmp_mib2_set_sysname() to provide the necessary buffers.
+ */
+#ifndef SNMP_LWIP_MIB2_SYSNAME
+#define SNMP_LWIP_MIB2_SYSNAME              "FQDN-unk"
+#endif
+
+/**
+ * Value return for sysContact field of MIB2.
+ * To make sysContact field settable, call snmp_mib2_set_syscontact() to provide the necessary buffers.
+ */
+#ifndef SNMP_LWIP_MIB2_SYSCONTACT
+#define SNMP_LWIP_MIB2_SYSCONTACT           ""
+#endif
+
+/**
+ * Value return for sysLocation field of MIB2.
+ * To make sysLocation field settable, call snmp_mib2_set_syslocation() to provide the necessary buffers.
+ */
+#ifndef SNMP_LWIP_MIB2_SYSLOCATION
+#define SNMP_LWIP_MIB2_SYSLOCATION          ""
+#endif
+
+/**
+ * This value is used to limit the repetitions processed in GetBulk requests (value == 0 means no limitation).
+ * This may be useful to limit the load for a single request.
+ * According to SNMP RFC 1905 it is allowed to not return all requested variables from a GetBulk request if system load would be too high.
+ * so the effect is that the client will do more requests to gather all data.
+ * For the stack this could be useful in case that SNMP processing is done in TCP/IP thread. In this situation a request with many
+ * repetitions could block the thread for a longer time. Setting limit here will keep the stack more responsive.
+ */
+#ifndef SNMP_LWIP_GETBULK_MAX_REPETITIONS
+#define SNMP_LWIP_GETBULK_MAX_REPETITIONS 0
+#endif
+
+#endif /* SNMP_LWIP_MIB2 */

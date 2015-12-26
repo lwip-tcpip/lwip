@@ -1,0 +1,30 @@
+lwIP SNMPv2c agent
+==================
+
+Based on SNMP stack written by Christiaan Simons <christiaan.simons@axon.tv>
+
+Rewritten by Martin Hentschel <info@cl-soft.de> and
+Dirk Ziegelmeier <dziegel@gmx.de>
+
+Changes:
+  - SNMPv2c support
+  - Greatly reduced RAM usage, no memory pools any more
+  - API cleanup
+  - MIB2 is separated from SNMP stack
+  - Support for multiple MIBs (snmp_set_mibs call) - e.g. for private MIB
+  - Improved MIB2 implementation (tcpConnTable etc.)
+  - Redesigned simple and generic API for MIB implementation
+  - Comfortable node types for scalar arrays and tables
+  - Counter64, bit and truthvalue datatype support
+  - Callbacks for SNMP writes
+  - Runs on two APIs: RAW and netconn
+  - Async API is gone - the stack now supports netconn API instead,
+    so blocking operations can be done in MIB calls.
+    SNMP runs in a worker thread when netconn API is used.
+  - Simplified thread sync support for MIBs - useful when MIBs
+    need to access variables shared with other threads without locking
+    (used in MIB2 to access lwIP stats from lwIP thread)
+
+Currently in work:
+  - Traps rewrite
+  - MIB compiler
