@@ -246,4 +246,5 @@
 #define SNMP_LWIP_GETBULK_MAX_REPETITIONS 0
 #endif
 
-#endif /* SNMP_LWIP_MIB2 */
+#endif /* LWIP_HDR_SNMP_OPTS_H */
+
