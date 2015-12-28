@@ -150,7 +150,7 @@ static const struct snmp_scalar_array_node snmp_root = SNMP_SCALAR_CREATE_ARRAY_
 /* lwIP has no EGP, thus may not implement it. (egp .1.3.6.1.2.1.8) */
 
 /* --- udp .1.3.6.1.2.1.7 ----------------------------------------------------- */
-#if LWIP_UDP
+#if LWIP_UDP && LWIP_IPV4
 static u16_t udp_get_value(struct snmp_node_instance* instance, void* value);
 static snmp_err_t  udp_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, const u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len);
 static snmp_err_t  udp_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len);
@@ -182,11 +182,11 @@ static const struct snmp_node* udp_nodes[] = {
 };
 
 static const struct snmp_tree_node udp_root = SNMP_CREATE_TREE_NODE(7, udp_nodes);
-#endif /* LWIP_UDP */
+#endif /* LWIP_UDP && LWIP_IPV4 */
 
 /* --- tcp .1.3.6.1.2.1.6 ----------------------------------------------------- */
 /* implement this group only, if the TCP protocol is available */
-#if LWIP_TCP
+#if LWIP_TCP && LWIP_IPV4
 static u16_t tcp_get_value(struct snmp_node_instance* instance, void* value);
 static snmp_err_t  tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, const u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len);
 static snmp_err_t  tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len);
@@ -252,7 +252,7 @@ static const struct snmp_node* tcp_nodes[] = {
 };
 
 static const struct snmp_tree_node tcp_root = SNMP_CREATE_TREE_NODE(6, tcp_nodes);
-#endif /* LWIP_TCP */
+#endif /* LWIP_TCP && LWIP_IPV4 */
 
 /* --- icmp .1.3.6.1.2.1.5 ----------------------------------------------------- */
 #if LWIP_ICMP
@@ -289,6 +289,7 @@ static const struct snmp_scalar_array_node_def icmp_nodes[] = {
 static const struct snmp_scalar_array_node icmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(5, icmp_nodes, icmp_get_value, NULL, NULL);
 #endif /* LWIP_ICMP */
 
+#if LWIP_IPV4
 /* --- ip .1.3.6.1.2.1.4 ----------------------------------------------------- */
 static u16_t ip_get_value(struct snmp_node_instance* instance, void* value);
 static snmp_err_t  ip_set_test(struct snmp_node_instance* instance, u16_t len, void *value);
@@ -349,8 +350,9 @@ static const struct snmp_table_simple_col_def ip_RouteTable_columns[] = {
 };
 
 static const struct snmp_table_simple_node ip_RouteTable = SNMP_TABLE_CREATE_SIMPLE(21, ip_RouteTable_columns, ip_RouteTable_get_cell_value, ip_RouteTable_get_next_cell_instance_and_value);
+#endif /* LWIP_IPV4 */
 
-#if LWIP_ARP
+#if LWIP_ARP && LWIP_IPV4
 static const struct snmp_table_simple_col_def ip_NetToMediaTable_columns[] = {
   {  1, SNMP_ASN1_TYPE_INTEGER,      SNMP_VARIANT_VALUE_TYPE_U32 }, /* ipNetToMediaIfIndex */
   {  2, SNMP_ASN1_TYPE_OCTET_STRING, SNMP_VARIANT_VALUE_TYPE_PTR }, /* ipNetToMediaPhysAddress */
@@ -359,8 +361,9 @@ static const struct snmp_table_simple_col_def ip_NetToMediaTable_columns[] = {
 };
 
 static const struct snmp_table_simple_node ip_NetToMediaTable = SNMP_TABLE_CREATE_SIMPLE(22, ip_NetToMediaTable_columns, ip_NetToMediaTable_get_cell_value, ip_NetToMediaTable_get_next_cell_instance_and_value);
-#endif /* LWIP_ARP */
+#endif /* LWIP_ARP && LWIP_IPV4 */
 
+#if LWIP_IPV4
 /* the following nodes access variables in LWIP stack from SNMP worker thread and must therefore be synced to LWIP (TCPIP) thread */ 
 CREATE_LWIP_SYNC_NODE( 1, ip_Forwarding)
 CREATE_LWIP_SYNC_NODE( 2, ip_DefaultTTL)
@@ -417,10 +420,11 @@ static const struct snmp_node* ip_nodes[] = {
 };
 
 static const struct snmp_tree_node ip_root = SNMP_CREATE_TREE_NODE(4, ip_nodes);
+#endif /* LWIP_IPV4 */
 
 /* --- at .1.3.6.1.2.1.3 ----------------------------------------------------- */
 
-#if LWIP_ARP
+#if LWIP_ARP && LWIP_IPV4
 /* at node table is a subset of ip_nettomedia table (same rows but less columns) */
 static const struct snmp_table_simple_col_def at_Table_columns[] = {
   { 1, SNMP_ASN1_TYPE_INTEGER,      SNMP_VARIANT_VALUE_TYPE_U32 }, /* atIfIndex */
@@ -438,7 +442,7 @@ static const struct snmp_node* at_nodes[] = {
 };
 
 static const struct snmp_tree_node at_root = SNMP_CREATE_TREE_NODE(3, at_nodes);
-#endif /* LWIP_ARP */
+#endif /* LWIP_ARP && LWIP_IPV4 */
 
 /* --- interfaces .1.3.6.1.2.1.2 ----------------------------------------------------- */
 static u16_t interfaces_get_value(struct snmp_node_instance* instance, void* value);
@@ -525,19 +529,21 @@ static const struct snmp_scalar_array_node system_node = SNMP_SCALAR_CREATE_ARRA
 static const struct snmp_node* mib2_nodes[] = {
   &system_node.node.node,
   &interface_root.node,
-#if LWIP_ARP
+#if LWIP_ARP && LWIP_IPV4
   &at_root.node,
-#endif /* LWIP_ARP */
+#endif /* LWIP_ARP && LWIP_IPV4 */
+#if LWIP_IPV4
   &ip_root.node,
+#endif /* LWIP_IPV4 */
 #if LWIP_ICMP
   &icmp_root.node.node,
 #endif /* LWIP_ICMP */
-#if LWIP_TCP
+#if LWIP_TCP && LWIP_IPV4
   &tcp_root.node,
-#endif /* LWIP_TCP */
-#if LWIP_UDP
+#endif /* LWIP_TCP && LWIP_IPV4 */
+#if LWIP_UDP && LWIP_IPV4
   &udp_root.node,
-#endif /* LWIP_UDP */
+#endif /* LWIP_UDP && LWIP_IPV4 */
   &snmp_root.node.node
 };
 
@@ -1092,6 +1098,7 @@ static snmp_err_t interfaces_Table_set_value(struct snmp_node_instance* instance
 
 #endif /* SNMP_SAFE_REQUESTS */
 
+#if LWIP_IPV4
 /* --- ip .1.3.6.1.2.1.4 ----------------------------------------------------- */
 
 static u16_t 
@@ -1231,7 +1238,6 @@ ip_set_value(struct snmp_node_instance* instance, u16_t len, void *value)
   /* nothing to do here because in set_test we only accept values being the same as our own stored value -> no need to store anything */
   return SNMP_ERR_NOERROR;
 }
-
 
 /* --- ipAddrTable --- */
 
@@ -1631,6 +1637,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
   /* not found */
   return SNMP_ERR_NOSUCHINSTANCE;
 }
+#endif /* LWIP_IPV4 */
 
 /* --- icmp .1.3.6.1.2.1.5 ----------------------------------------------------- */
 
@@ -1732,7 +1739,7 @@ icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 
 /* --- tcp .1.3.6.1.2.1.6 ----------------------------------------------------- */
 
-#if LWIP_TCP
+#if LWIP_TCP && LWIP_IPV4
 static u16_t 
 tcp_get_value(struct snmp_node_instance* instance, void* value)
 {
@@ -1964,11 +1971,11 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   return SNMP_ERR_NOSUCHINSTANCE;
 }
 
-#endif /* LWIP_TCP */
+#endif /* LWIP_TCP && LWIP_IPV4 */
 
 /* --- udp .1.3.6.1.2.1.7 ----------------------------------------------------- */
 
-#if LWIP_UDP
+#if LWIP_UDP && LWIP_IPV4
 
 static u16_t 
 udp_get_value(struct snmp_node_instance* instance, void* value)
@@ -2097,7 +2104,7 @@ udp_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_
   }
 }
 
-#endif /* LWIP_UDP */
+#endif /* LWIP_UDP && LWIP_IPV4 */
 
 /* --- snmp .1.3.6.1.2.1.11 ----------------------------------------------------- */
 

@@ -297,8 +297,10 @@ void snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 u8_t snmp_oid_equal(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len);
 s8_t snmp_oid_compare(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len);
 
+#if LWIP_IPV4
 u8_t snmp_oid_to_ip(const u32_t *oid, ip4_addr_t *ip);
 void snmp_ip_to_oid(const ip4_addr_t *ip, u32_t *oid);
+#endif /* LWIP_IPV4 */
 
 u8_t snmp_set_test_ok(struct snmp_node_instance* instance, u16_t value_len, void* value); /* generic function which can be used if test is always successful */
 

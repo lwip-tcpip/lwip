@@ -100,6 +100,7 @@ const struct snmp_obj_id* snmp_get_device_enterprise_oid(void)
   return snmp_device_enterprise_oid;
 }
 
+#if LWIP_IPV4
 /**
  * Conversion from oid to lwIP ip_addr
  * @param ident points to u32_t ident[4] input
@@ -133,6 +134,7 @@ snmp_ip_to_oid(const ip4_addr_t *ip, u32_t *oid)
   oid[2] = ip4_addr3(ip);
   oid[3] = ip4_addr4(ip);
 }
+#endif /* LWIP_IPV4 */
 
 void
 snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
