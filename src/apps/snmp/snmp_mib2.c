@@ -543,7 +543,7 @@ static const struct snmp_node* mib2_nodes[] = {
 
 static const struct snmp_tree_node mib2_root = SNMP_CREATE_TREE_NODE(1, mib2_nodes);
 
-static const u32_t  mib2_base_oid_arr[6] = { 1,3,6,1,2,1 };
+static const u32_t  mib2_base_oid_arr[] = { 1,3,6,1,2,1 };
 const struct snmp_mib mib2 = SNMP_MIB_CREATE(mib2_base_oid_arr, &mib2_root.node);
 
 /** mib-2.system.sysDescr */
@@ -898,7 +898,6 @@ static snmp_err_t interfaces_Table_get_cell_instance(const u32_t* column, const 
 
   /* not found */
   return SNMP_ERR_NOSUCHINSTANCE;
-
 }
 
 static snmp_err_t interfaces_Table_get_next_cell_instance(const u32_t* column, struct snmp_obj_id* row_oid, struct snmp_node_instance* cell_instance)
