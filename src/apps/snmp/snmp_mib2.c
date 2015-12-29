@@ -1302,7 +1302,7 @@ ip_AddrTable_get_cell_value(const u32_t* column, const u32_t* row_oid, const u8_
   }
 
   /* get IP from incoming OID */
-  snmp_oid_to_ip(&row_oid[0], &ip); /* we know it succeeds because of oid_in_range check above */
+  snmp_oid_to_ip4(&row_oid[0], &ip); /* we know it succeeds because of oid_in_range check above */
 
   /* find netif with requested ip */
   netif = netif_list;
@@ -1333,7 +1333,7 @@ ip_AddrTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_o
   netif = netif_list;
   while (netif != NULL) {
     u32_t test_oid[LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges)];
-    snmp_ip_to_oid(netif_ip4_addr(netif), &test_oid[0]);
+    snmp_ip4_to_oid(netif_ip4_addr(netif), &test_oid[0]);
 
     /* check generated OID: is it a candidate for the next one? */
     snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges), netif);
@@ -1453,7 +1453,7 @@ ip_RouteTable_get_cell_value(const u32_t* column, const u32_t* row_oid, const u8
   }
 
   /* get IP and port from incoming OID */
-  snmp_oid_to_ip(&row_oid[0], &test_ip); /* we know it succeeds because of oid_in_range check above */
+  snmp_oid_to_ip4(&row_oid[0], &test_ip); /* we know it succeeds because of oid_in_range check above */
 
   /* default route is on default netif */
   if(ip4_addr_isany_val(test_ip) && (netif_default != NULL)) {
@@ -1492,7 +1492,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
 
   /* check default route */
   if(netif_default != NULL) {
-    snmp_ip_to_oid(IP4_ADDR_ANY, &test_oid[0]);
+    snmp_ip4_to_oid(IP4_ADDR_ANY, &test_oid[0]);
     snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges), netif_default);
   }
 
@@ -1504,7 +1504,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
 
     /* check generated OID: is it a candidate for the next one? */
     if (!ip4_addr_isany_val(dst)) {
-      snmp_ip_to_oid(&dst, &test_oid[0]);
+      snmp_ip4_to_oid(&dst, &test_oid[0]);
       snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges), netif);
     }
     
@@ -1514,7 +1514,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   /* did we find a next one? */
   if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     ip4_addr_t dst;
-    snmp_oid_to_ip(&result_temp[0], &dst);
+    snmp_oid_to_ip4(&result_temp[0], &dst);
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* fill in object properties */
     return ip_RouteTable_get_cell_value_core((struct netif*)state.reference, ip4_addr_isany_val(dst), column, value, value_len);
@@ -1580,7 +1580,7 @@ ip_NetToMediaTable_get_cell_value(const u32_t* column, const u32_t* row_oid, con
 
   /* get IP from incoming OID */
   netif_index = (u8_t)row_oid[0];
-  snmp_oid_to_ip(&row_oid[1], &ip_in); /* we know it succeeds because of oid_in_range check above */
+  snmp_oid_to_ip4(&row_oid[1], &ip_in); /* we know it succeeds because of oid_in_range check above */
 
   /* find requested entry */
   for(i=0; i<ARP_TABLE_SIZE; i++) {
@@ -1620,7 +1620,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
       u32_t test_oid[LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges)];
 
       test_oid[0] = netif_to_num(netif);
-      snmp_ip_to_oid(ip, &test_oid[1]);
+      snmp_ip4_to_oid(ip, &test_oid[1]);
 
       /* check generated OID: is it a candidate for the next one? */
       snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges), (void*)(size_t)i);
@@ -1882,9 +1882,9 @@ tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, const u8
   }
 
   /* get IPs and ports from incoming OID */
-  snmp_oid_to_ip(&row_oid[0], &local_ip); /* we know it succeeds because of oid_in_range check above */
+  snmp_oid_to_ip4(&row_oid[0], &local_ip); /* we know it succeeds because of oid_in_range check above */
   local_port = (u16_t)row_oid[4];
-  snmp_oid_to_ip(&row_oid[5], &remote_ip); /* we know it succeeds because of oid_in_range check above */
+  snmp_oid_to_ip4(&row_oid[5], &remote_ip); /* we know it succeeds because of oid_in_range check above */
   remote_port = (u16_t)row_oid[9];
   
   /* find tcp_pcb with requested ips and ports */
@@ -1937,18 +1937,18 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
       u32_t test_oid[LWIP_ARRAYSIZE(tcp_ConnTable_oid_ranges)];
             
       if(!IP_IS_V6_VAL(pcb->local_ip)) {
-        snmp_ip_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
+        snmp_ip4_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
         test_oid[4] = pcb->local_port;
 
         /* PCBs in state LISTEN are not connected and have no remote_ip or remote_port */
         if(pcb->state == LISTEN) {
-          snmp_ip_to_oid(IP4_ADDR_ANY, &test_oid[5]);
+          snmp_ip4_to_oid(IP4_ADDR_ANY, &test_oid[5]);
           test_oid[9] = 0;
         } else {
           if(IP_IS_V6_VAL(pcb->remote_ip)) { /* should never happen */
             continue;
           }
-          snmp_ip_to_oid(ip_2_ip4(&pcb->remote_ip), &test_oid[5]);
+          snmp_ip4_to_oid(ip_2_ip4(&pcb->remote_ip), &test_oid[5]);
           test_oid[9] = pcb->remote_port;
         }
 
@@ -2048,7 +2048,7 @@ udp_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, const u8_t r
   }
 
   /* get IP and port from incoming OID */
-  snmp_oid_to_ip(&row_oid[0], &ip); /* we know it succeeds because of oid_in_range check above */
+  snmp_oid_to_ip4(&row_oid[0], &ip); /* we know it succeeds because of oid_in_range check above */
   port = (u16_t)row_oid[4];
 
   /* find udp_pcb with requested ip and port*/
@@ -2083,7 +2083,7 @@ udp_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_
     u32_t test_oid[LWIP_ARRAYSIZE(udp_Table_oid_ranges)];
 
     if(!IP_IS_V6_VAL(pcb->local_ip)) {
-      snmp_ip_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
+      snmp_ip4_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
       test_oid[4] = pcb->local_port;
 
       /* check generated OID: is it a candidate for the next one? */
