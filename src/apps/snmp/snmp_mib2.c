@@ -2048,23 +2048,42 @@ udp_ep_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_
 
   LWIP_UNUSED_ARG(value_len);
 
+  /* udpEndpointLocalAddressType + udpEndpointLocalAddress */
   index += snmp_oid_to_ip(&row_oid[index], row_oid_len-index, &local_ip);
   if(index == 0) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
-  /* @todo: OID length check + range check */
+
+  /* udpEndpointLocalPort */
+  if(row_oid_len < (index+1)) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+  if(row_oid[index] > 0xffff) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
   local_port = (u16_t)row_oid[index];
   index++;
 
+  /* udpEndpointRemoteAddressType + udpEndpointRemoteAddress */
   index += snmp_oid_to_ip(&row_oid[index], row_oid_len-index, &remote_ip);
   if(index == 0) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
-  /* @todo: OID length check + range check */
+
+  /* udpEndpointRemotePort */
+  if(row_oid_len < (index+1)) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+  if(row_oid[index] > 0xffff) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
   remote_port = (u16_t)row_oid[index];
   index++;
 
-  /* check udpEndpointInstance */
+  /* udpEndpointInstance */
+  if(row_oid_len < (index+1)) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
   if(row_oid[index] != 0) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
