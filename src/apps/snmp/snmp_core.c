@@ -102,7 +102,7 @@ const struct snmp_obj_id* snmp_get_device_enterprise_oid(void)
 
 #if LWIP_IPV4
 /**
- * Conversion from oid to lwIP ip_addr
+ * Conversion from InetAddress oid to lwIP ip4_addr
  * @param ident points to u32_t ident[4] input
  * @param ip points to output struct
  */
@@ -122,9 +122,9 @@ snmp_oid_to_ip4(const u32_t *oid, ip4_addr_t *ip)
 }
 
 /**
- * Conversion from lwIP ip_addr to oid
+ * Convert ip4_addr to InetAddress (no InetAddressType)
  * @param ip points to input struct
- * @param ident points to u32_t ident[4] output
+ * @param oid points to u32_t ident[4] output
  */
 void
 snmp_ip4_to_oid(const ip4_addr_t *ip, u32_t *oid)
@@ -138,8 +138,8 @@ snmp_ip4_to_oid(const ip4_addr_t *ip, u32_t *oid)
 
 #if LWIP_IPV6
 /**
- * Conversion from oid to lwIP ip_addr
- * @param ident points to u32_t ident[4] input
+ * Conversion from InetAddress oid to lwIP ip6_addr
+ * @param oid points to u32_t oid[16] input
  * @param ip points to output struct
  */
 u8_t
@@ -173,9 +173,9 @@ snmp_oid_to_ip6(const u32_t *oid, ip6_addr_t *ip)
 }
 
 /**
- * Conversion from lwIP ip_addr to oid
+ * Convert ip6_addr to InetAddress (no InetAddressType)
  * @param ip points to input struct
- * @param ident points to u32_t ident[4] output
+ * @param oid points to u32_t ident[16] output
  */
 void
 snmp_ip6_to_oid(const ip6_addr_t *ip, u32_t *oid)
@@ -200,17 +200,83 @@ snmp_ip6_to_oid(const ip6_addr_t *ip, u32_t *oid)
 #endif /* LWIP_IPV6 */
 
 #if LWIP_IPV4 || LWIP_IPV6
-void
+/**
+ * Convert to InetAddressType+InetAddress
+ * @param ip
+ * @param oid
+ * @return OID length
+ */
+u8_t
 snmp_ip_to_oid(const ip_addr_t *ip, u32_t *oid)
 {
   if(IP_IS_V6(ip)) {
 #if LWIP_IPV6
-    snmp_ip6_to_oid(ip_2_ip6(ip), oid);
+    oid[0] = 2; /* ipv6 */
+    snmp_ip6_to_oid(ip_2_ip6(ip), &oid[1]);
+    return 17;
+#else /* LWIP_IPV6 */
+    return 0;
 #endif /* LWIP_IPV6 */
   } else {
 #if LWIP_IPV4
-    snmp_ip4_to_oid(ip_2_ip4(ip), oid);
+    oid[0] = 1; /* ipv4 */
+    snmp_ip4_to_oid(ip_2_ip4(ip), &oid[1]);
+    return 5;
+#else /* LWIP_IPV4 */
+    return 0;
 #endif /* LWIP_IPV4 */
+  }
+}
+
+/**
+ * Convert from InetAddressType+InetAddress to ip_addr_t
+ * @param oid
+ * @param oid_len
+ * @param ip
+ * @return Parsed OID length
+ */
+u8_t
+snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
+{
+  /* InetAddressType */
+  if(oid_len < 1) {
+    return 0;
+  }
+  
+  if (oid[0] == 1) { /* ipv4 */
+#if LWIP_IPV4
+    /* InetAddressType, 4x InetAddress */
+    if(oid_len < 5) {
+      return 0;
+    }
+        
+    IP_SET_TYPE(ip, IPADDR_TYPE_V4);
+    if(!snmp_oid_to_ip4(&oid[1], ip_2_ip4(ip))) {
+      return 0;
+    }
+    
+    return 5;
+#else /* LWIP_IPV4 */
+    return 0;
+#endif /* LWIP_IPV4 */
+  } else if(oid[0] == 2) { /* ipv6 */
+#if LWIP_IPV6
+    /* InetAddressType, 16x InetAddress */
+    if(oid_len < 17) {
+      return 0;
+    }
+
+    IP_SET_TYPE(ip, IPADDR_TYPE_V6);
+    if(!snmp_oid_to_ip6(&oid[1], ip_2_ip6(ip))) {
+      return 0;
+    }
+
+    return 17;
+#else /* LWIP_IPV6 */
+    return 0;
+#endif /* LWIP_IPV6 */
+  } else { /* unsupported InetAddressType */
+    return 0;
   }
 }
 #endif /* LWIP_IPV4 || LWIP_IPV6 */

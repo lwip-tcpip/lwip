@@ -117,7 +117,7 @@
  * Indirectly this also limits the maximum depth of SNMP tree.
  */
 #ifndef SNMP_MAX_OBJ_ID_LEN
-#define SNMP_MAX_OBJ_ID_LEN             32
+#define SNMP_MAX_OBJ_ID_LEN             50
 #endif
 
 /**
