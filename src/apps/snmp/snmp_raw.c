@@ -39,9 +39,6 @@
 #include "lwip/udp.h"
 #include "snmp_msg.h"
 
-/* UDP Protocol Control Block */
-static struct udp_pcb *snmp_pcb;
-
 /* lwIP UDP receive callback function */
 static void
 snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
@@ -67,15 +64,32 @@ snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
 void
 snmp_init(void)
 {
-  snmp_pcb = udp_new();
+#if LWIP_IPV4
+  struct udp_pcb *snmp_pcb_4 = udp_new();
+#endif /* LWIP_IPV4 */
+#if LWIP_IPV6
+  struct udp_pcb *snmp_pcb_6 = udp_new_ip6();
+#endif /* LWIP_IPV6 */
 
-  if (snmp_pcb != NULL) {
+#if LWIP_IPV4
+  if (snmp_pcb_4 != NULL) {
     /*trap_msg.handle = snmp_pcb;*/
     /*trap_msg.lip = &snmp_pcb->local_ip;*/
 
-    udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
-    udp_bind(snmp_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
+    udp_recv(snmp_pcb_4, snmp_recv, (void *)SNMP_IN_PORT);
+    udp_bind(snmp_pcb_4, IP_ADDR_ANY, SNMP_IN_PORT);
   }
+#endif /* LWIP_IPV4 */
+
+#if LWIP_IPV6
+  if (snmp_pcb_6 != NULL) {
+    /*trap_msg.handle = snmp_pcb;*/
+    /*trap_msg.lip = &snmp_pcb->local_ip;*/
+
+    udp_recv(snmp_pcb_6, snmp_recv, (void *)SNMP_IN_PORT);
+    udp_bind(snmp_pcb_6, IP6_ADDR_ANY, SNMP_IN_PORT);
+  }
+#endif /* LWIP_IPV6 */
 }
 
 #endif /* LWIP_SNMP && SNMP_USE_RAW */
