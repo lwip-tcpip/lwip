@@ -286,10 +286,10 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
     } else if (err != ERR_OK) {
       request->error_status = SNMP_ERR_GENERROR;
     }
+  }
 
-    if (node_instance.release_instance != NULL) {
-      node_instance.release_instance(&node_instance);
-    }
+  if (node_instance.release_instance != NULL) {
+    node_instance.release_instance(&node_instance);
   }
 }
 
@@ -312,7 +312,7 @@ snmp_process_get_request(struct snmp_request *request)
     err = snmp_vb_enumerator_get_next(&request->inbound_varbind_enumerator, &vb);
     if (err == SNMP_VB_ENUMERATOR_ERR_OK) {
       if ((vb.type == SNMP_ASN1_TYPE_NULL) && (vb.value_len == 0)) {
-        snmp_process_varbind(request, &vb, 1);
+        snmp_process_varbind(request, &vb, 0);
       } else {
         request->error_status = SNMP_ERR_GENERROR;
       }
