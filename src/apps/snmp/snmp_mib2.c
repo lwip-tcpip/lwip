@@ -153,10 +153,12 @@ static const struct snmp_scalar_array_node snmp_root = SNMP_SCALAR_CREATE_ARRAY_
 #if LWIP_UDP
 static u16_t udp_get_value(struct snmp_node_instance* instance, void* value);
 
-static const struct snmp_scalar_node udp_inDatagrams  = SNMP_SCALAR_CREATE_NODE_READONLY(1, SNMP_ASN1_TYPE_COUNTER, udp_get_value);
-static const struct snmp_scalar_node udp_noPorts      = SNMP_SCALAR_CREATE_NODE_READONLY(2, SNMP_ASN1_TYPE_COUNTER, udp_get_value);
-static const struct snmp_scalar_node udp_inErrors     = SNMP_SCALAR_CREATE_NODE_READONLY(3, SNMP_ASN1_TYPE_COUNTER, udp_get_value);
-static const struct snmp_scalar_node udp_outDatagrams = SNMP_SCALAR_CREATE_NODE_READONLY(4, SNMP_ASN1_TYPE_COUNTER, udp_get_value);
+static const struct snmp_scalar_node udp_inDatagrams    = SNMP_SCALAR_CREATE_NODE_READONLY(1, SNMP_ASN1_TYPE_COUNTER,   udp_get_value);
+static const struct snmp_scalar_node udp_noPorts        = SNMP_SCALAR_CREATE_NODE_READONLY(2, SNMP_ASN1_TYPE_COUNTER,   udp_get_value);
+static const struct snmp_scalar_node udp_inErrors       = SNMP_SCALAR_CREATE_NODE_READONLY(3, SNMP_ASN1_TYPE_COUNTER,   udp_get_value);
+static const struct snmp_scalar_node udp_outDatagrams   = SNMP_SCALAR_CREATE_NODE_READONLY(4, SNMP_ASN1_TYPE_COUNTER,   udp_get_value);
+static const struct snmp_scalar_node udp_HCInDatagrams  = SNMP_SCALAR_CREATE_NODE_READONLY(8, SNMP_ASN1_TYPE_COUNTER64, udp_get_value);
+static const struct snmp_scalar_node udp_HCOutDatagrams = SNMP_SCALAR_CREATE_NODE_READONLY(9, SNMP_ASN1_TYPE_COUNTER64, udp_get_value);
 
 #if LWIP_IPV4
 static snmp_err_t  udp_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len);
@@ -187,6 +189,8 @@ CREATE_LWIP_SYNC_NODE(4, udp_outDatagrams)
 CREATE_LWIP_SYNC_NODE(5, udp_Table)
 #endif /* LWIP_IPV4 */
 CREATE_LWIP_SYNC_NODE(7, udp_ep_Table)
+CREATE_LWIP_SYNC_NODE(8, udp_HCInDatagrams)
+CREATE_LWIP_SYNC_NODE(9, udp_HCOutDatagrams)
 
 static const struct snmp_node* udp_nodes[] = {
   &SYNC_NODE_NAME(udp_inDatagrams).node.node,
@@ -196,7 +200,9 @@ static const struct snmp_node* udp_nodes[] = {
 #if LWIP_IPV4
   &SYNC_NODE_NAME(udp_Table).node.node,
 #endif /* LWIP_IPV4 */
-  &SYNC_NODE_NAME(udp_ep_Table).node.node
+  &SYNC_NODE_NAME(udp_ep_Table).node.node,
+  &SYNC_NODE_NAME(udp_HCInDatagrams).node.node,
+  &SYNC_NODE_NAME(udp_HCOutDatagrams).node.node
 };
 
 static const struct snmp_tree_node udp_root = SNMP_CREATE_TREE_NODE(7, udp_nodes);
@@ -2014,6 +2020,12 @@ udp_get_value(struct snmp_node_instance* instance, void* value)
   case 4: /* udpOutDatagrams */
     *uint_ptr = STATS_GET(mib2.udpoutdatagrams);
     return sizeof(*uint_ptr);
+  case 8: /* udpHCInDatagrams */
+    memset(value, 0, 2*sizeof(u32_t)); /* not supported */
+    return 2*sizeof(u32_t);
+  case 9: /* udpHCOutDatagrams */
+    memset(value, 0, 2*sizeof(u32_t)); /* not supported */
+    return 2*sizeof(u32_t);
   default:
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("udp_get_value(): unknown id: %"S32_F"\n", instance->node->oid));
     break;
