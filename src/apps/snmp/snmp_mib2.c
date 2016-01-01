@@ -175,6 +175,7 @@ static snmp_err_t  udp_ep_Table_get_cell_value(const u32_t* column, const u32_t*
 static snmp_err_t  udp_ep_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len);
 
 static const struct snmp_table_simple_col_def udp_ep_Table_columns[] = {
+  /* all items except udpEndpointProcess are declared as not-accessible */   
   { 8, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }  /* udpEndpointProcess */
 };
 
@@ -2039,6 +2040,7 @@ udp_get_value(struct snmp_node_instance* instance, void* value)
 static snmp_err_t 
 udp_ep_Table_get_cell_value_core(const u32_t* column, union snmp_variant_value* value)
 {
+  /* all items except udpEndpointProcess are declared as not-accessible */   
   switch (*column) {
   case 8: /* udpEndpointProcess */
     value->u32 = 0; /* not supported */
