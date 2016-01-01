@@ -242,14 +242,8 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
     request->error_status = snmp_get_node_instance_from_oid(vb->oid.id, vb->oid.len, &node_instance);
 
     if (request->error_status == SNMP_ERR_NOERROR) {
-      /* use 'getnext_validate' method for validation to aavoid code duplication (some checks have to be executed here) */
+      /* use 'getnext_validate' method for validation to avoid code duplication (some checks have to be executed here) */
       request->error_status = snmp_msg_getnext_validate_node_inst(&node_instance, request);
-
-      if (request->error_status != SNMP_ERR_NOERROR) {
-        if (node_instance.release_instance != NULL) {
-          node_instance.release_instance(&node_instance);
-        }
-      }
     }
   }
 
