@@ -306,8 +306,11 @@ u8_t snmp_oid_to_ip6(const u32_t *oid, ip6_addr_t *ip);
 void snmp_ip6_to_oid(const ip6_addr_t *ip, u32_t *oid);
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4 || LWIP_IPV6
-u8_t snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip);
 u8_t snmp_ip_to_oid(const ip_addr_t *ip, u32_t *oid);
+u8_t snmp_ip_port_to_oid(const ip_addr_t *ip, u16_t port, u32_t *oid);
+
+u8_t snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip);
+u8_t snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port);
 #endif /* LWIP_IPV4 || LWIP_IPV6 */
 
 u8_t snmp_set_test_ok(struct snmp_node_instance* instance, u16_t value_len, void* value); /* generic function which can be used if test is always successful */
