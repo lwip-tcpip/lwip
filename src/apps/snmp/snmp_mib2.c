@@ -212,10 +212,8 @@ static const struct snmp_tree_node udp_root = SNMP_CREATE_TREE_NODE(7, udp_nodes
 
 /* --- tcp .1.3.6.1.2.1.6 ----------------------------------------------------- */
 /* implement this group only, if the TCP protocol is available */
-#if LWIP_TCP && LWIP_IPV4
+#if LWIP_TCP
 static u16_t tcp_get_value(struct snmp_node_instance* instance, void* value);
-static snmp_err_t  tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len);
-static snmp_err_t  tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len);
 
 static const struct snmp_scalar_node tcp_RtoAlgorithm  = SNMP_SCALAR_CREATE_NODE_READONLY(1, SNMP_ASN1_TYPE_INTEGER, tcp_get_value);
 static const struct snmp_scalar_node tcp_RtoMin        = SNMP_SCALAR_CREATE_NODE_READONLY(2, SNMP_ASN1_TYPE_INTEGER, tcp_get_value);
@@ -231,6 +229,12 @@ static const struct snmp_scalar_node tcp_OutSegs       = SNMP_SCALAR_CREATE_NODE
 static const struct snmp_scalar_node tcp_RetransSegs   = SNMP_SCALAR_CREATE_NODE_READONLY(12, SNMP_ASN1_TYPE_COUNTER, tcp_get_value);
 static const struct snmp_scalar_node tcp_InErrs        = SNMP_SCALAR_CREATE_NODE_READONLY(14, SNMP_ASN1_TYPE_COUNTER, tcp_get_value);
 static const struct snmp_scalar_node tcp_OutRsts       = SNMP_SCALAR_CREATE_NODE_READONLY(15, SNMP_ASN1_TYPE_COUNTER, tcp_get_value);
+static const struct snmp_scalar_node tcp_HCInSegs      = SNMP_SCALAR_CREATE_NODE_READONLY(17, SNMP_ASN1_TYPE_COUNTER64, tcp_get_value);
+static const struct snmp_scalar_node tcp_HCOutSegs     = SNMP_SCALAR_CREATE_NODE_READONLY(18, SNMP_ASN1_TYPE_COUNTER64, tcp_get_value);
+
+#if LWIP_IPV4
+static snmp_err_t  tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len);
+static snmp_err_t  tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len);
 
 static const struct snmp_table_simple_col_def tcp_ConnTable_columns[] = {
   {  1, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }, /* tcpConnState */
@@ -241,6 +245,17 @@ static const struct snmp_table_simple_col_def tcp_ConnTable_columns[] = {
 };
 
 static const struct snmp_table_simple_node tcp_ConnTable = SNMP_TABLE_CREATE_SIMPLE(13, tcp_ConnTable_columns, tcp_ConnTable_get_cell_value, tcp_ConnTable_get_next_cell_instance_and_value);
+#endif /* LWIP_IPV4 */
+
+static snmp_err_t  tcp_ListenerTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len);
+static snmp_err_t  tcp_ListenerTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len);
+
+static const struct snmp_table_simple_col_def tcp_ListenerTable_columns[] = {
+  /* all items except tcpListenerProcess are declared as not-accessible */   
+  { 4, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }  /* tcpListenerProcess */
+};
+
+static const struct snmp_table_simple_node tcp_ListenerTable = SNMP_TABLE_CREATE_SIMPLE(20, tcp_ListenerTable_columns, tcp_ListenerTable_get_cell_value, tcp_ListenerTable_get_next_cell_instance_and_value);
 
 /* the following nodes access variables in LWIP stack from SNMP worker thread and must therefore be synced to LWIP (TCPIP) thread */ 
 CREATE_LWIP_SYNC_NODE( 1, tcp_RtoAlgorithm)
@@ -255,9 +270,14 @@ CREATE_LWIP_SYNC_NODE( 9, tcp_CurrEstab)
 CREATE_LWIP_SYNC_NODE(10, tcp_InSegs)
 CREATE_LWIP_SYNC_NODE(11, tcp_OutSegs)
 CREATE_LWIP_SYNC_NODE(12, tcp_RetransSegs)
+#if LWIP_IPV4
 CREATE_LWIP_SYNC_NODE(13, tcp_ConnTable)
+#endif /* LWIP_IPV4 */
 CREATE_LWIP_SYNC_NODE(14, tcp_InErrs)
 CREATE_LWIP_SYNC_NODE(15, tcp_OutRsts)
+CREATE_LWIP_SYNC_NODE(17, tcp_HCInSegs)
+CREATE_LWIP_SYNC_NODE(18, tcp_HCOutSegs)
+CREATE_LWIP_SYNC_NODE(20, tcp_ListenerTable)
 
 static const struct snmp_node* tcp_nodes[] = {
   &SYNC_NODE_NAME(tcp_RtoAlgorithm).node.node,
@@ -272,13 +292,18 @@ static const struct snmp_node* tcp_nodes[] = {
   &SYNC_NODE_NAME(tcp_InSegs).node.node,
   &SYNC_NODE_NAME(tcp_OutSegs).node.node,
   &SYNC_NODE_NAME(tcp_RetransSegs).node.node,
+#if LWIP_IPV4
   &SYNC_NODE_NAME(tcp_ConnTable).node.node,
+#endif /* LWIP_IPV4 */
   &SYNC_NODE_NAME(tcp_InErrs).node.node,
-  &SYNC_NODE_NAME(tcp_OutRsts).node.node
+  &SYNC_NODE_NAME(tcp_OutRsts).node.node,
+  &SYNC_NODE_NAME(tcp_HCInSegs).node.node,
+  &SYNC_NODE_NAME(tcp_HCOutSegs).node.node,
+  &SYNC_NODE_NAME(tcp_ListenerTable).node.node
 };
 
 static const struct snmp_tree_node tcp_root = SNMP_CREATE_TREE_NODE(6, tcp_nodes);
-#endif /* LWIP_TCP && LWIP_IPV4 */
+#endif /* LWIP_TCP */
 
 /* --- icmp .1.3.6.1.2.1.5 ----------------------------------------------------- */
 #if LWIP_ICMP
@@ -1765,7 +1790,8 @@ icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 
 /* --- tcp .1.3.6.1.2.1.6 ----------------------------------------------------- */
 
-#if LWIP_TCP && LWIP_IPV4
+#if LWIP_TCP
+
 static u16_t 
 tcp_get_value(struct snmp_node_instance* instance, void* value)
 {
@@ -1830,6 +1856,12 @@ tcp_get_value(struct snmp_node_instance* instance, void* value)
   case 15: /* tcpOutRsts */
     *uint_ptr = STATS_GET(mib2.tcpoutrsts);
     return sizeof(*uint_ptr);
+  case 17: /* tcpHCInSegs */
+    memset(value, 0, 2*sizeof(u32_t)); /* not supported */
+    return 2*sizeof(u32_t);
+  case 18: /* tcpHCOutSegs */
+    memset(value, 0, 2*sizeof(u32_t)); /* not supported */
+    return 2*sizeof(u32_t);
   default:
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_value(): unknown id: %"S32_F"\n", instance->node->oid));
     break;
@@ -1839,6 +1871,8 @@ tcp_get_value(struct snmp_node_instance* instance, void* value)
 }
 
 /* --- tcpConnTable --- */
+
+#if LWIP_IPV4
 
 /* list of allowed value ranges for incoming OID */
 static const struct snmp_oid_range tcp_ConnTable_oid_ranges[] = {
@@ -1997,7 +2031,109 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   return SNMP_ERR_NOSUCHINSTANCE;
 }
 
-#endif /* LWIP_TCP && LWIP_IPV4 */
+#endif /* LWIP_IPV4 */
+
+/* --- tcpListenerTable --- */
+
+static snmp_err_t 
+tcp_ListenerTable_get_cell_value_core(const u32_t* column, union snmp_variant_value* value)
+{
+  /* all items except tcpListenerProcess are declared as not-accessible */   
+  switch (*column) {
+  case 4: /* tcpListenerProcess */
+    value->u32 = 0; /* not supported */
+    break;
+  default:
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+
+  return SNMP_ERR_NOERROR;
+}
+
+static snmp_err_t
+tcp_ListenerTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid_len, union snmp_variant_value* value, u32_t* value_len)
+{
+  ip_addr_t local_ip;
+  u16_t local_port;
+  struct tcp_pcb_listen *pcb;
+  int index = 0;
+
+  LWIP_UNUSED_ARG(value_len);
+
+  /* tcpListenerLocalAddressType + tcpListenerLocalAddress */
+  index += snmp_oid_to_ip(&row_oid[index], row_oid_len-index, &local_ip);
+  if(index == 0) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+
+  /* tcpListenerLocalPort  */
+  if(row_oid_len < (index+1)) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+  if(row_oid[index] > 0xffff) {
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+  local_port = (u16_t)row_oid[index];
+  index++;
+  
+  /* find tcp_pcb with requested ip and port*/
+  pcb = tcp_listen_pcbs.listen_pcbs;
+  while (pcb != NULL) {
+    if(ip_addr_cmp(&local_ip, &pcb->local_ip) &&
+       (local_port == pcb->local_port)) {
+      /* fill in object properties */
+      return tcp_ListenerTable_get_cell_value_core(column, value);
+    }
+    pcb = pcb->next;
+  }
+
+  /* not found */
+  return SNMP_ERR_NOSUCHINSTANCE;  
+}
+
+static snmp_err_t
+tcp_ListenerTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_id* row_oid, union snmp_variant_value* value, u32_t* value_len)
+{
+  struct tcp_pcb_listen *pcb;
+  struct snmp_next_oid_state state;
+  /* 1x tcpListenerLocalAddressType  + 16x tcpListenerLocalAddress  + 1x tcpListenerLocalPort */
+  u32_t  result_temp[18];
+
+  LWIP_UNUSED_ARG(value_len);
+
+  /* init struct to search next oid */
+  snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(result_temp));
+
+  /* iterate over all possible OIDs to find the next one */
+  pcb = tcp_listen_pcbs.listen_pcbs;
+  while (pcb != NULL) {
+    u8_t index = 0;
+    u32_t test_oid[LWIP_ARRAYSIZE(result_temp)];
+            
+    /* tcpListenerLocalAddressType + tcpListenerLocalAddress */
+    index += snmp_ip_to_oid(&pcb->local_ip, &test_oid[index]);
+
+    test_oid[index] = pcb->local_port; /* tcpListenerLocalPort */
+    index++;
+
+    /* check generated OID: is it a candidate for the next one? */
+    snmp_next_oid_check(&state, test_oid, index, NULL);
+    
+    pcb = pcb->next;
+  }
+
+  /* did we find a next one? */
+  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+    snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
+    /* fill in object properties */
+    return tcp_ListenerTable_get_cell_value_core(column, value);
+  } else {
+    /* not found */
+    return SNMP_ERR_NOSUCHINSTANCE;
+  }
+}
+
+#endif /* LWIP_TCP */
 
 /* --- udp .1.3.6.1.2.1.7 ----------------------------------------------------- */
 
@@ -2157,7 +2293,7 @@ udp_endpointTable_get_next_cell_instance_and_value(const u32_t* column, struct s
     index++;
     
     /* check generated OID: is it a candidate for the next one? */
-    snmp_next_oid_check(&state, test_oid, index, pcb);
+    snmp_next_oid_check(&state, test_oid, index, NULL);
     
     pcb = pcb->next;
   }
