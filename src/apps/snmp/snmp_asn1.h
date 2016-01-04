@@ -53,7 +53,7 @@ extern "C" {
 #define SNMP_ASN1_CLASS_MASK        0xC0
 #define SNMP_ASN1_CONTENTTYPE_MASK  0x20
 #define SNMP_ASN1_DATATYPE_MASK     0x1F
-#define SNMP_ASN1_DATATYPE_EXTENDED 0x1F // DataType indicating that datatype is encoded in following bytes
+#define SNMP_ASN1_DATATYPE_EXTENDED 0x1F /* DataType indicating that datatype is encoded in following bytes */
 
 /* context specific (SNMP) tags (from SNMP spec. RFC1157) */
 #define SNMP_ASN1_CONTEXT_PDU_GET_REQ      0
