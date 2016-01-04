@@ -36,6 +36,7 @@
 
 #include "snmp_pbuf_stream.h"
 #include "lwip/def.h"
+#include <string.h>
 
 err_t
 snmp_pbuf_stream_init(struct snmp_pbuf_stream* pbuf_stream, struct pbuf* p, u16_t offset, u16_t length)

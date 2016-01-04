@@ -2307,7 +2307,7 @@ udp_endpointTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t
   ip_addr_t local_ip, remote_ip;
   u16_t local_port, remote_port;
   struct udp_pcb *pcb;
-  int index = 0;
+  u8_t index = 0;
 
   LWIP_UNUSED_ARG(value_len);
 

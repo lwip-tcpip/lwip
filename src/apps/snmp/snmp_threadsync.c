@@ -35,6 +35,7 @@
 #include "lwip/apps/snmp_core.h"
 #include "lwip/mem.h"
 #include "lwip/sys.h"
+#include <string.h>
 
 struct threadsync_data
 {

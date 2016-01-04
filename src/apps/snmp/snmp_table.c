@@ -36,6 +36,7 @@
 
 #include "lwip/apps/snmp_core.h"
 #include "lwip/apps/snmp_table.h"
+#include <string.h>
 
 snmp_err_t snmp_table_get_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance)
 {

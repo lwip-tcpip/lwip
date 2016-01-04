@@ -40,6 +40,8 @@
 #include "lwip/apps/snmp.h"
 #include "lwip/apps/snmp_core.h"
 #include "snmp_core_priv.h"
+#include <string.h>
+
 
 #if (LWIP_SNMP && (SNMP_TRAP_DESTINATIONS<=0))
   #error "If you want to use SNMP, you have to define SNMP_TRAP_DESTINATIONS>=1 in your lwipopts.h"
