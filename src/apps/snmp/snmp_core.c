@@ -212,13 +212,13 @@ snmp_ip6_to_oid(const ip6_addr_t *ip, u32_t *oid)
 u8_t
 snmp_ip_port_to_oid(const ip_addr_t *ip, u16_t port, u32_t *oid)
 {
-  u8_t index;
+  u8_t idx;
 
-  index = snmp_ip_to_oid(ip, oid);
-  oid[index] = port;
-  index++;
+  idx = snmp_ip_to_oid(ip, oid);
+  oid[idx] = port;
+  idx++;
   
-  return index;
+  return idx;
 }
 
 /**
@@ -312,25 +312,25 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
 u8_t
 snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port)
 {
-  u8_t index = 0;
+  u8_t idx = 0;
   
   /* InetAddressType + InetAddress */
-  index += snmp_oid_to_ip(&oid[index], oid_len-index, ip);
-  if(index == 0) {
+  idx += snmp_oid_to_ip(&oid[idx], oid_len-idx, ip);
+  if(idx == 0) {
     return 0;
   }
 
   /* InetPortNumber */
-  if(oid_len < (index+1)) {
+  if(oid_len < (idx+1)) {
     return 0;
   }
-  if(oid[index] > 0xffff) {
+  if(oid[idx] > 0xffff) {
     return 0;
   }
-  *port = (u16_t)oid[index];
-  index++;
+  *port = (u16_t)oid[idx];
+  idx++;
 
-  return index;
+  return idx;
 }
 
 #endif /* LWIP_IPV4 || LWIP_IPV6 */
