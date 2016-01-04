@@ -1222,7 +1222,7 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
 }
 
 /**
- * Connect a pcb contained inside a netconn
+ * Disconnect a pcb contained inside a netconn
  * Only used for UDP netconns.
  * Called from netconn_disconnect.
  *
