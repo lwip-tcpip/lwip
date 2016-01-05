@@ -2052,12 +2052,12 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
 static snmp_err_t 
 tcp_ConnectionTable_get_cell_value_core(const u32_t* column, struct tcp_pcb *pcb, union snmp_variant_value* value)
 {
-  /* all items except tcpConnectionStatea and tcpListenerProcess are declared as not-accessible */   
+  /* all items except tcpConnectionState and tcpConnectionProcess are declared as not-accessible */   
   switch (*column) {
   case 7: /* tcpConnectionState */
     value->u32 = pcb->state + 1;
     break;
-  case 8: /* tcpListenerProcess */
+  case 8: /* tcpConnectionProcess */
     value->u32 = 0; /* not supported */
     break;
   default:
