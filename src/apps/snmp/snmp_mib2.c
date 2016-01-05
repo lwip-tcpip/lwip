@@ -1021,7 +1021,7 @@ static u16_t interfaces_Table_get_value(struct snmp_node_instance* instance, voi
     break;
   case 2: /* ifDescr */
     value_len = sizeof(netif->name);
-    SMEMCPY(value, netif->name, value_len);
+    MEMCPY(value, netif->name, value_len);
     break;
   case 3: /* ifType */
     *value_s32 = netif->link_type;
@@ -1037,7 +1037,7 @@ static u16_t interfaces_Table_get_value(struct snmp_node_instance* instance, voi
     break;
   case 6: /* ifPhysAddress */
     value_len = sizeof(netif->hwaddr);
-    SMEMCPY(value, &netif->hwaddr, value_len);
+    MEMCPY(value, &netif->hwaddr, value_len);
     break;
   case 7: /* ifAdminStatus */
     if (netif_is_up(netif)) {
@@ -1114,7 +1114,7 @@ static u16_t interfaces_Table_get_value(struct snmp_node_instance* instance, voi
   /** @note returning zeroDotZero (0.0) no media specific MIB support */
   case 22: /* ifSpecific */
     value_len = snmp_zero_dot_zero.len * sizeof(u32_t);
-    SMEMCPY(value, snmp_zero_dot_zero.id, value_len);
+    MEMCPY(value, snmp_zero_dot_zero.id, value_len);
     break;
   default:
     return 0;

@@ -940,7 +940,7 @@ snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, const u
       {
         if (oid_len <= state->next_oid_max_len)
         {
-          SMEMCPY(state->next_oid, oid, oid_len * sizeof(u32_t));
+          MEMCPY(state->next_oid, oid, oid_len * sizeof(u32_t));
           state->next_oid_len = oid_len;
           state->status       = SNMP_NEXT_OID_STATUS_SUCCESS;
           state->reference    = reference;
