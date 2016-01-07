@@ -194,13 +194,17 @@ do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* ins
     call_data->arg2.root_oid_len   = root_oid_len;
     call_synced_function(call_data, fn);
 
-    instance->access           = call_data->proxy_instance.access;
-    instance->asn1_type        = call_data->proxy_instance.asn1_type;
-    instance->release_instance = threadsync_release_instance;
-    instance->get_value        = (call_data->proxy_instance.get_value != NULL)? threadsync_get_value : NULL;
-    instance->set_value        = (call_data->proxy_instance.set_value != NULL)? threadsync_set_value : NULL;
-    instance->set_test         = (call_data->proxy_instance.set_test != NULL)?  threadsync_set_test  : NULL;
-    snmp_oid_assign(&instance->instance_oid, call_data->proxy_instance.instance_oid.id, call_data->proxy_instance.instance_oid.len);
+    if(call_data->retval.u8 == SNMP_ERR_NOERROR) {
+      instance->access           = call_data->proxy_instance.access;
+      instance->asn1_type        = call_data->proxy_instance.asn1_type;
+      instance->release_instance = threadsync_release_instance;
+      instance->get_value        = (call_data->proxy_instance.get_value != NULL)? threadsync_get_value : NULL;
+      instance->set_value        = (call_data->proxy_instance.set_value != NULL)? threadsync_set_value : NULL;
+      instance->set_test         = (call_data->proxy_instance.set_test != NULL)?  threadsync_set_test  : NULL;
+      snmp_oid_assign(&instance->instance_oid, call_data->proxy_instance.instance_oid.id, call_data->proxy_instance.instance_oid.len);
+    } else {
+      mem_free(call_data);
+    }
 
     return call_data->retval.u8;
   } else {

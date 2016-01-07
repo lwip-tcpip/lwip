@@ -244,6 +244,12 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
     if (request->error_status == SNMP_ERR_NOERROR) {
       /* use 'getnext_validate' method for validation to avoid code duplication (some checks have to be executed here) */
       request->error_status = snmp_msg_getnext_validate_node_inst(&node_instance, request);
+
+      if (request->error_status != SNMP_ERR_NOERROR) {
+        if (node_instance.release_instance != NULL) {
+          node_instance.release_instance(&node_instance);
+        }
+      }
     }
   }
 
@@ -280,10 +286,10 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
     } else if (err != ERR_OK) {
       request->error_status = SNMP_ERR_GENERROR;
     }
-  }
 
-  if (node_instance.release_instance != NULL) {
-    node_instance.release_instance(&node_instance);
+    if (node_instance.release_instance != NULL) {
+      node_instance.release_instance(&node_instance);
+    }
   }
 }
 
