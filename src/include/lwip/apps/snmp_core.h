@@ -143,10 +143,6 @@ union snmp_variant_value
   s32_t s32;
 };
 
-#define SNMP_VARIANT_VALUE_TYPE_U32 0
-#define SNMP_VARIANT_VALUE_TYPE_S32 1
-#define SNMP_VARIANT_VALUE_TYPE_PTR 2
-#define SNMP_VARIANT_VALUE_TYPE_CONST_PTR 3
 
 /**
 SNMP MIB node types

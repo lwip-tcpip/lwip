@@ -83,11 +83,18 @@ snmp_err_t snmp_table_get_next_instance(const u32_t *root_oid, u8_t root_oid_len
   
 /* simple read-only table */
 
+typedef enum {
+  SNMP_VARIANT_VALUE_TYPE_U32,
+  SNMP_VARIANT_VALUE_TYPE_S32,
+  SNMP_VARIANT_VALUE_TYPE_PTR,
+  SNMP_VARIANT_VALUE_TYPE_CONST_PTR
+} snmp_table_column_data_type_t;
+
 struct snmp_table_simple_col_def
 {
   u32_t index;
   u8_t asn1_type;
-  u8_t data_type; /* any of SNMP_VARIANT_VALUE_TYPE_*, depending of what union member is used to store the value*/
+  snmp_table_column_data_type_t data_type; /* depending of what union member is used to store the value*/
 };
 
 struct snmp_table_simple_node
