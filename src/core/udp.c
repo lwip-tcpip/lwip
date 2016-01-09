@@ -937,6 +937,16 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   ip_addr_debug_print(UDP_DEBUG | LWIP_DBG_TRACE, ipaddr);
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, (", port = %"U16_F")\n", port));
 
+  /* no port specified? */
+  if (port == 0) {
+    port = udp_new_port();
+    if (port == 0) {
+      /* no more ports available in local range */
+      LWIP_DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
+      return ERR_USE;
+    }
+  }
+
   rebind = 0;
   /* Check for double bind and rebind of the same pcb */
   for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
@@ -973,15 +983,6 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 
   ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
 
-  /* no port specified? */
-  if (port == 0) {
-    port = udp_new_port();
-    if (port == 0) {
-      /* no more ports available in local range */
-      LWIP_DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
-      return ERR_USE;
-    }
-  }
   pcb->local_port = port;
   mib2_udp_bind(pcb);
   /* pcb not active yet? */
