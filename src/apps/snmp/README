@@ -10,7 +10,7 @@ Features:
   - SNMPv2c support.
   - Low RAM usage - no memory pools, stack only.
   - MIB2 implementation is separated from SNMP stack.
-  - Support for multiple MIBs (snmp_set_mibs call) - e.g. for private MIB.
+  - Support for multiple MIBs (snmp_set_mibs() call) - e.g. for private MIB.
   - Simple and generic API for MIB implementation.
   - Comfortable node types and helper functions for scalar arrays and tables.
   - Counter64, bit and truthvalue datatype support.
@@ -24,9 +24,14 @@ Features:
     possible. Used in MIB2 to access lwIP stats from lwIP thread.
 
 MIB compiler (code generator):
-  - Written in C# but can be compiled and used under Linux with monodevelop.
+  - Written in C#. MIB viewer used Windows Forms.
+  - Developed on Windows with Visual Studio 2010.
+  - Can be compiled and used under Linux with http://www.monodevelop.com/.
   - Based on a heavily modified version of last LGPL version of
     SharpSnmpLib (https://sharpsnmplib.codeplex.com/).
+  - MIB parser, C file generation framework and LWIP code generation are cleanly
+    separated, which means the code may be useful as a base for code generation
+    of other SNMP agents.
 
 Notes:
   - Stack and MIB compiler were used to implement a Profinet device.
