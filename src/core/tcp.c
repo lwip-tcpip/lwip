@@ -464,26 +464,26 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
     if (port == 0) {
       return ERR_BUF;
     }
-  }
-
-  /* Check if the address already is in use (on all lists) */
-  for (i = 0; i < max_pcb_list; i++) {
-    for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
-      if (cpcb->local_port == port) {
+  } else {
+    /* Check if the address already is in use (on all lists) */
+    for (i = 0; i < max_pcb_list; i++) {
+      for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
+        if (cpcb->local_port == port) {
 #if SO_REUSE
-        /* Omit checking for the same port if both pcbs have REUSEADDR set.
-           For SO_REUSEADDR, the duplicate-check for a 5-tuple is done in
-           tcp_connect. */
-        if (!ip_get_option(pcb, SOF_REUSEADDR) ||
-            !ip_get_option(cpcb, SOF_REUSEADDR))
+          /* Omit checking for the same port if both pcbs have REUSEADDR set.
+             For SO_REUSEADDR, the duplicate-check for a 5-tuple is done in
+             tcp_connect. */
+          if (!ip_get_option(pcb, SOF_REUSEADDR) ||
+              !ip_get_option(cpcb, SOF_REUSEADDR))
 #endif /* SO_REUSE */
-        {
-          /* @todo: check accept_any_ip_version */
-          if (IP_PCB_IPVER_EQ(pcb, cpcb) &&
-              (ip_addr_isany(&cpcb->local_ip) ||
-              ip_addr_isany(ipaddr) ||
-              ip_addr_cmp(&cpcb->local_ip, ipaddr))) {
-            return ERR_USE;
+          {
+            /* @todo: check accept_any_ip_version */
+            if (IP_PCB_IPVER_EQ(pcb, cpcb) &&
+                (ip_addr_isany(&cpcb->local_ip) ||
+                ip_addr_isany(ipaddr) ||
+                ip_addr_cmp(&cpcb->local_ip, ipaddr))) {
+              return ERR_USE;
+            }
           }
         }
       }
@@ -785,28 +785,30 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
     if (pcb->local_port == 0) {
       return ERR_BUF;
     }
-  }
+  } else {
 #if SO_REUSE
-  if (ip_get_option(pcb, SOF_REUSEADDR)) {
-    /* Since SOF_REUSEADDR allows reusing a local address, we have to make sure
-       now that the 5-tuple is unique. */
-    struct tcp_pcb *cpcb;
-    int i;
-    /* Don't check listen- and bound-PCBs, check active- and TIME-WAIT PCBs. */
-    for (i = 2; i < NUM_TCP_PCB_LISTS; i++) {
-      for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
-        if ((cpcb->local_port == pcb->local_port) &&
-            (cpcb->remote_port == port) &&
-            IP_PCB_IPVER_EQ(cpcb, pcb) &&
-            ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip) &&
-            ip_addr_cmp(&cpcb->remote_ip, ipaddr)) {
-          /* linux returns EISCONN here, but ERR_USE should be OK for us */
-          return ERR_USE;
+    if (ip_get_option(pcb, SOF_REUSEADDR)) {
+      /* Since SOF_REUSEADDR allows reusing a local address, we have to make sure
+         now that the 5-tuple is unique. */
+      struct tcp_pcb *cpcb;
+      int i;
+      /* Don't check listen- and bound-PCBs, check active- and TIME-WAIT PCBs. */
+      for (i = 2; i < NUM_TCP_PCB_LISTS; i++) {
+        for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
+          if ((cpcb->local_port == pcb->local_port) &&
+              (cpcb->remote_port == port) &&
+              IP_PCB_IPVER_EQ(cpcb, pcb) &&
+              ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip) &&
+              ip_addr_cmp(&cpcb->remote_ip, ipaddr)) {
+            /* linux returns EISCONN here, but ERR_USE should be OK for us */
+            return ERR_USE;
+          }
         }
       }
     }
-  }
 #endif /* SO_REUSE */
+  }
+
   iss = tcp_next_iss();
   pcb->rcv_nxt = 0;
   pcb->snd_nxt = iss;
