@@ -23,15 +23,14 @@ namespace Lextm.SharpSnmpLib.Mib
 
                     if (mi != null)
                     {
-                        entities.Remove(element);
                         _root.Add(new MibTreeNode(null, mi));
-                        break;
                     }
                 }
 
                 // gather all items below ModuleIdentity
                 foreach (MibTreeNode mibTreeNode in _root)
                 {
+					entities.Remove (mibTreeNode.Entity);
                     BuildTree(mibTreeNode, entities);
                     UpdateTreeNodeTypes(mibTreeNode);
                 }
@@ -44,9 +43,7 @@ namespace Lextm.SharpSnmpLib.Mib
 
                     if (oa != null)
                     {
-                        entities.Remove(element);
                         _root.Add(new MibTreeNode(null, oa));
-                        break;
                     }
                 }
 
@@ -54,11 +51,14 @@ namespace Lextm.SharpSnmpLib.Mib
                 {
                     //no module identity, assume first entity is root
                     _root.Add(new MibTreeNode(null, entities[0]));
-                    entities.RemoveAt(0);
                 }
 
                 foreach (MibTreeNode mibTreeNode in _root)
                 {
+					if (entities.Contains (mibTreeNode.Entity))
+					{
+						entities.Remove (mibTreeNode.Entity);
+					}
                     BuildTree(mibTreeNode, entities);
                     UpdateTreeNodeTypes(mibTreeNode);
                 }
