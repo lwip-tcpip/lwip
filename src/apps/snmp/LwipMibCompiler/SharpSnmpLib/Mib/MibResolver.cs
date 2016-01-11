@@ -31,24 +31,26 @@ namespace Lextm.SharpSnmpLib.Mib
             {
                 string[] matchedFiles = Directory.GetFiles(
                     _path,
-                    moduleName + ".*",
+                    "*",
                     (_recursive) ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
 
                 if ((matchedFiles != null) && (matchedFiles.Length >= 1))
                 {
                     foreach (string matchedFile in matchedFiles)
                     {
-                        try
-                        {
-                            MibDocument md = new MibDocument(matchedFile);
-                            if (md.Modules.Count > 0)
-                            {
-                                return md.Modules[0];
-                            }
-                        }
-                        catch
-                        {
-                        }
+						if (Path.GetFileNameWithoutExtension(matchedFile.ToLowerInvariant()) == moduleName.ToLowerInvariant())
+						{
+							try
+							{
+								MibDocument md = new MibDocument (matchedFile);
+								if (md.Modules.Count > 0)
+								{
+									return md.Modules [0];
+								}
+							} catch
+							{
+							}
+						}
                     }                  
                 }
             }
