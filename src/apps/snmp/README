@@ -27,8 +27,8 @@ MIB compiler (code generator):
   - Written in C#. MIB viewer used Windows Forms.
   - Developed on Windows with Visual Studio 2010.
   - Can be compiled and used under Linux with http://www.monodevelop.com/.
-  - Based on a heavily modified version of last LGPL version of
-    SharpSnmpLib (https://sharpsnmplib.codeplex.com/).
+  - Based on a heavily modified version of of SharpSnmpLib (a4bd05c6afb4)
+    (https://sharpsnmplib.codeplex.com/SourceControl/network/forks/Nemo157/MIBParserUpdate).
   - MIB parser, C file generation framework and LWIP code generation are cleanly
     separated, which means the code may be useful as a base for code generation
     of other SNMP agents.
