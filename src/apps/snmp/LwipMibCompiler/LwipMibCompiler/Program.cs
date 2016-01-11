@@ -348,6 +348,10 @@ namespace LwipMibCompiler
 			{
 				result.AccessMode = SnmpAccessMode.ReadOnly;
 			}
+			else if (ote.Access == MaxAccess.readCreate)
+			{
+				result.AccessMode = SnmpAccessMode.ReadOnly;
+			}
 			else if (ignoreAccessibleFlag && (ote.Access == MaxAccess.notAccessible))
 			{
 				result.AccessMode = SnmpAccessMode.NotAccessible;
