@@ -142,9 +142,9 @@ namespace LwipMibViewer
 				this.listviewNodeDetails.Items.Clear();
 
 				MibTree mt = new MibTree(md.Modules[0] as MibModule);
-				if (mt.Root != null)
+				foreach (MibTreeNode mibTreeNode in mt.Root)
 				{
-					AddNode(mt.Root, this.treeMib.Nodes);
+					AddNode(mibTreeNode, this.treeMib.Nodes);
 
 					foreach (TreeNode node in this.treeMib.Nodes)
 					{
