@@ -38,14 +38,14 @@ namespace LwipSnmpCodeGeneration
 {
 	public class SnmpMib : SnmpTreeNode
 	{
-		public int[] BaseOid { get; set; }
+		public uint[] BaseOid { get; set; }
 
 		public SnmpMib()
 			: base(null)
 		{
 		}
 
-		public SnmpMib(int[] baseOid)
+		public SnmpMib(uint[] baseOid)
 			: base(null)
 		{
 			this.BaseOid = baseOid;
@@ -64,7 +64,7 @@ namespace LwipSnmpCodeGeneration
 			
 			// create and add BaseOID declarations
 			StringBuilder boidInitialization = new StringBuilder("{");
-			foreach (int t in this.BaseOid)
+			foreach (uint t in this.BaseOid)
 			{
 				boidInitialization.Append(t);
 				boidInitialization.Append(",");

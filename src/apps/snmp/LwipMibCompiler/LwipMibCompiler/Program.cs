@@ -118,7 +118,7 @@ namespace LwipMibCompiler
 
 				SnmpMib snmpMib = new SnmpMib();
 				snmpMib.Oid = mibTreeNode.Entity.Value;
-				snmpMib.BaseOid = (int[])(object)MibTypesResolver.ResolveOid(mibTreeNode.Entity).GetOidValues();
+				snmpMib.BaseOid = MibTypesResolver.ResolveOid(mibTreeNode.Entity).GetOidValues();
 				snmpMib.Name = mibTreeNode.Entity.Name;
 
 				ProcessMibTreeNode(mibTreeNode, snmpMib);
