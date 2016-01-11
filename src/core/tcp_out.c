@@ -321,7 +321,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
 
   /* fail on too much data */
   if (len > pcb->snd_buf) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too much data (len=%"U16_F" > snd_buf=%"TCPWNDSIZE_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too much data (len=%"U16_F" > snd_buf=%"TCPWNDSIZE_F")\n",
       len, pcb->snd_buf));
     pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
@@ -333,7 +333,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
    * configured maximum, return an error */
   /* check for configured max queuelen and possible overflow */
   if ((pcb->snd_queuelen >= TCP_SND_QUEUELEN) || (pcb->snd_queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too long queue %"U16_F" (max %"U16_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too long queue %"U16_F" (max %"U16_F")\n",
       pcb->snd_queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
@@ -764,7 +764,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
   /* check for configured max queuelen and possible overflow (FIN flag should always come through!) */
   if (((pcb->snd_queuelen >= TCP_SND_QUEUELEN) || (pcb->snd_queuelen > TCP_SNDQUEUELEN_OVERFLOW)) &&
       ((flags & TCP_FIN) == 0)) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue_flags: too long queue %"U16_F" (max %"U16_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_enqueue_flags: too long queue %"U16_F" (max %"U16_F")\n",
                                        pcb->snd_queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
@@ -795,7 +795,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
    * This means we can't send FIN while snd_buf==0. A better fix would be to
    * not include SYN and FIN sequence numbers in the snd_buf count. */
   if (pcb->snd_buf == 0) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue_flags: no send buffer available\n"));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_enqueue_flags: no send buffer available\n"));
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
