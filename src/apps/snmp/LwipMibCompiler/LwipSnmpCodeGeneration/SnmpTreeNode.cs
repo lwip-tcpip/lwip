@@ -163,7 +163,7 @@ namespace LwipSnmpCodeGeneration
 			// check if we can merge this node to a scalar array node (all childs need to be scalars)
 			if (this.childNodes.Count > 0)
 			{
-				if (LwipOpts.GenerateScalarArrays && (this.childScalarNodes.Count == this.childNodes.Count))
+				if (LwipOpts.GenerateScalarArrays && (this.childScalarNodes.Count == this.childNodes.Count) && (this.ParentNode != null))
 				{
 					SnmpScalarArrayNode scalarArrayNode = new SnmpScalarArrayNode(this.childScalarNodes, this.ParentNode);
 					scalarArrayNode.Oid  = this.Oid;

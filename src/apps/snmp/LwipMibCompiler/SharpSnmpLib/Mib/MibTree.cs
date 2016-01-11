@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using Lextm.SharpSnmpLib.Mib.Elements.Entities;
 
 namespace Lextm.SharpSnmpLib.Mib
@@ -11,7 +8,7 @@ namespace Lextm.SharpSnmpLib.Mib
     /// </summary>
     public class MibTree
     {
-        private MibTreeNode _root = null;
+        private readonly List<MibTreeNode> _root = new List<MibTreeNode>();
 
         public MibTree(MibModule module)
         {
@@ -27,24 +24,48 @@ namespace Lextm.SharpSnmpLib.Mib
                     if (mi != null)
                     {
                         entities.Remove(element);
-                        _root = new MibTreeNode(null, mi);
+                        _root.Add(new MibTreeNode(null, mi));
                         break;
                     }
                 }
 
-                if (_root == null)
+                // gather all items below ModuleIdentity
+                foreach (MibTreeNode mibTreeNode in _root)
+                {
+                    BuildTree(mibTreeNode, entities);
+                    UpdateTreeNodeTypes(mibTreeNode);
+                }
+
+                // find OID assignments as root, if there are any that are not below ModuleIdentity
+                // FIXME: There may be multiple OID assignments that create a tree (find the root ones!)
+                foreach (IEntity element in entities)
+                {
+                    OidValueAssignment oa = element as OidValueAssignment;
+
+                    if (oa != null)
+                    {
+                        entities.Remove(element);
+                        _root.Add(new MibTreeNode(null, oa));
+                        break;
+                    }
+                }
+
+                if (_root.Count == 0)
                 {
                     //no module identity, assume first entity is root
-                    _root = new MibTreeNode(null, entities[0]);
+                    _root.Add(new MibTreeNode(null, entities[0]));
                     entities.RemoveAt(0);
                 }
 
-                BuildTree(_root, entities);
-                UpdateTreeNodeTypes(_root);
+                foreach (MibTreeNode mibTreeNode in _root)
+                {
+                    BuildTree(mibTreeNode, entities);
+                    UpdateTreeNodeTypes(mibTreeNode);
+                }
             }
         }
 
-        public MibTreeNode Root
+        public IList<MibTreeNode> Root
         {
             get { return _root; }
         }

@@ -102,31 +102,34 @@ namespace LwipMibCompiler
 			MibTypesResolver.ResolveTypes(md.Modules[0]);
 			MibTree mt = new MibTree(md.Modules[0] as MibModule);
 
-			if (mt.Root == null)
+			if (mt.Root.Count == 0)
 			{
 				Console.WriteLine("No root element found inside MIB!");
 				return;
 			}
 
-			
-			// create LWIP object tree from MIB structure
-			Console.WriteLine(" Creating lwIP object tree...");
-
-			SnmpMib snmpMib = new SnmpMib();
-			snmpMib.Oid     = mt.Root.Entity.Value;
-			snmpMib.BaseOid = (int[])(object)MibTypesResolver.ResolveOid(mt.Root.Entity).GetOidValues();
-			snmpMib.Name    = _alphaNumericRegex.Replace(md.Modules[0].Name, "").ToLowerInvariant();
-
-			ProcessMibTreeNode(mt.Root, snmpMib);
-
-			// let the tree transform itself depending on node structure
-			snmpMib.Analyze();
-			
-			// generate code from LWIP object tree
-			Console.WriteLine(" Generating code files...");
-			MibCFile      generatedFile       = new MibCFile();
+			MibCFile generatedFile = new MibCFile();
 			MibHeaderFile generatedHeaderFile = new MibHeaderFile();
-			snmpMib.Generate(generatedFile, generatedHeaderFile);
+
+			foreach (MibTreeNode mibTreeNode in mt.Root)
+			{
+				// create LWIP object tree from MIB structure
+				Console.WriteLine(" Creating lwIP object tree " + mibTreeNode.Entity.Name);
+
+				SnmpMib snmpMib = new SnmpMib();
+				snmpMib.Oid = mibTreeNode.Entity.Value;
+				snmpMib.BaseOid = (int[])(object)MibTypesResolver.ResolveOid(mibTreeNode.Entity).GetOidValues();
+				snmpMib.Name = mibTreeNode.Entity.Name;
+
+				ProcessMibTreeNode(mibTreeNode, snmpMib);
+
+				// let the tree transform itself depending on node structure
+				snmpMib.Analyze();
+
+				// generate code from LWIP object tree
+				Console.WriteLine(" Generating code " + snmpMib.Name);
+				snmpMib.Generate(generatedFile, generatedHeaderFile);
+			}
 
 			string preservedCode = MibCFile.GetPreservedCode(destFile);
 			if (!string.IsNullOrEmpty(preservedCode))
