@@ -962,7 +962,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
        PCB is already bound to, unless *all* PCBs with that port have tha
        REUSEADDR flag set. */
 #if SO_REUSE
-    else if (!ip_get_option(pcb, SOF_REUSEADDR) &&
+    else if (!ip_get_option(pcb, SOF_REUSEADDR) ||
              !ip_get_option(ipcb, SOF_REUSEADDR)) {
 #else /* SO_REUSE */
     /* port matches that of PCB in list and REUSEADDR not set -> reject */
