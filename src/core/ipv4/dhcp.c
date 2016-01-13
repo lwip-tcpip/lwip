@@ -1205,11 +1205,15 @@ dhcp_release(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   ip_addr_t server_ip_addr;
+  u8_t is_dhcp_supplied_address;
+
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release()\n"));
   if (dhcp == NULL) {
     return ERR_ARG;
   }
   ip_addr_copy(server_ip_addr, dhcp->server_ip_addr);
+
+  is_dhcp_supplied_address = dhcp_supplied_address(netif);
 
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_STATE_OFF);
@@ -1224,7 +1228,7 @@ dhcp_release(struct netif *netif)
   dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
   dhcp->t1_renew_time = dhcp->t2_rebind_time = dhcp->lease_used = dhcp->t0_timeout = 0;
 
-  if (!dhcp_supplied_address(netif)) {
+  if (!is_dhcp_supplied_address) {
     /* don't issue release message when address is not dhcp-assigned */
     return ERR_OK;
   }
