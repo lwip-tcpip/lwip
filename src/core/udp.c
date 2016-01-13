@@ -937,6 +937,16 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   ip_addr_debug_print(UDP_DEBUG | LWIP_DBG_TRACE, ipaddr);
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, (", port = %"U16_F")\n", port));
 
+  rebind = 0;
+  /* Check for double bind and rebind of the same pcb */
+  for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
+    /* is this UDP PCB already on active list? */
+    if (pcb == ipcb) {
+      rebind = 1;
+      break;
+    }
+  }
+
   /* no port specified? */
   if (port == 0) {
     port = udp_new_port();
@@ -945,38 +955,29 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
       LWIP_DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
       return ERR_USE;
     }
-  }
-
-  rebind = 0;
-  /* Check for double bind and rebind of the same pcb */
-  for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
-    /* is this UDP PCB already on active list? */
-    if (pcb == ipcb) {
-      /* pcb may occur at most once in active list */
-      LWIP_ASSERT("rebind == 0", rebind == 0);
-      /* pcb already in list, just rebind */
-      rebind = 1;
-    }
-
-    /* By default, we don't allow to bind to a port that any other udp
-       PCB is already bound to, unless *all* PCBs with that port have tha
-       REUSEADDR flag set. */
+  } else {
+    for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
+      if (pcb != ipcb) {
+      /* By default, we don't allow to bind to a port that any other udp
+         PCB is already bound to, unless *all* PCBs with that port have tha
+         REUSEADDR flag set. */
 #if SO_REUSE
-    else if (!ip_get_option(pcb, SOF_REUSEADDR) ||
-             !ip_get_option(ipcb, SOF_REUSEADDR)) {
-#else /* SO_REUSE */
-    /* port matches that of PCB in list and REUSEADDR not set -> reject */
-    else {
+        if (!ip_get_option(pcb, SOF_REUSEADDR) ||
+            !ip_get_option(ipcb, SOF_REUSEADDR))
 #endif /* SO_REUSE */
-      if ((ipcb->local_port == port) && IP_PCB_IPVER_EQ(pcb, ipcb) &&
-          /* IP address matches, or one is IP_ADDR_ANY? */
-            (ip_addr_isany(&ipcb->local_ip) ||
-             ip_addr_isany(ipaddr) ||
-             ip_addr_cmp(&ipcb->local_ip, ipaddr))) {
-        /* other PCB already binds to this local IP and port */
-        LWIP_DEBUGF(UDP_DEBUG,
-                    ("udp_bind: local port %"U16_F" already bound by another pcb\n", port));
-        return ERR_USE;
+        {
+          /* port matches that of PCB in list and REUSEADDR not set -> reject */
+          if ((ipcb->local_port == port) && IP_PCB_IPVER_EQ(pcb, ipcb) &&
+              /* IP address matches, or one is IP_ADDR_ANY? */
+                (ip_addr_isany(&ipcb->local_ip) ||
+                 ip_addr_isany(ipaddr) ||
+                 ip_addr_cmp(&ipcb->local_ip, ipaddr))) {
+            /* other PCB already binds to this local IP and port */
+            LWIP_DEBUGF(UDP_DEBUG,
+                        ("udp_bind: local port %"U16_F" already bound by another pcb\n", port));
+            return ERR_USE;
+          }
+        }
       }
     }
   }
