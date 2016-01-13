@@ -916,7 +916,9 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
     /* When we are at the end of the headers, check for data to send
      * instead of waiting for ACK from remote side to continue
      * (which would happen when sending files from async read). */
-    http_check_eof(pcb, hs);
+    if(http_check_eof(pcb, hs)) {
+      data_to_send = HTTP_DATA_TO_SEND_CONTINUE;
+    }
   }
   /* If we get here and there are still header bytes to send, we send
    * the header information we just wrote immediately. If there are no
