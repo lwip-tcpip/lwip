@@ -114,34 +114,36 @@ static snmp_err_t snmp_set_value(const struct snmp_scalar_array_node_def *node, 
 
 /* the following nodes access variables in SNMP stack (snmp_stats) from SNMP worker thread -> OK, no sync needed */ 
 static const struct snmp_scalar_array_node_def snmp_nodes[] = {
-  { 1, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInPkts */
-  { 2, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutPkts */
-  { 3, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInBadVersions */
-  { 4, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInBadCommunityNames */
-  { 5, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInBadCommunityUses */
-  { 6, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInASNParseErrs */
-  { 8, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInTooBigs */
-  { 9, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInNoSuchNames */
-  {10, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInBadValues */
-  {11, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInReadOnlys */
-  {12, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInGenErrs */
-  {13, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInTotalReqVars */
-  {14, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInTotalSetVars */
-  {15, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInGetRequests */
-  {16, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInGetNexts */
-  {17, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInSetRequests */
-  {18, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInGetResponses */
-  {19, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpInTraps */
-  {20, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutTooBigs */
-  {21, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutNoSuchNames */
-  {22, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutBadValues */
-  {24, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutGenErrs */
-  {25, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutGetRequests */
-  {26, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutGetNexts */
-  {27, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutSetRequests */
-  {28, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutGetResponses */
-  {29, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}, /* snmpOutTraps */
-  {30, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_WRITE} /* snmpEnableAuthenTraps */
+  { 1, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInPkts */
+  { 2, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutPkts */
+  { 3, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInBadVersions */
+  { 4, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInBadCommunityNames */
+  { 5, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInBadCommunityUses */
+  { 6, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInASNParseErrs */
+  { 8, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInTooBigs */
+  { 9, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInNoSuchNames */
+  {10, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInBadValues */
+  {11, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInReadOnlys */
+  {12, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInGenErrs */
+  {13, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInTotalReqVars */
+  {14, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInTotalSetVars */
+  {15, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInGetRequests */
+  {16, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInGetNexts */
+  {17, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInSetRequests */
+  {18, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInGetResponses */
+  {19, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpInTraps */
+  {20, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutTooBigs */
+  {21, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutNoSuchNames */
+  {22, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutBadValues */
+  {24, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutGenErrs */
+  {25, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutGetRequests */
+  {26, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutGetNexts */
+  {27, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutSetRequests */
+  {28, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutGetResponses */
+  {29, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutTraps */
+  {30, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_WRITE}, /* snmpEnableAuthenTraps */
+  {31, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpSilentDrops */
+  {32, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_ONLY}   /* snmpProxyDrops */
 };
 static const struct snmp_scalar_array_node snmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(11, snmp_nodes, snmp_get_value, snmp_set_test, snmp_set_value);
 
@@ -2597,6 +2599,12 @@ snmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
     } else {
       *uint_ptr = MIB2_AUTH_TRAPS_ENABLED;
     }
+    break;
+  case 31: /* snmpSilentDrops */
+    *uint_ptr = 0; /* not supported */
+    break;
+  case 32: /* snmpProxyDrops */
+    *uint_ptr = 0; /* not supported */
     break;
   default:
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_value(): unknown id: %"S32_F"\n", node->oid));
