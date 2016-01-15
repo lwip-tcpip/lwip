@@ -583,6 +583,15 @@ sntp_setoperatingmode(u8_t operating_mode)
   sntp_opmode = operating_mode;
 }
 
+/**
+ * Gets the operating mode.
+ */
+u8_t
+sntp_getoperatingmode(void)
+{
+  return sntp_opmode;
+}
+
 #if SNTP_GET_SERVERS_FROM_DHCP
 /**
  * Config SNTP server handling by IP address, name, or DHCP; clear table

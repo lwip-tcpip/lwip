@@ -44,6 +44,7 @@ extern "C" {
 #define SNTP_OPMODE_POLL            0
 #define SNTP_OPMODE_LISTENONLY      1
 void sntp_setoperatingmode(u8_t operating_mode);
+u8_t sntp_getoperatingmode(void);
 
 void sntp_init(void);
 void sntp_stop(void);
