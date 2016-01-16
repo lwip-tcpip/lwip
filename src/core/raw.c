@@ -112,9 +112,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
       if ((ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif()))
-#if LWIP_IPV6
           || PCB_ISIPV6(pcb)
-#endif /* LWIP_IPV6 */
           )
 #endif /* IP_SOF_BROADCAST_RECV */
       {
@@ -248,14 +246,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
 
-  header_size = (
-#if LWIP_IPV4 && LWIP_IPV6
-    PCB_ISIPV6(pcb) ? IP6_HLEN : IP_HLEN);
-#elif LWIP_IPV4
-    IP_HLEN);
-#else
-    IP6_HLEN);
-#endif
+  header_size = PCB_ISIPV6(pcb) ? IP6_HLEN : IP_HLEN;
 
   /* not enough space to add an IP header to first pbuf in given p chain? */
   if (pbuf_header(p, header_size)) {
@@ -293,9 +284,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
   }
 
 #if IP_SOF_BROADCAST
-#if LWIP_IPV6
   if (!PCB_ISIPV6(pcb))
-#endif /* LWIP_IPV6 */
   {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(ipaddr, netif)) {
