@@ -274,6 +274,10 @@ static struct ip_reassdata*
 ip_reass_enqueue_new_datagram(struct ip_hdr *fraghdr, int clen)
 {
   struct ip_reassdata* ipr;
+#if ! IP_REASS_FREE_OLDEST
+  LWIP_UNUSED_ARG(clen);
+#endif
+
   /* No matching previous fragment found, allocate a new reassdata struct */
   ipr = (struct ip_reassdata *)memp_malloc(MEMP_REASSDATA);
   if (ipr == NULL) {
