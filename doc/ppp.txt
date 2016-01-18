@@ -318,7 +318,7 @@ ppp_free(ppp);
 =====================================================
 
 Received data on serial port should be sent to lwIP using the pppos_input()
-function or the pppos_input_sys() function.
+function or the pppos_input_tcpip() function.
 
 If NO_SYS is 1 and if PPP_INPROC_IRQ_SAFE is 0 (the default), pppos_input()
 is not IRQ safe and then *MUST* only be called inside your main loop.
