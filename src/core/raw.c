@@ -246,7 +246,14 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
 
-  header_size = PCB_ISIPV6(pcb) ? IP6_HLEN : IP_HLEN;
+  header_size = (
+#if LWIP_IPV4 && LWIP_IPV6
+    PCB_ISIPV6(pcb) ? IP6_HLEN : IP_HLEN);
+#elif LWIP_IPV4
+    IP_HLEN);
+#else
+    IP6_HLEN);
+#endif
 
   /* not enough space to add an IP header to first pbuf in given p chain? */
   if (pbuf_header(p, header_size)) {
