@@ -498,7 +498,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
         protocol = PPP_VJC_UNCOMP;
         break;
       default:
-        PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: bad IP packet\n", pcb->netif->num));
+        PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad IP packet\n", pcb->netif->num));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
         MIB2_STATS_NETIF_INC(pcb->netif, ifoutdiscards);
