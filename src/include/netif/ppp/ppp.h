@@ -350,8 +350,6 @@ struct ppp_pcb_s {
 #endif /* VJ_SUPPORT */
 #if CCP_SUPPORT
   unsigned int ccp_all_rejected        :1; /* we rejected all peer's options */
-  unsigned int ccp_is_open             :1; /* true when CCP is open (currently negotiating) */
-  unsigned int ccp_is_up               :1; /* true when CCP is up (ready to handle data packets) */
 #endif /* CCP_SUPPORT */
 #if MPPE_SUPPORT
   unsigned int mppe_keys_set           :1; /* Have the MPPE keys been set? */

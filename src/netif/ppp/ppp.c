@@ -456,6 +456,9 @@ static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip
 #endif /* PPP_IPV6_SUPPORT */
 
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protocol) {
+#if MPPE_SUPPORT
+  err_t err;
+#endif /* MPPE_SUPPORT */
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
 
   /* Check that the link is up. */
@@ -473,8 +476,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
 
 #if MPPE_SUPPORT
   /* If MPPE is required, refuse any IP packet until we are able to crypt them. */
-  if (pcb->settings.require_mppe &&
-            (!pcb->ccp_is_up || pcb->ccp_transmit_method != CI_MPPE) ) {
+  if (pcb->settings.require_mppe && pcb->ccp_transmit_method != CI_MPPE) {
     PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: MPPE required, not up\n", pcb->netif->num));
     goto err_rte_drop;
   }
@@ -508,28 +510,24 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
 #endif /* VJ_SUPPORT && LWIP_TCP */
 
 #if CCP_SUPPORT
-  if (pcb->ccp_is_up) {
+  switch (pcb->ccp_transmit_method) {
+  case 0:
+    break; /* Don't compress */
 #if MPPE_SUPPORT
-    err_t err;
-#endif /* MPPE_SUPPORT */
-
-    switch (pcb->ccp_transmit_method) {
-#if MPPE_SUPPORT
-    case CI_MPPE:
-      if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != ERR_OK) {
-        LINK_STATS_INC(link.memerr);
-        LINK_STATS_INC(link.drop);
-        MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-        return err;
-      }
-
-      err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_COMP);
-      pbuf_free(pb);
+  case CI_MPPE:
+    if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != ERR_OK) {
+      LINK_STATS_INC(link.memerr);
+      LINK_STATS_INC(link.drop);
+      MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
       return err;
-#endif /* MPPE_SUPPORT */
-    default:
-      goto err_rte_drop; /* Cannot really happen, we only negotiate what we are able to do */
     }
+
+    err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_COMP);
+    pbuf_free(pb);
+    return err;
+#endif /* MPPE_SUPPORT */
+  default:
+    goto err_rte_drop; /* Cannot really happen, we only negotiate what we are able to do */
   }
 #endif /* CCP_SUPPORT */
 
@@ -772,10 +770,6 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
   if (protocol == PPP_COMP) {
     u8_t *pl;
-
-    if (!pcb->ccp_is_up) {
-      goto drop;
-    }
 
     switch (pcb->ccp_receive_method) {
 #if MPPE_SUPPORT
@@ -1307,8 +1301,8 @@ ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
 void
 ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method)
 {
-  pcb->ccp_is_open = isopen;
-  pcb->ccp_is_up = isup;
+  LWIP_UNUSED_ARG(isopen);
+  LWIP_UNUSED_ARG(isup);
   pcb->ccp_receive_method = receive_method;
   pcb->ccp_transmit_method = transmit_method;
   PPPDEBUG(LOG_DEBUG, ("ccp_set[%d]: is_open=%d, is_up=%d, receive_method=%u, transmit_method=%u\n",
