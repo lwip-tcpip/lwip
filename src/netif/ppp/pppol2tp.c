@@ -129,11 +129,6 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     goto memp_malloc_l2tp_failed;
   }
 
-  ppp = ppp_new(pppif, &pppol2tp_callbacks, l2tp, link_status_cb, ctx_cb);
-  if (ppp == NULL) {
-    goto ppp_new_failed;
-  }
-
 #if LWIP_IPV6
   if (IP_IS_V6_VAL(*ipaddr)) {
     udp = udp_new_ip6();
@@ -144,6 +139,11 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     goto udp_new_failed;
   }
   udp_recv(udp, pppol2tp_input, l2tp);
+
+  ppp = ppp_new(pppif, &pppol2tp_callbacks, l2tp, link_status_cb, ctx_cb);
+  if (ppp == NULL) {
+    goto ppp_new_failed;
+  }
 
   memset(l2tp, 0, sizeof(pppol2tp_pcb));
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
@@ -159,9 +159,9 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 
   return ppp;
 
-udp_new_failed:
-  ppp_free(ppp);
 ppp_new_failed:
+  udp_remove(udp);
+udp_new_failed:
   memp_free(MEMP_PPPOL2TP_PCB, l2tp);
 memp_malloc_l2tp_failed:
 ipaddr_check_failed:
