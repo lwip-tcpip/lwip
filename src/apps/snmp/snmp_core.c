@@ -988,7 +988,7 @@ snmp_oid_in_range(const u32_t *oid_in, u8_t oid_len, const struct snmp_oid_range
   return 1;
 }
 
-u8_t
+snmp_err_t
 snmp_set_test_ok(struct snmp_node_instance* instance, u16_t value_len, void* value)
 {
   LWIP_UNUSED_ARG(instance);

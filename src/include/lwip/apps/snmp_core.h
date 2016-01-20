@@ -311,7 +311,7 @@ u8_t snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip);
 u8_t snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port);
 #endif /* LWIP_IPV4 || LWIP_IPV6 */
 
-u8_t snmp_set_test_ok(struct snmp_node_instance* instance, u16_t value_len, void* value); /* generic function which can be used if test is always successful */
+snmp_err_t snmp_set_test_ok(struct snmp_node_instance* instance, u16_t value_len, void* value); /* generic function which can be used if test is always successful */
 
 err_t snmp_decode_bits(const u8_t *buf, u32_t buf_len, u32_t *bit_value);
 err_t snmp_decode_truthvalue(const s32_t *asn1_value, u8_t *bool_value);
