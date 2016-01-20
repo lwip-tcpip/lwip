@@ -91,34 +91,34 @@ extern "C" {
 #define SNMP_ASN1_TYPE_OPAQUE         (SNMP_ASN1_CLASS_APPLICATION | SNMP_ASN1_CONTENTTYPE_PRIMITIVE | SNMP_ASN1_APPLICATION_OPAQUE)
 #define SNMP_ASN1_TYPE_COUNTER64      (SNMP_ASN1_CLASS_APPLICATION | SNMP_ASN1_CONTENTTYPE_PRIMITIVE | SNMP_ASN1_APPLICATION_COUNTER64)
 
-typedef u8_t snmp_err_t;
-
-  /* error codes predefined by SNMP prot. */
-#define SNMP_ERR_NOERROR              0
-/* 
-outdated v1 error codes. do not use anmore!
-#define SNMP_ERR_NOSUCHNAME 2 // use SNMP_ERR_NOSUCHINSTANCE instead
-#define SNMP_ERR_BADVALUE   3 // use SNMP_ERR_WRONGTYPE,SNMP_ERR_WRONGLENGTH,SNMP_ERR_WRONGENCODING or SNMP_ERR_WRONGVALUE instead
-#define SNMP_ERR_READONLY   4 // use SNMP_ERR_NOTWRITABLE instead
-*/
-#define SNMP_ERR_GENERROR             5
-#define SNMP_ERR_NOACCESS             6
-#define SNMP_ERR_WRONGTYPE            7
-#define SNMP_ERR_WRONGLENGTH          8
-#define SNMP_ERR_WRONGENCODING        9
-#define SNMP_ERR_WRONGVALUE          10
-#define SNMP_ERR_NOCREATION          11
-#define SNMP_ERR_INCONSISTENTVALUE   12
-#define SNMP_ERR_RESOURCEUNAVAILABLE 13
-#define SNMP_ERR_COMMITFAILED        14
-#define SNMP_ERR_UNDOFAILED          15
-#define SNMP_ERR_NOTWRITABLE         17
-#define SNMP_ERR_INCONSISTENTNAME    18
-
 #define SNMP_VARBIND_EXCEPTION_OFFSET 0xF0
 #define SNMP_VARBIND_EXCEPTION_MASK   0x0F
-#define SNMP_ERR_NOSUCHINSTANCE       SNMP_VARBIND_EXCEPTION_OFFSET + SNMP_ASN1_CONTEXT_VARBIND_NO_SUCH_INSTANCE
 
+/* error codes predefined by SNMP prot. */
+typedef enum {
+  SNMP_ERR_NOERROR             = 0,
+/* 
+outdated v1 error codes. do not use anmore!
+#define SNMP_ERR_NOSUCHNAME 2  use SNMP_ERR_NOSUCHINSTANCE instead
+#define SNMP_ERR_BADVALUE   3  use SNMP_ERR_WRONGTYPE,SNMP_ERR_WRONGLENGTH,SNMP_ERR_WRONGENCODING or SNMP_ERR_WRONGVALUE instead
+#define SNMP_ERR_READONLY   4  use SNMP_ERR_NOTWRITABLE instead
+*/
+  SNMP_ERR_GENERROR            = 5,
+  SNMP_ERR_NOACCESS            = 6,
+  SNMP_ERR_WRONGTYPE           = 7,
+  SNMP_ERR_WRONGLENGTH         = 8,
+  SNMP_ERR_WRONGENCODING       = 9,
+  SNMP_ERR_WRONGVALUE          = 10,
+  SNMP_ERR_NOCREATION          = 11,
+  SNMP_ERR_INCONSISTENTVALUE   = 12,
+  SNMP_ERR_RESOURCEUNAVAILABLE = 13,
+  SNMP_ERR_COMMITFAILED        = 14,
+  SNMP_ERR_UNDOFAILED          = 15,
+  SNMP_ERR_NOTWRITABLE         = 17,
+  SNMP_ERR_INCONSISTENTNAME    = 18,
+
+  SNMP_ERR_NOSUCHINSTANCE      = SNMP_VARBIND_EXCEPTION_OFFSET + SNMP_ASN1_CONTEXT_VARBIND_NO_SUCH_INSTANCE
+} snmp_err_t;
 
 /** internal object identifier representation */
 struct snmp_obj_id
@@ -233,8 +233,8 @@ struct snmp_leaf_node
 {
   /* inherited "base class" members */
   struct snmp_node node;
-  u8_t (*get_instance)(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
-  u8_t (*get_next_instance)(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
+  snmp_err_t (*get_instance)(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
+  snmp_err_t (*get_next_instance)(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
 };
 
 /* represents a single mib with its base oid and root node */
@@ -257,6 +257,12 @@ struct snmp_oid_range
 /** checks if incoming OID length and values are in allowed ranges */
 u8_t snmp_oid_in_range(const u32_t *oid_in, u8_t oid_len, const struct snmp_oid_range *oid_ranges, u8_t oid_ranges_len);
 
+typedef enum {
+  SNMP_NEXT_OID_STATUS_SUCCESS,
+  SNMP_NEXT_OID_STATUS_NO_MATCH,
+  SNMP_NEXT_OID_STATUS_BUF_TO_SMALL
+} snmp_next_oid_status_t;
+
 /** state for next_oid_init / next_oid_check functions */
 struct snmp_next_oid_state
 {
@@ -267,13 +273,9 @@ struct snmp_next_oid_state
   u8_t next_oid_len;
   u8_t next_oid_max_len;
   
-  u8_t status;
+  snmp_next_oid_status_t status;
   void* reference;
 };
-
-#define SNMP_NEXT_OID_STATUS_SUCCESS      0
-#define SNMP_NEXT_OID_STATUS_NO_MATCH     1
-#define SNMP_NEXT_OID_STATUS_BUF_TO_SMALL 2
 
 /** initialize struct next_oid_state using this function before passing it to next_oid_check */
 void snmp_next_oid_init(struct snmp_next_oid_state *state,
