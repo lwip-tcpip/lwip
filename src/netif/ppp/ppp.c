@@ -527,6 +527,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
     return err;
 #endif /* MPPE_SUPPORT */
   default:
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: bad CCP transmit method\n", pcb->netif->num));
     goto err_rte_drop; /* Cannot really happen, we only negotiate what we are able to do */
   }
 #endif /* CCP_SUPPORT */
@@ -780,6 +781,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       break;
 #endif /* MPPE_SUPPORT */
     default:
+      PPPDEBUG(LOG_ERR, ("ppp_input[%d]: bad CCP receive method\n", pcb->netif->num));
       goto drop; /* Cannot really happen, we only negotiate what we are able to do */
     }
 
