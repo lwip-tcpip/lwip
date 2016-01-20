@@ -184,6 +184,7 @@ ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
     return NULL;
   }
 
+  memset(pppos, 0, sizeof(pppos_pcb));
   pppos->ppp = ppp;
   pppos->output_cb = output_cb;
   return ppp;
