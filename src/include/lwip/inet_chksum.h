@@ -56,14 +56,16 @@
 #if LWIP_CHECKSUM_ON_COPY
 /** Function-like macro: same as MEMCPY but returns the checksum of copied data
     as u16_t */
-#ifndef LWIP_CHKSUM_COPY
-#define LWIP_CHKSUM_COPY(dst, src, len) lwip_chksum_copy(dst, src, len)
-#ifndef LWIP_CHKSUM_COPY_ALGORITHM
-#define LWIP_CHKSUM_COPY_ALGORITHM 1
-#endif /* LWIP_CHKSUM_COPY_ALGORITHM */
-#endif /* LWIP_CHKSUM_COPY */
+# ifndef LWIP_CHKSUM_COPY
+#  define LWIP_CHKSUM_COPY(dst, src, len) lwip_chksum_copy(dst, src, len)
+#  ifndef LWIP_CHKSUM_COPY_ALGORITHM
+#   define LWIP_CHKSUM_COPY_ALGORITHM 1
+#  endif /* LWIP_CHKSUM_COPY_ALGORITHM */
+# else /* LWIP_CHKSUM_COPY */
+#  define LWIP_CHKSUM_COPY_ALGORITHM 0
+# endif /* LWIP_CHKSUM_COPY */
 #else /* LWIP_CHECKSUM_ON_COPY */
-#define LWIP_CHKSUM_COPY_ALGORITHM 0
+# define LWIP_CHKSUM_COPY_ALGORITHM 0
 #endif /* LWIP_CHECKSUM_ON_COPY */
 
 #ifdef __cplusplus
