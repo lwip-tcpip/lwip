@@ -67,6 +67,10 @@ typedef u8_t (*snmp_validate_node_instance_method)(struct snmp_node_instance*, v
 u8_t snmp_get_node_instance_from_oid(const u32_t *oid, u8_t oid_len, struct snmp_node_instance* node_instance);
 u8_t snmp_get_next_node_instance_from_oid(const u32_t *oid, u8_t oid_len, snmp_validate_node_instance_method validate_node_instance_method, void* validate_node_instance_arg, struct snmp_obj_id* node_oid, struct snmp_node_instance* node_instance);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* LWIP_SNMP */
 
 #endif /* LWIP_HDR_APPS_SNMP_CORE_PRIV_H */
