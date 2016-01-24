@@ -456,10 +456,9 @@ static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip
 #endif /* PPP_IPV6_SUPPORT */
 
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protocol) {
-#if MPPE_SUPPORT
-  err_t err;
-#endif /* MPPE_SUPPORT */
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
+  err_t err;
+  struct pbuf *fpb = NULL;
 
   /* Check that the link is up. */
   if (0
@@ -519,12 +518,17 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
       LINK_STATS_INC(link.memerr);
       LINK_STATS_INC(link.drop);
       MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-      return err;
+      goto err;
     }
-
-    err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_COMP);
-    pbuf_free(pb);
-    return err;
+    /* if VJ compressor returned a new allocated pbuf, free it */
+    if (fpb) {
+      pbuf_free(fpb);
+    }
+    /* mppe_compress() returns a new allocated pbuf, indicate we should free
+     * our duplicated pbuf later */
+    fpb = pb;
+    protocol = PPP_COMP;
+    break;
 #endif /* MPPE_SUPPORT */
   default:
     PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: bad CCP transmit method\n", pcb->netif->num));
@@ -532,13 +536,19 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
   }
 #endif /* CCP_SUPPORT */
 
-  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, protocol);
+  err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, protocol);
+  goto err;
 
 err_rte_drop:
+  err = ERR_RTE;
   LINK_STATS_INC(link.rterr);
   LINK_STATS_INC(link.drop);
   MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-  return ERR_RTE;
+err:
+  if (fpb) {
+    pbuf_free(fpb);
+  }
+  return err;
 }
 
 /************************************/
