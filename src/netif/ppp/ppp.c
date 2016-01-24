@@ -487,15 +487,21 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
    * this is an IP packet.
    */
   if (protocol == PPP_IP && pcb->vj_enabled) {
-    switch (vj_compress_tcp(&pcb->vj_comp, pb)) {
+    switch (vj_compress_tcp(&pcb->vj_comp, &pb)) {
       case TYPE_IP:
         /* No change...
-           protocol = PPP_IP_PROTOCOL; */
+           protocol = PPP_IP; */
         break;
       case TYPE_COMPRESSED_TCP:
+        /* vj_compress_tcp() returns a new allocated pbuf, indicate we should free
+         * our duplicated pbuf later */
+        fpb = pb;
         protocol = PPP_VJC_COMP;
         break;
       case TYPE_UNCOMPRESSED_TCP:
+        /* vj_compress_tcp() returns a new allocated pbuf, indicate we should free
+         * our duplicated pbuf later */
+        fpb = pb;
         protocol = PPP_VJC_UNCOMP;
         break;
       default:

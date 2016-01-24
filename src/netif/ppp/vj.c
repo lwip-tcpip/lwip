@@ -132,9 +132,10 @@ vj_compress_init(struct vjcompress *comp)
  * compressed.
  */
 u8_t
-vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
+vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
 {
-  struct ip_hdr *ip = (struct ip_hdr *)pb->payload;
+  struct pbuf *np = *pb;
+  struct ip_hdr *ip = (struct ip_hdr *)np->payload;
   struct cstate *cs = comp->last_cs->cs_next;
   u16_t ilen = IPH_HL(ip);
   u16_t hlen;
@@ -158,7 +159,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * `compressible' (i.e., ACK isn't set or some other control bit is
    * set).
    */
-  if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || pb->tot_len < 40) {
+  if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || np->tot_len < 40) {
     return (TYPE_IP);
   }
   th = (struct tcp_hdr *)&((u32_t*)ip)[ilen];
@@ -169,10 +170,25 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   /* Check that the TCP/IP headers are contained in the first buffer. */
   hlen = ilen + TCPH_HDRLEN(th);
   hlen <<= 2;
-  if (pb->len < hlen) {
+  if (np->len < hlen) {
     PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\n", hlen));
     return (TYPE_IP);
   }
+
+  /* TCP stack requires that we don't change the packet payload, therefore we copy
+   * the whole packet before compression. */
+  np = pbuf_alloc(PBUF_RAW, np->tot_len, PBUF_POOL);
+  if (!np) {
+    return (TYPE_IP);
+  }
+
+  if (pbuf_copy(np, *pb) != ERR_OK) {
+    pbuf_free(np);
+    return (TYPE_IP);
+  }
+
+  *pb = np;
+  ip = (struct ip_hdr *)np->payload;
 
   /*
    * Packet is compressible -- we're going to send either a
@@ -371,20 +387,20 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   if (!comp->compressSlot || comp->last_xmit != cs->cs_id) {
     comp->last_xmit = cs->cs_id;
     hlen -= deltaS + 4;
-    if (pbuf_header(pb, -(s16_t)hlen)){
+    if (pbuf_header(np, -(s16_t)hlen)){
       /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
     }
-    cp = (u8_t*)pb->payload;
+    cp = (u8_t*)np->payload;
     *cp++ = (u8_t)(changes | NEW_C);
     *cp++ = cs->cs_id;
   } else {
     hlen -= deltaS + 3;
-    if (pbuf_header(pb, -(s16_t)hlen)) {
+    if (pbuf_header(np, -(s16_t)hlen)) {
       /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
     }
-    cp = (u8_t*)pb->payload;
+    cp = (u8_t*)np->payload;
     *cp++ = (u8_t)changes;
   }
   *cp++ = (u8_t)(deltaA >> 8);
