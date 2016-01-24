@@ -46,7 +46,7 @@
  * sequence number changes, one change per bit set in the header
  * (there may be no changes and there are two special cases where
  * the receiver implicitly knows what changed -- see below).
- * 
+ *
  * There are 5 numbers which can change (they are always inserted
  * in the following order): TCP urgent pointer, window,
  * acknowlegement, sequence number and IP ID.  (The urgent pointer
@@ -107,9 +107,9 @@
  */
 struct cstate {
   struct cstate *cs_next; /* next most recently used state (xmit only) */
-  u_short cs_hlen;        /* size of hdr (receive only) */
-  u_char cs_id;           /* connection # associated with this state */
-  u_char cs_filler;
+  u16_t cs_hlen;        /* size of hdr (receive only) */
+  u8_t cs_id;           /* connection # associated with this state */
+  u8_t cs_filler;
   union {
     char csu_hdr[MAX_HDR];
     struct ip_hdr csu_ip;     /* ip/tcp hdr from most recent packet */
@@ -120,14 +120,14 @@ struct cstate {
 
 
 struct vjstat {
-  unsigned long vjs_packets;        /* outbound packets */
-  unsigned long vjs_compressed;     /* outbound compressed packets */
-  unsigned long vjs_searches;       /* searches for connection state */
-  unsigned long vjs_misses;         /* times couldn't find conn. state */
-  unsigned long vjs_uncompressedin; /* inbound uncompressed packets */
-  unsigned long vjs_compressedin;   /* inbound compressed packets */
-  unsigned long vjs_errorin;        /* inbound unknown type packets */
-  unsigned long vjs_tossed;         /* inbound packets tossed because of error */
+  u32_t vjs_packets;        /* outbound packets */
+  u32_t vjs_compressed;     /* outbound compressed packets */
+  u32_t vjs_searches;       /* searches for connection state */
+  u32_t vjs_misses;         /* times couldn't find conn. state */
+  u32_t vjs_uncompressedin; /* inbound uncompressed packets */
+  u32_t vjs_compressedin;   /* inbound compressed packets */
+  u32_t vjs_errorin;        /* inbound unknown type packets */
+  u32_t vjs_tossed;         /* inbound packets tossed because of error */
 };
 
 /*
@@ -135,11 +135,11 @@ struct vjstat {
  */
 struct vjcompress {
   struct cstate *last_cs;          /* most recently used tstate */
-  u_char last_recv;                /* last rcvd conn. id */
-  u_char last_xmit;                /* last sent conn. id */
-  u_short flags;
-  u_char maxSlotIndex;
-  u_char compressSlot;             /* Flag indicating OK to compress slot ID. */
+  u8_t last_recv;                /* last rcvd conn. id */
+  u8_t last_xmit;                /* last sent conn. id */
+  u16_t flags;
+  u8_t maxSlotIndex;
+  u8_t compressSlot;             /* Flag indicating OK to compress slot ID. */
 #if LINK_STATS
   struct vjstat stats;
 #endif
@@ -151,7 +151,7 @@ struct vjcompress {
 #define VJF_TOSS 1U /* tossing rcvd frames because of input err */
 
 extern void  vj_compress_init    (struct vjcompress *comp);
-extern u_int vj_compress_tcp     (struct vjcompress *comp, struct pbuf *pb);
+extern u8_t  vj_compress_tcp     (struct vjcompress *comp, struct pbuf *pb);
 extern void  vj_uncompress_err   (struct vjcompress *comp);
 extern int   vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp);
 extern int   vj_uncompress_tcp   (struct pbuf **nb, struct vjcompress *comp);
