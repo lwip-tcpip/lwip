@@ -140,7 +140,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   register struct tcp_hdr *oth;
   register struct tcp_hdr *th;
   register u_short deltaS, deltaA = 0;
-  register u_long deltaL;
+  register u32_t deltaL;
   register u_int changes = 0;
   u_char new_seq[16];
   register u_char *cp = new_seq;
@@ -160,7 +160,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || pb->tot_len < 40) {
     return (TYPE_IP);
   }
-  th = (struct tcp_hdr *)&((long *)ip)[hlen];
+  th = (struct tcp_hdr *)&((u32_t*)ip)[hlen];
   if ((TCPH_FLAGS(th) & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
     return (TYPE_IP);
   }
@@ -174,7 +174,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   INCR(vjs_packets);
   if (!ip4_addr_cmp(&ip->src, &cs->cs_ip.src)
       || !ip4_addr_cmp(&ip->dest, &cs->cs_ip.dest)
-      || *(long *)th != ((long *)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]) {
+      || *(u32_t*)th != ((u32_t*)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]) {
     /*
      * Wasn't the first -- search for it.
      *
@@ -195,7 +195,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
       INCR(vjs_searches);
       if (ip4_addr_cmp(&ip->src, &cs->cs_ip.src)
           && ip4_addr_cmp(&ip->dest, &cs->cs_ip.dest)
-          && *(long *)th == ((long *)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]) {
+          && *(u32_t*)th == ((u32_t*)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]) {
         goto found;
       }
     } while (cs != lastcs);
@@ -231,7 +231,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     }
   }
 
-  oth = (struct tcp_hdr *)&((long *)&cs->cs_ip)[hlen];
+  oth = (struct tcp_hdr *)&((u32_t*)&cs->cs_ip)[hlen];
   deltaS = hlen;
   hlen += TCPH_HDRLEN(th);
   hlen <<= 2;
