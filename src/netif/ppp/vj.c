@@ -136,7 +136,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
 {
   struct ip_hdr *ip = (struct ip_hdr *)pb->payload;
   struct cstate *cs = comp->last_cs->cs_next;
-  u16_t hlen = IPH_HL(ip);
+  u16_t ilen = IPH_HL(ip);
+  u16_t hlen;
   struct tcp_hdr *oth;
   struct tcp_hdr *th;
   u16_t deltaS, deltaA = 0;
@@ -160,10 +161,19 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || pb->tot_len < 40) {
     return (TYPE_IP);
   }
-  th = (struct tcp_hdr *)&((u32_t*)ip)[hlen];
+  th = (struct tcp_hdr *)&((u32_t*)ip)[ilen];
   if ((TCPH_FLAGS(th) & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
     return (TYPE_IP);
   }
+
+  /* Check that the TCP/IP headers are contained in the first buffer. */
+  hlen = ilen + TCPH_HDRLEN(th);
+  hlen <<= 2;
+  if (pb->len < hlen) {
+    PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\n", hlen));
+    return (TYPE_IP);
+  }
+
   /*
    * Packet is compressible -- we're going to send either a
    * COMPRESSED_TCP or UNCOMPRESSED_TCP packet.  Either way we need
@@ -210,12 +220,6 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
      */
     INCR(vjs_misses);
     comp->last_cs = lcs;
-    hlen += TCPH_HDRLEN(th);
-    hlen <<= 2;
-    /* Check that the IP/TCP headers are contained in the first buffer. */
-    if (hlen > pb->len) {
-      return (TYPE_IP);
-    }
     goto uncompressed;
 
     found:
@@ -231,15 +235,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     }
   }
 
-  oth = (struct tcp_hdr *)&((u32_t*)&cs->cs_ip)[hlen];
-  deltaS = hlen;
-  hlen += TCPH_HDRLEN(th);
-  hlen <<= 2;
-  /* Check that the IP/TCP headers are contained in the first buffer. */
-  if (hlen > pb->len) {
-    PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\n", hlen));
-    return (TYPE_IP);
-  }
+  oth = (struct tcp_hdr *)&((u32_t*)&cs->cs_ip)[ilen];
+  deltaS = ilen;
 
   /*
    * Make sure that only what we expect to change changed. The first
