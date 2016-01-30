@@ -49,12 +49,14 @@
 
 struct stats_ lwip_stats;
 
+#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
 #if MEMP_STATS
 static const char * memp_names[] = {
 #define LWIP_MEMPOOL(name,num,size,desc) desc,
 #include "lwip/priv/memp_std.h"
 };
 #endif /* MEMP_STATS */
+#endif /* LWIP_DEBUG || LWIP_STATS_DISPLAY */
 
 void
 stats_init(void)
