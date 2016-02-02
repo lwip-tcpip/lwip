@@ -38,6 +38,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    
+#include "lwip/mem.h"
 
 #if MEMP_OVERFLOW_CHECK
 /* if MEMP_OVERFLOW_CHECK is turned on, we reserve some bytes at the beginning
