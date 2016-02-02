@@ -47,20 +47,40 @@ extern "C" {
 typedef void (*snmp_threadsync_called_fn)(void* arg);
 typedef void (*snmp_threadsync_synchronizer_fn)(snmp_threadsync_called_fn fn, void* arg);
 
-struct snmp_threadsync_locks
+
+struct threadsync_data
+{
+  union {
+    snmp_err_t u8;
+    u16_t u16;
+  } retval;
+  union {
+    const u32_t *root_oid;
+    void *value;
+  } arg1;
+  union {
+    u8_t root_oid_len;
+    u16_t len;
+  } arg2;
+  const struct snmp_threadsync_node *threadsync_node;
+  struct snmp_node_instance proxy_instance;
+};
+
+struct snmp_threadsync_instance
 {
   sys_sem_t                       sem;
   sys_mutex_t                     sem_usage_mutex;
   snmp_threadsync_synchronizer_fn sync_fn;
+  struct threadsync_data          data;
 };
 
 /* thread sync node */
 struct snmp_threadsync_node
 {
   /* inherited "base class" members */
-  struct snmp_leaf_node node;
-  const struct snmp_leaf_node *target;
-  struct snmp_threadsync_locks *locks;
+  struct snmp_leaf_node           node;
+  const struct snmp_leaf_node     *target;
+  struct snmp_threadsync_instance *instance;
 };
 
 snmp_err_t snmp_threadsync_get_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
@@ -73,7 +93,7 @@ snmp_err_t snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oi
     (target), \
     (locks) }
 
-void snmp_threadsync_init(struct snmp_threadsync_locks *locks, snmp_threadsync_synchronizer_fn sync_fn);
+void snmp_threadsync_init(struct snmp_threadsync_instance *instance, snmp_threadsync_synchronizer_fn sync_fn);
 
 #endif /* LWIP_SNMP */
 

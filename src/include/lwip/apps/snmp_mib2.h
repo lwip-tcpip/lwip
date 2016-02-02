@@ -54,7 +54,7 @@ extern const struct snmp_mib mib2;
 #if SNMP_USE_NETCONN
 #include "lwip/apps/snmp_threadsync.h"
 void snmp_mib2_lwip_synchronizer(snmp_threadsync_called_fn fn, void* arg);
-extern struct snmp_threadsync_locks snmp_mib2_lwip_locks;
+extern struct snmp_threadsync_instance snmp_mib2_lwip_locks;
 #endif
 
 #ifndef SNMP_SYSSERVICES

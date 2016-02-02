@@ -97,7 +97,7 @@ snmp_mib2_lwip_synchronizer(snmp_threadsync_called_fn fn, void* arg)
   tcpip_callback_with_block(fn, arg, 1);
 }
 
-struct snmp_threadsync_locks snmp_mib2_lwip_locks;
+struct snmp_threadsync_instance snmp_mib2_lwip_locks;
 
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
 #define CREATE_LWIP_SYNC_NODE(oid, node_name) \
