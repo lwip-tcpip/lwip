@@ -46,9 +46,7 @@ extern "C" {
 
 struct snmp_pbuf_stream
 {
-  struct pbuf* pbuffer;
-  u8_t* p_data;
-  u16_t pbuf_len;
+  struct pbuf* pbuf;
   u16_t offset;
   u16_t length;
 };
