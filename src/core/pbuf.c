@@ -1044,7 +1044,7 @@ void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
  * @param out_offset resulting offset in the returned pbuf
  * @return the pbuf in the queue where the offset is
  */
-static struct pbuf*
+struct pbuf*
 pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset)
 {
   u16_t offset_left = in_offset;
