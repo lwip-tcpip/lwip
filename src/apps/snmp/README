@@ -36,6 +36,3 @@ MIB compiler (code generator):
 Notes:
   - Stack and MIB compiler were used to implement a Profinet device.
     Compiled/implemented MIBs: LLDP-MIB, LLDP-EXT-DOT3-MIB, LLDP-EXT-PNO-MIB.
-
-Currently in work:
-  - Traps rewrite
