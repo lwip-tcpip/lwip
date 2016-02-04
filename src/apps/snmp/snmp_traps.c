@@ -35,13 +35,44 @@
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/snmp.h"
+#include "lwip/sys.h"
 #include "lwip/apps/snmp.h"
 #include "lwip/apps/snmp_core.h"
-#include "lwip/ip_addr.h"
+#include "snmp_msg.h"
+#include "snmp_asn1.h"
 
-#define snmp_community_trap snmp_community
+struct snmp_msg_trap
+{
+  /* source enterprise ID (sysObjectID) */
+  const struct snmp_obj_id *enterprise;
+  /* source IP address, raw network order format */
+  ip_addr_t sip;
+  /* generic trap code */
+  u32_t gen_trap;
+  /* specific trap code */
+  u32_t spc_trap;
+  /* timestamp */
+  u32_t ts;
+  /* snmp_version */
+  u32_t snmp_version;
+
+  /* output trap lengths used in ASN encoding */
+  /* encoding pdu length */
+  u16_t pdulen;
+  /* encoding community length */
+  u16_t comlen;
+  /* encoding sequence length */
+  u16_t seqlen;
+};
+
+static u16_t snmp_trap_header_sum(struct snmp_msg_trap *trap);
+static void snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream);
+
 /** Agent community string for sending traps */
 extern const char *snmp_community_trap;
+
+void* traps_handle;
 
 struct snmp_trap_dst
 {
@@ -114,10 +145,60 @@ snmp_get_auth_traps_enabled(void)
 static err_t
 snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_trap, s32_t specific_trap)
 {
-  LWIP_UNUSED_ARG(device_enterprise_oid);
-  LWIP_UNUSED_ARG(generic_trap);
-  LWIP_UNUSED_ARG(specific_trap);
-  return ERR_OK;
+  struct snmp_msg_trap trap_msg;
+  struct snmp_trap_dst *td;
+  struct pbuf *p;
+  u16_t i, tot_len;
+  err_t err = ERR_OK;
+
+  trap_msg.snmp_version = 0;
+
+  for (i = 0, td = &trap_dst[0]; i < SNMP_TRAP_DESTINATIONS; i++, td++) {
+    if ((td->enable != 0) && !ip_addr_isany(&td->dip)) {
+      /* lookup current source address for this dst */
+      if (snmp_get_local_ip_for_dst(traps_handle, &td->dip, &trap_msg.sip)) {
+        if (device_enterprise_oid == NULL) {
+          trap_msg.enterprise = snmp_get_device_enterprise_oid();
+        } else {
+          trap_msg.enterprise = device_enterprise_oid;
+        }
+
+        trap_msg.gen_trap = generic_trap;
+        if (generic_trap == SNMP_GENTRAP_ENTERPRISE_SPECIFIC) {
+          trap_msg.spc_trap = specific_trap;
+        } else {
+          trap_msg.spc_trap = 0;
+        }
+
+        MIB2_COPY_SYSUPTIME_TO(&trap_msg.ts);
+
+        /* pass 0, calculate length fields */
+        tot_len = snmp_trap_header_sum(&trap_msg);
+
+        /* allocate pbuf(s) */
+        p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_RAM);
+        if (p != NULL) {
+          struct snmp_pbuf_stream pbuf_stream;
+          snmp_pbuf_stream_init(&pbuf_stream, p, 0, tot_len);
+
+          /* pass 1, encode packet ino the pbuf(s) */
+          snmp_trap_header_enc(&trap_msg, &pbuf_stream);
+
+          snmp_stats.outtraps++;
+          snmp_stats.outpkts++;
+
+          /** send to the TRAP destination */
+          snmp_sendto(traps_handle, p, &td->dip, SNMP_TRAP_PORT);
+        } else {
+          err = ERR_MEM;
+        }
+      } else {
+        /* routing error */
+        err = ERR_RTE;
+      }
+    }
+  }
+  return err;
 }
 
 err_t 
@@ -126,11 +207,11 @@ snmp_send_trap_generic(s32_t generic_trap)
   return snmp_send_trap(NULL, generic_trap, 0);
 }
 
-err_t snmp_send_trap_specific(s32_t specific_trap)
+err_t
+snmp_send_trap_specific(s32_t specific_trap)
 {
   return snmp_send_trap(NULL, SNMP_GENTRAP_ENTERPRISE_SPECIFIC, specific_trap);
 }
-
 
 void
 snmp_coldstart_trap(void)
@@ -144,6 +225,137 @@ snmp_authfail_trap(void)
   if (snmp_auth_traps_enabled != 0) {
     snmp_send_trap_generic(SNMP_GENTRAP_AUTH_FAILURE);
   }
+}
+
+/**
+ * Sums trap header field lengths from tail to head and
+ * returns trap_header_lengths for second encoding pass.
+ *
+ * @param vb_len varbind-list length
+ * @param thl points to returned header lengths
+ * @return the required length for encoding the trap header
+ */
+static u16_t
+snmp_trap_header_sum(struct snmp_msg_trap *trap)
+{
+  u16_t tot_len;
+  u16_t len;
+  u8_t lenlen;
+
+  tot_len = 0;
+
+  snmp_asn1_enc_u32t_cnt(trap->ts, &len);
+  snmp_asn1_enc_length_cnt(len, &lenlen);
+  tot_len += 1 + len + lenlen;
+
+  snmp_asn1_enc_s32t_cnt(trap->spc_trap, &len);
+  snmp_asn1_enc_length_cnt(len, &lenlen);
+  tot_len += 1 + len + lenlen;
+
+  snmp_asn1_enc_s32t_cnt(trap->gen_trap, &len);
+  snmp_asn1_enc_length_cnt(len, &lenlen);
+  tot_len += 1 + len + lenlen;
+
+  if(IP_IS_V6_VAL(trap->sip)) {
+#if LWIP_IPV6
+    len = sizeof(ip_2_ip6(&trap->sip)->addr);
+#endif
+  } else {
+#if LWIP_IPV4
+    len = sizeof(ip_2_ip4(&trap->sip)->addr);
+#endif
+  }
+  snmp_asn1_enc_length_cnt(len, &lenlen);
+  tot_len += 1 + len + lenlen;
+
+  snmp_asn1_enc_oid_cnt(trap->enterprise->id, trap->enterprise->len, &len);
+  snmp_asn1_enc_length_cnt(len, &lenlen);
+  tot_len += 1 + len + lenlen;
+
+  trap->pdulen = tot_len;
+  snmp_asn1_enc_length_cnt(trap->pdulen, &lenlen);
+  tot_len += 1 + lenlen;
+
+  trap->comlen = (u16_t)strlen(snmp_community_trap);
+  snmp_asn1_enc_length_cnt(trap->comlen, &lenlen);
+  tot_len += 1 + lenlen + trap->comlen;
+
+  snmp_asn1_enc_s32t_cnt(trap->snmp_version, &len);
+  snmp_asn1_enc_length_cnt(len, &lenlen);
+  tot_len += 1 + len + lenlen;
+
+  trap->seqlen = tot_len;
+  snmp_asn1_enc_length_cnt(trap->seqlen, &lenlen);
+  tot_len += 1 + lenlen;
+
+  return tot_len;
+}
+
+/**
+ * Encodes trap header from head to tail.
+ */
+static void
+snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream)
+{
+  struct snmp_asn1_tlv tlv;
+
+  /* 'Message' sequence */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, 0, trap->seqlen);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+
+  /* version */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_INTEGER, 0, 0);
+  snmp_asn1_enc_s32t_cnt(trap->snmp_version, &tlv.value_len);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  snmp_asn1_enc_s32t(pbuf_stream, tlv.value_len, trap->snmp_version);
+
+  /* community */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OCTET_STRING, 0, trap->comlen);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  snmp_asn1_enc_raw(pbuf_stream,  (const u8_t *)snmp_community_trap, trap->comlen);
+
+  /* 'PDU' sequence */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_TRAP), 0, trap->pdulen);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+
+  /* object ID */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OBJECT_ID, 0, 0);
+  snmp_asn1_enc_oid_cnt(trap->enterprise->id, trap->enterprise->len, &tlv.value_len);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  snmp_asn1_enc_oid(pbuf_stream, trap->enterprise->id, trap->enterprise->len);
+
+  /* IP addr */
+  if(IP_IS_V6_VAL(trap->sip)) {
+#if LWIP_IPV6
+    SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_IPADDR, 0, sizeof(ip_2_ip6(&trap->sip)->addr));
+    snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+    snmp_asn1_enc_raw(pbuf_stream, (const u8_t *)&ip_2_ip6(&trap->sip)->addr, sizeof(ip_2_ip6(&trap->sip)->addr));
+#endif
+  } else {
+#if LWIP_IPV4
+    SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_IPADDR, 0, sizeof(ip_2_ip4(&trap->sip)->addr));
+    snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+    snmp_asn1_enc_raw(pbuf_stream, (const u8_t *)&ip_2_ip4(&trap->sip)->addr, sizeof(ip_2_ip4(&trap->sip)->addr));
+#endif
+  }
+
+  /* trap length */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_INTEGER, 0, 0);
+  snmp_asn1_enc_s32t_cnt(trap->gen_trap, &tlv.value_len);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  snmp_asn1_enc_s32t(pbuf_stream, tlv.value_len, trap->gen_trap);
+
+  /* specific trap */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_INTEGER, 0, 0);
+  snmp_asn1_enc_s32t_cnt(trap->spc_trap, &tlv.value_len);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  snmp_asn1_enc_s32t(pbuf_stream, tlv.value_len, trap->spc_trap);
+
+  /* timestamp */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_TIMETICKS, 0, 0);
+  snmp_asn1_enc_s32t_cnt(trap->ts, &tlv.value_len);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  snmp_asn1_enc_s32t(pbuf_stream, tlv.value_len, trap->ts);
 }
 
 #endif /* LWIP_SNMP */

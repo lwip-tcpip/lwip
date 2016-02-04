@@ -37,6 +37,7 @@
 #if LWIP_SNMP && SNMP_USE_NETCONN
 
 #include "lwip/api.h"
+#include "lwip/ip.h"
 #include "lwip/udp.h"
 #include "snmp_msg.h"
 #include "lwip/sys.h"
@@ -53,8 +54,7 @@ snmp_netconn_thread(void *arg)
   conn = netconn_new(NETCONN_UDP);
   LWIP_ERROR("snmp_netconn: invalid conn", (conn != NULL), return;);
   
-  /*trap_msg.handle = conn;*/
-  /*trap_msg.lip = &conn->pcb.udp->local_ip;*/
+  traps_handle = conn;
   
   /* Bind to SNMP port with default IP address */
   netconn_bind(conn, IP_ADDR_ANY, SNMP_IN_PORT);  
@@ -83,6 +83,25 @@ snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
   result = netconn_sendto((struct netconn*)handle, &buf, dst, port);
   
   return result;
+}
+
+u8_t
+snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
+{
+  struct netconn* conn = (struct netconn*)handle;
+  struct netif *dst_if;
+  const ip_addr_t* dst_ip;
+
+  LWIP_UNUSED_ARG(conn); /* unused in case of IPV4 only configuration */
+
+  ip_route_get_local_ip(IP_IS_V6(conn->pcb.udp->local_ip), conn->pcb.udp->local_ip, dst, dst_if, dst_ip);
+
+  if((dst_if != NULL) && (dst_ip != NULL)) {
+    ip_addr_copy(*result, *dst_ip);
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /**

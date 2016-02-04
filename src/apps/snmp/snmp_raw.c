@@ -37,6 +37,7 @@
 #if LWIP_SNMP && SNMP_USE_RAW
 
 #include "lwip/udp.h"
+#include "lwip/ip.h"
 #include "snmp_msg.h"
 
 /* lwIP UDP receive callback function */
@@ -57,6 +58,25 @@ snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
   return result;
 }
 
+u8_t
+snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
+{
+  struct udp_pcb* udp_pcb = (struct udp_pcb*)handle;
+  struct netif *dst_if;
+  const ip_addr_t* dst_ip;
+
+  LWIP_UNUSED_ARG(udp_pcb); /* unused in case of IPV4 only configuration */
+
+  ip_route_get_local_ip(IP_IS_V6(udp_pcb->local_ip), udp_pcb->local_ip, dst, dst_if, dst_ip);
+
+  if((dst_if != NULL) && (dst_ip != NULL)) {
+    ip_addr_copy(*result, *dst_ip);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 /**
  * Starts SNMP Agent.
  * Allocates UDP pcb and binds it to IP_ADDR_ANY port 161.
@@ -64,32 +84,14 @@ snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
 void
 snmp_init(void)
 {
-#if LWIP_IPV4
-  struct udp_pcb *snmp_pcb_4 = udp_new();
-#endif /* LWIP_IPV4 */
-#if LWIP_IPV6
-  struct udp_pcb *snmp_pcb_6 = udp_new_ip6();
-#endif /* LWIP_IPV6 */
+  struct udp_pcb *snmp_pcb = udp_new();
 
-#if LWIP_IPV4
-  if (snmp_pcb_4 != NULL) {
-    /*trap_msg.handle = snmp_pcb;*/
-    /*trap_msg.lip = &snmp_pcb->local_ip;*/
+  if (snmp_pcb != NULL) {
+    traps_handle = snmp_pcb;
 
-    udp_recv(snmp_pcb_4, snmp_recv, (void *)SNMP_IN_PORT);
-    udp_bind(snmp_pcb_4, IP_ADDR_ANY, SNMP_IN_PORT);
+    udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
+    udp_bind(snmp_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
   }
-#endif /* LWIP_IPV4 */
-
-#if LWIP_IPV6
-  if (snmp_pcb_6 != NULL) {
-    /*trap_msg.handle = snmp_pcb;*/
-    /*trap_msg.lip = &snmp_pcb->local_ip;*/
-
-    udp_recv(snmp_pcb_6, snmp_recv, (void *)SNMP_IN_PORT);
-    udp_bind(snmp_pcb_6, IP6_ADDR_ANY, SNMP_IN_PORT);
-  }
-#endif /* LWIP_IPV6 */
 }
 
 #endif /* LWIP_SNMP && SNMP_USE_RAW */
