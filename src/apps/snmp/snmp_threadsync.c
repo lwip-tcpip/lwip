@@ -196,6 +196,7 @@ snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, stru
   return do_sync(root_oid, root_oid_len, instance, get_next_instance_synced);
 }
 
+/** Initializes thread synchronization instance */
 void snmp_threadsync_init(struct snmp_threadsync_instance *instance, snmp_threadsync_synchronizer_fn sync_fn)
 {
   sys_mutex_new(&instance->sem_usage_mutex);
