@@ -114,7 +114,7 @@ snmp_pbuf_stream_writeto(struct snmp_pbuf_stream* pbuf_stream, struct snmp_pbuf_
     }
 
     chunk_len = LWIP_MIN(len, pbuf->len);
-    err = snmp_pbuf_stream_writebuf(target_pbuf_stream, &((uint8_t*)pbuf->payload)[target_offset], chunk_len);
+    err = snmp_pbuf_stream_writebuf(target_pbuf_stream, &((u8_t*)pbuf->payload)[target_offset], chunk_len);
     if (err != ERR_OK) {
       return err;
     }
