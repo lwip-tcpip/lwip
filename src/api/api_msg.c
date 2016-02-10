@@ -335,13 +335,13 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   LWIP_UNUSED_ARG(pcb);
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
-  if (conn->state == NETCONN_WRITE) {
-    lwip_netconn_do_writemore(conn  WRITE_DELAYED);
-  } else if (conn->state == NETCONN_CLOSE) {
-    lwip_netconn_do_close_internal(conn  WRITE_DELAYED);
-  }
-
   if (conn) {
+    if (conn->state == NETCONN_WRITE) {
+      lwip_netconn_do_writemore(conn  WRITE_DELAYED);
+    } else if (conn->state == NETCONN_CLOSE) {
+      lwip_netconn_do_close_internal(conn  WRITE_DELAYED);
+    }
+
     /* If the queued byte- or pbuf-count drops below the configured low-water limit,
        let select mark this pcb as writable again. */
     if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT) &&
