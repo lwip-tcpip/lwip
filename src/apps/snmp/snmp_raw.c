@@ -33,6 +33,7 @@
  */
 
 #include "lwip/apps/snmp_opts.h"
+#include "lwip/ip_addr.h"
 
 #if LWIP_SNMP && SNMP_USE_RAW
 
@@ -54,8 +55,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 err_t 
 snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port)
 {
-  err_t result = udp_sendto((struct udp_pcb*)handle, p, dst, port);
-  return result;
+  return udp_sendto((struct udp_pcb*)handle, p, dst, port);
 }
 
 u8_t
@@ -67,7 +67,7 @@ snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 
   LWIP_UNUSED_ARG(udp_pcb); /* unused in case of IPV4 only configuration */
 
-  ip_route_get_local_ip(IP_IS_V6(&udp_pcb->local_ip), &udp_pcb->local_ip, dst, dst_if, dst_ip);
+  ip_route_get_local_ip(IP_IS_V6_VAL(udp_pcb->local_ip), &udp_pcb->local_ip, dst, dst_if, dst_ip);
 
   if((dst_if != NULL) && (dst_ip != NULL)) {
     ip_addr_copy(*result, *dst_ip);
@@ -85,13 +85,12 @@ void
 snmp_init(void)
 {
   struct udp_pcb *snmp_pcb = udp_new();
+  LWIP_ERROR("snmp_raw: no PCB", (snmp_pcb != NULL), return;);
 
-  if (snmp_pcb != NULL) {
-    traps_handle = snmp_pcb;
+  snmp_traps_handle = snmp_pcb;
 
-    udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
-    udp_bind(snmp_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
-  }
+  udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
+  udp_bind(snmp_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
 }
 
 #endif /* LWIP_SNMP && SNMP_USE_RAW */

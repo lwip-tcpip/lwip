@@ -141,7 +141,7 @@ extern const char *snmp_community;
 /** Agent community string for write access */
 extern const char *snmp_community_write;
 /** handle for sending traps */
-extern void* traps_handle;
+extern void* snmp_traps_handle;
 
 void snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t port);
 err_t snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port);

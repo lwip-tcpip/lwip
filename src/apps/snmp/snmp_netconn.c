@@ -54,7 +54,7 @@ snmp_netconn_thread(void *arg)
   conn = netconn_new(NETCONN_UDP);
   LWIP_ERROR("snmp_netconn: invalid conn", (conn != NULL), return;);
   
-  traps_handle = conn;
+  snmp_traps_handle = conn;
   
   /* Bind to SNMP port with default IP address */
   netconn_bind(conn, IP_ADDR_ANY, SNMP_IN_PORT);  
@@ -94,7 +94,7 @@ snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 
   LWIP_UNUSED_ARG(conn); /* unused in case of IPV4 only configuration */
 
-  ip_route_get_local_ip(IP_IS_V6(&conn->pcb.udp->local_ip), &conn->pcb.udp->local_ip, dst, dst_if, dst_ip);
+  ip_route_get_local_ip(IP_IS_V6_VAL(conn->pcb.udp->local_ip), &conn->pcb.udp->local_ip, dst, dst_if, dst_ip);
 
   if((dst_if != NULL) && (dst_ip != NULL)) {
     ip_addr_copy(*result, *dst_ip);

@@ -72,7 +72,7 @@ static void snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_st
 /** Agent community string for sending traps */
 extern const char *snmp_community_trap;
 
-void* traps_handle;
+void* snmp_traps_handle;
 
 struct snmp_trap_dst
 {
@@ -84,9 +84,6 @@ struct snmp_trap_dst
 static struct snmp_trap_dst trap_dst[SNMP_TRAP_DESTINATIONS];
 
 static u8_t snmp_auth_traps_enabled = 0;
-
-/** TRAP message structure */
-/*struct snmp_msg_trap trap_msg;*/
 
 /**
  * Sets enable switch for this trap destination.
@@ -135,7 +132,6 @@ snmp_get_auth_traps_enabled(void)
  * @param specific_trap used for enterprise traps when generic_trap == 6
  * @return ERR_OK when success, ERR_MEM if we're out of memory
  *
- * @note the caller is responsible for filling in outvb in the trap_msg
  * @note the use of the enterprise identifier field
  * is per RFC1215.
  * Use .iso.org.dod.internet.mgmt.mib-2.snmp for generic traps
@@ -156,7 +152,7 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
   for (i = 0, td = &trap_dst[0]; i < SNMP_TRAP_DESTINATIONS; i++, td++) {
     if ((td->enable != 0) && !ip_addr_isany(&td->dip)) {
       /* lookup current source address for this dst */
-      if (snmp_get_local_ip_for_dst(traps_handle, &td->dip, &trap_msg.sip)) {
+      if (snmp_get_local_ip_for_dst(snmp_traps_handle, &td->dip, &trap_msg.sip)) {
         if (device_enterprise_oid == NULL) {
           trap_msg.enterprise = snmp_get_device_enterprise_oid();
         } else {
@@ -188,7 +184,7 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
           snmp_stats.outpkts++;
 
           /** send to the TRAP destination */
-          snmp_sendto(traps_handle, p, &td->dip, SNMP_TRAP_PORT);
+          snmp_sendto(snmp_traps_handle, p, &td->dip, SNMP_TRAP_PORT);
         } else {
           err = ERR_MEM;
         }
