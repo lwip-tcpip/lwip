@@ -199,8 +199,10 @@ snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, stru
 /** Initializes thread synchronization instance */
 void snmp_threadsync_init(struct snmp_threadsync_instance *instance, snmp_threadsync_synchronizer_fn sync_fn)
 {
-  sys_mutex_new(&instance->sem_usage_mutex);
-  sys_sem_new(&instance->sem, 0);
+  err_t err = sys_mutex_new(&instance->sem_usage_mutex);
+  LWIP_ASSERT("Failed to set up mutex", err == ERR_OK);
+  err = sys_sem_new(&instance->sem, 0);
+  LWIP_ASSERT("Failed to set up semaphore", err == ERR_OK);
   instance->sync_fn = sync_fn;
 }
 
