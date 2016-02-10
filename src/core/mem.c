@@ -674,7 +674,7 @@ void *mem_calloc(mem_size_t count, mem_size_t size)
   p = mem_malloc(count * size);
   if (p) {
     /* zero the memory */
-    memset(p, 0, count * size);
+    memset(p, 0, (size_t)count * (size_t)size);
   }
   return p;
 }
