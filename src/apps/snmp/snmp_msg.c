@@ -792,13 +792,13 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
   SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_INTEGER, 0, 1);
   OF_BUILD_EXEC( snmp_ans1_enc_tlv(pbuf_stream, &tlv) );
   request->outbound_error_status_offset = pbuf_stream->offset;
-  snmp_pbuf_stream_write(pbuf_stream, 0);
+  OF_BUILD_EXEC( snmp_pbuf_stream_write(pbuf_stream, 0) );
 
   /* error index */
   SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_INTEGER, 0, 1);
   OF_BUILD_EXEC( snmp_ans1_enc_tlv(pbuf_stream, &tlv) );
   request->outbound_error_index_offset = pbuf_stream->offset;
-  snmp_pbuf_stream_write(pbuf_stream, 0);
+  OF_BUILD_EXEC( snmp_pbuf_stream_write(pbuf_stream, 0) );
 
   /* 'VarBindList' sequence */
   SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, 3, 0);
