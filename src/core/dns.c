@@ -1129,7 +1129,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         /* skip the rest of the "question" part */
         res_idx += SIZEOF_DNS_QUERY;
 
-        while (nanswers > 0) {
+        while ((nanswers > 0) && (res_idx < p->tot_len)) {
           /* skip answer resource record's host name */
           res_idx = dns_parse_name(p, res_idx);
 
