@@ -81,7 +81,6 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_DEBUG */
   struct icmp_echo_hdr *iecho;
   const struct ip_hdr *iphdr_in;
-  struct ip_hdr *iphdr;
   s16_t hlen;
   const ip4_addr_t* src;
 
@@ -160,7 +159,6 @@ icmp_input(struct pbuf *p, struct netif *inp)
                   (r->len >= hlen + sizeof(struct icmp_echo_hdr)));
       /* copy the ip header */
       MEMCPY(r->payload, iphdr_in, hlen);
-      iphdr = (struct ip_hdr *)r->payload;
       /* switch r->payload back to icmp header */
       if (pbuf_header(r, -hlen)) {
         LWIP_ASSERT("icmp_input: moving r->payload to icmp header failed\n", 0);
@@ -193,7 +191,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
       err_t ret;
-      iphdr = (struct ip_hdr*)p->payload;
+      struct ip_hdr *iphdr = (struct ip_hdr*)p->payload;
       ip4_addr_copy(iphdr->src, *src);
       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
       ICMPH_TYPE_SET(iecho, ICMP_ER);
