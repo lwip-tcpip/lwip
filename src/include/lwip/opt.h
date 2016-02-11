@@ -451,6 +451,14 @@
 #define ARP_TABLE_SIZE                  10
 #endif
 
+/** the time an ARP entry stays valid after its last update,
+ *  for ARP_TMR_INTERVAL = 1000, this is
+ *  (60 * 5) seconds = 5 minutes.
+ */
+#ifndef ARP_MAXAGE
+#define ARP_MAXAGE                      300
+#endif
+
 /**
  * ARP_QUEUEING==1: Multiple outgoing packets are queued during hardware address
  * resolution. By default, only the most recent packet is queued per IP address.
