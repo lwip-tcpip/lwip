@@ -1290,8 +1290,6 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
  * set in the sets has events. On return, readset, writeset and exceptset have
  * the sockets enabled that had events.
  *
- * exceptset is not used for now!!!
- *
  * @param maxfdp1 the highest socket index in the sets
  * @param readset_in:    set of sockets to check for read events
  * @param writeset_in:   set of sockets to check for write events
