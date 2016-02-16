@@ -62,7 +62,7 @@ typedef enum {
  *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_my_private_pool[];
  */
 
-extern const struct memp_desc *memp_pools[MEMP_MAX];
+extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc memp_ ## name
 

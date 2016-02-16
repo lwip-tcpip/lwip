@@ -195,7 +195,7 @@ CREATE_LWIP_SYNC_NODE(7, udp_endpointTable)
 CREATE_LWIP_SYNC_NODE(8, udp_HCInDatagrams)
 CREATE_LWIP_SYNC_NODE(9, udp_HCOutDatagrams)
 
-static const struct snmp_node* udp_nodes[] = {
+static const struct snmp_node* const udp_nodes[] = {
   &SYNC_NODE_NAME(udp_inDatagrams).node.node,
   &SYNC_NODE_NAME(udp_noPorts).node.node,
   &SYNC_NODE_NAME(udp_inErrors).node.node,
@@ -294,7 +294,7 @@ CREATE_LWIP_SYNC_NODE(18, tcp_HCOutSegs)
 CREATE_LWIP_SYNC_NODE(19, tcp_ConnectionTable)
 CREATE_LWIP_SYNC_NODE(20, tcp_ListenerTable)
 
-static const struct snmp_node* tcp_nodes[] = {
+static const struct snmp_node* const tcp_nodes[] = {
   &SYNC_NODE_NAME(tcp_RtoAlgorithm).node.node,
   &SYNC_NODE_NAME(tcp_RtoMin).node.node,
   &SYNC_NODE_NAME(tcp_RtoMax).node.node,
@@ -458,7 +458,7 @@ CREATE_LWIP_SYNC_NODE(22, ip_NetToMediaTable)
 #endif /* LWIP_ARP */
 CREATE_LWIP_SYNC_NODE(23, ip_RoutingDiscards)
 
-static const struct snmp_node* ip_nodes[] = {
+static const struct snmp_node* const ip_nodes[] = {
   &SYNC_NODE_NAME(ip_Forwarding).node.node,
   &SYNC_NODE_NAME(ip_DefaultTTL).node.node,
   &SYNC_NODE_NAME(ip_InReceives).node.node,
@@ -504,7 +504,7 @@ static const struct snmp_table_simple_node at_Table = SNMP_TABLE_CREATE_SIMPLE(1
 /* the following nodes access variables in LWIP stack from SNMP worker thread and must therefore be synced to LWIP (TCPIP) thread */ 
 CREATE_LWIP_SYNC_NODE(1, at_Table)
 
-static const struct snmp_node* at_nodes[] = {
+static const struct snmp_node* const at_nodes[] = {
   &SYNC_NODE_NAME(at_Table).node.node
 };
 
@@ -568,7 +568,7 @@ static const struct snmp_table_node interfaces_Table = SNMP_TABLE_CREATE(
 CREATE_LWIP_SYNC_NODE(1, interfaces_Number)
 CREATE_LWIP_SYNC_NODE(2, interfaces_Table)
 
-static const struct snmp_node* interface_nodes[] = {
+static const struct snmp_node* const interface_nodes[] = {
   &SYNC_NODE_NAME(interfaces_Number).node.node,
   &SYNC_NODE_NAME(interfaces_Table).node.node
 };
@@ -593,7 +593,7 @@ static const struct snmp_scalar_array_node_def system_nodes[] = {
 static const struct snmp_scalar_array_node system_node = SNMP_SCALAR_CREATE_ARRAY_NODE(1, system_nodes, system_get_value, system_set_test, system_set_value);
 
 /* --- mib-2 .1.3.6.1.2.1 ----------------------------------------------------- */
-static const struct snmp_node* mib2_nodes[] = {
+static const struct snmp_node* const mib2_nodes[] = {
   &system_node.node.node,
   &interface_root.node,
 #if LWIP_ARP && LWIP_IPV4

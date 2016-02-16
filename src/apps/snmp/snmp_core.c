@@ -60,15 +60,15 @@ const struct snmp_obj_id_const_ref snmp_zero_dot_zero = { LWIP_ARRAYSIZE(snmp_ze
 
 #if SNMP_LWIP_MIB2
 #include "lwip/apps/snmp_mib2.h"
-static const struct snmp_mib *default_mibs[] = { &mib2 };
-static u8_t snmp_num_mibs                    = 1;
+static const struct snmp_mib* const default_mibs[] = { &mib2 };
+static u8_t snmp_num_mibs                          = 1;
 #else
-static const struct snmp_mib *default_mibs[] = { NULL };
-static u8_t snmp_num_mibs                    = 0;
+static const struct snmp_mib* const default_mibs[] = { NULL };
+static u8_t snmp_num_mibs                          = 0;
 #endif
 
 /* List of known mibs */
-static struct snmp_mib const **snmp_mibs = default_mibs;
+static struct snmp_mib const * const *snmp_mibs = default_mibs;
 
 /**
  * Sets the MIBs to use.
