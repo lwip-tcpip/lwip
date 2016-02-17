@@ -119,7 +119,7 @@ namespace LwipSnmpCodeGeneration
 				}
 
 				VariableDeclaration subnodeArray = new VariableDeclaration(
-					new VariableType(this.Name + "_subnodes", LwipDefs.Vt_StNode, "*", ConstType.Value, String.Empty),
+					new VariableType(this.Name + "_subnodes", LwipDefs.Vt_StNode, "*", ConstType.Both, String.Empty),
 					"{\n" + subnodeArrayInitialization + "\n}",
 					isStatic: true);
 
