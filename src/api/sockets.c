@@ -1315,38 +1315,44 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
   /* Go through each socket in each list to count number of sockets which
      currently match */
   for (i = LWIP_SOCKET_OFFSET; i < maxfdp1; i++) {
-    void* lastdata = NULL;
-    s16_t rcvevent = 0;
-    u16_t sendevent = 0;
-    u16_t errevent = 0;
+    /* if this FD is not in the set, continue */
+    if (!(readset_in && FD_ISSET(i, readset_in)) &&
+        !(writeset_in && FD_ISSET(i, writeset_in)) &&
+        !(exceptset_in && FD_ISSET(i, exceptset_in))) {
+      continue;
+    }
     /* First get the socket's status (protected)... */
     SYS_ARCH_PROTECT(lev);
     sock = tryget_socket(i);
     if (sock != NULL) {
-      lastdata = sock->lastdata;
-      rcvevent = sock->rcvevent;
-      sendevent = sock->sendevent;
-      errevent = sock->errevent;
-    }
-    SYS_ARCH_UNPROTECT(lev);
-    /* ... then examine it: */
-    /* See if netconn of this socket is ready for read */
-    if (readset_in && FD_ISSET(i, readset_in) && ((lastdata != NULL) || (rcvevent > 0))) {
-      FD_SET(i, &lreadset);
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
-      nready++;
-    }
-    /* See if netconn of this socket is ready for write */
-    if (writeset_in && FD_ISSET(i, writeset_in) && (sendevent != 0)) {
-      FD_SET(i, &lwriteset);
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for writing\n", i));
-      nready++;
-    }
-    /* See if netconn of this socket had an error */
-    if (exceptset_in && FD_ISSET(i, exceptset_in) && (errevent != 0)) {
-      FD_SET(i, &lexceptset);
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for exception\n", i));
-      nready++;
+      void* lastdata = sock->lastdata;
+      s16_t rcvevent = sock->rcvevent;
+      u16_t sendevent = sock->sendevent;
+      u16_t errevent = sock->errevent;
+      SYS_ARCH_UNPROTECT(lev);
+
+      /* ... then examine it: */
+      /* See if netconn of this socket is ready for read */
+      if (readset_in && FD_ISSET(i, readset_in) && ((lastdata != NULL) || (rcvevent > 0))) {
+        FD_SET(i, &lreadset);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
+        nready++;
+      }
+      /* See if netconn of this socket is ready for write */
+      if (writeset_in && FD_ISSET(i, writeset_in) && (sendevent != 0)) {
+        FD_SET(i, &lwriteset);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for writing\n", i));
+        nready++;
+      }
+      /* See if netconn of this socket had an error */
+      if (exceptset_in && FD_ISSET(i, exceptset_in) && (errevent != 0)) {
+        FD_SET(i, &lexceptset);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for exception\n", i));
+        nready++;
+      }
+    } else {
+      SYS_ARCH_UNPROTECT(lev);
+      /* continue on to next FD in list */
     }
   }
   /* copy local sets to the ones provided as arguments */
