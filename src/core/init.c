@@ -288,6 +288,9 @@
 #if TCP_SNDLOWAT >= TCP_SND_BUF
   #error "lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than TCP_SND_BUF. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
+#if TCP_SNDLOWAT >= (0xFFFF - (4 * TCP_MSS))
+  #error "lwip_sanity_check: WARNING: TCP_SNDLOWAT must at least be 4*MSS below u16_t overflow!"
+#endif
 #if TCP_SNDQUEUELOWAT >= TCP_SND_QUEUELEN
   #error "lwip_sanity_check: WARNING: TCP_SNDQUEUELOWAT must be less than TCP_SND_QUEUELEN. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
