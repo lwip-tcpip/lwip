@@ -1498,7 +1498,6 @@ err_mem:
         conn->current_msg->msg.w.len = conn->write_offset;
         /* everything was written */
         write_finished = 1;
-        conn->write_offset = 0;
       }
       out_err = tcp_output(conn->pcb.tcp);
       if (ERR_IS_FATAL(out_err) || (out_err == ERR_RTE)) {
@@ -1538,6 +1537,7 @@ err_mem:
     sys_sem_t* op_completed_sem = LWIP_API_MSG_SEM(conn->current_msg);
     conn->current_msg->err = err;
     conn->current_msg = NULL;
+    conn->write_offset = 0;
     conn->state = NETCONN_NONE;
     NETCONN_SET_SAFE_ERR(conn, err);
 #if LWIP_TCPIP_CORE_LOCKING
