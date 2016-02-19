@@ -611,7 +611,7 @@ tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 
   lpcb = tcp_listen_with_backlog(pcb, backlog);
   if ((lpcb != NULL) &&
-      ip_addr_isany(&pcb->local_ip)) {
+      ip_addr_isany(&lpcb->local_ip)) {
     /* The default behavior is to accept connections on either
      * IPv4 or IPv6, if not bound. */
     /* @see NETCONN_FLAG_IPV6_V6ONLY for changing this behavior */
