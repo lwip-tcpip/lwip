@@ -642,6 +642,7 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
 
   pcb->netif = pppif;
+  MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
   if (!netif_add(pcb->netif,
 #if LWIP_IPV4
                  IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY,
