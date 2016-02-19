@@ -518,6 +518,7 @@ lwiperf_tcp_poll(void *arg, struct tcp_pcb *tpcb)
   LWIP_UNUSED_ARG(tpcb);
   if (++conn->poll_count >= LWIPERF_TCP_MAX_IDLE_SEC) {
     lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL);
+    return ERR_OK; /* lwiperf_tcp_close frees conn */
   }
 
   if (!conn->base.server) {
