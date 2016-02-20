@@ -580,7 +580,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #if LWIP_IPV6 || (LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS)
   if (ip_addr_ismulticast(dst_ip_route)) {
 #if LWIP_IPV6
-    if (PCB_ISIPV6(pcb)) {
+    if (IP_IS_V6(dst_ip)) {
       /* For multicast, find a netif based on source address. */
       dst_ip_route = &pcb->local_ip;
     } else
@@ -593,7 +593,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
          in pcb->multicast_ip that is used for routing. */
       if (!ip_addr_isany_val(pcb->multicast_ip) &&
           !ip4_addr_cmp(ip_2_ip4(&pcb->multicast_ip), IP4_ADDR_BROADCAST)) {
-        dst_ip_route = & pcb->multicast_ip;
+        dst_ip_route = &pcb->multicast_ip;
       }
 #endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
     }
@@ -601,7 +601,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #endif /* LWIP_IPV6 || (LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS) */
 
   /* find the outgoing network interface for this packet */
-  netif = ip_route(PCB_ISIPV6(pcb), &pcb->local_ip, dst_ip_route);
+  netif = ip_route(IP_IS_V6(dst_ip_route), &pcb->local_ip, dst_ip_route);
 
   /* no outgoing network interface could be found? */
   if (netif == NULL) {
@@ -660,7 +660,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 
   /* PCB local address is IP_ANY_ADDR? */
 #if LWIP_IPV6
-  if (PCB_ISIPV6(pcb)) {
+  if (IP_IS_V6(dst_ip)) {
     if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip))) {
       src_ip = ip6_select_source_address(netif, ip_2_ip6(dst_ip));
       if (src_ip == NULL) {
@@ -733,7 +733,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   /* broadcast filter? */
   if (!ip_get_option(pcb, SOF_BROADCAST) &&
 #if LWIP_IPV6
-      !PCB_ISIPV6(pcb) &&
+      !IP_IS_V6(dst_ip) &&
 #endif /* LWIP_IPV6 */
       ip_addr_isbroadcast(dst_ip, netif)) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
@@ -848,7 +848,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
 #if CHECKSUM_GEN_UDP
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_UDP) {
       /* Checksum is mandatory over IPv6. */
-      if (PCB_ISIPV6(pcb) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
+      if (IP_IS_V6(dst_ip) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
         u16_t udpchksum;
 #if LWIP_CHECKSUM_ON_COPY
         if (have_chksum) {
@@ -886,7 +886,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (u16_t)ip_proto));
   /* output to IP */
   NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-  err = ip_output_if_src(PCB_ISIPV6(pcb), q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
+  err = ip_output_if_src(IP_IS_V6(dst_ip), q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* TODO: must this be increased even if error occurred? */
@@ -1037,14 +1037,14 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 /** TODO: this functionality belongs in upper layers */
 #ifdef LWIP_UDP_TODO
 #if LWIP_IPV6
-  if (!PCB_ISIPV6(pcb))
+  if (!IP_IS_V6_VAL(pcb->remote_ip))
 #endif /* LWIP_IPV6 */
   {
     /* Nail down local IP for netconn_addr()/getsockname() */
     if (ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) {
       struct netif *netif;
 
-      if ((netif = ip_route(PCB_ISIPV6(pcb), (const ip_addr_t*)NULL, &pcb->remote_ip)) == NULL) {
+      if ((netif = ip_route(IP_IS_V6_VAL(pcb->remote_ip), (const ip_addr_t*)NULL, &pcb->remote_ip)) == NULL) {
         LWIP_DEBUGF(UDP_DEBUG, ("udp_connect: No route to %s\n", ipaddr_ntoa(&pcb->remote_ip)));
         UDP_STATS_INC(udp.rterr);
         return ERR_RTE;
@@ -1052,9 +1052,9 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
       /** TODO: this will bind the udp pcb locally, to the interface which
           is used to route output packets to the remote address. However, we
           might want to accept incoming packets on any interface! */
-      ip_addr_set(&pcb->local_ip, ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif, &pcb->remote_ip));
+      ip_addr_set(&pcb->local_ip, ip_netif_get_local_ip(IP_IS_V6_VAL(pcb->remote_ip), netif, &pcb->remote_ip));
     } else if (ip_addr_isany(&pcb->remote_ip)) {
-      ip_addr_set_any(PCB_ISIPV6(pcb), &pcb->local_ip);
+      ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->local_ip);
     }
   }
 #endif
