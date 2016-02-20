@@ -248,7 +248,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
   header_size = (
 #if LWIP_IPV4 && LWIP_IPV6
-    PCB_ISIPV6(pcb) ? IP6_HLEN : IP_HLEN);
+    IP_IS_V6(ipaddr) ? IP6_HLEN : IP_HLEN);
 #elif LWIP_IPV4
     IP_HLEN);
 #else
@@ -279,7 +279,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
     }
   }
 
-  netif = ip_route(PCB_ISIPV6(pcb), &pcb->local_ip, dst_ip);
+  netif = ip_route(IP_IS_V6(dst_ip), &pcb->local_ip, dst_ip);
   if (netif == NULL) {
     LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
     ip_addr_debug_print(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, dst_ip);
@@ -291,7 +291,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
   }
 
 #if IP_SOF_BROADCAST
-  if (!PCB_ISIPV6(pcb))
+  if (!IP_IS_V6(ipaddr))
   {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(ipaddr, netif)) {
@@ -307,7 +307,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
   if (ip_addr_isany(&pcb->local_ip)) {
     /* use outgoing network interface IP address as source address */
-    src_ip = ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif, dst_ip);
+    src_ip = ip_netif_get_local_ip(IP_IS_V6(dst_ip), netif, dst_ip);
 #if LWIP_IPV6
     if (src_ip == NULL) {
       if (q != p) {
@@ -324,7 +324,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 #if LWIP_IPV6
   /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
-  if (PCB_ISIPV6(pcb) && pcb->chksum_reqd) {
+  if (IP_IS_V6(dst_ip) && pcb->chksum_reqd) {
     u16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
     LWIP_ASSERT("Checksum must fit into first pbuf", p->len >= (pcb->chksum_offset + 2));
     SMEMCPY(((u8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(u16_t));
@@ -332,7 +332,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 #endif
 
   NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
-  err = ip_output_if(PCB_ISIPV6(pcb), q, src_ip, dst_ip, pcb->ttl, pcb->tos, pcb->protocol, netif);
+  err = ip_output_if(IP_IS_V6(dst_ip), q, src_ip, dst_ip, pcb->ttl, pcb->tos, pcb->protocol, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* did we chain a header earlier? */

@@ -740,7 +740,7 @@ tcp_process(struct tcp_pcb *pcb)
 
 #if TCP_CALCULATE_EFF_SEND_MSS
       pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip,
-        PCB_ISIPV6(pcb));
+        IP_IS_V6_VAL(pcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
       /* Set ssthresh again after changing 'mss' and 'snd_wnd' */
