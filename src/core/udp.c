@@ -967,7 +967,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* SO_REUSE */
         {
           /* port matches that of PCB in list and REUSEADDR not set -> reject */
-          if ((ipcb->local_port == port) && IP_PCB_IPVER_EQ(pcb, ipcb) &&
+          if ((ipcb->local_port == port) && (IP_IS_V6(ipaddr) == IP_IS_V6_VAL(ipcb->local_ip)) &&
               /* IP address matches, or one is IP_ADDR_ANY? */
                 (ip_addr_isany(&ipcb->local_ip) ||
                  ip_addr_isany(ipaddr) ||

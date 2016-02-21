@@ -77,11 +77,9 @@ extern "C" {
 
 #if LWIP_IPV6 && LWIP_IPV4
 #define IP_PCB_ISIPV6_MEMBER          u8_t isipv6;
-#define IP_PCB_IPVER_EQ(pcb1, pcb2)   ((pcb1)->isipv6 == (pcb2)->isipv6)
 #define PCB_ISIPV6(pcb) ((pcb)->isipv6)
 #else
 #define IP_PCB_ISIPV6_MEMBER
-#define IP_PCB_IPVER_EQ(pcb1, pcb2)   1
 #define PCB_ISIPV6(pcb)               LWIP_IPV6
 #endif /* LWIP_IPV6 */
 

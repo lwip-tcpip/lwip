@@ -478,7 +478,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* SO_REUSE */
           {
             /* @todo: check accept_any_ip_version */
-            if (IP_PCB_IPVER_EQ(pcb, cpcb) &&
+            if ((IP_IS_V6(ipaddr) == IP_IS_V6_VAL(cpcb->local_ip)) &&
                 (ip_addr_isany(&cpcb->local_ip) ||
                 ip_addr_isany(ipaddr) ||
                 ip_addr_cmp(&cpcb->local_ip, ipaddr))) {
@@ -547,11 +547,9 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
        this port is only used once for every local IP. */
     for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if ((lpcb->local_port == pcb->local_port) &&
-          IP_PCB_IPVER_EQ(pcb, lpcb)) {
-        if (ip_addr_cmp(&lpcb->local_ip, &pcb->local_ip)) {
-          /* this address/port is already used */
-          return NULL;
-        }
+          ip_addr_cmp(&lpcb->local_ip, &pcb->local_ip)) {
+        /* this address/port is already used */
+        return NULL;
       }
     }
   }
@@ -797,7 +795,6 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
         for (cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
           if ((cpcb->local_port == pcb->local_port) &&
               (cpcb->remote_port == port) &&
-              IP_PCB_IPVER_EQ(cpcb, pcb) &&
               ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip) &&
               ip_addr_cmp(&cpcb->remote_ip, ipaddr)) {
             /* linux returns EISCONN here, but ERR_USE should be OK for us */
@@ -1672,7 +1669,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
         tcp_listen_pcbs.listen_pcbs != NULL);
       for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
         if ((lpcb->local_port == pcb->local_port) &&
-            IP_PCB_IPVER_EQ(pcb, lpcb) &&
+            (IP_IS_V6_VAL(pcb->local_ip) == IP_IS_V6_VAL(lpcb->local_ip)) &&
             (ip_addr_isany(&lpcb->local_ip) ||
              ip_addr_cmp(&pcb->local_ip, &lpcb->local_ip))) {
             /* port and address of the listen pcb match the timed-out pcb */
