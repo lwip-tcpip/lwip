@@ -106,7 +106,7 @@ raw_input(struct pbuf *p, struct netif *inp)
   /* loop through all raw pcbs until the packet is eaten by one */
   /* this allows multiple pcbs to match against the packet by design */
   while ((eaten == 0) && (pcb != NULL)) {
-    if ((pcb->protocol == proto) && IP_PCB_IPVER_INPUT_MATCH(pcb) &&
+    if ((pcb->protocol == proto) && (ip_current_is_v6() == IP_IS_V6_VAL(pcb->local_ip)) &&
         (ip_addr_isany(&pcb->local_ip) ||
          ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr()))) {
 #if IP_SOF_BROADCAST_RECV

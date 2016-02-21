@@ -285,7 +285,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
       /* compare PCB remote addr+port to UDP source addr+port */
       if ((local_match != 0) &&
-          (pcb->remote_port == src) && IP_PCB_IPVER_INPUT_MATCH(pcb) &&
+          (pcb->remote_port == src) && (ip_current_is_v6() == IP_IS_V6_VAL(pcb->remote_ip)) &&
             (ip_addr_isany_val(pcb->remote_ip) ||
               ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
         /* the first fully matching PCB */

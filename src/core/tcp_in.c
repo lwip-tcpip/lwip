@@ -269,7 +269,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
         } else
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-        if (IP_PCB_IPVER_INPUT_MATCH(lpcb)) {
+        if (ip_current_is_v6() == IP_IS_V6_VAL(lpcb->local_ip)) {
           if (ip_addr_cmp(&lpcb->local_ip, ip_current_dest_addr())) {
             /* found an exact match */
             break;
