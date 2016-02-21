@@ -112,7 +112,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
       if ((ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif()))
-          || PCB_ISIPV6(pcb)
+          || IP_IS_V6_VAL(pcb->local_ip)
           )
 #endif /* IP_SOF_BROADCAST_RECV */
       {

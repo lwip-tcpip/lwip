@@ -598,7 +598,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
 #if TCP_CALCULATE_EFF_SEND_MSS
     npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip,
-      &npcb->remote_ip, PCB_ISIPV6(npcb));
+      &npcb->remote_ip, IP_IS_V6_VAL(npcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
     MIB2_STATS_INC(mib2.tcppassiveopens);
