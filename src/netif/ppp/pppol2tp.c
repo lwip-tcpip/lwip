@@ -308,7 +308,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
 #if LWIP_IPV6
-  if (PCB_ISIPV6(l2tp->udp)) {
+  if (IP_IS_V6_VAL(l2tp->udp->local_ip)) {
     udp_bind(l2tp->udp, IP6_ADDR_ANY, 0);
   } else
 #endif /* LWIP_IPV6 */
