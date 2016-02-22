@@ -155,6 +155,7 @@ slipif_output(struct netif *netif, struct pbuf *p)
   return ERR_OK;
 }
 
+#if LWIP_IPV4
 /**
  * Send a pbuf doing the necessary SLIP encapsulation
  *
@@ -171,6 +172,7 @@ slipif_output_v4(struct netif *netif, struct pbuf *p, const ip4_addr_t *ipaddr)
   LWIP_UNUSED_ARG(ipaddr);
   return slipif_output(netif, p);
 }
+#endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
 /**
@@ -369,7 +371,9 @@ slipif_init(struct netif *netif)
 
   netif->name[0] = 's';
   netif->name[1] = 'l';
+#if LWIP_IPV4
   netif->output = slipif_output_v4;
+#endif /* LWIP_IPV4 */
 #if LWIP_IPV6
   netif->output_ip6 = slipif_output_v6;
 #endif /* LWIP_IPV6 */
