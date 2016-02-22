@@ -185,7 +185,7 @@ struct tcpip_msg {
     struct {
       struct pbuf *p;
       struct netif *netif;
-      tcpip_inpkt_fn input_fn;
+      netif_input_fn input_fn;
     } inp;
     struct {
       tcpip_callback_fn function;

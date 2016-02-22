@@ -169,7 +169,7 @@ tcpip_thread(void *arg)
  * @param input_fn input function to call
  */
 err_t
-tcpip_inpkt(struct pbuf *p, struct netif *inp, tcpip_inpkt_fn input_fn)
+tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn)
 {
 #if LWIP_TCPIP_CORE_LOCKING_INPUT
   err_t ret;
