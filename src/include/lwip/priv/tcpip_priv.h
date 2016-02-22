@@ -132,13 +132,6 @@ extern sys_mutex_t lock_tcpip_core;
 #define API_EXPR_DEREF(expr)            *(expr)
 #endif /* LWIP_MPU_COMPATIBLE */
 
-/** Function prototype for input functions functions.
- * 
- * @param p The received packet, copied into a pbuf
- * @param inp The netif which received the packet
- */
-typedef err_t (*tcpip_inpkt_fn)(struct pbuf *p, struct netif *inp);
-
 #if LWIP_NETCONN || LWIP_SOCKET
 err_t tcpip_apimsg(struct api_msg *apimsg);
 #endif /* LWIP_NETCONN || LWIP_SOCKET */

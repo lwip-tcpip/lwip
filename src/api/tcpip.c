@@ -166,24 +166,18 @@ tcpip_thread(void *arg)
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
- * @param p the received packet, p->payload pointing to the Ethernet header or
- *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
- *          NETIF_FLAG_ETHERNET flags)
+ * @param p the received packet
  * @param inp the network interface on which the packet was received
+ * @param input_fn input function to call
  */
 err_t
-tcpip_input(struct pbuf *p, struct netif *inp)
+tcpip_inpkt(struct pbuf *p, struct netif *inp, tcpip_inpkt_fn input_fn)
 {
 #if LWIP_TCPIP_CORE_LOCKING_INPUT
   err_t ret;
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_input: PACKET %p/%p\n", (void *)p, (void *)inp));
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_inpkt: PACKET %p/%p\n", (void *)p, (void *)inp));
   LOCK_TCPIP_CORE();
-#if LWIP_ETHERNET
-  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
-    ret = ethernet_input(p, inp);
-  } else
-#endif /* LWIP_ETHERNET */
-  ret = ip_input(p, inp);
+  ret = input_fn(p, inp);
   UNLOCK_TCPIP_CORE();
   return ret;
 #else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
@@ -200,18 +194,33 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   msg->type = TCPIP_MSG_INPKT;
   msg->msg.inp.p = p;
   msg->msg.inp.netif = inp;
-#if LWIP_ETHERNET
-  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
-    msg->msg.inp.input_fn = ethernet_input;
-  } else
-#endif /* LWIP_ETHERNET */
-  msg->msg.inp.input_fn = ip_input;
+  msg->msg.inp.input_fn = input_fn;
   if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
     memp_free(MEMP_TCPIP_MSG_INPKT, msg);
     return ERR_MEM;
   }
   return ERR_OK;
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+}
+
+/**
+ * Pass a received packet to tcpip_thread for input processing with
+ * ethernet_input or ip_input
+ *
+ * @param p the received packet, p->payload pointing to the Ethernet header or
+ *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
+ *          NETIF_FLAG_ETHERNET flags)
+ * @param inp the network interface on which the packet was received
+ */
+err_t
+tcpip_input(struct pbuf *p, struct netif *inp)
+{
+#if LWIP_ETHERNET
+  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
+    return tcpip_inpkt(p, inp, ethernet_input);
+  } else
+#endif /* LWIP_ETHERNET */
+  return tcpip_inpkt(p, inp, ip_input);
 }
 
 #if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
@@ -226,34 +235,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 err_t
 tcpip_pppos_input(struct pbuf *p, struct netif *inp)
 {
-#if LWIP_TCPIP_CORE_LOCKING_INPUT
-  err_t ret;
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_pppos_input: PACKET %p/%p\n", (void *)p, (void *)inp));
-  LOCK_TCPIP_CORE();
-  ret = pppos_input_sys(p, inp);
-  UNLOCK_TCPIP_CORE();
-  return ret;
-#else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
-  struct tcpip_msg *msg;
-
-  if (!sys_mbox_valid_val(mbox)) {
-    return ERR_VAL;
-  }
-  msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
-  if (msg == NULL) {
-    return ERR_MEM;
-  }
-
-  msg->type = TCPIP_MSG_INPKT;
-  msg->msg.inp.p = p;
-  msg->msg.inp.netif = inp;
-  msg->msg.inp.input_fn = pppos_input_sys;
-  if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
-    memp_free(MEMP_TCPIP_MSG_INPKT, msg);
-    return ERR_MEM;
-  }
-  return ERR_OK;
-#endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+  return tcpip_inpkt(p, inp, pppos_input_sys);
 }
 #endif /* PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE */
 
