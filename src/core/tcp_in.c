@@ -594,8 +594,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->ssthresh = LWIP_TCP_INITIAL_SSTHRESH(npcb);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-    npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip,
-      &npcb->remote_ip, IP_IS_V6_VAL(npcb->remote_ip));
+    npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip, &npcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
     MIB2_STATS_INC(mib2.tcppassiveopens);
@@ -736,8 +735,7 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->state = ESTABLISHED;
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-      pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip,
-        IP_IS_V6_VAL(pcb->remote_ip));
+      pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
       /* Set ssthresh again after changing 'mss' and 'snd_wnd' */

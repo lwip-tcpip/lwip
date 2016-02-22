@@ -601,7 +601,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #endif /* LWIP_IPV6 || (LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS) */
 
   /* find the outgoing network interface for this packet */
-  netif = ip_route(IP_IS_V6(dst_ip_route), &pcb->local_ip, dst_ip_route);
+  netif = ip_route(&pcb->local_ip, dst_ip_route);
 
   /* no outgoing network interface could be found? */
   if (netif == NULL) {
@@ -886,7 +886,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (u16_t)ip_proto));
   /* output to IP */
   NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-  err = ip_output_if_src(IP_IS_V6(dst_ip), q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
+  err = ip_output_if_src(q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* TODO: must this be increased even if error occurred? */

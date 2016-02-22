@@ -763,11 +763,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   LWIP_ERROR("tcp_connect: can only connect from state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
-  if (ipaddr != NULL) {
-    ip_addr_set(&pcb->remote_ip, ipaddr);
-  } else {
-    return ERR_VAL;
-  }
+  ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
 
   /* check if we have a route to the remote host */
@@ -775,7 +771,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
     /* no local IP address set, yet. */
     struct netif *netif;
     const ip_addr_t *local_ip;
-    ip_route_get_local_ip(IP_IS_V6(ipaddr), &pcb->local_ip, &pcb->remote_ip, netif, local_ip);
+    ip_route_get_local_ip(&pcb->local_ip, &pcb->remote_ip, netif, local_ip);
     if ((netif == NULL) || (local_ip == NULL)) {
       /* Don't even try to send a SYN packet if we have no route
          since that will fail. */
@@ -828,7 +824,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
      The send MSS is updated when an MSS option is received. */
   pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
 #if TCP_CALCULATE_EFF_SEND_MSS
-  pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip, IP_IS_V6_VAL(pcb->remote_ip));
+  pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
   pcb->ssthresh = TCP_WND;
@@ -1785,19 +1781,16 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
 #if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
                      , const ip_addr_t *src
 #endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
-#if LWIP_IPV6 && LWIP_IPV4
-                     , u8_t isipv6
-#endif /* LWIP_IPV6 && LWIP_IPV4 */
                      )
 {
   u16_t mss_s;
   struct netif *outif;
   s16_t mtu;
 
-  outif = ip_route(isipv6, src, dest);
+  outif = ip_route(src, dest);
 #if LWIP_IPV6
 #if LWIP_IPV4
-  if (isipv6)
+  if (IP_IS_V6(dest))
 #endif /* LWIP_IPV4 */
   {
     /* First look in destination cache, to see if there is a Path MTU. */
@@ -1819,7 +1812,7 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
   if (mtu != 0) {
 #if LWIP_IPV6
 #if LWIP_IPV4
-    if (isipv6)
+    if (IP_IS_V6(dest))
 #endif /* LWIP_IPV4 */
     {
       mss_s = mtu - IP6_HLEN - TCP_HLEN;

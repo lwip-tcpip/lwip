@@ -502,17 +502,12 @@ u16_t tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
 #if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
                            , const ip_addr_t *src
 #endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
-#if LWIP_IPV6 && LWIP_IPV4
-                           , u8_t isipv6
-#endif /* LWIP_IPV6 && LWIP_IPV4 */
                            );
-#if LWIP_IPV4 && LWIP_IPV6
-#define tcp_eff_send_mss(sendmss, src, dest, isipv6) tcp_eff_send_mss_impl(sendmss, dest, src, isipv6)
-#elif LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
-#define tcp_eff_send_mss(sendmss, src, dest, isipv6) tcp_eff_send_mss_impl(sendmss, dest, src)
-#else /* LWIP_IPV4 && LWIP_IPV6 */
-#define tcp_eff_send_mss(sendmss, src, dest, isipv6) tcp_eff_send_mss_impl(sendmss, dest)
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
+#if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
+#define tcp_eff_send_mss(sendmss, src, dest) tcp_eff_send_mss_impl(sendmss, dest, src)
+#else /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
+#define tcp_eff_send_mss(sendmss, src, dest) tcp_eff_send_mss_impl(sendmss, dest)
+#endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API

@@ -930,7 +930,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   }
 #endif
 
-  netif = ip_route(IP_IS_V6_VAL(pcb->remote_ip), &pcb->local_ip, &pcb->remote_ip);
+  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
@@ -941,7 +941,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
     }
 #endif
     NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-    err = ip_output_if(IP_IS_V6_VAL(pcb->remote_ip), p, &pcb->local_ip, &pcb->remote_ip,
+    err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip,
       pcb->ttl, pcb->tos, IP_PROTO_TCP, netif);
     NETIF_SET_HWADDRHINT(netif, NULL);
   }
@@ -1161,7 +1161,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   if (seg->flags & TF_SEG_OPTS_MSS) {
     u16_t mss;
 #if TCP_CALCULATE_EFF_SEND_MSS
-    mss = tcp_eff_send_mss(TCP_MSS, &pcb->local_ip, &pcb->remote_ip, IP_IS_V6_VAL(pcb->remote_ip));
+    mss = tcp_eff_send_mss(TCP_MSS, &pcb->local_ip, &pcb->remote_ip);
 #else /* TCP_CALCULATE_EFF_SEND_MSS */
     mss = TCP_MSS;
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
@@ -1189,15 +1189,14 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     pcb->rtime = 0;
   }
 
-  netif = ip_route(IP_IS_V6_VAL(pcb->remote_ip), &pcb->local_ip, &pcb->remote_ip);
+  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     return ERR_RTE;
   }
 
   /* If we don't have a local IP address, we get one from netif */
   if (ip_addr_isany(&pcb->local_ip)) {
-    const ip_addr_t *local_ip = ip_netif_get_local_ip(IP_IS_V6_VAL(pcb->remote_ip), netif,
-      &pcb->remote_ip);
+    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
     if (local_ip == NULL) {
       return ERR_RTE;
     }
@@ -1262,7 +1261,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
   NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-  err = ip_output_if(IP_IS_V6_VAL(pcb->remote_ip), seg->p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
+  err = ip_output_if(seg->p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
     pcb->tos, IP_PROTO_TCP, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
   return err;
@@ -1321,7 +1320,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCP_STATS_INC(tcp.xmit);
   MIB2_STATS_INC(mib2.tcpoutrsts);
 
-  netif = ip_route(IP_IS_V6(remote_ip), local_ip, remote_ip);
+  netif = ip_route(local_ip, remote_ip);
   if (netif != NULL) {
 #if CHECKSUM_GEN_TCP
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
@@ -1330,7 +1329,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
     }
 #endif
     /* Send output with hardcoded TTL/HL since we have no access to the pcb */
-    ip_output_if(IP_IS_V6(remote_ip), p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP, netif);
+    ip_output_if(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP, netif);
   }
   pbuf_free(p);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));
@@ -1493,7 +1492,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
                 ("tcp_keepalive: could not allocate memory for pbuf\n"));
     return ERR_MEM;
   }
-  netif = ip_route(IP_IS_V6_VAL(pcb->remote_ip), &pcb->local_ip, &pcb->remote_ip);
+  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
@@ -1508,8 +1507,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
 
     /* Send output to IP */
     NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-    err = ip_output_if(IP_IS_V6_VAL(pcb->remote_ip), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
-      0, IP_PROTO_TCP, netif);
+    err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP, netif);
     NETIF_SET_HWADDRHINT(netif, NULL);
   }
   pbuf_free(p);
@@ -1581,7 +1579,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     pbuf_copy_partial(seg->p, d, 1, seg->p->tot_len - seg->len);
   }
 
-  netif = ip_route(IP_IS_V6_VAL(pcb->remote_ip), &pcb->local_ip, &pcb->remote_ip);
+  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
@@ -1595,7 +1593,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 
     /* Send output to IP */
     NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-    err = ip_output_if(IP_IS_V6_VAL(pcb->remote_ip), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
+    err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
       0, IP_PROTO_TCP, netif);
     NETIF_SET_HWADDRHINT(netif, NULL);
   }
