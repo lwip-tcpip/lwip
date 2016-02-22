@@ -79,6 +79,9 @@ APIFILES=$(LWIPDIR)/api/api_lib.c \
 NETIFFILES=$(LWIPDIR)/netif/etharp.c \
 	$(LWIPDIR)/netif/slipif.c
 
+# SIXLOWPAN: 6LoWPAN
+SIXLOWPAN=$(LWIPDIR)/netif/lowpan6.c \
+
 # PPPFILES: PPP
 PPPFILES=$(LWIPDIR)/netif/ppp/auth.c \
 	$(LWIPDIR)/netif/ppp/ccp.c \
@@ -116,7 +119,8 @@ LWIPNOAPPSFILES=$(COREFILES) \
 	$(CORE6FILES) \
 	$(APIFILES) \
 	$(NETIFFILES) \
-	$(PPPFILES)
+	$(PPPFILES) \
+	$(SIXLOWPAN)
 
 # SNMPFILES: SNMPv2c agent
 SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
