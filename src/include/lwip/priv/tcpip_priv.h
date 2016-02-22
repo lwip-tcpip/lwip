@@ -132,6 +132,12 @@ extern sys_mutex_t lock_tcpip_core;
 #define API_EXPR_DEREF(expr)            *(expr)
 #endif /* LWIP_MPU_COMPATIBLE */
 
+/** Function prototype for input functions functions.
+ * 
+ * @param p The received packet, copied into a pbuf
+ * @param inp The netif which received the packet
+ */
+typedef err_t (*tcpip_inpkt_fn)(struct pbuf *p, struct netif *inp);
 
 #if LWIP_NETCONN || LWIP_SOCKET
 err_t tcpip_apimsg(struct api_msg *apimsg);
@@ -180,7 +186,6 @@ enum tcpip_msg_type {
 
 struct tcpip_msg {
   enum tcpip_msg_type type;
-  sys_sem_t *sem;
   union {
 #if LWIP_NETCONN || LWIP_SOCKET
     struct api_msg *apimsg;
@@ -194,6 +199,7 @@ struct tcpip_msg {
     struct {
       struct pbuf *p;
       struct netif *netif;
+      tcpip_inpkt_fn input_fn;
     } inp;
     struct {
       tcpip_callback_fn function;
