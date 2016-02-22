@@ -49,8 +49,6 @@
 #include "lwip/init.h"
 #include "lwip/ip.h"
 #include "netif/etharp.h"
-#include "netif/ppp/pppoe.h"
-#include "netif/ppp/pppos.h"
 
 #define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
 #define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
@@ -222,22 +220,6 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_ETHERNET */
   return tcpip_inpkt(p, inp, ip_input);
 }
-
-#if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
-/**
- * Pass a received packet to tcpip_thread for input processing
- *
- * @param p the received packet, p->payload pointing to the Ethernet header or
- *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
- *          NETIF_FLAG_ETHERNET flags)
- * @param inp the network interface on which the packet was received
- */
-err_t
-tcpip_pppos_input(struct pbuf *p, struct netif *inp)
-{
-  return tcpip_inpkt(p, inp, pppos_input_sys);
-}
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE */
 
 /**
  * Call a specific function in the thread context of

@@ -444,7 +444,7 @@ pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
   }
   pbuf_take(p, s, l);
 
-  err = tcpip_pppos_input(p, ppp_netif(ppp));
+  err = tcpip_inpkt(p, ppp_netif(ppp), pppos_input_sys);
   if (err != ERR_OK) {
      pbuf_free(p);
   }
@@ -895,4 +895,5 @@ failed:
   pbuf_free(nb);
   return err;
 }
+
 #endif /* PPP_SUPPORT && PPPOS_SUPPORT */

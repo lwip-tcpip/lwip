@@ -136,10 +136,6 @@ extern sys_mutex_t lock_tcpip_core;
 err_t tcpip_apimsg(struct api_msg *apimsg);
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
 
-#if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
-err_t tcpip_pppos_input(struct pbuf *p, struct netif *inp);
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE */
-
 #if LWIP_NETIF_API
 err_t tcpip_netifapi(struct netifapi_msg *netifapimsg);
 #if LWIP_TCPIP_CORE_LOCKING
