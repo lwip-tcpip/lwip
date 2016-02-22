@@ -84,7 +84,7 @@ extern "C" {
 #define NETCONNTYPE_DATAGRAM(t)      ((t)&0xE0)
 #if LWIP_IPV6
 #define NETCONN_TYPE_IPV6            0x08
-#define NETCONNTYPE_ISIPV6(t)        ((t)&0x08)
+#define NETCONNTYPE_ISIPV6(t)        (((t)&NETCONN_TYPE_IPV6) != 0)
 #define NETCONNTYPE_ISUDPLITE(t)     (((t)&0xF7) == NETCONN_UDPLITE)
 #define NETCONNTYPE_ISUDPNOCHKSUM(t) (((t)&0xF7) == NETCONN_UDPNOCHKSUM)
 #else /* LWIP_IPV6 */
