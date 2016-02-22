@@ -556,7 +556,8 @@ pcb_new(struct api_msg_msg *msg)
 #if LWIP_IPV4 && LWIP_IPV6
   else {
     if (NETCONNTYPE_ISIPV6(msg->conn->type)) {
-      ip_set_v6(msg->conn->pcb.ip, 1);
+      IP_SET_TYPE_VAL(msg->conn->pcb.ip->local_ip, IPADDR_TYPE_V6);
+      IP_SET_TYPE_VAL(msg->conn->pcb.ip->remote_ip, IPADDR_TYPE_V6);
     }
   }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
@@ -1764,7 +1765,7 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
 #if LWIP_UDP
 #if LWIP_IPV6 && LWIP_IPV6_MLD
-        if (PCB_ISIPV6(msg->conn->pcb.udp)) {
+        if (NETCONNTYPE_ISIPV6(msg->conn->type)) {
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
             msg->err = mld6_joingroup(ip_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
               ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));

@@ -569,9 +569,6 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     pcb->accepts_pending++;
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
-#if LWIP_IPV4 && LWIP_IPV6
-    PCB_ISIPV6(npcb) = ip_current_is_v6();
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
     ip_addr_copy(npcb->local_ip, *ip_current_dest_addr());
     ip_addr_copy(npcb->remote_ip, *ip_current_src_addr());
     npcb->local_port = pcb->local_port;
@@ -1151,7 +1148,7 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->polltmr = 0;
 
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
-      if (PCB_ISIPV6(pcb)) {
+      if (ip_current_is_v6()) {
         /* Inform neighbor reachability of forward progress. */
         nd6_reachability_hint(ip6_current_src_addr());
       }
@@ -1485,7 +1482,7 @@ tcp_receive(struct tcp_pcb *pcb)
         tcp_ack(pcb);
 
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
-        if (PCB_ISIPV6(pcb)) {
+        if (ip_current_is_v6()) {
           /* Inform neighbor reachability of forward progress. */
           nd6_reachability_hint(ip6_current_src_addr());
         }

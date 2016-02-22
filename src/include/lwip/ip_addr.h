@@ -66,7 +66,7 @@ typedef struct _ip_addr {
 #define IP_SET_TYPE_VAL(ipaddr, iptype) do { (ipaddr).type = (iptype); }while(0)
 #define IP_SET_TYPE(ipaddr, iptype)     do { if((ipaddr) != NULL) { IP_SET_TYPE_VAL(*(ipaddr), iptype); }}while(0)
 
-#define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (PCB_ISIPV6(pcb) == IP_IS_V6(ipaddr))
+#define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (IP_IS_V6_VAL(pcb->local_ip) == IP_IS_V6(ipaddr))
 
 /* Convert generic ip address to specific protocol version */
 #define ip_2_ip6(ipaddr)   (&((ipaddr)->u_addr.ip6))

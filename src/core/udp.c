@@ -244,7 +244,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if (pcb->local_port == dest) {
         if (
 #if LWIP_IPV6
-          (PCB_ISIPV6(pcb) && (ip_current_is_v6()) &&
+          (IP_IS_V6_VAL(pcb->local_ip) && ip_current_is_v6() &&
             (ip6_addr_isany(ip_2_ip6(&pcb->local_ip)) ||
 #if LWIP_IPV6_MLD
             ip6_addr_ismulticast(ip6_current_dest_addr()) ||
@@ -252,7 +252,7 @@ udp_input(struct pbuf *p, struct netif *inp)
             ip6_addr_cmp(ip_2_ip6(&pcb->local_ip), ip6_current_dest_addr())))
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4 && LWIP_IPV6
-           || (!PCB_ISIPV6(pcb) &&
+           || (!IP_IS_V6_VAL(pcb->local_ip) &&
             (ip4_current_header() != NULL) &&
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 #if LWIP_IPV4
@@ -393,10 +393,10 @@ udp_input(struct pbuf *p, struct netif *inp)
             /* compare PCB local addr+port to UDP destination addr+port */
             if ((mpcb->local_port == dest) &&
 #if LWIP_IPV6
-                ((PCB_ISIPV6(mpcb) &&
+                ((IP_IS_V6_VAL(mpcb->local_ip) &&
                   (ip6_addr_ismulticast(ip6_current_dest_addr()) ||
                    ip6_addr_cmp(ip_2_ip6(&mpcb->local_ip), ip6_current_dest_addr()))) ||
-                 (!PCB_ISIPV6(mpcb) &&
+                 (!IP_IS_V6_VAL(mpcb->local_ip) &&
 #else /* LWIP_IPV6 */
                 ((
 #endif /* LWIP_IPV6 */
@@ -571,7 +571,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   struct netif *netif;
   const ip_addr_t *dst_ip_route = dst_ip;
 
-  if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+  if ((pcb == NULL) || (dst_ip == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
   }
 
@@ -654,7 +654,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   const ip_addr_t *src_ip;
 
-  if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+  if ((pcb == NULL) || (dst_ip == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
   }
 
@@ -724,7 +724,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   u8_t ip_proto;
   u8_t ttl;
 
-  if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) ||
+  if ((pcb == NULL) || (dst_ip == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) ||
       !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
   }
@@ -929,7 +929,15 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   struct udp_pcb *ipcb;
   u8_t rebind;
 
-  if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+#if LWIP_IPV4
+  /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+  if (ipaddr == NULL) {
+    ipaddr = IP_ADDR_ANY;
+  }
+#endif /* LWIP_IPV4 */
+
+  /* still need to check for ipaddr == NULL in IPv6 only case */
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -1020,7 +1028,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 
-  if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -1062,7 +1070,7 @@ void
 udp_disconnect(struct udp_pcb *pcb)
 {
   /* reset remote address association */
-  ip_addr_set_any(PCB_ISIPV6(pcb), &pcb->remote_ip);
+  ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
   pcb->remote_port = 0;
   /* mark PCB as unconnected */
   pcb->flags &= ~UDP_FLAGS_CONNECTED;
@@ -1160,7 +1168,6 @@ udp_new_ip6(void)
   struct udp_pcb *pcb;
   pcb = udp_new();
 #if LWIP_IPV4
-  ip_set_v6(pcb, 1);
   IP_SET_TYPE_VAL(pcb->local_ip, IPADDR_TYPE_V6);
   IP_SET_TYPE_VAL(pcb->remote_ip, IPADDR_TYPE_V6);
 #endif /* LWIP_IPV4 */

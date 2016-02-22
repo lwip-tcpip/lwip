@@ -75,20 +75,11 @@ extern "C" {
 #define IP_PCB_ADDRHINT
 #endif /* LWIP_NETIF_HWADDRHINT */
 
-#if LWIP_IPV6 && LWIP_IPV4
-#define IP_PCB_ISIPV6_MEMBER          u8_t isipv6;
-#define PCB_ISIPV6(pcb) ((pcb)->isipv6)
-#else
-#define IP_PCB_ISIPV6_MEMBER
-#define PCB_ISIPV6(pcb)               LWIP_IPV6
-#endif /* LWIP_IPV6 */
-
 /* This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
 #define IP_PCB \
-  IP_PCB_ISIPV6_MEMBER \
   /* ip addresses in network byte order */ \
   ip_addr_t local_ip; \
   ip_addr_t remote_ip; \
@@ -179,11 +170,6 @@ extern struct ip_globals ip_data;
 /** Get the transport layer header */
 #define ip_next_header_ptr()     ((const void*)((ip_current_is_v6() ? \
   (const u8_t*)ip6_current_header() : (const u8_t*)ip4_current_header())  + ip_current_header_tot_len()))
-
-/** Set an IP_PCB to IPv6 (IPv4 is the default) */
-#define ip_set_v6(pcb, val)       do{if(pcb != NULL) { pcb->isipv6 = val; \
-  IP_SET_TYPE(&(pcb)->local_ip,  (val)?IPADDR_TYPE_V6:IPADDR_TYPE_V4); \
-  IP_SET_TYPE(&(pcb)->remote_ip, (val)?IPADDR_TYPE_V6:IPADDR_TYPE_V4); }}while(0)
 
 /** Source IP4 address of current_header */
 #define ip4_current_src_addr()     (ip_2_ip4(&ip_data.current_iphdr_src))
