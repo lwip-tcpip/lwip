@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2016-02-22: Ivan Delamer:
+  * Initial 6LoWPAN support
+
   2015-12-26: Martin Hentschel and Dirk Ziegelmeier
   * Rewrite SNMP agent
 
