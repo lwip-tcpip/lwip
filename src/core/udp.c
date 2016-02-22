@@ -1161,6 +1161,8 @@ udp_new_ip6(void)
   pcb = udp_new();
 #if LWIP_IPV4
   ip_set_v6(pcb, 1);
+  IP_SET_TYPE_VAL(pcb->local_ip, IPADDR_TYPE_V6);
+  IP_SET_TYPE_VAL(pcb->remote_ip, IPADDR_TYPE_V6);
 #endif /* LWIP_IPV4 */
   return pcb;
 }
