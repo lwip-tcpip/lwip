@@ -111,21 +111,10 @@ tcpip_thread(void *arg)
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
-#if LWIP_ETHERNET
-      if (msg->msg.inp.netif->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
-        ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
-      } else
-#endif /* LWIP_ETHERNET */
-      ip_input(msg->msg.inp.p, msg->msg.inp.netif);
+      msg->msg.inp.input_fn(msg->msg.inp.p, msg->msg.inp.netif);
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
 
-#if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
-    case TCPIP_MSG_INPKT_PPPOS:
-      pppos_input_sys(msg->msg.inp.p, msg->msg.inp.netif);
-      memp_free(MEMP_TCPIP_MSG_INPKT, msg);
-      break;
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE */
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 
 #if LWIP_NETIF_API
@@ -211,6 +200,12 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   msg->type = TCPIP_MSG_INPKT;
   msg->msg.inp.p = p;
   msg->msg.inp.netif = inp;
+#if LWIP_ETHERNET
+  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
+    msg->msg.inp.input_fn = ethernet_input;
+  } else
+#endif /* LWIP_ETHERNET */
+  msg->msg.inp.input_fn = ip_input;
   if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
     memp_free(MEMP_TCPIP_MSG_INPKT, msg);
     return ERR_MEM;
@@ -249,9 +244,10 @@ tcpip_pppos_input(struct pbuf *p, struct netif *inp)
     return ERR_MEM;
   }
 
-  msg->type = TCPIP_MSG_INPKT_PPPOS;
+  msg->type = TCPIP_MSG_INPKT;
   msg->msg.inp.p = p;
   msg->msg.inp.netif = inp;
+  msg->msg.inp.input_fn = pppos_input_sys;
   if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
     memp_free(MEMP_TCPIP_MSG_INPKT, msg);
     return ERR_MEM;
