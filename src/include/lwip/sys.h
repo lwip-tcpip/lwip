@@ -99,6 +99,10 @@ typedef void (*lwip_thread_fn)(void *arg);
 
 /** Define LWIP_COMPAT_MUTEX if the port has no mutexes and binary semaphores
     should be used instead */
+#ifndef LWIP_COMPAT_MUTEX
+#define LWIP_COMPAT_MUTEX 0
+#endif
+
 #if LWIP_COMPAT_MUTEX
 /* for old ports that don't have mutexes: define them to binary semaphores */
 #define sys_mutex_t                   sys_sem_t
