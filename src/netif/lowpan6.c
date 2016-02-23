@@ -628,12 +628,12 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 }
 
 err_t
-lowpan6_set_context(u8_t index, const ip6_addr_t * context)
+lowpan6_set_context(u8_t idx, const ip6_addr_t * context)
 {
-    if (index > LWIP_6LOWPAN_NUM_CONTEXTS)
+    if (idx > LWIP_6LOWPAN_NUM_CONTEXTS)
       return ERR_ARG;
 
-    ip6_addr_set(&lowpan6_context[index], context);
+    ip6_addr_set(&lowpan6_context[idx], context);
 
     return ERR_OK;
 }
