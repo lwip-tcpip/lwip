@@ -51,6 +51,7 @@
 #include "lwip/mem.h"
 #include "lwip/udp.h"
 #include "lwip/tcpip.h"
+#include "lwip/snmp.h"
 
 #include <string.h>
 
@@ -216,6 +217,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   /* We'll use a dedicated pbuf for building 6LowPAN fragments. */
   p_frag = pbuf_alloc(PBUF_RAW, 127, PBUF_RAM);
   if (p_frag == NULL) {
+    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
 
@@ -454,6 +456,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   remaining_len = p->tot_len;
 
   if (remaining_len > 0x7FF) {
+    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     /* datagram_size must fit into 11 bit */
     pbuf_free(p_frag);
     return ERR_VAL;
@@ -493,6 +496,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     p_frag->len = p_frag->tot_len = ieee_header_len + 4 + frag_len + 2; /* add 2 dummy bytes for crc*/
 
     /* send the packet */
+    MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
     LWIP_DEBUGF(LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
     err = netif->linkoutput(netif, p_frag);
 
@@ -524,6 +528,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
       p_frag->len = p_frag->tot_len = frag_len + 5 + ieee_header_len + 2;
 
       /* send the packet */
+      MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
       LWIP_DEBUGF(LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
       err = netif->linkoutput(netif, p_frag);
     }
@@ -546,6 +551,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     p_frag->len = p_frag->tot_len = frag_len + lowpan6_header_len + ieee_header_len + 2;
 
     /* send the packet */
+    MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
     LWIP_DEBUGF(LOWPAN6_DEBUG | LWIP_DBG_TRACE, ("lowpan6_send: sending packet %p\n", (void *)p));
     err = netif->linkoutput(netif, p_frag);
   }
@@ -628,6 +634,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 
   /* multicast destination IP address? */
   if (ip6_addr_ismulticast(ip6addr)) {
+    MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
     /* We need to send to the broadcast address.*/
     return lowpan6_frag(netif, q, &src, &ieee_802154_broadcast);
   }
@@ -644,6 +651,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     dest.addr[1] = ((u8_t *)q->payload)[39];
     if ((src.addr_len == 2) && (ip6_addr_netcmp(&ip6_hdr->src, &ip6_hdr->dest)) &&
         (lowpan6_get_address_mode(ip6addr, &dest) == 3)) {
+      MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
       return lowpan6_frag(netif, q, &src, &dest);
     }
   }
@@ -653,6 +661,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   /* Get next hop record. */
   i = nd6_get_next_hop_entry(ip6addr, netif);
   if (i < 0) {
+    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     /* failed to get a next hop neighbor record. */
     return ERR_MEM;
   }
@@ -671,6 +680,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     /* Send out. */
     dest.addr_len = netif->hwaddr_len;
     SMEMCPY(dest.addr, neighbor_cache[i].lladdr, netif->hwaddr_len);
+    MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
     return lowpan6_frag(netif, q, &src, &dest);
   }
 
@@ -968,6 +978,8 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
   u16_t datagram_size, datagram_offset, datagram_tag;
   struct lowpan6_reass_helper *lrh, *lrh_temp;
 
+  MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
+
   /* Analyze header. TODO validate. */
   puc = (u8_t*)p->payload;
   datagram_offset = 5;
@@ -1016,6 +1028,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0)) {
         /* address match with packet in reassembly. */
         if ((datagram_tag == lrh->datagram_tag) && (datagram_size == lrh->datagram_size)) {
+          MIB2_STATS_NETIF_INC(netif, ifindiscards);
           /* duplicate fragment. */
           pbuf_free(p);
           return ERR_OK;
@@ -1039,6 +1052,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
 
     lrh = (struct lowpan6_reass_helper *) mem_malloc(sizeof(struct lowpan6_reass_helper));
     if (lrh == NULL) {
+      MIB2_STATS_NETIF_INC(netif, ifindiscards);
       pbuf_free(p);
       return ERR_MEM;
     }
@@ -1072,6 +1086,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
     }
     if (lrh == NULL) {
       /* rogue fragment */
+      MIB2_STATS_NETIF_INC(netif, ifindiscards);
       pbuf_free(p);
       return ERR_OK;
     }
@@ -1081,6 +1096,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
       pbuf_free(p);
       return ERR_OK;
     } else if (lrh->pbuf->tot_len > datagram_offset) {
+      MIB2_STATS_NETIF_INC(netif, ifindiscards);
       /* We have missed a fragment. Delete whole reassembly. */
       dequeue_datagram(lrh);
       pbuf_free(lrh->pbuf);
@@ -1120,12 +1136,17 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
     /* IPv6 headers are compressed using IPHC. */
     p = lowpan6_decompress(p, &src, &dest);
     if (p == NULL) {
+      MIB2_STATS_NETIF_INC(netif, ifindiscards);
       return ERR_OK;
     }
   } else {
+    MIB2_STATS_NETIF_INC(netif, ifindiscards);
     pbuf_free(p);
     return ERR_OK;
   }
+
+  /* @todo: distinguish unicast/multicast */
+  MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
 
   return ip6_input(p, netif);
 }
@@ -1139,6 +1160,8 @@ lowpan6_if_init(struct netif *netif)
   netif->output = lowpan4_output;
 #endif /* LWIP_IPV4 */
   netif->output_ip6 = lowpan6_output;
+
+  MIB2_INIT_NETIF(netif, snmp_ifType_other, 0);
 
   /* maximum transfer unit */
   netif->mtu = 1280;
