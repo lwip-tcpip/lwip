@@ -22,6 +22,9 @@ slipif.c
           A generic implementation of the SLIP (Serial Line IP)
           protocol. It requires a sio (serial I/O) module to work.
 
+lowpan6.c
+          6LoWPAN implementation
+
 ppp/      Point-to-Point Protocol stack
           The lwIP PPP support is based from pppd (http://ppp.samba.org) with
           huge changes to match code size and memory requirements for embedded
