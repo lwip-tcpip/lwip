@@ -35,6 +35,8 @@
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
+#include <string.h>
+
 #include "lwip/snmp.h"
 #include "lwip/sys.h"
 #include "lwip/apps/snmp.h"
@@ -272,7 +274,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *trap)
   snmp_asn1_enc_length_cnt(trap->pdulen, &lenlen);
   tot_len += 1 + lenlen;
 
-  trap->comlen = (u16_t)strlen(snmp_community_trap);
+  trap->comlen = (u16_t)LWIP_MIN(strlen(snmp_community_trap), 0xFFFF);
   snmp_asn1_enc_length_cnt(trap->comlen, &lenlen);
   tot_len += 1 + lenlen + trap->comlen;
 
