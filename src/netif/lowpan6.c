@@ -453,6 +453,12 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   /* Calculate remaining packet length */
   remaining_len = p->tot_len;
 
+  if (remaining_len > 0x7FF) {
+    /* datagram_size must fit into 11 bit */
+    pbuf_free(p_frag);
+    return ERR_VAL;
+  }
+
   /* Fragment, or 1 packet? */
   if (remaining_len > (127 - ieee_header_len - lowpan6_header_len - 3)) { /* 127 - header - 1 byte dispatch - 2 bytes CRC */
     /* We must move the 6LowPAN header to make room for the FRAG header. */
@@ -496,11 +502,12 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 
       buffer[ieee_header_len] |= 0x20; /* Change FRAG1 to FRAGN */
 
-      buffer[ieee_header_len + 4] = datagram_offset >> 3; /* datagram offset in FRAGN header */
+      buffer[ieee_header_len + 4] = (u8_t)(datagram_offset >> 3); /* datagram offset in FRAGN header (datagram_offset is max. 11 bit) */
 
       frag_len = (127 - ieee_header_len - 5 - 2) & 0xf8;
-      if (frag_len > remaining_len)
+      if (frag_len > remaining_len) {
         frag_len = remaining_len;
+      }
 
       pbuf_copy_partial(p, buffer + ieee_header_len + 5, frag_len, p->tot_len - remaining_len);
       remaining_len -= frag_len;
