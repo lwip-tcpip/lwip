@@ -166,6 +166,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 #endif /* IP_SOF_BROADCAST_RECV */
       {
         if(ip4_addr_isany(ip_2_ip4(&pcb->local_ip)) ||
+          ((ip4_current_dest_addr()->addr == IPADDR_BROADCAST)) ||
            ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(inp))) {
           return 1;
         }
