@@ -84,13 +84,16 @@ snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 void
 snmp_init(void)
 {
-  struct udp_pcb *snmp_pcb = udp_new();
+  err_t err;
+  
+  struct udp_pcb *snmp_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ERROR("snmp_raw: no PCB", (snmp_pcb != NULL), return;);
 
   snmp_traps_handle = snmp_pcb;
 
   udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
-  udp_bind(snmp_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
+  err = udp_bind(snmp_pcb, IP_ANY_TYPE, SNMP_IN_PORT);
+  LWIP_ERROR("snmp_raw: Unable to bind PCB", (err == ERR_OK), return;);
 }
 
 #endif /* LWIP_SNMP && SNMP_USE_RAW */

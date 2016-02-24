@@ -147,11 +147,20 @@ again:
  * @return 1 on match, 0 otherwise
  */
 static u8_t
-udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
+udp_input_local_match(struct udp_pcb *pcb, struct netif *netif, u8_t broadcast)
 {
+  LWIP_UNUSED_ARG(netif);     /* in IPv6 only case */
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
-  /* @todo: Add special dualstack case here */
+  /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
+  if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+#if IP_SOF_BROADCAST_RECV
+    if(broadcast && !ip_get_option(pcb, SOF_BROADCAST)) {
+      return 0;
+    }
+#endif /* IP_SOF_BROADCAST_RECV */
+    return 1;
+  }
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
   if(ip_current_is_v6() == IP_IS_V6_VAL(pcb->local_ip)) {
@@ -167,7 +176,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
       {
         if(ip4_addr_isany(ip_2_ip4(&pcb->local_ip)) ||
           ((ip4_current_dest_addr()->addr == IPADDR_BROADCAST)) ||
-           ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(inp))) {
+           ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(netif))) {
           return 1;
         }
       }
@@ -907,7 +916,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* LWIP_IPV4 */
 
   /* still need to check for ipaddr == NULL in IPv6 only case */
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -998,7 +1007,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -1123,9 +1132,8 @@ udp_new(void)
   return pcb;
 }
 
-#if LWIP_IPV6
 /**
- * Create a UDP PCB for IPv6.
+ * Create a UDP PCB for specific IP type. See IPADDR_TYPE_XX definitions.
  *
  * @return The UDP PCB which was created. NULL if the PCB data structure
  * could not be allocated.
@@ -1133,17 +1141,18 @@ udp_new(void)
  * @see udp_remove()
  */
 struct udp_pcb *
-udp_new_ip6(void)
+udp_new_ip_type(u8_t type)
 {
   struct udp_pcb *pcb;
   pcb = udp_new();
-#if LWIP_IPV4
-  IP_SET_TYPE_VAL(pcb->local_ip, IPADDR_TYPE_V6);
-  IP_SET_TYPE_VAL(pcb->remote_ip, IPADDR_TYPE_V6);
-#endif /* LWIP_IPV4 */
+#if LWIP_IPV4 && LWIP_IPV6
+  IP_SET_TYPE_VAL(pcb->local_ip,  type);
+  IP_SET_TYPE_VAL(pcb->remote_ip, type);
+#else
+  LWIP_UNUSED_ARG(type);
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
   return pcb;
 }
-#endif /* LWIP_IPV6 */
 
 #if LWIP_IPV4
 /** This function is called from netif.c when address is changed

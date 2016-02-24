@@ -123,6 +123,7 @@ extern struct udp_pcb *udp_pcbs;
 /* The following functions is the application layer interface to the
    UDP code. */
 struct udp_pcb * udp_new        (void);
+struct udp_pcb * udp_new_ip_type(u8_t type);
 void             udp_remove     (struct udp_pcb *pcb);
 err_t            udp_bind       (struct udp_pcb *pcb, const ip_addr_t *ipaddr,
                                  u16_t port);
@@ -163,10 +164,6 @@ err_t            udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p,
 void             udp_input      (struct pbuf *p, struct netif *inp);
 
 void             udp_init       (void);
-
-#if LWIP_IPV6
-struct udp_pcb * udp_new_ip6(void);
-#endif /* LWIP_IPV6 */
 
 #if LWIP_MULTICAST_TX_OPTIONS
 #define udp_set_multicast_netif_addr(pcb, ip4addr) ip_addr_copy_from_ip4((pcb)->multicast_ip, *(ip4addr))

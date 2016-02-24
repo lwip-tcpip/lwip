@@ -131,7 +131,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 
 #if LWIP_IPV6
   if (IP_IS_V6_VAL(*ipaddr)) {
-    udp = udp_new_ip6();
+    udp = udp_new_ip_type(IPADDR_TYPE_V6);
   } else
 #endif /* LWIP_IPV6 */
   udp = udp_new();
