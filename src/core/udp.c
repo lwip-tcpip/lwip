@@ -138,12 +138,20 @@ again:
 #endif
 }
 
+/** Common code to see if the current input packet matches the pcb
+ * (current input packet is accessed via ip(4/6)_current_* macros)
+ *
+ * @param pcb pcb to check
+ * @param inp network interface on which the datagram was received (only used for IPv4)
+ * @param broadcast 1 if his is an IPv4 broadcast (global or subnet-only), 0 otherwise (only used for IPv4)
+ * @return 1 on match, 0 otherwise
+ */
 static u8_t
-pcb_local_match(struct udp_pcb *pcb, struct netif *netif, u8_t broadcast)
+udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 {
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
-  /* TODO: Add special dualstack case here */
+  /* @todo: Add special dualstack case here */
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
   if(ip_current_is_v6() == IP_IS_V6_VAL(pcb->local_ip)) {
@@ -158,7 +166,7 @@ pcb_local_match(struct udp_pcb *pcb, struct netif *netif, u8_t broadcast)
 #endif /* IP_SOF_BROADCAST_RECV */
       {
         if(ip4_addr_isany(ip_2_ip4(&pcb->local_ip)) ||
-           ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(netif))) {
+           ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(inp))) {
           return 1;
         }
       }
@@ -279,7 +287,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
       /* compare PCB local addr+port to UDP destination addr+port */
       if ((pcb->local_port == dest) &&
-          (pcb_local_match(pcb, inp, broadcast) != 0)) {
+          (udp_input_local_match(pcb, inp, broadcast) != 0)) {
         if ((uncon_pcb == NULL) &&
             ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
           /* the first unconnected matching PCB */
@@ -388,7 +396,7 @@ udp_input(struct pbuf *p, struct netif *inp)
           if (mpcb != pcb) {
             /* compare PCB local addr+port to UDP destination addr+port */
             if ((mpcb->local_port == dest) &&
-                (pcb_local_match(mpcb, inp, broadcast) != 0)) {
+                (udp_input_local_match(mpcb, inp, broadcast) != 0)) {
               /* pass a copy of the packet to all local matches */
               if (mpcb->recv != NULL) {
                 struct pbuf *q;
