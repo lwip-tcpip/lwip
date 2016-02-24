@@ -133,11 +133,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   }
 
   /* Don't even process incoming broadcasts/multicasts. */
-  if (
-#if LWIP_IPV4
-      (!ip_current_is_v6() && ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) ||
-#endif /* LWIP_IPV4 */
-       ip_addr_ismulticast(ip_current_dest_addr())) {
+  if (ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif()) ||
+      ip_addr_ismulticast(ip_current_dest_addr())) {
     TCP_STATS_INC(tcp.proterr);
     goto dropped;
   }
@@ -269,7 +266,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
         } else
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-        if (ip_current_is_v6() == IP_IS_V6_VAL(lpcb->local_ip)) {
+        if (IP_ADDR_PCB_VERSION_MATCH_EXACT(lpcb, ip_current_dest_addr())) {
           if (ip_addr_cmp(&lpcb->local_ip, ip_current_dest_addr())) {
             /* found an exact match */
             break;

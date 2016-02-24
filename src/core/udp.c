@@ -147,9 +147,9 @@ again:
  * @return 1 on match, 0 otherwise
  */
 static u8_t
-udp_input_local_match(struct udp_pcb *pcb, struct netif *netif, u8_t broadcast)
+udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 {
-  LWIP_UNUSED_ARG(netif);     /* in IPv6 only case */
+  LWIP_UNUSED_ARG(inp);       /* in IPv6 only case */
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
   /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
@@ -163,7 +163,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *netif, u8_t broadcast)
   }
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
-  if(ip_current_is_v6() == IP_IS_V6_VAL(pcb->local_ip)) {
+  if(IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
     LWIP_ASSERT("UDP PCB: inconsistent local/remote IP versions", IP_IS_V6_VAL(pcb->local_ip) == IP_IS_V6_VAL(pcb->remote_ip));
 
 #if LWIP_IPV4
@@ -176,7 +176,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *netif, u8_t broadcast)
       {
         if(ip4_addr_isany(ip_2_ip4(&pcb->local_ip)) ||
           ((ip4_current_dest_addr()->addr == IPADDR_BROADCAST)) ||
-           ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(netif))) {
+           ip4_addr_netcmp(ip_2_ip4(&pcb->local_ip), ip4_current_dest_addr(), netif_ip4_netmask(inp))) {
           return 1;
         }
       }
