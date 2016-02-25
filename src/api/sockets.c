@@ -2621,18 +2621,20 @@ lwip_ioctl(int s, long cmd, void *argp)
       struct pbuf *p;
       if (sock->lastdata) {
         p = ((struct netbuf *)sock->lastdata)->p;
+        *((int*)argp) = p->tot_len - sock->lastoffset;
       } else {
         struct netbuf *rxbuf;
         err_t err;
         if (sock->rcvevent <= 0) {
-          *((u16_t*)argp) = 0;
+          *((int*)argp) = 0;
         } else {
           err = netconn_recv(sock->conn, &rxbuf);
           if (err != ERR_OK) {
-            *((u16_t*)argp) = 0;
+            *((int*)argp) = 0;
           } else {
             sock->lastdata = rxbuf;
-            *((u16_t*)argp) = rxbuf->p->tot_len;
+            sock->lastoffset = 0;
+            *((int*)argp) = rxbuf->p->tot_len;
           }
         }
       }
