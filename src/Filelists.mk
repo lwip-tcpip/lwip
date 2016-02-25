@@ -76,7 +76,7 @@ APIFILES=$(LWIPDIR)/api/api_lib.c \
 	$(LWIPDIR)/api/tcpip.c
 
 # NETIFFILES: Files implementing various generic network interface functions
-NETIFFILES=$(LWIPDIR)/netif/etharp.c \
+NETIFFILES=$(LWIPDIR)/netif/ethernet.c $(LWIPDIR)/netif/etharp.c \
 	$(LWIPDIR)/netif/slipif.c
 
 # SIXLOWPAN: 6LoWPAN
