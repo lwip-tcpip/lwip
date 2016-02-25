@@ -51,43 +51,9 @@
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp6.h"
+#include "netif/ethernet.h"
 
 #include <string.h>
-
-#define ETHTYPE_IPV6        0x86DD
-
-/** The ethernet address */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct eth_addr {
-  PACK_STRUCT_FLD_8(u8_t addr[6]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Ethernet header */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct eth_hdr {
-#if ETH_PAD_SIZE
-  PACK_STRUCT_FLD_8(u8_t padding[ETH_PAD_SIZE]);
-#endif
-  PACK_STRUCT_FLD_S(struct eth_addr dest);
-  PACK_STRUCT_FLD_S(struct eth_addr src);
-  PACK_STRUCT_FIELD(u16_t type);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-#define SIZEOF_ETH_HDR (14 + ETH_PAD_SIZE)
 
 /**
  * Send an IPv6 packet on the network using netif->linkoutput
