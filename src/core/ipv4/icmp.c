@@ -108,7 +108,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     MIB2_STATS_INC(mib2.icmpinechos);
     src = ip4_current_dest_addr();
     /* multicast destination address? */
-    if (ip_addr_ismulticast(ip_current_dest_addr())) {
+    if (ip4_addr_ismulticast(ip4_current_dest_addr())) {
 #if LWIP_MULTICAST_PING
       /* For multicast, use address of receiving interface as source address */
       src = netif_ip4_addr(inp);
@@ -118,7 +118,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_MULTICAST_PING */
     }
     /* broadcast destination address? */
-    if (ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) {
+    if (ip4_addr_isbroadcast(ip4_current_dest_addr(), ip_current_netif())) {
 #if LWIP_BROADCAST_PING
       /* For broadcast, use address of receiving interface as source address */
       src = netif_ip4_addr(inp);
