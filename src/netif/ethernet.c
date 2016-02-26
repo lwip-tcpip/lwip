@@ -48,6 +48,10 @@
 
 #include <string.h>
 
+#if PPPOE_SUPPORT
+#include "netif/ppp/pppoe.h"
+#endif /* PPPOE_SUPPORT */
+
 const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
