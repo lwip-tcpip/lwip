@@ -492,6 +492,7 @@ chkerr:
  * - ERR_OK. Successful. No error occurred.
  * - ERR_MEM. Out of memory.
  * - ERR_RTE. Could not find route to destination address.
+ * - ERR_VAL. No PCB or PCB is dual-stack
  * - More errors could be returned by lower protocol layers.
  *
  * @see udp_disconnect() udp_sendto()
@@ -499,6 +500,10 @@ chkerr:
 err_t
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
 {
+  if ((pcb == NULL) || IP_IS_ANY_TYPE_VAL(pcb->remote_ip)) {
+    return ERR_VAL;
+  }
+
   /* send to the packet using remote ip and port stored in the pcb */
   return udp_sendto(pcb, p, &pcb->remote_ip, pcb->remote_port);
 }
@@ -510,6 +515,10 @@ err_t
 udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
                 u8_t have_chksum, u16_t chksum)
 {
+  if ((pcb == NULL) || IP_IS_ANY_TYPE_VAL(pcb->remote_ip)) {
+    return ERR_VAL;
+  }
+
   /* send to the packet using remote ip and port stored in the pcb */
   return udp_sendto_chksum(pcb, p, &pcb->remote_ip, pcb->remote_port,
     have_chksum, chksum);
