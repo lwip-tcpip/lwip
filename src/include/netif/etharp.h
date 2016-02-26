@@ -51,6 +51,10 @@ extern "C" {
 
 #if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
+#ifndef ETHARP_HWADDR_LEN
+#define ETHARP_HWADDR_LEN     ETH_HWADDR_LEN
+#endif
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
