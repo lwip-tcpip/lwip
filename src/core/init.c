@@ -61,10 +61,6 @@
 #include "lwip/api.h"
 #include "netif/ppp/ppp_impl.h"
 
-#if LWIP_IPV4 && LWIP_IPV6
-const ip_addr_t ip_addr_any_type = IPADDR_ANY_TYPE_INIT;
-#endif
-
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
  */

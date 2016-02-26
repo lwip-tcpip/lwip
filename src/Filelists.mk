@@ -34,6 +34,7 @@ COREFILES=$(LWIPDIR)/core/def.c \
 	$(LWIPDIR)/core/dns.c \
 	$(LWIPDIR)/core/inet_chksum.c \
 	$(LWIPDIR)/core/init.c \
+	$(LWIPDIR)/core/ip.c \
 	$(LWIPDIR)/core/mem.c \
 	$(LWIPDIR)/core/memp.c \
 	$(LWIPDIR)/core/netif.c \

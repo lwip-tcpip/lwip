@@ -289,39 +289,4 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
   return buf;
 }
 
-#if LWIP_IPV4
-/** Convert IP address string (both versions) to numeric.
- * The version is auto-detected from the string.
- *
- * @param cp IP address string to convert
- * @param addr conversion result is stored here
- * @return 1 on success, 0 on error
- */
-int
-ipaddr_aton(const char *cp, ip_addr_t *addr)
-{
-  if (cp != NULL) {
-    const char* c;
-    for (c = cp; *c != 0; c++) {
-      if (*c == ':') {
-        /* contains a colon: IPv6 address */
-        if (addr) {
-          IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V6);
-        }
-        return ip6addr_aton(cp, ip_2_ip6(addr));
-      } else if (*c == '.') {
-        /* contains a dot: IPv4 address */
-        break;
-      }
-    }
-    /* call ip4addr_aton as fallback or if IPv4 was found */
-    if (addr) {
-      IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
-    }
-    return ip4addr_aton(cp, ip_2_ip4(addr));
-  }
-  return 0;
-}
-#endif /* LWIP_IPV4 */
-
 #endif /* LWIP_IPV6 */

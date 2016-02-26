@@ -59,11 +59,6 @@
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 
-#if !LWIP_IPV4
-/** Global data for IPv6 only */
-struct ip_globals ip_data;
-#endif /* !LWIP_IPV4 */
-
 /**
  * Finds the appropriate network interface for a given IPv6 address. It tries to select
  * a netif following a sequence of heuristics:
@@ -373,18 +368,6 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
   return;
 }
 #endif /* LWIP_IPV6_FORWARD */
-
-#if !LWIP_IPV4
-/* If both IP versions are enabled, this function can dispatch packets to the correct one.
- * If only IPv6 is enabled, this directly maps at ip6_input.
- * May be used as netif input function.
- */
-err_t
-ip_input(struct pbuf *p, struct netif *inp)
-{
-  return ip6_input(p, inp);
-}
-#endif /* !LWIP_IPV4 */
 
 /**
  * This function is called by the network interface device driver when

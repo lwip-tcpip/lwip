@@ -99,9 +99,6 @@
 #define IP_ACCEPT_LINK_LAYER_ADDRESSING 0
 #endif /* LWIP_DHCP */
 
-/** Global data for both IPv4 and IPv6 */
-struct ip_globals ip_data;
-
 /** The IP header ID of the next outgoing IP packet */
 static u16_t ip_id;
 
@@ -351,26 +348,6 @@ return_noroute:
   MIB2_STATS_INC(mib2.ipoutnoroutes);
 }
 #endif /* IP_FORWARD */
-
-/* If both IP versions are enabled, this function can dispatch packets to the correct one.
- * If only IPv4 is enabled, this directly maps at ip4_input.
- * May be used as netif input function.
- */
-err_t
-ip_input(struct pbuf *p, struct netif *inp)
-{
-#if LWIP_IPV6
-  if (p != NULL) {
-    if (IP_HDR_GET_VERSION(p->payload) == 6) {
-      return ip6_input(p, inp);
-    }
-    return ip4_input(p, inp);
-  }
-  return ERR_VAL;
-#else /* LWIP_IPV6 */
-  return ip4_input(p, inp);
-#endif /* LWIP_IPV6 */
-}
 
 /**
  * This function is called by the network interface device driver when
