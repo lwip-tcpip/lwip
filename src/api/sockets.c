@@ -308,8 +308,8 @@ static const int err_to_errno_table[] = {
 #define ERR_TO_ERRNO_TABLE_SIZE LWIP_ARRAYSIZE(err_to_errno_table)
 
 #define err_to_errno(err) \
-  ((unsigned)(-(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
-    err_to_errno_table[-(err)] : EIO)
+  ((unsigned)(-(signed)(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
+    err_to_errno_table[-(signed)(err)] : EIO)
 
 #if LWIP_SOCKET_SET_ERRNO
 #ifndef set_errno
