@@ -260,74 +260,53 @@ udp_input(struct pbuf *p, struct netif *inp)
   ip_addr_debug_print(UDP_DEBUG, ip_current_src_addr());
   LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", ntohs(udphdr->src)));
 
-#if LWIP_DHCP
   pcb = NULL;
-  /* when LWIP_DHCP is active, packets to DHCP_CLIENT_PORT may only be processed by
-     the dhcp module, no other UDP pcb may use the local UDP port DHCP_CLIENT_PORT */
-  if (dest == DHCP_CLIENT_PORT) {
-    /* all packets for DHCP_CLIENT_PORT not coming from DHCP_SERVER_PORT are dropped! */
-    if (src == DHCP_SERVER_PORT) {
-      if ((inp->dhcp != NULL) && (inp->dhcp->pcb != NULL)) {
-        /* accept the packet if
-           (- broadcast or directed to us) -> DHCP is link-layer-addressed, local ip is always ANY!
-           - inp->dhcp->pcb->remote == ANY or iphdr->src
-           (no need to check for IPv6 since the dhcp struct always uses IPv4) */
-        if (ip_addr_isany_val(inp->dhcp->pcb->remote_ip) ||
-            ip_addr_cmp(&inp->dhcp->pcb->remote_ip, ip_current_src_addr())) {
-          pcb = inp->dhcp->pcb;
-        }
-      }
-    }
-  } else
-#endif /* LWIP_DHCP */
-  {
-    prev = NULL;
-    uncon_pcb = NULL;
-    /* Iterate through the UDP pcb list for a matching pcb.
-     * 'Perfect match' pcbs (connected to the remote port & ip address) are
-     * preferred. If no perfect match is found, the first unconnected pcb that
-     * matches the local port and ip address gets the datagram. */
-    for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-      /* print the PCB local and remote address */
-      LWIP_DEBUGF(UDP_DEBUG, ("pcb ("));
-      ip_addr_debug_print(UDP_DEBUG, &pcb->local_ip);
-      LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F") <-- (", pcb->local_port));
-      ip_addr_debug_print(UDP_DEBUG, &pcb->remote_ip);
-      LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", pcb->remote_port));
+  prev = NULL;
+  uncon_pcb = NULL;
+  /* Iterate through the UDP pcb list for a matching pcb.
+   * 'Perfect match' pcbs (connected to the remote port & ip address) are
+   * preferred. If no perfect match is found, the first unconnected pcb that
+   * matches the local port and ip address gets the datagram. */
+  for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
+    /* print the PCB local and remote address */
+    LWIP_DEBUGF(UDP_DEBUG, ("pcb ("));
+    ip_addr_debug_print(UDP_DEBUG, &pcb->local_ip);
+    LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F") <-- (", pcb->local_port));
+    ip_addr_debug_print(UDP_DEBUG, &pcb->remote_ip);
+    LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", pcb->remote_port));
 
-      /* compare PCB local addr+port to UDP destination addr+port */
-      if ((pcb->local_port == dest) &&
-          (udp_input_local_match(pcb, inp, broadcast) != 0)) {
-        if ((uncon_pcb == NULL) &&
-            ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
-          /* the first unconnected matching PCB */
-          uncon_pcb = pcb;
-        }
-
-        /* compare PCB remote addr+port to UDP source addr+port */
-        if ((pcb->remote_port == src) &&
-            (ip_addr_isany_val(pcb->remote_ip) ||
-            ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
-          /* the first fully matching PCB */
-          if (prev != NULL) {
-            /* move the pcb to the front of udp_pcbs so that is
-               found faster next time */
-            prev->next = pcb->next;
-            pcb->next = udp_pcbs;
-            udp_pcbs = pcb;
-          } else {
-            UDP_STATS_INC(udp.cachehit);
-          }
-          break;
-        }
+    /* compare PCB local addr+port to UDP destination addr+port */
+    if ((pcb->local_port == dest) &&
+        (udp_input_local_match(pcb, inp, broadcast) != 0)) {
+      if ((uncon_pcb == NULL) &&
+          ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
+        /* the first unconnected matching PCB */
+        uncon_pcb = pcb;
       }
 
-      prev = pcb;
+      /* compare PCB remote addr+port to UDP source addr+port */
+      if ((pcb->remote_port == src) &&
+          (ip_addr_isany_val(pcb->remote_ip) ||
+          ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
+        /* the first fully matching PCB */
+        if (prev != NULL) {
+          /* move the pcb to the front of udp_pcbs so that is
+             found faster next time */
+          prev->next = pcb->next;
+          pcb->next = udp_pcbs;
+          udp_pcbs = pcb;
+        } else {
+          UDP_STATS_INC(udp.cachehit);
+        }
+        break;
+      }
     }
-    /* no fully matching pcb found? then look for an unconnected pcb */
-    if (pcb == NULL) {
-      pcb = uncon_pcb;
-    }
+
+    prev = pcb;
+  }
+  /* no fully matching pcb found? then look for an unconnected pcb */
+  if (pcb == NULL) {
+    pcb = uncon_pcb;
   }
 
   /* Check checksum if this is a match or if it was directed at us. */

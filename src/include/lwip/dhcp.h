@@ -59,10 +59,10 @@ struct dhcp
 {
   /** transaction identifier of last sent request */
   u32_t xid;
-  /** our connection to the DHCP server */
-  struct udp_pcb *pcb;
   /** incoming msg */
   struct dhcp_msg *msg_in;
+  /** track PCB allocation state */
+  u8_t pcb_allocated;
   /** current DHCP state machine state */
   u8_t state;
   /** retries of current request */
