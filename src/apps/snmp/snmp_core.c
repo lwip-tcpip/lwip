@@ -230,7 +230,11 @@ snmp_ip_port_to_oid(const ip_addr_t *ip, u16_t port, u32_t *oid)
 u8_t
 snmp_ip_to_oid(const ip_addr_t *ip, u32_t *oid)
 {
-  if(IP_IS_V6(ip)) {
+  if(IP_IS_ANY_TYPE_VAL(*ip)) {
+    oid[0] = 0; /* any */
+    oid[1] = 0; /* no IP OIDs follow */
+    return 2;
+  } else if(IP_IS_V6(ip)) {
 #if LWIP_IPV6
     oid[0] = 2; /* ipv6 */
     oid[1] = 16; /* 16 InetAddressIPv6 OIDs follow */
@@ -266,9 +270,22 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
     return 0;
   }
   
-  if (oid[0] == 1) { /* ipv4 */
+  if (oid[0] == 0) { /* any */
+    /* 1x InetAddressType, 1x OID len */
+    if(oid_len < 2) {
+      return 0;
+    }
+    if(oid[1] != 0) {
+      return 0;
+    }
+
+    memset(ip, 0, sizeof(*ip));
+    IP_SET_TYPE(ip, IPADDR_TYPE_ANY);
+
+    return 0;
+  } else if (oid[0] == 1) { /* ipv4 */
 #if LWIP_IPV4
-    /* 1x InetAddressType, 4x InetAddressIPv4 */
+    /* 1x InetAddressType, 1x OID len, 4x InetAddressIPv4 */
     if(oid_len < 6) {
       return 0;
     }
@@ -289,7 +306,7 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
 #endif /* LWIP_IPV4 */
   } else if(oid[0] == 2) { /* ipv6 */
 #if LWIP_IPV6
-    /* 1x InetAddressType, 16x InetAddressIPv6 */
+    /* 1x InetAddressType, 1x OID len, 16x InetAddressIPv6 */
     if(oid_len < 18) {
       return 0;
     }
