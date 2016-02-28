@@ -79,14 +79,17 @@ extern "C" {
 #endif /* LWIP_IPV6 */
 
 
-/* Helpers to process several netconn_types by the same code */
+#define NETCONN_TYPE_IP_ANY          0x04
+#define NETCONNTYPE_ANYIP(t)         (((t)&NETCONN_TYPE_IP_ANY) != 0)
+
+    /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)         ((t)&0xF0)
 #define NETCONNTYPE_DATAGRAM(t)      ((t)&0xE0)
 #if LWIP_IPV6
 #define NETCONN_TYPE_IPV6            0x08
 #define NETCONNTYPE_ISIPV6(t)        (((t)&NETCONN_TYPE_IPV6) != 0)
-#define NETCONNTYPE_ISUDPLITE(t)     (((t)&0xF7) == NETCONN_UDPLITE)
-#define NETCONNTYPE_ISUDPNOCHKSUM(t) (((t)&0xF7) == NETCONN_UDPNOCHKSUM)
+#define NETCONNTYPE_ISUDPLITE(t)     (((t)&0xF3) == NETCONN_UDPLITE)
+#define NETCONNTYPE_ISUDPNOCHKSUM(t) (((t)&0xF3) == NETCONN_UDPNOCHKSUM)
 #else /* LWIP_IPV6 */
 #define NETCONNTYPE_ISUDPLITE(t)     ((t) == NETCONN_UDPLITE)
 #define NETCONNTYPE_ISUDPNOCHKSUM(t) ((t) == NETCONN_UDPNOCHKSUM)
@@ -104,17 +107,23 @@ enum netconn_type {
   NETCONN_UDP         = 0x20,
   NETCONN_UDPLITE     = 0x21,
   NETCONN_UDPNOCHKSUM = 0x22,
+
 #if LWIP_IPV6
   NETCONN_UDP_IPV6         = NETCONN_UDP | NETCONN_TYPE_IPV6 /* 0x28 */,
   NETCONN_UDPLITE_IPV6     = NETCONN_UDPLITE | NETCONN_TYPE_IPV6 /* 0x29 */,
   NETCONN_UDPNOCHKSUM_IPV6 = NETCONN_UDPNOCHKSUM | NETCONN_TYPE_IPV6 /* 0x2a */,
 #endif /* LWIP_IPV6 */
+
   /* NETCONN_RAW Group */
-  NETCONN_RAW         = 0x40
+  NETCONN_RAW         = 0x40,
 #if LWIP_IPV6
-  ,
-  NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6 /* 0x48 */
+  NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6, /* 0x48 */
 #endif /* LWIP_IPV6 */
+
+  /* NETCONN dual stack */
+/*  NETCONN_TCP_IPANY     = NETCONN_TCP | NETCONN_TYPE_IP_ANY, */ /* 0x14 */
+  NETCONN_UDP_IPANY     = NETCONN_UDP | NETCONN_TYPE_IP_ANY /* 0x24 */
+/*  NETCONN_RAW_IPANY     = NETCONN_RAW | NETCONN_TYPE_IP_ANY, */ /* 0x44 */
 };
 
 /** Current state of the netconn. Non-TCP netconns are always

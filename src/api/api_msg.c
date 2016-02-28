@@ -523,7 +523,11 @@ pcb_new(struct api_msg_msg *msg)
 #endif /* LWIP_RAW */
 #if LWIP_UDP
   case NETCONN_UDP:
-    msg->conn->pcb.udp = udp_new();
+    if(NETCONNTYPE_ANYIP(msg->conn->type)) {
+      msg->conn->pcb.udp = udp_new_ip_type(IPADDR_TYPE_ANY);  
+    } else {
+      msg->conn->pcb.udp = udp_new();
+    }
     if (msg->conn->pcb.udp != NULL) {
 #if LWIP_UDPLITE
       if (NETCONNTYPE_ISUDPLITE(msg->conn->type)) {
@@ -1351,7 +1355,7 @@ lwip_netconn_do_send(struct api_msg_msg *msg)
 #if LWIP_UDP
       case NETCONN_UDP:
 #if LWIP_CHECKSUM_ON_COPY
-        if (ip_addr_isany(&msg->msg.b->addr)) {
+        if (ip_addr_isany(&msg->msg.b->addr) || IP_IS_ANY_TYPE_VAL(msg->msg.b->addr)) {
           msg->err = udp_send_chksum(msg->conn->pcb.udp, msg->msg.b->p,
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         } else {
@@ -1360,7 +1364,7 @@ lwip_netconn_do_send(struct api_msg_msg *msg)
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         }
 #else /* LWIP_CHECKSUM_ON_COPY */
-        if (ip_addr_isany_val(msg->msg.b->addr)) {
+        if (ip_addr_isany_val(msg->msg.b->addr) || IP_IS_ANY_TYPE_VAL(msg->msg.b->addr)) {
           msg->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
           msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, &msg->msg.b->addr, msg->msg.b->port);
