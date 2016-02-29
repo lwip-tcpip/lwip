@@ -165,6 +165,9 @@ void             udp_input      (struct pbuf *p, struct netif *inp);
 
 void             udp_init       (void);
 
+/* for compatibility with older implementation */
+#define udp_new_ip6() udp_new_ip_type(IPADDR_TYPE_V6)
+
 #if LWIP_MULTICAST_TX_OPTIONS
 #define udp_set_multicast_netif_addr(pcb, ip4addr) ip_addr_copy_from_ip4((pcb)->multicast_ip, *(ip4addr))
 #define udp_get_multicast_netif_addr(pcb)          ip_2_ip4(&(pcb)->multicast_ip)
