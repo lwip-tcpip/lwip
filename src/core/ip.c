@@ -43,7 +43,11 @@
 #include "lwip/ip_addr.h"
 #include "lwip/ip.h"
 
+/** Global data for both IPv4 and IPv6 */
+struct ip_globals ip_data;
+
 #if LWIP_IPV4 && LWIP_IPV6
+
 const ip_addr_t ip_addr_any_type = IPADDR_ANY_TYPE_INIT;
 
 /** Convert IP address string (both versions) to numeric.
@@ -79,19 +83,10 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
   return 0;
 }
 
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-
-/** Global data for both IPv4 and IPv6 */
-struct ip_globals ip_data;
-
-/* If both IP versions are enabled, this function can dispatch packets to the correct one.
- * If only IPv4 is enabled, this directly maps at ip4_input.
- * May be used as netif input function.
- */
+/* If both IP versions are enabled, this function can dispatch packets to the correct one. */
 err_t
 ip_input(struct pbuf *p, struct netif *inp)
 {
-#if LWIP_IPV4 && LWIP_IPV6
   if (p != NULL) {
     if (IP_HDR_GET_VERSION(p->payload) == 6) {
       return ip6_input(p, inp);
@@ -99,15 +94,8 @@ ip_input(struct pbuf *p, struct netif *inp)
     return ip4_input(p, inp);
   }
   return ERR_VAL;
-#else /* LWIP_IPV4 && LWIP_IPV6 */
-  
-#if LWIP_IPV4
-  return ip4_input(p, inp);
-#else /* LWIP_IPV4 */
-  return ip6_input(p, inp);
-#endif /* LWIP_IPV4 */
-  
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 }
+
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 #endif /* LWIP_IPV4 || LWIP_IPV6 */
