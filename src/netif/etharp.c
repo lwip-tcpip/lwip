@@ -47,15 +47,11 @@
 
 #if LWIP_ARP || LWIP_ETHERNET
 
-#include "lwip/ip_addr.h"
-#include "lwip/def.h"
-#include "lwip/ip.h"
+#include "netif/etharp.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
-#include "netif/etharp.h"
-#include "lwip/ip6.h"
 
 #include <string.h>
 

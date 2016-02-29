@@ -40,9 +40,9 @@
 #if LWIP_ARP || LWIP_ETHERNET /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/pbuf.h"
-#include "lwip/ip_addr.h"
+#include "lwip/ip4_addr.h"
 #include "lwip/netif.h"
-#include "lwip/ip.h"
+#include "lwip/ip4.h"
 #include "netif/ethernet.h"
 
 #ifdef __cplusplus

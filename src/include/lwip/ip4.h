@@ -38,8 +38,7 @@
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
-#include "lwip/ip_addr.h"
-#include "lwip/ip6_addr.h"
+#include "lwip/ip4_addr.h"
 #include "lwip/err.h"
 #include "lwip/netif.h"
 
