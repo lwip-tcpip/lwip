@@ -1071,27 +1071,28 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     err = ERR_OK;
   }
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
-  /* create a chained netbuf from the IO vectors */
-  err = netbuf_ref(chain_buf, msg->msg_iov[0].iov_base, (u16_t)msg->msg_iov[0].iov_len);
-  if (err == ERR_OK) {
-    struct netbuf *tail_buf;
-    size = msg->msg_iov[0].iov_len;
-    for (i = 1; i < msg->msg_iovlen; i++) {
-      tail_buf = netbuf_new();
-      if (!tail_buf) {
-        err = ERR_MEM;
-        break;
-      } else {
-        err = netbuf_ref(tail_buf, msg->msg_iov[i].iov_base, (u16_t)msg->msg_iov[i].iov_len);
-        if (err == ERR_OK) {
-          netbuf_chain(chain_buf, tail_buf);
-          size += msg->msg_iov[i].iov_len;
-        } else {
-          netbuf_delete(tail_buf);
-          break;
-        }
-      }
+  /* create a chained netbuf from the IO vectors. NOTE: we assemble a pbuf chain
+     manually to avoid having to allocate, chain, and delete a netbuf for each iov */
+  for (i = 0; i < msg->msg_iovlen; i++) {
+    struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
+    if (p == NULL) {
+      err = ERR_MEM; /* let netbuf_delete() cleanup chain_buf */
+      break;
     }
+    p->payload = msg->msg_iov[i].iov_base;
+    LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
+    p->len = p->tot_len = (u16_t)msg->msg_iov[i].iov_len;
+    /* netbuf empty, add new pbuf */
+    if (chain_buf->p == NULL) {
+      chain_buf->p = chain_buf->ptr = p;
+    /* add pbuf to existing pbuf chain */
+    } else {
+      pbuf_cat(chain_buf->p, p);
+    }
+  }    
+  /* save size of total chain */
+  if (err == ERR_OK) {
+    size = netbuf_len(chain_buf);
   }
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
