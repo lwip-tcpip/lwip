@@ -2118,9 +2118,9 @@ tcp_ConnectionTable_get_next_cell_instance_and_value(const u32_t* column, struct
 {
   struct tcp_pcb *pcb;
   struct snmp_next_oid_state state;
-  /* 1x tcpConnectionLocalAddressType  + 16x tcpConnectionLocalAddress  + 1x tcpConnectionLocalPort
-   * 1x tcpConnectionRemAddressType    + 16x tcpConnectionRemAddress    + 1x tcpConnectionRemPort */
-  u32_t  result_temp[36];
+  /* 1x tcpConnectionLocalAddressType + 1x OID len + 16x tcpConnectionLocalAddress  + 1x tcpConnectionLocalPort
+   * 1x tcpConnectionRemAddressType   + 1x OID len + 16x tcpConnectionRemAddress    + 1x tcpConnectionRemPort */
+  u32_t  result_temp[38];
   u8_t i;
   struct tcp_pcb ** const tcp_pcb_nonlisten_lists[] = {&tcp_bound_pcbs, &tcp_active_pcbs, &tcp_tw_pcbs};
 
@@ -2214,8 +2214,8 @@ tcp_ListenerTable_get_next_cell_instance_and_value(const u32_t* column, struct s
 {
   struct tcp_pcb_listen *pcb;
   struct snmp_next_oid_state state;
-  /* 1x tcpListenerLocalAddressType  + 16x tcpListenerLocalAddress  + 1x tcpListenerLocalPort */
-  u32_t  result_temp[18];
+  /* 1x tcpListenerLocalAddressType + 1x OID len + 16x tcpListenerLocalAddress  + 1x tcpListenerLocalPort */
+  u32_t  result_temp[19];
 
   LWIP_UNUSED_ARG(value_len);
 
@@ -2355,11 +2355,11 @@ udp_endpointTable_get_next_cell_instance_and_value(const u32_t* column, struct s
 {
   struct udp_pcb *pcb;
   struct snmp_next_oid_state state;
-  /* 1x udpEndpointLocalAddressType  + 16x udpEndpointLocalAddress  + 1x udpEndpointLocalPort  +
-   * 1x udpEndpointRemoteAddressType + 16x udpEndpointRemoteAddress + 1x udpEndpointRemotePort +
-   * 1x udpEndpointInstance = 37
+  /* 1x udpEndpointLocalAddressType  + 1x OID len + 16x udpEndpointLocalAddress  + 1x udpEndpointLocalPort  +
+   * 1x udpEndpointRemoteAddressType + 1x OID len + 16x udpEndpointRemoteAddress + 1x udpEndpointRemotePort +
+   * 1x udpEndpointInstance = 39
    */
-  u32_t  result_temp[37];
+  u32_t  result_temp[39];
 
   LWIP_UNUSED_ARG(value_len);
 
