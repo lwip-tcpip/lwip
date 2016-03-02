@@ -84,9 +84,9 @@ extern const ip_addr_t ip_addr_any_type;
 #define IP_ADDR6(ipaddr,i0,i1,i2,i3)  do { IP6_ADDR(ip_2_ip6(ipaddr),i0,i1,i2,i3); \
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
 
-#define ip_addr_copy(dest, src)      do{if(IP_IS_V6_VAL(src)){ \
-  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }else{ \
-  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }}while(0)
+#define ip_addr_copy(dest, src)      do{ IP_SET_TYPE_VAL(dest, (src).type); if(IP_IS_V6_VAL(src)){ \
+  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); }else{ \
+  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); }}while(0)
 #define ip_addr_copy_from_ip6(dest, src)      do{ \
   ip6_addr_copy(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }while(0)
 #define ip_addr_copy_from_ip4(dest, src)      do{ \
@@ -95,7 +95,7 @@ extern const ip_addr_t ip_addr_any_type;
   IP_SET_TYPE(ipaddr, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_get_ip4_u32(ipaddr)  (((ipaddr) && !IP_IS_V6(ipaddr)) ? \
   ip4_addr_get_u32(ip_2_ip4(ipaddr)) : 0)
-#define ip_addr_set(dest, src) do{ IP_SET_TYPE(dest, src->type); if(IP_IS_V6(src)){ \
+#define ip_addr_set(dest, src) do{ IP_SET_TYPE(dest, (src)->type); if(IP_IS_V6(src)){ \
   ip6_addr_set(ip_2_ip6(dest), ip_2_ip6(src)); }else{ \
   ip4_addr_set(ip_2_ip4(dest), ip_2_ip4(src)); }}while(0)
 #define ip_addr_set_ipaddr(dest, src) ip_addr_set(dest, src)
