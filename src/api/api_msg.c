@@ -543,7 +543,11 @@ pcb_new(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
   case NETCONN_TCP:
-    msg->conn->pcb.tcp = tcp_new();
+    if(NETCONNTYPE_ANYIP(msg->conn->type)) {
+      msg->conn->pcb.tcp = tcp_new_ip_type(IPADDR_TYPE_ANY);
+    } else {
+      msg->conn->pcb.tcp = tcp_new();
+    }
     if (msg->conn->pcb.tcp != NULL) {
       setup_tcp(msg->conn);
     }
@@ -1270,22 +1274,19 @@ lwip_netconn_do_listen(struct api_msg_msg *msg)
             /* connection is not closed, cannot listen */
             msg->err = ERR_VAL;
           } else {
-#if LWIP_IPV6
-            if ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0) {
-#if TCP_LISTEN_BACKLOG
-              lpcb = tcp_listen_dual_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
-#else  /* TCP_LISTEN_BACKLOG */
-              lpcb = tcp_listen_dual(msg->conn->pcb.tcp);
-#endif /* TCP_LISTEN_BACKLOG */
-            } else
-#endif /* LWIP_IPV6 */
-            {
-#if TCP_LISTEN_BACKLOG
-              lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
-#else  /* TCP_LISTEN_BACKLOG */
-              lpcb = tcp_listen(msg->conn->pcb.tcp);
-#endif /* TCP_LISTEN_BACKLOG */
+#if LWIP_IPV4 && LWIP_IPV6
+            if (ip_addr_isany_val(msg->conn->pcb.tcp->local_ip) &&
+                ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0)) {
+              IP_SET_TYPE_VAL(msg->conn->pcb.tcp->local_ip, IPADDR_TYPE_ANY);
             }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
+#if TCP_LISTEN_BACKLOG
+            lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+#else  /* TCP_LISTEN_BACKLOG */
+            lpcb = tcp_listen(msg->conn->pcb.tcp);
+#endif /* TCP_LISTEN_BACKLOG */
+
             if (lpcb == NULL) {
               /* in this case, the old pcb is still allocated */
               msg->err = ERR_MEM;
