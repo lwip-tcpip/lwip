@@ -434,8 +434,10 @@ raw_new_ip6(u8_t proto)
   struct raw_pcb *pcb;
   pcb = raw_new(proto);
 #if LWIP_IPV4
-  IP_SET_TYPE_VAL(pcb->local_ip, IPADDR_TYPE_V6);
-  IP_SET_TYPE_VAL(pcb->remote_ip, IPADDR_TYPE_V6);
+  if(pcb != NULL) {
+    IP_SET_TYPE_VAL(pcb->local_ip,  IPADDR_TYPE_V6);
+    IP_SET_TYPE_VAL(pcb->remote_ip, IPADDR_TYPE_V6);
+  }
 #endif /* LWIP_IPV4 */
   return pcb;
 }
