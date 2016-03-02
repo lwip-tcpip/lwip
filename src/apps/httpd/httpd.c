@@ -2318,33 +2318,14 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 
 /**
- * Initialize the httpd with the specified local address.
- */
-static void
-httpd_init_addr(const ip_addr_t *local_addr)
-{
-  struct tcp_pcb *pcb;
-  err_t err;
-
-  pcb = tcp_new();
-  LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
-  tcp_setprio(pcb, HTTPD_TCP_PRIO);
-  /* set SOF_REUSEADDR here to explicitly bind httpd to multiple interfaces */
-  err = tcp_bind(pcb, local_addr, HTTPD_SERVER_PORT);
-  LWIP_ASSERT("httpd_init: tcp_bind failed", err == ERR_OK);
-  pcb = tcp_listen_dual(pcb);
-  LWIP_ASSERT("httpd_init: tcp_listen failed", pcb != NULL);
-  /* initialize callback arg and accept callback */
-  tcp_arg(pcb, pcb);
-  tcp_accept(pcb, http_accept);
-}
-
-/**
  * Initialize the httpd: set up a listening PCB and bind it to the defined port
  */
 void
 httpd_init(void)
 {
+  struct tcp_pcb *pcb;
+  err_t err;
+
   LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));
 
 #if HTTPD_USE_MEM_POOL
@@ -2354,7 +2335,17 @@ httpd_init(void)
 #endif /* LWIP_HTTPD_SSI */
 #endif /* HTTPD_USE_MEM_POOL */
   
-  httpd_init_addr(IP_ADDR_ANY);
+  pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
+  LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
+  tcp_setprio(pcb, HTTPD_TCP_PRIO);
+  /* set SOF_REUSEADDR here to explicitly bind httpd to multiple interfaces */
+  err = tcp_bind(pcb, IP_ANY_TYPE, HTTPD_SERVER_PORT);
+  LWIP_ASSERT("httpd_init: tcp_bind failed", err == ERR_OK);
+  pcb = tcp_listen(pcb);
+  LWIP_ASSERT("httpd_init: tcp_listen failed", pcb != NULL);
+  /* initialize callback arg and accept callback */
+  tcp_arg(pcb, pcb);
+  tcp_accept(pcb, http_accept);
 }
 
 #if LWIP_HTTPD_SSI
