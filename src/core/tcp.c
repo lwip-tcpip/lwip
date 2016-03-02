@@ -574,7 +574,6 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
 #if LWIP_IPV4 && LWIP_IPV6
-  lpcb->accept_any_ip_version = 0;
   IP_SET_TYPE_VAL(lpcb->remote_ip, pcb->local_ip.type);
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
   ip_addr_copy(lpcb->local_ip, pcb->local_ip);
@@ -592,40 +591,6 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
   return (struct tcp_pcb *)lpcb;
 }
-
-#if LWIP_IPV4 && LWIP_IPV6
-/**
- * Same as tcp_listen_with_backlog, but allows to accept IPv4 and IPv6
- * connections, if the pcb's local address is set to ANY.
- */
-struct tcp_pcb *
-tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
-{
-  struct tcp_pcb *lpcb;
-  struct tcp_pcb_listen *l;
-
-  if (pcb->local_port != 0) {
-    /* Check that there's noone listening on this port already
-       (don't check the IP address since we'll set it to ANY */
-    for (l = tcp_listen_pcbs.listen_pcbs; l != NULL; l = l->next) {
-      if (l->local_port == pcb->local_port) {
-        /* this port is already used */
-        return NULL;
-      }
-    }
-  }
-
-  lpcb = tcp_listen_with_backlog(pcb, backlog);
-  if ((lpcb != NULL) &&
-      ip_addr_isany(&lpcb->local_ip)) {
-    /* The default behavior is to accept connections on either
-     * IPv4 or IPv6, if not bound. */
-    /* @see NETCONN_FLAG_IPV6_V6ONLY for changing this behavior */
-    ((struct tcp_pcb_listen*)lpcb)->accept_any_ip_version = 1;
-  }
-  return lpcb;
-}
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 /**
  * Update the state that tracks the available window space to advertise.
@@ -1535,26 +1500,29 @@ tcp_new(void)
   return tcp_alloc(TCP_PRIO_NORMAL);
 }
 
-#if LWIP_IPV6
 /**
- * Creates a new TCP-over-IPv6 protocol control block but doesn't
+ * Creates a new TCP protocol control block but doesn't
  * place it on any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
  *
+ * @param IP address type, see IPADDR_TYPE_XX definitions.
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
-tcp_new_ip6(void)
+tcp_new_ip_type(u8_t type)
 {
   struct tcp_pcb * pcb;
   pcb = tcp_alloc(TCP_PRIO_NORMAL);
-#if LWIP_IPV4
-  IP_SET_TYPE_VAL(pcb->local_ip, IPADDR_TYPE_V6);
-  IP_SET_TYPE_VAL(pcb->remote_ip, IPADDR_TYPE_V6);
-#endif /* LWIP_IPV4 */
+#if LWIP_IPV4 && LWIP_IPV6
+  if(pcb != NULL) {
+    IP_SET_TYPE_VAL(pcb->local_ip, type);
+    IP_SET_TYPE_VAL(pcb->remote_ip, type);
+  }
+#else
+  LWIP_UNUSED_ARG(type);
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
   return pcb;
 }
-#endif /* LWIP_IPV6 */
 
 /**
  * Used to specify the argument that should be passed callback

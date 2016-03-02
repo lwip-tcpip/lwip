@@ -262,18 +262,15 @@ tcp_input(struct pbuf *p, struct netif *inp)
     prev = NULL;
     for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if (lpcb->local_port == tcphdr->dest) {
-#if LWIP_IPV4 && LWIP_IPV6
-        if (lpcb->accept_any_ip_version) {
-          /* found an ANY-match */
+        if (IP_IS_ANY_TYPE_VAL(lpcb->local_ip)) {
+          /* found an ANY TYPE (IPv4/IPv6) match */
 #if SO_REUSE
           lpcb_any = lpcb;
           lpcb_prev = prev;
 #else /* SO_REUSE */
           break;
 #endif /* SO_REUSE */
-        } else
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-        if (IP_ADDR_PCB_VERSION_MATCH_EXACT(lpcb, ip_current_dest_addr())) {
+        } else if (IP_ADDR_PCB_VERSION_MATCH_EXACT(lpcb, ip_current_dest_addr())) {
           if (ip_addr_cmp(&lpcb->local_ip, ip_current_dest_addr())) {
             /* found an exact match */
             break;
