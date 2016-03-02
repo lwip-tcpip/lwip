@@ -1121,8 +1121,9 @@ udp_new(void)
 }
 
 /**
- * Create a UDP PCB for specific IP type. See IPADDR_TYPE_XX definitions.
+ * Create a UDP PCB for specific IP type.
  *
+ * @param IP address type, see IPADDR_TYPE_XX definitions.
  * @return The UDP PCB which was created. NULL if the PCB data structure
  * could not be allocated.
  *
@@ -1134,8 +1135,10 @@ udp_new_ip_type(u8_t type)
   struct udp_pcb *pcb;
   pcb = udp_new();
 #if LWIP_IPV4 && LWIP_IPV6
-  IP_SET_TYPE_VAL(pcb->local_ip,  type);
-  IP_SET_TYPE_VAL(pcb->remote_ip, type);
+  if(pcb != NULL) {
+    IP_SET_TYPE_VAL(pcb->local_ip,  type);
+    IP_SET_TYPE_VAL(pcb->remote_ip, type);
+  }
 #else
   LWIP_UNUSED_ARG(type);
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
