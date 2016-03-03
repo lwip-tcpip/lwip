@@ -587,10 +587,13 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
 {
   err_t err;
   struct tcp_pcb* pcb;
+  lwiperf_state_tcp_t* s;
+
   if(local_addr == NULL) {
     return NULL;
   }
-  lwiperf_state_tcp_t* s = (lwiperf_state_tcp_t*)LWIPERF_ALLOC(lwiperf_state_tcp_t);
+
+  s = (lwiperf_state_tcp_t*)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (s == NULL) {
     return NULL;
   }
