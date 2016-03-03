@@ -51,13 +51,17 @@ snmp_netconn_thread(void *arg)
   err_t err;
   LWIP_UNUSED_ARG(arg);
   
-  conn = netconn_new(NETCONN_UDP_IPANY);
+  /* Bind to SNMP port with default IP address */
+ #if LWIP_IPV6
+  conn = netconn_new(NETCONN_UDP_IPV6);
+  netconn_bind(conn, IP6_ADDR_ANY, SNMP_IN_PORT);
+#else /* LWIP_IPV6 */
+  conn = netconn_new(NETCONN_UDP);
+  netconn_bind(conn, IP_ADDR_ANY, SNMP_IN_PORT);
+#endif /* LWIP_IPV6 */
   LWIP_ERROR("snmp_netconn: invalid conn", (conn != NULL), return;);
   
   snmp_traps_handle = conn;
-  
-  /* Bind to SNMP port with default IP address */
-  netconn_bind(conn, IP_ANY_TYPE, SNMP_IN_PORT);  
 
   do {
     err = netconn_recv(conn, &buf);
