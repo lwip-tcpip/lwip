@@ -1505,7 +1505,7 @@ tcp_new(void)
  * place it on any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
  *
- * @param IP address type, see IPADDR_TYPE_XX definitions.
+ * @param type IP address type, see IPADDR_TYPE_XX definitions.
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
