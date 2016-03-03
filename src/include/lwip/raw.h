@@ -83,6 +83,7 @@ struct raw_pcb {
 /* The following functions is the application layer interface to the
    RAW code. */
 struct raw_pcb * raw_new        (u8_t proto);
+struct raw_pcb * raw_new_ip_type(u8_t type, u8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
 err_t            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
@@ -92,13 +93,12 @@ err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
 
-#if LWIP_IPV6
-struct raw_pcb * raw_new_ip6    (u8_t proto);
-#endif /* LWIP_IPV6 */
-
 /* The following functions are the lower layer interface to RAW. */
 u8_t             raw_input      (struct pbuf *p, struct netif *inp);
 #define raw_init() /* Compatibility define, no init needed. */
+
+/* for compatibility with older implementation */
+#define raw_new_ip6(proto) raw_new_ip_type(IPADDR_TYPE_V6, proto)
 
 #ifdef __cplusplus
 }
