@@ -470,6 +470,8 @@ raw_new_ip_type(u8_t type, u8_t proto)
     IP_SET_TYPE_VAL(pcb->local_ip,  type);
     IP_SET_TYPE_VAL(pcb->remote_ip, type);
   }
+#else /* LWIP_IPV4 && LWIP_IPV6 */
+  LWIP_UNUSED_ARG(type);
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
   return pcb;
 }
