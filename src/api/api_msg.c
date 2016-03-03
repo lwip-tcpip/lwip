@@ -523,11 +523,7 @@ pcb_new(struct api_msg_msg *msg)
 #endif /* LWIP_RAW */
 #if LWIP_UDP
   case NETCONN_UDP:
-    if(NETCONNTYPE_ANYIP(msg->conn->type)) {
-      msg->conn->pcb.udp = udp_new_ip_type(IPADDR_TYPE_ANY);  
-    } else {
-      msg->conn->pcb.udp = udp_new();
-    }
+    msg->conn->pcb.udp = udp_new();
     if (msg->conn->pcb.udp != NULL) {
 #if LWIP_UDPLITE
       if (NETCONNTYPE_ISUDPLITE(msg->conn->type)) {
@@ -543,11 +539,7 @@ pcb_new(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
   case NETCONN_TCP:
-    if(NETCONNTYPE_ANYIP(msg->conn->type)) {
-      msg->conn->pcb.tcp = tcp_new_ip_type(IPADDR_TYPE_ANY);
-    } else {
-      msg->conn->pcb.tcp = tcp_new();
-    }
+    msg->conn->pcb.tcp = tcp_new();
     if (msg->conn->pcb.tcp != NULL) {
       setup_tcp(msg->conn);
     }
@@ -564,7 +556,8 @@ pcb_new(struct api_msg_msg *msg)
 #if LWIP_IPV4 && LWIP_IPV6
   else {
     if (NETCONNTYPE_ISIPV6(msg->conn->type)) {
-      IP_SET_TYPE_VAL(msg->conn->pcb.ip->local_ip, IPADDR_TYPE_V6);
+      /* Convert IPv4 PCB manually to an IPv6 PCB */
+      IP_SET_TYPE_VAL(msg->conn->pcb.ip->local_ip,  IPADDR_TYPE_V6);
       IP_SET_TYPE_VAL(msg->conn->pcb.ip->remote_ip, IPADDR_TYPE_V6);
     }
   }
@@ -1087,20 +1080,37 @@ lwip_netconn_do_bind(struct api_msg_msg *msg)
   } else {
     msg->err = ERR_VAL;
     if (msg->conn->pcb.tcp != NULL) {
+      const ip_addr_t *ipaddr = API_EXPR_REF(msg->msg.bc.ipaddr);
+
+#if LWIP_IPV4 && LWIP_IPV6
+      /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
+       * and NETCONN_FLAG_IPV6_V6ONLY is NOT set, use IP_ANY_TYPE to bind
+       */
+      if (ip_addr_cmp(ipaddr, IP6_ADDR_ANY) &&
+          ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0)) {
+        /* change PCB type to IPADDR_TYPE_ANY */
+        IP_SET_TYPE_VAL(msg->conn->pcb.ip->local_ip,  IPADDR_TYPE_ANY);
+        IP_SET_TYPE_VAL(msg->conn->pcb.ip->remote_ip, IPADDR_TYPE_ANY);
+        
+        /* bind to IPADDR_TYPE_ANY */
+        ipaddr = IP_ANY_TYPE;
+      }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        msg->err = raw_bind(msg->conn->pcb.raw, API_EXPR_REF(msg->msg.bc.ipaddr));
+        msg->err = raw_bind(msg->conn->pcb.raw, ipaddr);
         break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
       case NETCONN_UDP:
-        msg->err = udp_bind(msg->conn->pcb.udp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
+        msg->err = udp_bind(msg->conn->pcb.udp, ipaddr, msg->msg.bc.port);
         break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
       case NETCONN_TCP:
-        msg->err = tcp_bind(msg->conn->pcb.tcp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
+        msg->err = tcp_bind(msg->conn->pcb.tcp, ipaddr, msg->msg.bc.port);
         break;
 #endif /* LWIP_TCP */
       default:
@@ -1275,9 +1285,14 @@ lwip_netconn_do_listen(struct api_msg_msg *msg)
             msg->err = ERR_VAL;
           } else {
 #if LWIP_IPV4 && LWIP_IPV6
-            if (ip_addr_isany_val(msg->conn->pcb.tcp->local_ip) &&
+            /* "Socket API like" dual-stack support: If IP to listen to is IP6_ADDR_ANY,
+             * and NETCONN_FLAG_IPV6_V6ONLY is NOT set, use IP_ANY_TYPE to listen
+             */
+            if (ip_addr_cmp(API_EXPR_REF(msg->msg.bc.ipaddr), IP6_ADDR_ANY) &&
                 ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0)) {
-              IP_SET_TYPE_VAL(msg->conn->pcb.tcp->local_ip, IPADDR_TYPE_ANY);
+              /* change PCB type to IPADDR_TYPE_ANY */
+              IP_SET_TYPE_VAL(msg->conn->pcb.tcp->local_ip,  IPADDR_TYPE_ANY);
+              IP_SET_TYPE_VAL(msg->conn->pcb.tcp->remote_ip, IPADDR_TYPE_ANY);
             }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 

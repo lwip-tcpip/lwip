@@ -79,9 +79,6 @@ extern "C" {
 #endif /* LWIP_IPV6 */
 
 
-#define NETCONN_TYPE_IP_ANY          0x04
-#define NETCONNTYPE_ANYIP(t)         (((t)&NETCONN_TYPE_IP_ANY) != 0)
-
     /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)         ((t)&0xF0)
 #define NETCONNTYPE_DATAGRAM(t)      ((t)&0xE0)
@@ -115,15 +112,10 @@ enum netconn_type {
 #endif /* LWIP_IPV6 */
 
   /* NETCONN_RAW Group */
-  NETCONN_RAW         = 0x40,
+  NETCONN_RAW         = 0x40
 #if LWIP_IPV6
-  NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6, /* 0x48 */
+  , NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6 /* 0x48 */
 #endif /* LWIP_IPV6 */
-
-  /* NETCONN dual stack */
-  NETCONN_TCP_IPANY     = NETCONN_TCP | NETCONN_TYPE_IP_ANY, /* 0x14 */
-  NETCONN_UDP_IPANY     = NETCONN_UDP | NETCONN_TYPE_IP_ANY  /* 0x24 */
-/*  NETCONN_RAW_IPANY     = NETCONN_RAW | NETCONN_TYPE_IP_ANY, */ /* 0x44 */
 };
 
 /** Current state of the netconn. Non-TCP netconns are always
