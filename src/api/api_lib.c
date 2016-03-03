@@ -200,15 +200,15 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 {
   API_MSG_VAR_DECLARE(msg);
   err_t err;
-
+  
   LWIP_ERROR("netconn_bind: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  API_MSG_VAR_ALLOC(msg);
-#if LWIP_MPU_COMPATIBLE
+  /* Don't propagate NULL pointer (IP_ADDR_ANY alias) to subsequent functions */
   if (addr == NULL) {
     addr = IP_ADDR_ANY;
   }
-#endif /* LWIP_MPU_COMPATIBLE */
+
+  API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).msg.conn = conn;
   API_MSG_VAR_REF(msg).msg.msg.bc.ipaddr = API_MSG_VAR_REF(addr);
   API_MSG_VAR_REF(msg).msg.msg.bc.port = port;
@@ -234,12 +234,12 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 
   LWIP_ERROR("netconn_connect: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  API_MSG_VAR_ALLOC(msg);
-#if LWIP_MPU_COMPATIBLE
+  /* Don't propagate NULL pointer (IP_ADDR_ANY alias) to subsequent functions */
   if (addr == NULL) {
     addr = IP_ADDR_ANY;
   }
-#endif /* LWIP_MPU_COMPATIBLE */
+
+  API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).msg.conn = conn;
   API_MSG_VAR_REF(msg).msg.msg.bc.ipaddr = API_MSG_VAR_REF(addr);
   API_MSG_VAR_REF(msg).msg.msg.bc.port = port;
@@ -793,14 +793,15 @@ netconn_join_leave_group(struct netconn *conn,
   LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   API_MSG_VAR_ALLOC(msg);
-#if LWIP_MPU_COMPATIBLE
+
+  /* Don't propagate NULL pointer (IP_ADDR_ANY alias) to subsequent functions */
   if (multiaddr == NULL) {
     multiaddr = IP_ADDR_ANY;
   }
   if (netif_addr == NULL) {
     netif_addr = IP_ADDR_ANY;
   }
-#endif /* LWIP_MPU_COMPATIBLE */
+
   API_MSG_VAR_REF(msg).msg.conn = conn;
   API_MSG_VAR_REF(msg).msg.msg.jl.multiaddr = API_MSG_VAR_REF(multiaddr);
   API_MSG_VAR_REF(msg).msg.msg.jl.netif_addr = API_MSG_VAR_REF(netif_addr);
