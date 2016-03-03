@@ -603,11 +603,7 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
   s->report_fn = report_fn;
   s->report_arg = report_arg;
 
-  if(IP_IS_ANY_TYPE_VAL(*local_addr)) {
-    pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
-  } else {
-    pcb = tcp_new();
-  }
+  pcb = tcp_new();
   if (pcb != NULL) {
     err = tcp_bind(pcb, local_addr, local_port);
     if (err == ERR_OK) {
