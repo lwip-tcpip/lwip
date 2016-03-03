@@ -587,6 +587,9 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
 {
   err_t err;
   struct tcp_pcb* pcb;
+  if(local_addr == NULL) {
+    return NULL;
+  }
   lwiperf_state_tcp_t* s = (lwiperf_state_tcp_t*)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (s == NULL) {
     return NULL;
@@ -597,7 +600,11 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
   s->report_fn = report_fn;
   s->report_arg = report_arg;
 
-  pcb = tcp_new();
+  if(IP_IS_ANY_TYPE_VAL(*local_addr)) {
+    pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
+  } else {
+    pcb = tcp_new();
+  }
   if (pcb != NULL) {
     err = tcp_bind(pcb, local_addr, local_port);
     if (err == ERR_OK) {

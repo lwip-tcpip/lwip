@@ -315,11 +315,11 @@ netbiosns_init(void)
   LWIP_ASSERT("NetBIOS name is too long!", strlen(NETBIOS_LWIP_NAME) < NETBIOS_NAME_LEN);
 #endif
 
-  netbiosns_pcb = udp_new();
+  netbiosns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   if (netbiosns_pcb != NULL) {
     /* we have to be allowed to send broadcast packets! */
     netbiosns_pcb->so_options |= SOF_BROADCAST;
-    udp_bind(netbiosns_pcb, IP_ADDR_ANY, NETBIOS_PORT);
+    udp_bind(netbiosns_pcb, IP_ANY_TYPE, NETBIOS_PORT);
     udp_recv(netbiosns_pcb, netbiosns_recv, netbiosns_pcb);
   }
 }

@@ -538,7 +538,7 @@ sntp_init(void)
 #endif /* SNTP_SERVER_ADDRESS */
 
   if (sntp_pcb == NULL) {
-    sntp_pcb = udp_new();
+    sntp_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
     LWIP_ASSERT("Failed to allocate udp pcb for sntp client", sntp_pcb != NULL);
     if (sntp_pcb != NULL) {
       udp_recv(sntp_pcb, sntp_recv, NULL);
@@ -552,7 +552,7 @@ sntp_init(void)
 #endif
       } else if (sntp_opmode == SNTP_OPMODE_LISTENONLY) {
         ip_set_option(sntp_pcb, SOF_BROADCAST);
-        udp_bind(sntp_pcb, IP_ADDR_ANY, SNTP_PORT);
+        udp_bind(sntp_pcb, IP_ANY_TYPE, SNTP_PORT);
       }
     }
   }
