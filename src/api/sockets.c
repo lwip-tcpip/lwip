@@ -2110,7 +2110,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
         return ENOPROTOOPT;
       }
-      *(int*)optval = ((sock->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) ? 1 : 0);
+      *(int*)optval = (netconn_get_ipv6only(sock->conn) ? 1 : 0);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY) = %d\n",
                   s, *(int *)optval));
       break;
@@ -2505,12 +2505,12 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       /* @todo: this does not work for datagram sockets, yet */
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_TCP);
       if (*(const int*)optval) {
-        sock->conn->flags |= NETCONN_FLAG_IPV6_V6ONLY;
+        netconn_set_ipv6only(sock->conn, 1);
       } else {
-        sock->conn->flags &= ~NETCONN_FLAG_IPV6_V6ONLY;
+        netconn_set_ipv6only(sock->conn, 0);
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY, ..) -> %d\n",
-                  s, ((sock->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) ? 1 : 0)));
+                  s, (netconn_get_ipv6only(sock->conn) ? 1 : 0)));
       break;
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",

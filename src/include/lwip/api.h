@@ -315,6 +315,16 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 /** TCP: Get the no-auto-recved status of netconn calls (see NETCONN_FLAG_NO_AUTO_RECVED) */
 #define netconn_get_noautorecved(conn)        (((conn)->flags & NETCONN_FLAG_NO_AUTO_RECVED) != 0)
 
+#if LWIP_IPV6
+/** TCP: Set the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY) */
+#define netconn_set_ipv6only(conn, val)  do { if(val) { \
+  (conn)->flags |= NETCONN_FLAG_IPV6_V6ONLY; \
+} else { \
+  (conn)->flags &= ~ NETCONN_FLAG_IPV6_V6ONLY; }} while(0)
+/** TCP: Get the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY) */
+#define netconn_get_ipv6only(conn)        (((conn)->flags & NETCONN_FLAG_IPV6_V6ONLY) != 0)
+#endif /* LWIP_IPV6 */
+
 #if LWIP_SO_SNDTIMEO
 /** Set the send timeout in milliseconds */
 #define netconn_set_sendtimeout(conn, timeout)      ((conn)->send_timeout = (timeout))
