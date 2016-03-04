@@ -142,8 +142,8 @@ static const struct snmp_scalar_array_node_def snmp_nodes[] = {
   {28, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutGetResponses */
   {29, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpOutTraps */
   {30, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_WRITE}, /* snmpEnableAuthenTraps */
-  {31, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpSilentDrops */
-  {32, SNMP_ASN1_TYPE_INTEGER, SNMP_NODE_INSTANCE_READ_ONLY}   /* snmpProxyDrops */
+  {31, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY},  /* snmpSilentDrops */
+  {32, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}   /* snmpProxyDrops */
 };
 static const struct snmp_scalar_array_node snmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(11, snmp_nodes, snmp_get_value, snmp_set_test, snmp_set_value);
 
@@ -178,7 +178,7 @@ static snmp_err_t  udp_endpointTable_get_next_cell_instance_and_value(const u32_
 
 static const struct snmp_table_simple_col_def udp_endpointTable_columns[] = {
   /* all items except udpEndpointProcess are declared as not-accessible */   
-  { 8, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }  /* udpEndpointProcess */
+  { 8, SNMP_ASN1_TYPE_UNSIGNED32, SNMP_VARIANT_VALUE_TYPE_U32 }  /* udpEndpointProcess */
 };
 
 static const struct snmp_table_simple_node udp_endpointTable = SNMP_TABLE_CREATE_SIMPLE(7, udp_endpointTable_columns, udp_endpointTable_get_cell_value, udp_endpointTable_get_next_cell_instance_and_value);
@@ -254,8 +254,8 @@ static snmp_err_t  tcp_ConnectionTable_get_next_cell_instance_and_value(const u3
 
 static const struct snmp_table_simple_col_def tcp_ConnectionTable_columns[] = {
   /* all items except tcpConnectionState and tcpConnectionProcess are declared as not-accessible */   
-  { 7, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }, /* tcpConnectionState */
-  { 8, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }  /* tcpConnectionProcess */
+  { 7, SNMP_ASN1_TYPE_INTEGER,    SNMP_VARIANT_VALUE_TYPE_U32 }, /* tcpConnectionState */
+  { 8, SNMP_ASN1_TYPE_UNSIGNED32, SNMP_VARIANT_VALUE_TYPE_U32 }  /* tcpConnectionProcess */
 };
 
 static const struct snmp_table_simple_node tcp_ConnectionTable = SNMP_TABLE_CREATE_SIMPLE(19, tcp_ConnectionTable_columns, tcp_ConnectionTable_get_cell_value, tcp_ConnectionTable_get_next_cell_instance_and_value);
@@ -266,7 +266,7 @@ static snmp_err_t  tcp_ListenerTable_get_next_cell_instance_and_value(const u32_
 
 static const struct snmp_table_simple_col_def tcp_ListenerTable_columns[] = {
   /* all items except tcpListenerProcess are declared as not-accessible */   
-  { 4, SNMP_ASN1_TYPE_INTEGER, SNMP_VARIANT_VALUE_TYPE_U32 }  /* tcpListenerProcess */
+  { 4, SNMP_ASN1_TYPE_UNSIGNED32, SNMP_VARIANT_VALUE_TYPE_U32 }  /* tcpListenerProcess */
 };
 
 static const struct snmp_table_simple_node tcp_ListenerTable = SNMP_TABLE_CREATE_SIMPLE(20, tcp_ListenerTable_columns, tcp_ListenerTable_get_cell_value, tcp_ListenerTable_get_next_cell_instance_and_value);
