@@ -121,7 +121,7 @@ extern const ip_addr_t ip_addr_any_type;
 #define ip_addr_netcmp(addr1, addr2, mask) ((IP_IS_V6(addr1) && IP_IS_V6(addr2)) ? \
   0 : \
   ip4_addr_netcmp(ip_2_ip4(addr1), ip_2_ip4(addr2), mask))
-#define ip_addr_cmp(addr1, addr2)    ((IP_IS_V6_VAL(*(addr1)) != IP_IS_V6_VAL(*(addr2))) ? 0 : (IP_IS_V6_VAL(*(addr1)) ? \
+#define ip_addr_cmp(addr1, addr2)    ((IP_GET_TYPE(addr1) != IP_GET_TYPE(addr2)) ? 0 : (IP_IS_V6_VAL(*(addr1)) ? \
   ip6_addr_cmp(ip_2_ip6(addr1), ip_2_ip6(addr2)) : \
   ip4_addr_cmp(ip_2_ip4(addr1), ip_2_ip4(addr2))))
 #define ip_addr_isany(ipaddr)        ((IP_IS_V6(ipaddr)) ? \
