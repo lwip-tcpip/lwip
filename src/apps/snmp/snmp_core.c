@@ -282,7 +282,7 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
     memset(ip, 0, sizeof(*ip));
     IP_SET_TYPE(ip, IPADDR_TYPE_ANY);
 
-    return 0;
+    return 2;
   } else if (oid[0] == 1) { /* ipv4 */
 #if LWIP_IPV4
     /* 1x InetAddressType, 1x OID len, 4x InetAddressIPv4 */
