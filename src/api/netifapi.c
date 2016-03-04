@@ -114,7 +114,7 @@ netifapi_netif_add(struct netif *netif,
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
-#if LWIP_MPU_COMPATIBLE
+
   if (ipaddr == NULL) {
     ipaddr = IP4_ADDR_ANY;
   }
@@ -124,7 +124,7 @@ netifapi_netif_add(struct netif *netif,
   if (gw == NULL) {
     gw = IP4_ADDR_ANY;
   }
-#endif /* LWIP_MPU_COMPATIBLE */
+
   NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_add;
   NETIFAPI_VAR_REF(msg).msg.netif = netif;
 #if LWIP_IPV4
@@ -158,7 +158,7 @@ netifapi_netif_set_addr(struct netif *netif,
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
-#if LWIP_MPU_COMPATIBLE
+
   if (ipaddr == NULL) {
     ipaddr = IP4_ADDR_ANY;
   }
@@ -168,7 +168,7 @@ netifapi_netif_set_addr(struct netif *netif,
   if (gw == NULL) {
     gw = IP4_ADDR_ANY;
   }
-#endif /* LWIP_MPU_COMPATIBLE */
+
   NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_set_addr;
   NETIFAPI_VAR_REF(msg).msg.netif = netif;
   NETIFAPI_VAR_REF(msg).msg.msg.add.ipaddr  = NETIFAPI_VAR_REF(ipaddr);
