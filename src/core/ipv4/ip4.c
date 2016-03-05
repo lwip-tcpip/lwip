@@ -123,6 +123,7 @@ struct netif *
 ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src)
 {
   if (src != NULL) {
+    /* when src==NULL, the hook is called from ip4_route(dest) */
     struct netif *netif = LWIP_HOOK_IP4_ROUTE_SRC(dest, src);
     if (netif != NULL) {
       return netif;
@@ -145,18 +146,6 @@ struct netif *
 ip4_route(const ip4_addr_t *dest)
 {
   struct netif *netif;
-
-#ifdef LWIP_HOOK_IP4_ROUTE_SRC
-  netif = LWIP_HOOK_IP4_ROUTE_SRC(dest, NULL);
-  if (netif != NULL) {
-    return netif;
-  }
-#elif defined(LWIP_HOOK_IP4_ROUTE)
-  netif = LWIP_HOOK_IP4_ROUTE(dest);
-  if (netif != NULL) {
-    return netif;
-  }
-#endif
 
 #if LWIP_MULTICAST_TX_OPTIONS
   /* Use administratively selected interface for multicast by default */
@@ -198,6 +187,18 @@ ip4_route(const ip4_addr_t *dest)
     return NULL;
   }
 #endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
+
+#ifdef LWIP_HOOK_IP4_ROUTE_SRC
+  netif = LWIP_HOOK_IP4_ROUTE_SRC(dest, NULL);
+  if (netif != NULL) {
+    return netif;
+  }
+#elif defined(LWIP_HOOK_IP4_ROUTE)
+  netif = LWIP_HOOK_IP4_ROUTE(dest);
+  if (netif != NULL) {
+    return netif;
+  }
+#endif
 
   if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default) ||
       ip4_addr_isany_val(*netif_ip4_addr(netif_default))) {
