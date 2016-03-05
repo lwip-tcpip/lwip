@@ -62,15 +62,14 @@ typedef s8_t err_t;
 #define ERR_ISCONN     -10   /* Conn already established.*/
 
 #define ERR_CONN       -11   /* Not connected.           */
+#define ERR_IF         -12   /* Low-level netif error    */
 #define ERR_IS_FATAL(e) ((e) < ERR_CONN)
 
-#define ERR_ABRT       -12   /* Connection aborted.      */
-#define ERR_RST        -13   /* Connection reset.        */
-#define ERR_CLSD       -14   /* Connection closed.       */
+#define ERR_ABRT       -13   /* Connection aborted.      */
+#define ERR_RST        -14   /* Connection reset.        */
+#define ERR_CLSD       -15   /* Connection closed.       */
 
-#define ERR_ARG        -15   /* Illegal argument.        */
-
-#define ERR_IF         -16   /* Low-level netif error    */
+#define ERR_ARG        -16   /* Illegal argument.        */
 
 
 #ifdef LWIP_DEBUG

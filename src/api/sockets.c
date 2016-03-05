@@ -298,11 +298,11 @@ static const int err_to_errno_table[] = {
   EALREADY,      /* ERR_ALREADY    -9      Already connecting.      */
   EISCONN,       /* ERR_ISCONN     -10     Conn already established.*/
   ENOTCONN,      /* ERR_CONN       -11     Not connected.           */
-  ECONNABORTED,  /* ERR_ABRT       -12     Connection aborted.      */
-  ECONNRESET,    /* ERR_RST        -13     Connection reset.        */
-  ENOTCONN,      /* ERR_CLSD       -14     Connection closed.       */
-  EIO,           /* ERR_ARG        -15     Illegal argument.        */
-  -1,            /* ERR_IF         -16     Low-level netif error    */
+  -1,            /* ERR_IF         -12     Low-level netif error    */
+  ECONNABORTED,  /* ERR_ABRT       -13     Connection aborted.      */
+  ECONNRESET,    /* ERR_RST        -14     Connection reset.        */
+  ENOTCONN,      /* ERR_CLSD       -15     Connection closed.       */
+  EIO            /* ERR_ARG        -16     Illegal argument.        */
 };
 
 #define ERR_TO_ERRNO_TABLE_SIZE LWIP_ARRAYSIZE(err_to_errno_table)

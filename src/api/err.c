@@ -53,11 +53,11 @@ static const char *err_strerr[] = {
            "Already connecting.",    /* ERR_ALREADY    -9  */
            "Already connected.",     /* ERR_ISCONN     -10 */
            "Not connected.",         /* ERR_CONN       -11 */
-           "Connection aborted.",    /* ERR_ABRT       -12 */
-           "Connection reset.",      /* ERR_RST        -13 */
-           "Connection closed.",     /* ERR_CLSD       -14 */
-           "Illegal argument.",      /* ERR_ARG        -15 */
-           "Low-level netif error."  /* ERR_IF         -16 */
+           "Low-level netif error.", /* ERR_IF         -12 */
+           "Connection aborted.",    /* ERR_ABRT       -13 */
+           "Connection reset.",      /* ERR_RST        -14 */
+           "Connection closed.",     /* ERR_CLSD       -15 */
+           "Illegal argument."v      /* ERR_ARG        -16 */
 };
 
 /**
