@@ -81,13 +81,6 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   struct netif *netif;
   s8_t i;
 
-#ifdef LWIP_HOOK_IP6_ROUTE
-  netif = LWIP_HOOK_IP6_ROUTE(src, dest);
-  if (netif != NULL) {
-    return netif;
-  }
-#endif
-
   /* If single netif configuration, fast return. */
   if ((netif_list != NULL) && (netif_list->next == NULL)) {
     if (!netif_is_up(netif_list) || !netif_is_link_up(netif_list)) {
@@ -125,6 +118,14 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
     }
     return netif_default;
   }
+
+  /* we come here for non-link-local addresses */
+#ifdef LWIP_HOOK_IP6_ROUTE
+  netif = LWIP_HOOK_IP6_ROUTE(src, dest);
+  if (netif != NULL) {
+    return netif;
+  }
+#endif
 
   /* See if the destination subnet matches a configured address. */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
