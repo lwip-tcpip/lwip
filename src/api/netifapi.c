@@ -115,6 +115,7 @@ netifapi_netif_add(struct netif *netif,
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
 
+#if LWIP_IPV4
   if (ipaddr == NULL) {
     ipaddr = IP4_ADDR_ANY;
   }
@@ -124,6 +125,7 @@ netifapi_netif_add(struct netif *netif,
   if (gw == NULL) {
     gw = IP4_ADDR_ANY;
   }
+#endif /* LWIP_IPV4 */
 
   NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_add;
   NETIFAPI_VAR_REF(msg).msg.netif = netif;
