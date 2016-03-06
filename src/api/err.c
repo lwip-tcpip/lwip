@@ -57,7 +57,7 @@ static const char *err_strerr[] = {
            "Connection aborted.",    /* ERR_ABRT       -13 */
            "Connection reset.",      /* ERR_RST        -14 */
            "Connection closed.",     /* ERR_CLSD       -15 */
-           "Illegal argument."v      /* ERR_ARG        -16 */
+           "Illegal argument."       /* ERR_ARG        -16 */
 };
 
 /**
