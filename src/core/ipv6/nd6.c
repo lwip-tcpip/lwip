@@ -653,7 +653,8 @@ nd6_tmr(void)
   for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
     switch (neighbor_cache[i].state) {
     case ND6_INCOMPLETE:
-      if (neighbor_cache[i].counter.probes_sent >= LWIP_ND6_MAX_MULTICAST_SOLICIT) {
+      if ((neighbor_cache[i].counter.probes_sent >= LWIP_ND6_MAX_MULTICAST_SOLICIT) &&
+          (!neighbor_cache[i].isrouter)) {
         /* Retries exceeded. */
         nd6_free_neighbor_cache_entry(i);
       } else {
@@ -688,7 +689,8 @@ nd6_tmr(void)
       }
       break;
     case ND6_PROBE:
-      if (neighbor_cache[i].counter.probes_sent >= LWIP_ND6_MAX_MULTICAST_SOLICIT) {
+      if ((neighbor_cache[i].counter.probes_sent >= LWIP_ND6_MAX_MULTICAST_SOLICIT) &&
+          (!neighbor_cache[i].isrouter)) {
         /* Retries exceeded. */
         nd6_free_neighbor_cache_entry(i);
       } else {
@@ -1175,6 +1177,10 @@ static void
 nd6_free_neighbor_cache_entry(s8_t i)
 {
   if ((i < 0) || (i >= LWIP_ND6_NUM_NEIGHBORS)) {
+    return;
+  }
+  if (neighbor_cache[i].isrouter) {
+    /* isrouter needs to be cleared before deleting a neighbor cache entry */
     return;
   }
 
