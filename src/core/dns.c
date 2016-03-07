@@ -1474,6 +1474,11 @@ dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_call
   LWIP_UNUSED_ARG(dns_addrtype);
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
+  /* prevent calling found callback if no server is set, return error instead */
+  if (ip_addr_isany_val(dns_servers[0])) {
+    return ERR_VAL;
+  }
+
   /* queue query with specified callback */
   return dns_enqueue(hostname, hostnamelen, found, callback_arg LWIP_DNS_ADDRTYPE_ARG(dns_addrtype));
 }
