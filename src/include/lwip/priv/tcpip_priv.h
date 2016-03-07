@@ -37,14 +37,15 @@
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/tcpip.h"
-#include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include "lwip/timers.h"
-#include "lwip/netif.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+  
+struct pbuf;
+struct netif;
 
 /** Define this to something that triggers a watchdog. This is called from
  * tcpip_thread after processing a message. */
