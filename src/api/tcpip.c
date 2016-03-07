@@ -46,6 +46,7 @@
 #include "lwip/mem.h"
 #include "lwip/init.h"
 #include "lwip/ip.h"
+#include "lwip/pbuf.h"
 #include "netif/etharp.h"
 
 #define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
@@ -97,10 +98,12 @@ tcpip_thread(void *arg)
       continue;
     }
     switch (msg->type) {
+#if !LWIP_TCPIP_CORE_LOCKING
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       msg->msg.api.function(msg->msg.api.msg);
       break;
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
@@ -300,6 +303,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 #endif /* LWIP_TCPIP_TIMEOUT */
 
 
+#if !LWIP_TCPIP_CORE_LOCKING
 /**
  * Generic way to dispatch an API message in TCPIP thread.
  *
@@ -325,6 +329,7 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
   }
   return ERR_VAL;
 }
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 /**
  * Allocate a structure for a static callback message and initialize it.

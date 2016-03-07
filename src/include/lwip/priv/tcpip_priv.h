@@ -95,7 +95,9 @@ extern sys_mutex_t lock_tcpip_core;
 #define API_EXPR_DEREF(expr)            *(expr)
 #endif /* LWIP_MPU_COMPATIBLE */
 
+#if !LWIP_TCPIP_CORE_LOCKING
 err_t tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
