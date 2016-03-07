@@ -63,7 +63,7 @@
 
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
 
-
+#if !LWIP_TCPIP_CORE_LOCKING
 /**
  * Call the lower part of a netconn_* function
  * This function is then running in the thread context
@@ -90,6 +90,7 @@ tcpip_apimsg(struct api_msg *apimsg)
   }
   return ERR_VAL;
 }
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 /**
  * Create a new netconn (of a specific type) that has a callback function.
