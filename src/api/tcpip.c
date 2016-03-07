@@ -307,11 +307,10 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
  *
  * @param fn Function to be called from TCPIP thread
  * @param apimsg argument to API function
- * @param sem Semaphore to wait on
  * @return ERR_OK if the function was called, another err_t if not
  */
 err_t
-tcpip_send_api_msg(api_msg_fn fn, void *apimsg, sys_sem_t* sem)
+tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 {
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_DECLARE(msg);
@@ -327,35 +326,6 @@ tcpip_send_api_msg(api_msg_fn fn, void *apimsg, sys_sem_t* sem)
   }
   return ERR_VAL;
 }
-
-#if LWIP_NETCONN || LWIP_SOCKET
-/**
- * Call the lower part of a netconn_* function
- * This function is then running in the thread context
- * of tcpip_thread and has exclusive access to lwIP core code.
- *
- * @param apimsg a struct containing the function to call and its parameters
- * @return ERR_OK if the function was called, another err_t if not
- */
-err_t
-tcpip_apimsg(struct api_msg *apimsg)
-{
-#ifdef LWIP_DEBUG
-  /* catch functions that don't set err */
-  apimsg->msg.err = ERR_VAL;
-#endif
-#if LWIP_NETCONN_SEM_PER_THREAD
-  apimsg->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
-  LWIP_ASSERT("netconn semaphore not initialized",
-    sys_sem_valid(apimsg->msg.op_completed_sem));
-#endif
-  
-  if (tcpip_send_api_msg(apimsg->function, &apimsg->msg, LWIP_API_MSG_SEM(&apimsg->msg)) == ERR_OK) {
-    return apimsg->msg.err;
-  }
-  return ERR_VAL;
-}
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 /**
  * Allocate a structure for a static callback message and initialize it.

@@ -49,6 +49,7 @@
 #include "lwip/ip.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
+#include "lwip/priv/api_msg.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/priv/tcpip_priv.h"
 
@@ -61,6 +62,34 @@
 #define API_MSG_VAR_FREE(name)            API_VAR_FREE(MEMP_API_MSG, name)
 
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
+
+
+/**
+ * Call the lower part of a netconn_* function
+ * This function is then running in the thread context
+ * of tcpip_thread and has exclusive access to lwIP core code.
+ *
+ * @param apimsg a struct containing the function to call and its parameters
+ * @return ERR_OK if the function was called, another err_t if not
+ */
+static err_t
+tcpip_apimsg(struct api_msg *apimsg)
+{
+#ifdef LWIP_DEBUG
+  /* catch functions that don't set err */
+  apimsg->msg.err = ERR_VAL;
+#endif
+#if LWIP_NETCONN_SEM_PER_THREAD
+  apimsg->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
+  LWIP_ASSERT("netconn semaphore not initialized",
+    sys_sem_valid(apimsg->msg.op_completed_sem));
+#endif
+  
+  if (tcpip_send_api_msg(apimsg->function, &apimsg->msg, LWIP_API_MSG_SEM(&apimsg->msg)) == ERR_OK) {
+    return apimsg->msg.err;
+  }
+  return ERR_VAL;
+}
 
 /**
  * Create a new netconn (of a specific type) that has a callback function.

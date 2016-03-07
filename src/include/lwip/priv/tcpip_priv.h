@@ -37,9 +37,7 @@
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/tcpip.h"
-#include "lwip/priv/api_msg.h"
 #include "lwip/pbuf.h"
-#include "lwip/api.h"
 #include "lwip/sys.h"
 #include "lwip/timers.h"
 #include "lwip/netif.h"
@@ -59,36 +57,10 @@ extern "C" {
 extern sys_mutex_t lock_tcpip_core;
 #define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
 #define UNLOCK_TCPIP_CORE()   sys_mutex_unlock(&lock_tcpip_core)
-#ifdef LWIP_DEBUG
-#define TCIP_APIMSG_SET_ERR(m, e) (m)->msg.err = e  /* catch functions that don't set err */
-#else
-#define TCIP_APIMSG_SET_ERR(m, e)
-#endif
-#if LWIP_NETCONN_SEM_PER_THREAD
-#define TCPIP_APIMSG_SET_SEM(m) ((m)->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET())
-#else
-#define TCPIP_APIMSG_SET_SEM(m)
-#endif
-#define TCPIP_APIMSG_NOERR(m,f) do { \
-  TCIP_APIMSG_SET_ERR(m, ERR_VAL); \
-  TCPIP_APIMSG_SET_SEM(m); \
-  LOCK_TCPIP_CORE(); \
-  f(&((m)->msg)); \
-  UNLOCK_TCPIP_CORE(); \
-} while(0)
-#define TCPIP_APIMSG(m,f,e)   do { \
-  TCPIP_APIMSG_NOERR(m,f); \
-  (e) = (m)->msg.err; \
-} while(0)
-#define TCPIP_APIMSG_ACK(m)   NETCONN_SET_SAFE_ERR((m)->conn, (m)->err)
 #else /* LWIP_TCPIP_CORE_LOCKING */
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
-#define TCPIP_APIMSG_NOERR(m,f) do { (m)->function = f; tcpip_apimsg(m); } while(0)
-#define TCPIP_APIMSG(m,f,e)   do { (m)->function = f; (e) = tcpip_apimsg(m); } while(0)
-#define TCPIP_APIMSG_ACK(m)   do { NETCONN_SET_SAFE_ERR((m)->conn, (m)->err); sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
-
 
 #if LWIP_MPU_COMPATIBLE
 #define API_VAR_REF(name)               (*(name))
@@ -122,12 +94,7 @@ extern sys_mutex_t lock_tcpip_core;
 #define API_EXPR_DEREF(expr)            *(expr)
 #endif /* LWIP_MPU_COMPATIBLE */
 
-#if LWIP_NETCONN || LWIP_SOCKET
-err_t tcpip_apimsg(struct api_msg *apimsg);
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
-
-typedef void (*api_msg_fn)(void *msg);
-err_t tcpip_send_api_msg(api_msg_fn fn, void *apimsg, sys_sem_t* sem);
+err_t tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
@@ -144,7 +111,7 @@ struct tcpip_msg {
   enum tcpip_msg_type type;
   union {
     struct {
-      api_msg_fn function;
+      tcpip_callback_fn function;
       void* msg;
     } api;
     struct {
