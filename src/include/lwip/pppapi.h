@@ -111,7 +111,7 @@ struct pppapi_msg_msg {
 };
 
 struct pppapi_msg {
-  void (* function)(struct pppapi_msg_msg *msg);
+  void (* function)(void *msg);
   struct pppapi_msg_msg msg;
 };
 

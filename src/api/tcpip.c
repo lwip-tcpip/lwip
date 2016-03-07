@@ -110,16 +110,7 @@ tcpip_thread(void *arg)
       msg->msg.inp.input_fn(msg->msg.inp.p, msg->msg.inp.netif);
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
-
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
-
-
-#if LWIP_PPP_API
-    case TCPIP_MSG_PPPAPI:
-      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PPP API message %p\n", (void *)msg));
-      msg->msg.pppapimsg->function(&(msg->msg.pppapimsg->msg));
-      break;
-#endif /* LWIP_PPP_API */
 
 #if LWIP_TCPIP_TIMEOUT
     case TCPIP_MSG_TIMEOUT:
@@ -364,58 +355,7 @@ tcpip_apimsg(struct api_msg *apimsg)
   }
   return ERR_VAL;
 }
-
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
-
-#if LWIP_PPP_API
-#if !LWIP_TCPIP_CORE_LOCKING
-/**
- * Much like tcpip_apimsg, but calls the lower part of a pppapi_*
- * function.
- *
- * @param pppapimsg a struct containing the function to call and its parameters
- * @return error code given back by the function that was called
- */
-err_t
-tcpip_pppapi(struct pppapi_msg* pppapimsg)
-{
-  struct tcpip_msg msg;
-
-  if (sys_mbox_valid_val(mbox)) {
-    err_t err = sys_sem_new(&pppapimsg->msg.sem, 0);
-    if (err != ERR_OK) {
-      pppapimsg->msg.err = err;
-      return err;
-    }
-
-    msg.type = TCPIP_MSG_PPPAPI;
-    msg.msg.pppapimsg = pppapimsg;
-    sys_mbox_post(&mbox, &msg);
-    sys_sem_wait(&pppapimsg->msg.sem);
-    sys_sem_free(&pppapimsg->msg.sem);
-    return pppapimsg->msg.err;
-  }
-  return ERR_VAL;
-}
-#else /* !LWIP_TCPIP_CORE_LOCKING */
-/**
- * Call the lower part of a pppapi_* function
- * This function has exclusive access to lwIP core code by locking it
- * before the function is called.
- *
- * @param pppapimsg a struct containing the function to call and its parameters
- * @return ERR_OK (only for compatibility fo tcpip_pppapi())
- */
-err_t
-tcpip_pppapi_lock(struct pppapi_msg* pppapimsg)
-{
-  LOCK_TCPIP_CORE();
-  pppapimsg->function(&(pppapimsg->msg));
-  UNLOCK_TCPIP_CORE();
-  return pppapimsg->msg.err;
-}
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
-#endif /* LWIP_PPP_API */
 
 /**
  * Allocate a structure for a static callback message and initialize it.
