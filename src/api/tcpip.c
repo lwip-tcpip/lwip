@@ -40,12 +40,10 @@
 
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/tcpip.h"
 #include "lwip/priv/tcpip_priv.h"
 #include "lwip/sys.h"
 #include "lwip/memp.h"
 #include "lwip/mem.h"
-#include "lwip/pbuf.h"
 #include "lwip/init.h"
 #include "lwip/ip.h"
 #include "netif/etharp.h"
@@ -303,10 +301,11 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 
 
 /**
- * Generic way to send an API message.
+ * Generic way to dispatch an API message in TCPIP thread.
  *
- * @param fn Function to be called from TCPIP thread
+ * @param fn function to be called from TCPIP thread
  * @param apimsg argument to API function
+ * @param sem semaphore to wait on
  * @return ERR_OK if the function was called, another err_t if not
  */
 err_t
