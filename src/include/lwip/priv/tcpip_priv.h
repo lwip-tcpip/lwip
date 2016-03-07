@@ -38,7 +38,6 @@
 
 #include "lwip/tcpip.h"
 #include "lwip/priv/api_msg.h"
-#include "lwip/netifapi.h"
 #include "lwip/pppapi.h"
 #include "lwip/pbuf.h"
 #include "lwip/api.h"
@@ -83,8 +82,6 @@ extern sys_mutex_t lock_tcpip_core;
   (e) = (m)->msg.err; \
 } while(0)
 #define TCPIP_APIMSG_ACK(m)   NETCONN_SET_SAFE_ERR((m)->conn, (m)->err)
-#define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
-#define TCPIP_NETIFAPI_ACK(m)
 #define TCPIP_PPPAPI(m)       tcpip_pppapi_lock(m)
 #define TCPIP_PPPAPI_ACK(m)
 #else /* LWIP_TCPIP_CORE_LOCKING */
@@ -93,8 +90,6 @@ extern sys_mutex_t lock_tcpip_core;
 #define TCPIP_APIMSG_NOERR(m,f) do { (m)->function = f; tcpip_apimsg(m); } while(0)
 #define TCPIP_APIMSG(m,f,e)   do { (m)->function = f; (e) = tcpip_apimsg(m); } while(0)
 #define TCPIP_APIMSG_ACK(m)   do { NETCONN_SET_SAFE_ERR((m)->conn, (m)->err); sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
-#define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
-#define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
 #define TCPIP_PPPAPI(m)       tcpip_pppapi(m)
 #define TCPIP_PPPAPI_ACK(m)   sys_sem_signal(&m->sem)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
@@ -136,13 +131,6 @@ extern sys_mutex_t lock_tcpip_core;
 err_t tcpip_apimsg(struct api_msg *apimsg);
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
 
-#if LWIP_NETIF_API
-err_t tcpip_netifapi(struct netifapi_msg *netifapimsg);
-#if LWIP_TCPIP_CORE_LOCKING
-err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
-#endif /* LWIP_TCPIP_CORE_LOCKING */
-#endif /* LWIP_NETIF_API */
-
 #if LWIP_PPP_API
 err_t tcpip_pppapi(struct pppapi_msg *pppapimsg);
 #if LWIP_TCPIP_CORE_LOCKING
@@ -150,15 +138,12 @@ err_t tcpip_pppapi_lock(struct pppapi_msg *pppapimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_PPP_API */
 
+typedef void (*api_msg_fn)(void *msg);
+err_t tcpip_send_api_msg(api_msg_fn fn, void *apimsg, sys_sem_t* sem);
 
 enum tcpip_msg_type {
-#if LWIP_NETCONN || LWIP_SOCKET
   TCPIP_MSG_API,
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
   TCPIP_MSG_INPKT,
-#if LWIP_NETIF_API
-  TCPIP_MSG_NETIFAPI,
-#endif /* LWIP_NETIF_API */
 #if LWIP_PPP_API
   TCPIP_MSG_PPPAPI,
 #endif /* LWIP_PPP_API */
@@ -173,12 +158,10 @@ enum tcpip_msg_type {
 struct tcpip_msg {
   enum tcpip_msg_type type;
   union {
-#if LWIP_NETCONN || LWIP_SOCKET
-    struct api_msg *apimsg;
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
-#if LWIP_NETIF_API
-    struct netifapi_msg *netifapimsg;
-#endif /* LWIP_NETIF_API */
+    struct {
+      api_msg_fn function;
+      void* msg;
+    } api;
 #if LWIP_PPP_API
     struct pppapi_msg *pppapimsg;
 #endif /* LWIP_PPP_API */

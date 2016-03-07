@@ -99,12 +99,10 @@ tcpip_thread(void *arg)
       continue;
     }
     switch (msg->type) {
-#if LWIP_NETCONN || LWIP_SOCKET
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
-      msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
+      msg->msg.api.function(msg->msg.api.msg);
       break;
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
@@ -115,12 +113,6 @@ tcpip_thread(void *arg)
 
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 
-#if LWIP_NETIF_API
-    case TCPIP_MSG_NETIFAPI:
-      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: Netif API message %p\n", (void *)msg));
-      msg->msg.netifapimsg->function(&(msg->msg.netifapimsg->msg));
-      break;
-#endif /* LWIP_NETIF_API */
 
 #if LWIP_PPP_API
     case TCPIP_MSG_PPPAPI:
@@ -318,6 +310,33 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 }
 #endif /* LWIP_TCPIP_TIMEOUT */
 
+
+/**
+ * Generic way to send an API message.
+ *
+ * @param fn Function to be called from TCPIP thread
+ * @param apimsg argument to API function
+ * @param sem Semaphore to wait on
+ * @return ERR_OK if the function was called, another err_t if not
+ */
+err_t
+tcpip_send_api_msg(api_msg_fn fn, void *apimsg, sys_sem_t* sem)
+{
+  if (sys_mbox_valid_val(mbox)) {
+    TCPIP_MSG_VAR_DECLARE(msg);
+    
+    TCPIP_MSG_VAR_ALLOC(msg);
+    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
+    TCPIP_MSG_VAR_REF(msg).msg.api.function = fn;
+    TCPIP_MSG_VAR_REF(msg).msg.api.msg = apimsg;
+    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
+    sys_arch_sem_wait(sem, 0);
+    TCPIP_MSG_VAR_FREE(msg);
+    return ERR_OK;
+  }
+  return ERR_VAL;
+}
+
 #if LWIP_NETCONN || LWIP_SOCKET
 /**
  * Call the lower part of a netconn_* function
@@ -330,84 +349,23 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
-  TCPIP_MSG_VAR_DECLARE(msg);
 #ifdef LWIP_DEBUG
   /* catch functions that don't set err */
   apimsg->msg.err = ERR_VAL;
 #endif
-
-  if (sys_mbox_valid_val(mbox)) {
-    TCPIP_MSG_VAR_ALLOC(msg);
-    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
-    TCPIP_MSG_VAR_REF(msg).msg.apimsg = apimsg;
 #if LWIP_NETCONN_SEM_PER_THREAD
-    apimsg->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
-    LWIP_ASSERT("netconn semaphore not initialized",
-      sys_sem_valid(apimsg->msg.op_completed_sem));
+  apimsg->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
+  LWIP_ASSERT("netconn semaphore not initialized",
+    sys_sem_valid(apimsg->msg.op_completed_sem));
 #endif
-    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
-    sys_arch_sem_wait(LWIP_API_MSG_SEM(&apimsg->msg), 0);
-    TCPIP_MSG_VAR_FREE(msg);
+  
+  if (tcpip_send_api_msg(apimsg->function, &apimsg->msg, LWIP_API_MSG_SEM(&apimsg->msg)) == ERR_OK) {
     return apimsg->msg.err;
   }
   return ERR_VAL;
 }
 
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
-
-#if LWIP_NETIF_API
-#if !LWIP_TCPIP_CORE_LOCKING
-/**
- * Much like tcpip_apimsg, but calls the lower part of a netifapi_*
- * function.
- *
- * @param netifapimsg a struct containing the function to call and its parameters
- * @return error code given back by the function that was called
- */
-err_t
-tcpip_netifapi(struct netifapi_msg* netifapimsg)
-{
-  TCPIP_MSG_VAR_DECLARE(msg);
-
-  if (sys_mbox_valid_val(mbox)) {
-    err_t err;
-    TCPIP_MSG_VAR_ALLOC(msg);
-
-    err = sys_sem_new(&netifapimsg->msg.sem, 0);
-    if (err != ERR_OK) {
-      netifapimsg->msg.err = err;
-      return err;
-    }
-
-    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_NETIFAPI;
-    TCPIP_MSG_VAR_REF(msg).msg.netifapimsg = netifapimsg;
-    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
-    sys_sem_wait(&netifapimsg->msg.sem);
-    sys_sem_free(&netifapimsg->msg.sem);
-    TCPIP_MSG_VAR_FREE(msg);
-    return netifapimsg->msg.err;
-  }
-  return ERR_VAL;
-}
-#else /* !LWIP_TCPIP_CORE_LOCKING */
-/**
- * Call the lower part of a netifapi_* function
- * This function has exclusive access to lwIP core code by locking it
- * before the function is called.
- *
- * @param netifapimsg a struct containing the function to call and its parameters
- * @return ERR_OK (only for compatibility fo tcpip_netifapi())
- */
-err_t
-tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
-{
-  LOCK_TCPIP_CORE();
-  netifapimsg->function(&(netifapimsg->msg));
-  UNLOCK_TCPIP_CORE();
-  return netifapimsg->msg.err;
-}
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
-#endif /* LWIP_NETIF_API */
 
 #if LWIP_PPP_API
 #if !LWIP_TCPIP_CORE_LOCKING

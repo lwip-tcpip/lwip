@@ -74,7 +74,7 @@ struct netifapi_msg_msg {
 };
 
 struct netifapi_msg {
-  void (* function)(struct netifapi_msg_msg *msg);
+  void (* function)(void *msg);
   struct netifapi_msg_msg msg;
 };
 

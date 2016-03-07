@@ -571,8 +571,10 @@ pcb_new(struct api_msg_msg *msg)
  * @param msg the api_msg_msg describing the connection type
  */
 void
-lwip_netconn_do_newconn(struct api_msg_msg *msg)
+lwip_netconn_do_newconn(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   msg->err = ERR_OK;
   if (msg->conn->pcb.tcp == NULL) {
     pcb_new(msg);
@@ -973,8 +975,10 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_delconn(struct api_msg_msg *msg)
+lwip_netconn_do_delconn(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   enum netconn_state state = msg->conn->state;
   LWIP_ASSERT("netconn state error", /* this only happens for TCP netconns */
     (state == NETCONN_NONE) || (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP));
@@ -1073,8 +1077,10 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
  *            the IP address and port to bind to
  */
 void
-lwip_netconn_do_bind(struct api_msg_msg *msg)
+lwip_netconn_do_bind(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {
@@ -1179,8 +1185,10 @@ lwip_netconn_do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
  *            the IP address and port to connect to
  */
 void
-lwip_netconn_do_connect(struct api_msg_msg *msg)
+lwip_netconn_do_connect(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (msg->conn->pcb.tcp == NULL) {
     /* This may happen when calling netconn_connect() a second time */
     msg->err = ERR_CLSD;
@@ -1248,8 +1256,10 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection to disconnect
  */
 void
-lwip_netconn_do_disconnect(struct api_msg_msg *msg)
+lwip_netconn_do_disconnect(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
 #if LWIP_UDP
   if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
     udp_disconnect(msg->conn->pcb.udp);
@@ -1270,8 +1280,10 @@ lwip_netconn_do_disconnect(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_listen(struct api_msg_msg *msg)
+lwip_netconn_do_listen(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {
@@ -1351,8 +1363,10 @@ lwip_netconn_do_listen(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_send(struct api_msg_msg *msg)
+lwip_netconn_do_send(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {
@@ -1404,8 +1418,10 @@ lwip_netconn_do_send(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_recv(struct api_msg_msg *msg)
+lwip_netconn_do_recv(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   msg->err = ERR_OK;
   if (msg->conn->pcb.tcp != NULL) {
     if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
@@ -1590,8 +1606,10 @@ err_mem:
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_write(struct api_msg_msg *msg)
+lwip_netconn_do_write(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {
@@ -1644,8 +1662,10 @@ lwip_netconn_do_write(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_getaddr(struct api_msg_msg *msg)
+lwip_netconn_do_getaddr(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (msg->conn->pcb.ip != NULL) {
     if (msg->msg.ad.local) {
       ip_addr_copy(API_EXPR_DEREF(msg->msg.ad.ipaddr),
@@ -1708,8 +1728,10 @@ lwip_netconn_do_getaddr(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_close(struct api_msg_msg *msg)
+lwip_netconn_do_close(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
 #if LWIP_TCP
   enum netconn_state state = msg->conn->state;
   /* First check if this is a TCP netconn and if it is in a correct state
@@ -1782,8 +1804,10 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
  * @param msg the api_msg_msg pointing to the connection
  */
 void
-lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
+lwip_netconn_do_join_leave_group(void *m)
 {
+  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {

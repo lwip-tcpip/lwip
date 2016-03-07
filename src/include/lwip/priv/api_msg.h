@@ -155,7 +155,7 @@ struct api_msg_msg {
     This is passed to tcpip_apimsg to execute functions in tcpip_thread context. */
 struct api_msg {
   /** function to execute in tcpip_thread context */
-  void (* function)(struct api_msg_msg *msg);
+  void (* function)(void *msg);
   /** arguments for this function */
   struct api_msg_msg msg;
 };
@@ -186,20 +186,20 @@ struct dns_api_msg {
 };
 #endif /* LWIP_DNS */
 
-void lwip_netconn_do_newconn         ( struct api_msg_msg *msg);
-void lwip_netconn_do_delconn         ( struct api_msg_msg *msg);
-void lwip_netconn_do_bind            ( struct api_msg_msg *msg);
-void lwip_netconn_do_connect         ( struct api_msg_msg *msg);
-void lwip_netconn_do_disconnect      ( struct api_msg_msg *msg);
-void lwip_netconn_do_listen          ( struct api_msg_msg *msg);
-void lwip_netconn_do_send            ( struct api_msg_msg *msg);
-void lwip_netconn_do_recv            ( struct api_msg_msg *msg);
-void lwip_netconn_do_write           ( struct api_msg_msg *msg);
-void lwip_netconn_do_getaddr         ( struct api_msg_msg *msg);
-void lwip_netconn_do_close           ( struct api_msg_msg *msg);
-void lwip_netconn_do_shutdown        ( struct api_msg_msg *msg);
+void lwip_netconn_do_newconn         (void *m);
+void lwip_netconn_do_delconn         (void *m);
+void lwip_netconn_do_bind            (void *m);
+void lwip_netconn_do_connect         (void *m);
+void lwip_netconn_do_disconnect      (void *m);
+void lwip_netconn_do_listen          (void *m);
+void lwip_netconn_do_send            (void *m);
+void lwip_netconn_do_recv            (void *m);
+void lwip_netconn_do_write           (void *m);
+void lwip_netconn_do_getaddr         (void *m);
+void lwip_netconn_do_close           (void *m);
+void lwip_netconn_do_shutdown        (void *m);
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
-void lwip_netconn_do_join_leave_group( struct api_msg_msg *msg);
+void lwip_netconn_do_join_leave_group(void *m);
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 #if LWIP_DNS

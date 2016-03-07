@@ -44,12 +44,65 @@
 #define NETIFAPI_VAR_ALLOC(name)    API_VAR_ALLOC(struct netifapi_msg, MEMP_NETIFAPI_MSG, name)
 #define NETIFAPI_VAR_FREE(name)     API_VAR_FREE(MEMP_NETIFAPI_MSG, name)
 
+#if !LWIP_TCPIP_CORE_LOCKING
+#define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
+#define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
+
+/**
+ * Much like tcpip_apimsg, but calls the lower part of a netifapi_*
+ * function.
+ *
+ * @param netifapimsg a struct containing the function to call and its parameters
+ * @return error code given back by the function that was called
+ */
+static err_t
+tcpip_netifapi(struct netifapi_msg* netifapimsg)
+{
+  err_t err;
+
+  err = sys_sem_new(&netifapimsg->msg.sem, 0);
+  if (err != ERR_OK) {
+    netifapimsg->msg.err = err;
+    return err;
+  }
+
+  if(tcpip_send_api_msg(netifapimsg->function, &netifapimsg->msg, &netifapimsg->msg.sem) == ERR_OK)
+  {
+    sys_sem_free(&netifapimsg->msg.sem);
+    return netifapimsg->msg.err;
+  }
+  return ERR_VAL;
+}
+#else /* !LWIP_TCPIP_CORE_LOCKING */
+#define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
+#define TCPIP_NETIFAPI_ACK(m)
+
+/**
+ * Call the lower part of a netifapi_* function
+ * This function has exclusive access to lwIP core code by locking it
+ * before the function is called.
+ *
+ * @param netifapimsg a struct containing the function to call and its parameters
+ * @return ERR_OK (only for compatibility fo tcpip_netifapi())
+ */
+static err_t
+tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
+{
+  LOCK_TCPIP_CORE();
+  netifapimsg->function(&(netifapimsg->msg));
+  UNLOCK_TCPIP_CORE();
+  return netifapimsg->msg.err;
+}
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
+
 /**
  * Call netif_add() inside the tcpip_thread context.
  */
 static void
-netifapi_do_netif_add(struct netifapi_msg_msg *msg)
+netifapi_do_netif_add(void *m)
 {
+  struct netifapi_msg_msg *msg = (struct netifapi_msg_msg*)m;
+  
   if (!netif_add( msg->netif,
 #if LWIP_IPV4
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -71,8 +124,10 @@ netifapi_do_netif_add(struct netifapi_msg_msg *msg)
  * Call netif_set_addr() inside the tcpip_thread context.
  */
 static void
-netifapi_do_netif_set_addr(struct netifapi_msg_msg *msg)
+netifapi_do_netif_set_addr(void *m)
 {
+  struct netifapi_msg_msg *msg = (struct netifapi_msg_msg*)m;
+
   netif_set_addr( msg->netif,
                   API_EXPR_REF(msg->msg.add.ipaddr),
                   API_EXPR_REF(msg->msg.add.netmask),
@@ -87,8 +142,10 @@ netifapi_do_netif_set_addr(struct netifapi_msg_msg *msg)
  * tcpip_thread context.
  */
 static void
-netifapi_do_netif_common(struct netifapi_msg_msg *msg)
+netifapi_do_netif_common(void *m)
 {
+  struct netifapi_msg_msg *msg = (struct netifapi_msg_msg*)m;
+
   if (msg->msg.common.errtfunc != NULL) {
     msg->err = msg->msg.common.errtfunc(msg->netif);
   } else {
