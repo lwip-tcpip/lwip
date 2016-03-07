@@ -45,7 +45,7 @@
 #define NETIFAPI_VAR_FREE(name)     API_VAR_FREE(MEMP_NETIFAPI_MSG, name)
 
 #if !LWIP_TCPIP_CORE_LOCKING
-#define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
+#define TCPIP_NETIFAPI(fn, m)     tcpip_netifapi(fn, m)
 #define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
 
 /**
@@ -56,25 +56,25 @@
  * @return error code given back by the function that was called
  */
 static err_t
-tcpip_netifapi(struct netifapi_msg* netifapimsg)
+tcpip_netifapi(tcpip_callback_fn fn, struct netifapi_msg* netifapimsg)
 {
   err_t err;
 
-  err = sys_sem_new(&netifapimsg->msg.sem, 0);
+  err = sys_sem_new(&netifapimsg->sem, 0);
   if (err != ERR_OK) {
-    netifapimsg->msg.err = err;
+    netifapimsg->err = err;
     return err;
   }
 
-  if(tcpip_send_api_msg(netifapimsg->function, &netifapimsg->msg, &netifapimsg->msg.sem) == ERR_OK)
+  if(tcpip_send_api_msg(fn, netifapimsg, &netifapimsg->sem) == ERR_OK)
   {
-    sys_sem_free(&netifapimsg->msg.sem);
-    return netifapimsg->msg.err;
+    sys_sem_free(&netifapimsg->sem);
+    return netifapimsg->err;
   }
   return ERR_VAL;
 }
 #else /* !LWIP_TCPIP_CORE_LOCKING */
-#define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
+#define TCPIP_NETIFAPI(fn, m)     tcpip_netifapi_lock(fn, m)
 #define TCPIP_NETIFAPI_ACK(m)
 
 /**
@@ -86,12 +86,12 @@ tcpip_netifapi(struct netifapi_msg* netifapimsg)
  * @return ERR_OK (only for compatibility fo tcpip_netifapi())
  */
 static err_t
-tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
+tcpip_netifapi_lock(tcpip_callback_fn fn, struct netifapi_msg* netifapimsg)
 {
   LOCK_TCPIP_CORE();
-  netifapimsg->function(&(netifapimsg->msg));
+  fn(netifapimsg);
   UNLOCK_TCPIP_CORE();
-  return netifapimsg->msg.err;
+  return netifapimsg->err;
 }
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
@@ -101,7 +101,7 @@ tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
 static void
 netifapi_do_netif_add(void *m)
 {
-  struct netifapi_msg_msg *msg = (struct netifapi_msg_msg*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg*)m;
   
   if (!netif_add( msg->netif,
 #if LWIP_IPV4
@@ -126,7 +126,7 @@ netifapi_do_netif_add(void *m)
 static void
 netifapi_do_netif_set_addr(void *m)
 {
-  struct netifapi_msg_msg *msg = (struct netifapi_msg_msg*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg*)m;
 
   netif_set_addr( msg->netif,
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -144,7 +144,7 @@ netifapi_do_netif_set_addr(void *m)
 static void
 netifapi_do_netif_common(void *m)
 {
-  struct netifapi_msg_msg *msg = (struct netifapi_msg_msg*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg*)m;
 
   if (msg->msg.common.errtfunc != NULL) {
     msg->err = msg->msg.common.errtfunc(msg->netif);
@@ -184,19 +184,18 @@ netifapi_netif_add(struct netif *netif,
   }
 #endif /* LWIP_IPV4 */
 
-  NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_add;
-  NETIFAPI_VAR_REF(msg).msg.netif = netif;
+  NETIFAPI_VAR_REF(msg).netif = netif;
 #if LWIP_IPV4
-  NETIFAPI_VAR_REF(msg).msg.msg.add.ipaddr  = NETIFAPI_VAR_REF(ipaddr);
-  NETIFAPI_VAR_REF(msg).msg.msg.add.netmask = NETIFAPI_VAR_REF(netmask);
-  NETIFAPI_VAR_REF(msg).msg.msg.add.gw      = NETIFAPI_VAR_REF(gw);
+  NETIFAPI_VAR_REF(msg).msg.add.ipaddr  = NETIFAPI_VAR_REF(ipaddr);
+  NETIFAPI_VAR_REF(msg).msg.add.netmask = NETIFAPI_VAR_REF(netmask);
+  NETIFAPI_VAR_REF(msg).msg.add.gw      = NETIFAPI_VAR_REF(gw);
 #endif /* LWIP_IPV4 */
-  NETIFAPI_VAR_REF(msg).msg.msg.add.state   = state;
-  NETIFAPI_VAR_REF(msg).msg.msg.add.init    = init;
-  NETIFAPI_VAR_REF(msg).msg.msg.add.input   = input;
-  TCPIP_NETIFAPI(&API_VAR_REF(msg));
+  NETIFAPI_VAR_REF(msg).msg.add.state   = state;
+  NETIFAPI_VAR_REF(msg).msg.add.init    = init;
+  NETIFAPI_VAR_REF(msg).msg.add.input   = input;
+  TCPIP_NETIFAPI(netifapi_do_netif_add, &API_VAR_REF(msg));
 
-  err = NETIFAPI_VAR_REF(msg).msg.err;
+  err = NETIFAPI_VAR_REF(msg).err;
   NETIFAPI_VAR_FREE(msg);
   return err;
 }
@@ -228,14 +227,13 @@ netifapi_netif_set_addr(struct netif *netif,
     gw = IP4_ADDR_ANY;
   }
 
-  NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_set_addr;
-  NETIFAPI_VAR_REF(msg).msg.netif = netif;
-  NETIFAPI_VAR_REF(msg).msg.msg.add.ipaddr  = NETIFAPI_VAR_REF(ipaddr);
-  NETIFAPI_VAR_REF(msg).msg.msg.add.netmask = NETIFAPI_VAR_REF(netmask);
-  NETIFAPI_VAR_REF(msg).msg.msg.add.gw      = NETIFAPI_VAR_REF(gw);
-  TCPIP_NETIFAPI(&API_VAR_REF(msg));
+  NETIFAPI_VAR_REF(msg).netif = netif;
+  NETIFAPI_VAR_REF(msg).msg.add.ipaddr  = NETIFAPI_VAR_REF(ipaddr);
+  NETIFAPI_VAR_REF(msg).msg.add.netmask = NETIFAPI_VAR_REF(netmask);
+  NETIFAPI_VAR_REF(msg).msg.add.gw      = NETIFAPI_VAR_REF(gw);
+  TCPIP_NETIFAPI(netifapi_do_netif_set_addr, &API_VAR_REF(msg));
 
-  err = NETIFAPI_VAR_REF(msg).msg.err;
+  err = NETIFAPI_VAR_REF(msg).err;
   NETIFAPI_VAR_FREE(msg);
   return err;
 }
@@ -255,13 +253,12 @@ netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
 
-  NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_common;
-  NETIFAPI_VAR_REF(msg).msg.netif = netif;
-  NETIFAPI_VAR_REF(msg).msg.msg.common.voidfunc = voidfunc;
-  NETIFAPI_VAR_REF(msg).msg.msg.common.errtfunc = errtfunc;
-  TCPIP_NETIFAPI(&API_VAR_REF(msg));
+  NETIFAPI_VAR_REF(msg).netif = netif;
+  NETIFAPI_VAR_REF(msg).msg.common.voidfunc = voidfunc;
+  NETIFAPI_VAR_REF(msg).msg.common.errtfunc = errtfunc;
+  TCPIP_NETIFAPI(netifapi_do_netif_common, &API_VAR_REF(msg));
 
-  err = NETIFAPI_VAR_REF(msg).msg.err;
+  err = NETIFAPI_VAR_REF(msg).err;
   NETIFAPI_VAR_FREE(msg);
   return err;
 }

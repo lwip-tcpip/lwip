@@ -49,7 +49,7 @@ extern "C" {
 typedef void (*netifapi_void_fn)(struct netif *netif);
 typedef err_t (*netifapi_errt_fn)(struct netif *netif);
 
-struct netifapi_msg_msg {
+struct netifapi_msg {
 #if !LWIP_TCPIP_CORE_LOCKING
   sys_sem_t sem;
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
@@ -71,11 +71,6 @@ struct netifapi_msg_msg {
       netifapi_errt_fn errtfunc;
     } common;
   } msg;
-};
-
-struct netifapi_msg {
-  void (* function)(void *msg);
-  struct netifapi_msg_msg msg;
 };
 
 
