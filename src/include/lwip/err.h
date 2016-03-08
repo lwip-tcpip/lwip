@@ -63,7 +63,7 @@ typedef s8_t err_t;
 
 #define ERR_CONN       -11   /* Not connected.           */
 #define ERR_IF         -12   /* Low-level netif error    */
-#define ERR_IS_FATAL(e) ((e) < ERR_CONN)
+#define ERR_IS_FATAL(e) ((e) < ERR_IF)
 
 #define ERR_ABRT       -13   /* Connection aborted.      */
 #define ERR_RST        -14   /* Connection reset.        */
