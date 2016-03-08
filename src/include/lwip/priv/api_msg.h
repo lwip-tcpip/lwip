@@ -53,7 +53,7 @@ extern "C" {
 #if LWIP_MPU_COMPATIBLE
 #define API_MSG_M_DEF(m)      m
 #define API_MSG_M_DEF_C(t, m) t m
-#ifdef LWIP_NETCONN_SEM_PER_THREAD
+#if LWIP_NETCONN_SEM_PER_THREAD
 #define API_MSG_M_DEF_SEM(m)  *m
 #else
 #define API_MSG_M_DEF_SEM(m)  API_MSG_M_DEF(m)
