@@ -103,6 +103,11 @@ tcpip_thread(void *arg)
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       msg->msg.api.function(msg->msg.api.msg);
       break;
+    case TCPIP_MSG_API_CALL:
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API CALL message %p\n", (void *)msg));
+      msg->msg.api_call->err = msg->msg.api_call->function(msg->msg.api_call);
+      sys_sem_signal(&msg->msg.api_call->sem);
+      break;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
@@ -330,6 +335,38 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
   return ERR_VAL;
 }
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
+
+err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
+{
+#if LWIP_TCPIP_CORE_LOCKING
+  LOCK_TCPIP_CORE();
+  call->err = fn(call);
+  UNLOCK_TCPIP_CORE();
+  return call->err;
+#else
+
+  if (sys_mbox_valid_val(mbox)) {
+    TCPIP_MSG_VAR_DECLARE(msg);
+    err_t err;
+
+    err = sys_sem_new(&call->sem, 0);
+    if (err != ERR_OK) {
+      return err;
+    }
+    
+    TCPIP_MSG_VAR_ALLOC(msg);
+    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
+    TCPIP_MSG_VAR_REF(msg).msg.api_call = call;
+    TCPIP_MSG_VAR_REF(msg).msg.api_call->function = fn;
+    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
+    sys_arch_sem_wait(&call->sem, 0);
+    sys_sem_free(&call->sem);
+    TCPIP_MSG_VAR_FREE(msg);
+    return ERR_OK;
+  }
+  return ERR_VAL;
+#endif
+}
 
 /**
  * Allocate a structure for a static callback message and initialize it.

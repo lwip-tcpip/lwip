@@ -99,8 +99,21 @@ extern sys_mutex_t lock_tcpip_core;
 err_t tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
+struct tcpip_api_call;
+typedef err_t (*tcpip_api_call_fn)(struct tcpip_api_call* call);
+struct tcpip_api_call
+{
+  tcpip_api_call_fn function;
+#if !LWIP_TCPIP_CORE_LOCKING
+  sys_sem_t sem;
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
+  err_t err;
+};
+err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call);
+
 enum tcpip_msg_type {
   TCPIP_MSG_API,
+  TCPIP_MSG_API_CALL,
   TCPIP_MSG_INPKT,
 #if LWIP_TCPIP_TIMEOUT
   TCPIP_MSG_TIMEOUT,
@@ -117,6 +130,7 @@ struct tcpip_msg {
       tcpip_callback_fn function;
       void* msg;
     } api;
+    struct tcpip_api_call *api_call;
     struct {
       struct pbuf *p;
       struct netif *netif;
