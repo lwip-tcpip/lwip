@@ -339,12 +339,12 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
 {
 #if LWIP_TCPIP_CORE_LOCKING
+  err_t err;
   LOCK_TCPIP_CORE();
-  call->err = fn(call);
+  err = fn(call);
   UNLOCK_TCPIP_CORE();
-  return call->err;
+  return err;
 #else
-
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_DECLARE(msg);
     err_t err;

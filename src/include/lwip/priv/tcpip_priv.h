@@ -106,8 +106,8 @@ struct tcpip_api_call
   tcpip_api_call_fn function;
 #if !LWIP_TCPIP_CORE_LOCKING
   sys_sem_t sem;
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
   err_t err;
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 };
 err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call);
 
