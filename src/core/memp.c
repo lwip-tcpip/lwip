@@ -66,6 +66,7 @@
 #include "lwip/tcpip.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/priv/tcpip_priv.h"
+#include "lwip/netifapi.h"
 
 #include <string.h>
 
