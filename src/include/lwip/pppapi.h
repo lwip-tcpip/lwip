@@ -34,6 +34,7 @@
 
 #include "lwip/sys.h"
 #include "lwip/netif.h"
+#include "lwip/priv/tcpip_priv.h"
 #include "netif/ppp/ppp.h"
 #if PPPOS_SUPPORT
 #include "netif/ppp/pppos.h"
@@ -44,10 +45,6 @@ extern "C" {
 #endif
 
 struct pppapi_msg_msg {
-#if !LWIP_TCPIP_CORE_LOCKING
-  sys_sem_t sem;
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
-  err_t err;
   ppp_pcb *ppp;
   union {
     struct {
@@ -111,7 +108,7 @@ struct pppapi_msg_msg {
 };
 
 struct pppapi_msg {
-  void (* function)(void *msg);
+  struct tcpip_api_call call;
   struct pppapi_msg_msg msg;
 };
 
