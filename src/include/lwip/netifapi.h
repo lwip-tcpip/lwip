@@ -35,6 +35,7 @@
 #include "lwip/netif.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
+#include "lwip/priv/tcpip_priv.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,10 +51,7 @@ typedef void (*netifapi_void_fn)(struct netif *netif);
 typedef err_t (*netifapi_errt_fn)(struct netif *netif);
 
 struct netifapi_msg {
-#if !LWIP_TCPIP_CORE_LOCKING
-  sys_sem_t sem;
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
-  err_t err;
+  struct tcpip_api_call call;
   struct netif *netif;
   union {
     struct {
