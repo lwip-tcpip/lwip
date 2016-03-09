@@ -90,8 +90,8 @@ namespace LwipSnmpCodeGeneration
 		VariableDeclaration GetExportDeclaration()
 		{
 			return new VariableDeclaration(
-				new VariableType(this.Name, LwipDefs.Vt_StMib, null, ConstType.Value),
-				String.Format("{{{0}_base_oid, LWIP_ARRAYSIZE({0}_base_oid), &{1}.node}}", this.Name, this.FullNodeName));
+				new VariableType(this.Name.ToLowerInvariant(), LwipDefs.Vt_StMib, null, ConstType.Value),
+				String.Format("{{{0}_base_oid, LWIP_ARRAYSIZE({0}_base_oid), &{1}.node}}", this.Name.ToLowerInvariant(), this.FullNodeName));
 		}
 	}
 }
