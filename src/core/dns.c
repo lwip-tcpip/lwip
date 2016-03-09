@@ -386,7 +386,7 @@ dns_init(void)
   /* if dns client not yet initialized... */
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) == 0)
   if (dns_pcbs[0] == NULL) {
-    dns_pcbs[0] = udp_new();
+    dns_pcbs[0] = udp_new_ip_type(IPADDR_TYPE_ANY);
     LWIP_ASSERT("dns_pcbs[0] != NULL", dns_pcbs[0] != NULL);
 
     /* initialize DNS table not needed (initialized to zero since it is a
@@ -395,7 +395,7 @@ dns_init(void)
       DNS_STATE_UNUSED == 0);
 
     /* initialize DNS client */
-    udp_bind(dns_pcbs[0], IP_ADDR_ANY, 0);
+    udp_bind(dns_pcbs[0], IP_ANY_TYPE, 0);
     udp_recv(dns_pcbs[0], dns_recv, NULL);
   }
 #endif
@@ -802,7 +802,7 @@ dns_alloc_random_port(void)
   err_t err;
   struct udp_pcb* ret;
 
-  ret = udp_new();
+  ret = udp_new_ip_type(IPADDR_TYPE_ANY);
   if (ret == NULL) {
     /* out of memory, have to reuse an existing pcb */
     return NULL;
@@ -814,7 +814,7 @@ dns_alloc_random_port(void)
       err = ERR_USE;
       continue;
     }
-    err = udp_bind(ret, IP_ADDR_ANY, port);
+    err = udp_bind(ret, IP_ANY_TYPE, port);
   } while (err == ERR_USE);
   if (err != ERR_OK) {
     udp_remove(ret);
