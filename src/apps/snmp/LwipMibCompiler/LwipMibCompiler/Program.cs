@@ -215,7 +215,7 @@ namespace LwipMibCompiler
 		private static SnmpTreeNode GenerateSnmpTreeNode(MibTreeNode mibTreeNode, SnmpTreeNode parentNode)
 		{
 			SnmpTreeNode result = new SnmpTreeNode(parentNode);
-			result.Name    = _alphaNumericRegex.Replace(mibTreeNode.Entity.Name, "").ToLowerInvariant();
+			result.Name    = _alphaNumericRegex.Replace (mibTreeNode.Entity.Name, "");
 			result.Oid     = mibTreeNode.Entity.Value;
 			result.FullOid = MibTypesResolver.ResolveOid(mibTreeNode.Entity).GetOidString();
 
@@ -337,7 +337,7 @@ namespace LwipMibCompiler
 				}
 			}
 
-			result.Name = _alphaNumericRegex.Replace(ote.Name, "").ToLowerInvariant();
+			result.Name = _alphaNumericRegex.Replace(ote.Name, "");
 			result.Oid  = ote.Value;
 
 			if (ote.Access == MaxAccess.readWrite)

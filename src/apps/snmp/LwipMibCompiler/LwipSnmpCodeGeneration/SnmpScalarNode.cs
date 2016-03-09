@@ -57,7 +57,7 @@ namespace LwipSnmpCodeGeneration
 
 		public override string FullNodeName
 		{
-			get { return this.Name + "_scalar"; }
+			get { return this.Name.ToLowerInvariant() + "_scalar"; }
 		}
 
 		public SnmpDataType DataType

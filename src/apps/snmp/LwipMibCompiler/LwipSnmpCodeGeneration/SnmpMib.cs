@@ -53,7 +53,7 @@ namespace LwipSnmpCodeGeneration
 
 		public override string FullNodeName
 		{
-			get { return this.Name + "_root"; }
+			get { return this.Name.ToLowerInvariant() + "_root"; }
 		}
 
 		public override void GenerateCode(MibCFile mibFile)
@@ -73,7 +73,7 @@ namespace LwipSnmpCodeGeneration
 			boidInitialization.Append("}");
 
 			VariableDeclaration boidDecl = new VariableDeclaration(
-				new VariableType(this.Name + "_base_oid", LwipDefs.Vt_U32, null, ConstType.Value, String.Empty),
+				new VariableType(this.Name.ToLowerInvariant() + "_base_oid", LwipDefs.Vt_U32, null, ConstType.Value, String.Empty),
 				boidInitialization.ToString(), true);
 
 			mibFile.Declarations.Add(boidDecl);

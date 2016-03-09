@@ -49,7 +49,7 @@ namespace LwipSnmpCodeGeneration
 
 		public override string FullNodeName
 		{
-			get { return this.Name + "_scalars"; }
+			get { return this.Name.ToLowerInvariant() + "_scalars"; }
 		}
 
 		protected override IEnumerable<SnmpScalarNode> AggregatedScalarNodes

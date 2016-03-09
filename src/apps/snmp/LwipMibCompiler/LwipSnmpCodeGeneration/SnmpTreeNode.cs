@@ -50,7 +50,7 @@ namespace LwipSnmpCodeGeneration
 
 		public override string FullNodeName
 		{
-			get { return this.Name + "_treenode"; }
+			get { return this.Name.ToLowerInvariant() + "_treenode"; }
 		}
 
 		public string FullOid
@@ -119,7 +119,7 @@ namespace LwipSnmpCodeGeneration
 				}
 
 				VariableDeclaration subnodeArray = new VariableDeclaration(
-					new VariableType(this.Name + "_subnodes", LwipDefs.Vt_StNode, "*", ConstType.Both, String.Empty),
+					new VariableType(this.Name.ToLowerInvariant() + "_subnodes", LwipDefs.Vt_StNode, "*", ConstType.Both, String.Empty),
 					"{\n" + subnodeArrayInitialization + "\n}",
 					isStatic: true);
 
