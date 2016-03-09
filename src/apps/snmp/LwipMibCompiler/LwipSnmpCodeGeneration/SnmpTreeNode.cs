@@ -168,6 +168,7 @@ namespace LwipSnmpCodeGeneration
 					SnmpScalarArrayNode scalarArrayNode = new SnmpScalarArrayNode(this.childScalarNodes, this.ParentNode);
 					scalarArrayNode.Oid  = this.Oid;
 					scalarArrayNode.Name = this.Name;
+					scalarArrayNode.Analyze();
 
 					for (int i=0; i<this.ParentNode.ChildNodes.Count; i++)
 					{
