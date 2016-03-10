@@ -60,17 +60,14 @@ typedef s8_t err_t;
 #define ERR_USE        -8    /* Address in use.          */
 #define ERR_ALREADY    -9    /* Already connecting.      */
 #define ERR_ISCONN     -10   /* Conn already established.*/
-
 #define ERR_CONN       -11   /* Not connected.           */
 #define ERR_IF         -12   /* Low-level netif error    */
-#define ERR_IS_FATAL(e) ((e) < ERR_IF)
 
+#define ERR_IS_FATAL(e) ((e) <= ERR_ABRT)
 #define ERR_ABRT       -13   /* Connection aborted.      */
 #define ERR_RST        -14   /* Connection reset.        */
 #define ERR_CLSD       -15   /* Connection closed.       */
-
 #define ERR_ARG        -16   /* Illegal argument.        */
-
 
 #ifdef LWIP_DEBUG
 extern const char *lwip_strerr(err_t err);
