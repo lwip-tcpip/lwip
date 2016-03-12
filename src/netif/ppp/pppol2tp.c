@@ -129,12 +129,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     goto memp_malloc_l2tp_failed;
   }
 
-#if LWIP_IPV6
-  if (IP_IS_V6_VAL(*ipaddr)) {
-    udp = udp_new_ip_type(IPADDR_TYPE_V6);
-  } else
-#endif /* LWIP_IPV6 */
-  udp = udp_new();
+  udp = udp_new_ip_type(IP_GET_TYPE(ipaddr));
   if (udp == NULL) {
     goto udp_new_failed;
   }
