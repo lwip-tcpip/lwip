@@ -106,7 +106,11 @@ tcpip_thread(void *arg)
     case TCPIP_MSG_API_CALL:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API CALL message %p\n", (void *)msg));
       msg->msg.api_call->err = msg->msg.api_call->function(msg->msg.api_call);
+#if LWIP_NETCONN_SEM_PER_THREAD
+      sys_sem_signal(msg->msg.api_call->sem);
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
       sys_sem_signal(&msg->msg.api_call->sem);
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
       break;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
@@ -320,6 +324,8 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 err_t
 tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 {
+  LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
+
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_DECLARE(msg);
     
@@ -349,18 +355,26 @@ err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
     TCPIP_MSG_VAR_DECLARE(msg);
     err_t err;
 
+#if LWIP_NETCONN_SEM_PER_THREAD
+    call->sem = LWIP_NETCONN_THREAD_SEM_GET();
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
     err = sys_sem_new(&call->sem, 0);
     if (err != ERR_OK) {
       return err;
     }
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
     
     TCPIP_MSG_VAR_ALLOC(msg);
     TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
     TCPIP_MSG_VAR_REF(msg).msg.api_call = call;
     TCPIP_MSG_VAR_REF(msg).msg.api_call->function = fn;
     sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
+#if LWIP_NETCONN_SEM_PER_THREAD
+    sys_arch_sem_wait(call->sem, 0);
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
     sys_arch_sem_wait(&call->sem, 0);
     sys_sem_free(&call->sem);
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
     TCPIP_MSG_VAR_FREE(msg);
     return ERR_OK;
   }

@@ -105,7 +105,11 @@ struct tcpip_api_call
 {
   tcpip_api_call_fn function;
 #if !LWIP_TCPIP_CORE_LOCKING
+#if LWIP_NETCONN_SEM_PER_THREAD
+  sys_sem_t *sem;
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
   sys_sem_t sem;
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
   err_t err;
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 };
