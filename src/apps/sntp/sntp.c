@@ -428,7 +428,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
  * @param server_addr resolved IP address of the SNTP server
  */
 static void
-sntp_send_request(ip_addr_t *server_addr)
+sntp_send_request(const ip_addr_t *server_addr)
 {
   struct pbuf* p;
   p = pbuf_alloc(PBUF_TRANSPORT, SNTP_MSG_LEN, PBUF_RAM);
@@ -460,7 +460,7 @@ sntp_send_request(ip_addr_t *server_addr)
  * DNS found callback when using DNS names as server address.
  */
 static void
-sntp_dns_found(const char* hostname, ip_addr_t *ipaddr, void *arg)
+sntp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
 {
   LWIP_UNUSED_ARG(hostname);
   LWIP_UNUSED_ARG(arg);
