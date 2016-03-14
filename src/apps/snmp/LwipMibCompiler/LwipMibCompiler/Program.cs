@@ -126,9 +126,12 @@ namespace LwipMibCompiler
 				// let the tree transform itself depending on node structure
 				snmpMib.Analyze();
 
-				// generate code from LWIP object tree
-				Console.WriteLine(" Generating code " + snmpMib.Name);
-				snmpMib.Generate(generatedFile, generatedHeaderFile);
+				if (snmpMib.ChildNodes.Count != 0)
+				{
+					// generate code from LWIP object tree
+					Console.WriteLine(" Generating code " + snmpMib.Name);
+					snmpMib.Generate(generatedFile, generatedHeaderFile);
+				}
 			}
 
 			string preservedCode = MibCFile.GetPreservedCode(destFile);
