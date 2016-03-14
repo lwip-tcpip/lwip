@@ -38,7 +38,7 @@ namespace Lextm.SharpSnmpLib.Mib
                     }
                 }
 
-                FilterRealRoots (_root, entities);
+                FilterRealRoots (entities);
 
                 foreach (MibTreeNode mibTreeNode in _root)
                 {
@@ -68,19 +68,23 @@ namespace Lextm.SharpSnmpLib.Mib
             get { return _root; }
         }
 
-        private bool EntityExists(IList<IEntity> entities, string name) {
-            foreach(IEntity entity in entities) {
-                if (entity.Name == name) {
+        private bool EntityExists(IList<IEntity> entities, string name)
+		{
+            foreach(IEntity entity in entities)
+			{
+                if (entity.Name == name)
+				{
                     return true;
                 }
             }
             return false;
         }
 
-        private void FilterRealRoots(IList<MibTreeNode> root, IList<IEntity> entities)
+        private void FilterRealRoots(IList<IEntity> entities)
         {
             int i = 0;
-            while (i < _root.Count) {
+            while (i < _root.Count)
+			{
                 if (EntityExists(entities, _root[i].Entity.Parent))
                 {
                     _root.RemoveAt(i);
@@ -90,9 +94,9 @@ namespace Lextm.SharpSnmpLib.Mib
                     i++;
                 }
             }
-        }
-
-        private void BuildTree(MibTreeNode node, IList<IEntity> entities)
+		}
+		
+		private void BuildTree(MibTreeNode node, IList<IEntity> entities)
         {
             int i = 0;
             while (i < entities.Count)
