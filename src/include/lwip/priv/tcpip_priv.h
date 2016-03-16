@@ -95,7 +95,7 @@ extern sys_mutex_t lock_tcpip_core;
 #define API_EXPR_DEREF(expr)            *(expr)
 #endif /* LWIP_MPU_COMPATIBLE */
 
-err_t tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
+err_t tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
 
 struct tcpip_api_call;
 typedef err_t (*tcpip_api_call_fn)(struct tcpip_api_call* call);
@@ -131,7 +131,7 @@ struct tcpip_msg {
     struct {
       tcpip_callback_fn function;
       void* msg;
-    } api;
+    } api_msg;
     struct tcpip_api_call *api_call;
     struct {
       struct pbuf *p;

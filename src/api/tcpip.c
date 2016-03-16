@@ -101,7 +101,7 @@ tcpip_thread(void *arg)
 #if !LWIP_TCPIP_CORE_LOCKING
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
-      msg->msg.api.function(msg->msg.api.msg);
+      msg->msg.api_msg.function(msg->msg.api_msg.msg);
       break;
     case TCPIP_MSG_API_CALL:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API CALL message %p\n", (void *)msg));
@@ -112,7 +112,7 @@ tcpip_thread(void *arg)
       sys_sem_signal(&msg->msg.api_call->sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
       break;
-#endif /* LWIP_TCPIP_CORE_LOCKING */
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
@@ -120,7 +120,7 @@ tcpip_thread(void *arg)
       msg->msg.inp.input_fn(msg->msg.inp.p, msg->msg.inp.netif);
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
-#endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+#endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */
 
 #if LWIP_TCPIP_TIMEOUT
     case TCPIP_MSG_TIMEOUT:
@@ -325,7 +325,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
  * @return ERR_OK if the function was called, another err_t if not
  */
 err_t
-tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
+tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 {
   LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
 
@@ -341,8 +341,8 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
     
     TCPIP_MSG_VAR_ALLOC(msg);
     TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
-    TCPIP_MSG_VAR_REF(msg).msg.api.function = fn;
-    TCPIP_MSG_VAR_REF(msg).msg.api.msg = apimsg;
+    TCPIP_MSG_VAR_REF(msg).msg.api_msg.function = fn;
+    TCPIP_MSG_VAR_REF(msg).msg.api_msg.msg = apimsg;
     sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
     sys_arch_sem_wait(sem, 0);
     TCPIP_MSG_VAR_FREE(msg);
