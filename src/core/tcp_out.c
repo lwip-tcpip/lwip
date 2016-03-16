@@ -1134,8 +1134,12 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   u32_t *opts;
   struct netif *netif;
 
-  /** @bug Exclude retransmitted segments from this count. */
-  MIB2_STATS_INC(mib2.tcpoutsegs);
+  if (seg->p->ref != 1) {
+    /* This can happen if the pbuf of this segment is still referenced by the
+       netif driver due to deferred transmission. Since this function modifies
+       p->len, we must not continue in this case. */
+    return ERR_OK;
+  }
 
   /* The TCP header has already been constructed, but the ackno and
    wnd fields remain. */
@@ -1214,6 +1218,10 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
           seg->len));
 
   len = (u16_t)((u8_t *)seg->tcphdr - (u8_t *)seg->p->payload);
+  if (len == 0) {
+    /** Exclude retransmitted segments from this count. */
+    MIB2_STATS_INC(mib2.tcpoutsegs);
+  }
 
   seg->p->len -= len;
   seg->p->tot_len -= len;
