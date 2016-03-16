@@ -302,6 +302,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2013-03-16: Joel Cunningham
+  * tcp_out.c: reset rto timer on fast retransmission
+
   2016-03-16: Deomid Ryabkov
   * tcp_out.c: fixed bug #46384 Segment size calculation bug with MSS != TCP_MSS
 

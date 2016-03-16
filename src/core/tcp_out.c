@@ -1185,7 +1185,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* Set retransmission timer running if it is not currently enabled
      This must be set before checking the route. */
-  if (pcb->rtime == -1) {
+  if (pcb->rtime < 0) {
     pcb->rtime = 0;
   }
 
@@ -1460,6 +1460,9 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
 
     pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
     pcb->flags |= TF_INFR;
+
+    /* Reset the retransmission timer to prevent immediate rto retransmissions */
+    pcb->rtime = 0;
   }
 }
 
