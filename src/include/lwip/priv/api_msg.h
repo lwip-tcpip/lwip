@@ -75,7 +75,7 @@ extern "C" {
 /** This struct includes everything that is necessary to execute a function
     for a netconn in another thread context (mainly used to process netconns
     in the tcpip_thread context to be thread safe). */
-struct api_msg_msg {
+struct api_msg {
   /** The netconn which to process - always needed: it includes the semaphore
       which is used to block the application thread until the function finished. */
   struct netconn *conn;
@@ -149,14 +149,6 @@ struct api_msg_msg {
 #define LWIP_API_MSG_SEM(msg)          (&(msg)->conn->op_completed)
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-
-/** This struct contains a function to execute in another thread context and
-    a struct api_msg_msg that serves as an argument for this function.
-    This is passed to tcpip_apimsg to execute functions in tcpip_thread context. */
-struct api_msg {
-  /** arguments for this function */
-  struct api_msg_msg msg;
-};
 
 #if LWIP_DNS
 /** As lwip_netconn_do_gethostbyname requires more arguments but doesn't require a netconn,

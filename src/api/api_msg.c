@@ -513,7 +513,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
  * @return msg->conn->err, but the return value is currently ignored
  */
 static void
-pcb_new(struct api_msg_msg *msg)
+pcb_new(struct api_msg *msg)
 {
   LWIP_ASSERT("pcb_new: pcb already allocated", msg->conn->pcb.tcp == NULL);
 
@@ -579,7 +579,7 @@ pcb_new(struct api_msg_msg *msg)
 void
 lwip_netconn_do_newconn(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   msg->err = ERR_OK;
   if (msg->conn->pcb.tcp == NULL) {
@@ -983,7 +983,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
 void
 lwip_netconn_do_delconn(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   enum netconn_state state = msg->conn->state;
   LWIP_ASSERT("netconn state error", /* this only happens for TCP netconns */
@@ -1085,7 +1085,7 @@ lwip_netconn_do_delconn(void *m)
 void
 lwip_netconn_do_bind(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
@@ -1193,7 +1193,7 @@ lwip_netconn_do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 void
 lwip_netconn_do_connect(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (msg->conn->pcb.tcp == NULL) {
     /* This may happen when calling netconn_connect() a second time */
@@ -1264,7 +1264,7 @@ lwip_netconn_do_connect(void *m)
 void
 lwip_netconn_do_disconnect(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
 #if LWIP_UDP
   if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
@@ -1288,7 +1288,7 @@ lwip_netconn_do_disconnect(void *m)
 void
 lwip_netconn_do_listen(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
@@ -1371,7 +1371,7 @@ lwip_netconn_do_listen(void *m)
 void
 lwip_netconn_do_send(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
@@ -1426,7 +1426,7 @@ lwip_netconn_do_send(void *m)
 void
 lwip_netconn_do_recv(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   msg->err = ERR_OK;
   if (msg->conn->pcb.tcp != NULL) {
@@ -1614,7 +1614,7 @@ err_mem:
 void
 lwip_netconn_do_write(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
@@ -1670,7 +1670,7 @@ lwip_netconn_do_write(void *m)
 void
 lwip_netconn_do_getaddr(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (msg->conn->pcb.ip != NULL) {
     if (msg->msg.ad.local) {
@@ -1736,7 +1736,7 @@ lwip_netconn_do_getaddr(void *m)
 void
 lwip_netconn_do_close(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
 #if LWIP_TCP
   enum netconn_state state = msg->conn->state;
@@ -1812,7 +1812,7 @@ lwip_netconn_do_close(void *m)
 void
 lwip_netconn_do_join_leave_group(void *m)
 {
-  struct api_msg_msg *msg = (struct api_msg_msg*)m;
+  struct api_msg *msg = (struct api_msg*)m;
 
   if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;

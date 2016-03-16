@@ -77,15 +77,15 @@ tcpip_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
 {
 #ifdef LWIP_DEBUG
   /* catch functions that don't set err */
-  apimsg->msg.err = ERR_VAL;
+  apimsg->err = ERR_VAL;
 #endif /* LWIP_DEBUG */
 
 #if LWIP_NETCONN_SEM_PER_THREAD
-  apimsg->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
+  apimsg->op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
   
-  if (tcpip_send_api_msg(fn, &apimsg->msg, LWIP_API_MSG_SEM(&apimsg->msg)) == ERR_OK) {
-    return apimsg->msg.err;
+  if (tcpip_send_api_msg(fn, apimsg, LWIP_API_MSG_SEM(apimsg)) == ERR_OK) {
+    return apimsg->err;
   }
   return ERR_VAL;
 }
@@ -110,8 +110,8 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
   if (conn != NULL) {
     err_t err;
     API_MSG_VAR_ALLOC_DONTFAIL(msg);
-    API_MSG_VAR_REF(msg).msg.msg.n.proto = proto;
-    API_MSG_VAR_REF(msg).msg.conn = conn;
+    API_MSG_VAR_REF(msg).msg.n.proto = proto;
+    API_MSG_VAR_REF(msg).conn = conn;
     err = tcpip_apimsg(lwip_netconn_do_newconn, &API_MSG_VAR_REF(msg));
     API_MSG_VAR_FREE(msg);
     if (err != ERR_OK) {
@@ -152,14 +152,14 @@ netconn_delete(struct netconn *conn)
   }
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
+  API_MSG_VAR_REF(msg).conn = conn;
 #if LWIP_SO_SNDTIMEO || LWIP_SO_LINGER
   /* get the time we started, which is later compared to
      sys_now() + conn->send_timeout */
-  API_MSG_VAR_REF(msg).msg.msg.sd.time_started = sys_now();
+  API_MSG_VAR_REF(msg).msg.sd.time_started = sys_now();
 #else /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
 #if LWIP_TCP
-  API_MSG_VAR_REF(msg).msg.msg.sd.polls_left =
+  API_MSG_VAR_REF(msg).msg.sd.polls_left =
     ((LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT + TCP_SLOW_INTERVAL - 1) / TCP_SLOW_INTERVAL) + 1;
 #endif /* LWIP_TCP */
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
@@ -197,15 +197,15 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
   LWIP_ERROR("netconn_getaddr: invalid port", (port != NULL), return ERR_ARG;);
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.ad.local = local;
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.ad.local = local;
 #if LWIP_MPU_COMPATIBLE
   TCPIP_APIMSG(msg, lwip_netconn_do_getaddr, err);
-  *addr = msg->msg.msg.ad.ipaddr;
-  *port = msg->msg.msg.ad.port;
+  *addr = msg->msg.ad.ipaddr;
+  *port = msg->msg.ad.port;
 #else /* LWIP_MPU_COMPATIBLE */
-  msg.msg.msg.ad.ipaddr = addr;
-  msg.msg.msg.ad.port = port;
+  msg.msg.ad.ipaddr = addr;
+  msg.msg.ad.port = port;
   err = tcpip_apimsg(lwip_netconn_do_getaddr, &msg);
 #endif /* LWIP_MPU_COMPATIBLE */
   API_MSG_VAR_FREE(msg);
@@ -237,9 +237,9 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   }
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.bc.ipaddr = API_MSG_VAR_REF(addr);
-  API_MSG_VAR_REF(msg).msg.msg.bc.port = port;
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
+  API_MSG_VAR_REF(msg).msg.bc.port = port;
   err = tcpip_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
@@ -268,9 +268,9 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   }
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.bc.ipaddr = API_MSG_VAR_REF(addr);
-  API_MSG_VAR_REF(msg).msg.msg.bc.port = port;
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
+  API_MSG_VAR_REF(msg).msg.bc.port = port;
   err = tcpip_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
@@ -292,7 +292,7 @@ netconn_disconnect(struct netconn *conn)
   LWIP_ERROR("netconn_disconnect: invalid conn", (conn != NULL), return ERR_ARG;);
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
+  API_MSG_VAR_REF(msg).conn = conn;
   err = tcpip_apimsg(lwip_netconn_do_disconnect, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
@@ -320,9 +320,9 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
   LWIP_ERROR("netconn_listen: invalid conn", (conn != NULL), return ERR_ARG;);
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
+  API_MSG_VAR_REF(msg).conn = conn;
 #if TCP_LISTEN_BACKLOG
-  API_MSG_VAR_REF(msg).msg.msg.lb.backlog = backlog;
+  API_MSG_VAR_REF(msg).msg.lb.backlog = backlog;
 #endif /* TCP_LISTEN_BACKLOG */
   err = tcpip_apimsg(lwip_netconn_do_listen, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
@@ -386,7 +386,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */
   API_MSG_VAR_ALLOC_DONTFAIL(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
+  API_MSG_VAR_REF(msg).conn = conn;
   /* don't care for the return value of lwip_netconn_do_recv */
   tcpip_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
@@ -464,11 +464,11 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
       /* TODO: Speedup: Don't block and wait for the answer here
          (to prevent multiple thread-switches). */
       API_MSG_VAR_ALLOC_DONTFAIL(msg);
-      API_MSG_VAR_REF(msg).msg.conn = conn;
+      API_MSG_VAR_REF(msg).conn = conn;
       if (buf != NULL) {
-        API_MSG_VAR_REF(msg).msg.msg.r.len = ((struct pbuf *)buf)->tot_len;
+        API_MSG_VAR_REF(msg).msg.r.len = ((struct pbuf *)buf)->tot_len;
       } else {
-        API_MSG_VAR_REF(msg).msg.msg.r.len = 1;
+        API_MSG_VAR_REF(msg).msg.r.len = 1;
       }
       /* don't care for the return value of lwip_netconn_do_recv */
       tcpip_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
@@ -607,8 +607,8 @@ netconn_recved(struct netconn *conn, u32_t length)
     /* TODO: Speedup: Don't block and wait for the answer here
        (to prevent multiple thread-switches). */
     API_MSG_VAR_ALLOC_DONTFAIL(msg);
-    API_MSG_VAR_REF(msg).msg.conn = conn;
-    API_MSG_VAR_REF(msg).msg.msg.r.len = length;
+    API_MSG_VAR_REF(msg).conn = conn;
+    API_MSG_VAR_REF(msg).msg.r.len = length;
     /* don't care for the return value of lwip_netconn_do_recv */
     tcpip_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
     API_MSG_VAR_FREE(msg);
@@ -657,8 +657,8 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %"U16_F" bytes\n", buf->p->tot_len));
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.b = buf;
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.b = buf;
   err = tcpip_apimsg(lwip_netconn_do_send, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
@@ -700,10 +700,10 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
 
   API_MSG_VAR_ALLOC(msg);
   /* non-blocking write sends as much  */
-  API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.w.dataptr = dataptr;
-  API_MSG_VAR_REF(msg).msg.msg.w.apiflags = apiflags;
-  API_MSG_VAR_REF(msg).msg.msg.w.len = size;
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.w.dataptr = dataptr;
+  API_MSG_VAR_REF(msg).msg.w.apiflags = apiflags;
+  API_MSG_VAR_REF(msg).msg.w.len = size;
 #if LWIP_SO_SNDTIMEO
   if (conn->send_timeout != 0) {
     /* get the time we started, which is later compared to
@@ -725,7 +725,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
 #endif /* LWIP_SO_SNDTIMEO */
        ) {
       /* nonblocking write: maybe the data has been sent partly */
-      *bytes_written = API_MSG_VAR_REF(msg).msg.msg.w.len;
+      *bytes_written = API_MSG_VAR_REF(msg).msg.w.len;
     } else {
       /* blocking call succeeded: all data has been sent if it */
       *bytes_written = size;
@@ -753,16 +753,16 @@ netconn_close_shutdown(struct netconn *conn, u8_t how)
   LWIP_ERROR("netconn_close: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).msg.conn = conn;
+  API_MSG_VAR_REF(msg).conn = conn;
 #if LWIP_TCP
   /* shutting down both ends is the same as closing */
-  API_MSG_VAR_REF(msg).msg.msg.sd.shut = how;
+  API_MSG_VAR_REF(msg).msg.sd.shut = how;
 #if LWIP_SO_SNDTIMEO || LWIP_SO_LINGER
   /* get the time we started, which is later compared to
      sys_now() + conn->send_timeout */
-  API_MSG_VAR_REF(msg).msg.msg.sd.time_started = sys_now();
+  API_MSG_VAR_REF(msg).msg.sd.time_started = sys_now();
 #else /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
-  API_MSG_VAR_REF(msg).msg.msg.sd.polls_left =
+  API_MSG_VAR_REF(msg).msg.sd.polls_left =
     ((LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT + TCP_SLOW_INTERVAL - 1) / TCP_SLOW_INTERVAL) + 1;
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
 #endif /* LWIP_TCP */
@@ -829,10 +829,10 @@ netconn_join_leave_group(struct netconn *conn,
     netif_addr = IP_ADDR_ANY;
   }
 
-  API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.jl.multiaddr = API_MSG_VAR_REF(multiaddr);
-  API_MSG_VAR_REF(msg).msg.msg.jl.netif_addr = API_MSG_VAR_REF(netif_addr);
-  API_MSG_VAR_REF(msg).msg.msg.jl.join_or_leave = join_or_leave;
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.jl.multiaddr = API_MSG_VAR_REF(multiaddr);
+  API_MSG_VAR_REF(msg).msg.jl.netif_addr = API_MSG_VAR_REF(netif_addr);
+  API_MSG_VAR_REF(msg).msg.jl.join_or_leave = join_or_leave;
   err = tcpip_apimsg(lwip_netconn_do_join_leave_group, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
