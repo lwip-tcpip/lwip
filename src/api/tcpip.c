@@ -314,7 +314,8 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 
 #if !LWIP_TCPIP_CORE_LOCKING
 /**
- * Generic way to dispatch an API message in TCPIP thread.
+ * Generic way to dispatch an API message in TCPIP thread and wait for its
+ * completion by blocking on a semaphore.
  *
  * @param fn function to be called from TCPIP thread
  * @param apimsg argument to API function
@@ -342,6 +343,16 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 }
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
+/**
+ * Synchronously calls function in TCPIP thread and waits for its completion.
+ * It is recommended to use LWIP_TCPIP_CORE_LOCKING (preferred) or
+ * LWIP_NETCONN_SEM_PER_THREAD.
+ * If not, a semaphore is created and destroyed on every call which is usually
+ * an expensive/slow operation.
+ * @param fn Function to call
+ * @param call Call parameters
+ * @return Return value from tcpip_api_call_fn
+ */
 err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
 {
 #if LWIP_TCPIP_CORE_LOCKING

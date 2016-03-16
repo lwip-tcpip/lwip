@@ -1,0 +1,2264 @@
+MOBANetClocksV2-MIB DEFINITIONS ::= BEGIN
+    -- Title:       NTP Slave clock AGENT MIB
+    -- SW-Nr.:	    206457
+    -- Revision:    00
+    -- Date:        03.06.2014
+    -- Company:	    Moser-Baer AG, Switzerland
+    -- By:          Hansjörg Rohrer
+    -- Version:     1.00
+    -- Changed:     17.06.2014
+    IMPORTS
+    Integer32, OBJECT-TYPE, MODULE-IDENTITY,
+    enterprises, Unsigned32, NOTIFICATION-TYPE,
+    TimeTicks, IpAddress
+        FROM SNMPv2-SMI
+    OBJECT-GROUP, NOTIFICATION-GROUP, MODULE-COMPLIANCE
+        FROM SNMPv2-CONF
+    DisplayString, TEXTUAL-CONVENTION
+        FROM SNMPv2-TC;
+
+    mbnscMIB MODULE-IDENTITY
+        LAST-UPDATED	    "201406171202Z"
+        ORGANIZATION	    "Moser-Baer AG"
+        CONTACT-INFO        "Moser-Baer AG                 
+                            
+                            Spitalstr. 7
+                            3454 Sumiswald
+                            
+                            support@mobatime.com"
+        DESCRIPTION         "This mib definition is used for all MOBATime network slave clocks."
+
+        REVISION	    "201406171202Z"
+        DESCRIPTION         "initial version of this module"
+        ::= { mobaNetClocks 100 }
+
+    MOBAAlarm64 ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT	    "1x1x1x1x.1x1x1x1x"
+        STATUS		    current
+        DESCRIPTION         "The alarm list is an array of bytes. The first
+                            byte defines the mask for the alarm bits 0..7.
+                            The last byte defines the mask for the alarm
+                            bits 56..63.
+                            
+                            Every byte has the range 0 ... 255 (binary)."
+        SYNTAX		    OCTET STRING (SIZE(8))
+
+    MOBAFlags64 ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT	    "1x1x1x1x.1x1x1x1x"
+        STATUS		    current
+        DESCRIPTION         "The flags are an array of bytes. The first
+                            byte defines the mask for the status bits 0..7.
+                            The last byte defines the mask for the status
+                            bits 56..63.
+                            
+                            Every byte has the range 0 ... 255 (binary)."
+        SYNTAX		    OCTET STRING (SIZE(8))
+
+    MOBANetworkName ::= TEXTUAL-CONVENTION
+        DISPLAY-HINT	    "255a"
+        STATUS		    current
+        DESCRIPTION         "Fully qualified domain names or IP addresses in ASCII.
+                             IPv4 xxx.xxx.xxx.xxx
+                             IPV6 xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx
+                             name string max 40 chars"
+        SYNTAX		    OCTET STRING (SIZE(1..40))
+
+
+
+    mobatime OBJECT IDENTIFIER ::= { enterprises 13842 }
+
+    mobaNetClocks OBJECT IDENTIFIER ::= { mobatime 6 }
+
+    mobaNetClocksV2 OBJECT IDENTIFIER ::= { mobaNetClocks 2 }
+    
+    mbnscNet OBJECT IDENTIFIER ::= { mobaNetClocksV2 1 }
+
+    mbnscNetGen OBJECT IDENTIFIER ::= { mbnscNet 1 }
+
+    mbnscNetGenMAC OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(6))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "MAC-Address  (xx xx xx xx xx xx)"
+        ::= { mbnscNetGen 1 }
+
+    mbnscNetGenIPMode OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                both (0),
+                                ipv4only (1),
+                                ipv6only (2)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP Mode: 
+                            0: IPv4 and IPv6
+                            1: IPv4 only
+                            2: IPv6 only"
+        ::= { mbnscNetGen 2 }
+
+    mbnscNetGenIPNameserver OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IPv4 or IPv6 address (xxx.xxx.xxx.xxx or xxxx::xxxx:xxxx) 
+        										of the nameserver"
+        ::= { mbnscNetGen 3 }
+
+    mbnscNetGenTZClientPort OBJECT-TYPE
+        SYNTAX              Unsigned32 (1..65535)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Timezone client port. Default 65534"
+        ::= { mbnscNetGen 4 }
+
+    mbnscNetGenConfigPort OBJECT-TYPE
+        SYNTAX              Unsigned32 (1..65535)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Configuration port. Default 65532"
+        ::= { mbnscNetGen 5 }
+
+    mbnscNetGenSnmpMode OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "SNMP mode disabled
+                            0: SNMP enabled (default) 
+                            1: SNMP disabled"
+        ::= { mbnscNetGen 6 }
+
+    mbnscNetGenMulticastMode OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Multicast mode disabled
+                            0: Multicast enabled (default) 
+                            1: Multicast disabled"
+        ::= { mbnscNetGen 7 }
+
+    mbnscNetGenHostname OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..20))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Host name of the device"
+        ::= { mbnscNetGen 8 }
+
+    mbnscNetGenCommMode OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Communication / synchronisation mode
+                            0=unicast
+                            1=multicast
+                            (only for digital clocks)"
+        ::= { mbnscNetGen 9 }
+
+    mbnscNetGenMCastGrpIP OBJECT-TYPE
+        SYNTAX              IpAddress
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP network address (xxx.xxx.xxx.xxx) of the 
+							 multicast group IP e.g. 239.192.54.1
+                            (only for digital clocks)"
+        ::= { mbnscNetGen 10 }
+
+    mbnscNetGenConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Network configuration changed command variable. 
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscNetGen 100 }
+
+    mbnscNetGenConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscNetGen 101 }
+
+    mbnscNetIPv4 OBJECT IDENTIFIER ::= { mbnscNet 2 }
+
+    mbnscNetIPv4Addr OBJECT-TYPE
+        SYNTAX              IpAddress
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP network address (xxx.xxx.xxx.xxx) of the 
+                             network slave clock"
+        ::= { mbnscNetIPv4 1 }
+
+    mbnscNetIPv4Mask OBJECT-TYPE
+        SYNTAX              IpAddress
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP subnet mask (xxx.xxx.xxx.xxx)"
+        ::= { mbnscNetIPv4 2 }
+
+    mbnscNetIPv4Gateway OBJECT-TYPE
+        SYNTAX              IpAddress
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP network address (xxx.xxx.xxx.xxx) for the gateway"
+        ::= { mbnscNetIPv4 3 }
+
+    mbnscNetIPv4DHCPMode OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "DHCP mode
+                            0: DHCP disabled 
+                            1: DHCP enabled (default)"
+        ::= { mbnscNetIPv4 4 }
+
+    mbnscNetIPv4ConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Network configuration changed command variable. 
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscNetIPv4 100 }
+
+    mbnscNetIPv4ConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscNetIPv4 101 }
+    
+    mbnscNetIPv6 OBJECT IDENTIFIER ::= { mbnscNet 3 }
+
+    mbnscNetIPv6AddrLocal OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "IP V6 link local network address (xxxx:xxxx::xxxx)"
+        ::= { mbnscNetIPv6 1 }
+
+    mbnscNetIPv6AddrAuto OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "IP V6 network address by autoconfig (xxxx:xxxx::xxxx)"
+        ::= { mbnscNetIPv6 2 }
+
+    mbnscNetIPv6AddrDHCP OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "IP V6 network address by DHCPv6 (xxxx:xxxx::xxxx)"
+        ::= { mbnscNetIPv6 3 }
+
+    mbnscNetIPv6AddrFix OBJECT-TYPE
+        SYNTAX              MOBANetworkName (SIZE(40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP V6 network address manual set (xxxx:xxxx::xxxx)"
+        ::= { mbnscNetIPv6 4 }
+
+    mbnscNetIPv6Prefix OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..128)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IPv6 subnet prefix for manual set IP address"
+        ::= { mbnscNetIPv6 5 }
+
+    mbnscNetIPv6Gateway OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "IP V6 network address of gateway (next hop) (xxxx:xxxx::xxxx)"
+        ::= { mbnscNetIPv6 6 }
+
+    mbnscNetIPv6Config OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                both (0),
+                                autoonly (1),
+                                dhcpv6only (2),
+                                none (3)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Mode of IPv6 adress configuration
+                            0: auto and fixed 
+                            1: autoconfig only
+                            2: DHCPv6 only
+                            3: none"
+        ::= { mbnscNetIPv6 7 }
+
+    mbnscNetIPv6ConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Network configuration changed command variable. 
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscNetIPv6 100 }
+
+    mbnscNetIPv6ConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscNetIPv6 101 }
+
+    mbnscTime OBJECT IDENTIFIER ::= { mobaNetClocksV2 2 }
+
+    mbnscTimeNTP1 OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "String with IPv4 or IPv6 address (192.168.3.4 or 
+                             FD03:2345:2345:2345::231) or DNS name to 
+                             get NTP time information."
+        ::= { mbnscTime 1 }
+
+    mbnscTimeNTP2 OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "String with IPv4 or IPv6 address (192.168.3.4 or 
+                             FD03:2345:2345:2345::231) or DNS name to 
+                             get NTP time information."
+        ::= { mbnscTime 2 }
+
+    mbnscTimeNTP3 OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "String with IPv4 or IPv6 address (192.168.3.4 or 
+                             FD03:2345:2345:2345::231) or DNS name to 
+                             get NTP time information."
+        ::= { mbnscTime 3 }
+
+    mbnscTimeNTP4 OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "String with IPv4 or IPv6 address (192.168.3.4 or 
+                             FD03:2345:2345:2345::231) or DNS name to 
+                             get NTP time information."
+        ::= { mbnscTime 4 }
+
+    mbnscTimeNTPcurrent OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "IPv4 or IPv6 address of current NTP server"
+        ::= { mbnscTime 5 }
+
+    mbnscTimeNTPpollIntervall OBJECT-TYPE
+        SYNTAX              Unsigned32 (10..999)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "NTP request intervall
+                            10..999sec"
+        ::= { mbnscTime 6 }
+
+    mbnscTimeDeviceTime OBJECT-TYPE
+        SYNTAX              Unsigned32
+        UNITS               "Seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Actual device time  (UTC).                              
+                            Seconds since 1.1.1970 00:00:00"
+        ::= { mbnscTime 7 }
+
+    mbnscTimeLocOffset OBJECT-TYPE
+        SYNTAX              Integer32 (-720..720)
+        UNITS               "minutes (min)"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Offset to localt time in minutes 
+                            (-720..720)"
+        ::= { mbnscTime 8 }
+
+    mbnscTimeLastReception OBJECT-TYPE
+        SYNTAX              Unsigned32
+        UNITS               "Seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Last received time (UTC).                            
+                            Seconds since 1.1.1970 00:00:00"
+        ::= { mbnscTime 9 }
+
+    mbnscTimeConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Time configuration changed command variable. 
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscTime 100 }
+
+    mbnscTimeConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscTime 101 }
+
+    mbnscTimeZone OBJECT IDENTIFIER ::= { mobaNetClocksV2 3 }
+
+    mbnscTimeZoneVersion OBJECT-TYPE
+        SYNTAX              Integer32 (1..255)
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Actual version internal time zone table"
+        ::= { mbnscTimeZone 1 }
+
+    mbnscTimeZoneNumber OBJECT-TYPE
+        SYNTAX              Integer32 (0..255)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Time zone 
+                            0: UTC
+                            1..64: See user manual, time zone table
+                            65..128: user defined time zone
+                            129..143: time zone server 1..15
+                            254: automatic time zone - e.g. UTC
+                            255: internal user defined time zone
+                            (SET only used for digital clocks)"
+        ::= { mbnscTimeZone 2 }
+
+    mbnscTimeZoneEntry1 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 3 }
+
+    mbnscTimeZoneEntry2 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 4 }
+
+    mbnscTimeZoneEntry3 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 5 }
+
+    mbnscTimeZoneEntry4 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 6 }
+
+    mbnscTimeZoneEntry5 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 7 }
+
+    mbnscTimeZoneEntry6 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 8 }
+
+    mbnscTimeZoneEntry7 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(18))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time Zone entry -> see special definition"
+        ::= { mbnscTimeZone 9 }
+
+    mbnscTimeZoneConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Time zone configuration changed command variable. 
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscTimeZone 100 }
+
+    mbnscTimeZoneConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscTimeZone 101 }
+
+    mbnscMode OBJECT IDENTIFIER ::= { mobaNetClocksV2 4 }
+
+    mbnscModeSwitchInfo OBJECT-TYPE
+        SYNTAX              Integer32
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Current switch settings
+                            (only analogue movements)"
+        ::= { mbnscMode 1 }
+
+    mbnscModeDisplayBrightness OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Display brightness for digital clocks
+                            1..30, A (Auto)"
+        ::= { mbnscMode 2 }
+
+    mbnscModeDisplayFormat OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Display format 12h/24h for digital clocks"
+        ::= { mbnscMode 3 }
+
+    mbnscModeDisplayAlternate OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Display alternating mode for digital clocks
+                            1: time continuously
+                            2: date cont.
+                            3: temperature cont. (sequence 6 sec. time, 3 sec. date for ECO-DC)
+                            4: stopwatch cont. (only DC clock)
+                            5: sequence 6 sec. time, 3 sec. date (only DC clock)
+                            6: sequence 8 sec. time, 3 sec. date, 3 sec. temperature (only DC clock)"
+        ::= { mbnscMode 4 }
+
+    mbnscModeNTP OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          not-accessible
+        STATUS              obsolete
+        DESCRIPTION         "NTP synchronisation mode for digital clocks"
+        ::= { mbnscMode 5 }
+
+    mbnscModeIRlock OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IR autolock time for digital clocks (only DC clock)
+                            1..60, U (autolock off)"
+        ::= { mbnscMode 6 }
+
+    mbnscModeTimeDispZeros OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Leading zeros time display for digital clocks (only DC clock)
+                            1: time with leading zero
+                            2: time without leading zero"
+        ::= { mbnscMode 7 }
+
+    mbnscModeDateDispZeros OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Leading zeros date display for digital clocks (only DC clock)
+                            1: date with leading zero
+                            2: date without leading zero"
+        ::= { mbnscMode 8 }
+
+    mbnscModeTempUnit OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Temperature unit for digital clocks (only DC clock)
+                            C: Celsius
+                            F: Fahrenheit"
+        ::= { mbnscMode 9 }
+
+    mbnscModeClockOpMode OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Operation mode for digital clocks (only DC clock)
+                            0: normal mode
+                            1: special mode 1
+                            2: special mode 2"
+        ::= { mbnscMode 10 }
+
+    mbnscModeNWParam OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          not-accessible
+        STATUS              obsolete
+        DESCRIPTION         "Network parameter setting mode for digital clocks"
+        ::= { mbnscMode 11 }
+
+    mbnscModeDispDerating OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Display current deration setting for digital clocks
+                            (see service menu definition)"
+        ::= { mbnscMode 12 }
+
+    mbnscModeLightCorr OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Light measurement correction for digital clocks
+                            (see service menu definition)"
+        ::= { mbnscMode 13 }
+
+
+    --
+    -- Group for additional digital clock modes
+    --
+    mbnscAdditionalDigitalClockModes  OBJECT IDENTIFIER ::= { mbnscMode 30 }
+
+	--
+    -- Temperature Sensors "Sensors"
+    --
+    mbnscSensors   OBJECT IDENTIFIER ::= { mbnscAdditionalDigitalClockModes 1 }
+
+    mbnscSensorsTempActivation OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Temperature sensor activation
+                             1: DS18B20
+                             3: TME (only sensor 1)
+                             4: TME (Sensors 1 and 2)" 
+        ::= { mbnscSensors 1 }
+
+	mbnscSensorsTemp1IPAddr OBJECT-TYPE
+        SYNTAX              IpAddress
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP network address (xxx.xxx.xxx.xxx) of the 
+                             sensor 1
+							 (SET only used for digital clocks)"
+        ::= { mbnscSensors 2 }
+
+	
+	mbnscSensorsTemp2IPAddr OBJECT-TYPE
+        SYNTAX              IpAddress
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "IP network address (xxx.xxx.xxx.xxx) of the 
+                             sensor 2
+							 (SET only used for digital clocks)"
+        ::= { mbnscSensors 3 }
+
+	mbnscSensorsConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Mode configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscSensors 100 }
+
+    mbnscSensorsConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscSensors 101 }
+    --
+    -- Digital clock "DA"
+    --
+    mbnscDA   OBJECT IDENTIFIER ::= { mbnscAdditionalDigitalClockModes 2 }
+
+    mbnscDASecondCircleDisplay OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "The second circle display mode
+                             1: Accumulating ring of seconds marker
+                             2: Take actual second from full shining circle step by step
+                             3: Full shining circle, actual second off
+                             4: Three shining seconds, the first is showing actual second
+                             5: Two shining seconds, the first is showing actual second"
+        ::= { mbnscDA 1 }
+
+    mbnscDAConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Mode configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscDA 100 }
+
+    mbnscDAConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscDA 101 }
+
+
+    --
+    -- Digital clock "DK"
+    --
+    mbnscDK  OBJECT IDENTIFIER ::= { mbnscAdditionalDigitalClockModes 3 }
+
+    mbnscDKFirstLanguage OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "First language selection
+                            1: Czech
+                            2: Slovak
+                            3: English
+                            4: German
+                            5: ...
+                            (see manual for full language list)"
+        ::= { mbnscDK 1 }
+
+    mbnscDKSecondLanguage OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Second language selection
+                            1: Czech
+                            2: Slovak
+                            3: English
+                            4: German
+                            5: ...
+                            (see manual for full language list)"
+        ::= { mbnscDK 2 }
+
+    mbnscDKThirdLanguage OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Third language selection
+                            1: Czech
+                            2: Slovak
+                            3: English
+                            4: German
+                            5: ...
+                            (see manual for full language list)"
+        ::= { mbnscDK 3 }
+
+	mbnscDKTempUnitSecondLang OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Temperature units for second selected language
+                            C: Celsius
+                            F: Fahrenheit"
+        ::= { mbnscDK 4 }
+
+	mbnscDKTempUnitThirdLang OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Temperature units for third selected language
+                            C: Celsius
+                            F: Fahrenheit"
+        ::= { mbnscDK 5 }
+
+	mbnscDKAutoLangSwitchOver OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Language switch mode for automatic language 
+							 switching over in one display alternating cycle
+                            A: all languages
+                            S: simple language"
+        ::= { mbnscDK 6 }
+
+	mbnscDKNumOfCharsForWeekday OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Number of characters used for weekday names
+                            2: two characters
+                            3: three characters"
+        ::= { mbnscDK 7 }
+
+	mbnscDKNamesFormatDisplay OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Weekday and month display format
+                            1: first capital
+                            2: all capitals"
+        ::= { mbnscDK 8 }
+
+	mbnscDKTemp1DescriptEnable OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Display of description for first measured temperature
+                            N/Y"
+        ::= { mbnscDK 9 }
+
+	mbnscDKTemp1Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..5))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for first measured temperature"
+        ::= { mbnscDK 10 }
+	
+	mbnscDKTemp2DescriptEnable OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Display of description for second measured temperature
+                            N/Y"
+        ::= { mbnscDK 11 }
+
+	mbnscDKTemp2Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..5))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for second measured temperature"
+        ::= { mbnscDK 12 }
+
+	mbnscDKWorldTimeZone1 OBJECT-TYPE
+        SYNTAX              Integer32 (0..255)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Index of time zone for world time zone 1 
+                            0: UTC
+                            1..64: See user manual, time zone table
+                            65..128: user defined time zone
+                            129..143: time zone server 1..15
+                            255: none
+                            (SET only used for digital clocks)"
+        ::= { mbnscDK 13 }
+
+	mbnscDKWorldTimeZone1Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..8))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for World time zone 1"
+        ::= { mbnscDK 14 }
+
+	mbnscDKWorldTimeZone2 OBJECT-TYPE
+        SYNTAX              Integer32 (0..255)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Index of time zone for world time zone 2 
+                            0: UTC
+                            1..64: See user manual, time zone table
+                            65..128: user defined time zone
+                            129..143: time zone server 1..15
+                            255: none
+                            (SET only used for digital clocks)"
+        ::= { mbnscDK 15 }
+
+	mbnscDKWorldTimeZone2Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..8))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for World time zone 2"
+        ::= { mbnscDK 16 }
+
+	mbnscDKWorldTimeZone3 OBJECT-TYPE
+        SYNTAX              Integer32 (0..255)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Index of time zone for world time zone 3 
+                            0: UTC
+                            1..64: See user manual, time zone table
+                            65..128: user defined time zone
+                            129..143: time zone server 1..15
+                            255: none
+                            (SET only used for digital clocks)"
+        ::= { mbnscDK 17 }
+
+	mbnscDKWorldTimeZone3Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..8))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for World time zone 3"
+        ::= { mbnscDK 18 }
+
+	mbnscDKWorldTimeZone4 OBJECT-TYPE
+        SYNTAX              Integer32 (0..255)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Index of time zone for world time zone 4 
+                            0: UTC
+                            1..64: See user manual, time zone table
+                            65..128: user defined time zone
+                            129..143: time zone server 1..15
+                            255: none
+                            (SET only used for digital clocks)"
+        ::= { mbnscDK 19 }
+
+	mbnscDKWorldTimeZone4Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..8))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for World time zone 4"
+        ::= { mbnscDK 20 }
+
+	mbnscDKWorldTimeZone5 OBJECT-TYPE
+        SYNTAX              Integer32 (0..255)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Index of time zone for world time zone 5 
+                            0: UTC
+                            1..64: See user manual, time zone table
+                            65..128: user defined time zone
+                            129..143: time zone server 1..15
+                            255: none
+                            (SET only used for digital clocks)"
+        ::= { mbnscDK 21 }
+
+	mbnscDKWorldTimeZone5Description OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..8))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Description text for World time zone 5"
+        ::= { mbnscDK 22 }
+	
+	mbnscDKAutoTimeZoneSwitchOver OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..2))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "World time switch mode for automatic time zone
+							 switching over in one display alternating cycle
+                            A: all world time zones
+                            S: simple world time zone"
+        ::= { mbnscDK 23 }
+        
+    mbnscDKConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Mode configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscDK 100 }
+
+    mbnscDKConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscDK 101 }
+
+
+    mbnscModeConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Mode configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscMode 100 }
+
+    mbnscModeConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscMode 101 }
+        
+        
+    --
+    -- Group for additional interface modes
+    --
+    mbnscAdditionalInterfaceModes  OBJECT IDENTIFIER ::= { mbnscMode 40 }    
+    
+    --
+    -- Network-MOBALine-Interface "NMI"
+    --
+    mbnscNMI   OBJECT IDENTIFIER ::= { mbnscAdditionalInterfaceModes 1 }
+
+    mbnscNMIDCFCurrentLoop OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                off (0),
+                                on (1)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Operation mode of the DCF77 current loop.  
+                            
+                            0: OFF 
+                            1: ON"
+        ::= { mbnscNMI 1 }
+        
+    mbnscNMILineDriver OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                off (0),
+                                mobaline (1),
+                                activdcf (2)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Operation mode of the line driver.  
+                            
+                            0: OFF 
+                            1: MOBALine
+                            2: Active DCF"
+        ::= { mbnscNMI 2 }
+        
+    mbnscNMIMOBALineMode OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                normal (0),
+                                command12h (1),
+                                clockidcommand (2)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Operation mode of MOBALine.  
+                            
+                            0: normal operation
+                            1: 12:00 mode, sideclocks shows 12:00 position
+                            2: clock-id mode, sideclocks shows their ids if configured"
+        ::= { mbnscNMI 3 }
+        
+    mbnscNMIMOBALineMinuteHandMode OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                minutestep (0),
+                                halfminutestep (1),
+                                continuous (2)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Minute hand mode operation of MOBALine.  
+                            
+                            0: minute step mode
+                            1: half minute step mode
+                            2: continuous mode"
+        ::= { mbnscNMI 4 }
+        
+    mbnscNMIActiveDCFMode OBJECT-TYPE
+        SYNTAX              INTEGER {
+                                mode1 (1),
+                                mode2 (2),
+                                mode3 (3),
+                                mode4 (4),
+                                mode5 (5),
+                                mode6 (6)
+                            }
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Operation mode of Active DCF.  
+                            
+                            1: Mode 1
+                            2: Mode 2 
+                            3: Mode 3 
+                            4: Mode 4
+                            5: Mode 5
+                            6: Mode 6"
+        ::= { mbnscNMI 5 }
+        
+	mbnscNMIConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "General configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscNMI 100 }
+
+    mbnscNMIConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscNMI 101 }
+		
+    --
+    -- Group for suprevised MOBALine sideclock states 
+    --
+    mbnscNMISideClockState   OBJECT IDENTIFIER ::= { mbnscNMI 20 }
+    
+    mbnscNMISideClock1 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 1  
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 1 }
+    
+    mbnscNMISideClock2 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 2 
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 2 }
+        
+    mbnscNMISideClock3 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 3  
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 3 }
+        
+    mbnscNMISideClock4 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 4
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 4 }
+        
+    mbnscNMISideClock5 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 5
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 5 }
+        
+    mbnscNMISideClock6 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 6
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 6 }
+        
+    mbnscNMISideClock7 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 7
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 7 }
+        
+    mbnscNMISideClock8 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 8
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 8 }
+        
+    mbnscNMISideClock9 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 9
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 9 }
+        
+    mbnscNMISideClock10 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 10
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 10 }
+        
+    mbnscNMISideClock11 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 11
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 11 }
+        
+    mbnscNMISideClock12 OBJECT-TYPE
+    SYNTAX              INTEGER {
+                            notconfigured (0),
+                            clockok (3),
+                            clockerror (5)
+                        }
+    MAX-ACCESS          read-only
+    STATUS              current
+    DESCRIPTION         "State of side clock 12
+                        
+                        0: Clock not configured 
+                        3: Clock OK
+                        5: Clock error"
+    ::= { mbnscNMISideClockState 12 }
+    
+    
+
+    mbnscGeneral OBJECT IDENTIFIER ::= { mobaNetClocksV2 5 }
+
+    mbnscGeneralType OBJECT-TYPE
+        SYNTAX              Integer32 (1..14)
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Network slave clock type 
+                            1  Network Clock Interface NCI
+                            2  Wireless Time Distribution WTD 868-T
+                            3  NTP movement SEN 00
+                            4  NTP movement NBU 190
+                            5  Digital Clock ECO-DC
+                            6  Digital Clock DC3
+                            7  NTP movement SEN 40
+                            8  NTP movement SAN 40
+                            9  NTP digital clock DA
+                            10 NTP calendar digital clock DK2
+                            11 Network MOBALine Interface NMI
+                            12 NTP clock TREND
+                            13 NTP clock TREND double sided
+                            14 NTP in- and outdoor digital clock DSC"
+        ::= { mbnscGeneral 1 }
+
+    mbnscGeneralName OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(0..20))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Device name (identifier)"
+        ::= { mbnscGeneral 2 }
+
+    mbnscGeneralFirmwareNumber OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(6))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Article number of the firmware."
+        ::= { mbnscGeneral 3 }
+
+    mbnscGeneralFirmwareVer OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(4))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Firmware version."
+        REFERENCE           "OFS_PROD_FIRMW_VER, 27, VARTYPE_STRING"
+        ::= { mbnscGeneral 4 }
+
+    mbnscGeneralStatus OBJECT-TYPE
+        SYNTAX              MOBAFlags64
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Network slave clock status (64bit). Internal state of the
+                            network slave clock. Used for maintenance only.
+                            
+                            Bit 00 : time ok
+                            Bit 01 : 12h position
+                            Bit 02 : Reserved
+                            Bit 03 : Reserved
+                            Bit 04 : Reserved
+                            Bit 05 : Reserved
+                            Bit 06 : Reserved
+                            Bit 07 : Reserved
+                            Bit 08 : Reserved
+                            Bit 09 : Reserved
+                            Bit 10 : Reserved
+                            Bit 11 : Reserved 
+                            Bit 12 : Reserved
+                            Bit 13 : Reserved
+                            Bit 14 : Reserved 
+                            Bit 15 : Reserved 
+                            Bit 16 : Reserved 
+                            Bit 17 : Reserved 
+                            Bit 18 : Reserved 
+                            Bit 19 : Reserved 
+                            Bit 20 : Reserved 
+                            Bit 21 : Reserved 
+                            Bit 22 : Reserved
+                            Bit 23 : Reserved
+                            Bit 24 : Reserved
+                            Bit 25 : Reserved
+                            Bit 26 : Reserved
+                            Bit 27 : Reserved
+                            Bit 28 : Reserved
+                            Bit 29 : Reserved
+                            Bit 30 : Reserved 
+                            Bit 31 : Reserved
+                            Bit32..63 not used"
+        ::= { mbnscGeneral 5 }
+
+    mbnscGeneralAlarms OBJECT-TYPE
+        SYNTAX              MOBAAlarm64
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Alarm state of the network slave clock
+                            Bit00=Synchronization
+                            Bit01=Power supply
+                            Bit02=Slave (cascade)
+                            Bit03=Illumination
+                            Bit04=Hands position (sec)
+                            Bit05=Hands position (m/h)
+                            Bit06=Restart
+                            Bit07=CommError
+                            Bit08=Time zone
+                            Bit09=Reserved
+                            Bit10=Reserved
+                            Bit11=Reserved
+                            Bit12=Reserved
+                            Bit13=Reserved
+                            Bit14=Reserved
+                            Bit15=Reserved
+                            Bit16=Reserved
+                            Bit17=Reserved
+                            Bit18=Reserved
+                            Bit19=Reserved
+                            Bit20=Reserved
+                            Bit21=Reserved
+                            Bit22=Reserved
+                            Bit23=Reserved
+                            Bit24=Reserved
+                            Bit25=Reserved
+                            Bit26=Reserved
+                            Bit27=Reserved
+                            Bit28=Reserved
+                            Bit29=Reserved
+                            Bit30=Reserved
+                            Bit31=Reserved
+                            Bit32..Bit63=Device type specific error"
+        ::= { mbnscGeneral 6 }
+
+    mbnscGeneralSlaveInfo1 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(26))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Info from slave 1
+                              Byte 0..5 MAC
+                              Byte 6..11 Slave local time
+                              Byte 12..17 SW-number
+                              Byte 18..21 SW-version
+                              Byte 22 state
+                              Byte 23 reserved
+                              Byte 24 error
+                              Byte 25 reserved"
+        ::= { mbnscGeneral 7 }
+
+    mbnscGeneralSlaveInfo2 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(26))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Info from slave 2
+                              Byte 0..5 MAC
+                              Byte 6..11 Slave local time
+                              Byte 12..17 SW-number
+                              Byte 18..21 SW-version
+                              Byte 22 state
+                              Byte 23 reserved
+                              Byte 24 error
+                              Byte 25 reserved"
+        ::= { mbnscGeneral 8 }
+
+    mbnscGeneralSlaveInfo3 OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(26))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Info from slave 3
+                              Byte 0..5 MAC
+                              Byte 6..11 Slave local time
+                              Byte 12..17 SW-number
+                              Byte 18..21 SW-version
+                              Byte 22 state
+                              Byte 23 reserved
+                              Byte 24 error
+                              Byte 25 reserved"
+        ::= { mbnscGeneral 9 }
+
+    mbnscGeneralConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "General configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscGeneral 100 }
+
+    mbnscGeneralConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscGeneral 101 }
+
+    mbnscSupervision OBJECT IDENTIFIER ::= { mobaNetClocksV2 6 }
+
+    mbnscSNMPManager1 OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "String with IPv4 or IPv6 address (e.g 192.168.3.4 
+                             or FD03:2345:2345:2345::231) of the SNMP manager 1"
+        ::= { mbnscSupervision 1 }
+
+    mbnscSNMPManager2 OBJECT-TYPE
+        SYNTAX              DisplayString (SIZE(1..40))
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "String with IPv4 or IPv6 address (e.g 192.168.3.4 
+                             or FD03:2345:2345:2345::231) of the SNMP manager 2"
+        ::= { mbnscSupervision 2 }
+
+    mbnscSNMPTrapAliveMsgInterval OBJECT-TYPE
+        SYNTAX              Unsigned32 (0 | 1..1440)
+        UNITS               "minutes (min)"
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Time interval to send the alive message to the
+                            trap listener stations.
+                            0: Alive message disabled >0: Alive message enabled
+                            Range: 1 ... 1440 minutes"
+        ::= { mbnscSupervision 3 }
+
+    mbnscSNMPConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "SNMP / supervision  services configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscSupervision 100 }
+
+    mbnscSNMPConfigChangedTime OBJECT-TYPE
+        SYNTAX              TimeTicks
+        UNITS               "Time ticks in 1/100th seconds"
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Time of the last configuration change."
+        ::= { mbnscSupervision 101 }
+
+    mbnscCommand OBJECT IDENTIFIER ::= { mobaNetClocksV2 7 }
+
+    mbnscCommand12Pos OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Mode of the analogue clock:
+                             0=run, 1=12h position"
+        ::= { mbnscCommand 1 }
+
+    mbnscCommandSWReset OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Command SW reset if set to 1"
+        ::= { mbnscCommand 2 }
+
+    mbnscCommandFactorySetting OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "Restore factory settings if set to 1"
+        ::= { mbnscCommand 3 }
+
+    mbnscCommandFirmwUpd OBJECT-TYPE
+        SYNTAX              OCTET STRING (SIZE(10))
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Command to start FW update"
+        ::= { mbnscCommand 4 }
+
+    mbnscCommandExtContact OBJECT-TYPE
+        SYNTAX              Integer32 (0..1)
+        MAX-ACCESS          read-only
+        STATUS              current
+        DESCRIPTION         "Set external contact"
+        ::= { mbnscCommand 5 }
+
+    mbnscCommandConfigCmd OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..2)
+        MAX-ACCESS          read-write
+        STATUS              current
+        DESCRIPTION         "SNMP / supervision  services configuration changed command variable.
+                            0: Not defined
+                            1: SNMP has changed the configuration (possible restart of device)
+                            2: SNMP requests to restore the old configuration"
+        ::= { mbnscCommand 100 }
+
+    mbnscSnmpConfig OBJECT IDENTIFIER ::= { mobaNetClocksV2 9 }
+
+    mbnscSnmpCurrentAlarmInfo OBJECT IDENTIFIER ::= { mbnscSnmpConfig 1 }
+
+    mbnscTrapAlMsgErrorNr OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..63)
+        MAX-ACCESS          accessible-for-notify
+        STATUS              current
+        DESCRIPTION         "Error number of the trap message."
+        ::= { mbnscSnmpCurrentAlarmInfo 1 }
+
+    mbnscTrapAlMsgErrorState OBJECT-TYPE
+        SYNTAX              Unsigned32 (0..1)
+        MAX-ACCESS          accessible-for-notify
+        STATUS              current
+        DESCRIPTION         "Error state of the trap message."
+        ::= { mbnscSnmpCurrentAlarmInfo 2 }
+
+    mbnscTrapAlMsgErrorTime OBJECT-TYPE
+        SYNTAX              Unsigned32
+        UNITS               "Seconds"
+        MAX-ACCESS          accessible-for-notify
+        STATUS              current
+        DESCRIPTION         "Error time of the trap message.  
+                            
+                            Seconds since 1.1.1970 00:00:00"
+        ::= { mbnscSnmpCurrentAlarmInfo 3 }
+
+    mbnscTraps OBJECT IDENTIFIER ::= { mobaNetClocksV2 10 }
+
+    mbnscTrapsAlarm NOTIFICATION-TYPE
+        OBJECTS	{
+        		mbnscTrapAlMsgErrorNr,
+        		mbnscTrapAlMsgErrorState,
+        		mbnscTrapAlMsgErrorTime
+        	}
+        STATUS		    current
+        DESCRIPTION         "Alarm trap with attached (binded variables) alarm
+                            information.
+                            
+                            mbnscTrapAlMsgErrorNr, mbnscTrapAlMsgErrorState,
+                            mbnscTrapAlMsgErrorTime"
+        ::= { mbnscTraps 1 }
+
+    mbnscTrapsAlive NOTIFICATION-TYPE
+        OBJECTS	{
+        		mbnscGeneralStatus,
+        		mbnscGeneralAlarms
+        	}
+        STATUS		    current
+        DESCRIPTION         "Device alive trap. Will be send in the configured
+                            interval. Attached are the variables mbnscGeneralStatus
+                            and mbnscGeneralAlarms."
+        ::= { mbnscTraps 2 }
+
+    mbnscMIBCompliance OBJECT IDENTIFIER ::= { mbnscMIB 1 }
+
+    mbnscMIBCompliances MODULE-COMPLIANCE
+        STATUS		    current
+        DESCRIPTION         "Please replace this text with your description."
+
+        MODULE  -- this module
+                GROUP    mbnscGrpNBU190
+                DESCRIPTION         "Parameters for NBU 190 movement"
+
+                GROUP    mbnscGrpSEN40
+                DESCRIPTION         "Parameters for SEN 40 movement"
+
+                GROUP    mbnscGrpDC
+                DESCRIPTION         "Parameters for DC digital clock"
+                GROUP    mbnscGrpECODC
+                
+                DESCRIPTION         "Parameters for ECO DC digital clock"
+
+                GROUP    mbnscGrpDA
+                DESCRIPTION         "Parameters for DA digital clock"
+
+                GROUP    mbnscGrpDK
+                DESCRIPTION         "Parameters for DK digital clock"
+                
+                GROUP    mbnscGrpNMI
+                DESCRIPTION         "Parameters for Network-MOBALine-Interface NMI"
+
+                GROUP    mbnscGrpNotUsedParameters
+        	DESCRIPTION         "Parameters not yet used in any other group"
+
+
+        ::= { mbnscMIBCompliance 1 }
+
+
+    mbnscMIBGroups OBJECT IDENTIFIER ::= { mbnscMIB 2 }
+
+    mbnscAllNotifications NOTIFICATION-GROUP
+        NOTIFICATIONS       {
+                                mbnscTrapsAlarm,
+                                mbnscTrapsAlive
+                            }
+        STATUS		    current
+        DESCRIPTION         "This automatically created notification group
+                            contains all notifications that do not belong
+                            to any other NOTIFICATION-GROUP"
+        ::= { mbnscMIBGroups 1 }
+
+    mbnscGrpNBU190 OBJECT-GROUP
+        OBJECTS	{
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,    		      		
+        		mbnscTimeNTP1,
+        		mbnscTimeNTP2,
+        		mbnscTimeNTP3,
+        		mbnscTimeNTP4,
+        		mbnscTimeNTPcurrent,
+        		mbnscTimeNTPpollIntervall,
+        		mbnscTimeDeviceTime,
+        		mbnscTimeLocOffset,
+        		mbnscTimeLastReception,
+        		mbnscTimeConfigCmd,
+        		mbnscTimeConfigChangedTime,
+        		mbnscTimeZoneVersion,
+        		mbnscTimeZoneNumber,
+        		mbnscTimeZoneConfigCmd,
+        		mbnscTimeZoneConfigChangedTime,
+        		mbnscModeConfigCmd,
+        		mbnscModeConfigChangedTime,
+        		mbnscGeneralType,
+        		mbnscGeneralName,
+        		mbnscGeneralFirmwareNumber,
+        		mbnscGeneralFirmwareVer,
+        		mbnscGeneralStatus,
+        		mbnscGeneralAlarms,
+        		mbnscGeneralSlaveInfo1,
+        		mbnscGeneralSlaveInfo2,
+        		mbnscGeneralSlaveInfo3,
+        		mbnscGeneralConfigCmd,
+        		mbnscGeneralConfigChangedTime,
+        		mbnscSNMPManager1,
+        		mbnscSNMPManager2,
+        		mbnscSNMPTrapAliveMsgInterval,
+        		mbnscSNMPConfigCmd,
+        		mbnscSNMPConfigChangedTime,
+        		mbnscCommand12Pos,
+        		mbnscCommandSWReset,
+        		mbnscCommandConfigCmd,
+        		mbnscTrapAlMsgErrorNr,
+        		mbnscTrapAlMsgErrorState,
+        		mbnscTrapAlMsgErrorTime
+        	}
+        STATUS		    current
+        DESCRIPTION         "All parameters used for NBU 190 movement"
+        ::= { mbnscMIBGroups 2 }
+
+    mbnscGrpSEN40 OBJECT-GROUP
+        OBJECTS	{
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,  
+        		mbnscTimeNTP1,
+        		mbnscTimeNTP2,
+        		mbnscTimeNTP3,
+        		mbnscTimeNTP4,
+        		mbnscTimeNTPcurrent,
+        		mbnscTimeNTPpollIntervall,
+        		mbnscTimeDeviceTime,
+        		mbnscTimeLocOffset,
+        		mbnscTimeLastReception,
+        		mbnscTimeConfigCmd,
+        		mbnscTimeConfigChangedTime,
+        		mbnscTimeZoneVersion,
+        		mbnscTimeZoneNumber,
+        		mbnscTimeZoneConfigCmd,
+        		mbnscTimeZoneConfigChangedTime,
+        		mbnscModeConfigCmd,
+        		mbnscModeConfigChangedTime,
+        		mbnscGeneralType,
+        		mbnscGeneralName,
+        		mbnscGeneralFirmwareNumber,
+        		mbnscGeneralFirmwareVer,
+        		mbnscGeneralStatus,
+        		mbnscGeneralAlarms,
+        		mbnscGeneralSlaveInfo1,
+        		mbnscGeneralConfigCmd,
+        		mbnscGeneralConfigChangedTime,
+        		mbnscSNMPManager1,
+        		mbnscSNMPManager2,
+        		mbnscSNMPTrapAliveMsgInterval,
+        		mbnscSNMPConfigCmd,
+        		mbnscSNMPConfigChangedTime,
+        		mbnscCommand12Pos,
+        		mbnscCommandSWReset,
+        		mbnscCommandConfigCmd,
+        		mbnscTrapAlMsgErrorNr,
+        		mbnscTrapAlMsgErrorState,
+        		mbnscTrapAlMsgErrorTime
+        	}
+        STATUS		    current
+        DESCRIPTION         "All parameters used for SEN 40 movement"
+        ::= { mbnscMIBGroups 3 }
+
+	mbnscGrpDC OBJECT-GROUP
+        OBJECTS	{
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,  
+        		mbnscTimeNTP1,
+        		mbnscTimeNTP2,
+        		mbnscTimeNTP3,
+        		mbnscTimeNTP4,
+        		mbnscTimeNTPcurrent,
+        		mbnscTimeNTPpollIntervall,
+        		mbnscTimeDeviceTime,
+        		mbnscTimeLocOffset,
+        		mbnscTimeLastReception,
+        		mbnscTimeConfigCmd,
+        		mbnscTimeConfigChangedTime,
+        		mbnscTimeZoneVersion,
+        		mbnscTimeZoneNumber,
+        		mbnscTimeZoneConfigCmd,
+        		mbnscTimeZoneConfigChangedTime,
+        		mbnscModeDisplayBrightness,
+        		mbnscModeDisplayFormat,
+        		mbnscModeDisplayAlternate,
+        		mbnscModeIRlock,
+        		mbnscModeTimeDispZeros,
+        		mbnscModeDateDispZeros,
+        		mbnscModeTempUnit,
+        		mbnscModeClockOpMode,
+        		mbnscModeDispDerating,
+        		mbnscModeLightCorr,
+        		mbnscModeConfigCmd,
+        		mbnscModeConfigChangedTime,
+						mbnscSensorsTempActivation,
+						mbnscSensorsTemp1IPAddr,
+						mbnscSensorsTemp2IPAddr,
+						mbnscSensorsConfigCmd,
+						mbnscSensorsConfigChangedTime,
+        		mbnscGeneralType,
+        		mbnscGeneralName,
+        		mbnscGeneralFirmwareNumber,
+        		mbnscGeneralFirmwareVer,
+        		mbnscGeneralStatus,
+        		mbnscGeneralAlarms,
+        		mbnscGeneralConfigCmd,
+        		mbnscGeneralConfigChangedTime,
+        		mbnscSNMPManager1,
+        		mbnscSNMPManager2,
+        		mbnscSNMPTrapAliveMsgInterval,
+        		mbnscSNMPConfigCmd,
+        		mbnscSNMPConfigChangedTime,
+        		mbnscCommandSWReset,
+        		mbnscCommandConfigCmd,
+        		mbnscTrapAlMsgErrorNr,
+        		mbnscTrapAlMsgErrorState,
+        		mbnscTrapAlMsgErrorTime
+        	}
+        STATUS		    current
+        DESCRIPTION         "All parameters used for DC digital clock"
+        ::= { mbnscMIBGroups 4 }      
+        
+    mbnscGrpECODC OBJECT-GROUP
+        OBJECTS	{
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,  
+        		mbnscTimeNTP1,
+        		mbnscTimeNTP2,
+        		mbnscTimeNTP3,
+        		mbnscTimeNTP4,
+        		mbnscTimeNTPcurrent,
+        		mbnscTimeNTPpollIntervall,
+        		mbnscTimeDeviceTime,
+        		mbnscTimeLocOffset,
+        		mbnscTimeLastReception,
+        		mbnscTimeConfigCmd,
+        		mbnscTimeConfigChangedTime,
+        		mbnscTimeZoneVersion,
+        		mbnscTimeZoneNumber,
+        		mbnscTimeZoneConfigCmd,
+        		mbnscTimeZoneConfigChangedTime,
+        		mbnscModeDisplayBrightness,
+        		mbnscModeDisplayFormat,
+        		mbnscModeDisplayAlternate,
+        		mbnscModeDispDerating,
+        		mbnscModeLightCorr,
+        		mbnscModeConfigCmd,
+        		mbnscModeConfigChangedTime,
+        		mbnscGeneralType,
+        		mbnscGeneralName,
+        		mbnscGeneralFirmwareNumber,
+        		mbnscGeneralFirmwareVer,
+        		mbnscGeneralStatus,
+        		mbnscGeneralAlarms,
+        		mbnscGeneralConfigCmd,
+        		mbnscGeneralConfigChangedTime,
+        		mbnscSNMPManager1,
+        		mbnscSNMPManager2,
+        		mbnscSNMPTrapAliveMsgInterval,
+        		mbnscSNMPConfigCmd,
+        		mbnscSNMPConfigChangedTime,
+        		mbnscCommandSWReset,
+        		mbnscCommandConfigCmd,
+        		mbnscTrapAlMsgErrorNr,
+        		mbnscTrapAlMsgErrorState,
+        		mbnscTrapAlMsgErrorTime
+        	}
+        STATUS		    current
+        DESCRIPTION         "All parameters used for ECO DC digital clock"
+
+        ::= { mbnscMIBGroups 5 }
+    mbnscGrpDA OBJECT-GROUP
+        OBJECTS {
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,  
+						mbnscTimeNTP1,
+						mbnscTimeNTP2,
+						mbnscTimeNTP3,
+						mbnscTimeNTP4,
+						mbnscTimeNTPcurrent,
+						mbnscTimeNTPpollIntervall,
+						mbnscTimeDeviceTime,
+						mbnscTimeLocOffset,
+						mbnscTimeLastReception,
+						mbnscTimeConfigCmd,
+						mbnscTimeConfigChangedTime,
+						mbnscTimeZoneVersion,
+						mbnscTimeZoneNumber,
+						mbnscTimeZoneConfigCmd,
+						mbnscTimeZoneConfigChangedTime,
+						mbnscModeDisplayBrightness,
+						mbnscModeDisplayFormat,
+						mbnscModeDisplayAlternate,
+						mbnscModeIRlock,
+						mbnscModeTimeDispZeros,
+						mbnscModeDateDispZeros,
+						mbnscModeTempUnit,
+						mbnscModeClockOpMode,
+						mbnscModeDispDerating,
+						mbnscModeLightCorr,
+						mbnscModeConfigCmd,
+						mbnscModeConfigChangedTime,
+						mbnscSensorsTempActivation,
+						mbnscSensorsTemp1IPAddr,
+						mbnscSensorsTemp2IPAddr,
+						mbnscSensorsConfigCmd,
+						mbnscSensorsConfigChangedTime,
+						mbnscDASecondCircleDisplay,
+						mbnscDAConfigCmd,
+						mbnscDAConfigChangedTime,
+						mbnscGeneralType,
+						mbnscGeneralName,
+						mbnscGeneralFirmwareNumber,
+						mbnscGeneralFirmwareVer,
+						mbnscGeneralStatus,
+						mbnscGeneralAlarms,
+						mbnscGeneralConfigCmd,
+						mbnscGeneralConfigChangedTime,
+						mbnscSNMPManager1,
+						mbnscSNMPManager2,
+						mbnscSNMPTrapAliveMsgInterval,
+						mbnscSNMPConfigCmd,
+						mbnscSNMPConfigChangedTime,
+						mbnscCommandSWReset,
+						mbnscCommandConfigCmd,
+						mbnscTrapAlMsgErrorNr,
+						mbnscTrapAlMsgErrorState,
+						mbnscTrapAlMsgErrorTime
+          }
+        STATUS              current
+        DESCRIPTION         "All parameters used for DA digital clock"
+
+        ::= { mbnscMIBGroups 6 }
+
+    mbnscGrpDK OBJECT-GROUP
+        OBJECTS {
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,  
+						mbnscTimeNTP1,
+						mbnscTimeNTP2,
+						mbnscTimeNTP3,
+						mbnscTimeNTP4,
+						mbnscTimeNTPcurrent,
+						mbnscTimeNTPpollIntervall,
+						mbnscTimeDeviceTime,
+						mbnscTimeLocOffset,
+						mbnscTimeLastReception,
+						mbnscTimeConfigCmd,
+						mbnscTimeConfigChangedTime,
+						mbnscTimeZoneVersion,
+						mbnscTimeZoneNumber,
+						mbnscTimeZoneConfigCmd,
+						mbnscTimeZoneConfigChangedTime,
+						mbnscModeDisplayBrightness,
+						mbnscModeDisplayFormat,
+						mbnscModeDisplayAlternate,
+						mbnscModeIRlock,
+						mbnscModeTimeDispZeros,
+						mbnscModeDateDispZeros,
+						mbnscModeTempUnit,
+						mbnscModeClockOpMode,
+						mbnscModeDispDerating,
+						mbnscModeLightCorr,
+						mbnscModeConfigCmd,
+						mbnscModeConfigChangedTime,
+						mbnscSensorsTempActivation,
+						mbnscSensorsTemp1IPAddr,
+						mbnscSensorsTemp2IPAddr,
+						mbnscSensorsConfigCmd,
+						mbnscSensorsConfigChangedTime,
+						mbnscDKFirstLanguage,
+						mbnscDKSecondLanguage,
+						mbnscDKThirdLanguage,
+						mbnscDKTempUnitSecondLang,
+						mbnscDKTempUnitThirdLang,
+						mbnscDKAutoLangSwitchOver,
+						mbnscDKNumOfCharsForWeekday,
+						mbnscDKNamesFormatDisplay,
+						mbnscDKTemp1DescriptEnable,
+						mbnscDKTemp1Description,
+						mbnscDKTemp2DescriptEnable,
+						mbnscDKTemp2Description,
+						mbnscDKWorldTimeZone1,
+						mbnscDKWorldTimeZone1Description,
+						mbnscDKWorldTimeZone2,
+						mbnscDKWorldTimeZone2Description,
+						mbnscDKWorldTimeZone3,
+						mbnscDKWorldTimeZone3Description,
+						mbnscDKWorldTimeZone4,
+						mbnscDKWorldTimeZone4Description,
+						mbnscDKWorldTimeZone5,
+						mbnscDKWorldTimeZone5Description,
+						mbnscDKAutoTimeZoneSwitchOver,
+						mbnscDKConfigCmd,
+						mbnscDKConfigChangedTime,
+						mbnscGeneralType,
+						mbnscGeneralName,
+						mbnscGeneralFirmwareNumber,
+						mbnscGeneralFirmwareVer,
+						mbnscGeneralStatus,
+						mbnscGeneralAlarms,
+						mbnscGeneralConfigCmd,
+						mbnscGeneralConfigChangedTime,
+						mbnscSNMPManager1,
+						mbnscSNMPManager2,
+						mbnscSNMPTrapAliveMsgInterval,
+						mbnscSNMPConfigCmd,
+						mbnscSNMPConfigChangedTime,
+						mbnscCommandSWReset,
+						mbnscCommandConfigCmd,
+						mbnscTrapAlMsgErrorNr,
+						mbnscTrapAlMsgErrorState,
+						mbnscTrapAlMsgErrorTime
+          }
+        STATUS              current
+        DESCRIPTION         "All parameters used for DK digital clock"
+        ::= { mbnscMIBGroups 7 }
+        
+        mbnscGrpNMI OBJECT-GROUP
+        OBJECTS	{
+						mbnscNetGenMAC,
+						mbnscNetGenIPMode,
+						mbnscNetGenIPNameserver,
+						mbnscNetGenTZClientPort,
+						mbnscNetGenConfigPort,
+						mbnscNetGenSnmpMode,
+						mbnscNetGenMulticastMode,
+						mbnscNetGenHostname,
+						mbnscNetGenCommMode,
+						mbnscNetGenMCastGrpIP,
+						mbnscNetGenConfigCmd,
+						mbnscNetGenConfigChangedTime,
+						mbnscNetIPv4Addr,
+						mbnscNetIPv4Mask,
+						mbnscNetIPv4Gateway,
+						mbnscNetIPv4DHCPMode,
+						mbnscNetIPv4ConfigCmd,
+						mbnscNetIPv4ConfigChangedTime,
+						mbnscNetIPv6AddrLocal,
+						mbnscNetIPv6AddrAuto,
+						mbnscNetIPv6AddrDHCP,
+						mbnscNetIPv6AddrFix,
+						mbnscNetIPv6Prefix,
+						mbnscNetIPv6Gateway,
+						mbnscNetIPv6Config,
+						mbnscNetIPv6ConfigCmd,
+						mbnscNetIPv6ConfigChangedTime,  
+        		mbnscTimeNTP1,
+        		mbnscTimeNTP2,
+        		mbnscTimeNTP3,
+        		mbnscTimeNTP4,
+        		mbnscTimeNTPcurrent,
+        		mbnscTimeNTPpollIntervall,
+        		mbnscTimeDeviceTime,
+        		mbnscTimeLocOffset,
+        		mbnscTimeLastReception,
+        		mbnscTimeConfigCmd,
+        		mbnscTimeConfigChangedTime,
+        		mbnscTimeZoneVersion,
+        		mbnscTimeZoneNumber,
+        		mbnscTimeZoneConfigCmd,
+        		mbnscTimeZoneConfigChangedTime,
+        		mbnscModeConfigCmd,
+        		mbnscModeConfigChangedTime,
+            mbnscNMIDCFCurrentLoop,
+            mbnscNMILineDriver,
+            mbnscNMIMOBALineMode,
+            mbnscNMIMOBALineMinuteHandMode,
+            mbnscNMIActiveDCFMode,
+						mbnscNMIConfigCmd,
+						mbnscNMIConfigChangedTime,
+            mbnscNMISideClock1,
+            mbnscNMISideClock2,
+            mbnscNMISideClock3,
+            mbnscNMISideClock4,
+            mbnscNMISideClock5,
+            mbnscNMISideClock6,
+            mbnscNMISideClock7,
+            mbnscNMISideClock8,
+            mbnscNMISideClock9,
+            mbnscNMISideClock10,
+            mbnscNMISideClock11,
+            mbnscNMISideClock12,
+        		mbnscGeneralType,
+        		mbnscGeneralName,
+        		mbnscGeneralFirmwareNumber,
+        		mbnscGeneralFirmwareVer,
+        		mbnscGeneralStatus,
+        		mbnscGeneralAlarms,
+        		mbnscGeneralConfigCmd,
+        		mbnscGeneralConfigChangedTime,
+        		mbnscSNMPManager1,
+        		mbnscSNMPManager2,
+        		mbnscSNMPTrapAliveMsgInterval,
+        		mbnscSNMPConfigCmd,
+        		mbnscSNMPConfigChangedTime,
+        		mbnscCommand12Pos,
+        		mbnscCommandSWReset,
+        		mbnscCommandConfigCmd,
+        		mbnscTrapAlMsgErrorNr,
+        		mbnscTrapAlMsgErrorState,
+        		mbnscTrapAlMsgErrorTime
+        	}
+        STATUS		    current
+        DESCRIPTION         "All parameters used for Network-MOBALine-Interface NMI"
+        ::= { mbnscMIBGroups 8 }
+
+    mbnscGrpNotUsedParameters OBJECT-GROUP
+        OBJECTS	{
+        		mbnscTimeZoneEntry1,
+        		mbnscTimeZoneEntry2,
+        		mbnscTimeZoneEntry3,
+        		mbnscTimeZoneEntry4,
+        		mbnscTimeZoneEntry5,
+        		mbnscTimeZoneEntry6,
+        		mbnscTimeZoneEntry7,
+        		mbnscModeSwitchInfo,
+        		mbnscCommandFactorySetting,
+        		mbnscCommandFirmwUpd,
+        		mbnscCommandExtContact
+        	}
+        STATUS		    current
+        DESCRIPTION         "All parameters not used in oother groups"
+        ::= { mbnscMIBGroups 100 }
+
+
+END
+
