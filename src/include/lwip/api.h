@@ -160,6 +160,7 @@ struct tcp_pcb;
 struct udp_pcb;
 struct raw_pcb;
 struct netconn;
+struct api_msg;
 
 /** A callback prototype to inform about events for a netconn */
 typedef void (* netconn_callback)(struct netconn *, enum netconn_evt, u16_t len);
