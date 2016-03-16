@@ -93,7 +93,7 @@
 #endif
 
 /* Forward declarations.*/
-static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
+static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif);
 
 /** Allocate a pbuf and create a tcphdr at p->payload, used for output
  * functions other than the default tcp_output -> tcp_output_segment
@@ -971,6 +971,7 @@ tcp_output(struct tcp_pcb *pcb)
   struct tcp_seg *seg, *useg;
   u32_t wnd, snd_nxt;
   err_t err;
+  struct netif *netif;
 #if TCP_CWND_DEBUG
   s16_t i = 0;
 #endif /* TCP_CWND_DEBUG */
@@ -1007,6 +1008,20 @@ tcp_output(struct tcp_pcb *pcb)
   useg = pcb->unacked;
   if (useg != NULL) {
     for (; useg->next != NULL; useg = useg->next);
+  }
+
+  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+  if (netif == NULL) {
+    return ERR_RTE;
+  }
+
+  /* If we don't have a local IP address, we get one from netif */
+  if (ip_addr_isany(&pcb->local_ip)) {
+    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
+    if (local_ip == NULL) {
+      return ERR_RTE;
+    }
+    ip_addr_copy(pcb->local_ip, *local_ip);
   }
 
 #if TCP_OUTPUT_DEBUG
@@ -1062,7 +1077,7 @@ tcp_output(struct tcp_pcb *pcb)
 #if TCP_OVERSIZE_DBGCHECK
     seg->oversize_left = 0;
 #endif /* TCP_OVERSIZE_DBGCHECK */
-    err = tcp_output_segment(seg, pcb);
+    err = tcp_output_segment(seg, pcb, netif);
     if (err != ERR_OK) {
       /* segment could not be sent, for whatever reason */
       pcb->flags |= TF_NAGLEMEMERR;
@@ -1125,14 +1140,14 @@ tcp_output(struct tcp_pcb *pcb)
  *
  * @param seg the tcp_seg to send
  * @param pcb the tcp_pcb for the TCP connection used to send the segment
+ * @param netif the netif used to send the segment
  */
 static err_t
-tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
+tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif)
 {
   err_t err;
   u16_t len;
   u32_t *opts;
-  struct netif *netif;
 
   if (seg->p->ref != 1) {
     /* This can happen if the pbuf of this segment is still referenced by the
@@ -1191,20 +1206,6 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
      This must be set before checking the route. */
   if (pcb->rtime < 0) {
     pcb->rtime = 0;
-  }
-
-  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
-  if (netif == NULL) {
-    return ERR_RTE;
-  }
-
-  /* If we don't have a local IP address, we get one from netif */
-  if (ip_addr_isany(&pcb->local_ip)) {
-    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
-    if (local_ip == NULL) {
-      return ERR_RTE;
-    }
-    ip_addr_copy(pcb->local_ip, *local_ip);
   }
 
   if (pcb->rttest == 0) {
