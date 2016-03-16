@@ -6,7 +6,7 @@ HISTORY
 
   ++ New features:
 
-  2016-02-22: Ivan Delamer:
+  2016-02-22: Ivan Delamer
   * Initial 6LoWPAN support
 
   2015-12-26: Martin Hentschel and Dirk Ziegelmeier
@@ -301,6 +301,9 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2016-03-16: Deomid Ryabkov
+  * tcp_out.c: fixed bug #46384 Segment size calculation bug with MSS != TCP_MSS
 
   2016-03-05: Simon Goldschmidt
   * err.h/.c, sockets.c: ERR_IF is not necessarily a fatal error
