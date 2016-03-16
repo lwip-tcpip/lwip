@@ -312,10 +312,11 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 #endif /* LWIP_TCPIP_TIMEOUT */
 
 
-#if !LWIP_TCPIP_CORE_LOCKING
 /**
- * Generic way to dispatch an API message in TCPIP thread and wait for its
- * completion by blocking on a semaphore.
+ * Synchronously calls function in TCPIP thread and waits for its completion
+ * by blocking on a provided semaphore pointer.
+ * It is recommended to use LWIP_TCPIP_CORE_LOCKING since this is the way
+ * with least runtime overhead.
  *
  * @param fn function to be called from TCPIP thread
  * @param apimsg argument to API function
@@ -327,6 +328,13 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 {
   LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
 
+#if LWIP_TCPIP_CORE_LOCKING
+  LOCK_TCPIP_CORE();
+  fn(apimsg);
+  UNLOCK_TCPIP_CORE();
+  sys_arch_sem_wait(sem, 0);
+  return ERR_OK;
+#else /* LWIP_TCPIP_CORE_LOCKING */
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_DECLARE(msg);
     
@@ -340,13 +348,13 @@ tcpip_send_api_msg(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
     return ERR_OK;
   }
   return ERR_VAL;
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 }
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 /**
  * Synchronously calls function in TCPIP thread and waits for its completion.
  * It is recommended to use LWIP_TCPIP_CORE_LOCKING (preferred) or
- * LWIP_NETCONN_SEM_PER_THREAD.
+ * LWIP_NETCONN_SEM_PER_THREAD. 
  * If not, a semaphore is created and destroyed on every call which is usually
  * an expensive/slow operation.
  * @param fn Function to call
@@ -361,7 +369,7 @@ err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
   err = fn(call);
   UNLOCK_TCPIP_CORE();
   return err;
-#else
+#else /* LWIP_TCPIP_CORE_LOCKING */
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_DECLARE(msg);
     err_t err;
@@ -390,7 +398,7 @@ err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
     return ERR_OK;
   }
   return ERR_VAL;
-#endif
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 }
 
 /**
