@@ -1475,8 +1475,12 @@
 #endif
 
 /**
- * LWIP_TCPIP_CORE_LOCKING_INPUT: (EXPERIMENTAL!)
- * Don't use it if you're not an active lwIP project member
+ * LWIP_TCPIP_CORE_LOCKING_INPUT: when LWIP_TCPIP_CORE_LOCKING is enabled,
+ * this lets tcpip_input() grab the mutex for input packets as well,
+ * instead of allocating a message and passing it to tcpip_thread.
+ *
+ * ATTENTION: this does not work when tcpip_input() is called from
+ * interrupt context!
  */
 #ifndef LWIP_TCPIP_CORE_LOCKING_INPUT
 #define LWIP_TCPIP_CORE_LOCKING_INPUT   0
