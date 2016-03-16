@@ -39,7 +39,7 @@ Global
 		{CBE20411-5DB7-487D-825D-7694267BB6F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = LwipMibViewer\LwipMibViewer.csproj
+		StartupItem = LwipMibCompiler\LwipMibCompiler.csproj
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
