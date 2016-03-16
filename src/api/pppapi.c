@@ -58,12 +58,12 @@ pppapi_do_ppp_set_default(struct tcpip_api_call *m)
  * Call ppp_set_default() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-void
+err_t
 pppapi_set_default(ppp_pcb *pcb)
 {
   struct pppapi_msg msg;
   msg.msg.ppp = pcb;
-  tcpip_api_call(pppapi_do_ppp_set_default, &msg.call);
+  return tcpip_api_call(pppapi_do_ppp_set_default, &msg.call);
 }
 
 
@@ -84,7 +84,7 @@ pppapi_do_ppp_set_auth(struct tcpip_api_call *m)
  * Call ppp_set_auth() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-void
+err_t
 pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd)
 {
   struct pppapi_msg msg;
@@ -92,7 +92,7 @@ pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passw
   msg.msg.msg.setauth.authtype = authtype;
   msg.msg.msg.setauth.user = user;
   msg.msg.msg.setauth.passwd = passwd;
-  tcpip_api_call(pppapi_do_ppp_set_auth, &msg.call);
+  return tcpip_api_call(pppapi_do_ppp_set_auth, &msg.call);
 }
 
 
@@ -112,13 +112,13 @@ pppapi_do_ppp_set_notify_phase_callback(struct tcpip_api_call *m)
  * Call ppp_set_notify_phase_callback() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-void
+err_t
 pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb)
 {
   struct pppapi_msg msg;
   msg.msg.ppp = pcb;
   msg.msg.msg.setnotifyphasecb.notify_phase_cb = notify_phase_cb;
-  tcpip_api_call(pppapi_do_ppp_set_notify_phase_callback, &msg.call);
+  return tcpip_api_call(pppapi_do_ppp_set_notify_phase_callback, &msg.call);
 }
 #endif /* PPP_NOTIFY_PHASE */
 
@@ -146,6 +146,7 @@ pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
                ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   struct pppapi_msg msg;
+  msg.msg.ppp = NULL;
   msg.msg.msg.serialcreate.pppif = pppif;
   msg.msg.msg.serialcreate.output_cb = output_cb;
   msg.msg.msg.serialcreate.link_status_cb = link_status_cb;
@@ -181,6 +182,7 @@ pppapi_pppoe_create(struct netif *pppif, struct netif *ethif, const char *servic
                             void *ctx_cb)
 {
   struct pppapi_msg msg;
+  msg.msg.ppp = NULL;
   msg.msg.msg.ethernetcreate.pppif = pppif;
   msg.msg.msg.ethernetcreate.ethif = ethif;
   msg.msg.msg.ethernetcreate.service_name = service_name;
@@ -224,6 +226,7 @@ pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipad
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   struct pppapi_msg msg;
+  msg.msg.ppp = NULL;
   msg.msg.msg.l2tpcreate.pppif = pppif;
   msg.msg.msg.l2tpcreate.netif = netif;
   msg.msg.msg.l2tpcreate.ipaddr = ipaddr;

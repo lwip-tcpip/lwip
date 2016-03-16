@@ -113,10 +113,10 @@ struct pppapi_msg {
 };
 
 /* API for application */
-void pppapi_set_default(ppp_pcb *pcb);
-void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
+err_t pppapi_set_default(ppp_pcb *pcb);
+err_t pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 #if PPP_NOTIFY_PHASE
-void pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
+err_t pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 #endif /* PPP_NOTIFY_PHASE */
 #if PPPOS_SUPPORT
 ppp_pcb *pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
