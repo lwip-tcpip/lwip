@@ -73,7 +73,7 @@ static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
  * @return ERR_OK if the function was called, another err_t if not
  */
 static err_t
-tcpip_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
+netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
 {
 #ifdef LWIP_DEBUG
   /* catch functions that don't set err */
@@ -112,7 +112,7 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
     API_MSG_VAR_ALLOC_DONTFAIL(msg);
     API_MSG_VAR_REF(msg).msg.n.proto = proto;
     API_MSG_VAR_REF(msg).conn = conn;
-    err = tcpip_apimsg(lwip_netconn_do_newconn, &API_MSG_VAR_REF(msg));
+    err = netconn_apimsg(lwip_netconn_do_newconn, &API_MSG_VAR_REF(msg));
     API_MSG_VAR_FREE(msg);
     if (err != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
@@ -163,7 +163,7 @@ netconn_delete(struct netconn *conn)
     ((LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT + TCP_SLOW_INTERVAL - 1) / TCP_SLOW_INTERVAL) + 1;
 #endif /* LWIP_TCP */
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
-  err = tcpip_apimsg(lwip_netconn_do_delconn, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_delconn, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   if (err != ERR_OK) {
@@ -206,7 +206,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
 #else /* LWIP_MPU_COMPATIBLE */
   msg.msg.ad.ipaddr = addr;
   msg.msg.ad.port = port;
-  err = tcpip_apimsg(lwip_netconn_do_getaddr, &msg);
+  err = netconn_apimsg(lwip_netconn_do_getaddr, &msg);
 #endif /* LWIP_MPU_COMPATIBLE */
   API_MSG_VAR_FREE(msg);
 
@@ -240,7 +240,7 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   API_MSG_VAR_REF(msg).conn = conn;
   API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
   API_MSG_VAR_REF(msg).msg.bc.port = port;
-  err = tcpip_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
@@ -271,7 +271,7 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   API_MSG_VAR_REF(msg).conn = conn;
   API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
   API_MSG_VAR_REF(msg).msg.bc.port = port;
-  err = tcpip_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
@@ -293,7 +293,7 @@ netconn_disconnect(struct netconn *conn)
 
   API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).conn = conn;
-  err = tcpip_apimsg(lwip_netconn_do_disconnect, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_disconnect, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
@@ -324,7 +324,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 #if TCP_LISTEN_BACKLOG
   API_MSG_VAR_REF(msg).msg.lb.backlog = backlog;
 #endif /* TCP_LISTEN_BACKLOG */
-  err = tcpip_apimsg(lwip_netconn_do_listen, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_listen, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
@@ -388,7 +388,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   API_MSG_VAR_ALLOC_DONTFAIL(msg);
   API_MSG_VAR_REF(msg).conn = conn;
   /* don't care for the return value of lwip_netconn_do_recv */
-  tcpip_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
+  netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 #endif /* TCP_LISTEN_BACKLOG */
 
@@ -471,7 +471,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
         API_MSG_VAR_REF(msg).msg.r.len = 1;
       }
       /* don't care for the return value of lwip_netconn_do_recv */
-      tcpip_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
+      netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
       API_MSG_VAR_FREE(msg);
     }
 
@@ -610,7 +610,7 @@ netconn_recved(struct netconn *conn, u32_t length)
     API_MSG_VAR_REF(msg).conn = conn;
     API_MSG_VAR_REF(msg).msg.r.len = length;
     /* don't care for the return value of lwip_netconn_do_recv */
-    tcpip_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
+    netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
     API_MSG_VAR_FREE(msg);
   }
 #else /* LWIP_TCP */
@@ -659,7 +659,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).conn = conn;
   API_MSG_VAR_REF(msg).msg.b = buf;
-  err = tcpip_apimsg(lwip_netconn_do_send, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_send, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
@@ -717,7 +717,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   /* For locking the core: this _can_ be delayed on low memory/low send buffer,
      but if it is, this is done inside api_msg.c:do_write(), so we can use the
      non-blocking version here. */
-  err = tcpip_apimsg(lwip_netconn_do_write, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_write, &API_MSG_VAR_REF(msg));
   if ((err == ERR_OK) && (bytes_written != NULL)) {
     if (dontblock
 #if LWIP_SO_SNDTIMEO
@@ -766,7 +766,7 @@ netconn_close_shutdown(struct netconn *conn, u8_t how)
     ((LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT + TCP_SLOW_INTERVAL - 1) / TCP_SLOW_INTERVAL) + 1;
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
 #endif /* LWIP_TCP */
-  err = tcpip_apimsg(lwip_netconn_do_close, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_close, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
@@ -833,7 +833,7 @@ netconn_join_leave_group(struct netconn *conn,
   API_MSG_VAR_REF(msg).msg.jl.multiaddr = API_MSG_VAR_REF(multiaddr);
   API_MSG_VAR_REF(msg).msg.jl.netif_addr = API_MSG_VAR_REF(netif_addr);
   API_MSG_VAR_REF(msg).msg.jl.join_or_leave = join_or_leave;
-  err = tcpip_apimsg(lwip_netconn_do_join_leave_group, &API_MSG_VAR_REF(msg));
+  err = netconn_apimsg(lwip_netconn_do_join_leave_group, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
   return err;
