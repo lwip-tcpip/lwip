@@ -154,8 +154,6 @@ struct api_msg_msg {
     a struct api_msg_msg that serves as an argument for this function.
     This is passed to tcpip_apimsg to execute functions in tcpip_thread context. */
 struct api_msg {
-  /** function to execute in tcpip_thread context */
-  void (* function)(void *msg);
   /** arguments for this function */
   struct api_msg_msg msg;
 };
@@ -185,35 +183,6 @@ struct dns_api_msg {
   err_t API_MSG_M_DEF(err);
 };
 #endif /* LWIP_DNS */
-
-#if LWIP_TCPIP_CORE_LOCKING
-#ifdef LWIP_DEBUG
-#define TCIP_APIMSG_SET_ERR(m, e) (m)->msg.err = e  /* catch functions that don't set err */
-#else
-#define TCIP_APIMSG_SET_ERR(m, e)
-#endif
-#if LWIP_NETCONN_SEM_PER_THREAD
-#define TCPIP_APIMSG_SET_SEM(m) ((m)->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET())
-#else
-#define TCPIP_APIMSG_SET_SEM(m)
-#endif
-#define TCPIP_APIMSG_NOERR(m,f) do { \
-  TCIP_APIMSG_SET_ERR(m, ERR_VAL); \
-  TCPIP_APIMSG_SET_SEM(m); \
-  LOCK_TCPIP_CORE(); \
-  f(&((m)->msg)); \
-  UNLOCK_TCPIP_CORE(); \
-} while(0)
-#define TCPIP_APIMSG(m,f,e)   do { \
-  TCPIP_APIMSG_NOERR(m,f); \
-  (e) = (m)->msg.err; \
-} while(0)
-#define TCPIP_APIMSG_ACK(m)   NETCONN_SET_SAFE_ERR((m)->conn, (m)->err)
-#else /* LWIP_TCPIP_CORE_LOCKING */
-#define TCPIP_APIMSG_NOERR(m,f) do { (m)->function = f; tcpip_apimsg(m); } while(0)
-#define TCPIP_APIMSG(m,f,e)   do { (m)->function = f; (e) = tcpip_apimsg(m); } while(0)
-#define TCPIP_APIMSG_ACK(m)   do { NETCONN_SET_SAFE_ERR((m)->conn, (m)->err); sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
-#endif /* LWIP_TCPIP_CORE_LOCKING */
 
 void lwip_netconn_do_newconn         (void *m);
 void lwip_netconn_do_delconn         (void *m);

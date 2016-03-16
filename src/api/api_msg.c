@@ -77,6 +77,12 @@ static err_t lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM
 static err_t lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM);
 #endif
 
+#if LWIP_TCPIP_CORE_LOCKING
+#define TCPIP_APIMSG_ACK(m)   NETCONN_SET_SAFE_ERR((m)->conn, (m)->err)
+#else /* LWIP_TCPIP_CORE_LOCKING */
+#define TCPIP_APIMSG_ACK(m)   do { NETCONN_SET_SAFE_ERR((m)->conn, (m)->err); sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+
 #if LWIP_RAW
 /**
  * Receive callback function for RAW netconns.
