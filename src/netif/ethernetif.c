@@ -154,6 +154,16 @@ low_level_output(struct netif *netif, struct pbuf *p)
 
   signal that packet should be sent();
 
+  MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p->tot_len);
+  if (((u8_t*)p->payload)[0] & 1) {
+    /* broadcast or multicast packet*/
+    MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
+  } else {
+    /* unicast packet */
+    MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
+  }
+  /* increase ifoutdiscards or ifouterrors on error */
+
 #if ETH_PAD_SIZE
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
@@ -210,6 +220,14 @@ low_level_input(struct netif *netif)
     }
     acknowledge that packet has been read();
 
+    MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
+    if (((u8_t*)p->payload)[0] & 1) {
+      /* broadcast or multicast packet*/
+      MIB2_STATS_NETIF_INC(netif, ifinnucastpkts);
+    } else {
+      /* unicast packet*/
+      MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
+    }
 #if ETH_PAD_SIZE
     pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
@@ -219,6 +237,7 @@ low_level_input(struct netif *netif)
     drop packet();
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
+    MIB2_STATS_NETIF_INC(netif, ifindiscards);
   }
 
   return p;
@@ -244,33 +263,14 @@ ethernetif_input(struct netif *netif)
 
   /* move received packet into a new pbuf */
   p = low_level_input(netif);
-  /* no packet could be read, silently ignore this */
-  if (p == NULL) return;
-  /* points to packet payload, which starts with an Ethernet header */
-  ethhdr = p->payload;
-
-  switch (htons(ethhdr->type)) {
-  /* IP or ARP packet? */
-  case ETHTYPE_IP:
-  case ETHTYPE_IPV6:
-  case ETHTYPE_ARP:
-#if PPPOE_SUPPORT
-  /* PPPoE packet? */
-  case ETHTYPE_PPPOEDISC:
-  case ETHTYPE_PPPOE:
-#endif /* PPPOE_SUPPORT */
-    /* full packet send to tcpip_thread to process */
-    if (netif->input(p, netif)!=ERR_OK)
-     { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-       pbuf_free(p);
-       p = NULL;
-     }
-    break;
-
-  default:
-    pbuf_free(p);
-    p = NULL;
-    break;
+  /* if no packet could be read, silently ignore this */
+  if (p != NULL) {
+    /* pass all packets to ethernet_input, which decides what packets it supports */
+    if (netif->input(p, netif) != ERR_OK) { 
+      LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
+      pbuf_free(p);
+      p = NULL;
+    }
   }
 }
 
