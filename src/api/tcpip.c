@@ -327,15 +327,15 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 err_t
 tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 {
-  LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
-
 #if LWIP_TCPIP_CORE_LOCKING
+  LWIP_UNUSED_ARG(sem);
   LOCK_TCPIP_CORE();
   fn(apimsg);
   UNLOCK_TCPIP_CORE();
-  sys_arch_sem_wait(sem, 0);
   return ERR_OK;
 #else /* LWIP_TCPIP_CORE_LOCKING */
+  LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
+
   if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_DECLARE(msg);
     
@@ -362,7 +362,8 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
  * @param call Call parameters
  * @return Return value from tcpip_api_call_fn
  */
-err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
+err_t
+tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
 {
 #if LWIP_TCPIP_CORE_LOCKING
   err_t err;
