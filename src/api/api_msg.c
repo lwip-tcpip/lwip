@@ -378,12 +378,18 @@ err_tcp(void *arg, err_t err)
 
   conn->pcb.tcp = NULL;
 
-  /* no check since this is always fatal! */
-  SYS_ARCH_SET(conn->last_err, err);
-
   /* reset conn->state now before waking up other threads */
   old_state = conn->state;
   conn->state = NETCONN_NONE;
+
+  if (old_state == NETCONN_CLOSE) {
+    /* RST during close: let close return success & dealloc the netconn */
+    err = ERR_OK;
+    NETCONN_SET_SAFE_ERR(conn, ERR_OK);
+  } else {
+    /* no check since this is always fatal! */
+    SYS_ARCH_SET(conn->last_err, err);
+  }
 
   /* @todo: the type of NETCONN_EVT created should depend on 'old_state' */
 
