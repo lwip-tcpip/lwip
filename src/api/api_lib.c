@@ -708,9 +708,9 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   if (conn->send_timeout != 0) {
     /* get the time we started, which is later compared to
         sys_now() + conn->send_timeout */
-    API_MSG_VAR_REF(msg).msg.msg.w.time_started = sys_now();
+    API_MSG_VAR_REF(msg).msg.w.time_started = sys_now();
   } else {
-    API_MSG_VAR_REF(msg).msg.msg.w.time_started = 0;
+    API_MSG_VAR_REF(msg).msg.w.time_started = 0;
   }
 #endif /* LWIP_SO_SNDTIMEO */
 
