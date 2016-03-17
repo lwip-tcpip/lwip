@@ -18,7 +18,7 @@ HISTORY
 
   2015-11-12: Dirk Ziegelmeier
   * Implement possibility to declare private memory pools. This is useful to
-    decouple some apps from the core (SNMP stack) or make contrib app useage
+    decouple some apps from the core (SNMP stack) or make contrib app usage
     simpler (httpserver_raw)
 
   2015-10-09: Simon Goldschmidt
@@ -301,6 +301,11 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2013-03-17: Joel Cunningham
+  * api_msg.c: don't fail closing a socket/netconn when failing to allocate the
+    FIN segment; blocking the calling thread for a while is better than risking
+    leaking a netconn/socket (see bug #46701)
 
   2013-03-16: Joel Cunningham
   * tcp_out.c: reset rto timer on fast retransmission
