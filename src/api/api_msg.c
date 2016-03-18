@@ -1350,9 +1350,7 @@ lwip_netconn_do_listen(void *m)
         } else if (msg->conn->state == NETCONN_LISTEN) {
           /* already listening, allow updating of the backlog */
           msg->err = ERR_OK;
-#if TCP_LISTEN_BACKLOG
           tcp_backlog_set(msg->conn->pcb.tcp, msg->msg.lb.backlog);
-#endif /* TCP_LISTEN_BACKLOG */
         }
       } else {
         msg->err = ERR_ARG;

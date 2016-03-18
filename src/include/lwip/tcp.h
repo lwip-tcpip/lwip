@@ -366,6 +366,7 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 #else  /* TCP_LISTEN_BACKLOG */
 #define          tcp_accepted(pcb) LWIP_ASSERT("pcb->state == LISTEN (called for wrong pcb?)", \
                                                (pcb)->state == LISTEN)
+#define          tcp_backlog_set(pcb, new_backlog)
 #endif /* TCP_LISTEN_BACKLOG */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);

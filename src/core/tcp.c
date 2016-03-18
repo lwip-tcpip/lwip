@@ -586,7 +586,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 #endif /* LWIP_CALLBACK_API */
 #if TCP_LISTEN_BACKLOG
   lpcb->accepts_pending = 0;
-  tcp_backlog_set(lpcb, backlog);
+  lpcb->backlog = backlog;
 #endif /* TCP_LISTEN_BACKLOG */
   TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
   return (struct tcp_pcb *)lpcb;
