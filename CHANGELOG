@@ -302,15 +302,15 @@ HISTORY
 
   ++ Bugfixes:
 
-  2013-03-17: Simon Goldschmidt
+  2016-03-17: Simon Goldschmidt
   * api_msg.c: fixed bug #47448 (netconn/socket leak if RST is received during close)
 
-  2013-03-17: Joel Cunningham
+  2016-03-17: Joel Cunningham
   * api_msg.c: don't fail closing a socket/netconn when failing to allocate the
     FIN segment; blocking the calling thread for a while is better than risking
     leaking a netconn/socket (see bug #46701)
 
-  2013-03-16: Joel Cunningham
+  2016-03-16: Joel Cunningham
   * tcp_out.c: reset rto timer on fast retransmission
 
   2016-03-16: Deomid Ryabkov
