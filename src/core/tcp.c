@@ -1433,25 +1433,18 @@ tcp_alloc(u8_t prio)
     }
   }
   if (pcb != NULL) {
+    /* zero out the whole pcb, so there is no need to initialize members to zero */
     memset(pcb, 0, sizeof(struct tcp_pcb));
     pcb->prio = prio;
     pcb->snd_buf = TCP_SND_BUF;
-    pcb->snd_queuelen = 0;
     /* Start with a window that does not need scaling. When window scaling is
        enabled and used, the window is enlarged when both sides agree on scaling. */
     pcb->rcv_wnd = pcb->rcv_ann_wnd = TCPWND_MIN16(TCP_WND);
-#if LWIP_WND_SCALE
-    /* snd_scale and rcv_scale are zero unless both sides agree to use scaling */
-    pcb->snd_scale = 0;
-    pcb->rcv_scale = 0;
-#endif
-    pcb->tos = 0;
     pcb->ttl = TCP_TTL;
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
        The send MSS is updated when an MSS option is received. */
     pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
-    pcb->sa = 0;
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
     pcb->rtime = -1;
     pcb->cwnd = 1;
@@ -1463,7 +1456,6 @@ tcp_alloc(u8_t prio)
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
-    pcb->polltmr = 0;
 
 #if LWIP_CALLBACK_API
     pcb->recv = tcp_recv_null;
