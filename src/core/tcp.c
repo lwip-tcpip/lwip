@@ -1530,7 +1530,6 @@ tcp_alloc(u8_t prio)
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
-
 #if LWIP_CALLBACK_API
     pcb->recv = tcp_recv_null;
 #endif /* LWIP_CALLBACK_API */
@@ -1542,8 +1541,6 @@ tcp_alloc(u8_t prio)
     pcb->keep_intvl = TCP_KEEPINTVL_DEFAULT;
     pcb->keep_cnt   = TCP_KEEPCNT_DEFAULT;
 #endif /* LWIP_TCP_KEEPALIVE */
-
-    pcb->keep_cnt_sent = 0;
   }
   return pcb;
 }
