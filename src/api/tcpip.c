@@ -397,7 +397,7 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
     sys_sem_free(&call->sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
     TCPIP_MSG_VAR_FREE(msg);
-    return ERR_OK;
+    return call->err;
   }
   return ERR_VAL;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
