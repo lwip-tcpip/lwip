@@ -113,6 +113,8 @@ static u16_t dns_txid;
 /** DNS resource record max. TTL (one week as default) */
 #ifndef DNS_MAX_TTL
 #define DNS_MAX_TTL               604800
+#elif DNS_MAX_TTL > 0x7FFFFFFF
+#error DNS_MAX_TTL must be a positive 32-bit value
 #endif
 
 /* The number of parallel requests (i.e. calls to dns_gethostbyname
@@ -649,7 +651,7 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
  * @return 0xFFFF: names differ, other: names equal -> offset behind name
  */
 static u16_t
-dns_compare_name(char *query, struct pbuf* p, u16_t start_offset)
+dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
 {
   unsigned char n;
   u16_t response_offset = start_offset;
@@ -1049,6 +1051,33 @@ dns_check_entries(void)
 }
 
 /**
+ * Save TTL and call dns_call_found for correct response.
+ */
+static void
+dns_correct_response(u8_t idx, u32_t ttl)
+{
+  struct dns_table_entry *entry = &dns_table[idx];
+
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
+  ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
+  LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+
+  /* read the answer resource record's TTL, and maximize it if needed */
+  entry->ttl = ttl;
+  if (entry->ttl > DNS_MAX_TTL) {
+    entry->ttl = DNS_MAX_TTL;
+  }
+  dns_call_found(idx, &entry->ipaddr);
+
+  if (entry->ttl == 0) {
+    /* RFC 883, page 29: "Zero values are
+        interpreted to mean that the RR can only be used for the
+        transaction in progress, and should not be cached."
+        -> flush this entry now */
+    entry->state = DNS_STATE_UNUSED;
+  }
+}
+/**
  * Receive input function for DNS response packets arriving for the dns UDP pcb.
  *
  * @params see udp.h
@@ -1056,7 +1085,7 @@ dns_check_entries(void)
 static void
 dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
-  u8_t i, entry_idx = DNS_TABLE_SIZE;
+  u8_t i;
   u16_t txid;
   u16_t res_idx;
   struct dns_hdr hdr;
@@ -1080,32 +1109,29 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
     /* Match the ID in the DNS header with the name table. */
     txid = htons(hdr.id);
     for (i = 0; i < DNS_TABLE_SIZE; i++) {
-      struct dns_table_entry *entry = &dns_table[i];
-      entry_idx = i;
+      const struct dns_table_entry *entry = &dns_table[i];
       if ((entry->state == DNS_STATE_ASKING) &&
           (entry->txid == txid)) {
-        u8_t dns_err;
-        /* This entry is now completed. */
-        entry->state = DNS_STATE_DONE;
-        dns_err = hdr.flags2 & DNS_FLAG2_ERR_MASK;
 
         /* We only care about the question(s) and the answers. The authrr
            and the extrarr are simply discarded. */
         nquestions = htons(hdr.numquestions);
         nanswers   = htons(hdr.numanswers);
 
-        /* Check for error. If so, call callback to inform. */
-        if (((hdr.flags1 & DNS_FLAG1_RESPONSE) == 0) || (dns_err != 0) || (nquestions != 1)) {
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", entry->name));
-          /* call callback to indicate error, clean up memory and return */
-          goto responseerr;
+        /* Check for correct response. */
+        if ((hdr.flags1 & DNS_FLAG1_RESPONSE) == 0) {
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": not a response\n", entry->name));
+          goto memerr; /* ignore this packet */
+        }
+        if (nquestions != 1) {
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
+          goto memerr; /* ignore this packet */
         }
 
         /* Check whether response comes from the same network address to which the
            question was sent. (RFC 5452) */
         if (!ip_addr_cmp(addr, &dns_servers[entry->server_idx])) {
-          /* call callback to indicate error, clean up memory and return */
-          goto responseerr;
+          goto memerr; /* ignore this packet */
         }
 
         /* Check if the name in the "question" part match with the name in the entry and
@@ -1113,8 +1139,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         res_idx = dns_compare_name(entry->name, p, SIZEOF_DNS_HDR);
         if (res_idx == 0xFFFF) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
-          /* call callback to indicate error, clean up memory and return */
-          goto responseerr;
+          goto memerr; /* ignore this packet */
         }
 
         /* check if "question" part matches the request */
@@ -1123,125 +1148,91 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
           (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_AAAA))) ||
           (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_A)))) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
-          /* call callback to indicate error, clean up memory and return */
-          goto responseerr;
+          goto memerr; /* ignore this packet */
         }
         /* skip the rest of the "question" part */
         res_idx += SIZEOF_DNS_QUERY;
 
-        while ((nanswers > 0) && (res_idx < p->tot_len)) {
-          /* skip answer resource record's host name */
-          res_idx = dns_parse_name(p, res_idx);
+        /* Check for error. If so, call callback to inform. */
+        if (hdr.flags2 & DNS_FLAG2_ERR_MASK) {
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", entry->name));
+        } else {
+          while ((nanswers > 0) && (res_idx < p->tot_len)) {
+            /* skip answer resource record's host name */
+            res_idx = dns_parse_name(p, res_idx);
 
-          /* Check for IP address type and Internet class. Others are discarded. */
-          pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx);
-          if (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) {
+            /* Check for IP address type and Internet class. Others are discarded. */
+            pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx);
+            res_idx += SIZEOF_DNS_ANSWER;
+            if (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) {
 #if LWIP_IPV4
-            if ((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.len == PP_HTONS(sizeof(ip4_addr_t)))) {
+              if ((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.len == PP_HTONS(sizeof(ip4_addr_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
-              if (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
+                if (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-              {
-                ip4_addr_t ip4addr;
-                res_idx += SIZEOF_DNS_ANSWER;
-                /* read the answer resource record's TTL, and maximize it if needed */
-                entry->ttl = ntohl(ans.ttl);
-                if (entry->ttl > DNS_MAX_TTL) {
-                  entry->ttl = DNS_MAX_TTL;
+                {
+                  ip4_addr_t ip4addr;
+                  /* read the IP address after answer resource record's header */
+                  pbuf_copy_partial(p, &ip4addr, sizeof(ip4_addr_t), res_idx);
+                  ip_addr_copy_from_ip4(dns_table[i].ipaddr, ip4addr);
+                  pbuf_free(p);
+                  /* handle correct response */
+                  dns_correct_response(i, ntohl(ans.ttl));
+                  return;
                 }
-                /* read the IP address after answer resource record's header */
-                pbuf_copy_partial(p, &ip4addr, sizeof(ip4_addr_t), res_idx);
-                ip_addr_copy_from_ip4(entry->ipaddr, ip4addr);
-                LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
-                ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
-                LWIP_DEBUGF(DNS_DEBUG, ("\n"));
-                /* call specified callback function if provided */
-                dns_call_found(entry_idx, &entry->ipaddr);
-                if (entry->ttl == 0) {
-                  /* RFC 883, page 29: "Zero values are
-                     interpreted to mean that the RR can only be used for the
-                     transaction in progress, and should not be cached."
-                     -> flush this entry now */
-                  goto flushentry;
-                }
-                /* deallocate memory and return */
-                goto memerr;
               }
-            }
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
-            if ((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_t)))) {
+              if ((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
-              if (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
+                if (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-              {
-                ip6_addr_t ip6addr;
-                res_idx += SIZEOF_DNS_ANSWER;
-                /* read the answer resource record's TTL, and maximize it if needed */
-                entry->ttl = ntohl(ans.ttl);
-                if (entry->ttl > DNS_MAX_TTL) {
-                  entry->ttl = DNS_MAX_TTL;
+                {
+                  ip6_addr_t ip6addr;
+                  /* read the IP address after answer resource record's header */
+                  pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_t), res_idx);
+                  ip_addr_copy_from_ip6(dns_table[i].ipaddr, ip6addr);
+                  pbuf_free(p);
+                  /* handle correct response */
+                  dns_correct_response(i, ntohl(ans.ttl));
+                  return;
                 }
-                /* read the IP address after answer resource record's header */
-                pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_t), res_idx);
-                ip_addr_copy_from_ip6(entry->ipaddr, ip6addr);
-                LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
-                ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
-                LWIP_DEBUGF(DNS_DEBUG, (" AAAA\n"));
-                /* call specified callback function if provided */
-                dns_call_found(entry_idx, &entry->ipaddr);
-                if (entry->ttl == 0) {
-                  /* RFC 883, page 29: "Zero values are
-                     interpreted to mean that the RR can only be used for the
-                     transaction in progress, and should not be cached."
-                     -> flush this entry now */
-                  goto flushentry;
-                }
-                /* deallocate memory and return */
-                goto memerr;
               }
-            }
 #endif /* LWIP_IPV6 */
+            }
+            /* skip this answer */
+            res_idx += htons(ans.len);
+            --nanswers;
           }
-          /* skip this answer */
-          res_idx += SIZEOF_DNS_ANSWER + htons(ans.len);
-          --nanswers;
-        }
 #if LWIP_IPV4 && LWIP_IPV6
-        if ((entry->reqaddrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) ||
-            (entry->reqaddrtype == LWIP_DNS_ADDRTYPE_IPV6_IPV4)) {
-          if (entry->reqaddrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) {
-            /* IPv4 failed, try IPv6 */
-            entry->reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
-          } else {
-            /* IPv6 failed, try IPv4 */
-            entry->reqaddrtype = LWIP_DNS_ADDRTYPE_IPV4;
+          if ((entry->reqaddrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) ||
+              (entry->reqaddrtype == LWIP_DNS_ADDRTYPE_IPV6_IPV4)) {
+            if (entry->reqaddrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) {
+              /* IPv4 failed, try IPv6 */
+              dns_table[i].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV6;
+            } else {
+              /* IPv6 failed, try IPv4 */
+              dns_table[i].reqaddrtype = LWIP_DNS_ADDRTYPE_IPV4;
+            }
+            pbuf_free(p);
+            dns_table[i].state = DNS_STATE_NEW;
+            dns_check_entry(i);
+            return;
           }
-          pbuf_free(p);
-          entry->state = DNS_STATE_NEW;
-          dns_check_entry(entry_idx);
-          return;
-        }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-        LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", entry->name));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", entry->name));
+        }
         /* call callback to indicate error, clean up memory and return */
-        goto responseerr;
+        pbuf_free(p);
+        dns_call_found(i, NULL);
+        dns_table[i].state = DNS_STATE_UNUSED;
+        return;
       }
     }
   }
 
-  /* deallocate memory and return */
-  goto memerr;
-
-responseerr:
-  /* ERROR: call specified callback function with NULL as name to indicate an error */
-  dns_call_found(entry_idx, NULL);
-flushentry:
-  /* flush this entry */
-  dns_table[entry_idx].state = DNS_STATE_UNUSED;
-
 memerr:
-  /* free pbuf */
+  /* deallocate memory and return */
   pbuf_free(p);
   return;
 }

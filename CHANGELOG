@@ -302,6 +302,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-03-22: Simon Goldschmidt
+  * dns.c: ignore dns response parsing errors, only abort resolving for correct
+    responses or error responses from correct server (bug #47459)
+
   2016-03-17: Simon Goldschmidt
   * api_msg.c: fixed bug #47448 (netconn/socket leak if RST is received during close)
 
