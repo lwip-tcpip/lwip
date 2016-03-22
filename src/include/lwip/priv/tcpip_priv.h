@@ -97,20 +97,18 @@ extern sys_mutex_t lock_tcpip_core;
 
 err_t tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
 
-struct tcpip_api_call;
-typedef err_t (*tcpip_api_call_fn)(struct tcpip_api_call* call);
 struct tcpip_api_call
 {
-  tcpip_api_call_fn function;
 #if !LWIP_TCPIP_CORE_LOCKING
-#if LWIP_NETCONN_SEM_PER_THREAD
-  sys_sem_t *sem;
-#else /* LWIP_NETCONN_SEM_PER_THREAD */
+  err_t err;
+#if !LWIP_NETCONN_SEM_PER_THREAD
   sys_sem_t sem;
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
-  err_t err;
+#else /* !LWIP_TCPIP_CORE_LOCKING */
+  u8_t dummy; /* avoid empty struct :-( */
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 };
+typedef err_t (*tcpip_api_call_fn)(struct tcpip_api_call* call);
 err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call);
 
 enum tcpip_msg_type {
@@ -132,7 +130,11 @@ struct tcpip_msg {
       tcpip_callback_fn function;
       void* msg;
     } api_msg;
-    struct tcpip_api_call *api_call;
+    struct {
+      tcpip_api_call_fn function;
+      struct tcpip_api_call *arg;
+      sys_sem_t *sem;
+    } api_call;
     struct {
       struct pbuf *p;
       struct netif *netif;
