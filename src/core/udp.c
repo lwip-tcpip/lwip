@@ -164,8 +164,6 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 
   /* Only need to check PCB if incoming IP version matches PCB IP version */
   if(IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
-    LWIP_ASSERT("UDP PCB: inconsistent local/remote IP versions", IP_IS_V6_VAL(pcb->local_ip) == IP_IS_V6_VAL(pcb->remote_ip));
-
 #if LWIP_IPV4
     /* Special case: IPv4 broadcast: all or broadcasts in my subnet
      * Note: broadcast variable can only be 1 if it is an IPv4 broadcast */
@@ -993,7 +991,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -1035,7 +1033,15 @@ void
 udp_disconnect(struct udp_pcb *pcb)
 {
   /* reset remote address association */
-  ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
+#if LWIP_IPV4 && LWIP_IPV6
+  if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+    ip_addr_copy(pcb->remote_ip, *IP_ANY_TYPE);
+  } else {
+#endif
+    ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
+#if LWIP_IPV4 && LWIP_IPV6
+  }
+#endif
   pcb->remote_port = 0;
   /* mark PCB as unconnected */
   pcb->flags &= ~UDP_FLAGS_CONNECTED;
