@@ -363,7 +363,7 @@ void             tcp_backlog_accepted(struct tcp_pcb* pcb);
 #define          tcp_backlog_delayed(pcb)
 #define          tcp_backlog_accepted(pcb)
 #endif /* TCP_LISTEN_BACKLOG */
-//#define          tcp_accepted(pcb) /* compatibility define, not needed any more */
+#define          tcp_accepted(pcb) /* compatibility define, not needed any more */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
 err_t            tcp_bind    (struct tcp_pcb *pcb, const ip_addr_t *ipaddr,
