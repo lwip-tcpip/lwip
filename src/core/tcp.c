@@ -147,6 +147,78 @@ tcp_tmr(void)
   }
 }
 
+#if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
+/** Called when a listen pcb is closed. Iterates one pcb list and removes the
+ * closed listener pcb from pcb->listener if matching.
+ */
+static void
+tcp_remove_listener(struct tcp_pcb *list, struct tcp_pcb_listen *lpcb)
+{
+   struct tcp_pcb *pcb;
+   for (pcb = list; pcb != NULL; pcb = pcb->next) {
+      if (pcb->listener == lpcb) {
+         pcb->listener = NULL;
+      }
+   }
+}
+#endif
+
+/** Called when a listen pcb is closed. Iterates all pcb lists and removes the
+ * closed listener pcb from pcb->listener if matching.
+ */
+static void
+tcp_listen_closed(struct tcp_pcb *pcb)
+{
+#if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
+  size_t i;
+  LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  LWIP_ASSERT("pcb->state == LISTEN", pcb->state == LISTEN);
+  for (i = 1; i < LWIP_ARRAYSIZE(tcp_pcb_lists); i++) {
+    tcp_remove_listener(*tcp_pcb_lists[i], (struct tcp_pcb_listen*)pcb);
+  }
+#endif
+  LWIP_UNUSED_ARG(pcb);
+}
+
+#if TCP_LISTEN_BACKLOG
+/** Delay accepting a connection in respect to the listen backlog:
+ * the number of outstanding connections is increased until
+ * tcp_backlog_accepted() is called.
+ *
+ * ATTENTION: the caller is responsible for calling tcp_backlog_accepted()
+ * or else the backlog feature will get out of sync!
+ *
+ * @param pcb the connection pcb which is not fully accepted yet
+ */
+void
+tcp_backlog_delayed(struct tcp_pcb* pcb)
+{
+  LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  if (pcb->listener != NULL) {
+    pcb->listener->accepts_pending++;
+    LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
+  }
+}
+
+/** A delayed-accept a connection is accepted (or closed/aborted): decreases
+ * the number of outstanding connections after calling tcp_backlog_delayed().
+ *
+ * ATTENTION: the caller is responsible for calling tcp_backlog_accepted()
+ * or else the backlog feature will get out of sync!
+ *
+ * @param pcb the connection pcb which is now fully accepted (or closed/aborted)
+ */
+void
+tcp_backlog_accepted(struct tcp_pcb* pcb)
+{
+  LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  if (pcb->listener != NULL) {
+    LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
+    pcb->listener->accepts_pending--;
+  }
+}
+#endif /* TCP_LISTEN_BACKLOG */
+
 /**
  * Closes the TX side of a connection held by the PCB.
  * For tcp_close(), a RST is sent if the application didn't receive all data
@@ -217,6 +289,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
   case LISTEN:
     err = ERR_OK;
     tcp_pcb_remove(&tcp_listen_pcbs.pcbs, pcb);
+    tcp_listen_closed(pcb);
     memp_free(MEMP_TCP_PCB_LISTEN, pcb);
     pcb = NULL;
     break;
@@ -230,6 +303,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
   case SYN_RCVD:
     err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
+      tcp_backlog_accepted(pcb);
       MIB2_STATS_INC(mib2.tcpattemptfails);
       pcb->state = FIN_WAIT_1;
     }
@@ -1586,9 +1660,10 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 void
 tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 {
-  /* This function is allowed to be called for both listen pcbs and
-     connection pcbs. */
-  pcb->accept = accept;
+  if (pcb->state == LISTEN) {
+    struct tcp_pcb_listen *lpcb = (struct tcp_pcb_listen*)pcb;
+    lpcb->accept = accept;
+  }
 }
 #endif /* LWIP_CALLBACK_API */
 
@@ -1628,22 +1703,9 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 
 #if TCP_LISTEN_BACKLOG
     if (pcb->state == SYN_RCVD) {
-      /* Need to find the corresponding listen_pcb and decrease its accepts_pending */
-      struct tcp_pcb_listen *lpcb;
-      LWIP_ASSERT("tcp_pcb_purge: pcb->state == SYN_RCVD but tcp_listen_pcbs is NULL",
-        tcp_listen_pcbs.listen_pcbs != NULL);
-      for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
-        if ((lpcb->local_port == pcb->local_port) &&
-            (IP_IS_V6_VAL(pcb->local_ip) == IP_IS_V6_VAL(lpcb->local_ip)) &&
-            (ip_addr_isany(&lpcb->local_ip) ||
-             ip_addr_cmp(&pcb->local_ip, &lpcb->local_ip))) {
-            /* port and address of the listen pcb match the timed-out pcb */
-            LWIP_ASSERT("tcp_pcb_purge: listen pcb does not have accepts pending",
-              lpcb->accepts_pending > 0);
-            lpcb->accepts_pending--;
-            break;
-          }
-      }
+      tcp_backlog_accepted(pcb);
+      /* prevent executing this again: */
+      pcb->listener = NULL;
     }
 #endif /* TCP_LISTEN_BACKLOG */
 

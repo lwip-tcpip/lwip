@@ -155,34 +155,38 @@ enum tcp_state {
   TIME_WAIT   = 10
 };
 
-#if LWIP_CALLBACK_API
-  /* Function to call when a listener has been connected.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb a new tcp_pcb that now is connected
-   * @param err an error argument (TODO: that is current always ERR_OK?)
-   * @return ERR_OK: accept the new connection,
-   *                 any other err_t aborts the new connection
-   */
-#define DEF_ACCEPT_CALLBACK  tcp_accept_fn accept;
-#else /* LWIP_CALLBACK_API */
-#define DEF_ACCEPT_CALLBACK
-#endif /* LWIP_CALLBACK_API */
-
 /**
  * members common to struct tcp_pcb and struct tcp_listen_pcb
  */
 #define TCP_PCB_COMMON(type) \
   type *next; /* for the linked list */ \
   void *callback_arg; \
-  /* the accept callback for listen- and normal pcbs, if LWIP_CALLBACK_API */ \
-  DEF_ACCEPT_CALLBACK \
   enum tcp_state state; /* TCP state */ \
   u8_t prio; \
   /* ports are in host byte order */ \
   u16_t local_port
 
 
-/* the TCP protocol control block */
+/** the TCP protocol control block for listening pcbs */
+struct tcp_pcb_listen {
+/** Common members of all PCB types */
+  IP_PCB;
+/** Protocol specific PCB members */
+  TCP_PCB_COMMON(struct tcp_pcb_listen);
+
+#if LWIP_CALLBACK_API
+  /* Function to call when a listener has been connected. */
+  tcp_accept_fn accept;
+#endif /* LWIP_CALLBACK_API */
+
+#if TCP_LISTEN_BACKLOG
+  u8_t backlog;
+  u8_t accepts_pending;
+#endif /* TCP_LISTEN_BACKLOG */
+};
+
+
+/** the TCP protocol control block */
 struct tcp_pcb {
 /** common PCB members */
   IP_PCB;
@@ -268,6 +272,10 @@ struct tcp_pcb {
 
   struct pbuf *refused_data; /* Data previously received but not yet taken by upper layer */
 
+#if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
+  struct tcp_pcb_listen* listener;
+#endif /* LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG */
+
 #if LWIP_CALLBACK_API
   /* Function to be called when more send buffer space is available. */
   tcp_sent_fn sent;
@@ -307,18 +315,6 @@ struct tcp_pcb {
 #endif
 };
 
-struct tcp_pcb_listen {
-/* Common members of all PCB types */
-  IP_PCB;
-/* Protocol specific PCB members */
-  TCP_PCB_COMMON(struct tcp_pcb_listen);
-
-#if TCP_LISTEN_BACKLOG
-  u8_t backlog;
-  u8_t accepts_pending;
-#endif /* TCP_LISTEN_BACKLOG */
-};
-
 #if LWIP_EVENT_API
 
 enum lwip_event {
@@ -353,21 +349,21 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 #define          tcp_sndbuf(pcb)          (TCPWND16((pcb)->snd_buf))
 #define          tcp_sndqueuelen(pcb)     ((pcb)->snd_queuelen)
 #define          tcp_nagle_disable(pcb)   ((pcb)->flags |= TF_NODELAY)
-#define          tcp_nagle_enable(pcb)    ((pcb)->flags = (tcpflags_t)((pcb)->flags & ~TF_NODELAY))
+#define          tcp_nagle_enable(pcb)    ((pcb)->flags = (u16_t)((pcb)->flags & ~TF_NODELAY))
 #define          tcp_nagle_disabled(pcb)  (((pcb)->flags & TF_NODELAY) != 0)
 
 #if TCP_LISTEN_BACKLOG
-#define          tcp_accepted(pcb) do { \
-  LWIP_ASSERT("pcb->state == LISTEN (called for wrong pcb?)", pcb->state == LISTEN); \
-  (((struct tcp_pcb_listen *)(pcb))->accepts_pending--); } while(0)
 #define          tcp_backlog_set(pcb, new_backlog) do { \
   LWIP_ASSERT("pcb->state == LISTEN (called for wrong pcb?)", (pcb)->state == LISTEN); \
   ((struct tcp_pcb_listen *)(pcb))->backlog = ((new_backlog) ? (new_backlog) : 1); } while(0)
+void             tcp_backlog_delayed(struct tcp_pcb* pcb);
+void             tcp_backlog_accepted(struct tcp_pcb* pcb);
 #else  /* TCP_LISTEN_BACKLOG */
-#define          tcp_accepted(pcb) LWIP_ASSERT("pcb->state == LISTEN (called for wrong pcb?)", \
-                                               (pcb)->state == LISTEN)
 #define          tcp_backlog_set(pcb, new_backlog)
+#define          tcp_backlog_delayed(pcb)
+#define          tcp_backlog_accepted(pcb)
 #endif /* TCP_LISTEN_BACKLOG */
+//#define          tcp_accepted(pcb) /* compatibility define, not needed any more */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
 err_t            tcp_bind    (struct tcp_pcb *pcb, const ip_addr_t *ipaddr,

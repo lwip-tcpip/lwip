@@ -2286,12 +2286,10 @@ static err_t
 http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 {
   struct http_state *hs;
-  struct tcp_pcb_listen *lpcb = (struct tcp_pcb_listen*)arg;
+  LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(err);
   LWIP_DEBUGF(HTTPD_DEBUG, ("http_accept %p / %p\n", (void*)pcb, arg));
 
-  /* Decrease the listen backlog counter */
-  tcp_accepted(lpcb);
   /* Set priority */
   tcp_setprio(pcb, HTTPD_TCP_PRIO);
 
@@ -2343,8 +2341,7 @@ httpd_init(void)
   LWIP_ASSERT("httpd_init: tcp_bind failed", err == ERR_OK);
   pcb = tcp_listen(pcb);
   LWIP_ASSERT("httpd_init: tcp_listen failed", pcb != NULL);
-  /* initialize callback arg and accept callback */
-  tcp_arg(pcb, pcb);
+  /* initialize accept callback */
   tcp_accept(pcb, http_accept);
 }
 

@@ -216,11 +216,11 @@ PACK_STRUCT_END
 
 #else /* LWIP_EVENT_API */
 
-#define TCP_EVENT_ACCEPT(pcb,err,ret)                          \
-  do {                                                         \
-    if((pcb)->accept != NULL)                                  \
-      (ret) = (pcb)->accept((pcb)->callback_arg,(pcb),(err));  \
-    else (ret) = ERR_ARG;                                      \
+#define TCP_EVENT_ACCEPT(pcb,err,ret)                                   \
+  do {                                                                  \
+    if(((pcb)->listener != NULL) && ((pcb)->listener->accept != NULL))  \
+      (ret) = (pcb)->listener->accept((pcb)->callback_arg,(pcb),(err)); \
+    else (ret) = ERR_ARG;                                               \
   } while (0)
 
 #define TCP_EVENT_SENT(pcb,space,ret)                          \

@@ -485,6 +485,9 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
      to the application thread */
   newconn->last_err = err;
 
+  /* handle backlog counter */
+  tcp_backlog_delayed(newpcb);
+
   if (sys_mbox_trypost(&conn->acceptmbox, newconn) != ERR_OK) {
     /* When returning != ERR_OK, the pcb is aborted in tcp_process(),
        so do nothing here! */
@@ -501,6 +504,8 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     sys_mbox_free(&newconn->recvmbox);
     sys_mbox_set_invalid(&newconn->recvmbox);
     netconn_free(newconn);
+    /* handle backlog counter */
+    tcp_backlog_accepted(newpcb);
     return ERR_MEM;
   } else {
     /* Register event with callback */
@@ -761,8 +766,8 @@ netconn_drain(struct netconn *conn)
       struct netconn *newconn = (struct netconn *)mem;
       /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
       /* pcb might be set to NULL already by err_tcp() */
-      if (conn->pcb.tcp != NULL) {
-        tcp_accepted(conn->pcb.tcp);
+      if (newconn->pcb.tcp != NULL) {
+        tcp_backlog_accepted(newconn->pcb.tcp);
       }
       /* drain recvmbox */
       netconn_drain(newconn);
@@ -1430,23 +1435,37 @@ lwip_netconn_do_recv(void *m)
   msg->err = ERR_OK;
   if (msg->conn->pcb.tcp != NULL) {
     if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
-#if TCP_LISTEN_BACKLOG
-      if (msg->conn->pcb.tcp->state == LISTEN) {
-        tcp_accepted(msg->conn->pcb.tcp);
-      } else
-#endif /* TCP_LISTEN_BACKLOG */
-      {
-        u32_t remaining = msg->msg.r.len;
-        do {
-          u16_t recved = (remaining > 0xffff) ? 0xffff : (u16_t)remaining;
-          tcp_recved(msg->conn->pcb.tcp, recved);
-          remaining -= recved;
-        } while (remaining != 0);
-      }
+      u32_t remaining = msg->msg.r.len;
+      do {
+        u16_t recved = (remaining > 0xffff) ? 0xffff : (u16_t)remaining;
+        tcp_recved(msg->conn->pcb.tcp, recved);
+        remaining -= recved;
+      } while (remaining != 0);
     }
   }
   TCPIP_APIMSG_ACK(msg);
 }
+
+#if TCP_LISTEN_BACKLOG
+/** Indicate that a TCP pcb has been accepted
+ * Called from netconn_accept
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
+void
+lwip_netconn_do_accepted(void *m)
+{
+  struct api_msg *msg = (struct api_msg*)m;
+
+  msg->err = ERR_OK;
+  if (msg->conn->pcb.tcp != NULL) {
+    if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
+      tcp_backlog_accepted(msg->conn->pcb.tcp);
+    }
+  }
+  TCPIP_APIMSG_ACK(msg);
+}
+#endif /* TCP_LISTEN_BACKLOG */
 
 /**
  * See if more data needs to be written from a previous call to netconn_write.

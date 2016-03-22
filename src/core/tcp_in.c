@@ -579,9 +579,9 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->rcv_ann_right_edge = npcb->rcv_nxt;
     npcb->snd_wl1 = seqno - 1;/* initialise to seqno-1 to force window update */
     npcb->callback_arg = pcb->callback_arg;
-#if LWIP_CALLBACK_API
-    npcb->accept = pcb->accept;
-#endif /* LWIP_CALLBACK_API */
+#if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
+    npcb->listener = pcb;
+#endif /* LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG */
     /* inherit socket options */
     npcb->so_options = pcb->so_options & SOF_INHERITED;
     /* Register the new PCB so that we can begin receiving segments
@@ -784,10 +784,18 @@ tcp_process(struct tcp_pcb *pcb)
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
-        LWIP_ASSERT("pcb->accept != NULL", pcb->accept != NULL);
+        LWIP_ASSERT("pcb->listener->accept != NULL",
+          (pcb->listener == NULL) || (pcb->listener->accept != NULL));
+        if (pcb->listener == NULL) {
+          /* listen pcb might be closed by now */
+          err = ERR_VAL;
+        } else
 #endif
-        /* Call the accept function. */
-        TCP_EVENT_ACCEPT(pcb, ERR_OK, err);
+        {
+          tcp_backlog_accepted(pcb);
+          /* Call the accept function. */
+          TCP_EVENT_ACCEPT(pcb, ERR_OK, err);
+        }
         if (err != ERR_OK) {
           /* If the accept function returns with an error, we abort
            * the connection. */

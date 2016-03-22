@@ -386,9 +386,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */
   API_MSG_VAR_ALLOC_DONTFAIL(msg);
-  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).conn = newconn;
   /* don't care for the return value of lwip_netconn_do_recv */
-  netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
+  netconn_apimsg(lwip_netconn_do_accepted, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 #endif /* TCP_LISTEN_BACKLOG */
 
