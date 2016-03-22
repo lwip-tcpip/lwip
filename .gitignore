@@ -9,3 +9,4 @@
 /src/apps/snmp/LwipMibCompiler/SharpSnmpLib/bin/
 /src/apps/snmp/LwipMibCompiler/SharpSnmpLib/obj/
 /src/apps/snmp/LwipMibCompiler/LwipMibCompiler.userprefs
+/src/apps/snmp/LwipMibCompiler/*.suo
