@@ -468,6 +468,14 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 
   LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: newpcb->tate: %s\n", tcp_debug_state_str(newpcb->state)));
 
+  if ((err != ERR_OK) || (arg == NULL)) {
+    return ERR_VAL;
+  }
+  if (newpcb == NULL) {
+    /* @todo: out-of-pcbs during connect: pass on this error to the application */
+    return ERR_VAL;
+  }
+
   if (!sys_mbox_valid(&conn->acceptmbox)) {
     LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: acceptmbox already deleted\n"));
     return ERR_VAL;

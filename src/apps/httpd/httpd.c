@@ -2290,6 +2290,10 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
   LWIP_UNUSED_ARG(err);
   LWIP_DEBUGF(HTTPD_DEBUG, ("http_accept %p / %p\n", (void*)pcb, arg));
 
+  if ((err != ERR_OK) || (pcb == NULL)) {
+    return ERR_VAL;
+  }
+
   /* Set priority */
   tcp_setprio(pcb, HTTPD_TCP_PRIO);
 

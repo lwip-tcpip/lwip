@@ -562,8 +562,10 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
        we don't do anything, but rely on the sender will retransmit the
        SYN at a time when we have more memory available. */
     if (npcb == NULL) {
+      err_t err;
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
       TCP_STATS_INC(tcp.memerr);
+      TCP_EVENT_ACCEPT(pcb, NULL, pcb->callback_arg, ERR_MEM, err);
       return ERR_MEM;
     }
 #if TCP_LISTEN_BACKLOG
@@ -794,7 +796,7 @@ tcp_process(struct tcp_pcb *pcb)
         {
           tcp_backlog_accepted(pcb);
           /* Call the accept function. */
-          TCP_EVENT_ACCEPT(pcb, ERR_OK, err);
+          TCP_EVENT_ACCEPT(pcb->listener, pcb, pcb->callback_arg, ERR_OK, err);
         }
         if (err != ERR_OK) {
           /* If the accept function returns with an error, we abort

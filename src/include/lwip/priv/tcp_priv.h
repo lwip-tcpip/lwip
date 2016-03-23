@@ -199,7 +199,7 @@ PACK_STRUCT_END
 
 #if LWIP_EVENT_API
 
-#define TCP_EVENT_ACCEPT(pcb,err,ret)    ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
+#define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret) ret = lwip_tcp_event(arg, (pcb),\
                 LWIP_EVENT_ACCEPT, NULL, 0, err)
 #define TCP_EVENT_SENT(pcb,space,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
                    LWIP_EVENT_SENT, NULL, space, ERR_OK)
@@ -216,11 +216,11 @@ PACK_STRUCT_END
 
 #else /* LWIP_EVENT_API */
 
-#define TCP_EVENT_ACCEPT(pcb,err,ret)                                   \
-  do {                                                                  \
-    if(((pcb)->listener != NULL) && ((pcb)->listener->accept != NULL))  \
-      (ret) = (pcb)->listener->accept((pcb)->callback_arg,(pcb),(err)); \
-    else (ret) = ERR_ARG;                                               \
+#define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret)                 \
+  do {                                                         \
+    if((lpcb != NULL) && ((lpcb)->accept != NULL))             \
+      (ret) = (lpcb)->accept((arg),(pcb),(err));               \
+    else (ret) = ERR_ARG;                                      \
   } while (0)
 
 #define TCP_EVENT_SENT(pcb,space,ret)                          \
