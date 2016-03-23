@@ -40,6 +40,7 @@
 #include "lwip/apps/snmp.h"
 #include "lwip/apps/snmp_core.h"
 #include "snmp_core_priv.h"
+#include "lwip/netif.h"
 #include <string.h>
 
 
@@ -454,6 +455,26 @@ u8_t
 snmp_oid_equal(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
 {
   return (snmp_oid_compare(oid1, oid1_len, oid2, oid2_len) == 0)? 1 : 0;
+}
+
+u8_t
+netif_to_num(const struct netif *netif)
+{
+  u8_t result = 0;
+  struct netif *netif_iterator = netif_list;
+
+  while (netif_iterator != NULL) {
+    result++;
+
+    if(netif_iterator == netif) {
+      return result;
+    }
+
+    netif_iterator = netif_iterator->next;
+  }
+
+  LWIP_ASSERT("netif not found in netif_list", 0);
+  return 0;
 }
 
 static const struct snmp_mib*

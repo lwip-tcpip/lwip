@@ -40,6 +40,7 @@
 #include "lwip/apps/snmp_table.h"
 #include "lwip/apps/snmp_scalar.h"
 #include "lwip/icmp.h"
+#include "lwip/stats.h"
 
 #if SNMP_USE_NETCONN
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
