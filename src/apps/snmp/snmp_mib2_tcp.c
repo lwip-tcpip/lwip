@@ -43,6 +43,8 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
 
+#if LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_TCP
+
 #if SNMP_USE_NETCONN
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
 #define CREATE_LWIP_SYNC_NODE(oid, node_name) \
@@ -53,8 +55,6 @@
 #endif
 
 /* --- tcp .1.3.6.1.2.1.6 ----------------------------------------------------- */
-
-#if LWIP_TCP
 
 static u16_t 
 tcp_get_value(struct snmp_node_instance* instance, void* value)
@@ -589,4 +589,4 @@ static const struct snmp_node* const tcp_nodes[] = {
 };
 
 const struct snmp_tree_node snmp_mib2_tcp_root = SNMP_CREATE_TREE_NODE(6, tcp_nodes);
-#endif /* LWIP_TCP */
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_TCP */

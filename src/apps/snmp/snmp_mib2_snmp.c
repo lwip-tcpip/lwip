@@ -39,6 +39,8 @@
 #include "lwip/apps/snmp_mib2.h"
 #include "lwip/apps/snmp_scalar.h"
 
+#if LWIP_SNMP && SNMP_LWIP_MIB2
+
 #define MIB2_AUTH_TRAPS_ENABLED  1
 #define MIB2_AUTH_TRAPS_DISABLED 2
 
@@ -221,3 +223,5 @@ static const struct snmp_scalar_array_node_def snmp_nodes[] = {
 };
 
 const struct snmp_scalar_array_node snmp_mib2_snmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(11, snmp_nodes, snmp_get_value, snmp_set_test, snmp_set_value);
+
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 */

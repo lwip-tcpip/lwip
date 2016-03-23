@@ -42,6 +42,8 @@
 #include "lwip/udp.h"
 #include "lwip/stats.h"
 
+#if LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_UDP
+
 #if SNMP_USE_NETCONN
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
 #define CREATE_LWIP_SYNC_NODE(oid, node_name) \
@@ -52,8 +54,6 @@
 #endif
 
 /* --- udp .1.3.6.1.2.1.7 ----------------------------------------------------- */
-
-#if LWIP_UDP
 
 static u16_t 
 udp_get_value(struct snmp_node_instance* instance, void* value)
@@ -352,4 +352,4 @@ static const struct snmp_node* const udp_nodes[] = {
 };
 
 const struct snmp_tree_node snmp_mib2_udp_root = SNMP_CREATE_TREE_NODE(7, udp_nodes);
-#endif /* LWIP_UDP */
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_UDP */

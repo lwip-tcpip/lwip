@@ -40,6 +40,8 @@
 #include "lwip/apps/snmp_table.h"
 #include "lwip/apps/snmp_scalar.h"
 
+#if LWIP_SNMP && SNMP_LWIP_MIB2
+
 #if SNMP_USE_NETCONN
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
 #define CREATE_LWIP_SYNC_NODE(oid, node_name) \
@@ -355,3 +357,5 @@ static const struct snmp_scalar_array_node_def system_nodes[] = {
 };
 
 const struct snmp_scalar_array_node snmp_mib2_system_node = SNMP_SCALAR_CREATE_ARRAY_NODE(1, system_nodes, system_get_value, system_set_test, system_set_value);
+
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 */

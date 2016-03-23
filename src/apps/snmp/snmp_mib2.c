@@ -35,8 +35,7 @@
 
 #include "lwip/apps/snmp_opts.h"
 
-#if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
-#if SNMP_LWIP_MIB2
+#if LWIP_SNMP && SNMP_LWIP_MIB2 /* don't build if not configured for use in lwipopts.h */
 
 #if !LWIP_STATS
 #error LWIP_SNMP MIB2 needs LWIP_STATS (for MIB2)
@@ -111,5 +110,4 @@ static const struct snmp_tree_node mib2_root = SNMP_CREATE_TREE_NODE(1, mib2_nod
 static const u32_t  mib2_base_oid_arr[] = { 1,3,6,1,2,1 };
 const struct snmp_mib mib2 = SNMP_MIB_CREATE(mib2_base_oid_arr, &mib2_root.node);
 
-#endif /* SNMP_LWIP_MIB2 */
-#endif /* LWIP_SNMP */
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 */

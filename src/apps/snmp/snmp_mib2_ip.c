@@ -44,6 +44,8 @@
 #include "lwip/ip.h"
 #include "netif/etharp.h"
 
+#if LWIP_SNMP && SNMP_LWIP_MIB2
+
 #if SNMP_USE_NETCONN
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
 #define CREATE_LWIP_SYNC_NODE(oid, node_name) \
@@ -734,3 +736,5 @@ static const struct snmp_node* const at_nodes[] = {
 
 const struct snmp_tree_node snmp_mib2_at_root = SNMP_CREATE_TREE_NODE(3, at_nodes);
 #endif /* LWIP_ARP && LWIP_IPV4 */
+
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 */

@@ -42,6 +42,8 @@
 #include "lwip/icmp.h"
 #include "lwip/stats.h"
 
+#if LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_ICMP
+
 #if SNMP_USE_NETCONN
 #define SYNC_NODE_NAME(node_name) node_name ## _synced
 #define CREATE_LWIP_SYNC_NODE(oid, node_name) \
@@ -52,8 +54,6 @@
 #endif
 
 /* --- icmp .1.3.6.1.2.1.5 ----------------------------------------------------- */
-
-#if LWIP_ICMP
 
 static u16_t
 icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
@@ -179,4 +179,4 @@ static const struct snmp_scalar_array_node_def icmp_nodes[] = {
 
 const struct snmp_scalar_array_node snmp_mib2_icmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(5, icmp_nodes, icmp_get_value, NULL, NULL);
 
-#endif /* LWIP_ICMP */
+#endif /* LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_ICMP */
