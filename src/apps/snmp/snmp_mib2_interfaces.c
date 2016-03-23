@@ -39,7 +39,7 @@
 #include "lwip/apps/snmp_mib2.h"
 #include "lwip/apps/snmp_table.h"
 #include "lwip/apps/snmp_scalar.h"
-#include "lwip/icmp.h"
+#include "lwip/netif.h"
 #include "lwip/stats.h"
 
 #if SNMP_USE_NETCONN
