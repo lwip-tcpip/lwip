@@ -48,9 +48,6 @@
 #include "lwip/apps/snmp.h"
 #include "lwip/apps/snmp_core.h"
 #include "lwip/apps/snmp_mib2.h"
-#include "lwip/apps/snmp_scalar.h"
-#include "lwip/apps/snmp_table.h"
-#include "lwip/apps/snmp_threadsync.h"
 
 #if SNMP_USE_NETCONN
 #include "lwip/tcpip.h"
