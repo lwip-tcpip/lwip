@@ -1,9 +1,6 @@
 /**
  * @file
  * Management Information Base II (RFC1213) objects and functions.
- *
- * @note the object identifiers for this MIB-2 and private MIB tree
- * must be kept in sorted ascending order. This to ensure correct getnext operation.
  */
 
 /*
@@ -41,8 +38,6 @@
 #include "lwip/apps/snmp_core.h"
 #include "lwip/apps/snmp_mib2.h"
 #include "lwip/apps/snmp_scalar.h"
-
-#include <string.h>
 
 #define MIB2_AUTH_TRAPS_ENABLED  1
 #define MIB2_AUTH_TRAPS_DISABLED 2
@@ -225,4 +220,4 @@ static const struct snmp_scalar_array_node_def snmp_nodes[] = {
   {32, SNMP_ASN1_TYPE_COUNTER, SNMP_NODE_INSTANCE_READ_ONLY}   /* snmpProxyDrops */
 };
 
-const struct snmp_scalar_array_node snmp_mib_snmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(11, snmp_nodes, snmp_get_value, snmp_set_test, snmp_set_value);
+const struct snmp_scalar_array_node snmp_mib2_snmp_root = SNMP_SCALAR_CREATE_ARRAY_NODE(11, snmp_nodes, snmp_get_value, snmp_set_test, snmp_set_value);
