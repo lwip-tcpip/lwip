@@ -302,6 +302,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-03-23: Florent Matignon
+  * dhcp.c: fixed bug #38203: DHCP options are not recorded in all DHCP ack messages
+
   2016-03-22: Simon Goldschmidt
   * tcp: changed accept handling to be done internally: the application does not
     have to call tcp_accepted() any more. Instead, when delaying accept (e.g. sockets

@@ -136,7 +136,7 @@ u32_t dhcp_rx_options_val[DHCP_OPTION_IDX_MAX];
     @todo: move this into struct dhcp? */
 u8_t  dhcp_rx_options_given[DHCP_OPTION_IDX_MAX];
 
-static u8_t dhcp_discover_select_options[] = {
+static u8_t dhcp_discover_request_options[] = {
   DHCP_OPTION_SUBNET_MASK,
   DHCP_OPTION_ROUTER,
   DHCP_OPTION_BROADCAST,
@@ -357,9 +357,9 @@ dhcp_select(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
     dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(ip_2_ip4(&dhcp->server_ip_addr))));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_select_options));
-    for (i = 0; i < sizeof(dhcp_discover_select_options); i++) {
-      dhcp_option_byte(dhcp, dhcp_discover_select_options[i]);
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
+    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+      dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
 
 #if LWIP_NETIF_HOSTNAME
@@ -947,9 +947,9 @@ dhcp_discover(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_select_options));
-    for (i = 0; i < sizeof(dhcp_discover_select_options); i++) {
-      dhcp_option_byte(dhcp, dhcp_discover_select_options[i]);
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
+    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+      dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
     dhcp_option_trailer(dhcp);
 
@@ -1099,6 +1099,7 @@ dhcp_renew(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+  u8_t i;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_renew()\n"));
   dhcp_set_state(dhcp, DHCP_STATE_RENEWING);
 
@@ -1107,6 +1108,11 @@ dhcp_renew(struct netif *netif)
   if (result == ERR_OK) {
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
+
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
+    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+      dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
+    }
 
 #if LWIP_NETIF_HOSTNAME
     dhcp_option_hostname(dhcp, netif);
@@ -1145,6 +1151,7 @@ dhcp_rebind(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+  u8_t i;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind()\n"));
   dhcp_set_state(dhcp, DHCP_STATE_REBINDING);
 
@@ -1153,6 +1160,11 @@ dhcp_rebind(struct netif *netif)
   if (result == ERR_OK) {
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
+
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
+    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+      dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
+    }
 
 #if LWIP_NETIF_HOSTNAME
     dhcp_option_hostname(dhcp, netif);
@@ -1189,6 +1201,7 @@ dhcp_reboot(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+  u8_t i;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot()\n"));
   dhcp_set_state(dhcp, DHCP_STATE_REBOOTING);
 
@@ -1200,6 +1213,11 @@ dhcp_reboot(struct netif *netif)
 
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&dhcp->offered_ip_addr)));
+
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
+    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+      dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
+    }
 
     dhcp_option_trailer(dhcp);
 
@@ -1701,6 +1719,7 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     /* already bound to the given lease address? */
     else if ((dhcp->state == DHCP_STATE_REBOOTING) || (dhcp->state == DHCP_STATE_REBINDING) ||
              (dhcp->state == DHCP_STATE_RENEWING)) {
+      dhcp_handle_ack(netif);
       dhcp_bind(netif);
     }
   }
