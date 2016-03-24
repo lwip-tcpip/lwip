@@ -533,7 +533,7 @@ static err_t
 lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
   lwiperf_state_tcp_t *s, *conn;
-  if ((err != ERR_OK)  || (newpcb == NULL) || (arg == NULL)) {
+  if ((err != ERR_OK) || (newpcb == NULL) || (arg == NULL)) {
     return ERR_VAL;
   }
 
