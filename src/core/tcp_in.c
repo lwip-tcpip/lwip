@@ -571,6 +571,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     }
 #if TCP_LISTEN_BACKLOG
     pcb->accepts_pending++;
+    npcb->flags |= TF_BACKLOGPEND;
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
     ip_addr_copy(npcb->local_ip, *ip_current_dest_addr());

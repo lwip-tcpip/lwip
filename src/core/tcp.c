@@ -194,9 +194,12 @@ void
 tcp_backlog_delayed(struct tcp_pcb* pcb)
 {
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
-  if (pcb->listener != NULL) {
-    pcb->listener->accepts_pending++;
-    LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
+  if ((pcb->flags & TF_BACKLOGPEND) == 0) {
+    if (pcb->listener != NULL) {
+      pcb->listener->accepts_pending++;
+      LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
+      pcb->flags |= TF_BACKLOGPEND;
+    }
   }
 }
 
@@ -212,9 +215,12 @@ void
 tcp_backlog_accepted(struct tcp_pcb* pcb)
 {
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
-  if (pcb->listener != NULL) {
-    LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
-    pcb->listener->accepts_pending--;
+  if ((pcb->flags & TF_BACKLOGPEND) != 0) {
+    if (pcb->listener != NULL) {
+      LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
+      pcb->listener->accepts_pending--;
+      pcb->flags &= ~TF_BACKLOGPEND;
+    }
   }
 }
 #endif /* TCP_LISTEN_BACKLOG */
@@ -470,6 +476,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
       tcp_segs_free(pcb->ooseq);
     }
 #endif /* TCP_QUEUE_OOSEQ */
+    tcp_backlog_accepted(pcb);
     if (send_rst) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
       tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, local_port, pcb->remote_port);
@@ -1599,7 +1606,9 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 {
   /* This function is allowed to be called for both listen pcbs and
      connection pcbs. */
-  pcb->callback_arg = arg;
+  if (pcb != NULL) {
+    pcb->callback_arg = arg;
+  }
 }
 #if LWIP_CALLBACK_API
 
@@ -1613,8 +1622,10 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 void
 tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 {
-  LWIP_ASSERT("invalid socket state for recv callback", pcb->state != LISTEN);
-  pcb->recv = recv;
+  if (pcb != NULL) {
+    LWIP_ASSERT("invalid socket state for recv callback", pcb->state != LISTEN);
+    pcb->recv = recv;
+  }
 }
 
 /**
@@ -1627,8 +1638,10 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 void
 tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 {
-  LWIP_ASSERT("invalid socket state for sent callback", pcb->state != LISTEN);
-  pcb->sent = sent;
+  if (pcb != NULL) {
+    LWIP_ASSERT("invalid socket state for sent callback", pcb->state != LISTEN);
+    pcb->sent = sent;
+  }
 }
 
 /**
@@ -1642,8 +1655,10 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 void
 tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 {
-  LWIP_ASSERT("invalid socket state for err callback", pcb->state != LISTEN);
-  pcb->errf = err;
+  if (pcb != NULL) {
+    LWIP_ASSERT("invalid socket state for err callback", pcb->state != LISTEN);
+    pcb->errf = err;
+  }
 }
 
 /**
@@ -1657,7 +1672,7 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 void
 tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 {
-  if (pcb->state == LISTEN) {
+  if ((pcb != NULL) && (pcb->state == LISTEN)) {
     struct tcp_pcb_listen *lpcb = (struct tcp_pcb_listen*)pcb;
     lpcb->accept = accept;
   }
@@ -1698,14 +1713,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge\n"));
 
-#if TCP_LISTEN_BACKLOG
-    if (pcb->state == SYN_RCVD) {
-      tcp_backlog_accepted(pcb);
-      /* prevent executing this again: */
-      pcb->listener = NULL;
-    }
-#endif /* TCP_LISTEN_BACKLOG */
-
+    tcp_backlog_accepted(pcb);
 
     if (pcb->refused_data != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->refused_data\n"));

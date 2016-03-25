@@ -131,13 +131,17 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 #define TCPWND16(x)             ((u16_t)LWIP_MIN((x), 0xFFFF))
 #define TCP_WND_MAX(pcb)        ((tcpwnd_size_t)(((pcb)->flags & TF_WND_SCALE) ? TCP_WND : TCPWND16(TCP_WND)))
 typedef u32_t tcpwnd_size_t;
-typedef u16_t tcpflags_t;
 #else
 #define RCV_WND_SCALE(pcb, wnd) (wnd)
 #define SND_WND_SCALE(pcb, wnd) (wnd)
 #define TCPWND16(x)             (x)
 #define TCP_WND_MAX(pcb)        TCP_WND
 typedef u16_t tcpwnd_size_t;
+#endif
+
+#if LWIP_WND_SCALE || TCP_LISTEN_BACKLOG
+typedef u16_t tcpflags_t;
+#else
 typedef u8_t tcpflags_t;
 #endif
 
@@ -207,6 +211,9 @@ struct tcp_pcb {
 #define TF_NAGLEMEMERR 0x80U   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
 #if LWIP_WND_SCALE
 #define TF_WND_SCALE   0x0100U /* Window Scale option enabled */
+#endif
+#if TCP_LISTEN_BACKLOG
+#define TF_BACKLOGPEND 0x0200U /* If this is set, a connection pcb has increased the backlog on its listener */
 #endif
 
   /* the rest of the fields are in host byte order

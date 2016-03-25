@@ -512,8 +512,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     sys_mbox_free(&newconn->recvmbox);
     sys_mbox_set_invalid(&newconn->recvmbox);
     netconn_free(newconn);
-    /* handle backlog counter */
-    tcp_backlog_accepted(newpcb);
     return ERR_MEM;
   } else {
     /* Register event with callback */
@@ -774,9 +772,6 @@ netconn_drain(struct netconn *conn)
       struct netconn *newconn = (struct netconn *)mem;
       /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
       /* pcb might be set to NULL already by err_tcp() */
-      if (newconn->pcb.tcp != NULL) {
-        tcp_backlog_accepted(newconn->pcb.tcp);
-      }
       /* drain recvmbox */
       netconn_drain(newconn);
       if (newconn->pcb.tcp != NULL) {
