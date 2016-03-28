@@ -321,7 +321,7 @@ snmp_process_get_request(struct snmp_request *request)
       break;
     } else if (err == SNMP_VB_ENUMERATOR_ERR_ASN1ERROR) {
       /* malformed ASN.1, don't answer */
-      return ERR_ABRT;
+      return ERR_ARG;
     } else {
       request->error_status = SNMP_ERR_GENERROR;
     }
@@ -357,7 +357,7 @@ snmp_process_getnext_request(struct snmp_request *request)
       break;
     } else if (err == SNMP_VB_ENUMERATOR_ERR_ASN1ERROR) {
       /* malformed ASN.1, don't answer */
-      return ERR_ABRT;
+      return ERR_ARG;
     } else {
       request->error_status = SNMP_ERR_GENERROR;
     }
@@ -408,7 +408,7 @@ snmp_process_getbulk_request(struct snmp_request *request)
       break;
     } else if (err == SNMP_VB_ENUMERATOR_ERR_ASN1ERROR) {
       /* malformed ASN.1, don't answer */
-      return ERR_ABRT;
+      return ERR_ARG;
     } else if ((err != SNMP_VB_ENUMERATOR_ERR_OK) || (vb.type != SNMP_ASN1_TYPE_NULL) || (vb.value_len != 0)) {
       request->error_status = SNMP_ERR_GENERROR;
     } else {
@@ -510,7 +510,7 @@ snmp_process_set_request(struct snmp_request *request)
       request->error_status = SNMP_ERR_WRONGLENGTH;
     } else if (err == SNMP_VB_ENUMERATOR_ERR_ASN1ERROR) {
       /* malformed ASN.1, don't answer */
-      return ERR_ABRT;
+      return ERR_ARG;
     } else {
       request->error_status = SNMP_ERR_GENERROR;
     }
@@ -574,8 +574,8 @@ snmp_process_set_request(struct snmp_request *request)
     return retValue; \
   }
 
-#define IF_PARSE_EXEC(code)   PARSE_EXEC(code, ERR_ABRT)
-#define IF_PARSE_ASSERT(code) PARSE_ASSERT(code, ERR_ABRT)
+#define IF_PARSE_EXEC(code)   PARSE_EXEC(code, ERR_ARG)
+#define IF_PARSE_ASSERT(code) PARSE_ASSERT(code, ERR_ARG)
 
 /**
  * Checks and decodes incoming SNMP message header, logs header errors.
@@ -611,7 +611,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
   if ((s32_value != SNMP_VERSION_1) && (s32_value != SNMP_VERSION_2c)) {
     /* unsupported SNMP version */
     snmp_stats.inbadversions++;
-    return ERR_ABRT;
+    return ERR_ARG;
   }
   request->version = (u8_t)s32_value;
 
@@ -651,7 +651,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       /* GetBulkRequest PDU */
       if (request->version < SNMP_VERSION_2c) {
         /* RFC2089: invalid, drop packet */
-        return ERR_ABRT;
+        return ERR_ARG;
       }
       break;
     case (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_SET_REQ):
@@ -661,7 +661,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     default:
       /* unsupported input PDU for this agent (no parse error) */
       LWIP_DEBUGF(SNMP_DEBUG, ("Unknown/Invalid SNMP PDU type received: %d", tlv.type)); \
-      return ERR_ABRT;
+      return ERR_ARG;
       break;
   }
   request->request_type = tlv.type & SNMP_ASN1_DATATYPE_MASK;
@@ -671,7 +671,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     /* community string was too long or really empty*/
     snmp_stats.inbadcommunitynames++;
     snmp_authfail_trap();
-    return ERR_ABRT;
+    return ERR_ARG;
   } else if (request->request_type == SNMP_ASN1_CONTEXT_PDU_SET_REQ) {
     if (strnlen(snmp_community_write, SNMP_MAX_COMMUNITY_STR_LEN) == 0) {
       /* our write community is empty, that means all our objects are readonly */
@@ -681,14 +681,14 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       /* community name does not match */
       snmp_stats.inbadcommunitynames++;
       snmp_authfail_trap();
-      return ERR_ABRT;
+      return ERR_ARG;
     }
   } else { 
     if (strncmp(snmp_community, (const char*)request->community, SNMP_MAX_COMMUNITY_STR_LEN) != 0) {
       /* community name does not match */
       snmp_stats.inbadcommunitynames++;
       snmp_authfail_trap();
-      return ERR_ABRT;
+      return ERR_ARG;
     }
   }
   
@@ -746,7 +746,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
   return ERR_OK;
 }
 
-#define OF_BUILD_EXEC(code) BUILD_EXEC(code, ERR_ABRT)
+#define OF_BUILD_EXEC(code) BUILD_EXEC(code, ERR_ARG)
 
 static err_t
 snmp_prepare_outbound_frame(struct snmp_request *request)
@@ -809,7 +809,7 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
   return ERR_OK;
 }
 
-#define OVB_BUILD_EXEC(code) BUILD_EXEC(code, ERR_ABRT)
+#define OVB_BUILD_EXEC(code) BUILD_EXEC(code, ERR_ARG)
 
 static err_t
 snmp_append_outbound_varbind(struct snmp_request *request, struct snmp_varbind* varbind)
@@ -973,7 +973,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
     if (request->error_status >= SNMP_VARBIND_EXCEPTION_OFFSET) {
       /* should never occur because v2 frames store exceptions directly inside varbinds and not as frame error_status */
       LWIP_DEBUGF(SNMP_DEBUG, ("snmp_complete_outbound_frame() > Found v2 request with varbind exception code stored as error status!\n"));
-      return ERR_ABRT;
+      return ERR_ARG;
     }
   }
 
@@ -1003,7 +1003,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
     snmp_asn1_enc_s32t_cnt(request->error_status, &len);
     if (len != 1) {
       /* error, we only reserved one byte for it */
-      return ERR_ABRT;
+      return ERR_ARG;
     }
     OF_BUILD_EXEC( snmp_pbuf_stream_seek_abs(&(request->outbound_pbuf_stream), request->outbound_error_status_offset) );
     OF_BUILD_EXEC( snmp_asn1_enc_s32t(&(request->outbound_pbuf_stream), len, request->error_status) );
