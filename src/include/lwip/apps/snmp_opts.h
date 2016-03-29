@@ -47,6 +47,15 @@
 #endif
 
 /**
+ * LWIP_SNMP_V3==1: This enables EXPERIMENTAL SNMPv3 support. LWIP_SNMP must
+ * also be enabled.
+ * THIS IS UNDER DEVELOPMENT AND SHOULD NOT BE ENABLED IN PRODUCTS.
+ */
+#ifndef LWIP_SNMP_V3
+#define LWIP_SNMP_V3               0
+#endif
+
+/**
  * SNMP_USE_NETCONN: Use netconn API instead of raw API.
  * Makes SNMP agent run in a worker thread, so blocking operations
  * can be done in MIB calls.

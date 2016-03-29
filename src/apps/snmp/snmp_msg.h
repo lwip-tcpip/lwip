@@ -5,6 +5,7 @@
 
 /*
  * Copyright (c) 2006 Axon Digital Design B.V., The Netherlands.
+ * Copyright (c) 2016 Elias Oenal.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +32,7 @@
  *
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  *         Martin Hentschel <info@cl-soft.de>
+ *         Elias Oenal <lwip@eliasoenal.com>
  */
 
 #ifndef LWIP_HDR_APPS_SNMP_MSG_H
@@ -45,6 +47,10 @@
 #include "snmp_pbuf_stream.h"
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
+
+#if LWIP_SNMP_V3
+#include "snmpv3.h"
+#endif
 
 
 #ifdef __cplusplus
@@ -65,6 +71,7 @@ extern "C" {
 /* version defines used in PDU */
 #define SNMP_VERSION_1  0
 #define SNMP_VERSION_2c 1
+#define SNMP_VERSION_3  3
 
 struct snmp_varbind
 {
@@ -121,10 +128,30 @@ struct snmp_request
   /* max-repetitions (getBulkRequest (SNMPv2c)) */
   s32_t max_repetitions;
   
+#if LWIP_SNMP_V3
+  s32_t msg_id;
+  s32_t msg_max_size;
+  u8_t  msg_flags;
+  s32_t msg_security_model;
+  u8_t  msg_authoritative_engine_id[SNMP_V3_MAX_ENGINE_ID_LENGTH];
+  u8_t  msg_authoritative_engine_id_len;
+  s32_t msg_authoritative_engine_boots;
+  s32_t msg_authoritative_engine_time;
+  u8_t  msg_user_name[SNMP_V3_MAX_USER_LENGTH];
+  u8_t  msg_user_name_len;
+  u8_t  msg_authentication_parameters[SNMP_V3_MAX_AUTH_PARAM_LENGTH];
+  u8_t  msg_privacy_parameters[SNMP_V3_MAX_PRIV_PARAM_LENGTH];
+  u8_t  context_engine_id[SNMP_V3_MAX_ENGINE_ID_LENGTH];
+  u8_t  context_engine_id_len;
+  u8_t  context_name[SNMP_V3_MAX_ENGINE_ID_LENGTH];
+  u8_t  context_name_len;
+#endif
+
   struct pbuf *inbound_pbuf;
   struct snmp_varbind_enumerator inbound_varbind_enumerator;
   u16_t inbound_varbind_offset;
   u16_t inbound_varbind_len;
+  u16_t inbound_padding_len;
 
   struct pbuf *outbound_pbuf;
   struct snmp_pbuf_stream outbound_pbuf_stream;
@@ -132,6 +159,16 @@ struct snmp_request
   u16_t outbound_error_status_offset;
   u16_t outbound_error_index_offset;
   u16_t outbound_varbind_offset;
+#if LWIP_SNMP_V3
+  u16_t outbound_msg_global_data_offset;
+  u16_t outbound_msg_global_data_end;
+  u16_t outbound_msg_security_parameters_str_offset;
+  u16_t outbound_msg_security_parameters_seq_offset;
+  u16_t outbound_msg_security_parameters_end;
+  u16_t outbound_msg_authentication_parameters_offset;
+  u16_t outbound_scoped_pdu_seq_offset;
+  u16_t outbound_scoped_pdu_string_offset;
+#endif
 
   u8_t value_buffer[SNMP_MAX_VALUE_SIZE];
 };
