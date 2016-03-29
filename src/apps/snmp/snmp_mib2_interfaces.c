@@ -42,6 +42,8 @@
 #include "lwip/netif.h"
 #include "lwip/stats.h"
 
+#include <string.h>
+
 #if LWIP_SNMP && SNMP_LWIP_MIB2
 
 #if SNMP_USE_NETCONN

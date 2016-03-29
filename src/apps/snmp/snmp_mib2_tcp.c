@@ -43,6 +43,8 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
 
+#include <string.h>
+
 #if LWIP_SNMP && SNMP_LWIP_MIB2 && LWIP_TCP
 
 #if SNMP_USE_NETCONN

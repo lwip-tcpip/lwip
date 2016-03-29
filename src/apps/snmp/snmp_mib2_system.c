@@ -39,6 +39,9 @@
 #include "lwip/apps/snmp_mib2.h"
 #include "lwip/apps/snmp_table.h"
 #include "lwip/apps/snmp_scalar.h"
+#include "lwip/sys.h"
+
+#include <string.h>
 
 #if LWIP_SNMP && SNMP_LWIP_MIB2
 
