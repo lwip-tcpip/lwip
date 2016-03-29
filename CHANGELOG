@@ -14,8 +14,18 @@ HISTORY
   2016-02-22: Ivan Delamer
   * Initial 6LoWPAN support
 
+  2016-02-XX to 2016-03-XX: Dirk Ziegelmeier
+  * Cleanup TCPIP thread sync methods in a way that it is possibe to use them
+    in arbitrary code that needs things to be done in TCPIP thread. Used to
+    decouple netconn, netif, ppp and 6LoWPAN from LWIP core.
+
+  2016-02-XX: Dirk Ziegelmeier
+  * Implement dual-stack support in RAW, UDP and TCP. Add new IP address
+    type IPADDR_ANY_TYPE for this. Netconn/Socket API: Dual-stack is
+    automatically supported when an IPv6 netconn/socket is created.
+
   2015-12-26: Martin Hentschel and Dirk Ziegelmeier
-  * Rewrite SNMP agent
+  * Rewrite SNMP agent. SNMPv2c + MIB compiler.
 
   2015-11-12: Dirk Ziegelmeier
   * Decouple SNMP stack from lwIP core and move stack to apps/ directory.
