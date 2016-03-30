@@ -233,7 +233,6 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
 #define ip4_addr4_16(ipaddr) ((u16_t)ip4_addr4(ipaddr))
 
 #define IP4ADDR_STRLEN_MAX  16
-#define IPADDR_STRLEN_MAX   IP4ADDR_STRLEN_MAX
 
 /** For backwards compatibility */
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)

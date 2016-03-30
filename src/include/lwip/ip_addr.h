@@ -154,6 +154,8 @@ extern const ip_addr_t ip_addr_any_type;
   ((IP_IS_V6(addr)) ? ip6addr_ntoa_r(ip_2_ip6(addr), buf, buflen) : ip4addr_ntoa_r(ip_2_ip4(addr), buf, buflen)))
 int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
+#define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
+
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 
 #define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)         1
@@ -198,6 +200,8 @@ typedef ip4_addr_t ip_addr_t;
 #define ipaddr_ntoa_r(ipaddr, buf, buflen)      ip4addr_ntoa_r(ipaddr, buf, buflen)
 #define ipaddr_aton(cp, addr)                   ip4addr_aton(cp, addr)
 
+#define IPADDR_STRLEN_MAX   IP4ADDR_STRLEN_MAX
+
 #else /* LWIP_IPV4 */
 
 typedef ip6_addr_t ip_addr_t;
@@ -234,6 +238,8 @@ typedef ip6_addr_t ip_addr_t;
 #define ipaddr_ntoa(ipaddr)                     ip6addr_ntoa(ipaddr)
 #define ipaddr_ntoa_r(ipaddr, buf, buflen)      ip6addr_ntoa_r(ipaddr, buf, buflen)
 #define ipaddr_aton(cp, addr)                   ip6addr_aton(cp, addr)
+
+#define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
 
 #endif /* LWIP_IPV4 */
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
