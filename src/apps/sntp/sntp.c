@@ -572,6 +572,14 @@ sntp_stop(void)
 }
 
 /**
+ * Get enabled state.
+ */
+u8_t sntp_enabled(void)
+{
+  return (sntp_pcb != NULL)? 1 : 0;
+}
+
+/**
  * Sets the operating mode.
  * @param operating_mode one of the available operating modes
  */
