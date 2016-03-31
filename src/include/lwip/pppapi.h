@@ -108,7 +108,7 @@ struct pppapi_msg_msg {
 };
 
 struct pppapi_msg {
-  struct tcpip_api_call call;
+  struct tcpip_api_call_data call;
   struct pppapi_msg_msg msg;
 };
 

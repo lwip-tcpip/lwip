@@ -46,7 +46,7 @@
  * Call ppp_set_default() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_set_default(struct tcpip_api_call *m)
+pppapi_do_ppp_set_default(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
   
@@ -71,7 +71,7 @@ pppapi_set_default(ppp_pcb *pcb)
  * Call ppp_set_auth() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_set_auth(struct tcpip_api_call *m)
+pppapi_do_ppp_set_auth(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -128,7 +128,7 @@ pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_pha
  * Call pppos_create() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_pppos_create(struct tcpip_api_call *m)
+pppapi_do_pppos_create(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -162,7 +162,7 @@ pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
  * Call pppoe_create() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_pppoe_create(struct tcpip_api_call *m)
+pppapi_do_pppoe_create(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -200,7 +200,7 @@ pppapi_pppoe_create(struct netif *pppif, struct netif *ethif, const char *servic
  * Call pppol2tp_create() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_pppol2tp_create(struct tcpip_api_call *m)
+pppapi_do_pppol2tp_create(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -247,7 +247,7 @@ pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipad
  * Call ppp_connect() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_connect(struct tcpip_api_call *m)
+pppapi_do_ppp_connect(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -299,7 +299,7 @@ pppapi_listen(ppp_pcb *pcb, struct ppp_addrs *addrs)
  * Call ppp_close() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_close(struct tcpip_api_call *m)
+pppapi_do_ppp_close(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -324,7 +324,7 @@ pppapi_close(ppp_pcb *pcb, u8_t nocarrier)
  * Call ppp_free() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_free(struct tcpip_api_call *m)
+pppapi_do_ppp_free(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
@@ -348,7 +348,7 @@ pppapi_free(ppp_pcb *pcb)
  * Call ppp_ioctl() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_ioctl(struct tcpip_api_call *m)
+pppapi_do_ppp_ioctl(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 

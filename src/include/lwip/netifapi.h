@@ -51,7 +51,7 @@ typedef void (*netifapi_void_fn)(struct netif *netif);
 typedef err_t (*netifapi_errt_fn)(struct netif *netif);
 
 struct netifapi_msg {
-  struct tcpip_api_call call;
+  struct tcpip_api_call_data call;
   struct netif *netif;
   union {
     struct {

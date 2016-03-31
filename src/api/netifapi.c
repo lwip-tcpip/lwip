@@ -48,7 +48,7 @@
  * Call netif_add() inside the tcpip_thread context.
  */
 static err_t
-netifapi_do_netif_add(struct tcpip_api_call *m)
+netifapi_do_netif_add(struct tcpip_api_call_data *m)
 {
   struct netifapi_msg *msg = (struct netifapi_msg*)m;
   
@@ -72,7 +72,7 @@ netifapi_do_netif_add(struct tcpip_api_call *m)
  * Call netif_set_addr() inside the tcpip_thread context.
  */
 static err_t
-netifapi_do_netif_set_addr(struct tcpip_api_call *m)
+netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 {
   struct netifapi_msg *msg = (struct netifapi_msg*)m;
 
@@ -89,7 +89,7 @@ netifapi_do_netif_set_addr(struct tcpip_api_call *m)
  * tcpip_thread context.
  */
 static err_t
-netifapi_do_netif_common(struct tcpip_api_call *m)
+netifapi_do_netif_common(struct tcpip_api_call_data *m)
 {
   struct netifapi_msg *msg = (struct netifapi_msg*)m;
 

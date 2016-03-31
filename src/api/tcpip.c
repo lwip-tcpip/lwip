@@ -359,7 +359,7 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
  * @return Return value from tcpip_api_call_fn
  */
 err_t
-tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call *call)
+tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
 {
 #if LWIP_TCPIP_CORE_LOCKING
   err_t err;
