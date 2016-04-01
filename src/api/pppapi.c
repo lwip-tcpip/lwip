@@ -101,7 +101,7 @@ pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passw
  * Call ppp_set_notify_phase_callback() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_set_notify_phase_callback(struct tcpip_api_call *m)
+pppapi_do_ppp_set_notify_phase_callback(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
   ppp_set_notify_phase_callback(msg->msg.ppp, msg->msg.msg.setnotifyphasecb.notify_phase_cb);
@@ -273,7 +273,7 @@ pppapi_connect(ppp_pcb *pcb, u16_t holdoff)
  * Call ppp_listen() inside the tcpip_thread context.
  */
 static err_t
-pppapi_do_ppp_listen(struct tcpip_api_call *m)
+pppapi_do_ppp_listen(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
