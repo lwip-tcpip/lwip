@@ -45,14 +45,15 @@
 #include "lwip/ip_addr.h"
 #include "lwip/stats.h"
 
-#include <string.h>
-
 #if LWIP_SNMP_V3
-#include "snmpv3.h"
+#include "lwip/apps/snmpv3.h"
+#include "snmpv3_priv.h"
 #ifdef LWIP_SNMPV3_INCLUDE_ENGINE
 #include LWIP_SNMPV3_INCLUDE_ENGINE
 #endif
 #endif
+
+#include <string.h>
 
 /* public (non-static) constants */
 /** SNMP community string */
@@ -734,7 +735,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
         &u16_value, SNMP_V3_MAX_USER_LENGTH));
     request->msg_user_name_len = u16_value;
     /* TODO: Implement unknown user error response */
-    IF_PARSE_EXEC(LWIP_SNMPV3_GET_USER(request->msg_user_name, NULL, NULL, NULL, NULL));
+    IF_PARSE_EXEC(snmpv3_get_user((char*)request->msg_user_name, NULL, NULL, NULL, NULL));
 
     /* msgAuthenticationParameters */
     memset(request->msg_authentication_parameters, 0, SNMP_V3_MAX_AUTH_PARAM_LENGTH);
@@ -750,7 +751,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->msg_authentication_parameters,
         &u16_value, tlv.value_len));
 
-#ifdef LWIP_SNMP_V3_CRYPTO
+#if LWIP_SNMP_V3_CRYPTO
     if (request->msg_flags & SNMP_V3_AUTH_FLAG) {
       /* Rewind stream */
       IF_PARSE_EXEC(snmp_pbuf_stream_init(&pbuf_stream, request->inbound_pbuf, 0, request->inbound_pbuf->tot_len));
@@ -760,13 +761,13 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       IF_PARSE_EXEC(snmp_asn1_enc_raw(&pbuf_stream, zero_arr, tlv.value_len));
 
       /* Verify authentication */
-      u8_t* key;
+      u8_t key[20];
       u8_t algo;
-      u8_t hmac[20];
+      u8_t hmac[LWIP_MAX(SNMP_V3_SHA_LEN, SNMP_V3_MD5_LEN)];
       struct snmp_pbuf_stream auth_stream;
       IF_PARSE_EXEC(snmp_pbuf_stream_init(&auth_stream, request->inbound_pbuf, 0, request->inbound_pbuf->tot_len));
 
-      IF_PARSE_EXEC(LWIP_SNMPV3_GET_USER(request->msg_user_name, &algo, &key, NULL, NULL));
+      IF_PARSE_EXEC(snmpv3_get_user((char*)request->msg_user_name, &algo, key, NULL, NULL));
       IF_PARSE_EXEC(snmpv3_auth(&auth_stream, request->inbound_pbuf->tot_len, key, algo, hmac));
       /* TODO: Implement error response */
       IF_PARSE_EXEC(memcmp(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH));
@@ -788,10 +789,10 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->msg_privacy_parameters,
         &u16_value, SNMP_V3_MAX_PRIV_PARAM_LENGTH));
 
-#ifdef LWIP_SNMP_V3_CRYPTO
+#if LWIP_SNMP_V3_CRYPTO
     /* Decrypt message */
     if (request->msg_flags & SNMP_V3_PRIV_FLAG) {
-      u8_t* key;
+      u8_t key[20];
       u8_t algo;
 
       IF_PARSE_EXEC(snmp_asn1_dec_tlv(&pbuf_stream, &tlv));
@@ -799,7 +800,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       parent_tlv_value_len -= SNMP_ASN1_TLV_HDR_LENGTH(tlv);
       IF_PARSE_ASSERT(parent_tlv_value_len > 0);
 
-      IF_PARSE_EXEC(LWIP_SNMPV3_GET_USER(request->msg_user_name, NULL, NULL, &algo, &key));
+      IF_PARSE_EXEC(snmpv3_get_user((char*)request->msg_user_name, NULL, NULL, &algo, key));
       IF_PARSE_EXEC(snmpv3_crypt(&pbuf_stream, tlv.value_len, key,
           request->msg_privacy_parameters, request->msg_authoritative_engine_boots,
           request->msg_authoritative_engine_time, algo, SNMP_V3_PRIV_MODE_DECRYPT));
@@ -1004,6 +1005,8 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
   OF_BUILD_EXEC( snmp_asn1_enc_raw(pbuf_stream, request->community, request->community_strlen) );
 #if LWIP_SNMP_V3
   } else {
+    const char* id;
+
     /* globalData */
     request->outbound_msg_global_data_offset = pbuf_stream->offset;
     SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, 1, 0);
@@ -1045,8 +1048,8 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
 
     /* msgAuthoritativeEngineID */
-    request->msg_authoritative_engine_id_len = LWIP_SNMPV3_GET_ENGINE_ID_LEN();
-    memcpy(request->msg_authoritative_engine_id, LWIP_SNMPV3_GET_ENGINE_ID(), request->msg_authoritative_engine_id_len);
+    snmpv3_get_engine_id(&id, &request->msg_authoritative_engine_id_len);
+    memcpy(request->msg_authoritative_engine_id, id, request->msg_authoritative_engine_id_len);
     SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OCTET_STRING, 0, request->msg_authoritative_engine_id_len);
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
     OF_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, request->msg_authoritative_engine_id, request->msg_authoritative_engine_id_len));
@@ -1071,7 +1074,7 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
     OF_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, request->msg_user_name, request->msg_user_name_len));
 
-#ifdef LWIP_SNMP_V3_CRYPTO
+#if LWIP_SNMP_V3_CRYPTO
     /* msgAuthenticationParameters */
     if (request->msg_flags & SNMP_V3_AUTH_FLAG) {
       memset(request->msg_authentication_parameters, 0, SNMP_V3_MAX_AUTH_PARAM_LENGTH);
@@ -1086,7 +1089,7 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
       OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
     }
 
-#ifdef LWIP_SNMP_V3_CRYPTO
+#if LWIP_SNMP_V3_CRYPTO
     /* msgPrivacyParameters */
     if (request->msg_flags & SNMP_V3_PRIV_FLAG) {
       snmpv3_build_priv_param(request->msg_privacy_parameters);
@@ -1104,7 +1107,7 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
     /* End of msgSecurityParameters, so we can calculate the length of this sequence later */
     request->outbound_msg_security_parameters_end = pbuf_stream->offset;
 
-#ifdef LWIP_SNMP_V3_CRYPTO
+#if LWIP_SNMP_V3_CRYPTO
     /* For encryption we have to encapsulate the payload in an octet string */
     if (request->msg_flags & SNMP_V3_PRIV_FLAG) {
       request->outbound_scoped_pdu_string_offset = pbuf_stream->offset;
@@ -1120,8 +1123,8 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
 
     /* contextEngineID */
-    request->context_engine_id_len = LWIP_SNMPV3_GET_ENGINE_ID_LEN();
-    memcpy(request->context_engine_id, LWIP_SNMPV3_GET_ENGINE_ID(), request->context_engine_id_len);
+    snmpv3_get_engine_id(&id, &request->context_engine_id_len);
+    memcpy(request->context_engine_id, id, request->context_engine_id_len);
     SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OCTET_STRING, 0, request->context_engine_id_len);
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
     OF_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, request->context_engine_id, request->context_engine_id_len));
@@ -1211,10 +1214,10 @@ snmp_append_outbound_varbind(struct snmp_request *request, struct snmp_varbind* 
         value_value_len = 0;
         break;
       case SNMP_ASN1_TYPE_OBJECT_ID:
-        if ((varbind->value_len % sizeof(u32_t)) != 0) {
+        if ((varbind->value_len & 0x03) != 0) {
           return ERR_VAL;
         }
-        snmp_asn1_enc_oid_cnt((u32_t*)varbind->value, varbind->value_len / sizeof(u32_t), &value_value_len);
+        snmp_asn1_enc_oid_cnt((u32_t*)varbind->value, varbind->value_len >> 2, &value_value_len);
         break;
       case SNMP_ASN1_TYPE_COUNTER64:
         if (varbind->value_len != (2 * sizeof(u32_t))) {
@@ -1344,15 +1347,12 @@ snmp_complete_outbound_frame(struct snmp_request *request)
 
   frame_size = request->outbound_pbuf_stream.offset;
 
-#if LWIP_SNMP_V3 && defined(LWIP_SNMP_V3_CRYPTO)
+#if LWIP_SNMP_V3 && LWIP_SNMP_V3_CRYPTO
   /* Calculate padding for encryption */
   if (request->version == SNMP_VERSION_3 && (request->msg_flags & SNMP_V3_PRIV_FLAG)) {
     u8_t i;
-    for (i = 0; i < 8; i++) {
-      if ((frame_size + i - request->outbound_scoped_pdu_seq_offset) % 8 == 0) {
-        outbound_padding = i;
-        break;
-      }
+    outbound_padding = (u8_t)((frame_size - request->outbound_scoped_pdu_seq_offset) & 0x03);
+    for (i = 0; i < outbound_padding; i++) {
       snmp_pbuf_stream_write(&request->outbound_pbuf_stream, 0);
     }
   }
@@ -1456,10 +1456,10 @@ snmp_complete_outbound_frame(struct snmp_request *request)
   OF_BUILD_EXEC( snmp_ans1_enc_tlv(&(request->outbound_pbuf_stream), &tlv) );
 
   /* Authenticate response */
-#if LWIP_SNMP_V3 && defined(LWIP_SNMP_V3_CRYPTO)
+#if LWIP_SNMP_V3 && LWIP_SNMP_V3_CRYPTO
   /* Encrypt response */
   if (request->version == SNMP_VERSION_3 && (request->msg_flags & SNMP_V3_PRIV_FLAG)) {
-    u8_t* key;
+    u8_t key[20];
     u8_t algo;
 
     /* complete missing length in PDU sequence */
@@ -1469,7 +1469,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
         - request->outbound_scoped_pdu_string_offset - 1 - 3);
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(&(request->outbound_pbuf_stream), &tlv));
 
-    OF_BUILD_EXEC(LWIP_SNMPV3_GET_USER(request->msg_user_name, NULL, NULL, &algo, &key));
+    OF_BUILD_EXEC(snmpv3_get_user((char*)request->msg_user_name, NULL, NULL, &algo, key));
 
     OF_BUILD_EXEC(snmpv3_crypt(&request->outbound_pbuf_stream, tlv.value_len, key,
         request->msg_privacy_parameters, request->msg_authoritative_engine_boots,
@@ -1477,11 +1477,11 @@ snmp_complete_outbound_frame(struct snmp_request *request)
   }
 
   if (request->version == SNMP_VERSION_3 && (request->msg_flags & SNMP_V3_AUTH_FLAG)) {
-    u8_t* key;
+    u8_t key[20];
     u8_t algo;
     u8_t hmac[20];
 
-    OF_BUILD_EXEC(LWIP_SNMPV3_GET_USER(request->msg_user_name, &algo, &key, NULL, NULL));
+    OF_BUILD_EXEC(snmpv3_get_user((char*)request->msg_user_name, &algo, key, NULL, NULL));
     OF_BUILD_EXEC(snmp_pbuf_stream_init(&(request->outbound_pbuf_stream),
         request->outbound_pbuf, 0, request->outbound_pbuf->tot_len));
     OF_BUILD_EXEC(snmpv3_auth(&request->outbound_pbuf_stream, frame_size + outbound_padding, key, algo, hmac));

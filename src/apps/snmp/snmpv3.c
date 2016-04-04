@@ -32,9 +32,8 @@
  * Author: Elias Oenal <lwip@eliasoenal.com>
  */
 
-#include "snmpv3.h"
-#include "arch/cc.h"
-#include "snmp_msg.h"
+#include "snmpv3_priv.h"
+#include "lwip/apps/snmpv3.h"
 #include "lwip/sys.h"
 #include <string.h>
 
@@ -44,245 +43,55 @@
 #include LWIP_SNMPV3_INCLUDE_ENGINE
 #endif
 
-#ifdef LWIP_SNMP_V3_CRYPTO
-#ifdef LWIP_INCLUDE_CRYPTO_LIB
-#include LWIP_INCLUDE_CRYPTO_LIB
-#endif
-#ifdef LWIP_INCLUDE_CRYPTO_MD5
-#include LWIP_INCLUDE_CRYPTO_MD5
-#endif
-#ifdef LWIP_INCLUDE_CRYPTO_SHA
-#include LWIP_INCLUDE_CRYPTO_SHA
-#endif
-#ifdef LWIP_INCLUDE_CRYPTO_DES
-#include LWIP_INCLUDE_CRYPTO_DES
-#endif
-#ifdef LWIP_INCLUDE_CRYPTO_AES
-#include LWIP_INCLUDE_CRYPTO_AES
-#endif
-#endif
-
-#ifdef LWIP_SNMP_V3_CRYPTO
-#if !defined(LWIP_MD5_HMAC_HANDLE) || !defined(LWIP_MD5_HMAC_INIT) || \
-    !defined(LWIP_MD5_HMAC_UPDATE) || !defined(LWIP_MD5_HMAC_FINAL)
-#error LWIP_SNMP_V3_CRYPTO requires MD5 HMAC
-#endif
-#if !defined(LWIP_SHA_HMAC_HANDLE) || !defined(LWIP_SHA_HMAC_INIT) || \
-    !defined(LWIP_SHA_HMAC_UPDATE) || !defined(LWIP_SHA_HMAC_FINAL)
-#error LWIP_SNMP_V3_CRYPTO requires SHA HMAC
-#endif
-#if !defined(LWIP_DES_CBC_ENCRYPT_HANDLE) || !defined(LWIP_DES_CBC_ENCRYPT_INIT)  || \
-  !defined(LWIP_DES_CBC_ENCRYPT_UPDATE)   || !defined(LWIP_DES_CBC_ENCRYPT_FINAL) || \
-  !defined(LWIP_DES_CBC_DECRYPT_HANDLE)   || !defined(LWIP_DES_CBC_DECRYPT_INIT)  || \
-  !defined(LWIP_DES_CBC_DECRYPT_UPDATE)   || !defined(LWIP_DES_CBC_DECRYPT_FINAL)
-#error LWIP_SNMP_V3_CRYPTO requires DES CBC
-#endif
-#if !defined(LWIP_AES_CFB_ENCRYPT_HANDLE) || !defined(LWIP_AES_CFB_ENCRYPT_INIT)  || \
-  !defined(LWIP_AES_CFB_ENCRYPT_UPDATE)   || !defined(LWIP_AES_CFB_ENCRYPT_FINAL) || \
-  !defined(LWIP_AES_CFB_DECRYPT_HANDLE)   || !defined(LWIP_AES_CFB_DECRYPT_INIT)  || \
-  !defined(LWIP_AES_CFB_DECRYPT_UPDATE)   || !defined(LWIP_AES_CFB_DECRYPT_FINAL)
-#error LWIP_SNMP_V3_CRYPTO requires AES CFB
-#endif
-#endif
-
 #define SNMP_MAX_TIME_BOOT 2147483647UL
 
-/* Engine ID, as specified in RFC3411 */
-const char*
-snmpv3_get_engine_id(void)
-{
-  return LWIP_SNMPV3_GET_ENGINE_ID();
-}
-
-/* Has to reset boots, see below */
+/** Call this if engine has been changed. Has to reset boots, see below */
 void
 snmpv3_engine_id_changed(void)
 {
-  LWIP_SNMPV3_SET_ENGINE_BOOTS(0);
+  snmpv3_set_engine_boots(0);
 }
 
-/* According to RFC3414 2.2.2.
+/** According to RFC3414 2.2.2.
  *
  * The number of times that the SNMP engine has
  * (re-)initialized itself since snmpEngineID
  * was last configured.
  */
 u32_t
-snmpv3_get_engine_boots(void)
+snmpv3_get_engine_boots_internal(void)
 {
-  if (LWIP_SNMPV3_GET_ENGINE_BOOTS() == 0 ||
-      LWIP_SNMPV3_GET_ENGINE_BOOTS() < SNMP_MAX_TIME_BOOT) {
-    return LWIP_SNMPV3_GET_ENGINE_BOOTS();
+  if (snmpv3_get_engine_boots() == 0 ||
+      snmpv3_get_engine_boots() < SNMP_MAX_TIME_BOOT) {
+    return snmpv3_get_engine_boots();
   }
 
-  LWIP_SNMPV3_SET_ENGINE_BOOTS(SNMP_MAX_TIME_BOOT);
-  return LWIP_SNMPV3_GET_ENGINE_BOOTS();
+  snmpv3_set_engine_boots(SNMP_MAX_TIME_BOOT);
+  return snmpv3_get_engine_boots();
 }
 
-/* RFC3414 2.2.2.
+/** RFC3414 2.2.2.
  *
  * Once the timer reaches 2147483647 it gets reset to zero and the
  * engine boot ups get incremented.
  */
 u32_t
-snmpv3_get_engine_time(void)
+snmpv3_get_engine_time_internal(void)
 {
-  if (LWIP_SNMPV3_GET_ENGINE_TIME() >= SNMP_MAX_TIME_BOOT) {
-    LWIP_SNMPV3_RESET_ENGINE_TIME();
+  if (snmpv3_get_engine_time() >= SNMP_MAX_TIME_BOOT) {
+    snmpv3_reset_engine_time();
 
-    if (LWIP_SNMPV3_GET_ENGINE_BOOTS() < SNMP_MAX_TIME_BOOT - 1) {
-      LWIP_SNMPV3_SET_ENGINE_BOOTS(LWIP_SNMPV3_GET_ENGINE_BOOTS() + 1);
+    if (snmpv3_get_engine_boots() < SNMP_MAX_TIME_BOOT - 1) {
+      snmpv3_set_engine_boots(snmpv3_get_engine_boots() + 1);
     } else {
-      LWIP_SNMPV3_SET_ENGINE_BOOTS(SNMP_MAX_TIME_BOOT);
+      snmpv3_set_engine_boots(SNMP_MAX_TIME_BOOT);
     }
   }
 
-  return LWIP_SNMPV3_GET_ENGINE_TIME();
+  return snmpv3_get_engine_time();
 }
 
-#ifdef LWIP_SNMP_V3_CRYPTO
-err_t
-snmpv3_auth(struct snmp_pbuf_stream* stream, u16_t length,
-    const u8_t* key, u8_t algo, u8_t* hmac_out)
-{
-  u32_t i;
-  u8_t byte;
-  struct snmp_pbuf_stream read_stream;
-  snmp_pbuf_stream_init(&read_stream, stream->pbuf, stream->offset,
-      stream->length);
-
-  if (algo == SNMP_V3_AUTH_ALGO_MD5) {
-    LWIP_MD5_HMAC_HANDLE mh;
-    if (LWIP_MD5_HMAC_INIT(&mh, key, SNMP_V3_MD5_LEN))
-      return ERR_ARG;
-    for (i = 0; i < length; i++) {
-      if (snmp_pbuf_stream_read(&read_stream, &byte))
-        return ERR_ARG;
-      if (LWIP_MD5_HMAC_UPDATE(&mh, &byte, 1))
-        return ERR_ARG;
-    }
-    if (LWIP_MD5_HMAC_FINAL(&mh, hmac_out))
-      return ERR_ARG;
-
-  } else if (algo == SNMP_V3_AUTH_ALGO_SHA) {
-    LWIP_SHA_HMAC_HANDLE sh;
-    if (LWIP_SHA_HMAC_INIT(&sh, key, SNMP_V3_SHA_LEN))
-      return ERR_ARG;
-    for (i = 0; i < length; i++) {
-      if (snmp_pbuf_stream_read(&read_stream, &byte))
-        return ERR_ARG;
-      if (LWIP_SHA_HMAC_UPDATE(&sh, &byte, 1))
-        return ERR_ARG;
-    }
-    if (LWIP_SHA_HMAC_FINAL(&sh, hmac_out))
-      return ERR_ARG;
-  } else
-    return ERR_ARG;
-
-  return ERR_OK;
-}
-
-err_t
-snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
-    const u8_t* key, const u8_t* priv_param, const u32_t engine_boots,
-    const u32_t engine_time, u8_t algo, u8_t mode)
-{
-  u8_t in_bytes[8];
-  u8_t out_bytes[8];
-  u8_t iv_local[16];
-
-  u32_t i, j;
-  /* RFC 3414 mandates padding for DES */
-  if (algo == SNMP_V3_PRIV_ALGO_DES) {
-    if (length % 8)
-      return ERR_ARG;
-
-    for (i = 0; i < 8; i++)
-      iv_local[i] = priv_param[i] ^ key[i + 8];
-  } else if (algo == SNMP_V3_PRIV_ALGO_AES) {
-    /*
-     * IV is the big endian concatenation of boots,
-     * uptime and priv param - see RFC3826.
-     */
-    iv_local[0 + 0] = (engine_boots >> 24) & 0xFF;
-    iv_local[0 + 1] = (engine_boots >> 16) & 0xFF;
-    iv_local[0 + 2] = (engine_boots >> 8) & 0xFF;
-    iv_local[0 + 3] = (engine_boots >> 0) & 0xFF;
-    iv_local[4 + 0] = (engine_time >> 24) & 0xFF;
-    iv_local[4 + 1] = (engine_time >> 16) & 0xFF;
-    iv_local[4 + 2] = (engine_time >> 8) & 0xFF;
-    iv_local[4 + 3] = (engine_time >> 0) & 0xFF;
-    memcpy(iv_local + 8, priv_param, 8);
-  }
-
-  struct snmp_pbuf_stream read_stream;
-  struct snmp_pbuf_stream write_stream;
-  snmp_pbuf_stream_init(&read_stream, stream->pbuf, stream->offset,
-      stream->length);
-  snmp_pbuf_stream_init(&write_stream, stream->pbuf, stream->offset,
-      stream->length);
-
-  if (algo == SNMP_V3_PRIV_ALGO_DES && mode == SNMP_V3_PRIV_MODE_ENCRYPT) {
-    LWIP_DES_CBC_ENCRYPT_HANDLE handle;
-    LWIP_DES_CBC_ENCRYPT_INIT(&handle, key);
-
-    for (i = 0; i < length; i += 8) {
-      for (j = 0; j < 8; j++)
-        snmp_pbuf_stream_read(&read_stream, &in_bytes[j]);
-
-      LWIP_DES_CBC_ENCRYPT_UPDATE(&handle, 8, iv_local, in_bytes, out_bytes);
-
-      for (j = 0; j < 8; j++)
-        snmp_pbuf_stream_write(&write_stream, out_bytes[j]);
-    }
-
-    LWIP_DES_CBC_ENCRYPT_FINAL(&handle);
-  } else if (algo == SNMP_V3_PRIV_ALGO_DES && mode == SNMP_V3_PRIV_MODE_DECRYPT) {
-    LWIP_DES_CBC_DECRYPT_HANDLE handle;
-    LWIP_DES_CBC_DECRYPT_INIT(&handle, key);
-
-    for (i = 0; i < length; i += 8) {
-      for (j = 0; j < 8; j++)
-        snmp_pbuf_stream_read(&read_stream, &in_bytes[j]);
-
-      LWIP_DES_CBC_DECRYPT_UPDATE(&handle, 8, iv_local, in_bytes, out_bytes);
-
-      for (j = 0; j < 8; j++)
-        snmp_pbuf_stream_write(&write_stream, out_bytes[j]);
-    }
-
-    LWIP_DES_CBC_DECRYPT_FINAL(&handle);
-  } else if (algo == SNMP_V3_PRIV_ALGO_AES && mode == SNMP_V3_PRIV_MODE_ENCRYPT) {
-    size_t iv_offset = 0;
-    LWIP_AES_CFB_ENCRYPT_HANDLE handle;
-    LWIP_AES_CFB_ENCRYPT_INIT(&handle, key);
-
-    for (i = 0; i < length; i++) {
-      snmp_pbuf_stream_read(&read_stream, &in_bytes[0]);
-      LWIP_AES_CFB_ENCRYPT_UPDATE(&handle, 1, &iv_offset, iv_local, in_bytes,
-          out_bytes);
-      snmp_pbuf_stream_write(&write_stream, out_bytes[0]);
-    }
-
-    LWIP_AES_CFB_ENCRYPT_FINAL(&handle);
-  } else if (algo == SNMP_V3_PRIV_ALGO_AES && mode == SNMP_V3_PRIV_MODE_DECRYPT) {
-    size_t iv_off = 0;
-    LWIP_AES_CFB_DECRYPT_HANDLE handle;
-    LWIP_AES_CFB_DECRYPT_INIT(&handle, key);
-
-    for (i = 0; i < length; i++) {
-      snmp_pbuf_stream_read(&read_stream, &in_bytes[0]);
-      LWIP_AES_CFB_DECRYPT_UPDATE(&handle, 1, &iv_off, iv_local, in_bytes,
-          out_bytes);
-      snmp_pbuf_stream_write(&write_stream, out_bytes[0]);
-    }
-
-    LWIP_AES_CFB_DECRYPT_FINAL(&handle);
-  } else
-    return ERR_ARG;
-
-  return ERR_OK;
-}
+#if LWIP_SNMP_V3_CRYPTO
 
 /* This function ignores the byte order suggestion in RFC3414
  * since it simply doesn't influence the effectiveness of an IV.

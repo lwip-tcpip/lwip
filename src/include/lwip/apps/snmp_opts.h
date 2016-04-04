@@ -255,5 +255,14 @@
 #define SNMP_LWIP_GETBULK_MAX_REPETITIONS 0
 #endif
 
-#endif /* LWIP_HDR_SNMP_OPTS_H */
+/*
+   ------------------------------------
+   ---------- SNMPv3 options ----------
+   ------------------------------------
+*/
 
+#ifndef LWIP_SNMP_V3_CRYPTO
+#define LWIP_SNMP_V3_CRYPTO               LWIP_SNMP_V3
+#endif
+
+#endif /* LWIP_HDR_SNMP_OPTS_H */

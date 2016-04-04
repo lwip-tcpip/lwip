@@ -49,7 +49,7 @@
 #include "lwip/err.h"
 
 #if LWIP_SNMP_V3
-#include "snmpv3.h"
+#include "snmpv3_priv.h"
 #endif
 
 
