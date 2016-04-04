@@ -38,6 +38,8 @@
 #include <string.h>
 #include "lwip/err.h"
 
+#if LWIP_SNMP && LWIP_SNMP_V3
+
 /**
  *  @param username is a pointer to a string.
  * @param auth_algo is a pointer to u8_t. The implementation has to set this if user was found.
@@ -139,3 +141,5 @@ void
 snmpv3_reset_engine_time(void)
 {
 }
+
+#endif /* LWIP_SNMP && LWIP_SNMP_V3 */
