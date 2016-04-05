@@ -53,7 +53,11 @@ extern "C" {
 #define LWIP_ARRAYSIZE(x) (sizeof(x)/sizeof((x)[0]))
 
 #ifndef NULL
+#ifdef __cplusplus
+#define NULL 0
+#else
 #define NULL ((void *)0)
+#endif
 #endif
 
 /* Endianess-optimized shifting of two u8_t to create one u16_t */
