@@ -1889,7 +1889,7 @@ dhcp_option_trailer(struct dhcp *dhcp)
  *         0 otherwise
  */
 u8_t
-dhcp_supplied_address(struct netif *netif)
+dhcp_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif->dhcp != NULL)) {
     if ((netif->dhcp->state == DHCP_STATE_BOUND) ||
