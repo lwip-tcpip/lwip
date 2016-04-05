@@ -317,6 +317,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-04-05: Simon Goldschmidt (patch by Philip Gladstone)
+  * udp.c: patch #8358: allow more combinations of listening PCB for IPv6
+
   2016-04-05: Simon Goldschmidt
   * netconn/socket API: fixed bug# 43739 (Accept not reporting errors about
     aborted connections): netconn_accept() returns ERR_ABRT (sockets: ECONNABORTED)

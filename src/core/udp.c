@@ -274,8 +274,13 @@ udp_input(struct pbuf *p, struct netif *inp)
     /* compare PCB local addr+port to UDP destination addr+port */
     if ((pcb->local_port == dest) &&
         (udp_input_local_match(pcb, inp, broadcast) != 0)) {
-      if ((uncon_pcb == NULL) &&
-          ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
+      if (((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
+          ((uncon_pcb == NULL)
+#if SO_REUSE
+          /* prefer specific IPs over cath-all */
+          || !ip_addr_isany(&pcb->local_ip)
+#endif /* SO_REUSE */
+          )) {
         /* the first unconnected matching PCB */
         uncon_pcb = pcb;
       }
@@ -939,10 +944,8 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
         {
           /* port matches that of PCB in list and REUSEADDR not set -> reject */
           if ((ipcb->local_port == port) && (IP_IS_V6(ipaddr) == IP_IS_V6_VAL(ipcb->local_ip)) &&
-              /* IP address matches, or one is IP_ADDR_ANY? */
-                (ip_addr_isany(&ipcb->local_ip) ||
-                 ip_addr_isany(ipaddr) ||
-                 ip_addr_cmp(&ipcb->local_ip, ipaddr))) {
+              /* IP address matches? */
+                ip_addr_cmp(&ipcb->local_ip, ipaddr)) {
             /* other PCB already binds to this local IP and port */
             LWIP_DEBUGF(UDP_DEBUG,
                         ("udp_bind: local port %"U16_F" already bound by another pcb\n", port));
