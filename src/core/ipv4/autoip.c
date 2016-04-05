@@ -531,7 +531,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
  *         0 otherwise
  */
 u8_t
-autoip_supplied_address(struct netif *netif)
+autoip_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif->autoip != NULL)) {
     if (netif->autoip->state == AUTOIP_STATE_BOUND) {
