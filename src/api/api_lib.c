@@ -347,6 +347,7 @@ err_t
 netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
 #if LWIP_TCP
+  void *accept_ptr;
   struct netconn *newconn;
   err_t err;
 #if TCP_LISTEN_BACKLOG
@@ -356,7 +357,6 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   LWIP_ERROR("netconn_accept: invalid pointer",    (new_conn != NULL),                  return ERR_ARG;);
   *new_conn = NULL;
   LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return ERR_ARG;);
-  LWIP_ERROR("netconn_accept: invalid acceptmbox", sys_mbox_valid(&conn->acceptmbox),   return ERR_ARG;);
 
   err = conn->last_err;
   if (ERR_IS_FATAL(err)) {
@@ -364,24 +364,32 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
        waiting on acceptmbox forever! */
     return err;
   }
-
+  if (!sys_mbox_valid(&conn->acceptmbox)) {
+    return ERR_CLSD;
+  }
 #if LWIP_SO_RCVTIMEO
-  if (sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+  if (sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
     return ERR_TIMEOUT;
   }
 #else
-  sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, 0);
+  sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
+  newconn = (struct netconn *)accept_ptr;
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
+  if (accept_ptr == &netconn_aborted) {
+    /* a connection has been aborted: out of pcbs or out of netconns during accept */
+    /* @todo: set netconn error, but this would be fatal and thus block further accepts */
+    return ERR_ABRT;
+  }
   if (newconn == NULL) {
     /* connection has been aborted */
     /* in this special case, we set the netconn error from application thread, as
        on a ready-to-accept listening netconn, there should not be anything running
        in tcpip_thread */
-    NETCONN_SET_SAFE_ERR(conn, ERR_ABRT);
-    return ERR_ABRT;
+    NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
+    return ERR_CLSD;
   }
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */

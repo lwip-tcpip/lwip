@@ -83,6 +83,10 @@ static err_t lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_
 #define TCPIP_APIMSG_ACK(m)   do { NETCONN_SET_SAFE_ERR((m)->conn, (m)->err); sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
+#if LWIP_TCP
+u8_t netconn_aborted;
+#endif /* LWIP_TCP */
+
 #if LWIP_RAW
 /**
  * Receive callback function for RAW netconns.
@@ -468,23 +472,32 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 
   LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: newpcb->tate: %s\n", tcp_debug_state_str(newpcb->state)));
 
-  if ((err != ERR_OK) || (arg == NULL)) {
+  if (conn == NULL) {
     return ERR_VAL;
   }
-  if (newpcb == NULL) {
-    /* @todo: out-of-pcbs during connect: pass on this error to the application */
-    return ERR_VAL;
-  }
-
   if (!sys_mbox_valid(&conn->acceptmbox)) {
     LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: acceptmbox already deleted\n"));
     return ERR_VAL;
   }
 
+  if (newpcb == NULL) {
+    /* out-of-pcbs during connect: pass on this error to the application */
+    if (sys_mbox_trypost(&conn->acceptmbox, &netconn_aborted) == ERR_OK) {
+      /* Register event with callback */
+      API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
+    }
+    return ERR_VAL;
+  }
+
   /* We have to set the callback here even though
-   * the new socket is unknown. conn->socket is marked as -1. */
+   * the new socket is unknown. newconn->socket is marked as -1. */
   newconn = netconn_alloc(conn->type, conn->callback);
   if (newconn == NULL) {
+    /* outof netconns: pass on this error to the application */
+    if (sys_mbox_trypost(&conn->acceptmbox, &netconn_aborted) == ERR_OK) {
+      /* Register event with callback */
+      API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
+    }
     return ERR_MEM;
   }
   newconn->pcb.tcp = newpcb;

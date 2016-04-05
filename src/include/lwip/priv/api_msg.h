@@ -176,6 +176,10 @@ struct dns_api_msg {
 };
 #endif /* LWIP_DNS */
 
+#if LWIP_TCP
+extern u8_t netconn_aborted;
+#endif /* LWIP_TCP */
+
 void lwip_netconn_do_newconn         (void *m);
 void lwip_netconn_do_delconn         (void *m);
 void lwip_netconn_do_bind            (void *m);

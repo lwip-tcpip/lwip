@@ -317,6 +317,12 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-04-05: Simon Goldschmidt
+  * netconn/socket API: fixed bug# 43739 (Accept not reporting errors about
+    aborted connections): netconn_accept() returns ERR_ABRT (sockets: ECONNABORTED)
+    for aborted connections, ERR_CLSD (sockets: EINVAL) if the listening netconn
+    is closed, which better seems to follow the standard.
+
   2016-03-23: Florent Matignon
   * dhcp.c: fixed bug #38203: DHCP options are not recorded in all DHCP ack messages
 
