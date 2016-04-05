@@ -35,10 +35,13 @@
 
 #include "lwip/opt.h"
 
-/* Timers are not supported when NO_SYS==1 and NO_SYS_NO_TIMERS==1 */
+/** Timers are not supported when NO_SYS==1 and NO_SYS_NO_TIMERS==1.
+ * Timer support can be disabled when cyclic timers are implemented
+ * differently (use lwip_cyclic_timers array)
+ */
+#ifndef LWIP_TIMERS
 #define LWIP_TIMERS (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
-
-#if LWIP_TIMERS
+#endif
 
 #include "lwip/err.h"
 #if !NO_SYS
@@ -56,6 +59,26 @@ extern "C" {
 #define LWIP_DEBUG_TIMERNAMES 0
 #endif /* LWIP_DEBUG*/
 #endif
+
+/** Function prototype for a stack-internal timer function that has to be
+ * called at a defined interval */
+typedef void (* lwip_cyclic_timer_handler)(void);
+
+/** This struct contains information about a stack-internal timer function
+ that has to be called at a defined interval */
+struct lwip_cyclic_timer {
+  u32_t interval_ms;
+  lwip_cyclic_timer_handler handler;
+#if LWIP_DEBUG_TIMERNAMES
+  const char* handler_name;
+#endif /* LWIP_DEBUG_TIMERNAMES */
+};
+
+/** This array contains all stack-internal cyclic timers. To get the number of
+ * timers, use LWIP_ARRAYSIZE() */
+extern struct lwip_cyclic_timer lwip_cyclic_timers[];
+
+#if LWIP_TIMERS
 
 /** Function prototype for a timeout callback function. Register such a function
  * using sys_timeout().
@@ -93,9 +116,10 @@ void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 #endif /* NO_SYS */
 
 
+#endif /* LWIP_TIMERS */
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_TIMERS */
 #endif /* LWIP_HDR_TIMERS_H */

@@ -44,8 +44,6 @@
 #include "lwip/timers.h"
 #include "lwip/priv/tcp_priv.h"
 
-#if LWIP_TIMERS
-
 #include "lwip/def.h"
 #include "lwip/memp.h"
 #include "lwip/priv/tcpip_priv.h"
@@ -61,6 +59,54 @@
 #include "lwip/mld6.h"
 #include "lwip/sys.h"
 #include "lwip/pbuf.h"
+
+#if LWIP_DEBUG_TIMERNAMES
+#define HANDLER(x) x, #x
+#else /* LWIP_DEBUG_TIMERNAMES */
+#define HANDLER(x) x
+#endif /* LWIP_DEBUG_TIMERNAMES */
+
+/** This array contains all stack-internal cyclic timers. To get the number of
+ * timers, use LWIP_ARRAYSIZE() */
+struct lwip_cyclic_timer lwip_cyclic_timers[] = {
+#if LWIP_TCP
+  /* The TCP timer is a special case: it does not have to run always and
+     is triggered to start from TCP using tcp_timer_needed() */
+  {TCP_TMR_INTERVAL, HANDLER(tcp_tmr)},
+#endif /* LWIP_TCP */
+#if LWIP_IPV4
+#if IP_REASSEMBLY
+  {IP_TMR_INTERVAL, HANDLER(ip_reass_tmr)},
+#endif /* IP_REASSEMBLY */
+#if LWIP_ARP
+  {ARP_TMR_INTERVAL, HANDLER(etharp_tmr)},
+#endif /* LWIP_ARP */
+#if LWIP_DHCP
+  {DHCP_COARSE_TIMER_MSECS, HANDLER(dhcp_coarse_tmr)},
+  {DHCP_FINE_TIMER_MSECS, HANDLER(dhcp_fine_tmr)},
+#endif /* LWIP_DHCP */
+#if LWIP_AUTOIP
+  {AUTOIP_TMR_INTERVAL, HANDLER(autoip_tmr)},
+#endif /* LWIP_AUTOIP */
+#if LWIP_IGMP
+  {IGMP_TMR_INTERVAL, HANDLER(igmp_tmr)},
+#endif /* LWIP_IGMP */
+#endif /* LWIP_IPV4 */
+#if LWIP_DNS
+  {DNS_TMR_INTERVAL, HANDLER(dns_tmr)},
+#endif /* LWIP_DNS */
+#if LWIP_IPV6
+  {ND6_TMR_INTERVAL, HANDLER(nd6_tmr)},
+#if LWIP_IPV6_REASS
+  {IP6_REASS_TMR_INTERVAL, HANDLER(ip6_reass_tmr)},
+#endif /* LWIP_IPV6_REASS */
+#if LWIP_IPV6_MLD
+  {MLD6_TMR_INTERVAL, HANDLER(mld6_tmr)},
+#endif /* LWIP_IPV6_MLD */
+#endif /* LWIP_IPV6 */
+};
+
+#if LWIP_TIMERS
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
@@ -111,199 +157,30 @@ tcp_timer_needed(void)
 }
 #endif /* LWIP_TCP */
 
-#if LWIP_IPV4
-#if IP_REASSEMBLY
-/**
- * Timer callback function that calls ip_reass_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-ip_reass_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: ip_reass_tmr()\n"));
-  ip_reass_tmr();
-  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
-}
-#endif /* IP_REASSEMBLY */
-
-#if LWIP_ARP
-/**
- * Timer callback function that calls etharp_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-arp_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: etharp_tmr()\n"));
-  etharp_tmr();
-  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-}
-#endif /* LWIP_ARP */
-
-#if LWIP_DHCP
-/**
- * Timer callback function that calls dhcp_coarse_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-dhcp_timer_coarse(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: dhcp_coarse_tmr()\n"));
-  dhcp_coarse_tmr();
-  sys_timeout(DHCP_COARSE_TIMER_MSECS, dhcp_timer_coarse, NULL);
-}
-
-/**
- * Timer callback function that calls dhcp_fine_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-dhcp_timer_fine(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: dhcp_fine_tmr()\n"));
-  dhcp_fine_tmr();
-  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-}
-#endif /* LWIP_DHCP */
-
-#if LWIP_AUTOIP
-/**
- * Timer callback function that calls autoip_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-autoip_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: autoip_tmr()\n"));
-  autoip_tmr();
-  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
-}
-#endif /* LWIP_AUTOIP */
-
-#if LWIP_IGMP
-/**
- * Timer callback function that calls igmp_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-igmp_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: igmp_tmr()\n"));
-  igmp_tmr();
-  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-}
-#endif /* LWIP_IGMP */
-#endif /* LWIP_IPV4 */
-
-#if LWIP_DNS
-/**
- * Timer callback function that calls dns_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-dns_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: dns_tmr()\n"));
-  dns_tmr();
-  sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
-}
-#endif /* LWIP_DNS */
-
-#if LWIP_IPV6
-/**
- * Timer callback function that calls nd6_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-nd6_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: nd6_tmr()\n"));
-  nd6_tmr();
-  sys_timeout(ND6_TMR_INTERVAL, nd6_timer, NULL);
-}
-
-#if LWIP_IPV6_REASS
-/**
- * Timer callback function that calls ip6_reass_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-ip6_reass_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: ip6_reass_tmr()\n"));
-  ip6_reass_tmr();
-  sys_timeout(IP6_REASS_TMR_INTERVAL, ip6_reass_timer, NULL);
-}
-#endif /* LWIP_IPV6_REASS */
-
-#if LWIP_IPV6_MLD
 /**
  * Timer callback function that calls mld6_tmr() and reschedules itself.
  *
  * @param arg unused argument
  */
 static void
-mld6_timer(void *arg)
+cyclic_timer(void *arg)
 {
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: mld6_tmr()\n"));
-  mld6_tmr();
-  sys_timeout(MLD6_TMR_INTERVAL, mld6_timer, NULL);
+  struct lwip_cyclic_timer* cyclic = (struct lwip_cyclic_timer*)arg;
+#if LWIP_DEBUG_TIMERNAMES
+  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: %s()\n", cyclic->handler_name));
+#endif
+  cyclic->handler();
+  sys_timeout(cyclic->interval_ms, cyclic_timer, arg);
 }
-#endif /* LWIP_IPV6_MLD */
-#endif /* LWIP_IPV6 */
 
 /** Initialize this module */
 void sys_timeouts_init(void)
 {
-#if LWIP_IPV4
-#if IP_REASSEMBLY
-  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
-#endif /* IP_REASSEMBLY */
-#if LWIP_ARP
-  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-#endif /* LWIP_ARP */
-#if LWIP_DHCP
-  sys_timeout(DHCP_COARSE_TIMER_MSECS, dhcp_timer_coarse, NULL);
-  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-#endif /* LWIP_DHCP */
-#if LWIP_AUTOIP
-  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
-#endif /* LWIP_AUTOIP */
-#if LWIP_IGMP
-  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-#endif /* LWIP_IGMP */
-#endif /* LWIP_IPV4 */
-#if LWIP_DNS
-  sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
-#endif /* LWIP_DNS */
-#if LWIP_IPV6
-  sys_timeout(ND6_TMR_INTERVAL, nd6_timer, NULL);
-#if LWIP_IPV6_REASS
-  sys_timeout(IP6_REASS_TMR_INTERVAL, ip6_reass_timer, NULL);
-#endif /* LWIP_IPV6_REASS */
-#if LWIP_IPV6_MLD
-  sys_timeout(MLD6_TMR_INTERVAL, mld6_timer, NULL);
-#endif /* LWIP_IPV6_MLD */
-#endif /* LWIP_IPV6 */
+  size_t i;
+  /* tcp_tmr() at index 0 is started on demand */
+  for (i = 1; i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
+    sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, &lwip_cyclic_timers[i]);
+  }
 
 #if NO_SYS
   /* Initialise timestamp for sys_check_timeouts */
