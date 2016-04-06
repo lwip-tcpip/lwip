@@ -1071,7 +1071,7 @@ snmp_decode_bits(const u8_t *buf, u32_t buf_len, u32_t *bit_value)
         bits_processed++;
         b <<= 1;
       }
-      while ((bits_processed % 8) != 0);
+      while ((bits_processed & 0x07) != 0); /* &0x07 -> % 8 */
     } else {
       bits_processed += 8;
     }
@@ -1126,7 +1126,7 @@ u8_t
 snmp_encode_bits(u8_t *buf, u32_t buf_len, u32_t bit_value, u8_t bit_count)
 {
   u8_t len = 0;
-  u8_t min_bytes = (bit_count + 7) / 8;
+  u8_t min_bytes = (bit_count + 7) >> 3; /* >>3 -> / 8 */
 
   while ((buf_len > 0) && (bit_value != 0x00)) {
     s8_t i = 7;
