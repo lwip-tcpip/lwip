@@ -219,7 +219,7 @@ tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
 
     while (pcb != NULL) {
       /* do local IP and local port match? */
-      if(!IP_IS_V6_VAL(pcb->local_ip) &&
+      if(IP_IS_V4_VAL(pcb->local_ip) &&
          ip4_addr_cmp(&local_ip, ip_2_ip4(&pcb->local_ip)) && (local_port == pcb->local_port)) {
 
         /* PCBs in state LISTEN are not connected and have no remote_ip or remote_port */
@@ -229,7 +229,7 @@ tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
             return tcp_ConnTable_get_cell_value_core(pcb, column, value, value_len);
           }
         } else {
-          if(!IP_IS_V6_VAL(pcb->remote_ip) &&
+          if(IP_IS_V4_VAL(pcb->remote_ip) &&
              ip4_addr_cmp(&remote_ip, ip_2_ip4(&pcb->remote_ip)) && (remote_port == pcb->remote_port)) {
             /* fill in object properties */
             return tcp_ConnTable_get_cell_value_core(pcb, column, value, value_len);
@@ -262,7 +262,7 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
     while (pcb != NULL) {
       u32_t test_oid[LWIP_ARRAYSIZE(tcp_ConnTable_oid_ranges)];
             
-      if(!IP_IS_V6_VAL(pcb->local_ip)) {
+      if(IP_IS_V4_VAL(pcb->local_ip)) {
         snmp_ip4_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
         test_oid[4] = pcb->local_port;
 

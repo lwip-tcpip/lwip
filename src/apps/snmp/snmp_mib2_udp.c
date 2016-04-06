@@ -254,7 +254,7 @@ udp_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid
   /* find udp_pcb with requested ip and port*/
   pcb = udp_pcbs;
   while (pcb != NULL) {
-    if(!IP_IS_V6_VAL(pcb->local_ip)) {
+    if(IP_IS_V4_VAL(pcb->local_ip)) {
       if(ip4_addr_cmp(&ip, ip_2_ip4(&pcb->local_ip)) && (port == pcb->local_port)) {
         /* fill in object properties */
         return udp_Table_get_cell_value_core(pcb, column, value, value_len);
@@ -282,7 +282,7 @@ udp_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_
   while (pcb != NULL) {
     u32_t test_oid[LWIP_ARRAYSIZE(udp_Table_oid_ranges)];
 
-    if(!IP_IS_V6_VAL(pcb->local_ip)) {
+    if(IP_IS_V4_VAL(pcb->local_ip)) {
       snmp_ip4_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
       test_oid[4] = pcb->local_port;
 

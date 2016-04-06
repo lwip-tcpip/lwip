@@ -323,7 +323,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
   }
 
 #if IP_SOF_BROADCAST
-  if (!IP_IS_V6(ipaddr))
+  if (IP_IS_V4(ipaddr))
   {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(ipaddr, netif)) {

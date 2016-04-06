@@ -701,7 +701,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   /* broadcast filter? */
   if (!ip_get_option(pcb, SOF_BROADCAST) &&
 #if LWIP_IPV6
-      !IP_IS_V6(dst_ip) &&
+      IP_IS_V4(dst_ip) &&
 #endif /* LWIP_IPV6 */
       ip_addr_isbroadcast(dst_ip, netif)) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
@@ -943,9 +943,9 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* SO_REUSE */
         {
           /* port matches that of PCB in list and REUSEADDR not set -> reject */
-          if ((ipcb->local_port == port) && (IP_IS_V6(ipaddr) == IP_IS_V6_VAL(ipcb->local_ip)) &&
+          if ((ipcb->local_port == port) &&
               /* IP address matches? */
-                ip_addr_cmp(&ipcb->local_ip, ipaddr)) {
+              ip_addr_cmp(&ipcb->local_ip, ipaddr)) {
             /* other PCB already binds to this local IP and port */
             LWIP_DEBUGF(UDP_DEBUG,
                         ("udp_bind: local port %"U16_F" already bound by another pcb\n", port));
@@ -1165,7 +1165,7 @@ void udp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* n
   if (!ip4_addr_isany(new_addr)) {
     for (upcb = udp_pcbs; upcb != NULL; upcb = upcb->next) {
       /* Is this an IPv4 pcb? */
-      if (!IP_IS_V6_VAL(upcb->local_ip)) {
+      if (IP_IS_V4_VAL(upcb->local_ip)) {
         /* PCB bound to current local interface address? */
         if (!ip4_addr_isany(ip_2_ip4(&upcb->local_ip)) &&
             ip4_addr_cmp(ip_2_ip4(&upcb->local_ip), old_addr)) {

@@ -318,7 +318,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
       }
 #if LWIP_IPV4 && LWIP_IPV6
       if ((IP_IS_V6_VAL(addr) && ai_family == AF_INET) ||
-          (!IP_IS_V6_VAL(addr) && ai_family == AF_INET6)) {
+          (IP_IS_V4_VAL(addr) && ai_family == AF_INET6)) {
         return EAI_NONAME;
       }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
