@@ -129,7 +129,7 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
     if(mbedtls_cipher_setup(&ctx, cipher_info) != 0) {
       return ERR_ARG;
     }
-    if(mbedtls_cipher_setkey(&ctx, key, 12*8, (mode == SNMP_V3_PRIV_MODE_ENCRYPT)? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT) != 0) {
+    if(mbedtls_cipher_setkey(&ctx, key, 8*8, (mode == SNMP_V3_PRIV_MODE_ENCRYPT)? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT) != 0) {
       goto error;
     }
 
@@ -157,7 +157,7 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
 
       snmp_pbuf_stream_writebuf(&write_stream, out_bytes, out_len);
     }
-  } else if (algo == SNMP_V3_PRIV_ALGO_AES && mode == SNMP_V3_PRIV_MODE_ENCRYPT) {
+  } else if (algo == SNMP_V3_PRIV_ALGO_AES) {
     u8_t iv_local[16];
 
     cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_CFB128);
