@@ -70,7 +70,7 @@ snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *pri
     *auth_algo = SNMP_V3_AUTH_ALGO_SHA;
   }
   if(priv_key != NULL) {
-    snmpv3_password_to_key_md5((const u8_t*)"maplesyrup", 10,
+    snmpv3_password_to_key_sha((const u8_t*)"maplesyrup", 10,
       (const u8_t*)engine_id, engine_id_len,
       priv_key);
     *priv_algo = SNMP_V3_PRIV_ALGO_DES;

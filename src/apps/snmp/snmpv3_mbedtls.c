@@ -119,6 +119,8 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
 
   if (algo == SNMP_V3_PRIV_ALGO_DES) {
     u8_t iv_local[8];
+    u8_t out_bytes[8];
+    size_t out_len;
 
     /* RFC 3414 mandates padding for DES */
     if ((length & 0x07) != 0) {
@@ -127,6 +129,9 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
 
     cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_DES_CBC);
     if(mbedtls_cipher_setup(&ctx, cipher_info) != 0) {
+      return ERR_ARG;
+    }
+    if(mbedtls_cipher_set_padding_mode(&ctx, MBEDTLS_PADDING_NONE) != 0) {
       return ERR_ARG;
     }
     if(mbedtls_cipher_setkey(&ctx, key, 8*8, (mode == SNMP_V3_PRIV_MODE_ENCRYPT)? MBEDTLS_ENCRYPT : MBEDTLS_DECRYPT) != 0) {
@@ -144,8 +149,7 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
     for (i = 0; i < length; i += 8) {
       size_t j;
       u8_t in_bytes[8];
-      u8_t out_bytes[8];
-      size_t out_len = LWIP_ARRAYSIZE(out_bytes);
+      out_len = LWIP_ARRAYSIZE(out_bytes) ;
       
       for (j = 0; j < LWIP_ARRAYSIZE(in_bytes); j++) {
         snmp_pbuf_stream_read(&read_stream, &in_bytes[j]);
@@ -157,6 +161,12 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
 
       snmp_pbuf_stream_writebuf(&write_stream, out_bytes, out_len);
     }
+    
+    out_len = LWIP_ARRAYSIZE(out_bytes);
+    if(mbedtls_cipher_finish(&ctx, out_bytes, &out_len) != 0) {
+      goto error;
+    }
+    snmp_pbuf_stream_writebuf(&write_stream, out_bytes, out_len);
   } else if (algo == SNMP_V3_PRIV_ALGO_AES) {
     u8_t iv_local[16];
 
