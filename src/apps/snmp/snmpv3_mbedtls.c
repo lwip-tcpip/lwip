@@ -102,6 +102,8 @@ free_md:
   return ERR_ARG;
 }
 
+#if LWIP_SNMP_V3_CRYPTO
+
 err_t
 snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
     const u8_t* key, const u8_t* priv_param, const u32_t engine_boots,
@@ -217,6 +219,8 @@ error:
   mbedtls_cipher_free(&ctx);
   return ERR_OK;
 }
+
+#endif /* LWIP_SNMP_V3_CRYPTO */
 
 /* A.2.1. Password to Key Sample Code for MD5 */
 void 
