@@ -20,7 +20,7 @@
  * $Id: eap.h,v 1.2 2003/06/11 23:56:26 paulus Exp $
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && EAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #ifndef PPP_EAP_H

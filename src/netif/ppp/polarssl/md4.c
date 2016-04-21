@@ -39,7 +39,7 @@
  *  http://www.ietf.org/rfc/rfc1320.txt
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_MD4
 
 #include "netif/ppp/polarssl/md4.h"

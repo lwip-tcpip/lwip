@@ -30,7 +30,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && MSCHAP_SUPPORT /* don't build if not necessary */
 
 #include "netif/ppp/ppp_impl.h"

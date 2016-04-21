@@ -31,7 +31,7 @@
 *   Original derived from BSD codes.
 *****************************************************************************/
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #ifndef PPP_H

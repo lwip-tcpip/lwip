@@ -42,7 +42,7 @@
  * $Id: upap.h,v 1.8 2002/12/04 23:03:33 paulus Exp $
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #ifndef UPAP_H

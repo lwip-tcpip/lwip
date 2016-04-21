@@ -33,7 +33,7 @@
 #ifndef LWIP_HDR_PPP_IMPL_H
 #define LWIP_HDR_PPP_IMPL_H
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 

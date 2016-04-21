@@ -28,7 +28,7 @@
  * for a 16 bit processor.
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && VJ_SUPPORT && LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
 #include "netif/ppp/ppp_impl.h"
