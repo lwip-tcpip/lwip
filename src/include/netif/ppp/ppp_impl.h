@@ -378,13 +378,6 @@ struct pppd_stats {
  * PPP private functions
  */
 
-/*
- * Functions called from lwIP core.
- */
-
-/* initialize the PPP subsystem */
-int ppp_init(void);
-
 
 /*
  * Functions called from PPP link protocols.

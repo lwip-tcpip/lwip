@@ -561,18 +561,6 @@ err:
 /*** PRIVATE FUNCTION DEFINITIONS ***/
 /************************************/
 
-/* Initialize the PPP subsystem. */
-int ppp_init(void) {
-
-    /*
-     * Initialize magic number generator now so that protocols may
-     * use magic numbers in initialization.
-     */
-    magic_init();
-
-    return 0;
-}
-
 /*
  * Create a new PPP control block.
  *
