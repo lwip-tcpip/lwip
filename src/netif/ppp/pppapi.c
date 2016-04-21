@@ -35,7 +35,7 @@
 
 #if LWIP_PPP_API /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/pppapi.h"
+#include "netif/ppp/pppapi.h"
 #include "lwip/priv/tcpip_priv.h"
 #include "netif/ppp/pppoe.h"
 #include "netif/ppp/pppol2tp.h"

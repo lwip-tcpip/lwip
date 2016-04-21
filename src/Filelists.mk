@@ -72,7 +72,6 @@ APIFILES=$(LWIPDIR)/api/api_lib.c \
 	$(LWIPDIR)/api/netbuf.c \
 	$(LWIPDIR)/api/netdb.c \
 	$(LWIPDIR)/api/netifapi.c \
-	$(LWIPDIR)/api/pppapi.c \
 	$(LWIPDIR)/api/sockets.c \
 	$(LWIPDIR)/api/tcpip.c
 
@@ -101,6 +100,7 @@ PPPFILES=$(LWIPDIR)/netif/ppp/auth.c \
 	$(LWIPDIR)/netif/ppp/mppe.c \
 	$(LWIPDIR)/netif/ppp/multilink.c \
 	$(LWIPDIR)/netif/ppp/ppp.c \
+	$(LWIPDIR)/netif/ppp/pppapi.c \
 	$(LWIPDIR)/netif/ppp/pppcrypt.c \
 	$(LWIPDIR)/netif/ppp/pppoe.c \
 	$(LWIPDIR)/netif/ppp/pppol2tp.c \
