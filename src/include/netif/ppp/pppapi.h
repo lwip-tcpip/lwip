@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __LWIP_PPPAPI_H__
-#define __LWIP_PPPAPI_H__
+#ifndef LWIP_PPPAPI_H
+#define LWIP_PPPAPI_H
 
 #include "netif/ppp/ppp_opts.h"
 
@@ -145,4 +145,4 @@ err_t pppapi_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
 
 #endif /* LWIP_PPP_API */
 
-#endif /* __LWIP_PPPAPI_H__ */
+#endif /* LWIP_PPPAPI_H */

@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __LWIP_PPP_OPTS_H__
-#define __LWIP_PPP_OPTS_H__
+#ifndef LWIP_PPP_OPTS_H
+#define LWIP_PPP_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -537,4 +537,4 @@
 
 #endif /* PPP_SUPPORT */
 
-#endif /* __LWIP_PPP_OPTS_H__ */
+#endif /* LWIP_PPP_OPTS_H */

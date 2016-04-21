@@ -38,8 +38,8 @@
 #include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#ifndef __EUI64_H__
-#define __EUI64_H__
+#ifndef EUI64_H
+#define EUI64_H
 
 /*
  * TODO:
@@ -90,5 +90,5 @@ typedef union
 
 char *eui64_ntoa(eui64_t);	/* Returns ascii representation of id */
 
-#endif /* __EUI64_H__ */
+#endif /* EUI64_H */
 #endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */
