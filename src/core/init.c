@@ -60,6 +60,8 @@
 #include "lwip/mld6.h"
 #include "lwip/api.h"
 
+#include "netif/ppp/ppp_opts.h"
+
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
  */
