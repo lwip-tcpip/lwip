@@ -1372,6 +1372,14 @@
 #endif
 
 /**
+ * Define this to something that triggers a watchdog. This is called from
+ * tcpip_thread after processing a message.
+ */
+#ifndef LWIP_TCPIP_THREAD_ALIVE
+#define LWIP_TCPIP_THREAD_ALIVE()
+#endif
+
+/**
  * SLIPIF_THREAD_NAME: The name assigned to the slipif_loop thread.
  */
 #ifndef SLIPIF_THREAD_NAME

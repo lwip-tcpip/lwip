@@ -44,6 +44,16 @@
 extern "C" {
 #endif
 
+#if LWIP_TCPIP_CORE_LOCKING
+/** The global semaphore to lock the stack. */
+extern sys_mutex_t lock_tcpip_core;
+#define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
+#define UNLOCK_TCPIP_CORE()   sys_mutex_unlock(&lock_tcpip_core)
+#else /* LWIP_TCPIP_CORE_LOCKING */
+#define LOCK_TCPIP_CORE()
+#define UNLOCK_TCPIP_CORE()
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+
 struct pbuf;
 struct netif;
 

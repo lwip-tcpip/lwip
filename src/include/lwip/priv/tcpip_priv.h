@@ -47,22 +47,6 @@ extern "C" {
 struct pbuf;
 struct netif;
 
-/** Define this to something that triggers a watchdog. This is called from
- * tcpip_thread after processing a message. */
-#ifndef LWIP_TCPIP_THREAD_ALIVE
-#define LWIP_TCPIP_THREAD_ALIVE()
-#endif
-
-#if LWIP_TCPIP_CORE_LOCKING
-/** The global semaphore to lock the stack. */
-extern sys_mutex_t lock_tcpip_core;
-#define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
-#define UNLOCK_TCPIP_CORE()   sys_mutex_unlock(&lock_tcpip_core)
-#else /* LWIP_TCPIP_CORE_LOCKING */
-#define LOCK_TCPIP_CORE()
-#define UNLOCK_TCPIP_CORE()
-#endif /* LWIP_TCPIP_CORE_LOCKING */
-
 #if LWIP_MPU_COMPATIBLE
 #define API_VAR_REF(name)               (*(name))
 #define API_VAR_DECLARE(type, name)     type * name
