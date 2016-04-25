@@ -57,7 +57,7 @@
 
 #define API_MSG_VAR_REF(name)             API_VAR_REF(name)
 #define API_MSG_VAR_DECLARE(name)         API_VAR_DECLARE(struct api_msg, name)
-#define API_MSG_VAR_ALLOC(name)           API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name)
+#define API_MSG_VAR_ALLOC(name)           API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, ERR_MEM)
 #define API_MSG_VAR_ALLOC_DONTFAIL(name)  API_VAR_ALLOC_DONTFAIL(struct api_msg, MEMP_API_MSG, name)
 #define API_MSG_VAR_FREE(name)            API_VAR_FREE(MEMP_API_MSG, name)
 
@@ -881,7 +881,7 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   }
 #endif
 
-  API_VAR_ALLOC(struct dns_api_msg, MEMP_DNS_API_MSG, msg);
+  API_VAR_ALLOC(struct dns_api_msg, MEMP_DNS_API_MSG, msg, ERR_MEM);
 #if LWIP_MPU_COMPATIBLE
   strncpy(API_VAR_REF(msg).name, name, DNS_MAX_NAME_LENGTH-1);
   API_VAR_REF(msg).name[DNS_MAX_NAME_LENGTH-1] = 0;
