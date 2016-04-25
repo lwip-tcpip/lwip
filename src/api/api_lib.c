@@ -200,7 +200,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
   API_MSG_VAR_REF(msg).conn = conn;
   API_MSG_VAR_REF(msg).msg.ad.local = local;
 #if LWIP_MPU_COMPATIBLE
-  TCPIP_APIMSG(msg, lwip_netconn_do_getaddr, err);
+  err = netconn_apimsg(lwip_netconn_do_getaddr, &API_MSG_VAR_REF(msg));
   *addr = msg->msg.ad.ipaddr;
   *port = msg->msg.ad.port;
 #else /* LWIP_MPU_COMPATIBLE */
