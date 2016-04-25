@@ -72,8 +72,6 @@
 #define LWIP_PPP_API                    (PPP_SUPPORT && (NO_SYS == 0))
 #endif
 
-#if PPP_SUPPORT
-
 /**
  * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
  * connections (requires the PPP_SUPPORT option)
@@ -81,6 +79,8 @@
 #ifndef MEMP_NUM_PPP_PCB
 #define MEMP_NUM_PPP_PCB       1
 #endif
+
+#if PPP_SUPPORT
 
 /**
  * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
