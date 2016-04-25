@@ -107,6 +107,13 @@
 #endif
 
 /**
+ * MEMP_NUM_PPP_API_MSG: Number of concurrent PPP API messages (in pppapi.c)
+ */
+#ifndef MEMP_NUM_PPP_API_MSG
+#define MEMP_NUM_PPP_API_MSG 5
+#endif
+
+/**
  * PPP_DEBUG: Enable debugging for PPP.
  */
 #ifndef PPP_DEBUG

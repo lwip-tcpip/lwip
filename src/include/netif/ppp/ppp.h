@@ -504,7 +504,7 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff);
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_listen(ppp_pcb *pcb, struct ppp_addrs *addrs);
+err_t ppp_listen(ppp_pcb *pcb, const struct ppp_addrs *addrs);
 #endif /* PPP_SERVER */
 
 /*

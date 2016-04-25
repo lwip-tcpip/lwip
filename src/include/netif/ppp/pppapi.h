@@ -79,7 +79,7 @@ struct pppapi_msg_msg {
     struct {
       struct netif *pppif;
       struct netif *netif;
-      ip_addr_t *ipaddr;
+      API_MSG_M_DEF_C(ip_addr_t, ipaddr);
       u16_t port;
 #if PPPOL2TP_AUTH_SUPPORT
       const u8_t *secret;
@@ -94,7 +94,7 @@ struct pppapi_msg_msg {
     } connect;
 #if PPP_SERVER
     struct {
-      struct ppp_addrs *addrs;
+      API_MSG_M_DEF_C(struct ppp_addrs, addrs);
     } listen;
 #endif /* PPP_SERVER */
     struct {

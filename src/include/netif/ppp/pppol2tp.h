@@ -193,7 +193,7 @@ struct pppol2tp_pcb_s {
 
 /* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+       struct netif *netif, const ip_addr_t *ipaddr, u16_t port,
        const u8_t *secret, u8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 

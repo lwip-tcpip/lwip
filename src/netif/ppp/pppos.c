@@ -58,7 +58,7 @@ static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol);
 static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
 #if PPP_SERVER
-static err_t pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs);
+static err_t pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs);
 #endif /* PPP_SERVER */
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
@@ -332,7 +332,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 
 #if PPP_SERVER
 static err_t
-pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
+pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 #if PPP_IPV4_SUPPORT

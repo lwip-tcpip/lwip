@@ -145,6 +145,9 @@ LWIP_MEMPOOL_PROTOTYPE(PPPOE_IF);
 #if PPPOL2TP_SUPPORT
 LWIP_MEMPOOL_PROTOTYPE(PPPOL2TP_PCB);
 #endif
+#if LWIP_PPP_API && LWIP_MPU_COMPATIBLE
+LWIP_MEMPOOL_PROTOTYPE(PPPAPI_MSG);
+#endif
 LWIP_MEMPOOL_DECLARE(PPP_PCB, MEMP_NUM_PPP_PCB, sizeof(ppp_pcb), "PPP_PCB")
 
 /* FIXME: add stats per PPP session */
@@ -278,7 +281,7 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_listen(ppp_pcb *pcb, struct ppp_addrs *addrs) {
+err_t ppp_listen(ppp_pcb *pcb, const struct ppp_addrs *addrs) {
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_ALREADY;
   }
@@ -584,6 +587,9 @@ int ppp_init(void)
 #endif
 #if PPPOL2TP_SUPPORT
     LWIP_MEMPOOL_INIT(PPPOL2TP_PCB);
+#endif
+#if LWIP_PPP_API && LWIP_MPU_COMPATIBLE
+    LWIP_MEMPOOL_INIT(PPPAPI_MSG);
 #endif
 
     LWIP_MEMPOOL_INIT(PPP_PCB);
