@@ -56,11 +56,18 @@ struct netif;
                                             return ERR_MEM; \
                                           } \
                                         } while(0)
+#define API_VAR_ALLOC_POOL(type, pool, name) do { \
+                                          name = (type *)LWIP_MEMPOOL_ALLOC(pool); \
+                                          if (name == NULL) { \
+                                            return ERR_MEM; \
+                                          } \
+                                        } while(0)
 #define API_VAR_ALLOC_DONTFAIL(type, pool, name) do { \
                                           name = (type *)memp_malloc(pool); \
                                           LWIP_ASSERT("pool empty", name != NULL); \
                                         } while(0)
 #define API_VAR_FREE(pool, name)        memp_free(pool, name)
+#define API_VAR_FREE_POOL(pool, name)   LWIP_MEMPOOL_FREE(pool, name)
 #define API_EXPR_REF(expr)              &(expr)
 #if LWIP_NETCONN_SEM_PER_THREAD
 #define API_EXPR_REF_SEM(expr)          (expr)
@@ -72,8 +79,10 @@ struct netif;
 #define API_VAR_REF(name)               name
 #define API_VAR_DECLARE(type, name)     type name
 #define API_VAR_ALLOC(type, pool, name)
+#define API_VAR_ALLOC_POOL(type, pool, name)
 #define API_VAR_ALLOC_DONTFAIL(type, pool, name)
 #define API_VAR_FREE(pool, name)
+#define API_VAR_FREE_POOL(pool, name)
 #define API_EXPR_REF(expr)              expr
 #define API_EXPR_REF_SEM(expr)          API_EXPR_REF(expr)
 #define API_EXPR_DEREF(expr)            *(expr)
