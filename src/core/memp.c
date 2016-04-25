@@ -64,6 +64,8 @@
 #include "lwip/priv/tcpip_priv.h"
 #include "lwip/netifapi.h"
 
+#include "netif/ppp/ppp_opts.h"
+
 #include <string.h>
 
 #define LWIP_MEMPOOL(name,num,size,desc) LWIP_MEMPOOL_DECLARE(name,num,size,desc)
