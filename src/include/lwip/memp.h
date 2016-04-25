@@ -33,9 +33,6 @@
 #ifndef LWIP_HDR_MEMP_H
 #define LWIP_HDR_MEMP_H
 
-/* needed by memp_std.h */
-#include "netif/ppp/ppp_opts.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

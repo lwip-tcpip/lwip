@@ -135,6 +135,18 @@
 /*** LOCAL DEFINITIONS ***/
 /*************************/
 
+/* Memory pools */
+#if PPPOS_SUPPORT
+LWIP_MEMPOOL_PROTOTYPE(PPPOS_PCB);
+#endif
+#if PPPOE_SUPPORT
+LWIP_MEMPOOL_PROTOTYPE(PPPOE_IF);
+#endif
+#if PPPOL2TP_SUPPORT
+LWIP_MEMPOOL_PROTOTYPE(PPPOL2TP_PCB);
+#endif
+LWIP_MEMPOOL_DECLARE(PPP_PCB, MEMP_NUM_PPP_PCB, sizeof(ppp_pcb), "PPP_PCB")
+
 /* FIXME: add stats per PPP session */
 #if PPP_STATS_SUPPORT
 static struct timeval start_time; /* Time when link was started. */
@@ -352,7 +364,7 @@ err_t ppp_free(ppp_pcb *pcb) {
 
   err = pcb->link_cb->free(pcb, pcb->link_ctx_cb);
 
-  memp_free(MEMP_PPP_PCB, pcb);
+  LWIP_MEMPOOL_FREE(PPP_PCB, pcb);
   return err;
 }
 
@@ -561,6 +573,24 @@ err:
 /*** PRIVATE FUNCTION DEFINITIONS ***/
 /************************************/
 
+/* Initialize the PPP subsystem. */
+int ppp_init(void)
+{
+#if PPPOS_SUPPORT
+    LWIP_MEMPOOL_INIT(PPPOS_PCB);
+#endif
+#if PPPOE_SUPPORT
+    LWIP_MEMPOOL_INIT(PPPOE_IF);
+#endif
+#if PPPOL2TP_SUPPORT
+    LWIP_MEMPOOL_INIT(PPPOL2TP_PCB);
+#endif
+
+    LWIP_MEMPOOL_INIT(PPP_PCB);
+
+    return 0;
+}
+ 
 /*
  * Create a new PPP control block.
  *
@@ -579,7 +609,7 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
     return NULL;
   }
 
-  pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
+  pcb = (ppp_pcb*)LWIP_MEMPOOL_ALLOC(PPP_PCB);
   if (pcb == NULL) {
     return NULL;
   }
@@ -636,7 +666,7 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
                  IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY,
 #endif /* LWIP_IPV4 */
                  (void *)pcb, ppp_netif_init_cb, NULL)) {
-    memp_free(MEMP_PPP_PCB, pcb);
+    LWIP_MEMPOOL_FREE(PPP_PCB, pcb);
     PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
     return NULL;
   }

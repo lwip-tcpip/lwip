@@ -61,6 +61,7 @@
 #include "lwip/api.h"
 
 #include "netif/ppp/ppp_opts.h"
+#include "netif/ppp/ppp_impl.h"
 
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
@@ -346,7 +347,10 @@ lwip_init(void)
 #if LWIP_DNS
   dns_init();
 #endif /* LWIP_DNS */
-
+#if PPP_SUPPORT
+  ppp_init();
+#endif
+ 
 #if LWIP_TIMERS
   sys_timeouts_init();
 #endif /* LWIP_TIMERS */

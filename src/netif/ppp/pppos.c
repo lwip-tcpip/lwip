@@ -50,6 +50,9 @@
 #include "netif/ppp/pppos.h"
 #include "netif/ppp/vj.h"
 
+/* Memory pool */
+LWIP_MEMPOOL_DECLARE(PPPOS_PCB, MEMP_NUM_PPPOS_INTERFACES, sizeof(pppos_pcb), "PPPOS_PCB")
+
 /* callbacks called from PPP core */
 static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol);
@@ -173,14 +176,14 @@ ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
   pppos_pcb *pppos;
   ppp_pcb *ppp;
 
-  pppos = (pppos_pcb *)memp_malloc(MEMP_PPPOS_PCB);
+  pppos = (pppos_pcb *)LWIP_MEMPOOL_ALLOC(PPPOS_PCB);
   if (pppos == NULL) {
     return NULL;
   }
 
   ppp = ppp_new(pppif, &pppos_callbacks, pppos, link_status_cb, ctx_cb);
   if (ppp == NULL) {
-    memp_free(MEMP_PPPOS_PCB, pppos);
+    LWIP_MEMPOOL_FREE(PPPOS_PCB, pppos);
     return NULL;
   }
 
@@ -421,7 +424,7 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
   pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_IRQ_SAFE */
 
-  memp_free(MEMP_PPPOS_PCB, pppos);
+  LWIP_MEMPOOL_FREE(PPPOS_PCB, pppos);
   return ERR_OK;
 }
 

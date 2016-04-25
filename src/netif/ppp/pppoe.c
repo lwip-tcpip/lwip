@@ -86,6 +86,9 @@
 #include "netif/ppp/ipcp.h"
 #include "netif/ppp/pppoe.h"
 
+/* Memory pool */
+LWIP_MEMPOOL_DECLARE(PPPOE_IF, MEMP_NUM_PPPOE_INTERFACES, sizeof(struct pppoe_softc), "PPPOE_IF")
+
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define PPPOE_ADD_16(PTR, VAL) \
     *(PTR)++ = (u8_t)((VAL) / 256);    \
@@ -174,14 +177,14 @@ ppp_pcb *pppoe_create(struct netif *pppif,
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
 
-  sc = (struct pppoe_softc *)memp_malloc(MEMP_PPPOE_IF);
+  sc = (struct pppoe_softc *)LWIP_MEMPOOL_ALLOC(PPPOE_IF);
   if (sc == NULL) {
     return NULL;
   }
 
   ppp = ppp_new(pppif, &pppoe_callbacks, sc, link_status_cb, ctx_cb);
   if (ppp == NULL) {
-    memp_free(MEMP_PPPOE_IF, sc);
+    LWIP_MEMPOOL_FREE(PPPOE_IF, sc);
     return NULL;
   }
 
@@ -306,7 +309,7 @@ pppoe_destroy(ppp_pcb *ppp, void *ctx)
     mem_free(sc->sc_service_name);
   }
 #endif /* PPPOE_TODO */
-  memp_free(MEMP_PPPOE_IF, sc);
+  LWIP_MEMPOOL_FREE(PPPOE_IF, sc);
 
   return ERR_OK;
 }

@@ -74,6 +74,9 @@
 #endif
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
+/* Memory pool */
+LWIP_MEMPOOL_DECLARE(PPPOL2TP_PCB, MEMP_NUM_PPPOL2TP_INTERFACES, sizeof(pppol2tp_pcb), "PPPOL2TP_PCB")
+
 /* callbacks called from PPP core */
 static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
@@ -124,7 +127,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     goto ipaddr_check_failed;
   }
 
-  l2tp = (pppol2tp_pcb *)memp_malloc(MEMP_PPPOL2TP_PCB);
+  l2tp = (pppol2tp_pcb *)LWIP_MEMPOOL_ALLOC(PPPOL2TP_PCB);
   if (l2tp == NULL) {
     goto memp_malloc_l2tp_failed;
   }
@@ -157,7 +160,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 ppp_new_failed:
   udp_remove(udp);
 udp_new_failed:
-  memp_free(MEMP_PPPOL2TP_PCB, l2tp);
+  LWIP_MEMPOOL_FREE(PPPOL2TP_PCB, l2tp);
 memp_malloc_l2tp_failed:
 ipaddr_check_failed:
   return NULL;
@@ -254,7 +257,7 @@ static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx) {
   if (l2tp->udp != NULL) {
     udp_remove(l2tp->udp);
   }
-  memp_free(MEMP_PPPOL2TP_PCB, l2tp);
+  LWIP_MEMPOOL_FREE(PPPOL2TP_PCB, l2tp);
   return ERR_OK;
 }
 
