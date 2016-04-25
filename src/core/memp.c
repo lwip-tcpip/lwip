@@ -64,6 +64,7 @@
 #include "lwip/priv/tcpip_priv.h"
 #include "lwip/netifapi.h"
 
+/* needed by MEMP_NUM_SYS_TIMEOUT */
 #include "netif/ppp/ppp_opts.h"
 
 #include <string.h>

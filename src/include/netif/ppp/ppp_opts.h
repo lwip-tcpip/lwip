@@ -75,6 +75,45 @@
 #if PPP_SUPPORT
 
 /**
+ * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
+ * connections (requires the PPP_SUPPORT option)
+ */
+#ifndef MEMP_NUM_PPP_PCB
+#define MEMP_NUM_PPP_PCB       1
+#endif
+
+/**
+ * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
+ * interfaces (only used with PPPOS_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOS_INTERFACES
+#define MEMP_NUM_PPPOS_INTERFACES       MEMP_NUM_PPP_PCB
+#endif
+
+/**
+ * MEMP_NUM_PPPOE_INTERFACES: the number of concurrently active PPPoE
+ * interfaces (only used with PPPOE_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOE_INTERFACES
+#define MEMP_NUM_PPPOE_INTERFACES       1
+#endif
+
+/**
+ * MEMP_NUM_PPPOL2TP_INTERFACES: the number of concurrently active PPPoL2TP
+ * interfaces (only used with PPPOL2TP_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOL2TP_INTERFACES
+#define MEMP_NUM_PPPOL2TP_INTERFACES       1
+#endif
+
+/**
+ * PPP_DEBUG: Enable debugging for PPP.
+ */
+#ifndef PPP_DEBUG
+#define PPP_DEBUG                       LWIP_DBG_OFF
+#endif
+
+/**
  * PPP_INPROC_IRQ_SAFE==1 call pppos_input() using tcpip_callback().
  *
  * Please read the "PPPoS input path" chapter in the PPP documentation about this option.
