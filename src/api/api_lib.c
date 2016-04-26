@@ -85,8 +85,10 @@ netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
   apimsg->op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
   
-  tcpip_send_msg_wait_sem(fn, apimsg, LWIP_API_MSG_SEM(apimsg));
-  return apimsg->err;
+  if (tcpip_send_msg_wait_sem(fn, apimsg, LWIP_API_MSG_SEM(apimsg)) == ERR_OK) {
+    return apimsg->err;
+  }
+  return ERR_VAL;
 }
 
 /**
@@ -396,7 +398,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   /* Let the stack know that we have accepted the connection. */
   API_MSG_VAR_ALLOC_DONTFAIL(msg);
   API_MSG_VAR_REF(msg).conn = newconn;
-  /* don't care for the return value of lwip_netconn_do_accepted */
+  /* don't care for the return value of lwip_netconn_do_recv */
   netconn_apimsg(lwip_netconn_do_accepted, &API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 #endif /* TCP_LISTEN_BACKLOG */
