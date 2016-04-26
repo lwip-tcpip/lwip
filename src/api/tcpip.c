@@ -170,9 +170,8 @@ tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn)
 #else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
-  if (!sys_mbox_valid_val(mbox)) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
+
   msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
   if (msg == NULL) {
     return ERR_MEM;
@@ -226,26 +225,25 @@ tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
 {
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid_val(mbox)) {
-    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
-    if (msg == NULL) {
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
+
+  msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
+  if (msg == NULL) {
+    return ERR_MEM;
+  }
+
+  msg->type = TCPIP_MSG_CALLBACK;
+  msg->msg.cb.function = function;
+  msg->msg.cb.ctx = ctx;
+  if (block) {
+    sys_mbox_post(&mbox, msg);
+  } else {
+    if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
+      memp_free(MEMP_TCPIP_MSG_API, msg);
       return ERR_MEM;
     }
-
-    msg->type = TCPIP_MSG_CALLBACK;
-    msg->msg.cb.function = function;
-    msg->msg.cb.ctx = ctx;
-    if (block) {
-      sys_mbox_post(&mbox, msg);
-    } else {
-      if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
-        memp_free(MEMP_TCPIP_MSG_API, msg);
-        return ERR_MEM;
-      }
-    }
-    return ERR_OK;
   }
-  return ERR_VAL;
+  return ERR_OK;
 }
 
 #if LWIP_TCPIP_TIMEOUT
@@ -262,20 +260,19 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid_val(mbox)) {
-    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
-    if (msg == NULL) {
-      return ERR_MEM;
-    }
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
 
-    msg->type = TCPIP_MSG_TIMEOUT;
-    msg->msg.tmo.msecs = msecs;
-    msg->msg.tmo.h = h;
-    msg->msg.tmo.arg = arg;
-    sys_mbox_post(&mbox, msg);
-    return ERR_OK;
+  msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
+  if (msg == NULL) {
+    return ERR_MEM;
   }
-  return ERR_VAL;
+
+  msg->type = TCPIP_MSG_TIMEOUT;
+  msg->msg.tmo.msecs = msecs;
+  msg->msg.tmo.h = h;
+  msg->msg.tmo.arg = arg;
+  sys_mbox_post(&mbox, msg);
+  return ERR_OK;
 }
 
 /**
@@ -291,19 +288,18 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 {
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid_val(mbox)) {
-    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
-    if (msg == NULL) {
-      return ERR_MEM;
-    }
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
 
-    msg->type = TCPIP_MSG_UNTIMEOUT;
-    msg->msg.tmo.h = h;
-    msg->msg.tmo.arg = arg;
-    sys_mbox_post(&mbox, msg);
-    return ERR_OK;
+  msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
+  if (msg == NULL) {
+    return ERR_MEM;
   }
-  return ERR_VAL;
+
+  msg->type = TCPIP_MSG_UNTIMEOUT;
+  msg->msg.tmo.h = h;
+  msg->msg.tmo.arg = arg;
+  sys_mbox_post(&mbox, msg);
+  return ERR_OK;
 }
 #endif /* LWIP_TCPIP_TIMEOUT */
 
@@ -332,19 +328,18 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 #else /* LWIP_TCPIP_CORE_LOCKING */
   LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
 
-  if (sys_mbox_valid_val(mbox)) {
-    TCPIP_MSG_VAR_DECLARE(msg);
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
+
+  TCPIP_MSG_VAR_DECLARE(msg);
     
-    TCPIP_MSG_VAR_ALLOC(msg);
-    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
-    TCPIP_MSG_VAR_REF(msg).msg.api_msg.function = fn;
-    TCPIP_MSG_VAR_REF(msg).msg.api_msg.msg = apimsg;
-    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
-    sys_arch_sem_wait(sem, 0);
-    TCPIP_MSG_VAR_FREE(msg);
-    return ERR_OK;
-  }
-  return ERR_VAL;
+  TCPIP_MSG_VAR_ALLOC(msg);
+  TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
+  TCPIP_MSG_VAR_REF(msg).msg.api_msg.function = fn;
+  TCPIP_MSG_VAR_REF(msg).msg.api_msg.msg = apimsg;
+  sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
+  sys_arch_sem_wait(sem, 0);
+  TCPIP_MSG_VAR_FREE(msg);
+  return ERR_OK;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 }
 
@@ -368,37 +363,36 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
   UNLOCK_TCPIP_CORE();
   return err;
 #else /* LWIP_TCPIP_CORE_LOCKING */
-  if (sys_mbox_valid_val(mbox)) {
-    TCPIP_MSG_VAR_DECLARE(msg);
-    err_t err;
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
+
+  TCPIP_MSG_VAR_DECLARE(msg);
+  err_t err;
 
 #if !LWIP_NETCONN_SEM_PER_THREAD
-    err = sys_sem_new(&call->sem, 0);
-    if (err != ERR_OK) {
-      return err;
-    }
+  err = sys_sem_new(&call->sem, 0);
+  if (err != ERR_OK) {
+    return err;
+  }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
     
-    TCPIP_MSG_VAR_ALLOC(msg);
-    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
-    TCPIP_MSG_VAR_REF(msg).msg.api_call.arg = call;
-    TCPIP_MSG_VAR_REF(msg).msg.api_call.function = fn;
+  TCPIP_MSG_VAR_ALLOC(msg);
+  TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
+  TCPIP_MSG_VAR_REF(msg).msg.api_call.arg = call;
+  TCPIP_MSG_VAR_REF(msg).msg.api_call.function = fn;
 #if LWIP_NETCONN_SEM_PER_THREAD
-    TCPIP_MSG_VAR_REF(msg).msg.api_call.sem = LWIP_NETCONN_THREAD_SEM_GET();
+  TCPIP_MSG_VAR_REF(msg).msg.api_call.sem = LWIP_NETCONN_THREAD_SEM_GET();
 #else /* LWIP_NETCONN_SEM_PER_THREAD */
-    TCPIP_MSG_VAR_REF(msg).msg.api_call.sem = &call->sem;
+  TCPIP_MSG_VAR_REF(msg).msg.api_call.sem = &call->sem;
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
-    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
-    sys_arch_sem_wait(TCPIP_MSG_VAR_REF(msg).msg.api_call.sem, 0);
-    TCPIP_MSG_VAR_FREE(msg);
+  sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
+  sys_arch_sem_wait(TCPIP_MSG_VAR_REF(msg).msg.api_call.sem, 0);
+  TCPIP_MSG_VAR_FREE(msg);
 
 #if !LWIP_NETCONN_SEM_PER_THREAD
-    sys_sem_free(&call->sem);
+  sys_sem_free(&call->sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-    return call->err;
-  }
-  return ERR_VAL;
+  return call->err;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 }
 
@@ -444,9 +438,7 @@ tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg)
 err_t
 tcpip_trycallback(struct tcpip_callback_msg* msg)
 {
-  if (!sys_mbox_valid_val(mbox)) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
   return sys_mbox_trypost(&mbox, msg);
 }
 
