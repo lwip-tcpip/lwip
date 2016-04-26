@@ -2037,7 +2037,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
         return http_find_error_file(hs, 501);
       }
       /* if we come here, method is OK, parse URI */
-      left_len = data_len - ((sp1 +1) - data);
+      left_len = (u16_t)(data_len - ((sp1 +1) - data));
       sp2 = strnstr(sp1 + 1, " ", left_len);
 #if LWIP_HTTPD_SUPPORT_V09
       if (sp2 == NULL) {
@@ -2052,7 +2052,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
 #endif /* LWIP_HTTPD_SUPPORT_POST */
       }
 #endif /* LWIP_HTTPD_SUPPORT_V09 */
-      uri_len = sp2 - (sp1 + 1);
+      uri_len = (u16_t)(sp2 - (sp1 + 1));
       if ((sp2 != 0) && (sp2 > sp1)) {
         /* wait for CRLFCRLF (indicating end of HTTP headers) before parsing anything */
         if (strnstr(data, CRLF CRLF, data_len) != NULL) {

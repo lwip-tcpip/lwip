@@ -563,7 +563,7 @@ u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed,
     }
   }
 #else
-  LWIP_UNUSED_ARG(compress);
+  LWIP_UNUSED_ARG(can_be_compressed);
 #endif
   fclose(inFile);
   return buf;
