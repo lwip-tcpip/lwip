@@ -50,6 +50,9 @@ struct fsdata_chksum {
 };
 #endif /* HTTPD_PRECALCULATED_CHECKSUM */
 
+#define FS_FILE_FLAGS_HEADER_INCLUDED     0x01
+#define FS_FILE_FLAGS_HEADER_PERSISTENT   0x02
+
 struct fs_file {
   const char *data;
   int len;
@@ -59,7 +62,7 @@ struct fs_file {
   const struct fsdata_chksum *chksum;
   u16_t chksum_count;
 #endif /* HTTPD_PRECALCULATED_CHECKSUM */
-  u8_t http_header_included;
+  u8_t flags;
 #if LWIP_HTTPD_CUSTOM_FILES
   u8_t is_custom_file;
 #endif /* LWIP_HTTPD_CUSTOM_FILES */

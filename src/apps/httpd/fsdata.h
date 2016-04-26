@@ -40,7 +40,7 @@ struct fsdata_file {
   const unsigned char *name;
   const unsigned char *data;
   int len;
-  u8_t http_header_included;
+  u8_t flags;
 #if HTTPD_PRECALCULATED_CHECKSUM
   u16_t chksum_count;
   const struct fsdata_chksum *chksum;

@@ -88,6 +88,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #if LWIP_TCP
 
@@ -95,13 +96,10 @@
 #define MIN_REQ_LEN   7
 
 #define CRLF "\r\n"
-#define HTTP11_CONNECTIONKEEPALIVE "Connection: keep-alive"
-
-#if LWIP_HTTPD_SSI
-#define LWIP_HTTPD_IS_SSI(hs) ((hs)->ssi)
-#else /* LWIP_HTTPD_SSI */
-#define LWIP_HTTPD_IS_SSI(hs) 0
-#endif /* LWIP_HTTPD_SSI */
+#if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
+#define HTTP11_CONNECTIONKEEPALIVE  "Connection: keep-alive"
+#define HTTP11_CONNECTIONKEEPALIVE2 "Connection: Keep-Alive"
+#endif
 
 /** These defines check whether tcp_write has to copy data or not */
 
@@ -114,7 +112,7 @@
 #else /* LWIP_HTTPD_SSI */
 /** Default: don't copy if the data is sent from file-system directly */
 #define HTTP_IS_DATA_VOLATILE(hs) (((hs->file != NULL) && (hs->handle != NULL) && (hs->file == \
-                                   (const char*)hs->handle->data + hs->handle->len - hs->left)) \
+                                   (char*)hs->handle->data + hs->handle->len - hs->left)) \
                                    ? 0 : TCP_WRITE_FLAG_COPY)
 #endif /* LWIP_HTTPD_SSI */
 #endif
@@ -152,15 +150,37 @@ static char httpd_req_buf[LWIP_HTTPD_MAX_REQ_LENGTH+1];
 #endif /* LWIP_HTTPD_SUPPORT_REQUESTLIST */
 
 #if LWIP_HTTPD_SUPPORT_POST
-/** Filename for response file to send when POST is finished */
-static char http_post_response_filename[LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN+1];
-#endif /* LWIP_HTTPD_SUPPORT_POST */
+#if LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN > LWIP_HTTPD_MAX_REQUEST_URI_LEN
+#define LWIP_HTTPD_URI_BUF_LEN LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN
+#endif
+#endif
+#ifndef LWIP_HTTPD_URI_BUF_LEN
+#define LWIP_HTTPD_URI_BUF_LEN LWIP_HTTPD_MAX_REQUEST_URI_LEN
+#endif
+#if LWIP_HTTPD_URI_BUF_LEN
+/* Filename for response file to send when POST is finished or
+ * search for default files when a directory is requested. */
+static char http_uri_buf[LWIP_HTTPD_URI_BUF_LEN+1];
+#endif
 
 #if LWIP_HTTPD_DYNAMIC_HEADERS
 /* The number of individual strings that comprise the headers sent before each
  * requested file.
  */
-#define NUM_FILE_HDR_STRINGS 3
+#define NUM_FILE_HDR_STRINGS 5
+#define HDR_STRINGS_IDX_HTTP_STATUS          0 /* e.g. "HTTP/1.0 200 OK\r\n" */
+#define HDR_STRINGS_IDX_SERVER_NAME          1 /* e.g. "Server: "HTTPD_SERVER_AGENT"\r\n" */
+#define HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE 2 /* e.g. "Content-Length: xy\r\n" and/or "Connection: keep-alive\r\n" */
+#define HDR_STRINGS_IDX_CONTENT_LEN_NR       3 /* the byte count, when content-length is used */
+#define HDR_STRINGS_IDX_CONTENT_TYPE         4 /* the content type (or default answer content type including default document) */
+
+/* The dynamically generated Content-Length buffer needs space for CRLF + NULL */
+#define LWIP_HTTPD_MAX_CONTENT_LEN_OFFSET 3
+#ifndef LWIP_HTTPD_MAX_CONTENT_LEN_SIZE
+/* The dynamically generated Content-Length buffer shall be able to work with
+   ~953 MB (9 digits) */
+#define LWIP_HTTPD_MAX_CONTENT_LEN_SIZE   (9 + LWIP_HTTPD_MAX_CONTENT_LEN_OFFSET)
+#endif
 #endif /* LWIP_HTTPD_DYNAMIC_HEADERS */
 
 #if LWIP_HTTPD_SSI
@@ -200,7 +220,7 @@ struct http_state {
 #endif /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
   struct fs_file file_handle;
   struct fs_file *handle;
-  const char *file; /* Pointer to first unsent byte in buf. */
+  const char *file;       /* Pointer to first unsent byte in buf. */
 
   struct tcp_pcb *pcb;
 #if LWIP_HTTPD_SUPPORT_REQUESTLIST
@@ -225,6 +245,7 @@ struct http_state {
 #endif /* LWIP_HTTPD_CGI */
 #if LWIP_HTTPD_DYNAMIC_HEADERS
   const char *hdrs[NUM_FILE_HDR_STRINGS]; /* HTTP headers to be sent. */
+  char hdr_content_len[LWIP_HTTPD_MAX_CONTENT_LEN_SIZE];
   u16_t hdr_pos;     /* The position of the first unsent header byte in the
                         current string */
   u16_t hdr_index;   /* The index of the hdr string currently being sent. */
@@ -243,28 +264,27 @@ struct http_state {
 };
 
 #if HTTPD_USE_MEM_POOL
-LWIP_MEMPOOL_DECLARE(HTTPD_STATE, 20, sizeof(struct http_state), "HTTPD_STATE")
+LWIP_MEMPOOL_DECLARE(HTTPD_STATE,     MEMP_NUM_PARALLEL_HTTPD_CONNS,     sizeof(struct http_state),     "HTTPD_STATE")
+#if LWIP_HTTPD_SSI
+LWIP_MEMPOOL_DECLARE(HTTPD_SSI_STATE, MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS, sizeof(struct http_ssi_state), "HTTPD_SSI_STATE")
+#define HTTP_FREE_SSI_STATE(x)  LWIP_MEMPOOL_FREE(HTTPD_SSI_STATE, (x))
+#define HTTP_ALLOC_SSI_STATE()  (struct http_ssi_state *)LWIP_MEMPOOL_ALLOC(HTTPD_SSI_STATE)
+#endif /* LWIP_HTTPD_SSI */
 #define HTTP_ALLOC_HTTP_STATE() (struct http_state *)LWIP_MEMPOOL_ALLOC(HTTPD_STATE)
 #define HTTP_FREE_HTTP_STATE(x) LWIP_MEMPOOL_FREE(HTTPD_STATE, (x))
-
-#if LWIP_HTTPD_SSI
-LWIP_MEMPOOL_DECLARE(HTTPD_SSI_STATE, 20, sizeof(struct http_ssi_state), "HTTPD_SSI_STATE")
-#define HTTP_ALLOC_SSI_STATE()  (struct http_ssi_state *)LWIP_MEMPOOL_ALLOC(HTTPD_SSI_STATE)
-#define HTTP_FREE_SSI_STATE(x) LWIP_MEMPOOL_FREE(HTTPD_SSI_STATE, (x))
-#endif /* LWIP_HTTPD_SSI */
 #else /* HTTPD_USE_MEM_POOL */
 #define HTTP_ALLOC_HTTP_STATE() (struct http_state *)mem_malloc(sizeof(struct http_state))
 #define HTTP_FREE_HTTP_STATE(x) mem_free(x)
 #if LWIP_HTTPD_SSI
 #define HTTP_ALLOC_SSI_STATE()  (struct http_ssi_state *)mem_malloc(sizeof(struct http_ssi_state))
-#define HTTP_FREE_SSI_STATE(x) mem_free(x)
+#define HTTP_FREE_SSI_STATE(x)  mem_free(x)
 #endif /* LWIP_HTTPD_SSI */
 #endif /* HTTPD_USE_MEM_POOL */
 
 static err_t http_close_conn(struct tcp_pcb *pcb, struct http_state *hs);
 static err_t http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_conn);
 static err_t http_find_file(struct http_state *hs, const char *uri, int is_09);
-static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check);
+static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check, char* params);
 static err_t http_poll(void *arg, struct tcp_pcb *pcb);
 static u8_t http_check_eof(struct tcp_pcb *pcb, struct http_state *hs);
 #if LWIP_HTTPD_FS_ASYNC_READ
@@ -273,9 +293,11 @@ static void http_continue(void *connection);
 
 #if LWIP_HTTPD_SSI
 /* SSI insert handler function pointer. */
-tSSIHandler g_pfnSSIHandler = NULL;
-int g_iNumTags = 0;
-const char **g_ppcTags = NULL;
+tSSIHandler g_pfnSSIHandler;
+#if !LWIP_HTTPD_SSI_RAW
+int g_iNumTags;
+const char **g_ppcTags;
+#endif /* !LWIP_HTTPD_SSI_RAW */
 
 #define LEN_TAG_LEAD_IN 5
 const char * const g_pcTagLeadIn = "<!--#";
@@ -288,6 +310,12 @@ const char * const g_pcTagLeadOut = "-->";
 /* CGI handler information */
 const tCGI *g_pCGIs;
 int g_iNumCGIs;
+int http_cgi_paramcount;
+#define http_cgi_params     hs->params
+#define http_cgi_param_vals hs->param_vals
+#elif LWIP_HTTPD_CGI_SSI
+char *http_cgi_params[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Params extracted from the request URI */
+char *http_cgi_param_vals[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Values for each extracted param */
 #endif /* LWIP_HTTPD_CGI */
 
 #if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
@@ -304,16 +332,73 @@ strnstr(const char* buffer, const char* token, size_t n)
   const char* p;
   int tokenlen = (int)strlen(token);
   if (tokenlen == 0) {
-    return (char *)(size_t)buffer; /* cast to size_t is a hack to cast away constness */
+    return (char *)buffer;
   }
   for (p = buffer; *p && (p + tokenlen <= buffer + n); p++) {
     if ((*p == *token) && (strncmp(p, token, tokenlen) == 0)) {
-      return (char *)(size_t)p; /* cast to size_t is a hack to cast away constness */
+      return (char *)p;
     }
   }
   return NULL;
 } 
 #endif /* LWIP_HTTPD_STRNSTR_PRIVATE */
+
+#if LWIP_HTTPD_STRICMP_PRIVATE
+static int
+stricmp(const char* str1, const char* str2)
+{
+  char c1, c2;
+
+  do {
+    c1 = *str1++;
+    c2 = *str2++;
+    if (c1 != c2) {
+      char c1_upc = c1 | 0x20;
+      if ((c1_upc >= 'a') && (c1_upc <= 'z')) {
+        /* characters are not equal an one is in the alphabet range:
+        downcase both chars and check again */
+        char c2_upc = c2 | 0x20;
+        if (c1_upc != c2_upc) {
+          /* still not equal */
+          /* don't care for < or > */
+          return 1;
+        }
+      } else {
+        /* characters are not equal but none is in the alphabet range */
+        return 1;
+      }
+    }
+  } while (c1 != 0);
+  return 0;
+}
+#endif /* LWIP_HTTPD_STRICMP_PRIVATE */
+
+#if LWIP_HTTPD_ITOA_PRIVATE
+static void
+httpd_itoa(int value, char* result)
+{
+  const int base = 10;
+  char* ptr = result, *ptr1 = result, tmp_char;
+  int tmp_value;
+
+  do {
+    tmp_value = value;
+    value /= base;
+    *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + (tmp_value - value * base)];
+  } while(value);
+
+   /* Apply negative sign */
+  if (tmp_value < 0) {
+     *ptr++ = '-';
+  }
+  *ptr-- = '\0';
+  while(ptr1 < ptr) {
+    tmp_char = *ptr;
+    *ptr--= *ptr1;
+    *ptr1++ = tmp_char;
+  }
+}
+#endif
 
 #if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
 static void
@@ -334,6 +419,7 @@ http_kill_oldest_connection(u8_t ssi_required)
     {
       hs_free_next = hs;
     }
+    LWIP_ASSERT("broken list", hs != hs->next);
     hs = hs->next;
   }
   if (hs_free_next != NULL) {
@@ -533,6 +619,13 @@ http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
     *length = 0;
   }
 
+#if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
+   /* ensure nagle is normally enabled (only disabled for persistent connections
+      when all data has been enqueued but the connection stays open for the next
+      request */
+   tcp_nagle_enable(pcb);
+#endif
+
   return err;
 }
 
@@ -557,8 +650,8 @@ http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_
 #endif /* LWIP_HTTPD_POST_MANUAL_WND */
        ) {
       /* make sure the post code knows that the connection is closed */
-      http_post_response_filename[0] = 0;
-      httpd_post_finished(hs, http_post_response_filename, LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN);
+      http_uri_buf[0] = 0;
+      httpd_post_finished(hs, http_uri_buf, LWIP_HTTPD_URI_BUF_LEN);
     }
   }
 #endif /* LWIP_HTTPD_SUPPORT_POST*/
@@ -607,7 +700,7 @@ http_eof(struct tcp_pcb *pcb, struct http_state *hs)
 {
   /* HTTP/1.1 persistent connection? (Not supported for SSI) */
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
-  if (hs->keepalive && !LWIP_HTTPD_IS_SSI(hs)) {
+  if (hs->keepalive) {
 #if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
     struct http_state* next = hs->next;
 #endif
@@ -619,6 +712,8 @@ http_eof(struct tcp_pcb *pcb, struct http_state *hs)
 #endif
     hs->pcb = pcb;
     hs->keepalive = 1;
+    /* ensure nagle doesn't interfere with sending all data as fast as possible: */
+    tcp_nagle_disable(pcb);
   } else
 #endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
   {
@@ -626,7 +721,7 @@ http_eof(struct tcp_pcb *pcb, struct http_state *hs)
   }
 }
 
-#if LWIP_HTTPD_CGI
+#if LWIP_HTTPD_CGI || LWIP_HTTPD_CGI_SSI
 /**
  * Extract URI parameters from the parameter-part of an URI in the form
  * "test.cgi?x=y" @todo: better explanation!
@@ -643,6 +738,8 @@ extract_uri_parameters(struct http_state *hs, char *params)
   char *equals;
   int loop;
 
+  LWIP_UNUSED_ARG(hs);
+
   /* If we have no parameters at all, return immediately. */
   if(!params || (params[0] == '\0')) {
       return(0);
@@ -656,7 +753,7 @@ extract_uri_parameters(struct http_state *hs, char *params)
   for(loop = 0; (loop < LWIP_HTTPD_MAX_CGI_PARAMETERS) && pair; loop++) {
 
     /* Save the name of the parameter */
-    hs->params[loop] = pair;
+    http_cgi_params[loop] = pair;
 
     /* Remember the start of this name=value pair */
     equals = pair;
@@ -684,15 +781,15 @@ extract_uri_parameters(struct http_state *hs, char *params)
     equals = strchr(equals, '=');
     if(equals) {
       *equals = '\0';
-      hs->param_vals[loop] = equals + 1;
+      http_cgi_param_vals[loop] = equals + 1;
     } else {
-      hs->param_vals[loop] = NULL;
+      http_cgi_param_vals[loop] = NULL;
     }
   }
 
   return loop;
 }
-#endif /* LWIP_HTTPD_CGI */
+#endif /* LWIP_HTTPD_CGI || LWIP_HTTPD_CGI_SSI */
 
 #if LWIP_HTTPD_SSI
 /**
@@ -708,32 +805,57 @@ extract_uri_parameters(struct http_state *hs, char *params)
 static void
 get_tag_insert(struct http_state *hs)
 {
-  int loop;
+#if LWIP_HTTPD_SSI_RAW
+  const char* tag;
+#else /* LWIP_HTTPD_SSI_RAW */
+  int tag;
+#endif /* LWIP_HTTPD_SSI_RAW */
   size_t len;
   struct http_ssi_state *ssi;
+#if LWIP_HTTPD_SSI_MULTIPART
+  u16_t current_tag_part;
+#endif /* LWIP_HTTPD_SSI_MULTIPART */
+
   LWIP_ASSERT("hs != NULL", hs != NULL);
   ssi = hs->ssi;
   LWIP_ASSERT("ssi != NULL", ssi != NULL);
 #if LWIP_HTTPD_SSI_MULTIPART
-  u16_t current_tag_part = ssi->tag_part;
+  current_tag_part = ssi->tag_part;
   ssi->tag_part = HTTPD_LAST_TAG_PART;
 #endif /* LWIP_HTTPD_SSI_MULTIPART */
+#if LWIP_HTTPD_SSI_RAW
+  tag = ssi->tag_name;
+#endif
 
-  if(g_pfnSSIHandler && g_ppcTags && g_iNumTags) {
+  if(g_pfnSSIHandler
+#if !LWIP_HTTPD_SSI_RAW
+     && g_ppcTags && g_iNumTags
+#endif /* !LWIP_HTTPD_SSI_RAW */
+     ) {
 
     /* Find this tag in the list we have been provided. */
-    for(loop = 0; loop < g_iNumTags; loop++) {
-      if(strcmp(ssi->tag_name, g_ppcTags[loop]) == 0) {
-        ssi->tag_insert_len = g_pfnSSIHandler(loop, ssi->tag_insert,
+#if LWIP_HTTPD_SSI_RAW
+    {
+#else /* LWIP_HTTPD_SSI_RAW */
+    for(tag = 0; tag < g_iNumTags; tag++) {
+      if(strcmp(ssi->tag_name, g_ppcTags[tag]) == 0)
+#endif /* LWIP_HTTPD_SSI_RAW */
+      {
+        ssi->tag_insert_len = g_pfnSSIHandler(tag, ssi->tag_insert,
            LWIP_HTTPD_MAX_TAG_INSERT_LEN
 #if LWIP_HTTPD_SSI_MULTIPART
            , current_tag_part, &ssi->tag_part
 #endif /* LWIP_HTTPD_SSI_MULTIPART */
 #if LWIP_HTTPD_FILE_STATE
-           , hs->handle->state
+           , (hs->handle ? hs->handle->state : NULL)
 #endif /* LWIP_HTTPD_FILE_STATE */
            );
-        return;
+#if LWIP_HTTPD_SSI_RAW
+        if (ssi->tag_insert_len != HTTPD_SSI_TAG_UNKNOWN)
+#endif /* LWIP_HTTPD_SSI_RAW */
+        {
+          return;
+        }
       }
     }
   }
@@ -764,94 +886,143 @@ get_tag_insert(struct http_state *hs)
  * them into the supplied buffer.
  */
 static void
-get_http_headers(struct http_state *pState, char *pszURI)
+get_http_headers(struct http_state *hs, const char *uri)
 {
-  unsigned int iLoop;
-  char *pszWork;
-  char *pszExt;
-  char *pszVars;
-
-  /* Ensure that we initialize the loop counter. */
-  iLoop = 0;
+  size_t content_type;
+  char *tmp;
+  char *ext;
+  char *vars;
+  u8_t add_content_len;
 
   /* In all cases, the second header we send is the server identification
      so set it here. */
-  pState->hdrs[1] = g_psHTTPHeaderStrings[HTTP_HDR_SERVER];
+  hs->hdrs[HDR_STRINGS_IDX_SERVER_NAME] = g_psHTTPHeaderStrings[HTTP_HDR_SERVER];
+  hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = NULL;
+  hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_NR] = NULL;
 
   /* Is this a normal file or the special case we use to send back the
      default "404: Page not found" response? */
-  if (pszURI == NULL) {
-    pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
-    pState->hdrs[2] = g_psHTTPHeaderStrings[DEFAULT_404_HTML];
+  if (uri == NULL) {
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
+#if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
+    if (hs->keepalive) {
+      hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = g_psHTTPHeaderStrings[DEFAULT_404_HTML_PERSISTENT];
+    } else
+#endif
+    {
+      hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = g_psHTTPHeaderStrings[DEFAULT_404_HTML];
+    }
 
     /* Set up to send the first header string. */
-    pState->hdr_index = 0;
-    pState->hdr_pos = 0;
+    hs->hdr_index = 0;
+    hs->hdr_pos = 0;
     return;
+  }
+  /* We are dealing with a particular filename. Look for one other
+      special case.  We assume that any filename with "404" in it must be
+      indicative of a 404 server error whereas all other files require
+      the 200 OK header. */
+  if (strstr(uri, "404")) {
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
+  } else if (strstr(uri, "400")) {
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_BAD_REQUEST];
+  } else if (strstr(uri, "501")) {
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_IMPL];
   } else {
-    /* We are dealing with a particular filename. Look for one other
-       special case.  We assume that any filename with "404" in it must be
-       indicative of a 404 server error whereas all other files require
-       the 200 OK header. */
-    if (strstr(pszURI, "404")) {
-      pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
-    } else if (strstr(pszURI, "400")) {
-      pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_BAD_REQUEST];
-    } else if (strstr(pszURI, "501")) {
-      pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_IMPL];
-    } else {
-      pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_OK];
-    }
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_OK];
+  }
 
-    /* Determine if the URI has any variables and, if so, temporarily remove 
-       them. */
-    pszVars = strchr(pszURI, '?');
-    if(pszVars) {
-      *pszVars = '\0';
-    }
+  /* Determine if the URI has any variables and, if so, temporarily remove 
+      them. */
+  vars = strchr(uri, '?');
+  if(vars) {
+    *vars = '\0';
+  }
 
-    /* Get a pointer to the file extension.  We find this by looking for the
-       last occurrence of "." in the filename passed. */
-    pszExt = NULL;
-    pszWork = strchr(pszURI, '.');
-    while(pszWork) {
-      pszExt = pszWork + 1;
-      pszWork = strchr(pszExt, '.');
-    }
-
+  /* Get a pointer to the file extension.  We find this by looking for the
+      last occurrence of "." in the filename passed. */
+  ext = NULL;
+  tmp = strchr(uri, '.');
+  while (tmp) {
+    ext = tmp + 1;
+    tmp = strchr(ext, '.');
+  }
+  if (ext != NULL) {
     /* Now determine the content type and add the relevant header for that. */
-    for(iLoop = 0; (iLoop < NUM_HTTP_HEADERS) && pszExt; iLoop++) {
+    for (content_type = 0; content_type < NUM_HTTP_HEADERS; content_type++) {
       /* Have we found a matching extension? */
-      if(!strcmp(g_psHTTPHeaders[iLoop].extension, pszExt)) {
-        pState->hdrs[2] = g_psHTTPHeaders[iLoop].content_type;
+      if(!stricmp(g_psHTTPHeaders[content_type].extension, ext)) {
         break;
       }
     }
-
-    /* Reinstate the parameter marker if there was one in the original URI. */
-    if(pszVars) {
-      *pszVars = '?';
-    }
+  } else {
+    content_type = NUM_HTTP_HEADERS;
   }
 
+  /* Reinstate the parameter marker if there was one in the original URI. */
+  if (vars) {
+    *vars = '?';
+  }
+
+#if LWIP_HTTPD_OMIT_HEADER_FOR_EXTENSIONLESS_URI
   /* Does the URL passed have any file extension?  If not, we assume it
      is a special-case URL used for control state notification and we do
      not send any HTTP headers with the response. */
-  if(!pszExt) {
+  if (!ext) {
     /* Force the header index to a value indicating that all headers
        have already been sent. */
-    pState->hdr_index = NUM_FILE_HDR_STRINGS;
-  } else {
-    /* Did we find a matching extension? */
-    if(iLoop == NUM_HTTP_HEADERS) {
-      /* No - use the default, plain text file type. */
-      pState->hdrs[2] = HTTP_HDR_DEFAULT_TYPE;
-    }
-
-    /* Set up to send the first header string. */
-    pState->hdr_index = 0;
-    pState->hdr_pos = 0;
+    hs->hdr_index = NUM_FILE_HDR_STRINGS;
+    return;
   }
+#endif /* LWIP_HTTPD_OMIT_HEADER_FOR_EXTENSIONLESS_URI */
+  add_content_len = 1;
+  /* Did we find a matching extension? */
+  if(content_type < NUM_HTTP_HEADERS) {
+    /* yes, store it */
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = g_psHTTPHeaders[content_type].content_type;
+  } else if (!ext) {
+    /* no, no extension found -> use binary transfer to prevent the browser adding '.txt' on save */
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = HTTP_HDR_APP;
+  } else {
+    /* No - use the default, plain text file type. */
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = HTTP_HDR_DEFAULT_TYPE;
+  }
+  /* Add content-length header? */
+#if LWIP_HTTPD_SSI
+  if (hs->ssi != NULL) {
+    add_content_len = 0; /* @todo: get maximum file length from SSI */
+  } else
+#endif /* LWIP_HTTPD_SSI */
+  if ((hs->handle == NULL) || ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
+    add_content_len = 0;
+  }
+  if (add_content_len) {
+    size_t len;
+    LWIP_HTTPD_ITOA(hs->hdr_content_len, (size_t)LWIP_HTTPD_MAX_CONTENT_LEN_SIZE,
+      hs->handle->len);
+    len = strlen(hs->hdr_content_len);
+    if (len <= LWIP_HTTPD_MAX_CONTENT_LEN_SIZE - LWIP_HTTPD_MAX_CONTENT_LEN_OFFSET) {
+      SMEMCPY(&hs->hdr_content_len[len], CRLF "\0", 3);
+      hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_NR] = hs->hdr_content_len;
+    } else {
+      add_content_len = 0;
+    }
+  }
+#if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
+  if (add_content_len) {
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_KEEPALIVE_LEN];
+  } else {
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONN_CLOSE];
+  }
+#else /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
+  if (add_content_len) {
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONTENT_LENGTH];
+  }
+#endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
+
+  /* Set up to send the first header string. */
+  hs->hdr_index = 0;
+  hs->hdr_pos = 0;
 }
 
 /** Sub-function of http_send(): send dynamic headers
@@ -888,6 +1059,10 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
     ptr = (const void *)(hs->hdrs[hs->hdr_index] + hs->hdr_pos);
     old_sendlen = sendlen;
     apiflags = HTTP_IS_HDR_VOLATILE(hs, ptr);
+    if (hs->hdr_index == HDR_STRINGS_IDX_CONTENT_LEN_NR) {
+      /* content-length is always volatile */
+      apiflags |= TCP_WRITE_FLAG_COPY;
+    }
     if (hs->hdr_index < NUM_FILE_HDR_STRINGS - 1) {
       apiflags |= TCP_WRITE_FLAG_MORE;
     }
@@ -908,6 +1083,11 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
     if(hs->hdr_pos == hdrlen) {
       /* Yes - move on to the next one */
       hs->hdr_index++;
+      /* skip headers that are NULL (not all headers are required) */
+      while ((hs->hdr_index < NUM_FILE_HDR_STRINGS) &&
+         (hs->hdrs[hs->hdr_index] == NULL)) {
+        hs->hdr_index++;
+      }
       hs->hdr_pos = 0;
     }
   }
@@ -918,7 +1098,7 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
      * (which would happen when sending files from async read). */
     if(http_check_eof(pcb, hs)) {
       data_to_send = HTTP_DATA_TO_SEND_CONTINUE;
-    }
+    } 
   }
   /* If we get here and there are still header bytes to send, we send
    * the header information we just wrote immediately. If there are no
@@ -966,7 +1146,7 @@ http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
   /* Do we already have a send buffer allocated? */
   if(hs->buf) {
     /* Yes - get the length of the buffer */
-    count = hs->buf_len;
+    count = LWIP_MIN(hs->buf_len, bytes_left);
   } else {
     /* We don't have a send buffer so allocate one now */
     count = tcp_sndbuf(pcb);
@@ -1010,7 +1190,7 @@ http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
       return 0;
     }
     /* We reached the end of the file so this request is done.
-     * @todo: don't close here for HTTP/1.1? */
+     * @todo: close here for HTTP/1.1 when reading file fails */
     LWIP_DEBUGF(HTTPD_DEBUG, ("End of file.\n"));
     http_eof(pcb, hs);
     return 0;
@@ -1358,11 +1538,8 @@ http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
 #endif /* !LWIP_HTTPD_SSI_INCLUDE_TAG*/
             }
           }
-        break;
+          break;
       }
-      default:
-        LWIP_ASSERT("Unknown state", 0);
-        break;
     }
   }
 
@@ -1418,9 +1595,10 @@ http_send(struct tcp_pcb *pcb, struct http_state *hs)
 
 #if LWIP_HTTPD_DYNAMIC_HEADERS
   /* Do we have any more header data to send for this file? */
-  if(hs->hdr_index < NUM_FILE_HDR_STRINGS) {
+  if (hs->hdr_index < NUM_FILE_HDR_STRINGS) {
     data_to_send = http_send_headers(pcb, hs);
-    if (data_to_send != HTTP_DATA_TO_SEND_CONTINUE) {
+    if ((data_to_send != HTTP_DATA_TO_SEND_CONTINUE) &&
+        (hs->hdr_index < NUM_FILE_HDR_STRINGS)) {
       return data_to_send;
     }
   }
@@ -1490,7 +1668,7 @@ http_find_error_file(struct http_state *hs, u16_t error_nr)
       }
     }
   }
-  return http_init_file(hs, &hs->file_handle, 0, NULL, 0);
+  return http_init_file(hs, &hs->file_handle, 0, NULL, 0, NULL);
 }
 #else /* LWIP_HTTPD_SUPPORT_EXTSTATUS */
 #define http_find_error_file(hs, error_nr) ERR_ARG
@@ -1545,9 +1723,9 @@ http_handle_post_finished(struct http_state *hs)
 #endif /* LWIP_HTTPD_POST_MANUAL_WND */
   /* application error or POST finished */
   /* NULL-terminate the buffer */
-  http_post_response_filename[0] = 0;
-  httpd_post_finished(hs, http_post_response_filename, LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN);
-  return http_find_file(hs, http_post_response_filename, 0);
+  http_uri_buf[0] = 0;
+  httpd_post_finished(hs, http_uri_buf, LWIP_HTTPD_URI_BUF_LEN);
+  return http_find_file(hs, http_uri_buf, 0);
 }
 
 /** Pass received POST body data to the application and correctly handle
@@ -1564,11 +1742,13 @@ http_post_rxpbuf(struct http_state *hs, struct pbuf *p)
 {
   err_t err;
 
-  /* adjust remaining Content-Length */
-  if (hs->post_content_len_left < p->tot_len) {
-    hs->post_content_len_left = 0;
-  } else {
-    hs->post_content_len_left -= p->tot_len;
+  if (p != NULL) {
+    /* adjust remaining Content-Length */
+    if (hs->post_content_len_left < p->tot_len) {
+      hs->post_content_len_left = 0;
+    } else {
+      hs->post_content_len_left -= p->tot_len;
+    }
   }
   err = httpd_post_receive_data(hs, p);
   if (err != ERR_OK) {
@@ -1620,17 +1800,25 @@ http_post_request(struct pbuf *inp, struct http_state *hs,
       char *scontent_len_end = strnstr(scontent_len + HTTP_HDR_CONTENT_LEN_LEN, CRLF, HTTP_HDR_CONTENT_LEN_DIGIT_MAX_LEN);
       if (scontent_len_end != NULL) {
         int content_len;
-        char *conten_len_num = scontent_len + HTTP_HDR_CONTENT_LEN_LEN;
-        content_len = atoi(conten_len_num);
-        if (content_len > 0) {
+        char *content_len_num = scontent_len + HTTP_HDR_CONTENT_LEN_LEN;
+        content_len = atoi(content_len_num);
+        if (content_len == 0) {
+          /* if atoi returns 0 on error, fix this */
+          if ((content_len_num[0] != '0') || (content_len_num[1] != '\r')) {
+            content_len = -1;
+          }
+        }
+        if (content_len >= 0) {
           /* adjust length of HTTP header passed to application */
           const char *hdr_start_after_uri = uri_end + 1;
           u16_t hdr_len = LWIP_MIN(data_len, crlfcrlf + 4 - data);
           u16_t hdr_data_len = LWIP_MIN(data_len, crlfcrlf + 4 - hdr_start_after_uri);
           u8_t post_auto_wnd = 1;
-          http_post_response_filename[0] = 0;
+          http_uri_buf[0] = 0;
+          /* trim http header */
+          *crlfcrlf = 0;
           err = httpd_post_begin(hs, uri, hdr_start_after_uri, hdr_data_len, content_len,
-            http_post_response_filename, LWIP_HTTPD_POST_MAX_RESPONSE_URI_LEN, &post_auto_wnd);
+            http_uri_buf, LWIP_HTTPD_URI_BUF_LEN, &post_auto_wnd);
           if (err == ERR_OK) {
             /* try to pass in data of the first pbuf(s) */
             struct pbuf *q = inp;
@@ -1657,16 +1845,19 @@ http_post_request(struct pbuf *inp, struct http_state *hs,
 #endif /* LWIP_HTTPD_POST_MANUAL_WND */
               pbuf_ref(q);
               return http_post_rxpbuf(hs, q);
+            } else if (hs->post_content_len_left == 0) {
+              q = pbuf_alloc(PBUF_RAW, 0, PBUF_REF);
+              return http_post_rxpbuf(hs, q);
             } else {
               return ERR_OK;
             }
           } else {
             /* return file passed from application */
-            return http_find_file(hs, http_post_response_filename, 0);
+            return http_find_file(hs, http_uri_buf, 0);
           }
         } else {
           LWIP_DEBUGF(HTTPD_DEBUG, ("POST received invalid Content-Length: %s\n",
-            conten_len_num));
+            content_len_num));
           return ERR_ARG;
         }
       }
@@ -1846,7 +2037,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
         return http_find_error_file(hs, 501);
       }
       /* if we come here, method is OK, parse URI */
-      left_len = (u16_t)(data_len - ((sp1 +1) - data));
+      left_len = data_len - ((sp1 +1) - data);
       sp2 = strnstr(sp1 + 1, " ", left_len);
 #if LWIP_HTTPD_SUPPORT_V09
       if (sp2 == NULL) {
@@ -1861,13 +2052,16 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
 #endif /* LWIP_HTTPD_SUPPORT_POST */
       }
 #endif /* LWIP_HTTPD_SUPPORT_V09 */
-      uri_len = (u16_t)(sp2 - (sp1 + 1));
+      uri_len = sp2 - (sp1 + 1);
       if ((sp2 != 0) && (sp2 > sp1)) {
         /* wait for CRLFCRLF (indicating end of HTTP headers) before parsing anything */
         if (strnstr(data, CRLF CRLF, data_len) != NULL) {
           char *uri = sp1 + 1;
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
-          if (!is_09 && strnstr(data, HTTP11_CONNECTIONKEEPALIVE, data_len)) {
+          /* This is HTTP/1.0 compatible: for strict 1.1, a connection
+             would always be persistent unless "close" was specified. */
+          if (!is_09 && (strnstr(data, HTTP11_CONNECTIONKEEPALIVE, data_len) ||
+              strnstr(data, HTTP11_CONNECTIONKEEPALIVE2, data_len))) {
             hs->keepalive = 1;
           } else {
             hs->keepalive = 0;
@@ -1940,11 +2134,10 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
 {
   size_t loop;
   struct fs_file *file = NULL;
-  char *params;
+  char *params = NULL;
   err_t err;
 #if LWIP_HTTPD_CGI
   int i;
-  int count;
 #endif /* LWIP_HTTPD_CGI */
 #if !LWIP_HTTPD_SSI
   const
@@ -1952,15 +2145,41 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
   /* By default, assume we will not be processing server-side-includes tags */
   u8_t tag_check = 0;
 
-  /* Have we been asked for the default root file? */
-  if((uri[0] == '/') &&  (uri[1] == 0)) {
+  /* Have we been asked for the default file (in root or a directory) ? */
+#if LWIP_HTTPD_MAX_REQUEST_URI_LEN
+  size_t uri_len = strlen(uri);
+  if ((uri_len > 0) && (uri[uri_len-1] == '/') &&
+      ((uri != http_uri_buf) || (uri_len == 1))) {
+    size_t copy_len = LWIP_MIN(sizeof(http_uri_buf) - 1, uri_len - 1);
+    if (copy_len > 0) {
+      MEMCPY(http_uri_buf, uri, copy_len);
+      http_uri_buf[copy_len] = 0;
+    }
+#else /* LWIP_HTTPD_MAX_REQUEST_URI_LEN */
+  if ((uri[0] == '/') &&  (uri[1] == 0)) {
+#endif /* LWIP_HTTPD_MAX_REQUEST_URI_LEN */
     /* Try each of the configured default filenames until we find one
        that exists. */
     for (loop = 0; loop < NUM_DEFAULT_FILENAMES; loop++) {
-      LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Looking for %s...\n", g_psDefaultFilenames[loop].name));
-      err = fs_open(&hs->file_handle, g_psDefaultFilenames[loop].name);
-      uri = g_psDefaultFilenames[loop].name;
+      const char* file_name;
+#if LWIP_HTTPD_MAX_REQUEST_URI_LEN
+      if (copy_len > 0) {
+        size_t len_left = sizeof(http_uri_buf) - copy_len - 1;
+        if (len_left > 0) {
+          size_t name_len = strlen(g_psDefaultFilenames[loop].name);
+          size_t name_copy_len = LWIP_MIN(len_left, name_len);
+          MEMCPY(&http_uri_buf[copy_len], g_psDefaultFilenames[loop].name, name_copy_len);
+        }
+        file_name = http_uri_buf;
+      } else
+#endif /* LWIP_HTTPD_MAX_REQUEST_URI_LEN */
+      {
+        file_name = g_psDefaultFilenames[loop].name;
+      }
+      LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Looking for %s...\n", file_name));
+      err = fs_open(&hs->file_handle, file_name);
       if(err == ERR_OK) {
+        uri = file_name;
         file = &hs->file_handle;
         LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Opened.\n"));
 #if LWIP_HTTPD_SSI
@@ -1969,14 +2188,8 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
         break;
       }
     }
-    if (file == NULL) {
-      /* None of the default filenames exist so send back a 404 page */
-      file = http_get_404_file(hs, &uri);
-#if LWIP_HTTPD_SSI
-      tag_check = 0;
-#endif /* LWIP_HTTPD_SSI */
-    }
-  } else {
+  }
+  if (file == NULL) {
     /* No - we've been asked for a specific file. */
     /* First, isolate the base URI (without any parameters) */
     params = (char *)strchr(uri, '?');
@@ -1987,6 +2200,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
     }
 
 #if LWIP_HTTPD_CGI
+    http_cgi_paramcount = -1;
     /* Does the base URI we have isolated correspond to a CGI handler? */
     if (g_iNumCGIs && g_pCGIs) {
       for (i = 0; i < g_iNumCGIs; i++) {
@@ -1995,8 +2209,8 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
            * We found a CGI that handles this URI so extract the
            * parameters and call the handler.
            */
-           count = extract_uri_parameters(hs, params);
-           uri = g_pCGIs[i].pfnCGIHandler(i, count, hs->params,
+           http_cgi_paramcount = extract_uri_parameters(hs, params);
+           uri = g_pCGIs[i].pfnCGIHandler(i, http_cgi_paramcount, hs->params,
                                           hs->param_vals);
            break;
         }
@@ -2016,17 +2230,37 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
     if (file != NULL) {
       /* See if we have been asked for an shtml file and, if so,
          enable tag checking. */
+      const char* ext = NULL, *sub;
+      char* param = (char*)strstr(uri, "?");
+      if (param != NULL) {
+         /* separate uri from parameters for now, set back later */
+         *param = 0;
+      }
+      sub = uri;
+      ext = uri;
+      for (sub = strstr(sub, "."); sub != NULL; sub = strstr(sub, "."))
+      {
+         ext = sub;
+         sub++;
+      }
       tag_check = 0;
       for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
-        if (strstr(uri, g_pcSSIExtensions[loop])) {
+        if (!stricmp(ext, g_pcSSIExtensions[loop])) {
           tag_check = 1;
           break;
         }
       }
+      if (param != NULL) {
+         *param = '?';
+      }
     }
 #endif /* LWIP_HTTPD_SSI */
   }
-  return http_init_file(hs, file, is_09, uri, tag_check);
+  if (file == NULL) {
+    /* None of the default filenames exist so send back a 404 page */
+    file = http_get_404_file(hs, &uri);
+  }
+  return http_init_file(hs, file, is_09, uri, tag_check, params);
 }
 
 /** Initialize a http connection with a file to send (if found).
@@ -2037,11 +2271,13 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
  * @param is_09 1 if the request is HTTP/0.9 (no HTTP headers in response)
  * @param uri the HTTP header URI
  * @param tag_check enable SSI tag checking
+ * @param uri_has_params != NULL if URI has parameters (separated by '?')
  * @return ERR_OK if file was found and hs has been initialized correctly
  *         another err_t otherwise
  */
 static err_t
-http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check)
+http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri,
+               u8_t tag_check, char* params)
 {
   if (file != NULL) {
     /* file opened, initialise struct http_state */
@@ -2063,19 +2299,28 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
     hs->handle = file;
     hs->file = file->data;
     LWIP_ASSERT("File length must be positive!", (file->len >= 0));
-    hs->left = file->len;
+#if LWIP_HTTPD_CUSTOM_FILES
+    if (file->is_custom_file && (file->data == NULL)) {
+      /* custom file, need to read data first (via fs_read_custom) */
+      hs->left = 0;
+    } else
+#endif /* LWIP_HTTPD_CUSTOM_FILES */
+    {
+      hs->left = file->len;
+    }
     hs->retries = 0;
 #if LWIP_HTTPD_TIMING
     hs->time_started = sys_now();
 #endif /* LWIP_HTTPD_TIMING */
 #if !LWIP_HTTPD_DYNAMIC_HEADERS
-    LWIP_ASSERT("HTTP headers not included in file system", hs->handle->http_header_included);
+    LWIP_ASSERT("HTTP headers not included in file system",
+       (hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) != 0);
 #endif /* !LWIP_HTTPD_DYNAMIC_HEADERS */
 #if LWIP_HTTPD_SUPPORT_V09
-    if (hs->handle->http_header_included && is_09) {
+    if (is_09 && ((hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) != 0)) {
       /* HTTP/0.9 responses are sent without HTTP header,
          search for the end of the header. */
-      const char *file_start = strnstr(hs->file, CRLF CRLF, hs->left);
+      char *file_start = strnstr(hs->file, CRLF CRLF, hs->left);
       if (file_start != NULL) {
         size_t diff = file_start + 4 - hs->file;
         hs->file += diff;
@@ -2083,6 +2328,27 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
       }
     }
 #endif /* LWIP_HTTPD_SUPPORT_V09*/
+#if LWIP_HTTPD_CGI_SSI
+    if (params != NULL) {
+      /* URI contains parameters, call generic CGI handler */
+      int count;
+#if LWIP_HTTPD_CGI
+      if (http_cgi_paramcount >= 0) {
+        count = http_cgi_paramcount;
+      } else
+#endif
+      {
+        count = extract_uri_parameters(hs, params);
+      }
+      httpd_cgi_handler(uri, count, http_cgi_params, http_cgi_param_vals
+#if defined(LWIP_HTTPD_FILE_STATE) && LWIP_HTTPD_FILE_STATE
+         , hs->handle->state
+#endif /* LWIP_HTTPD_FILE_STATE */
+                        );
+    }
+#else /* LWIP_HTTPD_CGI_SSI */
+    LWIP_UNUSED_ARG(params);
+#endif /* LWIP_HTTPD_CGI_SSI */
   } else {
     hs->handle = NULL;
     hs->file = NULL;
@@ -2090,14 +2356,28 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
     hs->retries = 0;
   }
 #if LWIP_HTTPD_DYNAMIC_HEADERS
-    /* Determine the HTTP headers to send based on the file extension of
+  /* Determine the HTTP headers to send based on the file extension of
    * the requested URI. */
-  if ((hs->handle == NULL) || !hs->handle->http_header_included) {
-    get_http_headers(hs, (char*)uri);
+  if ((hs->handle == NULL) || ((hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) == 0)) {
+    get_http_headers(hs, uri);
   }
 #else /* LWIP_HTTPD_DYNAMIC_HEADERS */
   LWIP_UNUSED_ARG(uri);
 #endif /* LWIP_HTTPD_DYNAMIC_HEADERS */
+#if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
+  if (hs->keepalive) {
+#if LWIP_HTTPD_SSI
+     if (hs->ssi != NULL) {
+       hs->keepalive = 0;
+     } else
+#endif /* LWIP_HTTPD_SSI */
+     {
+       if ((hs->handle != NULL) && ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
+         hs->keepalive = 0;
+       }
+     }
+  }
+#endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
   return ERR_OK;
 }
 
@@ -2286,10 +2566,10 @@ static err_t
 http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 {
   struct http_state *hs;
-  LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(err);
+  LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(HTTPD_DEBUG, ("http_accept %p / %p\n", (void*)pcb, arg));
-
+  
   if ((err != ERR_OK) || (pcb == NULL)) {
     return ERR_VAL;
   }
@@ -2328,15 +2608,16 @@ httpd_init(void)
   struct tcp_pcb *pcb;
   err_t err;
 
-  LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));
-
+#if MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS
 #if HTTPD_USE_MEM_POOL
   LWIP_MEMPOOL_INIT(HTTPD_STATE);
 #if LWIP_HTTPD_SSI
   LWIP_MEMPOOL_INIT(HTTPD_SSI_STATE);
-#endif /* LWIP_HTTPD_SSI */
-#endif /* HTTPD_USE_MEM_POOL */
-  
+#endif
+#endif
+#endif
+  LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));
+
   pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
   tcp_setprio(pcb, HTTPD_TCP_PRIO);
@@ -2345,7 +2626,6 @@ httpd_init(void)
   LWIP_ASSERT("httpd_init: tcp_bind failed", err == ERR_OK);
   pcb = tcp_listen(pcb);
   LWIP_ASSERT("httpd_init: tcp_listen failed", pcb != NULL);
-  /* initialize accept callback */
   tcp_accept(pcb, http_accept);
 }
 
@@ -2363,12 +2643,18 @@ http_set_ssi_handler(tSSIHandler ssi_handler, const char **tags, int num_tags)
   LWIP_DEBUGF(HTTPD_DEBUG, ("http_set_ssi_handler\n"));
 
   LWIP_ASSERT("no ssi_handler given", ssi_handler != NULL);
+  g_pfnSSIHandler = ssi_handler;
+
+#if LWIP_HTTPD_SSI_RAW
+  LWIP_UNUSED_ARG(tags);
+  LWIP_UNUSED_ARG(num_tags);
+#else /* LWIP_HTTPD_SSI_RAW */
   LWIP_ASSERT("no tags given", tags != NULL);
   LWIP_ASSERT("invalid number of tags", num_tags > 0);
 
-  g_pfnSSIHandler = ssi_handler;
   g_ppcTags = tags;
   g_iNumTags = num_tags;
+#endif /* !LWIP_HTTPD_SSI_RAW */
 }
 #endif /* LWIP_HTTPD_SSI */
 

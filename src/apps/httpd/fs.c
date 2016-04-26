@@ -36,6 +36,7 @@
 #include "fsdata.h"
 #include <string.h>
 
+
 #if HTTPD_USE_CUSTOM_FSDATA
 #include "fsdata_custom.c"
 #else /* HTTPD_USE_CUSTOM_FSDATA */
@@ -50,6 +51,9 @@ void fs_close_custom(struct fs_file *file);
 #if LWIP_HTTPD_FS_ASYNC_READ
 u8_t fs_canread_custom(struct fs_file *file);
 u8_t fs_wait_read_custom(struct fs_file *file, fs_wait_cb callback_fn, void *callback_arg);
+int fs_read_async_custom(struct fs_file *file, char *buffer, int count, fs_wait_cb callback_fn, void *callback_arg);
+#else /* LWIP_HTTPD_FS_ASYNC_READ */
+int fs_read_custom(struct fs_file *file, char *buffer, int count);
 #endif /* LWIP_HTTPD_FS_ASYNC_READ */
 #endif /* LWIP_HTTPD_CUSTOM_FILES */
 
@@ -77,7 +81,7 @@ fs_open(struct fs_file *file, const char *name)
       file->len = f->len;
       file->index = f->len;
       file->pextension = NULL;
-      file->http_header_included = f->http_header_included;
+      file->flags = f->flags;
 #if HTTPD_PRECALCULATED_CHECKSUM
       file->chksum_count = f->chksum_count;
       file->chksum = f->chksum;
@@ -117,22 +121,22 @@ fs_read(struct fs_file *file, char *buffer, int count)
 #endif /* LWIP_HTTPD_FS_ASYNC_READ */
 {
   int read;
-
   if(file->index == file->len) {
     return FS_READ_EOF;
   }
 #if LWIP_HTTPD_FS_ASYNC_READ
-#if LWIP_HTTPD_CUSTOM_FILES
-  if (!fs_canread_custom(file)) {
-    if (fs_wait_read_custom(file, callback_fn, callback_arg)) {
-      return FS_READ_DELAYED;
-    }
-  }
-#else /* LWIP_HTTPD_CUSTOM_FILES */
   LWIP_UNUSED_ARG(callback_fn);
   LWIP_UNUSED_ARG(callback_arg);
-#endif /* LWIP_HTTPD_CUSTOM_FILES */
 #endif /* LWIP_HTTPD_FS_ASYNC_READ */
+#if LWIP_HTTPD_CUSTOM_FILES
+  if (file->is_custom_file) {
+#if LWIP_HTTPD_FS_ASYNC_READ
+    return fs_read_async_custom(file, buffer, count, callback_fn, callback_arg);
+#else /* LWIP_HTTPD_FS_ASYNC_READ */
+    return fs_read_custom(file, buffer, count);
+#endif /* LWIP_HTTPD_FS_ASYNC_READ */
+  }
+#endif /* LWIP_HTTPD_CUSTOM_FILES */
 
   read = file->len - file->index;
   if(read > count) {

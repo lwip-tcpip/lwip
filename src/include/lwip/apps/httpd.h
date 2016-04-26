@@ -92,6 +92,27 @@ void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
 
 #endif /* LWIP_HTTPD_CGI */
 
+#if LWIP_HTTPD_CGI || LWIP_HTTPD_CGI_SSI
+
+/* The maximum number of parameters that the CGI handler can be sent. */
+#ifndef LWIP_HTTPD_MAX_CGI_PARAMETERS
+#define LWIP_HTTPD_MAX_CGI_PARAMETERS 16
+#endif
+
+#if LWIP_HTTPD_CGI_SSI
+/** Define this generic CGI handler in your application.
+ * It is called once for every URI with parameters.
+ * The parameters can be stored to 
+ */
+extern void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, char **pcValue
+#if defined(LWIP_HTTPD_FILE_STATE) && LWIP_HTTPD_FILE_STATE
+                                     , void *connection_state
+#endif /* LWIP_HTTPD_FILE_STATE */
+                                     );
+#endif /* LWIP_HTTPD_CGI_SSI */
+
+#endif /* LWIP_HTTPD_CGI || LWIP_HTTPD_CGI_SSI */
+
 #if LWIP_HTTPD_SSI
 
 /*
@@ -123,7 +144,13 @@ void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
  * output JavaScript code must do so in an encapsulated way, sending the whole
  * HTML <script>...</script> section as a single include.
  */
-typedef u16_t (*tSSIHandler)(int iIndex, char *pcInsert, int iInsertLen
+typedef u16_t (*tSSIHandler)(
+#if LWIP_HTTPD_SSI_RAW
+                             const char* ssi_tag_name,
+#else /* LWIP_HTTPD_SSI_RAW */
+                             int iIndex,
+#endif /* LWIP_HTTPD_SSI_RAW */
+                             char *pcInsert, int iInsertLen
 #if LWIP_HTTPD_SSI_MULTIPART
                              , u16_t current_tag_part, u16_t *next_tag_part
 #endif /* LWIP_HTTPD_SSI_MULTIPART */
@@ -132,8 +159,17 @@ typedef u16_t (*tSSIHandler)(int iIndex, char *pcInsert, int iInsertLen
 #endif /* LWIP_HTTPD_FILE_STATE */
                              );
 
+/** Set the SSI handler function
+ * (if LWIP_HTTPD_SSI_RAW==1, only the first argument is used)
+ */
 void http_set_ssi_handler(tSSIHandler pfnSSIHandler,
                           const char **ppcTags, int iNumTags);
+
+/** For LWIP_HTTPD_SSI_RAW==1, return this to indicat the tag is unknown.
+ * In this case, the webserver writes a warning into the page.
+ * You can also just return 0 to write nothing for unknown tags.
+ */
+#define HTTPD_SSI_TAG_UNKNOWN 0xFFFF
 
 #endif /* LWIP_HTTPD_SSI */
 
@@ -192,8 +228,9 @@ void httpd_post_data_recved(void *connection, u16_t recved_len);
 
 void httpd_init(void);
 
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_APPS_HTTPD_H */
+#endif /* LWIP_HTTPD_H */
