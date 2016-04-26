@@ -314,9 +314,8 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
  * @param fn function to be called from TCPIP thread
  * @param apimsg argument to API function
  * @param sem semaphore to wait on
- * @return ERR_OK if the function was called, another err_t if not
  */
-err_t
+void
 tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
 {
 #if LWIP_TCPIP_CORE_LOCKING
@@ -324,7 +323,6 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
   LOCK_TCPIP_CORE();
   fn(apimsg);
   UNLOCK_TCPIP_CORE();
-  return ERR_OK;
 #else /* LWIP_TCPIP_CORE_LOCKING */
   LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
 
@@ -339,7 +337,6 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
   sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
   sys_arch_sem_wait(sem, 0);
   TCPIP_MSG_VAR_FREE(msg);
-  return ERR_OK;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 }
 

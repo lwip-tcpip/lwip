@@ -92,7 +92,7 @@ struct netif;
 #define API_MSG_M_DEF_C(t, m)           const t * m
 #endif /* LWIP_MPU_COMPATIBLE */
 
-err_t tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
+void tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem);
 
 struct tcpip_api_call_data
 {
