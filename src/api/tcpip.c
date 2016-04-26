@@ -326,12 +326,11 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t* sem)
   UNLOCK_TCPIP_CORE();
   return ERR_OK;
 #else /* LWIP_TCPIP_CORE_LOCKING */
-  LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
+  TCPIP_MSG_VAR_DECLARE(msg);
 
+  LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
   LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
 
-  TCPIP_MSG_VAR_DECLARE(msg);
-    
   TCPIP_MSG_VAR_ALLOC(msg);
   TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
   TCPIP_MSG_VAR_REF(msg).msg.api_msg.function = fn;
@@ -363,10 +362,10 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
   UNLOCK_TCPIP_CORE();
   return err;
 #else /* LWIP_TCPIP_CORE_LOCKING */
-  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
-
   TCPIP_MSG_VAR_DECLARE(msg);
   err_t err;
+
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
 
 #if !LWIP_NETCONN_SEM_PER_THREAD
   err = sys_sem_new(&call->sem, 0);
