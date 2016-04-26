@@ -55,11 +55,12 @@
 
 #include <string.h>
 
-#define API_MSG_VAR_REF(name)             API_VAR_REF(name)
-#define API_MSG_VAR_DECLARE(name)         API_VAR_DECLARE(struct api_msg, name)
-#define API_MSG_VAR_ALLOC(name)           API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, ERR_MEM)
-#define API_MSG_VAR_ALLOC_DONTFAIL(name)  API_VAR_ALLOC_DONTFAIL(struct api_msg, MEMP_API_MSG, name)
-#define API_MSG_VAR_FREE(name)            API_VAR_FREE(MEMP_API_MSG, name)
+#define API_MSG_VAR_REF(name)               API_VAR_REF(name)
+#define API_MSG_VAR_DECLARE(name)           API_VAR_DECLARE(struct api_msg, name)
+#define API_MSG_VAR_ALLOC(name)             API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, ERR_MEM)
+#define API_MSG_VAR_ALLOC_RETURN_NULL(name) API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, NULL)
+#define API_MSG_VAR_ALLOC_DONTFAIL(name)    API_VAR_ALLOC_DONTFAIL(struct api_msg, MEMP_API_MSG, name)
+#define API_MSG_VAR_FREE(name)              API_VAR_FREE(MEMP_API_MSG, name)
 
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
 
@@ -105,15 +106,15 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 {
   struct netconn *conn;
   API_MSG_VAR_DECLARE(msg);
+  API_MSG_VAR_ALLOC_RETURN_NULL(msg);
 
   conn = netconn_alloc(t, callback);
   if (conn != NULL) {
     err_t err;
-    API_MSG_VAR_ALLOC_DONTFAIL(msg);
+
     API_MSG_VAR_REF(msg).msg.n.proto = proto;
     API_MSG_VAR_REF(msg).conn = conn;
     err = netconn_apimsg(lwip_netconn_do_newconn, &API_MSG_VAR_REF(msg));
-    API_MSG_VAR_FREE(msg);
     if (err != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
       LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
@@ -126,9 +127,11 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 #endif /* !LWIP_NETCONN_SEM_PER_THREAD */
       sys_mbox_free(&conn->recvmbox);
       memp_free(MEMP_NETCONN, conn);
+      API_MSG_VAR_FREE(msg);
       return NULL;
     }
   }
+  API_MSG_VAR_FREE(msg);
   return conn;
 }
 
