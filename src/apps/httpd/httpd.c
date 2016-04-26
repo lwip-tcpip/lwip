@@ -112,7 +112,7 @@
 #else /* LWIP_HTTPD_SSI */
 /** Default: don't copy if the data is sent from file-system directly */
 #define HTTP_IS_DATA_VOLATILE(hs) (((hs->file != NULL) && (hs->handle != NULL) && (hs->file == \
-                                   (char*)hs->handle->data + hs->handle->len - hs->left)) \
+                                   (const char*)hs->handle->data + hs->handle->len - hs->left)) \
                                    ? 0 : TCP_WRITE_FLAG_COPY)
 #endif /* LWIP_HTTPD_SSI */
 #endif
@@ -332,11 +332,11 @@ strnstr(const char* buffer, const char* token, size_t n)
   const char* p;
   int tokenlen = (int)strlen(token);
   if (tokenlen == 0) {
-    return (char *)buffer;
+    return (char *)(size_t)buffer;
   }
   for (p = buffer; *p && (p + tokenlen <= buffer + n); p++) {
     if ((*p == *token) && (strncmp(p, token, tokenlen) == 0)) {
-      return (char *)p;
+      return (char *)(size_t)p;
     }
   }
   return NULL;
@@ -373,7 +373,7 @@ stricmp(const char* str1, const char* str2)
 }
 #endif /* LWIP_HTTPD_STRICMP_PRIVATE */
 
-#if LWIP_HTTPD_ITOA_PRIVATE
+#if LWIP_HTTPD_ITOA_PRIVATE && LWIP_HTTPD_DYNAMIC_HEADERS
 static void
 httpd_itoa(int value, char* result)
 {

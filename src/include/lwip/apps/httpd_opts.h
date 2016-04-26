@@ -153,11 +153,6 @@
 #define LWIP_HTTPD_STRICMP_PRIVATE          0
 #endif
 
-/** Set this to 1 on platforms where stricmp is not available */
-#ifndef LWIP_HTTPD_ITOA_PRIVATE
-#define LWIP_HTTPD_ITOA_PRIVATE             1
-#endif
-
 /** Define this to a smaller function if you have itoa() at hand... */
 #ifndef LWIP_HTTPD_ITOA
 #ifndef LWIP_HTTPD_ITOA_PRIVATE
