@@ -62,10 +62,6 @@ struct netif;
                                             return errorval; \
                                           } \
                                         } while(0)
-#define API_VAR_ALLOC_DONTFAIL(type, pool, name) do { \
-                                          name = (type *)memp_malloc(pool); \
-                                          LWIP_ASSERT("pool empty", name != NULL); \
-                                        } while(0)
 #define API_VAR_FREE(pool, name)        memp_free(pool, name)
 #define API_VAR_FREE_POOL(pool, name)   LWIP_MEMPOOL_FREE(pool, name)
 #define API_EXPR_REF(expr)              &(expr)
@@ -82,7 +78,6 @@ struct netif;
 #define API_VAR_DECLARE(type, name)     type name
 #define API_VAR_ALLOC(type, pool, name, errorval)
 #define API_VAR_ALLOC_POOL(type, pool, name, errorval)
-#define API_VAR_ALLOC_DONTFAIL(type, pool, name)
 #define API_VAR_FREE(pool, name)
 #define API_VAR_FREE_POOL(pool, name)
 #define API_EXPR_REF(expr)              expr

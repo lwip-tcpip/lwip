@@ -59,7 +59,6 @@
 #define API_MSG_VAR_DECLARE(name)           API_VAR_DECLARE(struct api_msg, name)
 #define API_MSG_VAR_ALLOC(name)             API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, ERR_MEM)
 #define API_MSG_VAR_ALLOC_RETURN_NULL(name) API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, NULL)
-#define API_MSG_VAR_ALLOC_DONTFAIL(name)    API_VAR_ALLOC_DONTFAIL(struct api_msg, MEMP_API_MSG, name)
 #define API_MSG_VAR_FREE(name)              API_VAR_FREE(MEMP_API_MSG, name)
 
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
@@ -472,9 +471,25 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
        before the fatal error occurred - is that a problem? */
     return err;
   }
-
+#if LWIP_TCP
+#if (LWIP_UDP || LWIP_RAW)
+  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
+#endif /* (LWIP_UDP || LWIP_RAW) */
+  {
+    API_MSG_VAR_ALLOC(msg);
+  }
+#endif /* LWIP_TCP */
+    
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(&conn->recvmbox, &buf, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+#if LWIP_TCP
+#if (LWIP_UDP || LWIP_RAW)
+    if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
+#endif /* (LWIP_UDP || LWIP_RAW) */
+    {
+      API_MSG_VAR_FREE(msg);
+    }
+#endif /* LWIP_TCP */
     return ERR_TIMEOUT;
   }
 #else
@@ -489,7 +504,6 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
     /* Let the stack know that we have taken the data. */
     /* TODO: Speedup: Don't block and wait for the answer here
        (to prevent multiple thread-switches). */
-    API_MSG_VAR_ALLOC_DONTFAIL(msg);
     API_MSG_VAR_REF(msg).conn = conn;
     if (buf != NULL) {
       API_MSG_VAR_REF(msg).msg.r.len = ((struct pbuf *)buf)->tot_len;
