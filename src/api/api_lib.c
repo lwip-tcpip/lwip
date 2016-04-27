@@ -76,6 +76,8 @@ static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
 static err_t
 netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
 {
+  err_t err;
+
 #ifdef LWIP_DEBUG
   /* catch functions that don't set err */
   apimsg->err = ERR_VAL;
@@ -84,11 +86,12 @@ netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
 #if LWIP_NETCONN_SEM_PER_THREAD
   apimsg->op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
-  
-  if (tcpip_send_msg_wait_sem(fn, apimsg, LWIP_API_MSG_SEM(apimsg)) == ERR_OK) {
+
+  err = tcpip_send_msg_wait_sem(fn, apimsg, LWIP_API_MSG_SEM(apimsg));
+  if (err == ERR_OK) {
     return apimsg->err;
   }
-  return ERR_VAL;
+  return err;
 }
 
 /**
@@ -370,8 +373,16 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   if (!sys_mbox_valid(&conn->acceptmbox)) {
     return ERR_CLSD;
   }
+
+#if TCP_LISTEN_BACKLOG
+  API_MSG_VAR_ALLOC(msg);
+#endif /* TCP_LISTEN_BACKLOG */
+
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+#if TCP_LISTEN_BACKLOG
+    API_MSG_VAR_FREE(msg);
+#endif /* TCP_LISTEN_BACKLOG */
     return ERR_TIMEOUT;
   }
 #else
@@ -384,6 +395,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   if (accept_ptr == &netconn_aborted) {
     /* a connection has been aborted: out of pcbs or out of netconns during accept */
     /* @todo: set netconn error, but this would be fatal and thus block further accepts */
+#if TCP_LISTEN_BACKLOG
+    API_MSG_VAR_FREE(msg);
+#endif /* TCP_LISTEN_BACKLOG */
     return ERR_ABRT;
   }
   if (newconn == NULL) {
@@ -392,11 +406,13 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
        on a ready-to-accept listening netconn, there should not be anything running
        in tcpip_thread */
     NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
+#if TCP_LISTEN_BACKLOG
+    API_MSG_VAR_FREE(msg);
+#endif /* TCP_LISTEN_BACKLOG */
     return ERR_CLSD;
   }
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */
-  API_MSG_VAR_ALLOC_DONTFAIL(msg);
   API_MSG_VAR_REF(msg).conn = newconn;
   /* don't care for the return value of lwip_netconn_do_recv */
   netconn_apimsg(lwip_netconn_do_accepted, &API_MSG_VAR_REF(msg));
