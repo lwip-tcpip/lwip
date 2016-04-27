@@ -444,6 +444,14 @@ ip6_input(struct pbuf *p, struct netif *inp)
   ip_addr_copy_from_ip6(ip_data.current_iphdr_dest, ip6hdr->dest);
   ip_addr_copy_from_ip6(ip_data.current_iphdr_src, ip6hdr->src);
 
+  /* Don't accept virtual IPv6 mapped IPv4 addresses */
+  if(ip6_addr_isipv6mappedipv4(ip_2_ip6(&ip_data.current_iphdr_dest)) ||
+     ip6_addr_isipv6mappedipv4(ip_2_ip6(&ip_data.current_iphdr_src))     ) {
+    IP6_STATS_INC(ip6.err);
+    IP6_STATS_INC(ip6.drop);
+    return ERR_OK;
+  }
+  
   /* current header pointer. */
   ip_data.current_ip6_header = ip6hdr;
 
