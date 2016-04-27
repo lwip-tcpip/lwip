@@ -522,8 +522,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
   }
   LWIP_ASSERT("newconn != NULL", newconn != NULL);
-  /* Prevent automatic window updates, we do this on our own! */
-  netconn_set_noautorecved(newconn, 1);
 
   newsock = alloc_socket(newconn, 1);
   if (newsock == -1) {
@@ -774,8 +772,6 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       if (((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) &&
           (sock->rcvevent <= 0)) {
         if (off > 0) {
-          /* update receive window */
-          netconn_recved(sock->conn, (u32_t)off);
           /* already received data, return that */
           sock_set_errno(sock, 0);
           return off;
@@ -797,8 +793,6 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
       if (err != ERR_OK) {
         if (off > 0) {
-          /* update receive window */
-          netconn_recved(sock->conn, (u32_t)off);
           if (err == ERR_CLSD) {
             /* closed but already received data, ensure select gets the FIN, too */
             event_callback(sock->conn, NETCONN_EVT_RCVPLUS, 0);
@@ -913,11 +907,6 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     }
   } while (!done);
 
-  if ((off > 0) && (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) &&
-      ((flags & MSG_PEEK) == 0)) {
-    /* update receive window */
-    netconn_recved(sock->conn, (u32_t)off);
-  }
   sock_set_errno(sock, 0);
   return off;
 }
@@ -1234,10 +1223,6 @@ lwip_socket(int domain, int type, int protocol)
     conn = netconn_new_with_callback(DOMAIN_TO_NETCONN_TYPE(domain, NETCONN_TCP), event_callback);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_STREAM, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
-    if (conn != NULL) {
-      /* Prevent automatic window updates, we do this on our own! */
-      netconn_set_noautorecved(conn, 1);
-    }
     break;
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%d, %d/UNKNOWN, %d) = -1\n",

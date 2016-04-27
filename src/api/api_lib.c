@@ -486,21 +486,20 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
   if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   {
-    if (!netconn_get_noautorecved(conn) || (buf == NULL)) {
-      /* Let the stack know that we have taken the data. */
-      /* TODO: Speedup: Don't block and wait for the answer here
-         (to prevent multiple thread-switches). */
-      API_MSG_VAR_ALLOC_DONTFAIL(msg);
-      API_MSG_VAR_REF(msg).conn = conn;
-      if (buf != NULL) {
-        API_MSG_VAR_REF(msg).msg.r.len = ((struct pbuf *)buf)->tot_len;
-      } else {
-        API_MSG_VAR_REF(msg).msg.r.len = 1;
-      }
-      /* don't care for the return value of lwip_netconn_do_recv */
-      netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
-      API_MSG_VAR_FREE(msg);
+    /* Let the stack know that we have taken the data. */
+    /* TODO: Speedup: Don't block and wait for the answer here
+       (to prevent multiple thread-switches). */
+    API_MSG_VAR_ALLOC_DONTFAIL(msg);
+    API_MSG_VAR_REF(msg).conn = conn;
+    if (buf != NULL) {
+      API_MSG_VAR_REF(msg).msg.r.len = ((struct pbuf *)buf)->tot_len;
+    } else {
+      API_MSG_VAR_REF(msg).msg.r.len = 1;
     }
+
+    /* don't care for the return value of lwip_netconn_do_recv */
+    netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
+    API_MSG_VAR_FREE(msg);
 
     /* If we are closed, we indicate that we no longer wish to use the socket */
     if (buf == NULL) {
@@ -611,39 +610,6 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     return netconn_recv_data(conn, (void **)new_buf);
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
-}
-
-/**
- * TCP: update the receive window: by calling this, the application
- * tells the stack that it has processed data and is able to accept
- * new data.
- * ATTENTION: use with care, this is mainly used for sockets!
- * Can only be used when calling netconn_set_noautorecved(conn, 1) before.
- *
- * @param conn the netconn for which to update the receive window
- * @param length amount of data processed (ATTENTION: this must be accurate!)
- */
-void
-netconn_recved(struct netconn *conn, u32_t length)
-{
-#if LWIP_TCP
-  if ((conn != NULL) && (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) &&
-      (netconn_get_noautorecved(conn))) {
-    API_MSG_VAR_DECLARE(msg);
-    /* Let the stack know that we have taken the data. */
-    /* TODO: Speedup: Don't block and wait for the answer here
-       (to prevent multiple thread-switches). */
-    API_MSG_VAR_ALLOC_DONTFAIL(msg);
-    API_MSG_VAR_REF(msg).conn = conn;
-    API_MSG_VAR_REF(msg).msg.r.len = length;
-    /* don't care for the return value of lwip_netconn_do_recv */
-    netconn_apimsg(lwip_netconn_do_recv, &API_MSG_VAR_REF(msg));
-    API_MSG_VAR_FREE(msg);
-  }
-#else /* LWIP_TCP */
-  LWIP_UNUSED_ARG(conn);
-  LWIP_UNUSED_ARG(length);
-#endif /* LWIP_TCP */
 }
 
 /**
