@@ -1737,8 +1737,11 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     /* remember offered lease */
     dhcp_handle_offer(netif);
   }
+
 free_pbuf_and_return:
-  dhcp->msg_in = NULL;
+  if(dhcp != NULL) {
+    dhcp->msg_in = NULL;
+  }
   pbuf_free(p);
 }
 
