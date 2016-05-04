@@ -58,7 +58,7 @@ extern "C" {
 #define LWIP_VERSION_IS_DEVELOPMENT (LWIP_VERSION_RC == LWIP_RC_DEVELOPMENT)
 #define LWIP_VERSION_IS_RC          ((LWIP_VERSION_RC != LWIP_RC_RELEASE) && (LWIP_VERSION_RC != LWIP_RC_DEVELOPMENT))
 
-/* Some helper defines to get a version string
+/* Some helper defines to get a version string */
 #define LWIP_VERSTR2(x) #x
 #define LWIP_VERSTR(x) LWIP_VERSTR2(x)
 #if LWIP_VERSION_IS_RELEASE
