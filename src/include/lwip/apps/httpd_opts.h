@@ -87,7 +87,7 @@
 
 /** This string is passed in the HTTP header as "Server: " */
 #ifndef HTTPD_SERVER_AGENT
-#define HTTPD_SERVER_AGENT "lwIP/1.3.1 (http://savannah.nongnu.org/projects/lwip)"
+#define HTTPD_SERVER_AGENT "lwIP/"LWIP_VERSION_STRING" (http://savannah.nongnu.org/projects/lwip)"
 #endif
 
 /** Set this to 1 if you want to include code that creates HTTP headers

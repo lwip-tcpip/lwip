@@ -79,6 +79,7 @@
  * about an unknown extension, make sure to add it (and its doctype) to
  * the 'g_psHTTPHeaders' list.
  */
+#include "lwip/init.h"
 #include "lwip/apps/httpd.h"
 #include "lwip/debug.h"
 #include "lwip/stats.h"
