@@ -351,6 +351,7 @@ err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf * p);
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 void nd6_reachability_hint(const ip6_addr_t * ip6addr);
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
+void nd6_cleanup_netif(struct netif * netif);
 
 #ifdef __cplusplus
 }
