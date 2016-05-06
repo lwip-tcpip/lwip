@@ -594,6 +594,12 @@ int ppp_init(void)
 
     LWIP_MEMPOOL_INIT(PPP_PCB);
 
+  /*
+   * Initialize magic number generator now so that protocols may
+   * use magic numbers in initialization.
+   */
+  magic_init();
+
     return 0;
 }
  
