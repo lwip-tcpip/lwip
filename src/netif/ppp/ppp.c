@@ -580,19 +580,19 @@ err:
 int ppp_init(void)
 {
 #if PPPOS_SUPPORT
-    LWIP_MEMPOOL_INIT(PPPOS_PCB);
+  LWIP_MEMPOOL_INIT(PPPOS_PCB);
 #endif
 #if PPPOE_SUPPORT
-    LWIP_MEMPOOL_INIT(PPPOE_IF);
+  LWIP_MEMPOOL_INIT(PPPOE_IF);
 #endif
 #if PPPOL2TP_SUPPORT
-    LWIP_MEMPOOL_INIT(PPPOL2TP_PCB);
+  LWIP_MEMPOOL_INIT(PPPOL2TP_PCB);
 #endif
 #if LWIP_PPP_API && LWIP_MPU_COMPATIBLE
-    LWIP_MEMPOOL_INIT(PPPAPI_MSG);
+  LWIP_MEMPOOL_INIT(PPPAPI_MSG);
 #endif
 
-    LWIP_MEMPOOL_INIT(PPP_PCB);
+  LWIP_MEMPOOL_INIT(PPP_PCB);
 
   /*
    * Initialize magic number generator now so that protocols may
@@ -600,7 +600,7 @@ int ppp_init(void)
    */
   magic_init();
 
-    return 0;
+  return 0;
 }
  
 /*
