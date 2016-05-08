@@ -331,6 +331,7 @@
  * LWIP_INCLUDED_POLARSSL_MD5   ; Use lwIP internal PolarSSL for MD5
  * LWIP_INCLUDED_POLARSSL_SHA1  ; Use lwIP internal PolarSSL for SHA1
  * LWIP_INCLUDED_POLARSSL_DES   ; Use lwIP internal PolarSSL for DES
+ * LWIP_INCLUDED_POLARSSL_ARC4  ; Use lwIP internal PolarSSL for ARC4
  *
  * If set (=1), the default if required by another enabled PPP feature unless
  * explicitly set to 0, using included lwIP PolarSSL.
@@ -344,7 +345,7 @@
 /* CHAP, EAP, L2TP AUTH and MD5 Random require MD5 support */
 #if CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM
 #ifndef LWIP_INCLUDED_POLARSSL_MD5
-#define LWIP_INCLUDED_POLARSSL_MD5        1
+#define LWIP_INCLUDED_POLARSSL_MD5      1
 #endif /* LWIP_INCLUDED_POLARSSL_MD5 */
 #endif /* CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM */
 

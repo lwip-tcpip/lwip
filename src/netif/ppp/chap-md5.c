@@ -41,12 +41,7 @@
 #include "netif/ppp/chap-new.h"
 #include "netif/ppp/chap-md5.h"
 #include "netif/ppp/magic.h"
-
-#if LWIP_INCLUDED_POLARSSL_MD5
-#include "netif/ppp/polarssl/md5.h"
-#else
-#include "polarssl/md5.h"
-#endif
+#include "netif/ppp/pppcrypt.h"
 
 #define MD5_HASH_SIZE		16
 #define MD5_MIN_CHALLENGE	17
@@ -67,7 +62,7 @@ static int chap_md5_verify_response(ppp_pcb *pcb, int id, const char *name,
 			 const unsigned char *secret, int secret_len,
 			 const unsigned char *challenge, const unsigned char *response,
 			 char *message, int message_space) {
-	md5_context ctx;
+	lwip_md5_context ctx;
 	unsigned char idbyte = id;
 	unsigned char hash[MD5_HASH_SIZE];
 	int challenge_len, response_len;
@@ -78,11 +73,11 @@ static int chap_md5_verify_response(ppp_pcb *pcb, int id, const char *name,
 	response_len = *response++;
 	if (response_len == MD5_HASH_SIZE) {
 		/* Generate hash of ID, secret, challenge */
-		md5_starts(&ctx);
-		md5_update(&ctx, &idbyte, 1);
-		md5_update(&ctx, secret, secret_len);
-		md5_update(&ctx, challenge, challenge_len);
-		md5_finish(&ctx, hash);
+		lwip_md5_starts(&ctx);
+		lwip_md5_update(&ctx, &idbyte, 1);
+		lwip_md5_update(&ctx, secret, secret_len);
+		lwip_md5_update(&ctx, challenge, challenge_len);
+		lwip_md5_finish(&ctx, hash);
 
 		/* Test if our hash matches the peer's response */
 		if (memcmp(hash, response, MD5_HASH_SIZE) == 0) {
@@ -98,18 +93,18 @@ static int chap_md5_verify_response(ppp_pcb *pcb, int id, const char *name,
 static void chap_md5_make_response(ppp_pcb *pcb, unsigned char *response, int id, const char *our_name,
 		       const unsigned char *challenge, const char *secret, int secret_len,
 		       unsigned char *private_) {
-	md5_context ctx;
+	lwip_md5_context ctx;
 	unsigned char idbyte = id;
 	int challenge_len = *challenge++;
 	LWIP_UNUSED_ARG(our_name);
 	LWIP_UNUSED_ARG(private_);
 	LWIP_UNUSED_ARG(pcb);
 
-	md5_starts(&ctx);
-	md5_update(&ctx, &idbyte, 1);
-	md5_update(&ctx, (const u_char *)secret, secret_len);
-	md5_update(&ctx, challenge, challenge_len);
-	md5_finish(&ctx, &response[1]);
+	lwip_md5_starts(&ctx);
+	lwip_md5_update(&ctx, &idbyte, 1);
+	lwip_md5_update(&ctx, (const u_char *)secret, secret_len);
+	lwip_md5_update(&ctx, challenge, challenge_len);
+	lwip_md5_finish(&ctx, &response[1]);
 	response[0] = MD5_HASH_SIZE;
 }
 
