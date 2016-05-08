@@ -110,9 +110,7 @@ struct lwip_cyclic_timer lwip_cyclic_timers[] = {
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
-#if NO_SYS
 static u32_t timeouts_last_time;
-#endif /* NO_SYS */
 
 #if LWIP_TCP
 /** global variable that shows if the tcp timer is currently scheduled or not */
@@ -182,10 +180,8 @@ void sys_timeouts_init(void)
     sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, &lwip_cyclic_timers[i]);
   }
 
-#if NO_SYS
   /* Initialise timestamp for sys_check_timeouts */
   timeouts_last_time = sys_now();
-#endif
 }
 
 /**
@@ -207,9 +203,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 #endif /* LWIP_DEBUG_TIMERNAMES */
 {
   struct sys_timeo *timeout, *t;
-#if NO_SYS
   u32_t now, diff;
-#endif
 
   timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
   if (timeout == NULL) {
@@ -217,7 +211,6 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     return;
   }
 
-#if NO_SYS
   now = sys_now();
   if (next_timeout == NULL) {
     diff = 0;
@@ -225,16 +218,11 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   } else {
     diff = now - timeouts_last_time;
   }
-#endif
 
   timeout->next = NULL;
   timeout->h = handler;
   timeout->arg = arg;
-#if NO_SYS
   timeout->time = msecs + diff;
-#else
-  timeout->time = msecs;
-#endif
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
   LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
@@ -302,14 +290,15 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
   return;
 }
 
-#if NO_SYS
-
 /** Handle timeouts for NO_SYS==1 (i.e. without using
  * tcpip_thread/sys_timeouts_mbox_fetch(). Uses sys_now() to call timeout
  * handler functions when timeouts expire.
  *
  * Must be called periodically from your main loop.
  */
+#if !NO_SYS
+static
+#endif /* !NO_SYS */
 void
 sys_check_timeouts(void)
 {
@@ -344,14 +333,24 @@ sys_check_timeouts(void)
 #endif /* LWIP_DEBUG_TIMERNAMES */
         memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
         if (handler != NULL) {
+#if !NO_SYS
+          /* For LWIP_TCPIP_CORE_LOCKING, lock the core before calling the
+             timeout handler function. */
+          LOCK_TCPIP_CORE();
+#endif /* !NO_SYS */
           handler(arg);
+#if !NO_SYS
+          UNLOCK_TCPIP_CORE();
+#endif /* !NO_SYS */
         }
+        LWIP_TCPIP_THREAD_ALIVE();
       }
     /* repeat until all expired timers have been called */
     } while (had_one);
   }
 }
 
+#if NO_SYS
 /** Set back the timestamp of the last call to sys_check_timeouts()
  * This is necessary if sys_check_timeouts() hasn't been called for a long
  * time (e.g. while saving energy) to prevent all timer functions of that
@@ -362,10 +361,14 @@ sys_restart_timeouts(void)
 {
   timeouts_last_time = sys_now();
 }
+#endif /* NO_SYS */
 
 /** Return the time left before the next timeout is due. If no timeouts are
  * enqueued, returns 0xffffffff
  */
+#if !NO_SYS
+static
+#endif /* !NO_SYS */
 u32_t
 sys_timeouts_sleeptime(void)
 {
@@ -381,7 +384,7 @@ sys_timeouts_sleeptime(void)
   }
 }
 
-#else /* NO_SYS */
+#if !NO_SYS
 
 /**
  * Wait (forever) for a message to arrive in an mbox.
@@ -393,57 +396,21 @@ sys_timeouts_sleeptime(void)
 void
 sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 {
-  u32_t time_needed;
-  struct sys_timeo *tmptimeout;
-  sys_timeout_handler handler;
-  void *arg;
+  u32_t sleeptime;
 
- again:
+again:
   if (!next_timeout) {
-    time_needed = sys_arch_mbox_fetch(mbox, msg, 0);
-  } else {
-    if (next_timeout->time > 0) {
-      time_needed = sys_arch_mbox_fetch(mbox, msg, next_timeout->time);
-    } else {
-      time_needed = SYS_ARCH_TIMEOUT;
-    }
+    sys_arch_mbox_fetch(mbox, msg, 0);
+    return;
+  }
 
-    if (time_needed == SYS_ARCH_TIMEOUT) {
-      /* If time == SYS_ARCH_TIMEOUT, a timeout occurred before a message
-         could be fetched. We should now call the timeout handler and
-         deallocate the memory allocated for the timeout. */
-      tmptimeout = next_timeout;
-      next_timeout = tmptimeout->next;
-      handler = tmptimeout->h;
-      arg = tmptimeout->arg;
-#if LWIP_DEBUG_TIMERNAMES
-      if (handler != NULL) {
-        LWIP_DEBUGF(TIMERS_DEBUG, ("stmf calling h=%s arg=%p\n",
-          tmptimeout->handler_name, arg));
-      }
-#endif /* LWIP_DEBUG_TIMERNAMES */
-      memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
-      if (handler != NULL) {
-        /* For LWIP_TCPIP_CORE_LOCKING, lock the core before calling the
-           timeout handler function. */
-        LOCK_TCPIP_CORE();
-        handler(arg);
-        UNLOCK_TCPIP_CORE();
-      }
-      LWIP_TCPIP_THREAD_ALIVE();
-
-      /* We try again to fetch a message from the mbox. */
-      goto again;
-    } else {
-      /* If time != SYS_ARCH_TIMEOUT, a message was received before the timeout
-         occured. The time variable is set to the number of
-         milliseconds we waited for the message. */
-      if (time_needed < next_timeout->time) {
-        next_timeout->time -= time_needed;
-      } else {
-        next_timeout->time = 0;
-      }
-    }
+  sleeptime = sys_timeouts_sleeptime();
+  if (sleeptime == 0 || sys_arch_mbox_fetch(mbox, msg, sleeptime) == SYS_ARCH_TIMEOUT) {
+    /* If a SYS_ARCH_TIMEOUT value is returned, a timeout occurred
+       before a message could be fetched. */
+    sys_check_timeouts();
+    /* We try again to fetch a message from the mbox. */
+    goto again;
   }
 }
 
