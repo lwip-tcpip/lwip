@@ -311,82 +311,33 @@
 #endif
 
 /**
- * PolarSSL library, used if necessary and not previously disabled
+ * PolarSSL embedded library
  *
  *
  * lwIP contains some files fetched from the latest BSD release of
- * the PolarSSL project for ciphers and encryption methods we need for lwIP
- * PPP support.
+ * the PolarSSL project (PolarSSL 0.10.1-bsd) for ciphers and encryption
+ * methods we need for lwIP PPP support.
  *
  * The PolarSSL files were cleaned to contain only the necessary struct
  * fields and functions needed for lwIP.
  *
  * The PolarSSL API was not changed at all, so if you are already using
  * PolarSSL you can choose to skip the compilation of the included PolarSSL
- * library into lwIP:
+ * library into lwIP.
  *
- * The following defines are available for flexibility:
- *
- * LWIP_INCLUDED_POLARSSL_MD4   ; Use lwIP internal PolarSSL for MD4
- * LWIP_INCLUDED_POLARSSL_MD5   ; Use lwIP internal PolarSSL for MD5
- * LWIP_INCLUDED_POLARSSL_SHA1  ; Use lwIP internal PolarSSL for SHA1
- * LWIP_INCLUDED_POLARSSL_DES   ; Use lwIP internal PolarSSL for DES
- * LWIP_INCLUDED_POLARSSL_ARC4  ; Use lwIP internal PolarSSL for ARC4
- *
- * If set (=1), the default if required by another enabled PPP feature unless
- * explicitly set to 0, using included lwIP PolarSSL.
- *
- * If clear (=0), not needed or using external PolarSSL.
+ * If you are not using the embedded copy you must include external
+ * libraries into your arch/cc.h port file.
  *
  * Beware of the stack requirements which can be a lot larger if you are not
  * using our cleaned PolarSSL library.
  */
 
-/* CHAP, EAP, L2TP AUTH and MD5 Random require MD5 support */
-#if CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM
-#ifndef LWIP_INCLUDED_POLARSSL_MD5
-#define LWIP_INCLUDED_POLARSSL_MD5      1
-#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
-#endif /* CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM */
-
-#if MSCHAP_SUPPORT
-/* MSCHAP require MD4 support */
-#ifndef LWIP_INCLUDED_POLARSSL_MD4
-#define LWIP_INCLUDED_POLARSSL_MD4      1
-#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
-/* MSCHAP require SHA1 support */
-#ifndef LWIP_INCLUDED_POLARSSL_SHA1
-#define LWIP_INCLUDED_POLARSSL_SHA1     1
-#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
-/* MSCHAP require DES support */
-#ifndef LWIP_INCLUDED_POLARSSL_DES
-#define LWIP_INCLUDED_POLARSSL_DES      1
-#endif /* LWIP_INCLUDED_POLARSSL_DES */
-/* MS-CHAP support is required for MPPE */
-#if MPPE_SUPPORT
-/* MPPE require ARC4 support */
-#ifndef LWIP_INCLUDED_POLARSSL_ARC4
-#define LWIP_INCLUDED_POLARSSL_ARC4     1
-#endif /* LWIP_INCLUDED_POLARSSL_ARC4*/
-#endif /* MPPE_SUPPORT */
-#endif /* MSCHAP_SUPPORT */
-
-/* Default value if unset */
-#ifndef LWIP_INCLUDED_POLARSSL_MD4
-#define LWIP_INCLUDED_POLARSSL_MD4      0
-#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
-#ifndef LWIP_INCLUDED_POLARSSL_MD5
-#define LWIP_INCLUDED_POLARSSL_MD5      0
-#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
-#ifndef LWIP_INCLUDED_POLARSSL_SHA1
-#define LWIP_INCLUDED_POLARSSL_SHA1     0
-#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
-#ifndef LWIP_INCLUDED_POLARSSL_DES
-#define LWIP_INCLUDED_POLARSSL_DES      0
-#endif /* LWIP_INCLUDED_POLARSSL_DES */
-#ifndef LWIP_INCLUDED_POLARSSL_ARC4
-#define LWIP_INCLUDED_POLARSSL_ARC4     0
-#endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
+/**
+ * LWIP_USE_EXTERNAL_POLARSSL: Use external PolarSSL library
+ */
+#ifndef LWIP_USE_EXTERNAL_POLARSSL
+#define LWIP_USE_EXTERNAL_POLARSSL      0
+#endif
 
 /*
  * PPP Timeouts
@@ -581,6 +532,54 @@
 #ifndef MAXSECRETLEN
 #define MAXSECRETLEN                    256
 #endif
+
+/* ------------------------------------------------------------------------- */
+
+/*
+ * Build triggers for embedded PolarSSL
+ */
+#if !LWIP_USE_EXTERNAL_POLARSSL
+
+/* CHAP, EAP, L2TP AUTH and MD5 Random require MD5 support */
+#if CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM
+#define LWIP_INCLUDED_POLARSSL_MD5      1
+#endif /* CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM */
+
+#if MSCHAP_SUPPORT
+
+/* MSCHAP require MD4 support */
+#define LWIP_INCLUDED_POLARSSL_MD4      1
+/* MSCHAP require SHA1 support */
+#define LWIP_INCLUDED_POLARSSL_SHA1     1
+/* MSCHAP require DES support */
+#define LWIP_INCLUDED_POLARSSL_DES      1
+
+/* MS-CHAP support is required for MPPE */
+#if MPPE_SUPPORT
+/* MPPE require ARC4 support */
+#define LWIP_INCLUDED_POLARSSL_ARC4     1
+#endif /* MPPE_SUPPORT */
+
+#endif /* MSCHAP_SUPPORT */
+
+#endif /* !LWIP_USE_EXTERNAL_POLARSSL */
+
+/* Default value if unset */
+#ifndef LWIP_INCLUDED_POLARSSL_MD4
+#define LWIP_INCLUDED_POLARSSL_MD4      0
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
+#ifndef LWIP_INCLUDED_POLARSSL_MD5
+#define LWIP_INCLUDED_POLARSSL_MD5      0
+#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
+#ifndef LWIP_INCLUDED_POLARSSL_SHA1
+#define LWIP_INCLUDED_POLARSSL_SHA1     0
+#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
+#ifndef LWIP_INCLUDED_POLARSSL_DES
+#define LWIP_INCLUDED_POLARSSL_DES      0
+#endif /* LWIP_INCLUDED_POLARSSL_DES */
+#ifndef LWIP_INCLUDED_POLARSSL_ARC4
+#define LWIP_INCLUDED_POLARSSL_ARC4     0
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
 
 #endif /* PPP_SUPPORT */
 
