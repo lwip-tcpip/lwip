@@ -47,6 +47,8 @@
 /*
  * Map hashes and ciphers functions to PolarSSL
  */
+#if !LWIP_USE_EXTERNAL_MBEDTLS
+
 #include "netif/ppp/polarssl/md4.h"
 #define lwip_md4_context md4_context
 #define lwip_md4_starts md4_starts
@@ -74,6 +76,38 @@
 #define lwip_arc4_context arc4_context
 #define lwip_arc4_setup arc4_setup
 #define lwip_arc4_crypt arc4_crypt
+
+#endif /* !LWIP_USE_EXTERNAL_MBEDTLS */
+
+/*
+ * Map hashes and ciphers functions to mbed TLS
+ */
+#if LWIP_USE_EXTERNAL_MBEDTLS
+
+#define lwip_md4_context mbedtls_md4_context
+#define lwip_md4_starts mbedtls_md4_starts
+#define lwip_md4_update mbedtls_md4_update
+#define lwip_md4_finish mbedtls_md4_finish
+
+#define lwip_md5_context mbedtls_md5_context
+#define lwip_md5_starts mbedtls_md5_starts
+#define lwip_md5_update mbedtls_md5_update
+#define lwip_md5_finish mbedtls_md5_finish
+
+#define lwip_sha1_context mbedtls_sha1_context
+#define lwip_sha1_starts mbedtls_sha1_starts
+#define lwip_sha1_update mbedtls_sha1_update
+#define lwip_sha1_finish mbedtls_sha1_finish
+
+#define lwip_des_context mbedtls_des_context
+#define lwip_des_setkey_enc mbedtls_des_setkey_enc
+#define lwip_des_crypt_ecb mbedtls_des_crypt_ecb
+
+#define lwip_arc4_context mbedtls_arc4_context
+#define lwip_arc4_setup mbedtls_arc4_setup
+#define lwip_arc4_crypt(context, buffer, length) mbedtls_arc4_crypt(context, length, buffer, buffer)
+
+#endif /* LWIP_USE_EXTERNAL_MBEDTLS */
 
 void pppcrypt_56_to_64_bit_key(u_char *key, u_char *des_key);
 

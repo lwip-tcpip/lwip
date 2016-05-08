@@ -339,6 +339,13 @@
 #define LWIP_USE_EXTERNAL_POLARSSL      0
 #endif
 
+/**
+ * LWIP_USE_EXTERNAL_MBEDTLS: Use external mbed TLS library
+ */
+#ifndef LWIP_USE_EXTERNAL_MBEDTLS
+#define LWIP_USE_EXTERNAL_MBEDTLS       0
+#endif
+
 /*
  * PPP Timeouts
  */
@@ -538,7 +545,7 @@
 /*
  * Build triggers for embedded PolarSSL
  */
-#if !LWIP_USE_EXTERNAL_POLARSSL
+#if !LWIP_USE_EXTERNAL_POLARSSL && !LWIP_USE_EXTERNAL_MBEDTLS
 
 /* CHAP, EAP, L2TP AUTH and MD5 Random require MD5 support */
 #if CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM
@@ -562,7 +569,7 @@
 
 #endif /* MSCHAP_SUPPORT */
 
-#endif /* !LWIP_USE_EXTERNAL_POLARSSL */
+#endif /* !LWIP_USE_EXTERNAL_POLARSSL && !LWIP_USE_EXTERNAL_MBEDTLS */
 
 /* Default value if unset */
 #ifndef LWIP_INCLUDED_POLARSSL_MD4
