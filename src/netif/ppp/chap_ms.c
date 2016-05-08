@@ -509,16 +509,22 @@ static void ChallengeResponse(const u_char *challenge,
 #endif
 
     pppcrypt_56_to_64_bit_key(ZPasswordHash + 0, des_key);
+    lwip_des_init(&des);
     lwip_des_setkey_enc(&des, des_key);
     lwip_des_crypt_ecb(&des, challenge, response +0);
+    lwip_des_free(&des);
 
     pppcrypt_56_to_64_bit_key(ZPasswordHash + 7, des_key);
+    lwip_des_init(&des);
     lwip_des_setkey_enc(&des, des_key);
     lwip_des_crypt_ecb(&des, challenge, response +8);
+    lwip_des_free(&des);
 
     pppcrypt_56_to_64_bit_key(ZPasswordHash + 14, des_key);
+    lwip_des_init(&des);
     lwip_des_setkey_enc(&des, des_key);
     lwip_des_crypt_ecb(&des, challenge, response +16);
+    lwip_des_free(&des);
 
 #if 0
     dbglog("ChallengeResponse - response %.24B", response);
@@ -537,11 +543,13 @@ static void ChallengeHash(const u_char PeerChallenge[16], const u_char *rchallen
     else
 	user = username;
 
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, PeerChallenge, 16);
     lwip_sha1_update(&sha1Context, rchallenge, 16);
     lwip_sha1_update(&sha1Context, (const unsigned char*)user, strlen(user));
     lwip_sha1_finish(&sha1Context, sha1Hash);
+    lwip_sha1_free(&sha1Context);
 
     MEMCPY(Challenge, sha1Hash, 8);
 }
@@ -564,9 +572,11 @@ static void ascii2unicode(const char ascii[], int ascii_len, u_char unicode[]) {
 static void NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE]) {
     lwip_md4_context		md4Context;
 
+    lwip_md4_init(&md4Context);
     lwip_md4_starts(&md4Context);
     lwip_md4_update(&md4Context, secret, secret_len);
     lwip_md4_finish(&md4Context, hash);
+    lwip_md4_free(&md4Context);
 }
 
 static void ChapMS_NT(const u_char *rchallenge, const char *secret, int secret_len,
@@ -613,12 +623,16 @@ static void ChapMS_LANMan(u_char *rchallenge, char *secret, int secret_len,
        UcasePassword[i] = (u_char)toupper(secret[i]);
 
     pppcrypt_56_to_64_bit_key(UcasePassword +0, des_key);
+    lwip_des_init(&des);
     lwip_des_setkey_enc(&des, des_key);
     lwip_des_crypt_ecb(&des, StdText, PasswordHash +0);
+    lwip_des_free(&des);
 
     pppcrypt_56_to_64_bit_key(UcasePassword +7, des_key);
+    lwip_des_init(&des);
     lwip_des_setkey_enc(&des, des_key);
     lwip_des_crypt_ecb(&des, StdText, PasswordHash +8);
+    lwip_des_free(&des);
 
     ChallengeResponse(rchallenge, PasswordHash, &response[MS_CHAP_LANMANRESP]);
 }
@@ -649,19 +663,23 @@ static void GenerateAuthenticatorResponse(const u_char PasswordHashHash[MD4_SIGN
     u_char	Digest[SHA1_SIGNATURE_SIZE];
     u_char	Challenge[8];
 
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
     lwip_sha1_update(&sha1Context, NTResponse, 24);
     lwip_sha1_update(&sha1Context, Magic1, sizeof(Magic1));
     lwip_sha1_finish(&sha1Context, Digest);
+    lwip_sha1_free(&sha1Context);
 
     ChallengeHash(PeerChallenge, rchallenge, username, Challenge);
 
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, Digest, sizeof(Digest));
     lwip_sha1_update(&sha1Context, Challenge, sizeof(Challenge));
     lwip_sha1_update(&sha1Context, Magic2, sizeof(Magic2));
     lwip_sha1_finish(&sha1Context, Digest);
+    lwip_sha1_free(&sha1Context);
 
     /* Convert to ASCII hex string. */
     for (i = 0; i < LWIP_MAX((MS_AUTH_RESPONSE_LENGTH / 2), (int)sizeof(Digest)); i++)
@@ -705,11 +723,13 @@ static void Set_Start_Key(ppp_pcb *pcb, const u_char *rchallenge, const char *se
     NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
     NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
 
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
     lwip_sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
     lwip_sha1_update(&sha1Context, rchallenge, 8);
     lwip_sha1_finish(&sha1Context, Digest);
+    lwip_sha1_free(&sha1Context);
 
     /* Same key in both directions. */
     mppe_set_key(pcb, &pcb->mppe_comp, Digest);
@@ -765,11 +785,13 @@ static void SetMasterKeys(ppp_pcb *pcb, const char *secret, int secret_len, u_ch
     NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
     NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
 
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
     lwip_sha1_update(&sha1Context, NTResponse, 24);
     lwip_sha1_update(&sha1Context, Magic1, sizeof(Magic1));
     lwip_sha1_finish(&sha1Context, MasterKey);
+    lwip_sha1_free(&sha1Context);
 
     /*
      * generate send key
@@ -778,12 +800,14 @@ static void SetMasterKeys(ppp_pcb *pcb, const char *secret, int secret_len, u_ch
 	s = Magic3;
     else
 	s = Magic2;
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, MasterKey, 16);
     lwip_sha1_update(&sha1Context, mppe_sha1_pad1, SHA1_PAD_SIZE);
     lwip_sha1_update(&sha1Context, s, 84);
     lwip_sha1_update(&sha1Context, mppe_sha1_pad2, SHA1_PAD_SIZE);
     lwip_sha1_finish(&sha1Context, Digest);
+    lwip_sha1_free(&sha1Context);
 
     mppe_set_key(pcb, &pcb->mppe_comp, Digest);
 
@@ -794,12 +818,14 @@ static void SetMasterKeys(ppp_pcb *pcb, const char *secret, int secret_len, u_ch
 	s = Magic2;
     else
 	s = Magic3;
+    lwip_sha1_init(&sha1Context);
     lwip_sha1_starts(&sha1Context);
     lwip_sha1_update(&sha1Context, MasterKey, 16);
     lwip_sha1_update(&sha1Context, mppe_sha1_pad1, SHA1_PAD_SIZE);
     lwip_sha1_update(&sha1Context, s, 84);
     lwip_sha1_update(&sha1Context, mppe_sha1_pad2, SHA1_PAD_SIZE);
     lwip_sha1_finish(&sha1Context, Digest);
+    lwip_sha1_free(&sha1Context);
 
     mppe_set_key(pcb, &pcb->mppe_decomp, Digest);
 
