@@ -35,7 +35,7 @@
 
 #include "lwip/apps/snmpv3.h"
 #include "snmpv3_priv.h"
-#include "arch/cc.h"
+#include "lwip/arch.h"
 #include "snmp_msg.h"
 #include "lwip/sys.h"
 #include <string.h>
