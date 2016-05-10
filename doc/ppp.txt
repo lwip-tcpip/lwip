@@ -8,7 +8,7 @@ Table of Contents:
 2 - Raw API PPP example for all protocols
 3 - PPPoS input path (raw API, IRQ safe API, TCPIP API)
 4 - Thread safe PPP API (PPPAPI)
-5 - Upgrading from lwIP <= 1.4.x to lwIP >= 1.5.x
+5 - Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
 
 
 
@@ -365,10 +365,10 @@ this is actually pretty obvious.
 
 
 
-5 Upgrading from lwIP <= 1.4.x to lwIP >= 1.5.x
+5 Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
 ===============================================
 
-PPP API was fully reworked between 1.4.x and 1.5.x releases. However porting
+PPP API was fully reworked between 1.4.x and 2.0.x releases. However porting
 from previous lwIP version is pretty easy:
 
 * Previous PPP API used an integer to identify PPP sessions, we are now
