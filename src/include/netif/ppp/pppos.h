@@ -38,7 +38,6 @@
 #define PPPOS_H
 
 #include "lwip/sys.h"
-#include "lwip/sio.h"
 
 #include "ppp.h"
 #include "vj.h"

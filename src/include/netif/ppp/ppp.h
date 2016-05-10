@@ -42,7 +42,6 @@
 #include "lwip/mem.h"
 #include "lwip/netif.h"
 #include "lwip/sys.h"
-#include "lwip/sio.h"
 #include "lwip/timers.h"
 #if PPP_IPV6_SUPPORT
 #include "lwip/ip6_addr.h"

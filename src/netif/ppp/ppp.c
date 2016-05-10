@@ -88,7 +88,6 @@
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
 #include "lwip/snmp.h"
-#include "lwip/sio.h"
 #include "lwip/sys.h"
 #include "lwip/ip4.h" /* for ip4_input() */
 #if PPP_IPV6_SUPPORT
