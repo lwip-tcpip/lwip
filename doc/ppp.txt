@@ -360,8 +360,8 @@ void pppos_input_tcpip(ppp, buffer, buffer_len);
 ==============================
 
 There is a thread safe API for all corresponding ppp_* functions, you have to
-enable LWIP_PPP_API in your lwipopts.h file, then see include/lwip/pppapi.h,
-this is actually pretty obvious.
+enable LWIP_PPP_API in your lwipopts.h file, then see
+include/netif/ppp/pppapi.h, this is actually pretty obvious.
 
 
 
@@ -392,7 +392,7 @@ from previous lwIP version is pretty easy:
   callback function
 
 * Only the following include files should now be used in user application:
-  #include "lwip/pppapi.h"
+  #include "netif/ppp/pppapi.h"
   #include "netif/ppp/pppos.h"
   #include "netif/ppp/pppoe.h"
   #include "netif/ppp/pppol2tp.h"
@@ -418,6 +418,7 @@ from previous lwIP version is pretty easy:
   almost all cases. If you need it conditional contact us and we will made it
   conditional.
 
-* PPPoS now requires a serial output callback
+* PPPoS does not use the SIO API anymore, as such it now requires a serial
+  output callback in place of sio_write
 
 * PPP_MAXIDLEFLAG is now in ms instead of jiffies
