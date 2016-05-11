@@ -363,16 +363,15 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
   return err;
 #else /* LWIP_TCPIP_CORE_LOCKING */
   TCPIP_MSG_VAR_DECLARE(msg);
-  err_t err;
-
-  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
 
 #if !LWIP_NETCONN_SEM_PER_THREAD
-  err = sys_sem_new(&call->sem, 0);
+  err_t err = sys_sem_new(&call->sem, 0);
   if (err != ERR_OK) {
     return err;
   }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
+
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
     
   TCPIP_MSG_VAR_ALLOC(msg);
   TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
