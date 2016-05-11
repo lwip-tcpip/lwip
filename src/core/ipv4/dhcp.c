@@ -357,8 +357,8 @@ dhcp_select(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
     dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(ip_2_ip4(&dhcp->server_ip_addr))));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
-    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, LWIP_ARRAYSIZE(dhcp_discover_request_options));
+    for (i = 0; i < LWIP_ARRAYSIZE(dhcp_discover_request_options); i++) {
       dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
 
@@ -947,8 +947,8 @@ dhcp_discover(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
-    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, LWIP_ARRAYSIZE(dhcp_discover_request_options));
+    for (i = 0; i < LWIP_ARRAYSIZE(dhcp_discover_request_options); i++) {
       dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
     dhcp_option_trailer(dhcp);
@@ -1109,8 +1109,8 @@ dhcp_renew(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
-    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, LWIP_ARRAYSIZE(dhcp_discover_request_options));
+    for (i = 0; i < LWIP_ARRAYSIZE(dhcp_discover_request_options); i++) {
       dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
 
@@ -1161,8 +1161,8 @@ dhcp_rebind(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
-    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, LWIP_ARRAYSIZE(dhcp_discover_request_options));
+    for (i = 0; i < LWIP_ARRAYSIZE(dhcp_discover_request_options); i++) {
       dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
 
@@ -1214,8 +1214,8 @@ dhcp_reboot(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&dhcp->offered_ip_addr)));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_request_options));
-    for (i = 0; i < sizeof(dhcp_discover_request_options); i++) {
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, LWIP_ARRAYSIZE(dhcp_discover_request_options));
+    for (i = 0; i < LWIP_ARRAYSIZE(dhcp_discover_request_options); i++) {
       dhcp_option_byte(dhcp, dhcp_discover_request_options[i]);
     }
 
