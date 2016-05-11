@@ -207,7 +207,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 
     /* Check for empty block. */
     if (current_block_value == 0) {
-      if (current_block_index == 7) {
+      if (current_block_index == 7 && empty_block_flag == 1) {
         /* special case, we must render a ':' for the last block. */
         buf[i++] = ':';
         if (i >= buflen) {
