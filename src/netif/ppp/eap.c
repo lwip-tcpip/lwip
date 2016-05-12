@@ -2146,7 +2146,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 	if (len < EAP_HEADERLEN || len > inlen)
 		return (0);
 
-	if (code >= 1 && code <= (int)sizeof(eap_codenames) / (int)sizeof(char *))
+	if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(eap_codenames))
 		printer(arg, " %s", eap_codenames[code-1]);
 	else
 		printer(arg, " code=0x%x", code);
@@ -2160,8 +2160,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 		}
 		GETCHAR(rtype, inp);
 		len--;
-		if (rtype >= 1 &&
-		    rtype <= (int)sizeof (eap_typenames) / (int)sizeof (char *))
+		if (rtype >= 1 && rtype <= (int)LWIP_ARRAYSIZE(eap_typenames))
 			printer(arg, " %s", eap_typenames[rtype-1]);
 		else
 			printer(arg, " type=0x%x", rtype);
@@ -2299,8 +2298,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 			break;
 		GETCHAR(rtype, inp);
 		len--;
-		if (rtype >= 1 &&
-		    rtype <= (int)sizeof (eap_typenames) / (int)sizeof (char *))
+		if (rtype >= 1 && rtype <= (int)LWIP_ARRAYSIZE(eap_typenames))
 			printer(arg, " %s", eap_typenames[rtype-1]);
 		else
 			printer(arg, " type=0x%x", rtype);
@@ -2323,8 +2321,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 			GETCHAR(rtype, inp);
 			len--;
 			printer(arg, " <Suggested-type %02X", rtype);
-			if (rtype >= 1 &&
-			    rtype < (int)sizeof (eap_typenames) / (int)sizeof (char *))
+			if (rtype >= 1 && rtype < (int)LWIP_ARRAYSIZE(eap_typenames))
 				printer(arg, " (%s)", eap_typenames[rtype-1]);
 			printer(arg, ">");
 			break;

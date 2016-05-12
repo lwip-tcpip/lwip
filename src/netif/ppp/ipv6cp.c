@@ -1416,7 +1416,7 @@ static int ipv6cp_printpkt(const u_char *p, int plen,
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= (int)sizeof(ipv6cp_codenames) / (int)sizeof(char *))
+    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ipv6cp_codenames))
 	printer(arg, " %s", ipv6cp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

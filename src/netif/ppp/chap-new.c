@@ -604,7 +604,7 @@ static int chap_print_pkt(const unsigned char *p, int plen,
 	if (len < CHAP_HDRLEN || len > plen)
 		return 0;
 
-	if (code >= 1 && code <= (int)sizeof(chap_code_names) / (int)sizeof(char *))
+	if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(chap_code_names))
 		printer(arg, " %s", chap_code_names[code-1]);
 	else
 		printer(arg, " code=0x%x", code);

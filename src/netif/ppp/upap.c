@@ -614,7 +614,7 @@ static int upap_printpkt(const u_char *p, int plen, void (*printer) (void *, con
     if (len < UPAP_HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= (int)sizeof(upap_codenames) / (int)sizeof(char *))
+    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(upap_codenames))
 	printer(arg, " %s", upap_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);
