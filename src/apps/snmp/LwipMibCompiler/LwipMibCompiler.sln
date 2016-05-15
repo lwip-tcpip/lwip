@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCodeGeneration", "CCodeGen
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpSnmpLib.Mib", "SharpSnmpLib\SharpSnmpLib.Mib.csproj", "{CBE20411-5DB7-487D-825D-7694267BB6F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LwipMibViewer", "LwipMibViewer\LwipMibViewer.csproj", "{86CC0B65-7985-4017-A252-0A7A18DCAEF3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MibViewer", "MibViewer\MibViewer.csproj", "{86CC0B65-7985-4017-A252-0A7A18DCAEF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
