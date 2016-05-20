@@ -670,13 +670,13 @@ dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
  * @return IP address of the indexed NTP server or "ip_addr_any" if the NTP
  *         server has not been configured by address (or at all).
  */
-ip_addr_t
+const ip_addr_t*
 sntp_getserver(u8_t idx)
 {
   if (idx < SNTP_MAX_SERVERS) {
-    return sntp_servers[idx].addr;
+    return &sntp_servers[idx].addr;
   }
-  return *IP_ADDR_ANY;
+  return IP_ADDR_ANY;
 }
 
 #if SNTP_SERVER_DNS
