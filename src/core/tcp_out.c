@@ -745,8 +745,6 @@ memerr:
  *
  * @param pcb Protocol control block for the TCP connection.
  * @param flags TCP header flags to set in the outgoing segment.
- * @param optdata pointer to TCP options, or NULL.
- * @param optlen length of TCP options in bytes.
  */
 err_t
 tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)

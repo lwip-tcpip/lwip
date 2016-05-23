@@ -604,7 +604,7 @@ pcb_new(struct api_msg *msg)
  * Create a new pcb of a specific type inside a netconn.
  * Called from netconn_new_with_proto_and_callback.
  *
- * @param msg the api_msg_msg describing the connection type
+ * @param m the api_msg_msg describing the connection type
  */
 void
 lwip_netconn_do_newconn(void *m)
@@ -627,7 +627,6 @@ lwip_netconn_do_newconn(void *m)
  * The corresponding pcb is NOT created!
  *
  * @param t the type of 'connection' to create (@see enum netconn_type)
- * @param proto the IP protocol for RAW IP pcbs
  * @param callback a function to call on status changes (RX available, TX'ed)
  * @return a newly allocated struct netconn or
  *         NULL on memory error
@@ -1000,7 +999,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
  * Delete the pcb inside a netconn.
  * Called from netconn_delete.
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_delconn(void *m)
@@ -1101,8 +1100,8 @@ lwip_netconn_do_delconn(void *m)
  * Bind a pcb contained in a netconn
  * Called from netconn_bind.
  *
- * @param msg the api_msg_msg pointing to the connection and containing
- *            the IP address and port to bind to
+ * @param m the api_msg_msg pointing to the connection and containing
+ *          the IP address and port to bind to
  */
 void
 lwip_netconn_do_bind(void *m)
@@ -1209,8 +1208,8 @@ lwip_netconn_do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
  * Connect a pcb contained inside a netconn
  * Called from netconn_connect.
  *
- * @param msg the api_msg_msg pointing to the connection and containing
- *            the IP address and port to connect to
+ * @param m the api_msg_msg pointing to the connection and containing
+ *          the IP address and port to connect to
  */
 void
 lwip_netconn_do_connect(void *m)
@@ -1281,7 +1280,7 @@ lwip_netconn_do_connect(void *m)
  * Only used for UDP netconns.
  * Called from netconn_disconnect.
  *
- * @param msg the api_msg_msg pointing to the connection to disconnect
+ * @param m the api_msg_msg pointing to the connection to disconnect
  */
 void
 lwip_netconn_do_disconnect(void *m)
@@ -1305,7 +1304,7 @@ lwip_netconn_do_disconnect(void *m)
  * Set a TCP pcb contained in a netconn into listen mode
  * Called from netconn_listen.
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_listen(void *m)
@@ -1386,7 +1385,7 @@ lwip_netconn_do_listen(void *m)
  * Send some data on a RAW or UDP pcb contained in a netconn
  * Called from netconn_send
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_send(void *m)
@@ -1441,7 +1440,7 @@ lwip_netconn_do_send(void *m)
  * Indicate data has been received from a TCP pcb contained in a netconn
  * Called from netconn_recv
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_recv(void *m)
@@ -1466,7 +1465,7 @@ lwip_netconn_do_recv(void *m)
 /** Indicate that a TCP pcb has been accepted
  * Called from netconn_accept
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_accepted(void *m)
@@ -1643,7 +1642,7 @@ err_mem:
  * Send some data on a TCP pcb contained in a netconn
  * Called from netconn_write
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_write(void *m)
@@ -1699,7 +1698,7 @@ lwip_netconn_do_write(void *m)
  * Return a connection's local or remote address
  * Called from netconn_getaddr
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_getaddr(void *m)
@@ -1765,7 +1764,7 @@ lwip_netconn_do_getaddr(void *m)
  * Called from netconn_close
  * In contrast to closing sockets, the netconn is not deallocated.
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_close(void *m)
@@ -1841,7 +1840,7 @@ lwip_netconn_do_close(void *m)
  * Join multicast groups for UDP netconns.
  * Called from netconn_join_leave_group
  *
- * @param msg the api_msg_msg pointing to the connection
+ * @param m the api_msg_msg pointing to the connection
  */
 void
 lwip_netconn_do_join_leave_group(void *m)

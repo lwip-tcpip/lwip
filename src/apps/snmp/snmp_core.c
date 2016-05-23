@@ -106,7 +106,7 @@ const struct snmp_obj_id* snmp_get_device_enterprise_oid(void)
 #if LWIP_IPV4
 /**
  * Conversion from InetAddressIPv4 oid to lwIP ip4_addr
- * @param ident points to u32_t ident[4] input
+ * @param oid points to u32_t ident[4] input
  * @param ip points to output struct
  */
 u8_t

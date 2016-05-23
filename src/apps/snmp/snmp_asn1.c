@@ -628,10 +628,11 @@ snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value
 /**
  * Decodes object identifier from incoming message into array of u32_t.
  *
- * @param p points to a pbuf holding an ASN1 coded object identifier
- * @param ofs points to the offset within the pbuf chain of the ASN1 coded object identifier
+ * @param pbuf_stream points to a pbuf stream
  * @param len length of the coded object identifier
- * @param oid return object identifier struct
+ * @param oid return decoded object identifier
+ * @param oid_len return decoded object identifier length
+ * @param oid_max_len size of oid buffer
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
@@ -718,11 +719,11 @@ snmp_asn1_dec_oid(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t* oid, u
  * Decodes (copies) raw data (ip-addresses, octet strings, opaque encoding)
  * from incoming message into array.
  *
- * @param p points to a pbuf holding an ASN1 coded raw data
- * @param ofs points to the offset within the pbuf chain of the ASN1 coded raw data
+ * @param pbuf_stream points to a pbuf stream
  * @param len length of the coded raw data (zero is valid, e.g. empty string!)
- * @param raw_len length of the raw return value
- * @param raw return raw bytes
+ * @param buf return raw bytes
+ * @param buf_len returns length of the raw return value
+ * @param buf_max_len buffer size
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t

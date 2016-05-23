@@ -15,7 +15,7 @@
  */
 
 /*
- * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
+ * Copyright (c) 2007-2009 Frï¿½dï¿½ric Bernon, Simon Goldschmidt
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -42,7 +42,7 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Frédéric Bernon, Simon Goldschmidt
+ * Author: Frï¿½dï¿½ric Bernon, Simon Goldschmidt
  */
 
 #include "lwip/apps/sntp.h"
@@ -618,8 +618,8 @@ sntp_servermode_dhcp(int set_servers_from_dhcp)
 /**
  * Initialize one of the NTP servers by IP address
  *
- * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
- * @param dnsserver IP address of the NTP server to set
+ * @param idx the index of the NTP server to set must be < SNTP_MAX_SERVERS
+ * @param server IP address of the NTP server to set
  */
 void
 sntp_setserver(u8_t idx, const ip_addr_t *server)
@@ -666,7 +666,7 @@ dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
 /**
  * Obtain one of the currently configured by IP address (or DHCP) NTP servers
  *
- * @param numdns the index of the NTP server
+ * @param idx the index of the NTP server
  * @return IP address of the indexed NTP server or "ip_addr_any" if the NTP
  *         server has not been configured by address (or at all).
  */

@@ -215,7 +215,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
  * A function called in that way may access lwIP core code
  * without fearing concurrent access.
  *
- * @param f the function to call
+ * @param function the function to call
  * @param ctx parameter passed to f
  * @param block 1 to block until the request is posted, 0 to non-blocking mode
  * @return ERR_OK if the function was called, another err_t if not

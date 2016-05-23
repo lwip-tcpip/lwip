@@ -1399,6 +1399,12 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
 }
 
 /** Like dns_gethostbyname, but returned address type can be controlled:
+ * @param hostname the hostname that is to be queried
+ * @param addr pointer to a ip_addr_t where to store the address if it is already
+ *             cached in the dns_table (only valid if ERR_OK is returned!)
+ * @param found a callback function to be called on success, failure or timeout (only if
+ *              ERR_INPROGRESS is returned!)
+ * @param callback_arg argument to pass to the callback function
  * @param dns_addrtype: - LWIP_DNS_ADDRTYPE_IPV4_IPV6: try to resolve IPv4 first, try IPv6 if IPv4 fails only
  *                      - LWIP_DNS_ADDRTYPE_IPV6_IPV4: try to resolve IPv6 first, try IPv4 if IPv6 fails only
  *                      - LWIP_DNS_ADDRTYPE_IPV4: try to resolve IPv4 only

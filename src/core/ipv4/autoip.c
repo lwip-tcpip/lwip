@@ -127,7 +127,7 @@ static void autoip_start_probing(struct netif *netif);
  * Using this prevents autoip_start to allocate it using mem_malloc.
  *
  * @param netif the netif for which to set the struct autoip
- * @param dhcp (uninitialised) dhcp struct allocated by the application
+ * @param autoip (uninitialised) autoip struct allocated by the application
  */
 void
 autoip_set_struct(struct netif *netif, struct autoip *autoip)
