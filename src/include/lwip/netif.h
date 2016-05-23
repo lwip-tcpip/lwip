@@ -347,6 +347,7 @@ void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
 #define netif_ip4_netmask(netif) ((const ip4_addr_t*)ip_2_ip4(&((netif)->netmask)))
 #define netif_ip4_gw(netif)      ((const ip4_addr_t*)ip_2_ip4(&((netif)->gw)))
 #define netif_ip_addr4(netif)    ((const ip_addr_t*)&((netif)->ip_addr))
+#define netif_ip_netmask4(netif) ((const ip_addr_t*)&((netif)->netmask))
 #define netif_ip_gw4(netif)      ((const ip_addr_t*)&((netif)->gw))
 #endif /* LWIP_IPV4 */
 
@@ -384,6 +385,7 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
 #if LWIP_IPV6 && LWIP_IPV6_MLD
 #define netif_set_mld_mac_filter(netif, function) do { if((netif) != NULL) { (netif)->mld_mac_filter = function; }}while(0)
 #define netif_get_mld_mac_filter(netif) (((netif) != NULL) ? ((netif)->mld_mac_filter) : NULL)
+#define netif_mld_mac_filter(netif, addr, action) do { if((netif) && (netif)->mld_mac_filter) { (netif)->mld_mac_filter((netif), (addr), (action)); }}while(0)
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
 #if ENABLE_LOOPBACK
@@ -403,6 +405,7 @@ void netif_poll_all(void);
 s8_t netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr);
 void netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit);
 err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chosen_idx);
+#define netif_set_ip6_autoconfig_enabled(netif, action) do { if(netif) { (netif)->ip6_autoconfig_enabled = (action); }}while(0)
 #endif /* LWIP_IPV6 */
 
 #if LWIP_NETIF_HWADDRHINT
