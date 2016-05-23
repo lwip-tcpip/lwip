@@ -1843,6 +1843,11 @@ nd6_reachability_hint(const ip6_addr_t * ip6addr)
 }
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
+/**
+ * Remove all prefix, neighbor_cache and router entries of the specified netif.
+ *
+ * @param netif points to a network interface
+ */
 void
 nd6_cleanup_netif(struct netif * netif)
 {

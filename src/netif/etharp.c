@@ -585,7 +585,8 @@ etharp_remove_static_entry(const ip4_addr_t *ipaddr)
  *
  * @param netif points to a network interface
  */
-void etharp_cleanup_netif(struct netif *netif)
+void
+etharp_cleanup_netif(struct netif *netif)
 {
   u8_t i;
 
