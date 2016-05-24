@@ -91,8 +91,8 @@
 
 /** Default for DHCP_GLOBAL_XID is 0xABCD0000
  * This can be changed by defining DHCP_GLOBAL_XID and DHCP_GLOBAL_XID_HEADER, e.g.
- *  #define DHCP_GLOBAL_XID_HEADER "stdlib.h"
- *  #define DHCP_GLOBAL_XID rand()
+ *  \#define DHCP_GLOBAL_XID_HEADER "stdlib.h"
+ *  \#define DHCP_GLOBAL_XID rand()
  */
 #ifdef DHCP_GLOBAL_XID_HEADER
 #include DHCP_GLOBAL_XID_HEADER /* include optional starting XID generation prototypes */

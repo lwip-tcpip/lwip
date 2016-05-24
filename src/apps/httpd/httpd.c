@@ -110,7 +110,8 @@
 /** These defines check whether tcp_write has to copy data or not */
 
 /** This was TI's check whether to let TCP copy data or not
-#define HTTP_IS_DATA_VOLATILE(hs) ((hs->file < (char *)0x20000000) ? 0 : TCP_WRITE_FLAG_COPY)*/
+ * \#define HTTP_IS_DATA_VOLATILE(hs) ((hs->file < (char *)0x20000000) ? 0 : TCP_WRITE_FLAG_COPY)
+ */
 #ifndef HTTP_IS_DATA_VOLATILE
 #if LWIP_HTTPD_SSI
 /* Copy for SSI files, no copy for non-SSI files */
