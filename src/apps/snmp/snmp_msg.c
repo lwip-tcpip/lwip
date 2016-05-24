@@ -1,6 +1,6 @@
 /**
  * @file
- * SNMP input message processing (RFC1157).
+ * SNMP message processing (RFC1157).
  */
 
 /*

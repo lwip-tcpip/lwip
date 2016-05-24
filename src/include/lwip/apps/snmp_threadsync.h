@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP server MIB API to implement thread synchronization
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.

@@ -1,3 +1,10 @@
+/**
+ * @file
+ * Ethernet output function - handles OUTGOING ethernet level traffic, implements
+ * ARP resolving.
+ * To be used in most low-level netif implementations
+ */
+
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * Copyright (c) 2003-2004 Leon Woestenberg <leon.woestenberg@axon.tv>

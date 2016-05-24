@@ -1,3 +1,8 @@
+/**
+ * @file
+ * lwIP internal memory pools (do not use in application code)
+ */
+
 /*
  * SETUP: Make sure we define everything we will need.
  *

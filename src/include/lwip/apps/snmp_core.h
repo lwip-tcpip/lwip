@@ -1,8 +1,6 @@
 /**
  * @file
- * Generic MIB tree structures.
- *
- * @todo namespace prefixes
+ * SNMP core API for implementing MIBs
  */
 
 /*

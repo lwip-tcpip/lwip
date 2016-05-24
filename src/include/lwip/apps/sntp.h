@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNTP client API
+ */
+
 /*
  * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
  * All rights reserved.

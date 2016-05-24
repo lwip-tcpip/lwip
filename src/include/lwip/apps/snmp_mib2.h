@@ -1,7 +1,6 @@
 /**
  * @file
- * MIB2 callback functions called from throughout the stack to integrate a MIB2
- * into lwIP (together with MIB2_STATS).
+ * SNMP MIB2 API
  */
 
 /*

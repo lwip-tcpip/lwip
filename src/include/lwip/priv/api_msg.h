@@ -1,3 +1,8 @@
+/**
+ * @file
+ * netconn API lwIP internal implementations (do not use in application code)
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.

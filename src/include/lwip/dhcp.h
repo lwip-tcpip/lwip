@@ -1,3 +1,8 @@
+/**
+ * @file
+ * DHCP client API
+ */
+
 /*
  * Copyright (c) 2001-2004 Leon Woestenberg <leon.woestenberg@gmx.net>
  * Copyright (c) 2001-2004 Axon Digital Design B.V., The Netherlands.

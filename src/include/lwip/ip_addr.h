@@ -1,3 +1,8 @@
+/**
+ * @file
+ * IP address API (common IPv4 and IPv6)
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.

@@ -1,6 +1,6 @@
 /**
  * @file
- * Management Information Base II (RFC1213) objects and functions.
+ * Management Information Base II (RFC1213) ICMP objects and functions.
  */
 
 /*

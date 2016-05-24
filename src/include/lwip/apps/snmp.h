@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP server main API - start and basic configuration
+ */
+
 /*
  * Copyright (c) 2001, 2002 Leon Woestenberg <leon.woestenberg@axon.tv>
  * Copyright (c) 2001, 2002 Axon Digital Design B.V., The Netherlands.

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP pbuf stream wrapper implementation (internal API, do not use in client code).
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * netif API (to be used from non-TCPIP threads)
+ */
+
 /*
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:

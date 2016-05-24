@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP server options list
+ */
+
 /*
  * Copyright (c) 2015 Dirk Ziegelmeier
  * All rights reserved.

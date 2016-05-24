@@ -1,3 +1,8 @@
+/**
+ * @file
+ * Memory pool API
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
