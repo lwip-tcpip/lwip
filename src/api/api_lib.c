@@ -796,8 +796,8 @@ netconn_close(struct netconn *conn)
  * Shut down one or both sides of a TCP netconn (doesn't delete it).
  *
  * @param conn the TCP netconn to shut down
- * @param shut_rx abort running reads
- * @param shut_tx abort running writes
+ * @param shut_rx shut down the RX side (no more read possible after this)
+ * @param shut_tx shut down the TX side (no more write possible after this)
  * @return ERR_OK if the netconn was closed, any other err_t on error
  */
 err_t
