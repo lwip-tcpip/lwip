@@ -90,6 +90,8 @@
 #include "lwip/stats.h"
 #include "lwip/apps/fs.h"
 #include "httpd_structs.h"
+#include "lwip/def.h"
+#include "lwip/ip.h"
 #include "lwip/tcp.h"
 
 #include <string.h>
