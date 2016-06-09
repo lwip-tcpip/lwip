@@ -100,8 +100,7 @@ snmp_ans1_enc_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tl
 
     PBUF_OP_EXEC(snmp_pbuf_stream_write(pbuf_stream, data));
 
-    while (length_bytes_required > 1)
-    {
+    while (length_bytes_required > 1) {
       if (length_bytes_required == 2) {
         /* append high byte */
         data = (u8_t)(tlv->value_len >> 8);
@@ -344,8 +343,7 @@ void
 snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
 {
   /* check if high u32 is 0 */
-  if (*value == 0x00)
-  {
+  if (*value == 0x00) {
     /* only low u32 is important */
     value++;
     snmp_asn1_enc_u32t_cnt(*value, octets_needed);
@@ -496,8 +494,7 @@ snmp_asn1_dec_u32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value
       *value = data;
       len--;
 
-      while (len > 0)
-      {
+      while (len > 0) {
         PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
         len--;
 
@@ -544,8 +541,7 @@ snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value
       *value = data;
       len--;
 
-      while (len > 0)
-      {
+      while (len > 0) {
         PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
 
         if (len == 4) {

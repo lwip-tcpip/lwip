@@ -119,8 +119,9 @@ snmpv3_build_priv_param(u8_t* priv_param)
 
   /* Emulate 64bit increment */
   priv1++;
-  if (!priv1) /* Overflow */
+  if (!priv1) { /* Overflow */
     priv2++;
+  }
 #else /* Based on RFC3414 */
   static u32_t ctr;
   u32_t boots = LWIP_SNMPV3_GET_ENGINE_BOOTS();

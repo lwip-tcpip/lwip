@@ -1308,25 +1308,29 @@ snmp_complete_outbound_frame(struct snmp_request *request)
         case SNMP_ERR_NOSUCHINSTANCE:
         case SNMP_ERR_NOSUCHOBJECT:
         case SNMP_ERR_ENDOFMIBVIEW:
-          request->error_status = SNMP_ERR_NOSUCHNAME; break;
+          request->error_status = SNMP_ERR_NOSUCHNAME;
+          break;
         /* mapping according to RFC */
         case SNMP_ERR_WRONGVALUE:
         case SNMP_ERR_WRONGENCODING:
         case SNMP_ERR_WRONGTYPE:
         case SNMP_ERR_WRONGLENGTH:
         case SNMP_ERR_INCONSISTENTVALUE:
-          request->error_status = SNMP_ERR_BADVALUE; break;
+          request->error_status = SNMP_ERR_BADVALUE;
+          break;
         case SNMP_ERR_NOACCESS:
         case SNMP_ERR_NOTWRITABLE:
         case SNMP_ERR_NOCREATION:
         case SNMP_ERR_INCONSISTENTNAME:
         case SNMP_ERR_AUTHORIZATIONERROR:
-          request->error_status = SNMP_ERR_NOSUCHNAME; break;
+          request->error_status = SNMP_ERR_NOSUCHNAME;
+          break;
         case SNMP_ERR_RESOURCEUNAVAILABLE:
         case SNMP_ERR_COMMITFAILED:
         case SNMP_ERR_UNDOFAILED:
         default:
-          request->error_status = SNMP_ERR_GENERROR; break;
+          request->error_status = SNMP_ERR_GENERROR;
+          break;
        }
     }
   } else {

@@ -59,6 +59,7 @@ threadsync_get_value_synced(void *ctx)
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static u16_t
 threadsync_get_value(struct snmp_node_instance* instance, void* value)
 {
@@ -79,6 +80,7 @@ threadsync_set_test_synced(void *ctx)
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static snmp_err_t
 threadsync_set_test(struct snmp_node_instance* instance, u16_t len, void *value)
 {
@@ -100,6 +102,7 @@ threadsync_set_value_synced(void *ctx)
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static snmp_err_t
 threadsync_set_value(struct snmp_node_instance* instance, u16_t len, void *value)
 {
@@ -121,6 +124,7 @@ threadsync_release_instance_synced(void* ctx)
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static void
 threadsync_release_instance(struct snmp_node_instance *instance)
 {
