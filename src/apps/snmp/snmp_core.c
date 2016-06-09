@@ -488,7 +488,10 @@ snmp_get_mib_from_oid(const u32_t *oid, u8_t oid_len)
   const struct snmp_mib* matched_mib = NULL;
 
   LWIP_ASSERT("'oid' param must not be NULL!", (oid != NULL));
-  LWIP_ASSERT("'oid_len' param must be greater than 0!", (oid_len > 0));
+
+  if (oid_len == 0) {
+    return NULL;
+  }
 
   for (i=0; i<snmp_num_mibs; i++)
   {
@@ -531,7 +534,10 @@ snmp_get_next_mib(const u32_t *oid, u8_t oid_len)
   const struct snmp_mib* next_mib = NULL;
 
   LWIP_ASSERT("'oid' param must not be NULL!", (oid != NULL));
-  LWIP_ASSERT("'oid_len' param must be greater than 0!", (oid_len > 0));
+
+  if (oid_len == 0) {
+    return NULL;
+  }
 
   for (i=0; i<snmp_num_mibs; i++)
   {
