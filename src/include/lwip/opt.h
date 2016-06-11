@@ -127,8 +127,8 @@
 
 /**
  * MEM_ALIGNMENT: should be set to the alignment of the CPU
- *    4 byte alignment -> #define MEM_ALIGNMENT 4
- *    2 byte alignment -> #define MEM_ALIGNMENT 2
+ *    4 byte alignment -> \#define MEM_ALIGNMENT 4
+ *    2 byte alignment -> \#define MEM_ALIGNMENT 2
  */
 #ifndef MEM_ALIGNMENT
 #define MEM_ALIGNMENT                   1
@@ -879,12 +879,12 @@
 
 /** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled,
  *  you have to define
- *    #define DNS_LOCAL_HOSTLIST_INIT {{"host1", 0x123}, {"host2", 0x234}}
+ *  \#define DNS_LOCAL_HOSTLIST_INIT {{"host1", 0x123}, {"host2", 0x234}}
  *  (an array of structs name/address, where address is an u32_t in network
  *  byte order).
  *
  *  Instead, you can also use an external function:
- *  #define DNS_LOOKUP_LOCAL_EXTERN(x) extern u32_t my_lookup_function(const char *name)
+ *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern u32_t my_lookup_function(const char *name)
  *  that returns the IP address or INADDR_NONE if not found.
  */
 #ifndef DNS_LOCAL_HOSTLIST
