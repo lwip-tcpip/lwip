@@ -8,19 +8,26 @@
  *
  * \section lwip_features_sec lwIP features:
  *
- * \li \c IP (Internet Protocol) including packet forwarding over multiple network interfaces\n
- * \li \c ICMP (Internet Control Message Protocol) for network maintenance and debugging\n
+ * \li \c IP (Internet Protocol, IPv4 and IPv6) including packet forwarding over multiple network interfaces\n
+ * \li \c ICMP (Internet Control Message Protocol, IPv4 and IPv6) for network maintenance and debugging\n
  * \li \c IGMP (Internet Group Management Protocol) for multicast traffic management\n
+ * \li \c MLD (Multicast listener discovery for IPv6). Aims to be compliant with RFC 2710. No support for MLDv2\n
+ * \li \c ND (Neighbor discovery and stateless address autoconfiguration for IPv6). Aims to be compliant with RFC 4861 (Neighbor discovery) and RFC 4862 (Address autoconfiguration)\n
  * \li \c UDP (User Datagram Protocol) including experimental UDP-lite extensions\n
  * \li \c TCP (Transmission Control Protocol) with congestion control, RTT estimation and fast recovery/fast retransmit\n
  * \li \c raw/native API for enhanced performance\n
  * \li \c Optional Berkeley-like socket API\n
  * \li \c DNS (Domain names resolver)\n
- * \li \c SNMP (Simple Network Management Protocol)\n
  * \li \c DHCP (Dynamic Host Configuration Protocol)\n
  * \li \c AUTOIP (for IPv4, conform with RFC 3927)\n
  * \li \c PPP (Point-to-Point Protocol)\n
  * \li \c ARP (Address Resolution Protocol) for Ethernet\n
+ *
+ * \section lwip_apps_sec lwIP applications:
+ * 
+ * \li \c HTTP server with SSI and CGI\n
+ * \li \c SNMPv2c agent with MIB compiler (Simple Network Management Protocol)\n
+ * \li \c SNTP (Simple network time protocol)\n
  *
  * \section install_sec Documentation
  *
