@@ -34,9 +34,6 @@
  * Development of lwIP is hosted on Savannah, a central point for software development, maintenance and distribution. Everyone can help improve lwIP by use of Savannah's interface, Git and the mailing list. A core team of developers will commit changes to the Git source tree.\n
  *   http://savannah.nongnu.org/projects/lwip/\n
  * \n
- * lwIP was originally written by Adam Dunkels:\n
- *   http://dunkels.com/adam/\n
- * \n
  * Self documentation of the source code is regularly extracted from the current Git sources and is available from this web page:\n
  *   http://www.nongnu.org/lwip/\n
  * \n
@@ -48,6 +45,9 @@
  * plus searchable archives:\n
  *   http://lists.nongnu.org/archive/html/lwip-users/\n
  *   http://lists.nongnu.org/archive/html/lwip-devel/\n
+ * \n
+ * lwIP was originally written by Adam Dunkels:\n
+ *   http://dunkels.com/adam/\n
  * \n
  * Reading Adam's papers, the files in docs/, browsing the source code documentation and browsing the mailing list archives is a good way to become familiar with the design of lwIP.\n
  *
