@@ -161,34 +161,51 @@ tcp_input(struct pbuf *p, struct netif *inp)
   tcphdr_optlen = tcphdr_opt1len = (hdrlen * 4) - TCP_HLEN;
   tcphdr_opt2 = NULL;
   if (p->len < hdrlen * 4) {
-    if (p->len >= TCP_HLEN) {
+    if (p->len >= TCP_HLEN && p->next != NULL) {
       /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
       u16_t optlen = tcphdr_opt1len;
       pbuf_header(p, -TCP_HLEN); /* cannot fail */
-      LWIP_ASSERT("tcphdr_opt1len >= p->len", tcphdr_opt1len >= p->len);
-      LWIP_ASSERT("p->next != NULL", p->next != NULL);
+      LWIP_ASSERT("tcphdr_opt1len >= p->len", tcphdr_opt1len >= p->len); /* that would be a programming error */
+
       tcphdr_opt1len = p->len;
       if (optlen > tcphdr_opt1len) {
         s16_t opt2len;
         /* options continue in the next pbuf: set p to zero length and hide the
            options in the next pbuf (adjusting p->tot_len) */
         u8_t phret = pbuf_header(p, -(s16_t)tcphdr_opt1len);
-        LWIP_ASSERT("phret == 0", phret == 0);
+
+        if (phret != 0) {
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: pbuf_header failed, illegal tcphdr_opt1len (%"U16_F")\n", tcphdr_opt1len));
+          TCP_STATS_INC(tcp.lenerr);
+          goto dropped;
+        }
+
         if(tcphdr_optlen - tcphdr_opt1len > p->tot_len) {
           /* drop short packets */
           LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
           TCP_STATS_INC(tcp.lenerr);
           goto dropped;
         }
+
         tcphdr_opt2 = (u8_t*)p->next->payload;
         opt2len = optlen - tcphdr_opt1len;
         phret = pbuf_header(p->next, -opt2len);
-        LWIP_ASSERT("phret == 0", phret == 0);
+        if (phret != 0) {
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: pbuf_header failed, illegal opt2len (%"U16_F")\n", opt2len));
+          TCP_STATS_INC(tcp.lenerr);
+          goto dropped;
+        }
         /* p->next->payload now points to the TCP data */
         /* manually adjust p->tot_len to changed p->next->tot_len change */
         p->tot_len -= opt2len;
       }
-      LWIP_ASSERT("p->len == 0", p->len == 0);
+
+      if (p->len != 0) {
+        /* drop malformed packets */
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: malformed packet (p->len %"U16_F" != 0), discarded\n", p->len));
+        TCP_STATS_INC(tcp.lenerr);
+        goto dropped;
+      }
     } else {
       /* drop short packets */
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
