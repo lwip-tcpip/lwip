@@ -109,7 +109,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   struct tcp_pcb *lpcb_prev = NULL;
   struct tcp_pcb_listen *lpcb_any = NULL;
 #endif /* SO_REUSE */
-  u8_t hdrlen;
+  u8_t hdrlen_bytes;
   err_t err;
 
   LWIP_UNUSED_ARG(inp);
@@ -157,11 +157,17 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
-  hdrlen = TCPH_HDRLEN(tcphdr);
-  tcphdr_optlen = tcphdr_opt1len = (hdrlen * 4) - TCP_HLEN;
+  hdrlen_bytes = TCPH_HDRLEN(tcphdr) * 4;
+  /* sanity-check header length */
+  if ((hdrlen_bytes < TCP_HLEN) || (hdrlen_bytes > p->tot_len)) {
+    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: invalid header length (%"U16_F")\n", (u16_t)hdrlen_bytes));
+    TCP_STATS_INC(tcp.lenerr);
+    goto dropped;
+  }
+  tcphdr_optlen = tcphdr_opt1len = hdrlen_bytes - TCP_HLEN;
   tcphdr_opt2 = NULL;
-  if (p->len < hdrlen * 4) {
-    if (p->len >= TCP_HLEN && p->next != NULL) {
+  if (p->len < hdrlen_bytes) {
+    if (p->next != NULL) { /* p->len >= TCP_HLEN checked above already */
       /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
       u16_t optlen = tcphdr_opt1len;
       pbuf_header(p, -TCP_HLEN); /* cannot fail */
@@ -213,7 +219,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
       goto dropped;
     }
   } else {
-    pbuf_header(p, -(hdrlen * 4)); /* cannot fail */
+    pbuf_header(p, -(s16_t)hdrlen_bytes); /* cannot fail */
   }
 
   /* Convert fields in TCP header to host byte order. */
