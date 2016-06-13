@@ -432,13 +432,13 @@ dns_setserver(u8_t numdns, const ip_addr_t *dnsserver)
  * @return IP address of the indexed DNS server or "ip_addr_any" if the DNS
  *         server has not been configured.
  */
-ip_addr_t
+const ip_addr_t*
 dns_getserver(u8_t numdns)
 {
   if (numdns < DNS_MAX_SERVERS) {
-    return dns_servers[numdns];
+    return &dns_servers[numdns];
   } else {
-    return *IP_ADDR_ANY;
+    return IP_ADDR_ANY;
   }
 }
 
