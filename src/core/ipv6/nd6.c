@@ -443,6 +443,13 @@ nd6_input(struct pbuf *p, struct netif *inp)
         buffer = nd6_ra_buffer;
         pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset);
       }
+      if (buffer[1] == 0) {
+        /* zero-length extension. drop packet */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
       switch (buffer[0]) {
       case ND6_OPTION_TYPE_SOURCE_LLADDR:
       {
@@ -511,6 +518,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         ND6_STATS_INC(nd6.proterr);
         break;
       }
+      /* option length is checked earlier to be non-zero to make sure loop ends */
       offset += 8 * ((u16_t)buffer[1]);
     }
 
