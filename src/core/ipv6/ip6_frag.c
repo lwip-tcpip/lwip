@@ -268,8 +268,12 @@ ip6_reass(struct pbuf *p)
 
   IP6_FRAG_STATS_INC(ip6_frag.recv);
 
-  LWIP_ASSERT("ip6_frag_hdr must be in the first pbuf, not chained",
-     (const void*)ip6_current_header() == ((u8_t*)p->payload) - IP6_HLEN);
+  if ((const void*)ip6_current_header() != ((u8_t*)p->payload) - IP6_HLEN) {
+    /* ip6_frag_hdr must be in the first pbuf, not chained */
+    IP6_FRAG_STATS_INC(ip6_frag.proterr);
+    IP6_FRAG_STATS_INC(ip6_frag.drop);
+    goto nullreturn;
+  }
 
   frag_hdr = (struct ip6_frag_hdr *) p->payload;
 
