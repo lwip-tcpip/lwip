@@ -410,7 +410,11 @@ ip4_input(struct pbuf *p, struct netif *inp)
   }
 
   /* header length exceeds first pbuf length, or ip length exceeds total pbuf length? */
-  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len)) {
+  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len) || (iphdr_hlen < IP_HLEN)) {
+    if (iphdr_hlen < IP_HLEN) {
+      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
+        ("ip4_input: short IP header (%"U16_F" bytes) received, IP packet dropped\n", iphdr_hlen));
+    }
     if (iphdr_hlen > p->len) {
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
         ("IP header (len %"U16_F") does not fit in first pbuf (len %"U16_F"), IP packet dropped.\n",
