@@ -148,7 +148,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     }
 #endif
 #if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
-    if (pbuf_header(p, (PBUF_IP_HLEN + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
+    if (pbuf_header(p, (hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
       /* p is not big enough to contain link headers
        * allocate a new one and copy p into it
        */
@@ -159,11 +159,14 @@ icmp_input(struct pbuf *p, struct netif *inp)
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: allocating new pbuf failed\n"));
         goto icmperr;
       }
-      LWIP_ASSERT("check that first pbuf can hold struct the ICMP header",
-                  (r->len >= hlen + sizeof(struct icmp_echo_hdr)));
+      if (r->len < hlen + sizeof(struct icmp_echo_hdr)) {
+        LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("first pbuf cannot hold the ICMP header"));
+        pbuf_free(r);
+        goto icmperr;
+      }
       /* copy the ip header */
       MEMCPY(r->payload, iphdr_in, hlen);
-      /* switch r->payload back to icmp header */
+      /* switch r->payload back to icmp header (cannot fail) */
       if (pbuf_header(r, -hlen)) {
         LWIP_ASSERT("icmp_input: moving r->payload to icmp header failed\n", 0);
         pbuf_free(r);
@@ -171,7 +174,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       }
       /* copy the rest of the packet without ip header */
       if (pbuf_copy(r, p) != ERR_OK) {
-        LWIP_ASSERT("icmp_input: copying to new pbuf failed\n", 0);
+        LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("icmp_input: copying to new pbuf failed"));
         pbuf_free(r);
         goto icmperr;
       }
@@ -180,8 +183,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
       /* we now have an identical copy of p that has room for link headers */
       p = r;
     } else {
-      /* restore p->payload to point to icmp header */
-      if (pbuf_header(p, -(s16_t)(PBUF_IP_HLEN + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
+      /* restore p->payload to point to icmp header (cannot fail) */
+      if (pbuf_header(p, -(s16_t)(hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
         LWIP_ASSERT("icmp_input: restoring original p->payload failed\n", 0);
         goto icmperr;
       }
@@ -192,7 +195,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
     iecho = (struct icmp_echo_hdr *)p->payload;
     if (pbuf_header(p, hlen)) {
-      LWIP_ASSERT("Can't move over header in packet", 0);
+      LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Can't move over header in packet"));
     } else {
       err_t ret;
       struct ip_hdr *iphdr = (struct ip_hdr*)p->payload;
@@ -222,7 +225,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
       IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_IP) {
-        IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+        IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, hlen));
       }
 #endif /* CHECKSUM_GEN_IP */
 
