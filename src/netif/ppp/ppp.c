@@ -703,6 +703,12 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
 /* Set a PPP PCB to its initial state */
 void ppp_clear(ppp_pcb *pcb) {
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
+  new_phase(pcb, PPP_PHASE_INITIALIZE);
+}
+
+/** Initiate LCP open request */
+void ppp_start(ppp_pcb *pcb) {
+  PPPDEBUG(LOG_DEBUG, ("ppp_start[%d]\n", pcb->netif->num));
 
   /* Clean data not taken care by anything else, mostly shared data. */
 #if PPP_STATS_SUPPORT
@@ -717,13 +723,8 @@ void ppp_clear(ppp_pcb *pcb) {
   vj_compress_init(&pcb->vj_comp);
 #endif /* VJ_SUPPORT && LWIP_TCP */
 
-  new_phase(pcb, PPP_PHASE_INITIALIZE);
-}
-
-/** Initiate LCP open request */
-void ppp_start(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_start[%d]\n", pcb->netif->num));
-  lcp_open(pcb); /* Start protocol */
+  /* Start protocol */
+  lcp_open(pcb);
   lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start[%d]: finished\n", pcb->netif->num));
 }
