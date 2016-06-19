@@ -308,7 +308,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
   pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_IRQ_SAFE */
 
-  ppp_clear(ppp);
+  ppp_link_start(ppp);
   /* reset PPPoS control block to its initial state */
   memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->last_xmit - (char*)0 ) );
 
@@ -346,7 +346,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs)
   pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_IRQ_SAFE */
 
-  ppp_clear(ppp);
+  ppp_link_start(ppp);
   /* reset PPPoS control block to its initial state */
   memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->last_xmit - (char*)0 ) );
 

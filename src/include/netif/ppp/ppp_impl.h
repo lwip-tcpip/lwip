@@ -394,8 +394,8 @@ int ppp_init(void);
 ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, void *link_ctx_cb,
                  ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-/* Set a PPP PCB to its initial state */
-void ppp_clear(ppp_pcb *pcb);
+/* Called when link is starting */
+void ppp_link_start(ppp_pcb *pcb);
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);

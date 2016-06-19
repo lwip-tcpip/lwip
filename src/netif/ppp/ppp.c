@@ -700,8 +700,8 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   return pcb;
 }
 
-/* Set a PPP PCB to its initial state */
-void ppp_clear(ppp_pcb *pcb) {
+/** Called when link is starting */
+void ppp_link_start(ppp_pcb *pcb) {
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
   new_phase(pcb, PPP_PHASE_INITIALIZE);
 }

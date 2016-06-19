@@ -921,7 +921,7 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   }
 #endif
 
-  ppp_clear(ppp);
+  ppp_link_start(ppp);
 
   lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
