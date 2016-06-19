@@ -373,7 +373,7 @@ static void ccp_init(ppp_pcb *pcb) {
     f->callbacks = &ccp_callbacks;
     fsm_init(f);
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
     memset(wo, 0, sizeof(*wo));
     memset(go, 0, sizeof(*go));
     memset(ao, 0, sizeof(*ao));

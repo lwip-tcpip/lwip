@@ -124,7 +124,7 @@ static const struct chap_digest_type* const chap_digests[] = {
 static void chap_init(ppp_pcb *pcb) {
 	LWIP_UNUSED_ARG(pcb);
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
 	memset(&pcb->chap_client, 0, sizeof(chap_client_state));
 #if PPP_SERVER
 	memset(&pcb->chap_server, 0, sizeof(chap_server_state));

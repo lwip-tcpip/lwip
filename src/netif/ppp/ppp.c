@@ -613,6 +613,8 @@ int ppp_init(void)
  */
 ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, void *link_ctx_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
+  const struct protent *protp;
+  int i;
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -686,15 +688,20 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   pcb->link_ctx_cb = link_ctx_cb;
   pcb->link_status_cb = link_status_cb;
   pcb->ctx_cb = ctx_cb;
+
+  /*
+   * Initialize each protocol.
+   */
+  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+      (*protp->init)(pcb);
+  }
+
   new_phase(pcb, PPP_PHASE_DEAD);
   return pcb;
 }
 
 /* Set a PPP PCB to its initial state */
 void ppp_clear(ppp_pcb *pcb) {
-  const struct protent *protp;
-  int i;
-
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
   /* Clean data not taken care by anything else, mostly shared data. */
@@ -706,14 +713,6 @@ void ppp_clear(ppp_pcb *pcb) {
   memset(&pcb->mppe_comp, 0, sizeof(pcb->mppe_comp));
   memset(&pcb->mppe_decomp, 0, sizeof(pcb->mppe_decomp));
 #endif /* MPPE_SUPPORT */
-
-  /*
-   * Initialize each protocol.
-   */
-  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
-      (*protp->init)(pcb);
-  }
-
 #if VJ_SUPPORT && LWIP_TCP
   vj_compress_init(&pcb->vj_comp);
 #endif /* VJ_SUPPORT && LWIP_TCP */
