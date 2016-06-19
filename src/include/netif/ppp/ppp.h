@@ -310,7 +310,6 @@ struct ppp_addrs {
  * PPP interface control block.
  */
 struct ppp_pcb_s {
-  /* -- below are data that will NOT be cleared between two sessions */
   ppp_settings settings;
   const struct link_callbacks *link_cb;
   void *link_ctx_cb;
@@ -320,13 +319,6 @@ struct ppp_pcb_s {
 #endif /* PPP_NOTIFY_PHASE */
   void *ctx_cb;                  /* Callbacks optional pointer */
   struct netif *netif;           /* PPP interface */
-
-  /* -- below are data that will be cleared between two sessions */
-
-  /*
-   * phase must be the first member of cleared members, because it is used to know
-   * which part must not be cleared.
-   */
   u8_t phase;                    /* where the link is at */
   u8_t err_code;                 /* Code indicating why interface is down. */
 

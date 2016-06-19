@@ -697,11 +697,15 @@ void ppp_clear(ppp_pcb *pcb) {
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
+  /* Clean data not taken care by anything else, mostly shared data. */
 #if PPP_STATS_SUPPORT
   link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
-
-  memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
+#if MPPE_SUPPORT
+  pcb->mppe_keys_set = 0;
+  memset(&pcb->mppe_comp, 0, sizeof(pcb->mppe_comp));
+  memset(&pcb->mppe_decomp, 0, sizeof(pcb->mppe_decomp));
+#endif /* MPPE_SUPPORT */
 
   /*
    * Initialize each protocol.
