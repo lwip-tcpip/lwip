@@ -280,7 +280,7 @@ START_TEST(test_tcp_fast_retx_recover)
   /*EXPECT_RET(txcounters.num_tx_calls == 1);*/
   EXPECT_RET(pcb->dupacks == 3);
   memset(&txcounters, 0, sizeof(txcounters));
-  /* TODO: check expected data?*/
+  /* @todo: check expected data?*/
   
   /* send data5, not output yet */
   err = tcp_write(pcb, data5, sizeof(data5), TCP_WRITE_FLAG_COPY);

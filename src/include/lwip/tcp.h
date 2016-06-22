@@ -122,7 +122,7 @@ typedef void  (*tcp_err_fn)(void *arg, err_t err);
  *
  * @param arg Additional argument to pass to the callback function (@see tcp_arg())
  * @param tpcb The connection pcb which is connected
- * @param err An unused error code, always ERR_OK currently ;-) TODO!
+ * @param err An unused error code, always ERR_OK currently ;-) @todo!
  *            Only return ERR_ABRT if you have called tcp_abort from within the
  *            callback function!
  *

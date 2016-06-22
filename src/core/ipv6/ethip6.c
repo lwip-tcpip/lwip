@@ -88,7 +88,7 @@ ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct et
  *
  * For unicast addresses, ...
  *
- * @TODO anycast addresses
+ * @todo anycast addresses
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
  * @param q The pbuf(s) containing the IP packet to be sent.
@@ -127,7 +127,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   }
 
   /* We have a unicast destination IP address */
-  /* TODO anycast? */
+  /* @todo anycast? */
   /* Get next hop record. */
   i = nd6_get_next_hop_entry(ip6addr, netif);
   if (i < 0) {
@@ -141,7 +141,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     neighbor_cache[i].state = ND6_DELAY;
     neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
   }
-  /* TODO should we send or queue if PROBE? send for now, to let unicast NS pass. */
+  /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
   if ((neighbor_cache[i].state == ND6_REACHABLE) ||
       (neighbor_cache[i].state == ND6_DELAY) ||
       (neighbor_cache[i].state == ND6_PROBE)) {

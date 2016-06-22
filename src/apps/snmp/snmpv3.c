@@ -98,7 +98,7 @@ snmpv3_get_engine_time_internal(void)
  *
  * Implementing RFC3826 priv param algorithm if LWIP_RAND is available.
  *
- * TODO: This is a potential thread safety issue.
+ * @todo: This is a potential thread safety issue.
  */
 err_t
 snmpv3_build_priv_param(u8_t* priv_param)

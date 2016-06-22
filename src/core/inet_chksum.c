@@ -336,10 +336,10 @@ inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
  * IPv6 addresses are expected to be in network byte order.
  *
  * @param p chain of pbufs over that a checksum should be calculated (ip data part)
- * @param src source ipv6 address (used for checksum of pseudo header)
- * @param dst destination ipv6 address (used for checksum of pseudo header)
  * @param proto ipv6 protocol/next header (used for checksum of pseudo header)
  * @param proto_len length of the ipv6 payload (used for checksum of pseudo header)
+ * @param src source ipv6 address (used for checksum of pseudo header)
+ * @param dest destination ipv6 address (used for checksum of pseudo header)
  * @return checksum (as u16_t) to be saved directly in the protocol header
  */
 u16_t
@@ -483,11 +483,11 @@ inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
  * portion of the payload.
  *
  * @param p chain of pbufs over that a checksum should be calculated (ip data part)
- * @param src source ipv6 address (used for checksum of pseudo header)
- * @param dst destination ipv6 address (used for checksum of pseudo header)
  * @param proto ipv6 protocol/next header (used for checksum of pseudo header)
  * @param proto_len length of the ipv6 payload (used for checksum of pseudo header)
  * @param chksum_len number of payload bytes used to compute chksum
+ * @param src source ipv6 address (used for checksum of pseudo header)
+ * @param dest destination ipv6 address (used for checksum of pseudo header)
  * @return checksum (as u16_t) to be saved directly in the protocol header
  */
 u16_t

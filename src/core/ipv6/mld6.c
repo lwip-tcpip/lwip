@@ -245,7 +245,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
 
   /* Check that mld header fits in packet. */
   if (p->len < sizeof(struct mld_header)) {
-    /* TODO debug message */
+    /* @todo debug message */
     pbuf_free(p);
     MLD6_STATS_INC(mld6.lenerr);
     MLD6_STATS_INC(mld6.drop);

@@ -170,7 +170,7 @@ autoip_handle_arp_conflict(struct netif *netif)
       LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
         ("autoip_handle_arp_conflict(): we are defending, but in DEFEND_INTERVAL, retreating\n"));
 
-      /* TODO: close all TCP sessions */
+      /* @todo: close all TCP sessions */
       autoip_restart(netif);
     } else {
       LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
@@ -181,7 +181,7 @@ autoip_handle_arp_conflict(struct netif *netif)
   } else {
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
       ("autoip_handle_arp_conflict(): we do not defend, retreating\n"));
-    /* TODO: close all TCP sessions */
+    /* @todo: close all TCP sessions */
     autoip_restart(netif);
   }
 }

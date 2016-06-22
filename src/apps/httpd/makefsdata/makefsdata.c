@@ -727,7 +727,7 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   u8_t* file_data;
   int is_compressed = 0;
 
-  /* create qualified name (TODO: prepend slash or not?) */
+  /* create qualified name (@todo: prepend slash or not?) */
   sprintf(qualifiedName,"%s/%s", curSubdir, filename);
   /* create C variable name */
   strcpy(varname, qualifiedName);

@@ -52,14 +52,14 @@ extern "C" {
 #endif
 
 
-/* This is the aligned version of ip6_addr_t,
-   used as local variable, on the stack, etc. */
+/** This is the aligned version of ip6_addr_t,
+    used as local variable, on the stack, etc. */
 struct ip6_addr {
   u32_t addr[4];
 };
 
-/* This is the packed version of ip6_addr_t,
-   used in network headers that are itself packed */
+/** This is the packed version of ip6_addr_t,
+    used in network headers that are itself packed */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -72,6 +72,7 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
+/** IPv6 address */
 typedef struct ip6_addr ip6_addr_t;
 typedef struct ip6_addr_packed ip6_addr_p_t;
 
@@ -103,12 +104,19 @@ Little-endian version, stored in network order (no htonl). */
 
 /** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK1(ip6addr) ((u16_t)(htonl((ip6addr)->addr[0]) >> 16) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK2(ip6addr) ((u16_t)(htonl((ip6addr)->addr[0])) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK3(ip6addr) ((u16_t)(htonl((ip6addr)->addr[1]) >> 16) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK4(ip6addr) ((u16_t)(htonl((ip6addr)->addr[1])) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK5(ip6addr) ((u16_t)(htonl((ip6addr)->addr[2]) >> 16) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK6(ip6addr) ((u16_t)(htonl((ip6addr)->addr[2])) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK7(ip6addr) ((u16_t)(htonl((ip6addr)->addr[3]) >> 16) & 0xffff)
+/** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK8(ip6addr) ((u16_t)(htonl((ip6addr)->addr[3])) & 0xffff)
 
 /** Copy IPv6 address - faster than ip6_addr_set: no NULL check */
@@ -203,7 +211,7 @@ Little-endian version, stored in network order (no htonl). */
 #define ip6_addr_ismulticast_orglocal(ip6addr) (((ip6addr)->addr[0] & PP_HTONL(0xff8f0000UL)) == PP_HTONL(0xff080000UL))
 #define ip6_addr_ismulticast_global(ip6addr) (((ip6addr)->addr[0] & PP_HTONL(0xff8f0000UL)) == PP_HTONL(0xff0e0000UL))
 
-/* TODO define get/set for well-know multicast addresses, e.g. ff02::1 */
+/* @todo define get/set for well-know multicast addresses, e.g. ff02::1 */
 #define ip6_addr_isallnodes_iflocal(ip6addr) (((ip6addr)->addr[0] == PP_HTONL(0xff010000UL)) && \
     ((ip6addr)->addr[1] == 0UL) && \
     ((ip6addr)->addr[2] == 0UL) && \

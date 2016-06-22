@@ -373,7 +373,7 @@ lwiperf_tx_start(lwiperf_state_tcp_t* conn)
   client_conn->base.server = 0;
   client_conn->server_pcb = NULL;
   client_conn->conn_pcb = newpcb;
-  client_conn->time_started = sys_now(); /* TODO: set this again on 'connected' */
+  client_conn->time_started = sys_now(); /* @todo: set this again on 'connected' */
   client_conn->poll_count = 0;
   client_conn->next_num = 4; /* initial nr is '4' since the header has 24 byte */
   client_conn->bytes_transferred = 0;
@@ -639,7 +639,7 @@ lwiperf_abort(void* lwiperf_session)
       if (last != NULL) {
         last->next = i;
       }
-      LWIPERF_FREE(lwiperf_state_tcp_t, dealloc); /* TODO: type? */
+      LWIPERF_FREE(lwiperf_state_tcp_t, dealloc); /* @todo: type? */
     } else {
       last = i;
       i = i->next;

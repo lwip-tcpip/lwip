@@ -44,7 +44,7 @@
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*
- * TODO:
+ * @todo:
  */
 
 #if 0 /* UNUSED */

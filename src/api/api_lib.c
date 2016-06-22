@@ -286,7 +286,7 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
  * Disconnect a netconn from its current peer (only valid for UDP netconns).
  *
  * @param conn the netconn to disconnect
- * @return TODO: return value is not set here...
+ * @return @todo: return value is not set here...
  */
 err_t
 netconn_disconnect(struct netconn *conn)
@@ -502,7 +502,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   {
     /* Let the stack know that we have taken the data. */
-    /* TODO: Speedup: Don't block and wait for the answer here
+    /* @todo: Speedup: Don't block and wait for the answer here
        (to prevent multiple thread-switches). */
     API_MSG_VAR_REF(msg).conn = conn;
     if (buf != NULL) {
@@ -855,6 +855,7 @@ netconn_join_leave_group(struct netconn *conn,
  *
  * @param name a string representation of the DNS host name to query
  * @param addr a preallocated ip_addr_t where to store the resolved IP address
+ * @param dns_addrtype IP address type (IPv4 / IPv6)
  * @return ERR_OK: resolving succeeded
  *         ERR_MEM: memory error, try again later
  *         ERR_ARG: dns client not initialized or invalid hostname

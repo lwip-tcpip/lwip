@@ -41,7 +41,7 @@
  * This is a DHCP client for the lwIP TCP/IP stack. It aims to conform
  * with RFC 2131 and RFC 2132.
  *
- * TODO:
+ * @todo:
  * - Support for interfaces other than Ethernet (SLIP, PPP, ...)
  *
  * Please coordinate changes and requests with Leon Woestenberg
@@ -1803,7 +1803,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
   dhcp->msg_out = (struct dhcp_msg *)dhcp->p_out->payload;
 
   dhcp->msg_out->op = DHCP_BOOTREQUEST;
-  /* TODO: make link layer independent */
+  /* @todo: make link layer independent */
   dhcp->msg_out->htype = DHCP_HTYPE_ETH;
   dhcp->msg_out->hlen = netif->hwaddr_len;
   dhcp->msg_out->hops = 0;

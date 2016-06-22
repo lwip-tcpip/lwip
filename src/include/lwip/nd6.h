@@ -332,7 +332,7 @@ PACK_STRUCT_END
 #define ND6_TMR_INTERVAL 1000
 
 /* Router tables. */
-/* TODO make these static? and entries accessible through API? */
+/* @todo make these static? and entries accessible through API? */
 extern struct nd6_neighbor_cache_entry neighbor_cache[];
 extern struct nd6_destination_cache_entry destination_cache[];
 extern struct nd6_prefix_list_entry prefix_list[];

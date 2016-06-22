@@ -842,7 +842,7 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                =
+EXCLUDE                = ../../src/include/netif/ppp/polarssl
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -2058,7 +2058,7 @@ INCLUDE_PATH           = ../../src/include
 # used.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-INCLUDE_FILE_PATTERNS  =
+INCLUDE_FILE_PATTERNS  = *.c *.h
 
 # The PREDEFINED tag can be used to specify one or more macro names that are
 # defined before the preprocessor is started (similar to the -D option of e.g.
@@ -2070,6 +2070,8 @@ INCLUDE_FILE_PATTERNS  =
 
 PREDEFINED             = NO_SYS=0 \
                          SYS_LIGHTWEIGHT_PROT=1 \
+                         LWIP_IPV4=1 \
+                         LWIP_IPV6=1 \
                          LWIP_ICMP=1 \
                          LWIP_RAW=1 \
                          LWIP_DHCP=1 \

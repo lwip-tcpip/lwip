@@ -139,7 +139,7 @@
  */
 
 /*
- * TODO: 
+ * @todo: 
  *
  * Proxy Neighbour Discovery.
  *

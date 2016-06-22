@@ -636,7 +636,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     u16_t u16_value;
 
     /* SNMPv3 doesn't use communities */
-    /* TODO: Differentiate read/write access */
+    /* @todo: Differentiate read/write access */
     strcpy((char*)request->community, snmp_community);
     request->community_strlen = strlen(snmp_community);
 
@@ -723,7 +723,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     parent_tlv_value_len -= SNMP_ASN1_TLV_LENGTH(tlv);
     IF_PARSE_ASSERT(parent_tlv_value_len > 0);
     IF_PARSE_EXEC(snmp_asn1_dec_s32t(&pbuf_stream, tlv.value_len, &request->msg_authoritative_engine_time));
-    /* TODO: Implement time window checking */
+    /* @todo: Implement time window checking */
 
     /* msgUserName */
     IF_PARSE_EXEC(snmp_asn1_dec_tlv(&pbuf_stream, &tlv));
@@ -734,7 +734,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->msg_user_name,
         &u16_value, SNMP_V3_MAX_USER_LENGTH));
     request->msg_user_name_len = u16_value;
-    /* TODO: Implement unknown user error response */
+    /* @todo: Implement unknown user error response */
     IF_PARSE_EXEC(snmpv3_get_user((char*)request->msg_user_name, NULL, NULL, NULL, NULL));
 
     /* msgAuthenticationParameters */
@@ -769,12 +769,12 @@ snmp_parse_inbound_frame(struct snmp_request *request)
 
       IF_PARSE_EXEC(snmpv3_get_user((char*)request->msg_user_name, &algo, key, NULL, NULL));
       IF_PARSE_EXEC(snmpv3_auth(&auth_stream, request->inbound_pbuf->tot_len, key, algo, hmac));
-      /* TODO: Implement error response */
+      /* @todo: Implement error response */
       IF_PARSE_EXEC(memcmp(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH));
     }
 #else
     /* Ungraceful exit if we encounter cryptography and don't support it.
-     * TODO: Implement error response
+     * @todo: Implement error response
      */
     IF_PARSE_ASSERT(!(request->msg_flags & (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)));
 #endif
