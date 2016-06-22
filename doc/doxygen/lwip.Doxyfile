@@ -842,7 +842,8 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = ../../src/include/netif/ppp/polarssl
+EXCLUDE                = ../../src/include/netif/ppp/polarssl \
+                         ../../src/include/lwip/priv
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -2094,6 +2095,14 @@ PREDEFINED             = NO_SYS=0 \
                          LWIP_DNS=1 \
                          LWIP_SOCKETS=1 \
                          LWIP_NETCONN=1 \
+                         IP_SOF_BROADCAST=1 \
+                         IP_SOF_BROADCAST_RECV=1 \
+                         LWIP_NETIF_API=1 \
+                         LWIP_SO_SNDTIMEO=1 \
+                         LWIP_SO_RCVBUF=1 \
+                         LWIP_SO_LINGER=1 \
+                         SO_REUSE=1 \
+                         SO_REUSE_RXTOALL=1 \
                          "LWIP_DNS && LWIP_SOCKET   " \
                          "(LWIP_DNS && LWIP_SOCKET)=1   "
 

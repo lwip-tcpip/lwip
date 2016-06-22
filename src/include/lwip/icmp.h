@@ -64,18 +64,28 @@ extern "C" {
 #define ICMP_AM  17    /* address mask request */
 #define ICMP_AMR 18    /* address mask reply */
 
+/** ICMP destination unreachable codes */
 enum icmp_dur_type {
-  ICMP_DUR_NET   = 0,  /* net unreachable */
-  ICMP_DUR_HOST  = 1,  /* host unreachable */
-  ICMP_DUR_PROTO = 2,  /* protocol unreachable */
-  ICMP_DUR_PORT  = 3,  /* port unreachable */
-  ICMP_DUR_FRAG  = 4,  /* fragmentation needed and DF set */
-  ICMP_DUR_SR    = 5   /* source route failed */
+  /** net unreachable */
+  ICMP_DUR_NET   = 0,
+  /** host unreachable */
+  ICMP_DUR_HOST  = 1,
+  /** protocol unreachable */
+  ICMP_DUR_PROTO = 2,
+  /** port unreachable */
+  ICMP_DUR_PORT  = 3,
+  /** fragmentation needed and DF set */
+  ICMP_DUR_FRAG  = 4,
+  /** source route failed */
+  ICMP_DUR_SR    = 5
 };
 
+/** ICMP time exceeded codes */
 enum icmp_te_type {
-  ICMP_TE_TTL  = 0,    /* time to live exceeded in transit */
-  ICMP_TE_FRAG = 1     /* fragment reassembly time exceeded */
+  /* time to live exceeded in transit */
+  ICMP_TE_TTL  = 0,
+  /** fragment reassembly time exceeded */
+  ICMP_TE_FRAG = 1
 };
 
 #ifdef PACK_STRUCT_USE_INCLUDES

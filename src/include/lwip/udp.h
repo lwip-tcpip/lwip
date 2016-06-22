@@ -93,8 +93,9 @@ struct udp_pcb;
 typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     const ip_addr_t *addr, u16_t port);
 
+/** the UDP protocol control block */
 struct udp_pcb {
-/* Common members of all PCB types */
+/** Common members of all PCB types */
   IP_PCB;
 
 /* Protocol specific PCB members */
