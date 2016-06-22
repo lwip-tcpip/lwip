@@ -47,11 +47,10 @@ extern "C" {
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-/* basic scalar node */
-
+/** basic scalar node */
 struct snmp_scalar_node
 {
-  /* inherited "base class" members */
+  /** inherited "base class" members */
   struct snmp_leaf_node node;
   u8_t asn1_type;
   snmp_access_t access;
@@ -72,7 +71,7 @@ snmp_err_t snmp_scalar_get_next_instance(const u32_t *root_oid, u8_t root_oid_le
 
 #define SNMP_SCALAR_CREATE_NODE_READONLY(oid, asn1_type, get_value_method) SNMP_SCALAR_CREATE_NODE(oid, SNMP_NODE_INSTANCE_READ_ONLY, asn1_type, get_value_method, NULL, NULL)
 
-/* scalar array node - a tree node which contains scalars only as children */
+/** scalar array node - a tree node which contains scalars only as children */
 struct snmp_scalar_array_node_def
 {
   u32_t         oid;
@@ -84,9 +83,10 @@ typedef u16_t (*snmp_scalar_array_get_value_method)(const struct snmp_scalar_arr
 typedef snmp_err_t (*snmp_scalar_array_set_test_method)(const struct snmp_scalar_array_node_def*, u16_t, void*);
 typedef snmp_err_t (*snmp_scalar_array_set_value_method)(const struct snmp_scalar_array_node_def*, u16_t, void*);
 
+/** basic scalar array node */
 struct snmp_scalar_array_node
 {
-  /* inherited "base class" members */
+  /** inherited "base class" members */
   struct snmp_leaf_node node;
   u16_t array_node_count;
   const struct snmp_scalar_array_node_def* array_nodes;

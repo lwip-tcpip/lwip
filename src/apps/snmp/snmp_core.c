@@ -89,6 +89,19 @@ snmp_set_mibs(const struct snmp_mib **mibs, u8_t num_mibs)
   snmp_num_mibs = num_mibs;
 }
 
+/**
+* 'device enterprise oid' is used for 'device OID' field in trap PDU's (for identification of generating device)
+* as well as for value returned by MIB-2 'sysObjectID' field (if internal MIB2 implementation is used).
+* The 'device enterprise oid' shall point to an OID located under 'private-enterprises' branch (1.3.6.1.4.1.XXX). If a vendor
+* wants to provide a custom object there, he has to get its own enterprise oid from IANA (http://www.iana.org). It
+* is not allowed to use LWIP enterprise ID!
+* In order to identify a specific device it is recommended to create a dedicated OID for each device type under its own 
+* enterprise oid.
+* e.g.
+* device a > 1.3.6.1.4.1.XXX(ent-oid).1(devices).1(device a)
+* device b > 1.3.6.1.4.1.XXX(ent-oid).1(devices).2(device b)
+* for more details see description of 'sysObjectID' field in RFC1213-MIB
+*/
 void snmp_set_device_enterprise_oid(const struct snmp_obj_id* device_enterprise_oid)
 {
   if (device_enterprise_oid == NULL) {
@@ -98,6 +111,7 @@ void snmp_set_device_enterprise_oid(const struct snmp_obj_id* device_enterprise_
   }
 }
 
+/** Get 'device enterprise oid' */
 const struct snmp_obj_id* snmp_get_device_enterprise_oid(void)
 {
   return snmp_device_enterprise_oid;
@@ -365,6 +379,12 @@ snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port)
 
 #endif /* LWIP_IPV4 || LWIP_IPV6 */
 
+/**
+ * Assign an OID to \struct snmp_obj_id
+ * @param target
+ * @param oid
+ * @param oid_len
+ */
 void
 snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 {
@@ -377,6 +397,12 @@ snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
   }
 }
 
+/**
+ * Prefix an OID to OID in \struct snmp_obj_id
+ * @param target
+ * @param oid
+ * @param oid_len
+ */
 void
 snmp_oid_prefix(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 {
@@ -394,6 +420,14 @@ snmp_oid_prefix(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
   }
 }
 
+/**
+ * Combine two OIDs into \struct snmp_obj_id
+ * @param target
+ * @param oid1
+ * @param oid1_len
+ * @param oid2
+ * @param oid2_len
+ */
 void
 snmp_oid_combine(struct snmp_obj_id* target, const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
 {
@@ -401,6 +435,12 @@ snmp_oid_combine(struct snmp_obj_id* target, const u32_t *oid1, u8_t oid1_len, c
   snmp_oid_append(target, oid2, oid2_len);
 }
 
+/**
+ * Append OIDs to \struct snmp_obj_id
+ * @param target
+ * @param oid
+ * @param oid_len
+ */
 void 
 snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 {
@@ -412,6 +452,14 @@ snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
   }
 }
 
+/**
+ * Compare two OIDs
+ * @param oid1
+ * @param oid1_len
+ * @param oid2
+ * @param oid2_len
+ * @return
+ */
 s8_t
 snmp_oid_compare(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
 {
@@ -444,12 +492,26 @@ snmp_oid_compare(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_
   return 0;   
 }
 
+
+/**
+ * Check of two OIDs are equal
+ * @param oid1
+ * @param oid1_len
+ * @param oid2
+ * @param oid2_len
+ * @return
+ */
 u8_t
 snmp_oid_equal(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
 {
   return (snmp_oid_compare(oid1, oid1_len, oid2, oid2_len) == 0)? 1 : 0;
 }
 
+/**
+ * Convert netif to interface index
+ * @param netif
+ * @return index
+ */
 u8_t
 netif_to_num(const struct netif *netif)
 {
@@ -901,6 +963,7 @@ snmp_mib_tree_resolve_next(const struct snmp_mib *mib, const u32_t *oid, u8_t oi
   return NULL;
 }
 
+/** initialize struct next_oid_state using this function before passing it to next_oid_check */
 void
 snmp_next_oid_init(struct snmp_next_oid_state *state,
   const u32_t *start_oid, u8_t start_oid_len,
@@ -914,6 +977,9 @@ snmp_next_oid_init(struct snmp_next_oid_state *state,
   state->status           = SNMP_NEXT_OID_STATUS_NO_MATCH;
 }
 
+/** checks if the passed incomplete OID may be a possible candidate for snmp_next_oid_check();
+this methid is intended if the complete OID is not yet known but it is very expensive to build it up,
+so it is possible to test the starting part before building up the complete oid and pass it to snmp_next_oid_check()*/
 u8_t
 snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len)
 {
@@ -933,6 +999,7 @@ snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, cons
   return 0;
 }
 
+/** checks the passed OID if it is a candidate to be the next one (get_next); returns !=0 if passed oid is currently closest, otherwise 0 */
 u8_t 
 snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len, void* reference)
 {

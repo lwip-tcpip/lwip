@@ -94,6 +94,7 @@ struct snmp_threadsync_node
 snmp_err_t snmp_threadsync_get_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
 snmp_err_t snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
 
+/** Create thread sync proxy node */
 #define SNMP_CREATE_THREAD_SYNC_NODE(oid, target_leaf_node, threadsync_instance) \
   {{{ SNMP_NODE_THREADSYNC, (oid) }, \
     snmp_threadsync_get_instance, \
@@ -101,6 +102,7 @@ snmp_err_t snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oi
     (target_leaf_node), \
     (threadsync_instance) }
 
+/** Create thread sync instance data */
 void snmp_threadsync_init(struct snmp_threadsync_instance *instance, snmp_threadsync_synchronizer_fn sync_fn);
 
 #endif /* LWIP_SNMP */
