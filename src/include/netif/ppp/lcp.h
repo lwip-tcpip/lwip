@@ -90,11 +90,11 @@
 /* Value used as data for CI_CALLBACK option */
 #define CBCP_OPT	6	/* Use callback control protocol */
 
-#if 0 /* moved to opt.h */
+#if 0 /* moved to ppp_opts.h */
 #define DEFMRU	1500		/* Try for this */
 #define MINMRU	128		/* No MRUs below this */
 #define MAXMRU	16384		/* Normally limit MRU to this */
-#endif /* moved to opt.h */
+#endif /* moved to ppp_opts.h */
 
 /* An endpoint discriminator, used with multilink. */
 #define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
@@ -159,11 +159,11 @@ void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len);    /* send protocol reject 
 
 extern const struct protent lcp_protent;
 
-#if 0 /* moved to opt.h */
+#if 0 /* moved to ppp_opts.h */
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */
 #define DEFLOOPBACKFAIL	10
-#endif /* moved to opt.h */
+#endif /* moved to ppp_opts.h */
 
 #endif /* LCP_H */
 #endif /* PPP_SUPPORT */

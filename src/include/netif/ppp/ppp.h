@@ -47,7 +47,7 @@
 #include "lwip/ip6_addr.h"
 #endif /* PPP_IPV6_SUPPORT */
 
-/* Disable non-working or rarely used PPP feature, so rarely that we don't want to bloat opt.h with them */
+/* Disable non-working or rarely used PPP feature, so rarely that we don't want to bloat ppp_opts.h with them */
 #ifndef PPP_OPTIONS
 #define PPP_OPTIONS         0
 #endif
