@@ -471,7 +471,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   int datalen = 0;
   int datalen2;
 
-  for(i = 0; i < sizeof(data_full_wnd); i++) {
+  for(i = 0; i < (int)sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
   }
 
@@ -840,7 +840,7 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
   u32_t exp_rx_calls = 0, exp_rx_bytes = 0, exp_close_calls = 0, exp_oos_pbufs = 0, exp_oos_tcplen = 0;
   int first_dropped = 0xff;
 
-  for(i = 0; i < sizeof(data_full_wnd); i++) {
+  for(i = 0; i < (int)sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
   }
 

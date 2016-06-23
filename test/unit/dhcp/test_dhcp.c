@@ -203,7 +203,7 @@ static void check_pkt(struct pbuf *p, u32_t pos, const u8_t *mem, u32_t len)
   fail_if(p == NULL);
   fail_unless(pos + len <= p->len); /* All data we seek within same pbuf */
 
-  data = p->payload;
+  data = (u8_t*)p->payload;
   fail_if(memcmp(&data[pos], mem, len), "data at pos %d, len %d in packet %d did not match", pos, len, txpacket);
 }
 
@@ -222,7 +222,7 @@ static void check_pkt_fuzzy(struct pbuf *p, u32_t startpos, const u8_t *mem, u32
   fail_unless(startpos + len <= p->len); /* All data we seek within same pbuf */
 
   found = 0;
-  data = p->payload;
+  data = (u8_t*)p->payload;
   for (i = startpos; i <= (p->len - len); i++) {
     if (memcmp(&data[i], mem, len) == 0) {
       found = 1;
@@ -301,6 +301,9 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
         check_pkt(p, 12, arpproto, sizeof(arpproto)); /* eth level proto: ip */
         break;
       }
+      default:
+        fail();
+        break;
     }
     break;
 
@@ -405,6 +408,9 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
         check_pkt_fuzzy(p, 282, dhcp_request_opt, sizeof(dhcp_request_opt));
         break;
       }
+    default:
+      fail();
+      break;
     }
     break;
 
