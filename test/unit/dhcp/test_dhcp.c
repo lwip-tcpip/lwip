@@ -118,7 +118,7 @@ static enum tcase {
   TEST_LWIP_DHCP,
   TEST_LWIP_DHCP_NAK,
   TEST_LWIP_DHCP_RELAY,
-  TEST_LWIP_DHCP_NAK_NO_ENDMARKER,
+  TEST_LWIP_DHCP_NAK_NO_ENDMARKER
 } tcase;
 
 static int debug = 0;
