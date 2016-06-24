@@ -139,7 +139,7 @@ static void
 get_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data   = (struct threadsync_data*)ctx;
-  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)call_data->proxy_instance.node;
+  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)(const void*)call_data->proxy_instance.node;
 
   call_data->retval.u8 = leaf->get_instance(call_data->arg1.root_oid, call_data->arg2.root_oid_len, &call_data->proxy_instance);
 
@@ -150,7 +150,7 @@ static void
 get_next_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data   = (struct threadsync_data*)ctx;
-  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)call_data->proxy_instance.node;
+  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)(const void*)call_data->proxy_instance.node;
 
   call_data->retval.u8 = leaf->get_next_instance(call_data->arg1.root_oid, call_data->arg2.root_oid_len, &call_data->proxy_instance);
 
@@ -160,7 +160,7 @@ get_next_instance_synced(void* ctx)
 static snmp_err_t
 do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance, snmp_threadsync_called_fn fn)
 {
-  const struct snmp_threadsync_node *threadsync_node = (const struct snmp_threadsync_node*)instance->node;
+  const struct snmp_threadsync_node *threadsync_node = (const struct snmp_threadsync_node*)(const void*)instance->node;
   struct threadsync_data *call_data = &threadsync_node->instance->data;
 
   if(threadsync_node->node.node.oid != threadsync_node->target->node.oid) {

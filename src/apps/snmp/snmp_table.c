@@ -46,7 +46,7 @@
 snmp_err_t snmp_table_get_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance)
 {
   snmp_err_t ret = SNMP_ERR_NOSUCHINSTANCE;
-  const struct snmp_table_node* table_node = (const struct snmp_table_node*)instance->node;
+  const struct snmp_table_node* table_node = (const struct snmp_table_node*)(const void*)instance->node;
 
   LWIP_UNUSED_ARG(root_oid);
   LWIP_UNUSED_ARG(root_oid_len);
@@ -87,7 +87,7 @@ snmp_err_t snmp_table_get_instance(const u32_t *root_oid, u8_t root_oid_len, str
 
 snmp_err_t snmp_table_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance)
 {
-  const struct snmp_table_node* table_node = (const struct snmp_table_node*)instance->node;
+  const struct snmp_table_node* table_node = (const struct snmp_table_node*)(const void*)instance->node;
   const struct snmp_table_col_def* col_def;
   struct snmp_obj_id row_oid;
   u32_t column = 0;
@@ -164,7 +164,7 @@ snmp_err_t snmp_table_get_next_instance(const u32_t *root_oid, u8_t root_oid_len
 snmp_err_t snmp_table_simple_get_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance)
 {
   snmp_err_t ret = SNMP_ERR_NOSUCHINSTANCE;
-  const struct snmp_table_simple_node* table_node = (const struct snmp_table_simple_node*)instance->node;
+  const struct snmp_table_simple_node* table_node = (const struct snmp_table_simple_node*)(const void*)instance->node;
 
   LWIP_UNUSED_ARG(root_oid);
   LWIP_UNUSED_ARG(root_oid_len);
@@ -226,7 +226,7 @@ snmp_err_t snmp_table_simple_get_instance(const u32_t *root_oid, u8_t root_oid_l
 
 snmp_err_t snmp_table_simple_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance)
 {
-  const struct snmp_table_simple_node* table_node = (const struct snmp_table_simple_node*)instance->node;
+  const struct snmp_table_simple_node* table_node = (const struct snmp_table_simple_node*)(const void*)instance->node;
   const struct snmp_table_simple_col_def* col_def;
   struct snmp_obj_id row_oid;
   u32_t column = 0;

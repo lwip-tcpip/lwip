@@ -636,7 +636,7 @@ snmp_get_node_instance_from_oid(const u32_t *oid, u8_t oid_len, struct snmp_node
     mn = snmp_mib_tree_resolve_exact(mib, oid, oid_len, &oid_instance_len);
     if ((mn != NULL) && (mn->node_type != SNMP_NODE_TREE)) {
       /* get instance */
-      const struct snmp_leaf_node* leaf_node = (const struct snmp_leaf_node*)mn;
+      const struct snmp_leaf_node* leaf_node = (const struct snmp_leaf_node*)(const void*)mn;
 
       node_instance->node = mn;
       snmp_oid_assign(&node_instance->instance_oid, oid + (oid_len - oid_instance_len), oid_instance_len);
@@ -715,7 +715,7 @@ snmp_get_next_node_instance_from_oid(const u32_t *oid, u8_t oid_len, snmp_valida
       node_instance->reference.ptr    = NULL;
       node_instance->reference_len    = 0;
 
-      result = ((const struct snmp_leaf_node*)mn)->get_next_instance(
+      result = ((const struct snmp_leaf_node*)(const void*)mn)->get_next_instance(
         node_oid->id,
         node_oid->len,
         node_instance);
@@ -883,7 +883,7 @@ snmp_mib_tree_resolve_next(const struct snmp_mib *mib, const u32_t *oid, u8_t oi
   }
 
   /* first build node stack related to passed oid (as far as possible), then go backwards to determine the next node */
-  node_stack[nsi] = (const struct snmp_tree_node*)mib->root_node;
+  node_stack[nsi] = (const struct snmp_tree_node*)(const void*)mib->root_node;
   while (oid_offset < oid_len) {
     /* search for matching sub node */
     u32_t i = node_stack[nsi]->subnode_count;
@@ -901,7 +901,7 @@ snmp_mib_tree_resolve_next(const struct snmp_mib *mib, const u32_t *oid, u8_t oi
       break;
     }
     nsi++;
-    node_stack[nsi] = (const struct snmp_tree_node*)(*node);
+    node_stack[nsi] = (const struct snmp_tree_node*)(const void*)(*node);
 
     oid_offset++;
   }
@@ -940,7 +940,7 @@ snmp_mib_tree_resolve_next(const struct snmp_mib *mib, const u32_t *oid, u8_t oi
       if (subnode->node_type == SNMP_NODE_TREE) {
         /* next is a tree node, go into it and start searching */
         nsi++;
-        node_stack[nsi] = (const struct snmp_tree_node*)subnode;
+        node_stack[nsi] = (const struct snmp_tree_node*)(const void*)subnode;
         subnode_oid = 0;
       } else {
         /* we found a leaf node -> fill oidret and return it */
