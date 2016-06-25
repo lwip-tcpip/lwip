@@ -1542,7 +1542,7 @@ again:
         break;
       default:
         decode_len = 0;
-        LWIP_DEBUGF(DHCP_DEBUG, ("skipping option %"U16_F" in options\n", op));
+        LWIP_DEBUGF(DHCP_DEBUG, ("skipping option %"U16_F" in options\n", (u16_t)op));
         break;
     }
     offset += len + 2;
