@@ -183,8 +183,8 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define TCPH_HDRLEN(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 12)
-#define TCPH_FLAGS(phdr)  (ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS)
+#define TCPH_HDRLEN(phdr) ((u16_t)(ntohs((phdr)->_hdrlen_rsvd_flags) >> 12))
+#define TCPH_FLAGS(phdr)  ((u16_t)(ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS))
 
 #define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | TCPH_FLAGS(phdr))
 #define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & PP_HTONS(~TCP_FLAGS)) | htons(flags))

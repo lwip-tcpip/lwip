@@ -334,7 +334,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
   /* check for configured max queuelen and possible overflow */
   if ((pcb->snd_queuelen >= TCP_SND_QUEUELEN) || (pcb->snd_queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too long queue %"U16_F" (max %"U16_F")\n",
-      pcb->snd_queuelen, TCP_SND_QUEUELEN));
+      pcb->snd_queuelen, (u16_t)TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
@@ -763,7 +763,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
   if (((pcb->snd_queuelen >= TCP_SND_QUEUELEN) || (pcb->snd_queuelen > TCP_SNDQUEUELEN_OVERFLOW)) &&
       ((flags & TCP_FIN) == 0)) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_enqueue_flags: too long queue %"U16_F" (max %"U16_F")\n",
-                                       pcb->snd_queuelen, TCP_SND_QUEUELEN));
+                                       pcb->snd_queuelen, (u16_t)TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
@@ -1461,7 +1461,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_FR_DEBUG,
                   ("tcp_receive: The minimum value for ssthresh %"TCPWNDSIZE_F
                    " should be min 2 mss %"U16_F"...\n",
-                   pcb->ssthresh, 2*pcb->mss));
+                   pcb->ssthresh, (u16_t)(2*pcb->mss)));
       pcb->ssthresh = 2*pcb->mss;
     }
 
@@ -1494,7 +1494,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n",
-                          tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
+                          tcp_ticks, pcb->tmr, (u16_t)pcb->keep_cnt_sent));
 
   p = tcp_output_alloc_header(pcb, 0, 0, htonl(pcb->snd_nxt - 1));
   if (p == NULL) {
@@ -1554,7 +1554,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG,
               ("tcp_zero_window_probe: tcp_ticks %"U32_F
                "   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n",
-               tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
+               tcp_ticks, pcb->tmr, (u16_t)pcb->keep_cnt_sent));
 
   seg = pcb->unacked;
 

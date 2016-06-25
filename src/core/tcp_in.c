@@ -1241,7 +1241,7 @@ tcp_receive(struct tcp_pcb *pcb)
       m = (s16_t)(tcp_ticks - pcb->rttest);
 
       LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: experienced rtt %"U16_F" ticks (%"U16_F" msec).\n",
-                                  m, m * TCP_SLOW_INTERVAL));
+                                  m, (u16_t)(m * TCP_SLOW_INTERVAL)));
 
       /* This is taken directly from VJs original code in his paper */
       m = m - (pcb->sa >> 3);
@@ -1254,7 +1254,7 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->rto = (pcb->sa >> 3) + pcb->sv;
 
       LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: RTO %"U16_F" (%"U16_F" milliseconds)\n",
-                                  pcb->rto, pcb->rto * TCP_SLOW_INTERVAL));
+                                  pcb->rto, (u16_t)(pcb->rto * TCP_SLOW_INTERVAL)));
 
       pcb->rttest = 0;
     }

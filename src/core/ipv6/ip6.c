@@ -422,12 +422,12 @@ ip6_input(struct pbuf *p, struct netif *inp)
     if (IP6_HLEN > p->len) {
       LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
         ("IPv6 header (len %"U16_F") does not fit in first pbuf (len %"U16_F"), IP packet dropped.\n",
-            IP6_HLEN, p->len));
+            (u16_t)IP6_HLEN, p->len));
     }
     if ((IP6H_PLEN(ip6hdr) + IP6_HLEN) > p->tot_len) {
       LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
         ("IPv6 (plen %"U16_F") is longer than pbuf (len %"U16_F"), IP packet dropped.\n",
-            IP6H_PLEN(ip6hdr) + IP6_HLEN, p->tot_len));
+            (u16_t)(IP6H_PLEN(ip6hdr) + IP6_HLEN), p->tot_len));
     }
     /* free (drop) packet pbufs */
     pbuf_free(p);
@@ -755,7 +755,7 @@ options_done:
         icmp6_param_problem(p, ICMP6_PP_HEADER, ip_data.current_ip_header_tot_len - hlen);
       }
 #endif /* LWIP_ICMP */
-      LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %"U16_F"\n", IP6H_NEXTH(ip6hdr)));
+      LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %"U16_F"\n", (u16_t)IP6H_NEXTH(ip6hdr)));
       pbuf_free(p);
       IP6_STATS_INC(ip6.proterr);
       IP6_STATS_INC(ip6.drop);
@@ -870,7 +870,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 
   IP6_STATS_INC(ip6.xmit);
 
-  LWIP_DEBUGF(IP6_DEBUG, ("ip6_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], netif->num));
+  LWIP_DEBUGF(IP6_DEBUG, ("ip6_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], (u16_t)netif->num));
   ip6_debug_print(p);
 
 #if ENABLE_LOOPBACK

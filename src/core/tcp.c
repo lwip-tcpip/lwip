@@ -748,7 +748,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   }
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: received %"U16_F" bytes, wnd %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F").\n",
-         len, pcb->rcv_wnd, TCP_WND_MAX(pcb) - pcb->rcv_wnd));
+         len, pcb->rcv_wnd, (u16_t)(TCP_WND_MAX(pcb) - pcb->rcv_wnd)));
 }
 
 /**
@@ -1948,12 +1948,12 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("| %2"U16_F" |   |%"U16_F"%"U16_F"%"U16_F"%"U16_F"%"U16_F"%"U16_F"|     %5"U16_F"     | (hdrlen, flags (",
        TCPH_HDRLEN(tcphdr),
-         TCPH_FLAGS(tcphdr) >> 5 & 1,
-         TCPH_FLAGS(tcphdr) >> 4 & 1,
-         TCPH_FLAGS(tcphdr) >> 3 & 1,
-         TCPH_FLAGS(tcphdr) >> 2 & 1,
-         TCPH_FLAGS(tcphdr) >> 1 & 1,
-         TCPH_FLAGS(tcphdr) & 1,
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 5 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 4 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 3 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 2 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 1 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr)      & 1),
          ntohs(tcphdr->wnd)));
   tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
   LWIP_DEBUGF(TCP_DEBUG, ("), win)\n"));

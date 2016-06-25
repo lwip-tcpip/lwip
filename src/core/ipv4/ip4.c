@@ -381,7 +381,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   /* identify the IP header */
   iphdr = (struct ip_hdr *)p->payload;
   if (IPH_V(iphdr) != 4) {
-    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", IPH_V(iphdr)));
+    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", (u16_t)IPH_V(iphdr)));
     ip4_debug_print(p);
     pbuf_free(p);
     IP_STATS_INC(ip.err);
@@ -598,7 +598,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {
 #if IP_REASSEMBLY /* packet fragment reassembly code present? */
     LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip4_reass()\n",
-      ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
+      ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), (u16_t)!!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (u16_t)((ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8)));
     /* reassemble the packet*/
     p = ip4_reass(p);
     /* packet not fully reassembled yet? */
@@ -692,7 +692,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_ICMP */
       pbuf_free(p);
 
-      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Unsupported transport protocol %"U16_F"\n", IPH_PROTO(iphdr)));
+      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Unsupported transport protocol %"U16_F"\n", (u16_t)IPH_PROTO(iphdr)));
 
       IP_STATS_INC(ip.proterr);
       IP_STATS_INC(ip.drop);
@@ -916,7 +916,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 
   IP_STATS_INC(ip.xmit);
 
-  LWIP_DEBUGF(IP_DEBUG, ("ip4_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], netif->num));
+  LWIP_DEBUGF(IP_DEBUG, ("ip4_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], (u16_t)netif->num));
   ip4_debug_print(p);
 
 #if ENABLE_LOOPBACK
@@ -1036,21 +1036,21 @@ ip4_debug_print(struct pbuf *p)
   LWIP_DEBUGF(IP_DEBUG, ("IP header:\n"));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|%2"S16_F" |%2"S16_F" |  0x%02"X16_F" |     %5"U16_F"     | (v, hl, tos, len)\n",
-                    IPH_V(iphdr),
-                    IPH_HL(iphdr),
-                    IPH_TOS(iphdr),
+                    (u16_t)IPH_V(iphdr),
+                    (u16_t)IPH_HL(iphdr),
+                    (u16_t)IPH_TOS(iphdr),
                     ntohs(IPH_LEN(iphdr))));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|    %5"U16_F"      |%"U16_F"%"U16_F"%"U16_F"|    %4"U16_F"   | (id, flags, offset)\n",
                     ntohs(IPH_ID(iphdr)),
-                    ntohs(IPH_OFFSET(iphdr)) >> 15 & 1,
-                    ntohs(IPH_OFFSET(iphdr)) >> 14 & 1,
-                    ntohs(IPH_OFFSET(iphdr)) >> 13 & 1,
-                    ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK));
+                    (u16_t)(ntohs(IPH_OFFSET(iphdr)) >> 15 & 1),
+                    (u16_t)(ntohs(IPH_OFFSET(iphdr)) >> 14 & 1),
+                    (u16_t)(ntohs(IPH_OFFSET(iphdr)) >> 13 & 1),
+                    (u16_t)(ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|  %3"U16_F"  |  %3"U16_F"  |    0x%04"X16_F"     | (ttl, proto, chksum)\n",
-                    IPH_TTL(iphdr),
-                    IPH_PROTO(iphdr),
+                    (u16_t)IPH_TTL(iphdr),
+                    (u16_t)IPH_PROTO(iphdr),
                     ntohs(IPH_CHKSUM(iphdr))));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  | (src)\n",

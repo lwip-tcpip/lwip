@@ -214,10 +214,10 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
   LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
-                      (ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0,       \
-                      (ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0,       \
-                      (ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0,       \
-                      (ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0)
+                      (u16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
+                      (u16_t)((ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0),       \
+                      (u16_t)((ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0),       \
+                      (u16_t)((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
 #define ip4_addr_debug_print_val(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       ip4_addr1_16(&(ipaddr)),       \
