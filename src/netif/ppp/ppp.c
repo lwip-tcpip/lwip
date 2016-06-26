@@ -627,10 +627,6 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   memset(pcb, 0, sizeof(ppp_pcb));
 
   /* default configuration */
-#if LWIP_DNS
-  pcb->settings.usepeerdns = 1;
-#endif /* LWIP_DNS */
-
 #if PAP_SUPPORT
   pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
   pcb->settings.pap_max_transmits = UPAP_DEFTRANSMITS;

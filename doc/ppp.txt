@@ -278,6 +278,16 @@ ppp_set_default(ppp);
  */
 
 /*
+ * Basic PPP client configuration. Can only be set if PPP session is in the
+ * dead state (i.e. disconnected). We don't need to provide thread-safe
+ * equivalents through PPPAPI because those helpers are only changing
+ * structure members.
+ */
+
+/* Ask the peer for up to 2 DNS server addresses. */
+ppp_set_usepeerdns(ppp, 1);
+
+/*
  * Initiate PPP negotiation, without waiting (holdoff=0), can only be called
  * if PPP session is in the dead state (i.e. disconnected).
  */
@@ -450,10 +460,10 @@ from previous lwIP version is pretty easy:
 * ppp_sighup and ppp_close functions were merged using an optional argument
   "nocarrier" on ppp_close.
 
-* DNS servers are now only remotely asked if LWIP_DNS is set and we are now
-  unconditionally registering them, which is probably the wanted behavior in
-  almost all cases. If you need it conditional contact us and we will made it
-  conditional.
+* DNS servers are now only remotely asked if LWIP_DNS is set and if
+  ppp_set_usepeerdns() is set to true, they are now automatically registered
+  using the dns_setserver() function so you don't need to do that in the PPP
+  callback anymore.
 
 * PPPoS does not use the SIO API anymore, as such it now requires a serial
   output callback in place of sio_write

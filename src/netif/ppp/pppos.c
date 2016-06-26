@@ -357,11 +357,6 @@ pppos_listen(ppp_pcb *ppp, void *ctx)
   }
 #endif /* PPP_AUTH_SUPPORT */
 
-#if PPP_IPV4_SUPPORT && LWIP_DNS
-  /* Don't accept DNS from peer */
-  ppp->settings.usepeerdns = 0;
-#endif /* PPP_IPV4_SUPPORT && LWIP_DNS */
-
   /*
    * Default the in and out accm so that escape and flag characters
    * are always escaped.

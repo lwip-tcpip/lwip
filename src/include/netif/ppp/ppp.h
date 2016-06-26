@@ -466,6 +466,12 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
  * for PPP server support.
  */
 #define ppp_set_ipcp_dnsaddr(ppp, index, addr) (ppp->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr))
+
+/*
+ * Whether we ask the peer for up to 2 DNS server addresses. Received DNS server addresses are
+ * registered using the dns_setserver() function. Default is false.
+ */
+#define ppp_set_usepeerdns(ppp, boolval) (ppp->settings.usepeerdns = boolval)
 #endif /* LWIP_DNS */
 #endif /* PPP_IPV4_SUPPORT */
 
