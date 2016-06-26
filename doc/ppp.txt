@@ -171,6 +171,7 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
    * to do a much better signaling here ;-)
    */
   ppp_connect(pcb, 30);
+  /* OR ppp_listen(pcb); */
 }
 
 
@@ -272,8 +273,8 @@ ppp_set_default(ppp);
 
 
 /*
- * Initiate PPP connection
- * =======================
+ * Initiate PPP client connection
+ * ==============================
  */
 
 /*
@@ -282,6 +283,42 @@ ppp_set_default(ppp);
  */
 u16_t holdoff = 0;
 ppp_connect(ppp, holdoff);
+
+
+/*
+ * Initiate PPP server listener
+ * ============================
+ */
+
+/*
+ * Basic PPP server configuration. Can only be set if PPP session is in the
+ * dead state (i.e. disconnected). We don't need to provide thread-safe
+ * equivalents through PPPAPI because those helpers are only changing
+ * structure members.
+ */
+ip4_addr_t addr;
+
+/* Set our address */
+IP4_ADDR(&addr, 192,168,0,1);
+ppp_set_ipcp_ouraddr(ppp, &addr);
+
+/* Set peer(his) address */
+IP4_ADDR(&addr, 192,168,0,2);
+ppp_set_ipcp_hisaddr(ppp, &addr);
+
+/* Set primary DNS server */
+IP4_ADDR(&addr, 192,168,10,20);
+ppp_set_ipcp_dnsaddr(ppp, 0, &addr);
+
+/* Set secondary DNS server */
+IP4_ADDR(&addr, 192,168,10,21);
+ppp_set_ipcp_dnsaddr(ppp, 1, &addr);
+
+/*
+ * Initiate PPP listener (i.e. wait for an incoming connection), can only
+ * be called if PPP session is in the dead state (i.e. disconnected).
+ */
+ppp_listen(ppp);
 
 
 /*
