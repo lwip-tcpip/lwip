@@ -261,31 +261,26 @@ ppp = pppol2tp_create(&ppp_netif,
 
 
 /*
- * PPP link configuration
- * ======================
- */
-
-/* Auth configuration, this is pretty self-explanatory */
-ppp_set_auth(ppp, PPPAUTHTYPE_ANY, "login", "password");
-
-/* Set this interface as default route */
-ppp_set_default(ppp);
-
-
-/*
  * Initiate PPP client connection
  * ==============================
  */
+
+/* Set this interface as default route */
+ppp_set_default(ppp);
 
 /*
  * Basic PPP client configuration. Can only be set if PPP session is in the
  * dead state (i.e. disconnected). We don't need to provide thread-safe
  * equivalents through PPPAPI because those helpers are only changing
- * structure members.
+ * structure members while session is inactive for lwIP core. Configuration
+ * only need to be done once.
  */
 
 /* Ask the peer for up to 2 DNS server addresses. */
 ppp_set_usepeerdns(ppp, 1);
+
+/* Auth configuration, this is pretty self-explanatory */
+ppp_set_auth(ppp, PPPAUTHTYPE_ANY, "login", "password");
 
 /*
  * Initiate PPP negotiation, without waiting (holdoff=0), can only be called
@@ -304,7 +299,8 @@ ppp_connect(ppp, holdoff);
  * Basic PPP server configuration. Can only be set if PPP session is in the
  * dead state (i.e. disconnected). We don't need to provide thread-safe
  * equivalents through PPPAPI because those helpers are only changing
- * structure members.
+ * structure members while session is inactive for lwIP core. Configuration
+ * only need to be done once.
  */
 ip4_addr_t addr;
 
@@ -323,6 +319,9 @@ ppp_set_ipcp_dnsaddr(ppp, 0, &addr);
 /* Set secondary DNS server */
 IP4_ADDR(&addr, 192,168,10,21);
 ppp_set_ipcp_dnsaddr(ppp, 1, &addr);
+
+/* Auth configuration, this is pretty self-explanatory */
+ppp_set_auth(ppp, PPPAUTHTYPE_ANY, "login", "password");
 
 /*
  * Initiate PPP listener (i.e. wait for an incoming connection), can only
