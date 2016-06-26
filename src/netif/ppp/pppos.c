@@ -337,6 +337,9 @@ pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 #if PPP_IPV4_SUPPORT
   ipcp_options *ipcp_wo;
+#if LWIP_DNS
+  ipcp_options *ipcp_ao;
+#endif /* LWIP_DNS */
 #endif /* PPP_IPV4_SUPPORT */
   lcp_options *lcp_wo;
   PPPOS_DECL_PROTECT(lev);
@@ -365,8 +368,12 @@ pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs)
   ipcp_wo->ouraddr = ip4_addr_get_u32(&addrs->our_ipaddr);
   ipcp_wo->hisaddr = ip4_addr_get_u32(&addrs->his_ipaddr);
 #if LWIP_DNS
-  ipcp_wo->dnsaddr[0] = ip4_addr_get_u32(&addrs->dns1);
-  ipcp_wo->dnsaddr[1] = ip4_addr_get_u32(&addrs->dns2);
+  /* Don't accept DNS from peer */
+  ppp->settings.usepeerdns = 0;
+
+  ipcp_ao = &ppp->ipcp_allowoptions;
+  ipcp_ao->dnsaddr[0] = ip4_addr_get_u32(&addrs->dns1);
+  ipcp_ao->dnsaddr[1] = ip4_addr_get_u32(&addrs->dns2);
 #endif /* LWIP_DNS */
 #else /* PPP_IPV4_SUPPORT */
   LWIP_UNUSED_ARG(addrs);
