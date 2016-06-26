@@ -246,9 +246,7 @@ static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx) {
   LWIP_UNUSED_ARG(ppp);
 
   sys_untimeout(pppol2tp_timeout, l2tp);
-  if (l2tp->udp != NULL) {
-    udp_remove(l2tp->udp);
-  }
+  udp_remove(l2tp->udp);
   LWIP_MEMPOOL_FREE(PPPOL2TP_PCB, l2tp);
   return ERR_OK;
 }
