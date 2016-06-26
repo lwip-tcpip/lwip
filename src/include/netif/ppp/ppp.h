@@ -453,6 +453,22 @@ struct ppp_pcb_s {
 #define PPPAUTHTYPE_ANY       0xff
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
+#if PPP_IPV4_SUPPORT
+/*
+ * Set PPP interface "our" and "his" IPv4 addresses. This is mostly necessary for PPP server
+ * support but it can also be used on a PPP link where each side choose its own IP address.
+ */
+#define ppp_set_ipcp_ouraddr(ppp, addr) (ppp->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr))
+#define ppp_set_ipcp_hisaddr(ppp, addr) (ppp->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr))
+#if LWIP_DNS
+/*
+ * Set DNS server addresses that are sent if the peer asks for them. This is mostly necessary
+ * for PPP server support.
+ */
+#define ppp_set_ipcp_dnsaddr(ppp, index, addr) (ppp->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr))
+#endif /* LWIP_DNS */
+#endif /* PPP_IPV4_SUPPORT */
+
 /*
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
