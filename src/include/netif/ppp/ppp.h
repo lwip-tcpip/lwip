@@ -483,6 +483,13 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #endif /* PPP_IPV4_SUPPORT */
 
 /*
+ * Wait for up to intval milliseconds for a valid PPP packet from the peer.
+ * At the end of this  time, or when a valid PPP packet is received from the
+ * peer, we commence negotiation by sending our first LCP packet.
+ */
+#define ppp_set_listen_time(ppp, intval) (ppp->settings.listen_time = intval)
+
+/*
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
  */
