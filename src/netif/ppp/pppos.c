@@ -351,12 +351,6 @@ pppos_listen(ppp_pcb *ppp, void *ctx)
   lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->silent = 1;
 
-#if PPP_AUTH_SUPPORT
-  if (ppp->settings.user && ppp->settings.passwd) {
-    ppp->settings.auth_required = 1;
-  }
-#endif /* PPP_AUTH_SUPPORT */
-
   /*
    * Default the in and out accm so that escape and flag characters
    * are always escaped.

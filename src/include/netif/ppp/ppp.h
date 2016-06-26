@@ -453,6 +453,13 @@ struct ppp_pcb_s {
 #define PPPAUTHTYPE_ANY       0xff
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
+#if PPP_AUTH_SUPPORT
+/*
+ * Whether peer is required to authenticate. This is mostly necessary for PPP server support.
+ */
+#define ppp_set_auth_required(ppp, boolval) (ppp->settings.auth_required = boolval)
+#endif /* PPP_AUTH_SUPPORT */
+
 #if PPP_IPV4_SUPPORT
 /*
  * Set PPP interface "our" and "his" IPv4 addresses. This is mostly necessary for PPP server

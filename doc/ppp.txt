@@ -323,6 +323,9 @@ ppp_set_ipcp_dnsaddr(ppp, 1, &addr);
 /* Auth configuration, this is pretty self-explanatory */
 ppp_set_auth(ppp, PPPAUTHTYPE_ANY, "login", "password");
 
+/* Require peer to authenticate */
+ppp_set_auth_required(ppp, 1);
+
 /*
  * Initiate PPP listener (i.e. wait for an incoming connection), can only
  * be called if PPP session is in the dead state (i.e. disconnected).
