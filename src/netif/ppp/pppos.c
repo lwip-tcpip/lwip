@@ -335,7 +335,6 @@ static err_t
 pppos_listen(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  lcp_options *lcp_wo;
   PPPOS_DECL_PROTECT(lev);
 
 #if PPP_INPROC_IRQ_SAFE
@@ -346,10 +345,6 @@ pppos_listen(ppp_pcb *ppp, void *ctx)
   ppp_link_start(ppp);
   /* reset PPPoS control block to its initial state */
   memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->last_xmit - (char*)0 ) );
-
-  /* Wait passively */
-  lcp_wo = &ppp->lcp_wantoptions;
-  lcp_wo->silent = 1;
 
   /*
    * Default the in and out accm so that escape and flag characters

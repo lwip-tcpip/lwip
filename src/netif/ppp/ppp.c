@@ -278,11 +278,17 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
  * established before calling this.
  */
 err_t ppp_listen(ppp_pcb *pcb) {
+  lcp_options *lcp_wo;
+
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_ALREADY;
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_listen[%d]\n", pcb->netif->num));
+
+  /* Wait passively */
+  lcp_wo = &pcb->lcp_wantoptions;
+  lcp_wo->silent = 1;
 
   if (pcb->link_cb->listen) {
     return pcb->link_cb->listen(pcb, pcb->link_ctx_cb);
