@@ -141,7 +141,7 @@ struct link_callbacks {
   err_t (*connect) (ppp_pcb *pcb, void *ctx);
 #if PPP_SERVER
   /* Listen for an incoming connection (Passive mode) */
-  err_t (*listen) (ppp_pcb *pcb, void *ctx, const struct ppp_addrs *addrs);
+  err_t (*listen) (ppp_pcb *pcb, void *ctx);
 #endif /* PPP_SERVER */
   /* End a connection (i.e. initiate disconnect phase) */
   void (*disconnect) (ppp_pcb *pcb, void *ctx);

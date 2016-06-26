@@ -58,7 +58,7 @@ static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol);
 static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
 #if PPP_SERVER
-static err_t pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs);
+static err_t pppos_listen(ppp_pcb *ppp, void *ctx);
 #endif /* PPP_SERVER */
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
@@ -332,15 +332,9 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 
 #if PPP_SERVER
 static err_t
-pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs)
+pppos_listen(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-#if PPP_IPV4_SUPPORT
-  ipcp_options *ipcp_wo;
-#if LWIP_DNS
-  ipcp_options *ipcp_ao;
-#endif /* LWIP_DNS */
-#endif /* PPP_IPV4_SUPPORT */
   lcp_options *lcp_wo;
   PPPOS_DECL_PROTECT(lev);
 
@@ -363,21 +357,10 @@ pppos_listen(ppp_pcb *ppp, void *ctx, const struct ppp_addrs *addrs)
   }
 #endif /* PPP_AUTH_SUPPORT */
 
-#if PPP_IPV4_SUPPORT
-  ipcp_wo = &ppp->ipcp_wantoptions;
-  ipcp_wo->ouraddr = ip4_addr_get_u32(&addrs->our_ipaddr);
-  ipcp_wo->hisaddr = ip4_addr_get_u32(&addrs->his_ipaddr);
-#if LWIP_DNS
+#if PPP_IPV4_SUPPORT && LWIP_DNS
   /* Don't accept DNS from peer */
   ppp->settings.usepeerdns = 0;
-
-  ipcp_ao = &ppp->ipcp_allowoptions;
-  ipcp_ao->dnsaddr[0] = ip4_addr_get_u32(&addrs->dns1);
-  ipcp_ao->dnsaddr[1] = ip4_addr_get_u32(&addrs->dns2);
-#endif /* LWIP_DNS */
-#else /* PPP_IPV4_SUPPORT */
-  LWIP_UNUSED_ARG(addrs);
-#endif /* PPP_IPV4_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT && LWIP_DNS */
 
   /*
    * Default the in and out accm so that escape and flag characters

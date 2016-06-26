@@ -321,7 +321,7 @@ pppapi_do_ppp_listen(struct tcpip_api_call_data *m)
 {
   struct pppapi_msg *msg = (struct pppapi_msg *)m;
 
-  return ppp_listen(msg->msg.ppp, API_EXPR_REF(msg->msg.msg.listen.addrs));
+  return ppp_listen(msg->msg.ppp);
 }
 
 /**
@@ -329,14 +329,13 @@ pppapi_do_ppp_listen(struct tcpip_api_call_data *m)
  * tcpip_thread context.
  */
 err_t
-pppapi_listen(ppp_pcb *pcb, struct ppp_addrs *addrs)
+pppapi_listen(ppp_pcb *pcb)
 {
   err_t err;
   PPPAPI_VAR_DECLARE(msg);
   PPPAPI_VAR_ALLOC(msg);
 
   PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  PPPAPI_VAR_REF(msg).msg.msg.listen.addrs = PPPAPI_VAR_REF(addrs);
   err = tcpip_api_call(pppapi_do_ppp_listen, &PPPAPI_VAR_REF(msg).call);
   PPPAPI_VAR_FREE(msg);
   return err;
