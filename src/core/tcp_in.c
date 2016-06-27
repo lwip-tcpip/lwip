@@ -697,32 +697,27 @@ static err_t
 tcp_process(struct tcp_pcb *pcb)
 {
   struct tcp_seg *rseg;
-  u8_t acceptable = 0;
   err_t err;
 
   err = ERR_OK;
 
   /* Process incoming RST segments. */
   if (flags & TCP_RST) {
-    /* First, determine if the reset is acceptable. */
-    if (pcb->state == SYN_SENT) {
-      if (ackno == pcb->snd_nxt) {
-        acceptable = 1;
-      }
-    } else {
-      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt,
-                          pcb->rcv_nxt + pcb->rcv_wnd)) {
-        acceptable = 1;
-      }
-    }
-
-    if (acceptable) {
+    /* First, determine if the reset is acceptable. (in case of RST only if the sequence number matches) */
+    if (ackno == pcb->snd_nxt) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: Connection RESET\n"));
       LWIP_ASSERT("tcp_input: pcb->state != CLOSED", pcb->state != CLOSED);
       recv_flags |= TF_RESET;
       pcb->flags &= ~TF_ACK_DELAY;
       return ERR_RST;
     } else {
+      /* if the sequence number is inside the window, we only send an ACK 
+      and wait for a re-send with matching sequence number.
+      This is protection against CVE-2004-0230 (RST spoofing attack) */
+      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt,
+                          pcb->rcv_nxt + pcb->rcv_wnd)) {
+        tcp_ack_now(pcb);
+      }
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: unacceptable reset seqno %"U32_F" rcv_nxt %"U32_F"\n",
        seqno, pcb->rcv_nxt));
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_process: unacceptable reset seqno %"U32_F" rcv_nxt %"U32_F"\n",
