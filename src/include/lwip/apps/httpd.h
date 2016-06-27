@@ -99,11 +99,6 @@ void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
 
 #if LWIP_HTTPD_CGI || LWIP_HTTPD_CGI_SSI
 
-/* The maximum number of parameters that the CGI handler can be sent. */
-#ifndef LWIP_HTTPD_MAX_CGI_PARAMETERS
-#define LWIP_HTTPD_MAX_CGI_PARAMETERS 16
-#endif
-
 #if LWIP_HTTPD_CGI_SSI
 /** Define this generic CGI handler in your application.
  * It is called once for every URI with parameters.
