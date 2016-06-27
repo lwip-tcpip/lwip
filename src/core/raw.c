@@ -62,6 +62,7 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
 {
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
+#if LWIP_IPV4 && LWIP_IPV6
   /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
   if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
 #if LWIP_IPV4 && IP_SOF_BROADCAST_RECV
@@ -71,6 +72,7 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
 #endif /* LWIP_IPV4 && IP_SOF_BROADCAST_RECV */
     return 1;
   }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
   
   /* Only need to check PCB if incoming IP version matches PCB IP version */
   if(IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
