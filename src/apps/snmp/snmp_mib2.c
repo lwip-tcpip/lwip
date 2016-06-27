@@ -61,7 +61,7 @@ snmp_mib2_lwip_synchronizer(snmp_threadsync_called_fn fn, void* arg)
   fn(arg);
   UNLOCK_TCPIP_CORE();
 #else
-  tcpip_callback_with_block(fn, arg, 1);
+  tcpip_callback(fn, arg);
 #endif
 }
 
