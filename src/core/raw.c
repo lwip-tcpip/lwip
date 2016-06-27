@@ -65,11 +65,11 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
 #if LWIP_IPV4 && LWIP_IPV6
   /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
   if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
-#if LWIP_IPV4 && IP_SOF_BROADCAST_RECV
+#if IP_SOF_BROADCAST_RECV
     if((broadcast != 0) && !ip_get_option(pcb, SOF_BROADCAST)) {
       return 0;
     }
-#endif /* LWIP_IPV4 && IP_SOF_BROADCAST_RECV */
+#endif /* IP_SOF_BROADCAST_RECV */
     return 1;
   }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
