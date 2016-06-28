@@ -192,6 +192,7 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
 
           /** send to the TRAP destination */
           snmp_sendto(snmp_traps_handle, p, &td->dip, SNMP_TRAP_PORT);
+          pbuf_free(p);
         } else {
           err = ERR_MEM;
         }
