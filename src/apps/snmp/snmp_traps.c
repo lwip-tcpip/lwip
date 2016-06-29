@@ -360,6 +360,9 @@ snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_s
   snmp_asn1_enc_s32t_cnt(trap->ts, &tlv.value_len);
   snmp_ans1_enc_tlv(pbuf_stream, &tlv);
   snmp_asn1_enc_s32t(pbuf_stream, tlv.value_len, trap->ts);
+
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, 0, 0);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
 }
 
 #endif /* LWIP_SNMP */
