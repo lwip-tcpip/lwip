@@ -208,7 +208,8 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
 err_t 
 snmp_send_trap_generic(s32_t generic_trap)
 {
-  return snmp_send_trap(NULL, generic_trap, 0);
+  static const struct snmp_obj_id oid = { 7, { 1, 3, 6, 1, 2, 1, 11 } };
+  return snmp_send_trap(&oid, generic_trap, 0);
 }
 
 err_t
