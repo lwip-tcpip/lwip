@@ -1447,7 +1447,7 @@
  * Your system should provide mutexes supporting priority inversion to use this.
  */
 #ifndef LWIP_TCPIP_CORE_LOCKING
-#define LWIP_TCPIP_CORE_LOCKING         0
+#define LWIP_TCPIP_CORE_LOCKING         1
 #endif
 
 /**
