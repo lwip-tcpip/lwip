@@ -47,15 +47,68 @@
 
 #include "arch/cc.h"
 
-/** Temporary: define format string for size_t if not defined in cc.h */
-#ifndef SZT_F
-#define SZT_F U32_F
-#endif /* SZT_F */
-/** Temporary upgrade helper: define format string for u8_t as hex if not
-    defined in cc.h */
+/** Define this to 1 in arch/cc.h of your port if your compiler does not provide
+ * the stdint.h header. This cannot be #defined in lwipopts.h since 
+ * this is not an option of lwIP itself, but an option of the lwIP port
+ * to your system.
+ * Additionally, this header is meant to be #included in lwipopts.h
+ * (you may need to declare function prototypes in there).
+ */
+#ifndef LWIP_NO_STDINT_H
+#define LWIP_NO_STDINT_H 0
+#endif
+
+/* Define generic types used in lwIP */
+#if !LWIP_NO_STDINT_H
+#include <stdint.h>
+typedef uint8_t   u8_t;
+typedef int8_t    s8_t;
+typedef uint16_t  u16_t;
+typedef int16_t   s16_t;
+typedef uint32_t  u32_t;
+typedef int32_t   s32_t;
+typedef uintptr_t mem_ptr_t;
+#endif
+
+/** Define this to 1 in arch/cc.h of your port if your compiler does not provide
+ * the inttypes.h header. This cannot be #defined in lwipopts.h since 
+ * this is not an option of lwIP itself, but an option of the lwIP port
+ * to your system.
+ * Additionally, this header is meant to be #included in lwipopts.h
+ * (you may need to declare function prototypes in there).
+ */
+#ifndef LWIP_NO_INTTYPES_H
+#define LWIP_NO_INTTYPES_H 0
+#endif
+
+/* Define (sn)printf formatters for these lwIP types */
+#if !LWIP_NO_INTTYPES_H
+#include <inttypes.h>
 #ifndef X8_F
-#define X8_F  "02x"
-#endif /* X8_F */
+#define X8_F  "02"PRIx8
+#endif
+#ifndef U16_F
+#define U16_F PRIu16
+#endif
+#ifndef S16_F
+#define S16_F PRId16
+#endif
+#ifndef X16_F
+#define X16_F PRIx16
+#endif
+#ifndef U32_F
+#define U32_F PRIu32
+#endif
+#ifndef S32_F
+#define S32_F PRId32
+#endif
+#ifndef X32_F
+#define X32_F PRIx32
+#endif
+#ifndef SZT_F
+#define SZT_F PRIuMAX
+#endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {
