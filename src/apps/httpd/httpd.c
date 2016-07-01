@@ -1002,7 +1002,8 @@ get_http_headers(struct http_state *hs, const char *uri)
     add_content_len = 0; /* @todo: get maximum file length from SSI */
   } else
 #endif /* LWIP_HTTPD_SSI */
-  if ((hs->handle == NULL) || ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
+  if ((hs->handle == NULL) ||
+      ((hs->handle->flags & (FS_FILE_FLAGS_HEADER_INCLUDED|FS_FILE_FLAGS_HEADER_PERSISTENT)) == FS_FILE_FLAGS_HEADER_INCLUDED)) {
     add_content_len = 0;
   }
   if (add_content_len) {
@@ -2381,7 +2382,8 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
      } else
 #endif /* LWIP_HTTPD_SSI */
      {
-       if ((hs->handle != NULL) && ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
+       if ((hs->handle != NULL) &&
+           ((hs->handle->flags & (FS_FILE_FLAGS_HEADER_INCLUDED|FS_FILE_FLAGS_HEADER_PERSISTENT)) == FS_FILE_FLAGS_HEADER_INCLUDED)) {
          hs->keepalive = 0;
        }
      }
