@@ -427,6 +427,7 @@ struct ppp_pcb_s {
  * only be called while the PPP is in the dead phase (i.e. disconnected).
  */
 
+#if PPP_AUTH_SUPPORT
 /*
  * Set PPP authentication.
  *
@@ -458,7 +459,6 @@ struct ppp_pcb_s {
 #define PPPAUTHTYPE_ANY       0xff
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
-#if PPP_AUTH_SUPPORT
 /*
  * Whether peer is required to authenticate. This is mostly necessary for PPP server support.
  */
