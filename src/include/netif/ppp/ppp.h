@@ -541,6 +541,46 @@ void ppp_set_mppe(ppp_pcb *pcb, u8_t flags);
 #define ppp_set_silent(ppp, boolval) (ppp->lcp_wantoptions.silent = boolval)
 
 /*
+ * If set, enable protocol field compression negotiation in both the receive and
+ * the transmit direction.
+ *
+ * Default is true.
+ */
+#define ppp_set_neg_pcomp(ppp, boolval) (ppp->lcp_wantoptions.neg_pcompression = \
+                                         ppp->lcp_allowoptions.neg_pcompression = boolval)
+
+/*
+ * If set, enable Address/Control compression in both the receive and the transmit
+ * direction.
+ *
+ * Default is true.
+ */
+#define ppp_set_neg_accomp(ppp, boolval) (ppp->lcp_wantoptions.neg_accompression = \
+                                          ppp->lcp_allowoptions.neg_accompression = boolval)
+
+/*
+ * If set, enable asyncmap negotiation. Otherwise forcing all control characters to
+ * be escaped for both the transmit and the receive direction.
+ *
+ * Default is true.
+ */
+#define ppp_set_neg_asyncmap(ppp, boolval) (ppp->lcp_wantoptions.neg_asyncmap = \
+                                            ppp->lcp_allowoptions.neg_asyncmap = boolval)
+
+/*
+ * This option sets the Async-Control-Character-Map (ACCM) for this end of the link.
+ * The ACCM is a set of 32 bits, one for each of the ASCII control characters with
+ * values from 0 to 31, where a 1 bit  indicates that the corresponding control
+ * character should not be used in PPP packets sent to this system. The map is
+ * an unsigned 32 bits integer where the least significant bit (00000001) represents
+ * character 0 and the most significant bit (80000000) represents character 31.
+ * We will then ask the peer to send these characters as a 2-byte escape sequence.
+ *
+ * Default is 0.
+ */
+#define ppp_set_asyncmap(ppp, intval) (ppp->lcp_wantoptions.asyncmap = intval)
+
+/*
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
  */
