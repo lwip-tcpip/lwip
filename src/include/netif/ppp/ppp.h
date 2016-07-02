@@ -510,6 +510,20 @@ void ppp_set_mppe(ppp_pcb *pcb, u8_t flags);
 #define ppp_set_listen_time(ppp, intval) (ppp->settings.listen_time = intval)
 
 /*
+ * Enables the "passive" option in the LCP. With this option, we will attempt
+ * to initiate a connection; if no reply is received from the peer, we will
+ * then just wait passively for a valid LCP packet from the peer.
+ */
+#define ppp_set_passive(ppp, boolval) (ppp->lcp_wantoptions.passive = boolval)
+
+/*
+ * With this option, we will not transmit LCP packets to initiate a connection
+ * until a valid LCP packet is received from the peer. This is what we usually
+ * call the server mode.
+ */
+#define ppp_set_silent(ppp, boolval) (ppp->lcp_wantoptions.silent = boolval)
+
+/*
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
  */

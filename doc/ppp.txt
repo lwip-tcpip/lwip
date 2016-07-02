@@ -327,6 +327,17 @@ ppp_set_auth(ppp, PPPAUTHTYPE_ANY, "login", "password");
 ppp_set_auth_required(ppp, 1);
 
 /*
+ * Only for PPPoS, the PPP session should be up and waiting for input.
+ *
+ * Note: for PPPoS, ppp_connect() and ppp_listen() are actually the same thing.
+ * The listen call is meant for future support of PPPoE and PPPoL2TP server
+ * mode, where we will need to negotiate the incoming PPPoE session or L2TP
+ * session before initiating PPP itself. We need this call because there is
+ * two passive modes for PPPoS, ppp_set_passive and ppp_set_silent.
+ */
+ppp_set_silent(pppos, 1);
+
+/*
  * Initiate PPP listener (i.e. wait for an incoming connection), can only
  * be called if PPP session is in the dead state (i.e. disconnected).
  */
