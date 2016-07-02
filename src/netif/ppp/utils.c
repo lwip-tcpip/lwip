@@ -591,7 +591,7 @@ void ppp_print_string(const u_char *p, int len, void (*printer) (void *, const c
 		printer(arg, "\\t");
 		break;
 	    default:
-		printer(arg, "\\%.3o", c);
+		printer(arg, "\\%.3o", (u8_t)c);
 		/* no break */
 	    }
 	}
