@@ -234,6 +234,21 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #endif /* PPP_AUTH_SUPPORT */
 }
 
+#if MPPE_SUPPORT
+/* Set MPPE configuration */
+void ppp_set_mppe(ppp_pcb *pcb, u8_t flags) {
+  if (flags == PPP_MPPE_DISABLE) {
+    pcb->settings.require_mppe = 0;
+    return;
+  }
+
+  pcb->settings.require_mppe = 1;
+  pcb->settings.refuse_mppe_stateful = !(flags & PPP_MPPE_ALLOW_STATEFUL);
+  pcb->settings.refuse_mppe_40 = !!(flags & PPP_MPPE_REFUSE_40);
+  pcb->settings.refuse_mppe_128 = !!(flags & PPP_MPPE_REFUSE_128);
+}
+#endif /* MPPE_SUPPORT */
+
 #if PPP_NOTIFY_PHASE
 void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
   pcb->notify_phase_cb = notify_phase_cb;
@@ -657,10 +672,6 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
 #endif /* PPP_SERVER */
 #endif /* EAP_SUPPORT */
-
-#if MPPE_SUPPORT
-  pcb->settings.refuse_mppe_stateful = 1;
-#endif /* MPPE_SUPPORT */
 
   pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;

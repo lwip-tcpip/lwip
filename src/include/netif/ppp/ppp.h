@@ -482,6 +482,21 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #endif /* LWIP_DNS */
 #endif /* PPP_IPV4_SUPPORT */
 
+#if MPPE_SUPPORT
+/* Disable MPPE (Microsoft Point to Point Encryption). This parameter is exclusive. */
+#define PPP_MPPE_DISABLE           0x00
+/* Require the use of MPPE (Microsoft Point to Point Encryption). */
+#define PPP_MPPE_ENABLE            0x01
+/* Allow MPPE to use stateful mode. Stateless mode is still attempted first. */
+#define PPP_MPPE_ALLOW_STATEFUL    0x02
+/* Refuse the use of MPPE with 40-bit encryption. Conflict with PPP_MPPE_REFUSE_128. */
+#define PPP_MPPE_REFUSE_40         0x04
+/* Refuse the use of MPPE with 128-bit encryption. Conflict with PPP_MPPE_REFUSE_40. */
+#define PPP_MPPE_REFUSE_128        0x08
+/* Set MPPE configuration */
+void ppp_set_mppe(ppp_pcb *pcb, u8_t flags);
+#endif /* MPPE_SUPPORT */
+
 /*
  * Wait for up to intval milliseconds for a valid PPP packet from the peer.
  * At the end of this  time, or when a valid PPP packet is received from the
