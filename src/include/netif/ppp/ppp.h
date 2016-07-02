@@ -449,6 +449,7 @@ struct ppp_pcb_s {
  * circumstances, then distinct user names SHOULD be employed, each of
  * which identifies exactly one authentication method.
  *
+ * Default is none auth type, unset (NULL) user and passwd.
  */
 #define PPPAUTHTYPE_NONE      0x00
 #define PPPAUTHTYPE_PAP       0x01
@@ -460,7 +461,9 @@ struct ppp_pcb_s {
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
 /*
- * Whether peer is required to authenticate. This is mostly necessary for PPP server support.
+ * If set, peer is required to authenticate. This is mostly necessary for PPP server support.
+ *
+ * Default is false.
  */
 #define ppp_set_auth_required(ppp, boolval) (ppp->settings.auth_required = boolval)
 #endif /* PPP_AUTH_SUPPORT */
@@ -469,6 +472,8 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 /*
  * Set PPP interface "our" and "his" IPv4 addresses. This is mostly necessary for PPP server
  * support but it can also be used on a PPP link where each side choose its own IP address.
+ *
+ * Default is unset (0.0.0.0).
  */
 #define ppp_set_ipcp_ouraddr(ppp, addr) (ppp->ipcp_wantoptions.ouraddr = ip4_addr_get_u32(addr))
 #define ppp_set_ipcp_hisaddr(ppp, addr) (ppp->ipcp_wantoptions.hisaddr = ip4_addr_get_u32(addr))
@@ -476,12 +481,16 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 /*
  * Set DNS server addresses that are sent if the peer asks for them. This is mostly necessary
  * for PPP server support.
+ *
+ * Default is unset (0.0.0.0).
  */
 #define ppp_set_ipcp_dnsaddr(ppp, index, addr) (ppp->ipcp_allowoptions.dnsaddr[index] = ip4_addr_get_u32(addr))
 
 /*
- * Whether we ask the peer for up to 2 DNS server addresses. Received DNS server addresses are
- * registered using the dns_setserver() function. Default is false.
+ * If set, we ask the peer for up to 2 DNS server addresses. Received DNS server addresses are
+ * registered using the dns_setserver() function.
+ *
+ * Default is false.
  */
 #define ppp_set_usepeerdns(ppp, boolval) (ppp->settings.usepeerdns = boolval)
 #endif /* LWIP_DNS */
@@ -498,7 +507,11 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #define PPP_MPPE_REFUSE_40         0x04
 /* Refuse the use of MPPE with 128-bit encryption. Conflict with PPP_MPPE_REFUSE_40. */
 #define PPP_MPPE_REFUSE_128        0x08
-/* Set MPPE configuration */
+/*
+ * Set MPPE configuration
+ *
+ * Default is disabled.
+ */
 void ppp_set_mppe(ppp_pcb *pcb, u8_t flags);
 #endif /* MPPE_SUPPORT */
 
@@ -506,20 +519,24 @@ void ppp_set_mppe(ppp_pcb *pcb, u8_t flags);
  * Wait for up to intval milliseconds for a valid PPP packet from the peer.
  * At the end of this  time, or when a valid PPP packet is received from the
  * peer, we commence negotiation by sending our first LCP packet.
+ *
+ * Default is 0.
  */
 #define ppp_set_listen_time(ppp, intval) (ppp->settings.listen_time = intval)
 
 /*
- * Enables the "passive" option in the LCP. With this option, we will attempt
- * to initiate a connection; if no reply is received from the peer, we will
- * then just wait passively for a valid LCP packet from the peer.
+ * If set, we will attempt to initiate a connection but if no reply is received from
+ * the peer, we will then just wait passively for a valid LCP packet from the peer.
+ *
+ * Default is false.
  */
 #define ppp_set_passive(ppp, boolval) (ppp->lcp_wantoptions.passive = boolval)
 
 /*
- * With this option, we will not transmit LCP packets to initiate a connection
- * until a valid LCP packet is received from the peer. This is what we usually
- * call the server mode.
+ * If set, we will not transmit LCP packets to initiate a connection until a valid
+ * LCP packet is received from the peer. This is what we usually call the server mode.
+ *
+ * Default is false.
  */
 #define ppp_set_silent(ppp, boolval) (ppp->lcp_wantoptions.silent = boolval)
 
