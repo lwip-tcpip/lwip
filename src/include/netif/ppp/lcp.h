@@ -110,7 +110,9 @@ struct epdisc {
 typedef struct lcp_options {
     unsigned int passive           :1; /* Don't die if we don't get a response */
     unsigned int silent            :1; /* Wait for the other end to start first */
+#if 0 /* UNUSED */
     unsigned int restart           :1; /* Restart vs. exit after close */
+#endif /* UNUSED */
     unsigned int neg_mru           :1; /* Negotiate the MRU? */
     unsigned int neg_asyncmap      :1; /* Negotiate the async map? */
 #if PAP_SUPPORT
