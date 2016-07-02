@@ -470,6 +470,10 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
         break;
       case PPPOE_TAG_ACCOOKIE:
         if (ac_cookie == NULL) {
+          if (len > PPPOE_MAX_AC_COOKIE_LEN) {
+            PPPDEBUG(LOG_DEBUG, ("pppoe: AC cookie is too long: len = %d, max = %d\n", len, PPPOE_MAX_AC_COOKIE_LEN));
+            goto done;
+          }
           ac_cookie = (u8_t*)pb->payload + off + sizeof(pt);
           ac_cookie_len = len;
         }
