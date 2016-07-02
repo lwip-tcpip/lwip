@@ -932,6 +932,8 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   lcp_wo->neg_asyncmap = 0;
   lcp_wo->neg_pcompression = 0;
   lcp_wo->neg_accompression = 0;
+  lcp_wo->passive = 0;
+  lcp_wo->silent = 0;
 
   lcp_ao = &ppp->lcp_allowoptions;
   lcp_ao->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
