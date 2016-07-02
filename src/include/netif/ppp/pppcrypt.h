@@ -31,7 +31,7 @@
  */
 
 #include "netif/ppp/ppp_opts.h"
-#if PPP_SUPPORT && MSCHAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /* This header file is included in all PPP modules needing hashes and/or ciphers */
 
@@ -133,4 +133,4 @@ void pppcrypt_56_to_64_bit_key(u_char *key, u_char *des_key);
 
 #endif /* PPPCRYPT_H */
 
-#endif /* PPP_SUPPORT && MSCHAP_SUPPORT */
+#endif /* PPP_SUPPORT */
