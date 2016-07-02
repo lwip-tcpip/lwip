@@ -81,40 +81,6 @@ pppapi_set_default(ppp_pcb *pcb)
 }
 
 
-/**
- * Call ppp_set_auth() inside the tcpip_thread context.
- */
-static err_t
-pppapi_do_ppp_set_auth(struct tcpip_api_call_data *m)
-{
-  struct pppapi_msg *msg = (struct pppapi_msg *)m;
-
-  ppp_set_auth(msg->msg.ppp, msg->msg.msg.setauth.authtype,
-               msg->msg.msg.setauth.user, msg->msg.msg.setauth.passwd);
-  return ERR_OK;
-}
-
-/**
- * Call ppp_set_auth() in a thread-safe way by running that function inside the
- * tcpip_thread context.
- */
-err_t
-pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd)
-{
-  err_t err;
-  PPPAPI_VAR_DECLARE(msg);
-  PPPAPI_VAR_ALLOC(msg);
-
-  PPPAPI_VAR_REF(msg).msg.ppp = pcb;
-  PPPAPI_VAR_REF(msg).msg.msg.setauth.authtype = authtype;
-  PPPAPI_VAR_REF(msg).msg.msg.setauth.user = user;
-  PPPAPI_VAR_REF(msg).msg.msg.setauth.passwd = passwd;
-  err = tcpip_api_call(pppapi_do_ppp_set_auth, &PPPAPI_VAR_REF(msg).call);
-  PPPAPI_VAR_FREE(msg);
-  return err;
-}
-
-
 #if PPP_NOTIFY_PHASE
 /**
  * Call ppp_set_notify_phase_callback() inside the tcpip_thread context.

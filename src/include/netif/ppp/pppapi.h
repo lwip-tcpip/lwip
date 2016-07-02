@@ -47,11 +47,6 @@ extern "C" {
 struct pppapi_msg_msg {
   ppp_pcb *ppp;
   union {
-    struct {
-      u8_t authtype;
-      const char *user;
-      const char *passwd;
-    } setauth;
 #if PPP_NOTIFY_PHASE
     struct {
       ppp_notify_phase_cb_fn notify_phase_cb;
@@ -109,7 +104,6 @@ struct pppapi_msg {
 
 /* API for application */
 err_t pppapi_set_default(ppp_pcb *pcb);
-err_t pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 #if PPP_NOTIFY_PHASE
 err_t pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 #endif /* PPP_NOTIFY_PHASE */

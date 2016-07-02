@@ -423,7 +423,12 @@ struct ppp_pcb_s {
  ************************/
 
 /*
- * Set auth helper, optional, you can either fill ppp_pcb->settings.
+ * WARNING: For multi-threads environment, all ppp_set_* functions most
+ * only be called while the PPP is in the dead phase (i.e. disconnected).
+ */
+
+/*
+ * Set PPP authentication.
  *
  * Warning: Using PPPAUTHTYPE_ANY might have security consequences.
  * RFC 1994 says:
