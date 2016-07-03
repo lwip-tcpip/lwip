@@ -106,7 +106,7 @@ typedef uintptr_t mem_ptr_t;
 #define X32_F PRIx32
 #endif
 #ifndef SZT_F
-#define SZT_F PRIuMAX
+#define SZT_F PRIuPTR
 #endif
 #endif
 
