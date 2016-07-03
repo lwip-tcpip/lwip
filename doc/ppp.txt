@@ -8,7 +8,8 @@ Table of Contents:
 2 - Raw API PPP example for all protocols
 3 - PPPoS input path (raw API, IRQ safe API, TCPIP API)
 4 - Thread safe PPP API (PPPAPI)
-5 - Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
+5 - Notify phase callback (PPP_NOTIFY_PHASE)
+6 - Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
 
 
 
@@ -416,6 +417,7 @@ or
 void pppos_input_tcpip(ppp, buffer, buffer_len);
 
 
+
 4 Thread safe PPP API (PPPAPI)
 ==============================
 
@@ -425,7 +427,50 @@ include/netif/ppp/pppapi.h, this is actually pretty obvious.
 
 
 
-5 Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
+5 Notify phase callback (PPP_NOTIFY_PHASE)
+==========================================
+
+Notify phase callback, enabled using the PPP_NOTIFY_PHASE config option, let
+you configure a callback that is called on each PPP internal state change.
+This is different from the status callback which only warns you about
+up(running) and down(dead) events.
+
+Notify phase callback can be used, for example, to set a LED pattern depending
+on the current phase of the PPP session. Here is a callback example which
+try to mimics what we usually see on xDSL modems while they are negotiating the
+link, which should be self-explanatory:
+
+static void ppp_notify_phase_cb(ppp_pcb *pcb, u8_t phase, void *ctx) {
+  switch (phase) {
+
+  /* Session is down (either permanently or briefly) */
+  case PPP_PHASE_DEAD:
+    led_set(PPP_LED, LED_OFF);
+    break;
+
+  /* We are between two sessions */
+  case PPP_PHASE_HOLDOFF:
+    led_set(PPP_LED, LED_SLOW_BLINK);
+    break;
+
+  /* Session just started */
+  case PPP_PHASE_INITIALIZE:
+    led_set(PPP_LED, LED_FAST_BLINK);
+    break;
+
+  /* Session is running */
+  case PPP_PHASE_RUNNING:
+    led_set(PPP_LED, LED_ON);
+    break;
+
+default:
+    break;
+  }
+}
+
+
+
+6 Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
 ===============================================
 
 PPP API was fully reworked between 1.4.x and 2.0.x releases. However porting
