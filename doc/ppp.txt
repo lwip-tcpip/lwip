@@ -437,8 +437,8 @@ up(running) and down(dead) events.
 
 Notify phase callback can be used, for example, to set a LED pattern depending
 on the current phase of the PPP session. Here is a callback example which
-try to mimics what we usually see on xDSL modems while they are negotiating the
-link, which should be self-explanatory:
+tries to mimic what we usually see on xDSL modems while they are negotiating
+the link, which should be self-explanatory:
 
 static void ppp_notify_phase_cb(ppp_pcb *pcb, u8_t phase, void *ctx) {
   switch (phase) {
@@ -463,7 +463,7 @@ static void ppp_notify_phase_cb(ppp_pcb *pcb, u8_t phase, void *ctx) {
     led_set(PPP_LED, LED_ON);
     break;
 
-default:
+  default:
     break;
   }
 }
