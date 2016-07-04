@@ -1073,10 +1073,13 @@ dns_correct_response(u8_t idx, u32_t ttl)
 
   if (entry->ttl == 0) {
     /* RFC 883, page 29: "Zero values are
-        interpreted to mean that the RR can only be used for the
-        transaction in progress, and should not be cached."
-        -> flush this entry now */
-    entry->state = DNS_STATE_UNUSED;
+       interpreted to mean that the RR can only be used for the
+       transaction in progress, and should not be cached."
+       -> flush this entry now */
+    /* entry reused during callback? */
+    if (entry->state == DNS_STATE_DONE) {
+      entry->state = DNS_STATE_UNUSED;
+    }
   }
 }
 /**
