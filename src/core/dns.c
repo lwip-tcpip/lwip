@@ -1058,6 +1058,8 @@ dns_correct_response(u8_t idx, u32_t ttl)
 {
   struct dns_table_entry *entry = &dns_table[idx];
 
+  entry->state = DNS_STATE_DONE;
+
   LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
   ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
   LWIP_DEBUGF(DNS_DEBUG, ("\n"));
