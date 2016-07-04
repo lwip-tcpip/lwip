@@ -812,6 +812,10 @@ tcp_process(struct tcp_pcb *pcb)
       /* send a RST to bring the other side in a non-synchronized state. */
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
         ip_current_src_addr(), tcphdr->dest, tcphdr->src);
+      /* Resend SYN immediately (don't wait for rto timeout) to establish
+        connection faster */
+      pcb->rtime = 0;
+      tcp_rexmit_rto(pcb);
     }
     break;
   case SYN_RCVD:
