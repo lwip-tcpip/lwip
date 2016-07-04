@@ -50,6 +50,25 @@ extern "C" {
 #include "lwip/err.h"
 #include "lwip/apps/snmp_core.h"
 
+/** SNMP variable binding descriptor (publically needed for traps) */
+struct snmp_varbind
+{
+  /** pointer to next varbind, NULL for last in list */
+  struct snmp_varbind *next;
+  /** pointer to previous varbind, NULL for first in list */
+  struct snmp_varbind *prev;
+
+  /** object identifier */
+  struct snmp_obj_id oid;
+
+  /** value ASN1 type */
+  u8_t type;
+  /** object value length */
+  u16_t value_len;
+  /** object value */
+  void *value;
+};
+
 /** Agent setup, start listening to port 161. */
 void snmp_init(void);
 void snmp_set_mibs(const struct snmp_mib **mibs, u8_t num_mibs);
@@ -76,7 +95,7 @@ void snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst);
 #define SNMP_GENTRAP_ENTERPRISE_SPECIFIC 6
 
 err_t snmp_send_trap_generic(s32_t generic_trap);
-err_t snmp_send_trap_specific(s32_t specific_trap);
+err_t snmp_send_trap_specific(s32_t specific_trap, struct snmp_varbind *varbinds);
 
 #define SNMP_AUTH_TRAPS_DISABLED 0
 #define SNMP_AUTH_TRAPS_ENABLED  1

@@ -73,19 +73,6 @@ extern "C" {
 #define SNMP_VERSION_2c 1
 #define SNMP_VERSION_3  3
 
-struct snmp_varbind
-{
-  /* object identifier */
-  struct snmp_obj_id oid;
-
-  /* value ASN1 type */
-  u8_t type;
-  /* object value length */
-  u16_t value_len;
-  /* object value */
-  void *value;
-};
-
 struct snmp_varbind_enumerator
 {
   struct snmp_pbuf_stream pbuf_stream;
@@ -183,6 +170,7 @@ extern void* snmp_traps_handle;
 void snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t port);
 err_t snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port);
 u8_t snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result);
+err_t snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind* varbind);
 
 #ifdef __cplusplus
 }
