@@ -263,7 +263,7 @@ snmp_varbind_len(struct snmp_varbind *varbind)
     switch (varbind->type) {
       case SNMP_ASN1_TYPE_INTEGER:
         if (varbind->value_len != sizeof (s32_t)) {
-          return ERR_VAL;
+          return 0;
         }
         snmp_asn1_enc_s32t_cnt(*((s32_t*) varbind->value), &value_value_len);
         break;
@@ -271,7 +271,7 @@ snmp_varbind_len(struct snmp_varbind *varbind)
       case SNMP_ASN1_TYPE_GAUGE:
       case SNMP_ASN1_TYPE_TIMETICKS:
         if (varbind->value_len != sizeof (u32_t)) {
-          return ERR_VAL;
+          return 0;
         }
         snmp_asn1_enc_u32t_cnt(*((u32_t*) varbind->value), &value_value_len);
         break;
@@ -282,25 +282,25 @@ snmp_varbind_len(struct snmp_varbind *varbind)
         break;
       case SNMP_ASN1_TYPE_NULL:
         if (varbind->value_len != 0) {
-          return ERR_VAL;
+          return 0;
         }
         value_value_len = 0;
         break;
       case SNMP_ASN1_TYPE_OBJECT_ID:
         if ((varbind->value_len & 0x03) != 0) {
-          return ERR_VAL;
+          return 0;
         }
         snmp_asn1_enc_oid_cnt((u32_t*) varbind->value, varbind->value_len >> 2, &value_value_len);
         break;
       case SNMP_ASN1_TYPE_COUNTER64:
         if (varbind->value_len != (2 * sizeof (u32_t))) {
-          return ERR_VAL;
+          return 0;
         }
         snmp_asn1_enc_u64t_cnt((u32_t*) varbind->value, &value_value_len);
         break;
       default:
         /* unsupported type */
-        return ERR_VAL;
+        return 0;
     }
   }
   snmp_asn1_enc_length_cnt(value_value_len, &value_len_len);
