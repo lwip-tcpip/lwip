@@ -50,7 +50,9 @@
 static err_t
 netifapi_do_netif_add(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
   
   if (!netif_add( msg->netif,
 #if LWIP_IPV4
@@ -74,7 +76,9 @@ netifapi_do_netif_add(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
 
   netif_set_addr( msg->netif,
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -91,7 +95,9 @@ netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_common(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
 
   if (msg->msg.common.errtfunc != NULL) {
     return msg->msg.common.errtfunc(msg->netif);
