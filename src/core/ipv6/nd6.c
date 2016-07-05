@@ -1862,13 +1862,13 @@ nd6_cleanup_netif(struct netif * netif)
   u8_t i;
   s8_t router_index;
   for (i = 0; i < LWIP_ND6_NUM_PREFIXES; i++) {
-    if(prefix_list[i].netif == netif) {
+    if (prefix_list[i].netif == netif) {
       prefix_list[i].netif = NULL;
       prefix_list[i].flags = 0;
     }
   }
   for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
-    if(neighbor_cache[i].netif == netif) {
+    if (neighbor_cache[i].netif == netif) {
       for (router_index = 0; router_index < LWIP_ND6_NUM_ROUTERS; router_index++) {
         if (default_router_list[router_index].neighbor_entry == &neighbor_cache[i]) {
           default_router_list[router_index].neighbor_entry = NULL;

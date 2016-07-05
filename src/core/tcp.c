@@ -1591,7 +1591,7 @@ tcp_new_ip_type(u8_t type)
   struct tcp_pcb * pcb;
   pcb = tcp_alloc(TCP_PRIO_NORMAL);
 #if LWIP_IPV4 && LWIP_IPV6
-  if(pcb != NULL) {
+  if (pcb != NULL) {
     IP_SET_TYPE_VAL(pcb->local_ip, type);
     IP_SET_TYPE_VAL(pcb->remote_ip, type);
   }

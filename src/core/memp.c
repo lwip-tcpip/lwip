@@ -324,7 +324,7 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
 
   if (memp != NULL) {
     MEMP_STATS_INC(used, type);
-    if(MEMP_STATS_GET(used, type) > MEMP_STATS_GET(max, type)) {
+    if (MEMP_STATS_GET(used, type) > MEMP_STATS_GET(max, type)) {
       MEMP_STATS_AVAIL(max, type, MEMP_STATS_GET(used, type));
     }
   } else {

@@ -118,28 +118,28 @@ udp_endpointTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t
 
   /* udpEndpointLocalAddressType + udpEndpointLocalAddress + udpEndpointLocalPort */
   idx += snmp_oid_to_ip_port(&row_oid[idx], row_oid_len-idx, &local_ip, &local_port);
-  if(idx == 0) {
+  if (idx == 0) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
   /* udpEndpointRemoteAddressType + udpEndpointRemoteAddress + udpEndpointRemotePort */
   idx += snmp_oid_to_ip_port(&row_oid[idx], row_oid_len-idx, &remote_ip, &remote_port);
-  if(idx == 0) {
+  if (idx == 0) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
   /* udpEndpointInstance */
-  if(row_oid_len < (idx+1)) {
+  if (row_oid_len < (idx+1)) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
-  if(row_oid[idx] != 0) {
+  if (row_oid[idx] != 0) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
   
   /* find udp_pcb with requested ip and port*/
   pcb = udp_pcbs;
   while (pcb != NULL) {
-    if(ip_addr_cmp(&local_ip, &pcb->local_ip) &&
+    if (ip_addr_cmp(&local_ip, &pcb->local_ip) &&
        (local_port == pcb->local_port) &&
        ip_addr_cmp(&remote_ip, &pcb->remote_ip) &&
        (remote_port == pcb->remote_port)) {
@@ -191,7 +191,7 @@ udp_endpointTable_get_next_cell_instance_and_value(const u32_t* column, struct s
   }
 
   /* did we find a next one? */
-  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+  if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* fill in object properties */
     return udp_endpointTable_get_cell_value_core(column, value);
@@ -243,7 +243,7 @@ udp_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid
   struct udp_pcb *pcb;
 
   /* check if incoming OID length and if values are in plausible range */
-  if(!snmp_oid_in_range(row_oid, row_oid_len, udp_Table_oid_ranges, LWIP_ARRAYSIZE(udp_Table_oid_ranges))) {
+  if (!snmp_oid_in_range(row_oid, row_oid_len, udp_Table_oid_ranges, LWIP_ARRAYSIZE(udp_Table_oid_ranges))) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
@@ -254,8 +254,8 @@ udp_Table_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_oid
   /* find udp_pcb with requested ip and port*/
   pcb = udp_pcbs;
   while (pcb != NULL) {
-    if(IP_IS_V4_VAL(pcb->local_ip)) {
-      if(ip4_addr_cmp(&ip, ip_2_ip4(&pcb->local_ip)) && (port == pcb->local_port)) {
+    if (IP_IS_V4_VAL(pcb->local_ip)) {
+      if (ip4_addr_cmp(&ip, ip_2_ip4(&pcb->local_ip)) && (port == pcb->local_port)) {
         /* fill in object properties */
         return udp_Table_get_cell_value_core(pcb, column, value, value_len);
       }
@@ -282,7 +282,7 @@ udp_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_
   while (pcb != NULL) {
     u32_t test_oid[LWIP_ARRAYSIZE(udp_Table_oid_ranges)];
 
-    if(IP_IS_V4_VAL(pcb->local_ip)) {
+    if (IP_IS_V4_VAL(pcb->local_ip)) {
       snmp_ip4_to_oid(ip_2_ip4(&pcb->local_ip), &test_oid[0]);
       test_oid[4] = pcb->local_port;
 
@@ -294,7 +294,7 @@ udp_Table_get_next_cell_instance_and_value(const u32_t* column, struct snmp_obj_
   }
 
   /* did we find a next one? */
-  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+  if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* fill in object properties */
     return udp_Table_get_cell_value_core((struct udp_pcb*)state.reference, column, value, value_len);

@@ -60,7 +60,7 @@ snmp_pbuf_stream_read(struct snmp_pbuf_stream* pbuf_stream, u8_t* data)
     return ERR_BUF;
   }
 
-  if(pbuf_copy_partial(pbuf_stream->pbuf, data, 1, pbuf_stream->offset) == 0) {
+  if (pbuf_copy_partial(pbuf_stream->pbuf, data, 1, pbuf_stream->offset) == 0) {
     return ERR_BUF;
   }
 
@@ -83,7 +83,7 @@ snmp_pbuf_stream_writebuf(struct snmp_pbuf_stream* pbuf_stream, const void* buf,
     return ERR_BUF;
   }
 
-  if(pbuf_take_at(pbuf_stream->pbuf, buf, buf_len, pbuf_stream->offset) != ERR_OK) {
+  if (pbuf_take_at(pbuf_stream->pbuf, buf, buf_len, pbuf_stream->offset) != ERR_OK) {
     return ERR_BUF;
   }
 

@@ -362,7 +362,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *trap, u16_t vb_len)
   snmp_asn1_enc_length_cnt(len, &lenlen);
   tot_len += 1 + len + lenlen;
 
-  if(IP_IS_V6_VAL(trap->sip)) {
+  if (IP_IS_V6_VAL(trap->sip)) {
 #if LWIP_IPV6
     len = sizeof(ip_2_ip6(&trap->sip)->addr);
 #endif
@@ -400,19 +400,19 @@ snmp_trap_header_sum(struct snmp_msg_trap *trap, u16_t vb_len)
 static void
 snmp_trap_varbind_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind *varbinds)
 {
-	struct snmp_asn1_tlv tlv;
-	struct snmp_varbind *varbind;
+  struct snmp_asn1_tlv tlv;
+  struct snmp_varbind *varbind;
 
-	varbind = varbinds;
+  varbind = varbinds;
 
-	SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, 0, trap->vbseqlen);
-	snmp_ans1_enc_tlv(pbuf_stream, &tlv);
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, 0, trap->vbseqlen);
+  snmp_ans1_enc_tlv(pbuf_stream, &tlv);
 
-	while(varbind != NULL) {
-		snmp_append_outbound_varbind(pbuf_stream, varbind);
+  while (varbind != NULL) {
+    snmp_append_outbound_varbind(pbuf_stream, varbind);
 
-		varbind = varbind->next;
-	}
+    varbind = varbind->next;
+  }
 }
 
 /**
@@ -449,7 +449,7 @@ snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_s
   snmp_asn1_enc_oid(pbuf_stream, trap->enterprise->id, trap->enterprise->len);
 
   /* IP addr */
-  if(IP_IS_V6_VAL(trap->sip)) {
+  if (IP_IS_V6_VAL(trap->sip)) {
 #if LWIP_IPV6
     SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_IPADDR, 0, sizeof(ip_2_ip6(&trap->sip)->addr));
     snmp_ans1_enc_tlv(pbuf_stream, &tlv);

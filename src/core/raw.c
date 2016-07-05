@@ -64,9 +64,9 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
 
 #if LWIP_IPV4 && LWIP_IPV6
   /* Dual-stack: PCBs listening to any IP type also listen to any IP address */
-  if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+  if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
 #if IP_SOF_BROADCAST_RECV
-    if((broadcast != 0) && !ip_get_option(pcb, SOF_BROADCAST)) {
+    if ((broadcast != 0) && !ip_get_option(pcb, SOF_BROADCAST)) {
       return 0;
     }
 #endif /* IP_SOF_BROADCAST_RECV */
@@ -75,23 +75,23 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
   
   /* Only need to check PCB if incoming IP version matches PCB IP version */
-  if(IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
+  if (IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
 #if LWIP_IPV4
     /* Special case: IPv4 broadcast: receive all broadcasts
      * Note: broadcast variable can only be 1 if it is an IPv4 broadcast */
-    if(broadcast != 0) {
+    if (broadcast != 0) {
 #if IP_SOF_BROADCAST_RECV
-      if(ip_get_option(pcb, SOF_BROADCAST))
+      if (ip_get_option(pcb, SOF_BROADCAST))
 #endif /* IP_SOF_BROADCAST_RECV */
       {
-        if(ip4_addr_isany(ip_2_ip4(&pcb->local_ip))) {
+        if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip))) {
           return 1;
         }
       }
     } else
 #endif /* LWIP_IPV4 */
     /* Handle IPv4 and IPv6: catch all or exact match */
-    if(ip_addr_isany(&pcb->local_ip) ||
+    if (ip_addr_isany(&pcb->local_ip) ||
        ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
       return 1;
     }
@@ -468,7 +468,7 @@ raw_new_ip_type(u8_t type, u8_t proto)
   struct raw_pcb *pcb;
   pcb = raw_new(proto);
 #if LWIP_IPV4 && LWIP_IPV6
-  if(pcb != NULL) {
+  if (pcb != NULL) {
     IP_SET_TYPE_VAL(pcb->local_ip,  type);
     IP_SET_TYPE_VAL(pcb->remote_ip, type);
   }

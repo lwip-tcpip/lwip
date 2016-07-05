@@ -201,13 +201,13 @@ static void dhcp_option_trailer(struct dhcp *dhcp);
 static err_t
 dhcp_inc_pcb_refcount(void)
 {
-  if(dhcp_pcb_refcount == 0) {
+  if (dhcp_pcb_refcount == 0) {
     LWIP_ASSERT("dhcp_inc_pcb_refcount(): memory leak", dhcp_pcb == NULL);
 
     /* allocate UDP PCB */
     dhcp_pcb = udp_new();
 
-    if(dhcp_pcb == NULL) {
+    if (dhcp_pcb == NULL) {
       return ERR_MEM;
     }
 
@@ -231,7 +231,7 @@ dhcp_dec_pcb_refcount(void)
   LWIP_ASSERT("dhcp_pcb_refcount(): refcount error", (dhcp_pcb_refcount > 0));
   dhcp_pcb_refcount--;
   
-  if(dhcp_pcb_refcount == 0) {
+  if (dhcp_pcb_refcount == 0) {
     udp_remove(dhcp_pcb);
     dhcp_pcb = NULL;
   }
@@ -731,7 +731,7 @@ dhcp_start(struct netif *netif)
     LWIP_ASSERT("pbuf p_out wasn't freed", dhcp->p_out == NULL);
     LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL );
 
-    if(dhcp->pcb_allocated != 0) {
+    if (dhcp->pcb_allocated != 0) {
       dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
     }
     /* dhcp is cleared below, no need to reset flag*/
@@ -743,7 +743,7 @@ dhcp_start(struct netif *netif)
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));  
 
-  if(dhcp_inc_pcb_refcount() != ERR_OK) { /* ensure DHCP PCB is allocated */
+  if (dhcp_inc_pcb_refcount() != ERR_OK) { /* ensure DHCP PCB is allocated */
     return ERR_MEM;
   }
   dhcp->pcb_allocated = 1;
@@ -784,7 +784,7 @@ dhcp_inform(struct netif *netif)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
-  if(dhcp_inc_pcb_refcount() != ERR_OK) { /* ensure DHCP PCB is allocated */
+  if (dhcp_inc_pcb_refcount() != ERR_OK) { /* ensure DHCP PCB is allocated */
     return;
   }
 
@@ -1327,7 +1327,7 @@ dhcp_stop(struct netif *netif)
     LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL);
     dhcp_set_state(dhcp, DHCP_STATE_OFF);
 
-    if(dhcp->pcb_allocated != 0) {
+    if (dhcp->pcb_allocated != 0) {
       dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
       dhcp->pcb_allocated = 0;
     }
@@ -1645,7 +1645,7 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   LWIP_UNUSED_ARG(arg);
 
   /* Caught DHCP message from netif that does not have DHCP enabled? -> not interested */
-  if((dhcp == NULL) || (dhcp->pcb_allocated == 0)) {
+  if ((dhcp == NULL) || (dhcp->pcb_allocated == 0)) {
     goto free_pbuf_and_return;
   }
 
@@ -1739,7 +1739,7 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   }
 
 free_pbuf_and_return:
-  if(dhcp != NULL) {
+  if (dhcp != NULL) {
     dhcp->msg_in = NULL;
   }
   pbuf_free(p);

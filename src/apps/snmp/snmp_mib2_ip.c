@@ -254,7 +254,7 @@ ip_AddrTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_
   struct netif *netif;
 
   /* check if incoming OID length and if values are in plausible range */
-  if(!snmp_oid_in_range(row_oid, row_oid_len, ip_AddrTable_oid_ranges, LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges))) {
+  if (!snmp_oid_in_range(row_oid, row_oid_len, ip_AddrTable_oid_ranges, LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges))) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
@@ -264,7 +264,7 @@ ip_AddrTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_
   /* find netif with requested ip */
   netif = netif_list;
   while (netif != NULL) {
-    if(ip4_addr_cmp(&ip, netif_ip4_addr(netif))) {
+    if (ip4_addr_cmp(&ip, netif_ip4_addr(netif))) {
       /* fill in object properties */
       return ip_AddrTable_get_cell_value_core(netif, column, value, value_len);
     }
@@ -299,7 +299,7 @@ ip_AddrTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_o
   }
 
   /* did we find a next one? */
-  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+  if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* fill in object properties */
     return ip_AddrTable_get_cell_value_core((struct netif*)state.reference, column, value, value_len);
@@ -405,7 +405,7 @@ ip_RouteTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
   struct netif *netif;
 
   /* check if incoming OID length and if values are in plausible range */
-  if(!snmp_oid_in_range(row_oid, row_oid_len, ip_RouteTable_oid_ranges, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges))) {
+  if (!snmp_oid_in_range(row_oid, row_oid_len, ip_RouteTable_oid_ranges, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges))) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
@@ -413,7 +413,7 @@ ip_RouteTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
   snmp_oid_to_ip4(&row_oid[0], &test_ip); /* we know it succeeds because of oid_in_range check above */
 
   /* default route is on default netif */
-  if(ip4_addr_isany_val(test_ip) && (netif_default != NULL)) {
+  if (ip4_addr_isany_val(test_ip) && (netif_default != NULL)) {
     /* fill in object properties */
     return ip_RouteTable_get_cell_value_core(netif_default, 1, column, value, value_len);
   }
@@ -424,7 +424,7 @@ ip_RouteTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
     ip4_addr_t dst;
     ip4_addr_get_network(&dst, netif_ip4_addr(netif), netif_ip4_netmask(netif));
 
-    if(ip4_addr_cmp(&dst, &test_ip)) {
+    if (ip4_addr_cmp(&dst, &test_ip)) {
       /* fill in object properties */
       return ip_RouteTable_get_cell_value_core(netif, 0, column, value, value_len);
     }
@@ -448,7 +448,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges));
 
   /* check default route */
-  if(netif_default != NULL) {
+  if (netif_default != NULL) {
     snmp_ip4_to_oid(IP4_ADDR_ANY, &test_oid[0]);
     snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges), netif_default);
   }
@@ -469,7 +469,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   }
 
   /* did we find a next one? */
-  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+  if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     ip4_addr_t dst;
     snmp_oid_to_ip4(&result_temp[0], &dst);
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
@@ -531,7 +531,7 @@ ip_NetToMediaTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_
   u8_t i;
 
   /* check if incoming OID length and if values are in plausible range */
-  if(!snmp_oid_in_range(row_oid, row_oid_len, ip_NetToMediaTable_oid_ranges, LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges))) {
+  if (!snmp_oid_in_range(row_oid, row_oid_len, ip_NetToMediaTable_oid_ranges, LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges))) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
@@ -545,8 +545,8 @@ ip_NetToMediaTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_
     struct netif *netif;
     struct eth_addr *ethaddr;
 
-    if(etharp_get_entry(i, &ip, &netif, &ethaddr)) {
-      if((netif_index == netif_to_num(netif)) && ip4_addr_cmp(&ip_in, ip)) {
+    if (etharp_get_entry(i, &ip, &netif, &ethaddr)) {
+      if ((netif_index == netif_to_num(netif)) && ip4_addr_cmp(&ip_in, ip)) {
         /* fill in object properties */
         return ip_NetToMediaTable_get_cell_value_core(i, column, value, value_len);
       }
@@ -573,7 +573,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
     struct netif *netif;
     struct eth_addr *ethaddr;
 
-    if(etharp_get_entry(i, &ip, &netif, &ethaddr)) {
+    if (etharp_get_entry(i, &ip, &netif, &ethaddr)) {
       u32_t test_oid[LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges)];
 
       test_oid[0] = netif_to_num(netif);
@@ -585,7 +585,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
   }
 
   /* did we find a next one? */
-  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+  if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* fill in object properties */
     return ip_NetToMediaTable_get_cell_value_core((u8_t)(size_t)state.reference, column, value, value_len);

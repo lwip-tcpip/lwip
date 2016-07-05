@@ -101,7 +101,7 @@ interfaces_Table_get_cell_instance(const u32_t* column, const u32_t* row_oid, u8
   LWIP_UNUSED_ARG(column);
 
   /* check if incoming OID length and if values are in plausible range */
-  if(!snmp_oid_in_range(row_oid, row_oid_len, interfaces_Table_oid_ranges, LWIP_ARRAYSIZE(interfaces_Table_oid_ranges))) {
+  if (!snmp_oid_in_range(row_oid, row_oid_len, interfaces_Table_oid_ranges, LWIP_ARRAYSIZE(interfaces_Table_oid_ranges))) {
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
@@ -111,7 +111,7 @@ interfaces_Table_get_cell_instance(const u32_t* column, const u32_t* row_oid, u8
   /* find netif with index */
   netif = netif_list;
   while (netif != NULL) {
-    if(netif_to_num(netif) == ifIndex) {
+    if (netif_to_num(netif) == ifIndex) {
       /* store netif pointer for subsequent operations (get/test/set) */
       cell_instance->reference.ptr = netif;
       return SNMP_ERR_NOERROR;
@@ -148,7 +148,7 @@ interfaces_Table_get_next_cell_instance(const u32_t* column, struct snmp_obj_id*
   }
 
   /* did we find a next one? */
-  if(state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
+  if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* store netif pointer for subsequent operations (get/test/set) */
     cell_instance->reference.ptr = /* (struct netif*) */state.reference;

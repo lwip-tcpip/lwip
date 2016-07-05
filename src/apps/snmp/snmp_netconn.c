@@ -70,7 +70,7 @@ snmp_netconn_thread(void *arg)
       snmp_receive(conn, buf->p, &buf->addr, buf->port);
     }
 
-    if(buf != NULL) {
+    if (buf != NULL) {
       netbuf_delete(buf);
     }
   } while(1);
@@ -100,7 +100,7 @@ snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result)
 
   ip_route_get_local_ip(&conn->pcb.udp->local_ip, dst, dst_if, dst_ip);
 
-  if((dst_if != NULL) && (dst_ip != NULL)) {
+  if ((dst_if != NULL) && (dst_ip != NULL)) {
     ip_addr_copy(*result, *dst_ip);
     return 1;
   } else {

@@ -130,7 +130,7 @@ threadsync_release_instance(struct snmp_node_instance *instance)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)instance->reference.ptr;
   
-  if(call_data->proxy_instance.release_instance != NULL) {
+  if (call_data->proxy_instance.release_instance != NULL) {
     call_synced_function(call_data, threadsync_release_instance_synced);
   }
 }
@@ -163,7 +163,7 @@ do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* ins
   const struct snmp_threadsync_node *threadsync_node = (const struct snmp_threadsync_node*)(const void*)instance->node;
   struct threadsync_data *call_data = &threadsync_node->instance->data;
 
-  if(threadsync_node->node.node.oid != threadsync_node->target->node.oid) {
+  if (threadsync_node->node.node.oid != threadsync_node->target->node.oid) {
     LWIP_DEBUGF(SNMP_DEBUG, ("Sync node OID does not match target node OID"));
     return SNMP_ERR_NOSUCHINSTANCE;
   }
@@ -180,7 +180,7 @@ do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* ins
   call_data->arg2.root_oid_len   = root_oid_len;
   call_synced_function(call_data, fn);
 
-  if(call_data->retval.u8 == SNMP_ERR_NOERROR) {
+  if (call_data->retval.u8 == SNMP_ERR_NOERROR) {
     instance->access           = call_data->proxy_instance.access;
     instance->asn1_type        = call_data->proxy_instance.asn1_type;
     instance->release_instance = threadsync_release_instance;

@@ -126,10 +126,10 @@ const struct snmp_obj_id* snmp_get_device_enterprise_oid(void)
 u8_t
 snmp_oid_to_ip4(const u32_t *oid, ip4_addr_t *ip)
 {
-  if((oid[0] > 0xFF) ||
-     (oid[1] > 0xFF) ||
-     (oid[2] > 0xFF) ||
-     (oid[3] > 0xFF)) {
+  if ((oid[0] > 0xFF) ||
+      (oid[1] > 0xFF) ||
+      (oid[2] > 0xFF) ||
+      (oid[3] > 0xFF)) {
     ip4_addr_copy(*ip, *IP4_ADDR_ANY);
     return 0;
   }
@@ -162,22 +162,22 @@ snmp_ip4_to_oid(const ip4_addr_t *ip, u32_t *oid)
 u8_t
 snmp_oid_to_ip6(const u32_t *oid, ip6_addr_t *ip)
 {
-  if((oid[0]  > 0xFF) ||
-     (oid[1]  > 0xFF) ||
-     (oid[2]  > 0xFF) ||
-     (oid[3]  > 0xFF) ||
-     (oid[4]  > 0xFF) ||
-     (oid[5]  > 0xFF) ||
-     (oid[6]  > 0xFF) ||
-     (oid[7]  > 0xFF) ||
-     (oid[8]  > 0xFF) ||
-     (oid[9]  > 0xFF) ||
-     (oid[10] > 0xFF) ||
-     (oid[11] > 0xFF) ||
-     (oid[12] > 0xFF) ||
-     (oid[13] > 0xFF) ||
-     (oid[14] > 0xFF) ||
-     (oid[15] > 0xFF)) {
+  if ((oid[0]  > 0xFF) ||
+      (oid[1]  > 0xFF) ||
+      (oid[2]  > 0xFF) ||
+      (oid[3]  > 0xFF) ||
+      (oid[4]  > 0xFF) ||
+      (oid[5]  > 0xFF) ||
+      (oid[6]  > 0xFF) ||
+      (oid[7]  > 0xFF) ||
+      (oid[8]  > 0xFF) ||
+      (oid[9]  > 0xFF) ||
+      (oid[10] > 0xFF) ||
+      (oid[11] > 0xFF) ||
+      (oid[12] > 0xFF) ||
+      (oid[13] > 0xFF) ||
+      (oid[14] > 0xFF) ||
+      (oid[15] > 0xFF)) {
     ip6_addr_set_any(ip);
     return 0;
   }
@@ -245,11 +245,11 @@ snmp_ip_port_to_oid(const ip_addr_t *ip, u16_t port, u32_t *oid)
 u8_t
 snmp_ip_to_oid(const ip_addr_t *ip, u32_t *oid)
 {
-  if(IP_IS_ANY_TYPE_VAL(*ip)) {
+  if (IP_IS_ANY_TYPE_VAL(*ip)) {
     oid[0] = 0; /* any */
     oid[1] = 0; /* no IP OIDs follow */
     return 2;
-  } else if(IP_IS_V6(ip)) {
+  } else if (IP_IS_V6(ip)) {
 #if LWIP_IPV6
     oid[0] = 2; /* ipv6 */
     oid[1] = 16; /* 16 InetAddressIPv6 OIDs follow */
@@ -281,16 +281,16 @@ u8_t
 snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
 {
   /* InetAddressType */
-  if(oid_len < 1) {
+  if (oid_len < 1) {
     return 0;
   }
   
   if (oid[0] == 0) { /* any */
     /* 1x InetAddressType, 1x OID len */
-    if(oid_len < 2) {
+    if (oid_len < 2) {
       return 0;
     }
-    if(oid[1] != 0) {
+    if (oid[1] != 0) {
       return 0;
     }
 
@@ -301,17 +301,17 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
   } else if (oid[0] == 1) { /* ipv4 */
 #if LWIP_IPV4
     /* 1x InetAddressType, 1x OID len, 4x InetAddressIPv4 */
-    if(oid_len < 6) {
+    if (oid_len < 6) {
       return 0;
     }
 
     /* 4x ipv4 OID */
-    if(oid[1] != 4) {
+    if (oid[1] != 4) {
       return 0;
     }
 
     IP_SET_TYPE(ip, IPADDR_TYPE_V4);
-    if(!snmp_oid_to_ip4(&oid[2], ip_2_ip4(ip))) {
+    if (!snmp_oid_to_ip4(&oid[2], ip_2_ip4(ip))) {
       return 0;
     }
     
@@ -319,20 +319,20 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
 #else /* LWIP_IPV4 */
     return 0;
 #endif /* LWIP_IPV4 */
-  } else if(oid[0] == 2) { /* ipv6 */
+  } else if (oid[0] == 2) { /* ipv6 */
 #if LWIP_IPV6
     /* 1x InetAddressType, 1x OID len, 16x InetAddressIPv6 */
-    if(oid_len < 18) {
+    if (oid_len < 18) {
       return 0;
     }
 
     /* 16x ipv6 OID */
-    if(oid[1] != 16) {
+    if (oid[1] != 16) {
       return 0;
     }
 
     IP_SET_TYPE(ip, IPADDR_TYPE_V6);
-    if(!snmp_oid_to_ip6(&oid[2], ip_2_ip6(ip))) {
+    if (!snmp_oid_to_ip6(&oid[2], ip_2_ip6(ip))) {
       return 0;
     }
 
@@ -360,15 +360,15 @@ snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port)
   
   /* InetAddressType + InetAddress */
   idx += snmp_oid_to_ip(&oid[idx], oid_len-idx, ip);
-  if(idx == 0) {
+  if (idx == 0) {
     return 0;
   }
 
   /* InetPortNumber */
-  if(oid_len < (idx+1)) {
+  if (oid_len < (idx+1)) {
     return 0;
   }
-  if(oid[idx] > 0xffff) {
+  if (oid[idx] > 0xffff) {
     return 0;
   }
   *port = (u16_t)oid[idx];
@@ -446,7 +446,7 @@ snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 {
   LWIP_ASSERT("offset + oid_len <= LWIP_SNMP_OBJ_ID_LEN", (target->len + oid_len) <= SNMP_MAX_OBJ_ID_LEN);
 
-  if(oid_len > 0) {
+  if (oid_len > 0) {
     MEMCPY(&target->id[target->len], oid, oid_len * sizeof(u32_t));
     target->len += oid_len;
   }
@@ -521,7 +521,7 @@ netif_to_num(const struct netif *netif)
   while (netif_iterator != NULL) {
     result++;
 
-    if(netif_iterator == netif) {
+    if (netif_iterator == netif) {
       return result;
     }
 
@@ -647,11 +647,11 @@ snmp_get_node_instance_from_oid(const u32_t *oid, u8_t oid_len, struct snmp_node
         node_instance);
 
 #ifdef LWIP_DEBUG
-      if(result == SNMP_ERR_NOERROR) {
-        if(((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != 0) && (node_instance->get_value == NULL)) {
+      if (result == SNMP_ERR_NOERROR) {
+        if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != 0) && (node_instance->get_value == NULL)) {
           LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is readable but no get_value function is specified\n"));
         }
-        if(((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != 0) && (node_instance->set_value == NULL)) {
+        if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != 0) && (node_instance->set_value == NULL)) {
           LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is writable but no set_value and/or set_test function is specified\n"));
         }
       }
@@ -722,10 +722,10 @@ snmp_get_next_node_instance_from_oid(const u32_t *oid, u8_t oid_len, snmp_valida
 
       if (result == SNMP_ERR_NOERROR) {
 #ifdef LWIP_DEBUG
-        if(((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != 0) && (node_instance->get_value == NULL)) {
+        if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_READ) != 0) && (node_instance->get_value == NULL)) {
           LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is readable but no get_value function is specified\n"));
         }
-        if(((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != 0) && (node_instance->set_value == NULL)) {
+        if (((node_instance->access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != 0) && (node_instance->set_value == NULL)) {
           LWIP_DEBUGF(SNMP_DEBUG, ("SNMP inconsistent access: node is writable but no set_value function is specified\n"));
         }
 #endif
@@ -1031,11 +1031,11 @@ snmp_oid_in_range(const u32_t *oid_in, u8_t oid_len, const struct snmp_oid_range
 {
   u8_t i;
 
-  if(oid_len != oid_ranges_len) {
+  if (oid_len != oid_ranges_len) {
     return 0;
   }
 
-  for(i = 0; i < oid_ranges_len; i++) {
+  for (i = 0; i < oid_ranges_len; i++) {
     if ((oid_in[i] < oid_ranges[i].min) || (oid_in[i] > oid_ranges[i].max)) {
       return 0;
     }

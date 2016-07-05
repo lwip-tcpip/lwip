@@ -331,7 +331,7 @@ netbiosns_set_name(const char* hostname)
 {
   size_t copy_len = strlen(hostname);
   LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
-  if(copy_len >= NETBIOS_NAME_LEN) {
+  if (copy_len >= NETBIOS_NAME_LEN) {
     copy_len = NETBIOS_NAME_LEN - 1;
   }
   memcpy(netbiosns_local_name, hostname, copy_len + 1);

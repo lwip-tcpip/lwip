@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
   printf("     extended by Simon Goldschmidt  - 2009 " NEWLINE NEWLINE);
 
   strcpy(path, "fs");
-  for(i = 1; i < argc; i++) {
+  for (i = 1; i < argc; i++) {
     if (argv[i] == NULL) {
       continue;
     }
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if(!check_path(path, sizeof(path))) {
+  if (!check_path(path, sizeof(path))) {
     printf("Invalid path: \"%s\"." NEWLINE, path);
     exit(-1);
   }
@@ -403,8 +403,7 @@ static void copy_file(const char *filename_in, FILE *fout)
     exit(-1);
   }
   buf = malloc(COPY_BUFSIZE);
-  while((len = fread(buf, 1, COPY_BUFSIZE, fin)) > 0)
-  {
+  while ((len = fread(buf, 1, COPY_BUFSIZE, fin)) > 0) {
     fwrite(buf, 1, len, fout);
   }
   free(buf);
@@ -493,8 +492,7 @@ u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed,
   }
   fseek(inFile, 0, SEEK_END);
   rs = ftell(inFile);
-  if(rs < 0)
-  {
+  if (rs < 0) {
      printf("ftell failed with %d\n", errno);
      exit(-1);
   }
@@ -643,8 +641,7 @@ static int is_valid_char_for_c_var(char x)
    if (((x >= 'A') && (x <= 'Z')) ||
        ((x >= 'a') && (x <= 'z')) ||
        ((x >= '0') && (x <= '9')) ||
-        (x == '_'))
-   {
+        (x == '_')) {
       return 1;
    }
    return 0;
@@ -870,13 +867,13 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
       file_ext++;
     }
   }
-  if((file_ext == NULL) || (*file_ext == 0)) {
+  if ((file_ext == NULL) || (*file_ext == 0)) {
     printf("failed to get extension for file \"%s\", using default.\n", filename);
     file_type = HTTP_HDR_DEFAULT_TYPE;
   } else {
     file_type = NULL;
-    for(j = 0; j < NUM_HTTP_HEADERS; j++) {
-      if(!strcmp(file_ext, g_psHTTPHeaders[j].extension)) {
+    for (j = 0; j < NUM_HTTP_HEADERS; j++) {
+      if (!strcmp(file_ext, g_psHTTPHeaders[j].extension)) {
         file_type = g_psHTTPHeaders[j].content_type;
         break;
       }
@@ -921,14 +918,12 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     memset(&stat_data, 0, sizeof(stat_data));
     cur_string = modbuf;
     strcpy(modbuf, "Last-Modified: ");
-    if(stat(filename, &stat_data) != 0)
-    {
+    if (stat(filename, &stat_data) != 0) {
        printf("stat(%s) failed with error %d\n", filename, errno);
        exit(-1);
     }
     t = gmtime(&stat_data.st_mtime);
-    if(t == NULL)
-    {
+    if (t == NULL) {
        printf("gmtime() failed with error %d\n", errno);
        exit(-1);
     }
@@ -1011,7 +1006,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 int file_put_ascii(FILE *file, const char* ascii_string, int len, int *i)
 {
   int x;
-  for(x = 0; x < len; x++) {
+  for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
     fprintf(file, "0x%02.2x,", cur);
     if ((++(*i) % HEX_BYTES_PER_LINE) == 0) {
@@ -1025,7 +1020,7 @@ int s_put_ascii(char *buf, const char *ascii_string, int len, int *i)
 {
   int x;
   int idx = 0;
-  for(x = 0; x < len; x++) {
+  for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
     sprintf(&buf[idx], "0x%02.2x,", cur);
     idx += 5;

@@ -458,7 +458,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
       }
     }
     conn->bytes_transferred += sizeof(lwiperf_settings_t);
-    if(conn->bytes_transferred <= 24) {
+    if (conn->bytes_transferred <= 24) {
       conn->time_started = sys_now();
       tcp_recved(tpcb, p->tot_len);
       pbuf_free(p);
@@ -589,7 +589,7 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
   struct tcp_pcb* pcb;
   lwiperf_state_tcp_t* s;
 
-  if(local_addr == NULL) {
+  if (local_addr == NULL) {
     return NULL;
   }
 
