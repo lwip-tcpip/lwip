@@ -124,6 +124,29 @@ typedef uintptr_t mem_ptr_t;
 #define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[LWIP_MEM_ALIGN_BUFFER(size)]
 #endif
 
+/** Calculate memory size for an aligned buffer - returns the next highest
+ * multiple of MEM_ALIGNMENT (e.g. LWIP_MEM_ALIGN_SIZE(3) and
+ * LWIP_MEM_ALIGN_SIZE(4) will both yield 4 for MEM_ALIGNMENT == 4).
+ */
+#ifndef LWIP_MEM_ALIGN_SIZE
+#define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT-1U))
+#endif
+
+/** Calculate safe memory size for an aligned buffer when using an unaligned
+ * type as storage. This includes a safety-margin on (MEM_ALIGNMENT - 1) at the
+ * start (e.g. if buffer is u8_t[] and actual data will be u32_t*)
+ */
+#ifndef LWIP_MEM_ALIGN_BUFFER
+#define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1U))
+#endif
+
+/** Align a memory pointer to the alignment defined by MEM_ALIGNMENT
+ * so that ADDR % MEM_ALIGNMENT == 0
+ */
+#ifndef LWIP_MEM_ALIGN
+#define LWIP_MEM_ALIGN(addr) ((void *)(((mem_ptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(mem_ptr_t)(MEM_ALIGNMENT-1)))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
