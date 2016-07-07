@@ -110,6 +110,20 @@ typedef uintptr_t mem_ptr_t;
 #endif
 #endif
 
+/** Allocates a memory buffer of specified size that is of sufficient size to align
+ * its start address using LWIP_MEM_ALIGN.
+ * You can declare your own version here e.g. to enforce alignment without adding
+ * trailing padding bytes (see LWIP_MEM_ALIGN_BUFFER) or your own section placement
+ * requirements.
+ * e.g. if you use gcc and need 32 bit alignment:
+ * #define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] __attribute__((aligned(4)))
+ * or more portable:
+ * #define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u32_t variable_name[(size + sizeof(u32_t) - 1) / sizeof(u32_t)]
+ */
+#ifndef LWIP_DECLARE_MEMORY_ALIGNED
+#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[LWIP_MEM_ALIGN_BUFFER(size)]
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

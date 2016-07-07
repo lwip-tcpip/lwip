@@ -90,8 +90,8 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #else /* MEMP_MEM_MALLOC */
 
-#define LWIP_MEMPOOL_DECLARE(name,num,size,desc) u8_t memp_memory_ ## name ## _base \
-    [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size))) + (MEM_ALIGNMENT-1)]; \
+#define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
+  LWIP_DECLARE_MEMORY_ALIGNED(memp_memory_ ## name ## _base, ((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))); \
     \
   static struct memp *memp_tab_ ## name; \
     \
