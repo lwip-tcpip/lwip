@@ -364,6 +364,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     return EAI_MEMORY;
   }
   memset(ai, 0, total_size);
+  /* cast through void* to get rid of alignment warnings */
   sa = (struct sockaddr_storage *)(void*)((u8_t*)ai + sizeof(struct addrinfo));
   if (IP_IS_V6_VAL(addr)) {
 #if LWIP_IPV6

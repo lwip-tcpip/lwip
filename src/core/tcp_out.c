@@ -1174,6 +1174,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
 
   /* Add any requested options.  NB MSS option is only set on SYN
      packets, so ignore it here */
+  /* cast through void* to get rid of alignment warnings */
   opts = (u32_t *)(void *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
     u16_t mss;

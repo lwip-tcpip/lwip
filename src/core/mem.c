@@ -145,6 +145,7 @@ mem_free(void *rmem)
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 
   /* get the original struct memp_malloc_helper */
+  /* cast through void* to get rid of alignment warnings */
   hmem = (struct memp_malloc_helper*)(void*)((u8_t*)rmem - LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper)));
 
   LWIP_ASSERT("hmem != NULL", (hmem != NULL));
@@ -357,6 +358,7 @@ mem_free(void *rmem)
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
   /* Get the corresponding struct mem ... */
+  /* cast through void* to get rid of alignment warnings */
   mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... which has to be in a used state ... */
   LWIP_ASSERT("mem_free: mem->used", mem->used);
@@ -423,6 +425,7 @@ mem_trim(void *rmem, mem_size_t newsize)
     return rmem;
   }
   /* Get the corresponding struct mem ... */
+  /* cast through void* to get rid of alignment warnings */
   mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... and its offset pointer */
   ptr = (mem_size_t)((u8_t *)mem - ram);
