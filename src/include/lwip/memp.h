@@ -69,14 +69,6 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc memp_ ## name
 
-#if MEMP_STATS
-#define LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(name) static struct stats_mem name;
-#define LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(name) &name,
-#else
-#define LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(name)
-#define LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(name)
-#endif
-
 #if MEMP_MEM_MALLOC
 
 #include "lwip/mem.h"

@@ -124,11 +124,13 @@ typedef enum {
 #define MEMP_POOL_LAST   ((memp_t) MEMP_POOL_HELPER_LAST)
 #endif /* MEM_USE_POOLS */
 
+/** Memory pool descriptor */
 struct memp_desc {
   /** Element size */
   u16_t size;
 
 #if MEMP_STATS
+  /** Statistics */
   struct stats_mem *stats;
 #endif
 
@@ -141,7 +143,7 @@ struct memp_desc {
   const char *desc;
 #endif /* LWIP_DEBUG || MEMP_OVERFLOW_CHECK */
 
-  /** Base */
+  /** Base address */
   u8_t *base;  
 
   /** First free element of each pool. Elements form a linked list. */
@@ -153,6 +155,14 @@ struct memp_desc {
 #define DECLARE_LWIP_MEMPOOL_DESC(desc) (desc),
 #else
 #define DECLARE_LWIP_MEMPOOL_DESC(desc)
+#endif
+
+#if MEMP_STATS
+#define LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(name) static struct stats_mem name;
+#define LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(name) &name,
+#else
+#define LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(name)
+#define LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(name)
 #endif
 
 void memp_init_pool(const struct memp_desc *desc);
