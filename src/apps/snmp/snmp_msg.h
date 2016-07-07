@@ -160,6 +160,16 @@ struct snmp_request
   u8_t value_buffer[SNMP_MAX_VALUE_SIZE];
 };
 
+struct snmp_varbind_len
+{
+  u8_t  vb_len_len;
+  u16_t vb_value_len;
+  u8_t  oid_len_len;
+  u16_t oid_value_len;
+  u8_t  value_len_len;
+  u16_t value_value_len;
+};
+
 /** Agent community string */
 extern const char *snmp_community;
 /** Agent community string for write access */
@@ -170,6 +180,7 @@ extern void* snmp_traps_handle;
 void snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t port);
 err_t snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port);
 u8_t snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result);
+err_t snmp_length_outbound_varbind(struct snmp_varbind *varbind, struct snmp_varbind_len *len);
 err_t snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind* varbind);
 
 #ifdef __cplusplus

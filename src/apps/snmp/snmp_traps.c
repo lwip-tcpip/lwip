@@ -246,72 +246,6 @@ snmp_authfail_trap(void)
 }
 
 static u16_t
-snmp_varbind_len(struct snmp_varbind *varbind)
-{
-  u8_t vb_len_len, oid_len_len, value_len_len;
-  u16_t vb_value_len, oid_value_len, value_value_len;
-
-  /* calculate required lengths */
-  snmp_asn1_enc_oid_cnt(varbind->oid.id, varbind->oid.len, &oid_value_len);
-  snmp_asn1_enc_length_cnt(oid_value_len, &oid_len_len);
-
-  if (varbind->value_len == 0) {
-    value_value_len = 0;
-  } else if (varbind->value_len & SNMP_GET_VALUE_RAW_DATA) {
-    value_value_len = varbind->value_len & (~SNMP_GET_VALUE_RAW_DATA);
-  } else {
-    switch (varbind->type) {
-      case SNMP_ASN1_TYPE_INTEGER:
-        if (varbind->value_len != sizeof (s32_t)) {
-          return 0;
-        }
-        snmp_asn1_enc_s32t_cnt(*((s32_t*) varbind->value), &value_value_len);
-        break;
-      case SNMP_ASN1_TYPE_COUNTER:
-      case SNMP_ASN1_TYPE_GAUGE:
-      case SNMP_ASN1_TYPE_TIMETICKS:
-        if (varbind->value_len != sizeof (u32_t)) {
-          return 0;
-        }
-        snmp_asn1_enc_u32t_cnt(*((u32_t*) varbind->value), &value_value_len);
-        break;
-      case SNMP_ASN1_TYPE_OCTET_STRING:
-      case SNMP_ASN1_TYPE_IPADDR:
-      case SNMP_ASN1_TYPE_OPAQUE:
-        value_value_len = varbind->value_len;
-        break;
-      case SNMP_ASN1_TYPE_NULL:
-        if (varbind->value_len != 0) {
-          return 0;
-        }
-        value_value_len = 0;
-        break;
-      case SNMP_ASN1_TYPE_OBJECT_ID:
-        if ((varbind->value_len & 0x03) != 0) {
-          return 0;
-        }
-        snmp_asn1_enc_oid_cnt((u32_t*) varbind->value, varbind->value_len >> 2, &value_value_len);
-        break;
-      case SNMP_ASN1_TYPE_COUNTER64:
-        if (varbind->value_len != (2 * sizeof (u32_t))) {
-          return 0;
-        }
-        snmp_asn1_enc_u64t_cnt((u32_t*) varbind->value, &value_value_len);
-        break;
-      default:
-        /* unsupported type */
-        return 0;
-    }
-  }
-  snmp_asn1_enc_length_cnt(value_value_len, &value_len_len);
-
-  vb_value_len = 1 + oid_len_len + oid_value_len + 1 + value_len_len + value_value_len;
-  snmp_asn1_enc_length_cnt(vb_value_len, &vb_len_len);
-
-  return 1 + vb_len_len + vb_value_len;
-}
-
-static u16_t
 snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
 {
   struct snmp_varbind *varbind;
@@ -321,7 +255,11 @@ snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
   tot_len = 0;
   varbind = varbinds;
   while (varbind != NULL) {
-    tot_len += snmp_varbind_len(varbind);
+    struct snmp_varbind_len len;
+
+    if (snmp_length_outbound_varbind(varbind, &len) == ERR_OK) {
+      tot_len += 1 + len.vb_len_len + len.vb_value_len;
+    }
 
     varbind = varbind->next;
   }

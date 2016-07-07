@@ -1167,118 +1167,128 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
   return ERR_OK;
 }
 
-#define OVB_BUILD_EXEC(code) BUILD_EXEC(code, ERR_ARG)
-
 err_t
-snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind* varbind)
+snmp_length_outbound_varbind(struct snmp_varbind *varbind, struct snmp_varbind_len *len)
 {
-  struct snmp_asn1_tlv tlv;
-  u8_t  vb_len_len,   oid_len_len,   value_len_len;
-  u16_t vb_value_len, oid_value_len, value_value_len;
-
   /* calculate required lengths */
-  snmp_asn1_enc_oid_cnt(varbind->oid.id, varbind->oid.len, &oid_value_len);
-  snmp_asn1_enc_length_cnt(oid_value_len, &oid_len_len);
+  snmp_asn1_enc_oid_cnt(varbind->oid.id, varbind->oid.len, &len->oid_value_len);
+  snmp_asn1_enc_length_cnt(len->oid_value_len, &len->oid_len_len);
 
   if (varbind->value_len == 0) {
-    value_value_len = 0;
+    len->value_value_len = 0;
   } else if (varbind->value_len & SNMP_GET_VALUE_RAW_DATA) {
-    value_value_len = varbind->value_len & (~SNMP_GET_VALUE_RAW_DATA);
+    len->value_value_len = varbind->value_len & (~SNMP_GET_VALUE_RAW_DATA);
   } else {
-    switch (varbind->type)
-    {
+    switch (varbind->type) {
       case SNMP_ASN1_TYPE_INTEGER:
-        if (varbind->value_len != sizeof(s32_t)) {
+        if (varbind->value_len != sizeof (s32_t)) {
           return ERR_VAL;
         }
-        snmp_asn1_enc_s32t_cnt(*((s32_t*)varbind->value) , &value_value_len);
+        snmp_asn1_enc_s32t_cnt(*((s32_t*) varbind->value), &len->value_value_len);
         break;
       case SNMP_ASN1_TYPE_COUNTER:
       case SNMP_ASN1_TYPE_GAUGE:
       case SNMP_ASN1_TYPE_TIMETICKS:
-        if (varbind->value_len != sizeof(u32_t)) {
+        if (varbind->value_len != sizeof (u32_t)) {
           return ERR_VAL;
         }
-        snmp_asn1_enc_u32t_cnt(*((u32_t*)varbind->value) , &value_value_len);
+        snmp_asn1_enc_u32t_cnt(*((u32_t*) varbind->value), &len->value_value_len);
         break;
       case SNMP_ASN1_TYPE_OCTET_STRING:
       case SNMP_ASN1_TYPE_IPADDR:
       case SNMP_ASN1_TYPE_OPAQUE:
-        value_value_len = varbind->value_len;
+        len->value_value_len = varbind->value_len;
         break;
       case SNMP_ASN1_TYPE_NULL:
         if (varbind->value_len != 0) {
           return ERR_VAL;
         }
-        value_value_len = 0;
+        len->value_value_len = 0;
         break;
       case SNMP_ASN1_TYPE_OBJECT_ID:
         if ((varbind->value_len & 0x03) != 0) {
           return ERR_VAL;
         }
-        snmp_asn1_enc_oid_cnt((u32_t*)varbind->value, varbind->value_len >> 2, &value_value_len);
+        snmp_asn1_enc_oid_cnt((u32_t*) varbind->value, varbind->value_len >> 2, &len->value_value_len);
         break;
       case SNMP_ASN1_TYPE_COUNTER64:
-        if (varbind->value_len != (2 * sizeof(u32_t))) {
+        if (varbind->value_len != (2 * sizeof (u32_t))) {
           return ERR_VAL;
         }
-        snmp_asn1_enc_u64t_cnt((u32_t*)varbind->value , &value_value_len);
+        snmp_asn1_enc_u64t_cnt((u32_t*) varbind->value, &len->value_value_len);
         break;
       default:
         /* unsupported type */
         return ERR_VAL;
     }
   }
-  snmp_asn1_enc_length_cnt(value_value_len, &value_len_len);
-  
-  vb_value_len = 1 + oid_len_len + oid_value_len + 1 + value_len_len + value_value_len;
-  snmp_asn1_enc_length_cnt(vb_value_len, &vb_len_len);
+  snmp_asn1_enc_length_cnt(len->value_value_len, &len->value_len_len);
+
+  len->vb_value_len = 1 + len->oid_len_len + len->oid_value_len + 1 + len->value_len_len + len->value_value_len;
+  snmp_asn1_enc_length_cnt(len->vb_value_len, &len->vb_len_len);
+
+  return ERR_OK;
+}
+
+#define OVB_BUILD_EXEC(code) BUILD_EXEC(code, ERR_ARG)
+
+err_t
+snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind* varbind)
+{
+  struct snmp_asn1_tlv tlv;
+  struct snmp_varbind_len len;
+  err_t err;
+
+  err = snmp_length_outbound_varbind(varbind, &len);
+
+  if (err != ERR_OK) {
+    return err;
+  }
 
   /* check length already before adding first data because in case of GetBulk,
    *  data added so far is returned and therefore no partial data shall be added
    */
-  if ((1 + vb_len_len + vb_value_len) > pbuf_stream->length) {
+  if ((1 + len.vb_len_len + len.vb_value_len) > pbuf_stream->length) {
     return ERR_BUF;
   }
 
   /* 'VarBind' sequence */
-  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, vb_len_len, vb_value_len);
-  OVB_BUILD_EXEC( snmp_ans1_enc_tlv(pbuf_stream, &tlv) );
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_SEQUENCE, len.vb_len_len, len.vb_value_len);
+  OVB_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
 
   /* VarBind OID */
-  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OBJECT_ID, oid_len_len, oid_value_len);
-  OVB_BUILD_EXEC( snmp_ans1_enc_tlv(pbuf_stream, &tlv) );
-  OVB_BUILD_EXEC( snmp_asn1_enc_oid(pbuf_stream, varbind->oid.id, varbind->oid.len) );
-  
-  /* VarBind value */
-  SNMP_ASN1_SET_TLV_PARAMS(tlv, varbind->type, value_len_len, value_value_len);
-  OVB_BUILD_EXEC( snmp_ans1_enc_tlv(pbuf_stream, &tlv) );
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OBJECT_ID, len.oid_len_len, len.oid_value_len);
+  OVB_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
+  OVB_BUILD_EXEC(snmp_asn1_enc_oid(pbuf_stream, varbind->oid.id, varbind->oid.len));
 
-  if (value_value_len > 0) {
+  /* VarBind value */
+  SNMP_ASN1_SET_TLV_PARAMS(tlv, varbind->type, len.value_len_len, len.value_value_len);
+  OVB_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
+
+  if (len.value_value_len > 0) {
     if (varbind->value_len & SNMP_GET_VALUE_RAW_DATA) {
-      OVB_BUILD_EXEC( snmp_asn1_enc_raw(pbuf_stream, (u8_t*)varbind->value, value_value_len) );
+      OVB_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, (u8_t*) varbind->value, len.value_value_len));
     } else {
-      switch (varbind->type)
-      {
+      switch (varbind->type) {
         case SNMP_ASN1_TYPE_INTEGER:
-          OVB_BUILD_EXEC( snmp_asn1_enc_s32t(pbuf_stream, value_value_len, *((s32_t*)varbind->value)) );
+          OVB_BUILD_EXEC(snmp_asn1_enc_s32t(pbuf_stream, len.value_value_len, *((s32_t*) varbind->value)));
           break;
         case SNMP_ASN1_TYPE_COUNTER:
         case SNMP_ASN1_TYPE_GAUGE:
         case SNMP_ASN1_TYPE_TIMETICKS:
-          OVB_BUILD_EXEC( snmp_asn1_enc_u32t(pbuf_stream, value_value_len, *((u32_t*)varbind->value)) );
+          OVB_BUILD_EXEC(snmp_asn1_enc_u32t(pbuf_stream, len.value_value_len, *((u32_t*) varbind->value)));
           break;
         case SNMP_ASN1_TYPE_OCTET_STRING:
         case SNMP_ASN1_TYPE_IPADDR:
         case SNMP_ASN1_TYPE_OPAQUE:
-          OVB_BUILD_EXEC( snmp_asn1_enc_raw(pbuf_stream, (u8_t*)varbind->value, value_value_len) );
-          value_value_len = varbind->value_len;
+          OVB_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, (u8_t*) varbind->value, len.value_value_len));
+          len.value_value_len = varbind->value_len;
           break;
         case SNMP_ASN1_TYPE_OBJECT_ID:
-          OVB_BUILD_EXEC( snmp_asn1_enc_oid(pbuf_stream, (u32_t*)varbind->value, varbind->value_len / sizeof(u32_t)) );
+          OVB_BUILD_EXEC(snmp_asn1_enc_oid(pbuf_stream, (u32_t*) varbind->value, varbind->value_len / sizeof (u32_t)));
           break;
         case SNMP_ASN1_TYPE_COUNTER64:
-          OVB_BUILD_EXEC( snmp_asn1_enc_u64t(pbuf_stream, value_value_len, (u32_t*)varbind->value) );
+          OVB_BUILD_EXEC(snmp_asn1_enc_u64t(pbuf_stream, len.value_value_len, (u32_t*) varbind->value));
           break;
         default:
           LWIP_ASSERT("Unknown variable type", 0);
