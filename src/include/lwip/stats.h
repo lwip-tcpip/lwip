@@ -247,7 +247,7 @@ struct stats_ {
   struct stats_mem mem;
 #endif
 #if MEMP_STATS
-  struct stats_mem memp[MEMP_MAX];
+  struct stats_mem *memp[MEMP_MAX];
 #endif
 #if SYS_STATS
   struct stats_sys sys;
@@ -370,19 +370,9 @@ void stats_init(void);
 #endif
 
 #if MEMP_STATS
-#define MEMP_STATS_AVAIL(x, i, y) lwip_stats.memp[i].x = y
-#define MEMP_STATS_INC(x, i) STATS_INC(memp[i].x)
-#define MEMP_STATS_DEC(x, i) STATS_DEC(memp[i].x)
-#define MEMP_STATS_INC_USED(x, i) STATS_INC_USED(memp[i], 1)
-#define MEMP_STATS_DISPLAY(i) stats_display_memp(&lwip_stats.memp[i], i)
-#define MEMP_STATS_GET(x, i) STATS_GET(memp[i].x)
+#define MEMP_STATS_DEC(x, i) STATS_DEC(memp[i]->x)
 #else
-#define MEMP_STATS_AVAIL(x, i, y)
-#define MEMP_STATS_INC(x, i)
 #define MEMP_STATS_DEC(x, i)
-#define MEMP_STATS_INC_USED(x, i)
-#define MEMP_STATS_DISPLAY(i)
-#define MEMP_STATS_GET(x, i) 0
 #endif
 
 #if SYS_STATS

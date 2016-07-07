@@ -128,6 +128,10 @@ struct memp_desc {
   /** Element size */
   u16_t size;
 
+#if MEMP_STATS
+  struct stats_mem *stats;
+#endif
+
 #if !MEMP_MEM_MALLOC
   /** Number of elements */
   u16_t num;
