@@ -540,7 +540,7 @@ ip_NetToMediaTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_
   snmp_oid_to_ip4(&row_oid[1], &ip_in); /* we know it succeeds because of oid_in_range check above */
 
   /* find requested entry */
-  for(i=0; i<ARP_TABLE_SIZE; i++) {
+  for (i=0; i<ARP_TABLE_SIZE; i++) {
     ip4_addr_t *ip;
     struct netif *netif;
     struct eth_addr *ethaddr;
@@ -568,7 +568,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges));
 
   /* iterate over all possible OIDs to find the next one */
-  for(i=0; i<ARP_TABLE_SIZE; i++) {
+  for (i=0; i<ARP_TABLE_SIZE; i++) {
     ip4_addr_t *ip;
     struct netif *netif;
     struct eth_addr *ethaddr;

@@ -214,7 +214,7 @@ tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
   remote_port = (u16_t)row_oid[9];
   
   /* find tcp_pcb with requested ips and ports */
-  for(i=0; i<LWIP_ARRAYSIZE(tcp_pcb_lists); i++) {
+  for (i = 0; i < LWIP_ARRAYSIZE(tcp_pcb_lists); i++) {
     pcb = *tcp_pcb_lists[i];
 
     while (pcb != NULL) {
@@ -257,7 +257,7 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(tcp_ConnTable_oid_ranges));
 
   /* iterate over all possible OIDs to find the next one */
-  for(i=0; i<LWIP_ARRAYSIZE(tcp_pcb_lists); i++) {
+  for (i = 0; i < LWIP_ARRAYSIZE(tcp_pcb_lists); i++) {
     pcb = *tcp_pcb_lists[i];
     while (pcb != NULL) {
       u32_t test_oid[LWIP_ARRAYSIZE(tcp_ConnTable_oid_ranges)];
@@ -344,7 +344,7 @@ tcp_ConnectionTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8
   }
 
   /* find tcp_pcb with requested ip and port*/
-  for(i=0; i<LWIP_ARRAYSIZE(tcp_pcb_nonlisten_lists); i++) {
+  for (i = 0; i < LWIP_ARRAYSIZE(tcp_pcb_nonlisten_lists); i++) {
     pcb = *tcp_pcb_nonlisten_lists[i];
     
     while (pcb != NULL) {
@@ -380,7 +380,7 @@ tcp_ConnectionTable_get_next_cell_instance_and_value(const u32_t* column, struct
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(result_temp));
 
   /* iterate over all possible OIDs to find the next one */
-  for(i=0; i<LWIP_ARRAYSIZE(tcp_pcb_nonlisten_lists); i++) {
+  for (i = 0; i < LWIP_ARRAYSIZE(tcp_pcb_nonlisten_lists); i++) {
     pcb = *tcp_pcb_nonlisten_lists[i];
 
     while (pcb != NULL) {
