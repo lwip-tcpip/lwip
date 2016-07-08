@@ -1167,8 +1167,9 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
   return ERR_OK;
 }
 
+/** Calculate the length of a varbind list */
 err_t
-snmp_length_outbound_varbind(struct snmp_varbind *varbind, struct snmp_varbind_len *len)
+snmp_varbind_length(struct snmp_varbind *varbind, struct snmp_varbind_len *len)
 {
   /* calculate required lengths */
   snmp_asn1_enc_oid_cnt(varbind->oid.id, varbind->oid.len, &len->oid_value_len);
@@ -1239,7 +1240,7 @@ snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_v
   struct snmp_varbind_len len;
   err_t err;
 
-  err = snmp_length_outbound_varbind(varbind, &len);
+  err = snmp_varbind_length(varbind, &len);
 
   if (err != ERR_OK) {
     return err;

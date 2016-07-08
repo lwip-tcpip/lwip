@@ -160,6 +160,7 @@ struct snmp_request
   u8_t value_buffer[SNMP_MAX_VALUE_SIZE];
 };
 
+/** A helper struct keeping length information about varbinds */
 struct snmp_varbind_len
 {
   u8_t  vb_len_len;
@@ -180,7 +181,7 @@ extern void* snmp_traps_handle;
 void snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t port);
 err_t snmp_sendto(void *handle, struct pbuf *p, const ip_addr_t *dst, u16_t port);
 u8_t snmp_get_local_ip_for_dst(void* handle, const ip_addr_t *dst, ip_addr_t *result);
-err_t snmp_length_outbound_varbind(struct snmp_varbind *varbind, struct snmp_varbind_len *len);
+err_t snmp_varbind_length(struct snmp_varbind *varbind, struct snmp_varbind_len *len);
 err_t snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_varbind* varbind);
 
 #ifdef __cplusplus
