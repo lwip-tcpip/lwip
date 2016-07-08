@@ -222,6 +222,17 @@ memp_init_pool(const struct memp_desc *desc)
 #if MEMP_OVERFLOW_CHECK
   memp_overflow_init(desc);
 #endif /* MEMP_OVERFLOW_CHECK */
+
+#if MEMP_STATS
+  desc->stats->used    = 0;
+  desc->stats->max     = 0;
+  desc->stats->err     = 0;
+  desc->stats->illegal = 0;
+  desc->stats->avail   = desc->num;
+
+#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
+  desc->stats->name    = desc->desc;
+#endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
 }
 
 /**
@@ -237,17 +248,6 @@ memp_init(void)
   /* for every pool: */
   for (i = 0; i < LWIP_ARRAYSIZE(memp_pools); i++) {
     memp_init_pool(memp_pools[i]);
-
-#if MEMP_STATS
-    memp_pools[i]->stats->used    = 0;
-    memp_pools[i]->stats->max     = 0;
-    memp_pools[i]->stats->err     = 0;
-    memp_pools[i]->stats->illegal = 0;
-    memp_pools[i]->stats->avail   = memp_pools[i]->num;
-
-#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
-    memp_pools[i]->stats->name    = memp_pools[i]->desc;
-#endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
 
 #if LWIP_STATS
     lwip_stats.memp[i] = memp_pools[i]->stats;
