@@ -93,9 +93,9 @@ struct stats_igmp {
 };
 
 struct stats_mem {
-#ifdef LWIP_DEBUG
+#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
   const char *name;
-#endif /* LWIP_DEBUG */
+#endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
   STAT_COUNTER err;
   mem_size_t avail;
   mem_size_t used;

@@ -138,10 +138,10 @@ struct memp_desc {
   /** Number of elements */
   u16_t num;
 
-#if defined(LWIP_DEBUG) || MEMP_OVERFLOW_CHECK
+#if defined(LWIP_DEBUG) || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY
   /** Textual description */
   const char *desc;
-#endif /* LWIP_DEBUG || MEMP_OVERFLOW_CHECK */
+#endif /* LWIP_DEBUG || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY */
 
   /** Base address */
   u8_t *base;  
@@ -151,7 +151,7 @@ struct memp_desc {
 #endif /* MEMP_MEM_MALLOC */
 };
 
-#ifdef LWIP_DEBUG
+#if defined(LWIP_DEBUG) || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY
 #define DECLARE_LWIP_MEMPOOL_DESC(desc) (desc),
 #else
 #define DECLARE_LWIP_MEMPOOL_DESC(desc)

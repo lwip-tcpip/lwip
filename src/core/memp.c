@@ -245,9 +245,9 @@ memp_init(void)
     memp_pools[i]->stats->illegal = 0;
     memp_pools[i]->stats->avail   = memp_pools[i]->num;
 
-#ifdef LWIP_DEBUG
+#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
     memp_pools[i]->stats->name    = memp_pools[i]->desc;
-#endif /* LWIP_DEBUG */
+#endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
 
 #if LWIP_STATS
     lwip_stats.memp[i] = memp_pools[i]->stats;

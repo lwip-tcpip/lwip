@@ -116,7 +116,7 @@ void
 stats_display_memp(struct stats_mem *mem, int index)
 {
   if (index < MEMP_MAX) {
-    stats_display_mem(mem, memp_names[index]);
+    stats_display_mem(mem, mem->name);
   }
 }
 #endif /* MEMP_STATS */
