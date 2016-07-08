@@ -60,14 +60,14 @@ START_TEST(test_tcp_new_abort)
   struct tcp_pcb* pcb;
   LWIP_UNUSED_ARG(_i);
 
-  fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 
   pcb = tcp_new();
   fail_unless(pcb != NULL);
   if (pcb != NULL) {
-    fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+    fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
     tcp_abort(pcb);
-    fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+    fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
   }
 }
 END_TEST
@@ -117,9 +117,9 @@ START_TEST(test_tcp_recv_inseq)
   }
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -185,9 +185,9 @@ START_TEST(test_tcp_malformed_header)
   }
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -358,9 +358,9 @@ START_TEST(test_tcp_fast_retx_recover)
   }
 #endif
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -470,9 +470,9 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   check_seqnos(pcb->unacked, 5, &seqnos[1]);
 
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -560,9 +560,9 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   check_seqnos(pcb->unacked, 6, seqnos);
 
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -705,9 +705,9 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   }
 
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 
 START_TEST(test_tcp_tx_full_window_lost_from_unsent)

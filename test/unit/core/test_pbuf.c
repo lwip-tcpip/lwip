@@ -46,7 +46,7 @@ START_TEST(test_pbuf_copy_zero_pbuf)
   LWIP_UNUSED_ARG(_i);
 
   fail_unless(lwip_stats.mem.used == 0);
-  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 
   p1 = pbuf_alloc(PBUF_RAW, 1024, PBUF_RAM);
   fail_unless(p1 != NULL);
@@ -70,7 +70,7 @@ START_TEST(test_pbuf_copy_zero_pbuf)
   fail_unless(lwip_stats.mem.used == 0);
 
   fail_unless(lwip_stats.mem.used == 0);
-  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 }
 END_TEST
 

@@ -31,10 +31,10 @@ tcp_remove_all(void)
   tcp_remove(tcp_listen_pcbs.pcbs);
   tcp_remove(tcp_active_pcbs);
   tcp_remove(tcp_tw_pcbs);
-  fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
-  fail_unless(lwip_stats.memp[MEMP_TCP_PCB_LISTEN].used == 0);
-  fail_unless(lwip_stats.memp[MEMP_TCP_SEG].used == 0);
-  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB_LISTEN) == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_SEG) == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 }
 
 /** Create a TCP segment usable for passing to tcp_input */
