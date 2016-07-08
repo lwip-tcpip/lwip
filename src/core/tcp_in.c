@@ -126,7 +126,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif
 
   /* Check that TCP header fits in payload */
-  if (p->len < sizeof(struct tcp_hdr)) {
+  if (p->len < TCP_HLEN) {
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
     TCP_STATS_INC(tcp.lenerr);
@@ -155,71 +155,57 @@ tcp_input(struct pbuf *p, struct netif *inp)
   }
 #endif /* CHECKSUM_CHECK_TCP */
 
-  /* Move the payload pointer in the pbuf so that it points to the
-     TCP data instead of the TCP header. */
-  hdrlen_bytes = TCPH_HDRLEN(tcphdr) * 4;
   /* sanity-check header length */
+  hdrlen_bytes = TCPH_HDRLEN(tcphdr) * 4;
   if ((hdrlen_bytes < TCP_HLEN) || (hdrlen_bytes > p->tot_len)) {
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: invalid header length (%"U16_F")\n", (u16_t)hdrlen_bytes));
     TCP_STATS_INC(tcp.lenerr);
     goto dropped;
   }
-  tcphdr_optlen = tcphdr_opt1len = hdrlen_bytes - TCP_HLEN;
+
+  /* Move the payload pointer in the pbuf so that it points to the
+     TCP data instead of the TCP header. */
+  tcphdr_optlen = hdrlen_bytes - TCP_HLEN;
   tcphdr_opt2 = NULL;
-  if (p->len < hdrlen_bytes) {
-    if (p->next != NULL) { /* p->len >= TCP_HLEN checked above already */
-      /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
-      u16_t optlen = tcphdr_opt1len;
-      pbuf_header(p, -TCP_HLEN); /* cannot fail */
-      LWIP_ASSERT("tcphdr_opt1len >= p->len", tcphdr_opt1len >= p->len); /* that would be a programming error */
+  if (p->len >= hdrlen_bytes) {
+    /* all options are in the first pbuf */
+    tcphdr_opt1len = tcphdr_optlen;
+    pbuf_header(p, -(s16_t)hdrlen_bytes); /* cannot fail */
+  } else {
+    u16_t opt2len;
+    /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
+    /* there must be a next pbuf, due to hdrlen_bytes sanity check above */
+    LWIP_ASSERT("p->next != NULL", p->next != NULL);
 
-      tcphdr_opt1len = p->len;
-      if (optlen > tcphdr_opt1len) {
-        s16_t opt2len;
-        /* options continue in the next pbuf: set p to zero length and hide the
-           options in the next pbuf (adjusting p->tot_len) */
-        u8_t phret = pbuf_header(p, -(s16_t)tcphdr_opt1len);
+    /* advance over the TCP header (cannot fail) */
+    pbuf_header(p, -TCP_HLEN);
 
-        if (phret != 0) {
-          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: pbuf_header failed, illegal tcphdr_opt1len (%"U16_F")\n", tcphdr_opt1len));
-          TCP_STATS_INC(tcp.lenerr);
-          goto dropped;
-        }
+    /* determine how long the first and second parts of the options are */
+    tcphdr_opt1len = p->len;
+    opt2len = tcphdr_optlen - tcphdr_opt1len;
 
-        if(tcphdr_optlen - tcphdr_opt1len > p->tot_len) {
-          /* drop short packets */
-          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
-          TCP_STATS_INC(tcp.lenerr);
-          goto dropped;
-        }
+    /* options continue in the next pbuf: set p to zero length and hide the
+        options in the next pbuf (adjusting p->tot_len) */
+    pbuf_header(p, -(s16_t)tcphdr_opt1len);
 
-        tcphdr_opt2 = (u8_t*)p->next->payload;
-        opt2len = optlen - tcphdr_opt1len;
-        phret = pbuf_header(p->next, -opt2len);
-        if (phret != 0) {
-          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: pbuf_header failed, illegal opt2len (%"U16_F")\n", opt2len));
-          TCP_STATS_INC(tcp.lenerr);
-          goto dropped;
-        }
-        /* p->next->payload now points to the TCP data */
-        /* manually adjust p->tot_len to changed p->next->tot_len change */
-        p->tot_len -= opt2len;
-      }
-
-      if (p->len != 0) {
-        /* drop malformed packets */
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: malformed packet (p->len %"U16_F" != 0), discarded\n", p->len));
-        TCP_STATS_INC(tcp.lenerr);
-        goto dropped;
-      }
-    } else {
+    /* check that the options fit in the second pbuf */
+    if (opt2len > p->next->len) {
       /* drop short packets */
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: options overflow second pbuf (%"U16_F" bytes)\n", p->next->len));
       TCP_STATS_INC(tcp.lenerr);
       goto dropped;
     }
-  } else {
-    pbuf_header(p, -(s16_t)hdrlen_bytes); /* cannot fail */
+
+    /* remember the pointer to the second part of the options */
+    tcphdr_opt2 = (u8_t*)p->next->payload;
+    
+    /* advance p->next to point after the options, and manually
+        adjust p->tot_len to keep it consistent with the changed p->next */
+    pbuf_header(p->next, -(s16_t)opt2len);
+    p->tot_len -= opt2len;
+
+    LWIP_ASSERT("p->len == 0", p->len == 0);
+    LWIP_ASSERT("p->tot_len == p->next->tot_len", p->tot_len == p->next->tot_len);
   }
 
   /* Convert fields in TCP header to host byte order. */
