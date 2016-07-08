@@ -19,7 +19,7 @@ udp_remove_all(void)
     pcb = pcb->next;
     udp_remove(pcb2);
   }
-  fail_unless(lwip_stats.memp[MEMP_UDP_PCB].used == 0);
+  fail_unless(MEMP_STATS_GET(MEMP_UDP_PCB, used) == 0);
 }
 
 /* Setups/teardown functions */
@@ -44,14 +44,14 @@ START_TEST(test_udp_new_remove)
   struct udp_pcb* pcb;
   LWIP_UNUSED_ARG(_i);
 
-  fail_unless(lwip_stats.memp[MEMP_UDP_PCB].used == 0);
+  fail_unless(MEMP_STATS_GET(MEMP_UDP_PCB, used) == 0);
 
   pcb = udp_new();
   fail_unless(pcb != NULL);
   if (pcb != NULL) {
-    fail_unless(lwip_stats.memp[MEMP_UDP_PCB].used == 1);
+    fail_unless(MEMP_STATS_GET(MEMP_UDP_PCB, used) == 1);
     udp_remove(pcb);
-    fail_unless(lwip_stats.memp[MEMP_UDP_PCB].used == 0);
+    fail_unless(MEMP_STATS_GET(MEMP_UDP_PCB, used) == 0);
   }
 }
 END_TEST
