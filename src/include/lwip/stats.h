@@ -369,12 +369,16 @@ void stats_init(void);
 #define MEM_STATS_DISPLAY()
 #endif
 
-#if MEMP_STATS
+ #if MEMP_STATS
 #define MEMP_STATS_DEC(x, i) STATS_DEC(memp[i]->x)
-#else
+#define MEMP_STATS_DISPLAY(i) stats_display_memp(lwip_stats.memp[i], i)
+#define MEMP_STATS_GET(x, i) STATS_GET(memp[i]->x)
+ #else
 #define MEMP_STATS_DEC(x, i)
+#define MEMP_STATS_DISPLAY(i)
+#define MEMP_STATS_GET(x, i) 0
 #endif
-
+ 
 #if SYS_STATS
 #define SYS_STATS_INC(x) STATS_INC(sys.x)
 #define SYS_STATS_DEC(x) STATS_DEC(sys.x)
