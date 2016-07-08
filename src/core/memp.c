@@ -224,14 +224,10 @@ memp_init_pool(const struct memp_desc *desc)
 #endif /* MEMP_OVERFLOW_CHECK */
 
 #if MEMP_STATS
-  desc->stats->used    = 0;
-  desc->stats->max     = 0;
-  desc->stats->err     = 0;
-  desc->stats->illegal = 0;
-  desc->stats->avail   = desc->num;
+  desc->stats->avail = desc->num;
 
 #if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
-  desc->stats->name    = desc->desc;
+  desc->stats->name  = desc->desc;
 #endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
 #endif /* MEMP_STATS */
 }
