@@ -63,6 +63,9 @@ typedef enum {
  *   - call ONCE before using pool (e.g. in some init() function): LWIP_MEMPOOL_INIT(my_private_pool);
  *   - allocate: void* my_new_mem = LWIP_MEMPOOL_ALLOC(my_private_pool);
  *   - free: LWIP_MEMPOOL_FREE(my_private_pool, my_new_mem);
+ *
+ * To relocate a pool, declare it as extern in cc.h. Example for GCC:
+ *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_my_private_pool[];
  */
 
 extern const struct memp_desc* const memp_pools[MEMP_MAX];
@@ -89,7 +92,7 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 #else /* MEMP_MEM_MALLOC */
 
 #define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
-  static LWIP_DECLARE_MEMORY_ALIGNED(memp_memory_ ## name ## _base, ((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))); \
+  LWIP_DECLARE_MEMORY_ALIGNED(memp_memory_ ## name ## _base, ((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))); \
     \
   LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(memp_stats_ ## name) \
     \
