@@ -58,6 +58,12 @@
 #define LWIP_HTTPD_SSI            0
 #endif
 
+/** Set this to 1 to implement an SSI tag handler callback that gets a const char*
+ * to the tag (instead of an index into a pre-registered array of known tags) */
+#ifndef LWIP_HTTPD_SSI_RAW
+#define LWIP_HTTPD_SSI_RAW        0
+#endif
+
 /** Set this to 1 to support HTTP POST */
 #ifndef LWIP_HTTPD_SUPPORT_POST
 #define LWIP_HTTPD_SUPPORT_POST   0

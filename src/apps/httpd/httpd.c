@@ -2619,12 +2619,10 @@ httpd_init(void)
   struct tcp_pcb *pcb;
   err_t err;
 
-#if MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS
 #if HTTPD_USE_MEM_POOL
   LWIP_MEMPOOL_INIT(HTTPD_STATE);
 #if LWIP_HTTPD_SSI
   LWIP_MEMPOOL_INIT(HTTPD_SSI_STATE);
-#endif
 #endif
 #endif
   LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));

@@ -165,7 +165,7 @@ typedef u16_t (*tSSIHandler)(
 void http_set_ssi_handler(tSSIHandler pfnSSIHandler,
                           const char **ppcTags, int iNumTags);
 
-/** For LWIP_HTTPD_SSI_RAW==1, return this to indicat the tag is unknown.
+/** For LWIP_HTTPD_SSI_RAW==1, return this to indicate the tag is unknown.
  * In this case, the webserver writes a warning into the page.
  * You can also just return 0 to write nothing for unknown tags.
  */
