@@ -233,6 +233,7 @@ memp_init_pool(const struct memp_desc *desc)
 #if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
   desc->stats->name    = desc->desc;
 #endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
+#endif /* MEMP_STATS */
 }
 
 /**
@@ -252,7 +253,6 @@ memp_init(void)
 #if LWIP_STATS
     lwip_stats.memp[i] = memp_pools[i]->stats;
 #endif
-#endif /* MEMP_STATS */
   }
 
 #if MEMP_OVERFLOW_CHECK
