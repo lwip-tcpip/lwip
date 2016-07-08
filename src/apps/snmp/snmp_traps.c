@@ -257,7 +257,7 @@ snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
   while (varbind != NULL) {
     struct snmp_varbind_len len;
 
-    if (snmp_length_outbound_varbind(varbind, &len) == ERR_OK) {
+    if (snmp_varbind_length(varbind, &len) == ERR_OK) {
       tot_len += 1 + len.vb_len_len + len.vb_value_len;
     }
 
