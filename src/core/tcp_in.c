@@ -398,6 +398,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
               goto aborted;
             }
           }
+          pcb->acked = 0;
         }
         if (recv_flags & TF_CLOSED) {
           /* The connection has been closed and we will deallocate the

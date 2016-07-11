@@ -321,6 +321,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-07-11: Simon Goldschmidt
+  * tcp_in.c: fixed bug #48476 (TCP sent callback called wrongly due to picking
+    up old pcb->acked
+
   2016-06-30: Simon Goldschmidt (original patch by Fabian Koch)
   * tcp_in.c: fixed bug #48170 (Vulnerable to TCP RST spoofing)
 
