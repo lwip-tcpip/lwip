@@ -48,10 +48,10 @@
 #include "arch/cc.h"
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the stdint.h header. This cannot be #defined in lwipopts.h since 
+ * the stdint.h header. This cannot be \#defined in lwipopts.h since 
  * this is not an option of lwIP itself, but an option of the lwIP port
  * to your system.
- * Additionally, this header is meant to be #included in lwipopts.h
+ * Additionally, this header is meant to be \#included in lwipopts.h
  * (you may need to declare function prototypes in there).
  */
 #ifndef LWIP_NO_STDINT_H
@@ -71,10 +71,10 @@ typedef uintptr_t mem_ptr_t;
 #endif
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the inttypes.h header. This cannot be #defined in lwipopts.h since 
+ * the inttypes.h header. This cannot be \#defined in lwipopts.h since 
  * this is not an option of lwIP itself, but an option of the lwIP port
  * to your system.
- * Additionally, this header is meant to be #included in lwipopts.h
+ * Additionally, this header is meant to be \#included in lwipopts.h
  * (you may need to declare function prototypes in there).
  */
 #ifndef LWIP_NO_INTTYPES_H
@@ -116,9 +116,9 @@ typedef uintptr_t mem_ptr_t;
  * trailing padding bytes (see LWIP_MEM_ALIGN_BUFFER) or your own section placement
  * requirements.
  * e.g. if you use gcc and need 32 bit alignment:
- * #define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] __attribute__((aligned(4)))
+ * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] __attribute__((aligned(4)))
  * or more portable:
- * #define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u32_t variable_name[(size + sizeof(u32_t) - 1) / sizeof(u32_t)]
+ * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u32_t variable_name[(size + sizeof(u32_t) - 1) / sizeof(u32_t)]
  */
 #ifndef LWIP_DECLARE_MEMORY_ALIGNED
 #define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[LWIP_MEM_ALIGN_BUFFER(size)]

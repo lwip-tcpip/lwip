@@ -198,7 +198,12 @@ memp_overflow_init(const struct memp_desc *desc)
 }
 #endif /* MEMP_OVERFLOW_CHECK */
 
-
+/**
+ * Initialize custom memory pool.
+ * Related functions: memp_malloc_pool, memp_free_pool
+ *
+ * @param desc pool to initialize
+ */
 void
 memp_init_pool(const struct memp_desc *desc)
 {
@@ -233,7 +238,8 @@ memp_init_pool(const struct memp_desc *desc)
 }
 
 /**
- * Initialize this module.
+ * Initializes lwIP built-in pools.
+ * Related functions: memp_malloc, memp_free
  *
  * Carves out memp_memory into linked lists for each pool-type.
  */
@@ -257,6 +263,18 @@ memp_init(void)
 #endif /* MEMP_OVERFLOW_CHECK */
 }
 
+
+/**
+ * Get an element from a custom pool.
+ *
+ * @param desc the pool to get an element from
+ *
+ * the debug version has two more parameters:
+ * @param file file name calling this function
+ * @param line number of line where this function is called
+ *
+ * @return a pointer to the allocated memory or a NULL pointer on error
+ */
 void *
 #if !MEMP_OVERFLOW_CHECK
 memp_malloc_pool(const struct memp_desc *desc)
@@ -391,6 +409,12 @@ do_memp_free_pool(const struct memp_desc* desc, void *mem)
   SYS_ARCH_UNPROTECT(old_level);
 }
 
+/**
+ * Put a custom pool element back into its pool.
+ *
+ * @param desc the pool where to put mem
+ * @param mem the memp element to free
+ */
 void
 memp_free_pool(const struct memp_desc* desc, void *mem)
 {
