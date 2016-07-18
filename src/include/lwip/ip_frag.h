@@ -55,7 +55,7 @@ extern "C" {
 /* The IP reassembly timer interval in milliseconds. */
 #define IP_TMR_INTERVAL 1000
 
-/* IP reassembly helper struct.
+/** IP reassembly helper struct.
  * This is exported because memp needs to know the size.
  */
 struct ip_reassdata {
@@ -74,11 +74,11 @@ struct pbuf * ip4_reass(struct pbuf *p);
 
 #if IP_FRAG
 #if !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF
+#ifndef LWIP_PBUF_CUSTOM_REF_DEFINED
+#define LWIP_PBUF_CUSTOM_REF_DEFINED
 /** A custom pbuf that holds a reference to another pbuf, which is freed
  * when this custom pbuf is freed. This is used to create a custom PBUF_REF
  * that points into the original pbuf. */
-#ifndef LWIP_PBUF_CUSTOM_REF_DEFINED
-#define LWIP_PBUF_CUSTOM_REF_DEFINED
 struct pbuf_custom_ref {
   /** 'base class' */
   struct pbuf_custom pc;

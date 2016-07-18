@@ -80,7 +80,7 @@ extern "C" {
 #define IP_PCB_ADDRHINT
 #endif /* LWIP_NETIF_HWADDRHINT */
 
-/* This is the common part of all PCB types. It needs to be at the
+/** This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
@@ -112,7 +112,7 @@ struct ip_pcb {
 /* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
 #define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE)
 
-/* Global variables of this module, kept in a struct for efficient access using base+index. */
+/** Global variables of this module, kept in a struct for efficient access using base+index. */
 struct ip_globals
 {
   /** The interface that accepted the packet for the current callback invocation. */

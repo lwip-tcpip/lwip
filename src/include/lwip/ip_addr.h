@@ -83,8 +83,9 @@ extern const ip_addr_t ip_addr_any_type;
 #define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr) (IP_GET_TYPE(&pcb->local_ip) == IP_GET_TYPE(ipaddr))
 #define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (IP_IS_ANY_TYPE_VAL(pcb->local_ip) || IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr))
 
-/* Convert generic ip address to specific protocol version */
+/** Convert generic ip address to specific protocol version */
 #define ip_2_ip6(ipaddr)   (&((ipaddr)->u_addr.ip6))
+/** Convert generic ip address to specific protocol version */
 #define ip_2_ip4(ipaddr)   (&((ipaddr)->u_addr.ip4))
 
 #define IP_ADDR4(ipaddr,a,b,c,d)      do { IP4_ADDR(ip_2_ip4(ipaddr),a,b,c,d); \

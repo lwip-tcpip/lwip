@@ -58,7 +58,7 @@
 extern "C" {
 #endif
 
-/* Struct for tables. */
+/** Struct for tables. */
 struct nd6_neighbor_cache_entry {
   ip6_addr_t next_hop_address;
   struct netif * netif;

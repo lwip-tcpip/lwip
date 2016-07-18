@@ -60,6 +60,7 @@ extern "C" {
 #define STAT_COUNTER_F   U16_F
 #endif
 
+/** Protocol related stats */
 struct stats_proto {
   STAT_COUNTER xmit;             /* Transmitted packets. */
   STAT_COUNTER recv;             /* Received packets. */
@@ -75,6 +76,7 @@ struct stats_proto {
   STAT_COUNTER cachehit;
 };
 
+/** IGMP stats */
 struct stats_igmp {
   STAT_COUNTER xmit;             /* Transmitted packets. */
   STAT_COUNTER recv;             /* Received packets. */
@@ -92,6 +94,7 @@ struct stats_igmp {
   STAT_COUNTER tx_report;        /* Sent reports. */
 };
 
+/** Memory stats */
 struct stats_mem {
 #if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
   const char *name;
@@ -103,18 +106,21 @@ struct stats_mem {
   STAT_COUNTER illegal;
 };
 
+/** System element stats */
 struct stats_syselem {
   STAT_COUNTER used;
   STAT_COUNTER max;
   STAT_COUNTER err;
 };
 
+/** System stats */
 struct stats_sys {
   struct stats_syselem sem;
   struct stats_syselem mutex;
   struct stats_syselem mbox;
 };
 
+/** SNMP MIB2 stats */
 struct stats_mib2 {
   /* IP */
   u32_t ipinhdrerrors;
@@ -173,6 +179,7 @@ struct stats_mib2 {
   u32_t icmpoutechoreps;
 };
 
+/** SNMP MIB2 interface stats */
 struct stats_mib2_netif_ctrs {
   /* The total number of octets received on the interface, including framing characters */
   u32_t ifinoctets;
@@ -218,62 +225,81 @@ struct stats_mib2_netif_ctrs {
   u32_t ifouterrors;
 };
 
+/** lwIP stats container */
 struct stats_ {
 #if LINK_STATS
+  /** Link level */
   struct stats_proto link;
 #endif
 #if ETHARP_STATS
+  /** ARP */
   struct stats_proto etharp;
 #endif
 #if IPFRAG_STATS
+  /** Fragmentation */
   struct stats_proto ip_frag;
 #endif
 #if IP_STATS
+  /** IP */
   struct stats_proto ip;
 #endif
 #if ICMP_STATS
+  /** ICMP */
   struct stats_proto icmp;
 #endif
 #if IGMP_STATS
+  /** IGMP */
   struct stats_igmp igmp;
 #endif
 #if UDP_STATS
+  /** UDP */
   struct stats_proto udp;
 #endif
 #if TCP_STATS
+  /** TCP */
   struct stats_proto tcp;
 #endif
 #if MEM_STATS
+  /** Heap */
   struct stats_mem mem;
 #endif
 #if MEMP_STATS
+  /** Internal memory pools */
   struct stats_mem *memp[MEMP_MAX];
 #endif
 #if SYS_STATS
+  /** System */
   struct stats_sys sys;
 #endif
 #if IP6_STATS
+  /** IPv6 */
   struct stats_proto ip6;
 #endif
 #if ICMP6_STATS
+  /** ICMP6 */
   struct stats_proto icmp6;
 #endif
 #if IP6_FRAG_STATS
+  /** IPv6 fragmentation */
   struct stats_proto ip6_frag;
 #endif
 #if MLD6_STATS
+  /** Multicast listener discovery */
   struct stats_igmp mld6;
 #endif
 #if ND6_STATS
+  /** Neighbor discovery */
   struct stats_proto nd6;
 #endif
 #if MIB2_STATS
+  /** SNMP MIB2 */
   struct stats_mib2 mib2;
 #endif
 };
 
 extern struct stats_ lwip_stats;
 
+/** Init statistics */
 void stats_init(void);
 
 #define STATS_INC(x) ++lwip_stats.x

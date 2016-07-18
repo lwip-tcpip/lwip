@@ -46,7 +46,7 @@ extern "C" {
 #define LWIP_MEMPOOL(name,num,size,desc)
 #include "lwip/priv/memp_std.h"
 
-/* Create the list of all memory pools managed by memp. MEMP_MAX represents a NULL pool at the end */
+/** Create the list of all memory pools managed by memp. MEMP_MAX represents a NULL pool at the end */
 typedef enum {
 #define LWIP_MEMPOOL(name,num,size,desc)  MEMP_##name,
 #include "lwip/priv/memp_std.h"
@@ -56,21 +56,7 @@ typedef enum {
 #include "lwip/priv/memp_priv.h"
 #include "lwip/stats.h"
 
-/* Private mempools example:
- * .h: only when pool is used in multiple .c files: LWIP_MEMPOOL_PROTOTYPE(my_private_pool);
- * .c:
- *   - in global variables section: LWIP_MEMPOOL_DECLARE(my_private_pool, 10, sizeof(foo), "Some description")
- *   - call ONCE before using pool (e.g. in some init() function): LWIP_MEMPOOL_INIT(my_private_pool);
- *   - allocate: void* my_new_mem = LWIP_MEMPOOL_ALLOC(my_private_pool);
- *   - free: LWIP_MEMPOOL_FREE(my_private_pool, my_new_mem);
- *
- * To relocate a pool, declare it as extern in cc.h. Example for GCC:
- *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_my_private_pool[];
- */
-
 extern const struct memp_desc* const memp_pools[MEMP_MAX];
-
-#define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc memp_ ## name
 
 #if MEMP_MEM_MALLOC
 
@@ -91,6 +77,23 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #else /* MEMP_MEM_MALLOC */
 
+/** Declare a private memory pool 
+ * Declare prototype for private memory pool if it is used in multiple files
+ */
+#define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc memp_ ## name
+
+/** Declare a private memory pool
+ * Private mempools example:
+ * .h: only when pool is used in multiple .c files: LWIP_MEMPOOL_PROTOTYPE(my_private_pool);
+ * .c:
+ *   - in global variables section: LWIP_MEMPOOL_DECLARE(my_private_pool, 10, sizeof(foo), "Some description")
+ *   - call ONCE before using pool (e.g. in some init() function): LWIP_MEMPOOL_INIT(my_private_pool);
+ *   - allocate: void* my_new_mem = LWIP_MEMPOOL_ALLOC(my_private_pool);
+ *   - free: LWIP_MEMPOOL_FREE(my_private_pool, my_new_mem);
+ *
+ * To relocate a pool, declare it as extern in cc.h. Example for GCC:
+ *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_my_private_pool[];
+ */
 #define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
   LWIP_DECLARE_MEMORY_ALIGNED(memp_memory_ ## name ## _base, ((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))); \
     \
@@ -107,8 +110,11 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
     &memp_tab_ ## name \
   };
 
+/** Initialize a private memory pool */
 #define LWIP_MEMPOOL_INIT(name)    memp_init_pool(&memp_ ## name)
+/** Allocate from a private memory pool */
 #define LWIP_MEMPOOL_ALLOC(name)   memp_malloc_pool(&memp_ ## name)
+/** Free element from a private memory pool */
 #define LWIP_MEMPOOL_FREE(name, x) memp_free_pool(&memp_ ## name, (x))
 
 #if MEM_USE_POOLS
