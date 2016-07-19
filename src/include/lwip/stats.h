@@ -297,6 +297,7 @@ struct stats_ {
 #endif
 };
 
+/** Global variable containing lwIP internal statistics. Add this to your debugger's watchlist. */
 extern struct stats_ lwip_stats;
 
 /** Init statistics */
