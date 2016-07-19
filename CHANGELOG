@@ -13,7 +13,7 @@ HISTORY
   2016-03-23: Simon Goldschmidt
   * tcp: call accept-callback with ERR_MEM when allocating a pcb fails on
     passive open to inform the application about this error
-	ATTENTION: applications have to handle NULL pcb in accept callback!
+    ATTENTION: applications have to handle NULL pcb in accept callback!
 
   2016-02-22: Ivan Delamer
   * Initial 6LoWPAN support
