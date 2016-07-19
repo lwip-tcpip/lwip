@@ -464,9 +464,11 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     errf = pcb->errf;
 #endif /* LWIP_CALLBACK_API */
     errf_arg = pcb->callback_arg;
-    if ((pcb->state == CLOSED) && (pcb->local_port != 0)) {
-      /* bound, not yet opened */
-      TCP_RMV(&tcp_bound_pcbs, pcb);
+    if (pcb->state == CLOSED) {
+      if (pcb->local_port != 0) {
+        /* bound, not yet opened */
+        TCP_RMV(&tcp_bound_pcbs, pcb);
+      }
     } else {
       send_rst = reset;
       local_port = pcb->local_port;
