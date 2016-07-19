@@ -35,8 +35,8 @@
  *
  */
 
-#ifndef LWIP_HDR_IP_FRAG_H
-#define LWIP_HDR_IP_FRAG_H
+#ifndef LWIP_HDR_IP4_FRAG_H
+#define LWIP_HDR_IP4_FRAG_H
 
 #include "lwip/opt.h"
 #include "lwip/err.h"
@@ -97,4 +97,4 @@ err_t ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest);
 
 #endif /* LWIP_IPV4 */
 
-#endif /* LWIP_HDR_IP_FRAG_H */
+#endif /* LWIP_HDR_IP4_FRAG_H */

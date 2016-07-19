@@ -48,7 +48,7 @@
 #include "lwip/memp.h"
 #include "lwip/priv/tcpip_priv.h"
 
-#include "lwip/ip_frag.h"
+#include "lwip/ip4_frag.h"
 #include "lwip/etharp.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"

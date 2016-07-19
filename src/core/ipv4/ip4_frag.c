@@ -42,7 +42,7 @@
 
 #if LWIP_IPV4
 
-#include "lwip/ip_frag.h"
+#include "lwip/ip4_frag.h"
 #include "lwip/def.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"

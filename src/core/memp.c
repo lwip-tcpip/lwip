@@ -52,7 +52,7 @@
 #include "lwip/timers.h"
 #include "lwip/stats.h"
 #include "lwip/etharp.h"
-#include "lwip/ip_frag.h"
+#include "lwip/ip4_frag.h"
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "lwip/nd6.h"
