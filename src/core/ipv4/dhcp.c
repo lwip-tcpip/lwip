@@ -701,12 +701,6 @@ dhcp_start(struct netif *netif)
   dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
 
-  /* check hwtype of the netif */
-  if ((netif->flags & NETIF_FLAG_ETHARP) == 0) {
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): No ETHARP netif\n"));
-    return ERR_ARG;
-  }
-
   /* check MTU of the netif */
   if (netif->mtu < DHCP_MAX_MSG_LEN_MIN_REQUIRED) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): Cannot use this netif with DHCP: MTU is too small\n"));
@@ -1709,8 +1703,13 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     if (dhcp->state == DHCP_STATE_REQUESTING) {
       dhcp_handle_ack(netif);
 #if DHCP_DOES_ARP_CHECK
-      /* check if the acknowledged lease address is already in use */
-      dhcp_check(netif);
+      if ((netif->flags & NETIF_FLAG_ETHARP) != 0) {
+        /* check if the acknowledged lease address is already in use */
+        dhcp_check(netif);
+      } else {
+        /* bind interface to the acknowledged lease address */
+        dhcp_bind(netif);
+      }
 #else
       /* bind interface to the acknowledged lease address */
       dhcp_bind(netif);
