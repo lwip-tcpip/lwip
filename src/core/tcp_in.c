@@ -751,7 +751,7 @@ tcp_process(struct tcp_pcb *pcb)
      pcb->snd_nxt, ntohl(pcb->unacked->tcphdr->seqno)));
     /* received SYN ACK with expected sequence number? */
     if ((flags & TCP_ACK) && (flags & TCP_SYN)
-        && ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
+        && (ackno == pcb->lastack + 1)) {
       pcb->snd_buf++;
       pcb->rcv_nxt = seqno + 1;
       pcb->rcv_ann_right_edge = pcb->rcv_nxt;
@@ -776,7 +776,15 @@ tcp_process(struct tcp_pcb *pcb)
       --pcb->snd_queuelen;
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"TCPWNDSIZE_F"\n", (tcpwnd_size_t)pcb->snd_queuelen));
       rseg = pcb->unacked;
-      pcb->unacked = rseg->next;
+      if (rseg == NULL) {
+        /* might happen if tcp_output fails in tcp_rexmit_rto()
+           in which case the segment is on the unsent list */
+        rseg = pcb->unsent;
+        LWIP_ASSERT("no segment to free", rseg != NULL);
+        pcb->unsent = rseg->next;
+      } else {
+        pcb->unacked = rseg->next;
+      }
       tcp_seg_free(rseg);
 
       /* If there's nothing left to acknowledge, stop the retransmit
