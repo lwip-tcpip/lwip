@@ -255,10 +255,11 @@ dhcp_handle_nak(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n",
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
+  /* Change to a defined state - set this before assigning the address
+     to ensure the callback can use dhcp_supplied_address() */
+  dhcp_set_state(dhcp, DHCP_STATE_BACKING_OFF);
   /* remove IP address from interface (must no longer be used, as per RFC2131) */
   netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
-  /* Change to a defined state */
-  dhcp_set_state(dhcp, DHCP_STATE_BACKING_OFF);
   /* We can immediately restart discovery */
   dhcp_discover(netif);
 }
@@ -1075,11 +1076,12 @@ dhcp_bind(struct netif *netif)
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_bind(): IP: 0x%08"X32_F" SN: 0x%08"X32_F" GW: 0x%08"X32_F"\n",
     ip4_addr_get_u32(&dhcp->offered_ip_addr), ip4_addr_get_u32(&sn_mask), ip4_addr_get_u32(&gw_addr)));
+  /* netif is now bound to DHCP leased address - set this before assigning the address
+     to ensure the callback can use dhcp_supplied_address() */
+  dhcp_set_state(dhcp, DHCP_STATE_BOUND);
+
   netif_set_addr(netif, &dhcp->offered_ip_addr, &sn_mask, &gw_addr);
   /* interface is used by routing now that an address is set */
-
-  /* netif is now bound to DHCP leased address */
-  dhcp_set_state(dhcp, DHCP_STATE_BOUND);
 }
 
 /**
