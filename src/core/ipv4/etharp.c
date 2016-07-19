@@ -480,6 +480,9 @@ etharp_update_arp_entry(struct netif *netif, const ip4_addr_t *ipaddr, struct et
   if (flags & ETHARP_FLAG_STATIC_ENTRY) {
     /* record static type */
     arp_table[i].state = ETHARP_STATE_STATIC;
+  } else if (arp_table[i].state == ETHARP_STATE_STATIC) {
+    /* found entry is a static type, don't overwrite it */
+    return ERR_VAL;
   } else
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
   {

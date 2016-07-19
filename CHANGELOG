@@ -321,6 +321,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-07-19: Simon Goldschmidt
+  * etharp.c: fixed bug #48477 (ARP input packet might update static entry)
+
   2016-07-11: Simon Goldschmidt
   * tcp_in.c: fixed bug #48476 (TCP sent callback called wrongly due to picking
     up old pcb->acked
