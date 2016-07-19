@@ -854,7 +854,8 @@ dhcp_network_changed(struct netif *netif)
  * @param netif the network interface on which the reply was received
  * @param addr The IP address we received a reply from
  */
-void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
+void
+dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
 {
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_arp_reply()\n"));
