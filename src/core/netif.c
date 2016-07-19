@@ -305,10 +305,18 @@ void
 netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
     const ip4_addr_t *gw)
 {
-  netif_set_netmask(netif, netmask);
-  netif_set_gw(netif, gw);
-  /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
-  netif_set_ipaddr(netif, ipaddr);
+  if (ip4_addr_isany(ipaddr)) {
+    /* when removing an address, we have to remove it *before* changing netmask/gw
+       to ensure that tcp RST segment can be sent correctly */
+    netif_set_ipaddr(netif, ipaddr);
+    netif_set_netmask(netif, netmask);
+    netif_set_gw(netif, gw);
+  } else {
+    netif_set_netmask(netif, netmask);
+    netif_set_gw(netif, gw);
+    /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
+    netif_set_ipaddr(netif, ipaddr);
+  }
 }
 #endif /* LWIP_IPV4*/
 
