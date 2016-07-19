@@ -264,8 +264,6 @@ struct tcp_pcb {
   tcpwnd_size_t snd_wnd;   /* sender window */
   tcpwnd_size_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
-  tcpwnd_size_t acked;
-
   tcpwnd_size_t snd_buf;   /* Available buffer space for sending (in bytes). */
 #define TCP_SNDQUEUELEN_OVERFLOW (0xffffU-3)
   u16_t snd_queuelen; /* Number of pbufs currently in the send buffer. */

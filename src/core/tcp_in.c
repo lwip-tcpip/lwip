@@ -75,8 +75,9 @@ static u16_t tcphdr_opt1len;
 static u8_t* tcphdr_opt2;
 static u16_t tcp_optidx;
 static u32_t seqno, ackno;
-static u8_t flags;
+static tcpwnd_size_t recv_acked;
 static u16_t tcplen;
+static u8_t flags;
 
 static u8_t recv_flags;
 static struct pbuf *recv_data;
@@ -346,6 +347,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     recv_data = NULL;
     recv_flags = 0;
+    recv_acked = 0;
 
     if (flags & TCP_PSH) {
       p->flags |= PBUF_FLAG_PUSH;
@@ -380,25 +382,25 @@ tcp_input(struct pbuf *p, struct netif *inp)
         /* If the application has registered a "sent" function to be
            called when new send buffer space is available, we call it
            now. */
-        if (pcb->acked > 0) {
-          u16_t acked;
+        if (recv_acked > 0) {
+          u16_t acked16;
 #if LWIP_WND_SCALE
-          /* pcb->acked is u32_t but the sent callback only takes a u16_t,
+          /* recv_acked is u32_t but the sent callback only takes a u16_t,
              so we might have to call it multiple times. */
-          u32_t pcb_acked = pcb->acked;
-          while (pcb_acked > 0) {
-            acked = (u16_t)LWIP_MIN(pcb_acked, 0xffffu);
-            pcb_acked -= acked;
+          u32_t acked = recv_acked;
+          while (acked > 0) {
+            acked16 = (u16_t)LWIP_MIN(acked, 0xffffu);
+            acked -= acked16;
 #else
           {
-            acked = pcb->acked;
+            acked16 = recv_acked;
 #endif
-            TCP_EVENT_SENT(pcb, (u16_t)acked, err);
+            TCP_EVENT_SENT(pcb, (u16_t)acked16, err);
             if (err == ERR_ABRT) {
               goto aborted;
             }
           }
-          pcb->acked = 0;
+          recv_acked = 0;
         }
         if (recv_flags & TF_CLOSED) {
           /* The connection has been closed and we will deallocate the
@@ -843,8 +845,8 @@ tcp_process(struct tcp_pcb *pcb)
         pcb->ssthresh = LWIP_TCP_INITIAL_SSTHRESH(pcb);
 
         /* Prevent ACK for SYN to generate a sent event */
-        if (pcb->acked != 0) {
-          pcb->acked--;
+        if (recv_acked != 0) {
+          recv_acked--;
         }
 
         pcb->cwnd = LWIP_TCP_CALC_INITIAL_CWND(pcb->mss);
@@ -1060,7 +1062,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
     /* Clause 1 */
     if (TCP_SEQ_LEQ(ackno, pcb->lastack)) {
-      pcb->acked = 0;
+      recv_acked = 0;
       /* Clause 2 */
       if (tcplen == 0) {
         /* Clause 3 */
@@ -1111,9 +1113,9 @@ tcp_receive(struct tcp_pcb *pcb)
 
       /* Update the send buffer space. Diff between the two can never exceed 64K
          unless window scaling is used. */
-      pcb->acked = (tcpwnd_size_t)(ackno - pcb->lastack);
+      recv_acked = (tcpwnd_size_t)(ackno - pcb->lastack);
 
-      pcb->snd_buf += pcb->acked;
+      pcb->snd_buf += recv_acked;
 
       /* Reset the fast retransmit variables. */
       pcb->dupacks = 0;
@@ -1158,8 +1160,8 @@ tcp_receive(struct tcp_pcb *pcb)
         LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"TCPWNDSIZE_F" ... ", (tcpwnd_size_t)pcb->snd_queuelen));
         LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
         /* Prevent ACK for FIN to generate a sent event */
-        if ((pcb->acked != 0) && ((TCPH_FLAGS(next->tcphdr) & TCP_FIN) != 0)) {
-          pcb->acked--;
+        if ((recv_acked != 0) && ((TCPH_FLAGS(next->tcphdr) & TCP_FIN) != 0)) {
+          recv_acked--;
         }
 
         pcb->snd_queuelen -= pbuf_clen(next->p);
@@ -1190,7 +1192,7 @@ tcp_receive(struct tcp_pcb *pcb)
 #endif /* LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS*/
     } else {
       /* Out of sequence ACK, didn't really ack anything */
-      pcb->acked = 0;
+      recv_acked = 0;
       tcp_send_empty_ack(pcb);
     }
 
@@ -1217,8 +1219,8 @@ tcp_receive(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"TCPWNDSIZE_F" ... ", (tcpwnd_size_t)pcb->snd_queuelen));
       LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
       /* Prevent ACK for FIN to generate a sent event */
-      if ((pcb->acked != 0) && ((TCPH_FLAGS(next->tcphdr) & TCP_FIN) != 0)) {
-        pcb->acked--;
+      if ((recv_acked != 0) && ((TCPH_FLAGS(next->tcphdr) & TCP_FIN) != 0)) {
+        recv_acked--;
       }
       pcb->snd_queuelen -= pbuf_clen(next->p);
       tcp_seg_free(next);
