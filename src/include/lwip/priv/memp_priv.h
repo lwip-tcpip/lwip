@@ -43,7 +43,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 #include "lwip/mem.h"
 
 #if MEMP_OVERFLOW_CHECK
@@ -144,7 +144,7 @@ struct memp_desc {
 #endif /* LWIP_DEBUG || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY */
 
   /** Base address */
-  u8_t *base;  
+  u8_t *base;
 
   /** First free element of each pool. Elements form a linked list. */
   struct memp **tab;

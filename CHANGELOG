@@ -328,6 +328,9 @@ HISTORY
   2016-06-30: Simon Goldschmidt (original patch by Fabian Koch)
   * tcp_in.c: fixed bug #48170 (Vulnerable to TCP RST spoofing)
 
+  2016-05-20: Dirk Ziegelmeier
+  * sntp.h/.c: Fix return value of sntp_getserver() call to return a pointer
+
   2016-04-05: Simon Goldschmidt (patch by Philip Gladstone)
   * udp.c: patch #8358: allow more combinations of listening PCB for IPv6
 
