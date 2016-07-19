@@ -35,8 +35,8 @@
  *         Simon Goldschmidt
  *
  */
-#ifndef LWIP_HDR_TIMERS_H
-#define LWIP_HDR_TIMERS_H
+#ifndef LWIP_HDR_TIMEOUTS_H
+#define LWIP_HDR_TIMEOUTS_H
 
 #include "lwip/opt.h"
 
@@ -127,4 +127,4 @@ void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 }
 #endif
 
-#endif /* LWIP_HDR_TIMERS_H */
+#endif /* LWIP_HDR_TIMEOUTS_H */

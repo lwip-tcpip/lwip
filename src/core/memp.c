@@ -49,7 +49,7 @@
 #include "lwip/priv/api_msg.h"
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/stats.h"
 #include "lwip/etharp.h"
 #include "lwip/ip4_frag.h"

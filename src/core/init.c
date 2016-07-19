@@ -53,7 +53,7 @@
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/etharp.h"
 #include "lwip/ip6.h"
 #include "lwip/nd6.h"

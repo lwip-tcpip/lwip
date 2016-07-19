@@ -43,7 +43,7 @@
 
 #include "lwip/tcpip.h"
 #include "lwip/sys.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 
 #ifdef __cplusplus
 extern "C" {

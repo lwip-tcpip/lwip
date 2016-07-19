@@ -76,7 +76,7 @@
 #include <stdio.h>
 #endif /* UNUSED */
 
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/memp.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
