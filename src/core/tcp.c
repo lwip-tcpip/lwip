@@ -1921,7 +1921,7 @@ void tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* n
             (ip4_addr_cmp(ip_2_ip4(&lpcb->local_ip), old_addr))) {
           /* The PCB is listening to the old ipaddr and
            * is set to listen to the new one instead */
-              ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
+          ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
         }
       }
     }
