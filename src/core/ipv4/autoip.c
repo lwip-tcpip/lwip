@@ -83,6 +83,23 @@
 /* 169.254.254.255 */
 #define AUTOIP_RANGE_END   (AUTOIP_NET | 0xFEFF)
 
+/* RFC 3927 Constants */
+#define PROBE_WAIT               1   /* second   (initial random delay)                 */
+#define PROBE_MIN                1   /* second   (minimum delay till repeated probe)    */
+#define PROBE_MAX                2   /* seconds  (maximum delay till repeated probe)    */
+#define PROBE_NUM                3   /*          (number of probe packets)              */
+#define ANNOUNCE_NUM             2   /*          (number of announcement packets)       */
+#define ANNOUNCE_INTERVAL        2   /* seconds  (time between announcement packets)    */
+#define ANNOUNCE_WAIT            2   /* seconds  (delay before announcing)              */
+#define MAX_CONFLICTS            10  /*          (max conflicts before rate limiting)   */
+#define RATE_LIMIT_INTERVAL      60  /* seconds  (delay between successive attempts)    */
+#define DEFEND_INTERVAL          10  /* seconds  (min. wait between defensive ARPs)     */
+
+/* AutoIP client states */
+#define AUTOIP_STATE_OFF         0
+#define AUTOIP_STATE_PROBING     1
+#define AUTOIP_STATE_ANNOUNCING  2
+#define AUTOIP_STATE_BOUND       3
 
 /** Pseudo random macro based on netif informations.
  * You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
@@ -105,21 +122,7 @@
 #endif /* LWIP_AUTOIP_CREATE_SEED_ADDR */
 
 /* static functions */
-static void autoip_handle_arp_conflict(struct netif *netif);
-
-/* creates a pseudo random LL IP-Address for a network interface */
-static void autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr);
-
-/* sends an ARP probe */
-static err_t autoip_arp_probe(struct netif *netif);
-
-/* sends an ARP announce */
 static err_t autoip_arp_announce(struct netif *netif);
-
-/* configure interface for use with current LL IP-Address */
-static err_t autoip_bind(struct netif *netif);
-
-/* start sending probes for llipaddr */
 static void autoip_start_probing(struct netif *netif);
 
 
@@ -228,9 +231,8 @@ autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
 static err_t
 autoip_arp_probe(struct netif *netif)
 {
-  return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,
-    (struct eth_addr *)netif->hwaddr, IP4_ADDR_ANY, &ethzero,
-    &netif->autoip->llipaddr, ARP_REQUEST);
+  /* this works because netif->ip_addr is ANY */
+  return etharp_request(netif, &netif->autoip->llipaddr);
 }
 
 /**
@@ -241,9 +243,7 @@ autoip_arp_probe(struct netif *netif)
 static err_t
 autoip_arp_announce(struct netif *netif)
 {
-  return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,
-    (struct eth_addr *)netif->hwaddr, &netif->autoip->llipaddr, &ethzero,
-    &netif->autoip->llipaddr, ARP_REQUEST);
+  return etharp_gratuitous(netif);
 }
 
 /**
