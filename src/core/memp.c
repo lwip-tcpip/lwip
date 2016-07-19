@@ -51,7 +51,7 @@
 #include "lwip/sys.h"
 #include "lwip/timers.h"
 #include "lwip/stats.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 #include "lwip/ip_frag.h"
 #include "lwip/dns.h"
 #include "lwip/netdb.h"

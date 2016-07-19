@@ -42,7 +42,7 @@
 #include "lwip/stats.h"
 #include "lwip/netif.h"
 #include "lwip/ip.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 
 #if LWIP_SNMP && SNMP_LWIP_MIB2
 

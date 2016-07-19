@@ -50,7 +50,7 @@
 
 #include "lwip/netif.h"
 /* #include "lwip/udp.h" */
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 
 #ifdef __cplusplus
 extern "C" {

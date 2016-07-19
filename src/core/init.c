@@ -54,7 +54,7 @@
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
 #include "lwip/timers.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 #include "lwip/ip6.h"
 #include "lwip/nd6.h"
 #include "lwip/mld6.h"

@@ -74,7 +74,7 @@
 #define PPP_OE_H
 
 #include "ppp.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"

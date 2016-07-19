@@ -42,7 +42,7 @@
 #include "netif/ethernet.h"
 #include "lwip/def.h"
 #include "lwip/stats.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/snmp.h"
 

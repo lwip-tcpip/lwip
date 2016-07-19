@@ -50,6 +50,7 @@ COREFILES=$(LWIPDIR)/core/def.c \
 
 CORE4FILES=$(LWIPDIR)/core/ipv4/autoip.c \
 	$(LWIPDIR)/core/ipv4/dhcp.c \
+	$(LWIPDIR)/core/ipv4/etharp.c \
 	$(LWIPDIR)/core/ipv4/icmp.c \
 	$(LWIPDIR)/core/ipv4/igmp.c \
 	$(LWIPDIR)/core/ipv4/ip_frag.c \
@@ -76,7 +77,7 @@ APIFILES=$(LWIPDIR)/api/api_lib.c \
 	$(LWIPDIR)/api/tcpip.c
 
 # NETIFFILES: Files implementing various generic network interface functions
-NETIFFILES=$(LWIPDIR)/netif/ethernet.c $(LWIPDIR)/netif/etharp.c \
+NETIFFILES=$(LWIPDIR)/netif/ethernet.c \
 	$(LWIPDIR)/netif/slipif.c
 
 # SIXLOWPAN: 6LoWPAN

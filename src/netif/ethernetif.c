@@ -53,7 +53,7 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "lwip/ethip6.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 #include "netif/ppp/pppoe.h"
 
 /* Define those to better describe your network interface. */

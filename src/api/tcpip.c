@@ -47,7 +47,7 @@
 #include "lwip/init.h"
 #include "lwip/ip.h"
 #include "lwip/pbuf.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 
 #define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
 #define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
