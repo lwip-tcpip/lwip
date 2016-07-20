@@ -782,10 +782,10 @@
 
 /**
  * LWIP_DHCP_AUTOIP_COOP_TRIES: Set to the number of DHCP DISCOVER probes
- * that should be sent before falling back on AUTOIP. This can be set
- * as low as 1 to get an AutoIP address very quickly, but you should
- * be prepared to handle a changing IP address when DHCP overrides
- * AutoIP.
+ * that should be sent before falling back on AUTOIP (the DHCP client keeps
+ * running in this case). This can be set as low as 1 to get an AutoIP address
+ * very  quickly, but you should be prepared to handle a changing IP address
+ * when DHCP overrides AutoIP.
  */
 #ifndef LWIP_DHCP_AUTOIP_COOP_TRIES
 #define LWIP_DHCP_AUTOIP_COOP_TRIES     9
