@@ -43,6 +43,11 @@
 #ifndef PPPOE_SUPPORT
 #define PPPOE_SUPPORT                   0
 #endif
+#if PPPOE_SUPPORT
+/* PPPoE requires Ethernet support */
+#undef LWIP_ETHERNET
+#define LWIP_ETHERNET                   1
+#endif /* PPPOE_SUPPORT */
 
 /**
  * PPPOL2TP_SUPPORT==1: Enable PPP Over L2TP
