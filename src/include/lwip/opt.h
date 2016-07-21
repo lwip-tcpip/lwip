@@ -478,7 +478,7 @@
  * might be disabled
  */
 #ifndef LWIP_ETHERNET
-#define LWIP_ETHERNET                   (LWIP_ARP || PPPOE_SUPPORT)
+#define LWIP_ETHERNET                   LWIP_ARP
 #endif
 
 /** ETH_PAD_SIZE: number of bytes added before the ethernet header to ensure
