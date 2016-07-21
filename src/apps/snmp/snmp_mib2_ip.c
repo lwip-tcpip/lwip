@@ -481,6 +481,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   }
 }
 
+#if LWIP_ARP && LWIP_IPV4
 /* --- ipNetToMediaTable --- */
 
 /* list of allowed value ranges for incoming OID */
@@ -594,6 +595,8 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
   /* not found */
   return SNMP_ERR_NOSUCHINSTANCE;
 }
+
+#endif /* LWIP_ARP && LWIP_IPV4 */
 
 static const struct snmp_scalar_node ip_Forwarding      = SNMP_SCALAR_CREATE_NODE(1, SNMP_NODE_INSTANCE_READ_WRITE, SNMP_ASN1_TYPE_INTEGER, ip_get_value, ip_set_test, ip_set_value);
 static const struct snmp_scalar_node ip_DefaultTTL      = SNMP_SCALAR_CREATE_NODE(2, SNMP_NODE_INSTANCE_READ_WRITE, SNMP_ASN1_TYPE_INTEGER, ip_get_value, ip_set_test, ip_set_value);
