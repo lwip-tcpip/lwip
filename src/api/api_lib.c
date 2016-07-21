@@ -445,6 +445,9 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
   err_t err;
 #if LWIP_TCP
   API_MSG_VAR_DECLARE(msg);
+#if LWIP_MPU_COMPATIBLE
+  msg = NULL;
+#endif
 #endif /* LWIP_TCP */
 
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
@@ -479,7 +482,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
     API_MSG_VAR_ALLOC(msg);
   }
 #endif /* LWIP_TCP */
-    
+
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(&conn->recvmbox, &buf, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
 #if LWIP_TCP
