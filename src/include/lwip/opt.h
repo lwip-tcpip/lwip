@@ -52,17 +52,21 @@
 */
 
 /**
- * SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection for certain
- * critical regions during buffer allocation, deallocation and memory
- * allocation and deallocation.
+ * SYS_LIGHTWEIGHT_PROT==1: enable inter-task protection (and task-vs-interrupt
+ * protection) for certain critical regions during buffer allocation, deallocation
+ * and memory allocation and deallocation.
+ * ATTENTION: This is required when using lwIP from more than one context! If
+ * you disable this, you must be sure what you are doing!
  */
 #ifndef SYS_LIGHTWEIGHT_PROT
-#define SYS_LIGHTWEIGHT_PROT            0
+#define SYS_LIGHTWEIGHT_PROT            1
 #endif
 
 /**
- * NO_SYS==1: Provides VERY minimal functionality. Otherwise,
- * use lwIP facilities.
+ * NO_SYS==1: Use lwIP without OS-awareness (no thread, semaphores, mutexes or
+ * mboxes). This means threaded APIs cannot be used (socket, netconn,
+ * i.e. everything in the 'api' folder), only the callback-style raw API is
+ * available (and you have to watch out for yourself that 
  */
 #ifndef NO_SYS
 #define NO_SYS                          0
@@ -96,7 +100,8 @@
  * LWIP_MPU_COMPATIBLE: enables special memory management mechanism
  * which makes lwip able to work on MPU (Memory Protection Unit) system
  * by not passing stack-pointers to other threads
- * (this decreases performance)
+ * (this decreases performance as memory is allocated from pools instead
+ * of keeping it on the stack)
  */
 #ifndef LWIP_MPU_COMPATIBLE
 #define LWIP_MPU_COMPATIBLE             0
@@ -117,10 +122,14 @@
 #endif
 
 /**
-* MEMP_MEM_MALLOC==1: Use mem_malloc/mem_free instead of the lwip pool allocator.
-* Especially useful with MEM_LIBC_MALLOC but handle with care regarding execution
-* speed and usage from interrupts!
-*/
+ * MEMP_MEM_MALLOC==1: Use mem_malloc/mem_free instead of the lwip pool allocator.
+ * Especially useful with MEM_LIBC_MALLOC but handle with care regarding execution
+ * speed (heap alloc can be much slower than pool alloc) and usage from interrupts
+ * (especially if your netif driver allocates PBUF_POOL pbufs for received frames
+ * from interrupt)!
+ * ATTENTION: Currently, this uses the heap for ALL pools (also for private pools,
+ * not only for internal pools defined in memp_std.h)!
+ */
 #ifndef MEMP_MEM_MALLOC
 #define MEMP_MEM_MALLOC                 0
 #endif
