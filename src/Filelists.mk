@@ -30,10 +30,10 @@
 #
 
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.
-COREFILES=$(LWIPDIR)/core/def.c \
+COREFILES=$(LWIPDIR)/core/init.c \
+	$(LWIPDIR)/core/def.c \
 	$(LWIPDIR)/core/dns.c \
 	$(LWIPDIR)/core/inet_chksum.c \
-	$(LWIPDIR)/core/init.c \
 	$(LWIPDIR)/core/ip.c \
 	$(LWIPDIR)/core/mem.c \
 	$(LWIPDIR)/core/memp.c \
