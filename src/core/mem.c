@@ -67,11 +67,7 @@
 
 #if MEM_USE_POOLS
 
-#if MEMP_MEM_MALLOC
-#error MEM_USE_POOLS and MEMP_MEM_MALLOC cannot be used together
-#endif
-
-/* lwIP head implemented with different sized pools */
+/* lwIP heap implemented with different sized pools */
 
 /**
  * Allocate memory: determine the smallest pool that is big enough

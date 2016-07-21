@@ -264,9 +264,9 @@
 #endif
 
 /* MEMP sanity checks */
-#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
-#if LWIP_NETCONN
 #if MEMP_MEM_MALLOC
+#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
+#if LWIP_NETCONN || LWIP_SOCKET
 #if !MEMP_NUM_NETCONN && LWIP_SOCKET
 #error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN cannot be 0 when using sockets!"
 #endif
@@ -274,9 +274,15 @@
 #if MEMP_NUM_NETCONN > (MEMP_NUM_TCP_PCB+MEMP_NUM_TCP_PCB_LISTEN+MEMP_NUM_UDP_PCB+MEMP_NUM_RAW_PCB)
 #error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN should be less than the sum of MEMP_NUM_{TCP,RAW,UDP}_PCB+MEMP_NUM_TCP_PCB_LISTEN. If you know what you are doing, define LWIP_DISABLE_MEMP_SANITY_CHECKS to 1 to disable this error."
 #endif
-#endif /* MEMP_MEM_MALLOC */
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 #endif /* !LWIP_DISABLE_MEMP_SANITY_CHECKS */
+#if MEM_USE_POOLS
+#error "MEMP_MEM_MALLOC and MEM_USE_POOLS cannot be enabled at the same time"
+#endif
+#ifdef LWIP_HOOK_MEMP_AVAILABLE
+#error "LWIP_HOOK_MEMP_AVAILABLE doesn't make sense with MEMP_MEM_MALLOC"
+#endif
+#endif /* MEMP_MEM_MALLOC */
 
 /* TCP sanity checks */
 #if !LWIP_DISABLE_TCP_SANITY_CHECKS
