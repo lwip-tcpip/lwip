@@ -788,16 +788,6 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
 #endif /* LWIP_TCP_TIMESTAMPS */
   optlen = LWIP_TCP_OPT_LENGTH(optflags);
 
-  /* tcp_enqueue_flags is always called with either SYN or FIN in flags.
-   * We need one available snd_buf byte to do that.
-   * This means we can't send FIN while snd_buf==0. A better fix would be to
-   * not include SYN and FIN sequence numbers in the snd_buf count. */
-  if (pcb->snd_buf == 0) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_enqueue_flags: no send buffer available\n"));
-    TCP_STATS_INC(tcp.memerr);
-    return ERR_MEM;
-  }
-
   /* Allocate pbuf with room for TCP header + options */
   if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
     pcb->flags |= TF_NAGLEMEMERR;
@@ -839,7 +829,6 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
   if ((flags & TCP_SYN) || (flags & TCP_FIN)) {
     pcb->snd_lbb++;
     /* optlen does not influence snd_buf */
-    pcb->snd_buf--;
   }
   if (flags & TCP_FIN) {
     pcb->flags |= TF_FIN;

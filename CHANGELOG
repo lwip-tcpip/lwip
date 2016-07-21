@@ -321,6 +321,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-07-21: Simon Goldschmidt (patch by Ambroz Bizjak)
+  * tcp_in.c, tcp_out.c: fixed bug #48543 (TCP sent callback may prematurely
+    report sent data when only part of a segment is acked) and don't include
+    SYN/FIN in snd_buf counter
+
   2016-07-19: Simon Goldschmidt
   * etharp.c: fixed bug #48477 (ARP input packet might update static entry)
 
