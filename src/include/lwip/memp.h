@@ -60,20 +60,13 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #if MEMP_MEM_MALLOC
 
-#include "lwip/mem.h"
-
-#define memp_init()
-#define memp_malloc(type)     mem_malloc(memp_pools[type]->size)
-#define memp_free(type, mem)  mem_free(mem)
-
 #define LWIP_MEMPOOL_DECLARE(name,num,size,desc) \
+  LWIP_MEMPOOL_DECLARE_STATS_INSTANCE(memp_stats_ ## name) \
   const struct memp_desc memp_ ## name = { \
+    DECLARE_LWIP_MEMPOOL_DESC(desc) \
+    LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(memp_stats_ ## name) \
     LWIP_MEM_ALIGN_SIZE(size) \
   };
-
-#define LWIP_MEMPOOL_INIT(name)
-#define LWIP_MEMPOOL_ALLOC(name)   mem_malloc(memp_ ## name.size)
-#define LWIP_MEMPOOL_FREE(name, x) mem_free(x)
 
 #else /* MEMP_MEM_MALLOC */
 
@@ -102,13 +95,15 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
   static struct memp *memp_tab_ ## name; \
     \
   const struct memp_desc memp_ ## name = { \
-    LWIP_MEM_ALIGN_SIZE(size), \
-    LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(memp_stats_ ## name) \
-    (num), \
     DECLARE_LWIP_MEMPOOL_DESC(desc) \
+    LWIP_MEMPOOL_DECLARE_STATS_REFERENCE(memp_stats_ ## name) \
+    LWIP_MEM_ALIGN_SIZE(size), \
+    (num), \
     memp_memory_ ## name ## _base, \
     &memp_tab_ ## name \
   };
+
+#endif /* MEMP_MEM_MALLOC */
 
 /** Initialize a private memory pool */
 #define LWIP_MEMPOOL_INIT(name)    memp_init_pool(&memp_ ## name)
@@ -138,8 +133,6 @@ void *memp_malloc_fn(memp_t type, const char* file, const int line);
 void *memp_malloc(memp_t type);
 #endif
 void  memp_free(memp_t type, void *mem);
-
-#endif /* MEMP_MEM_MALLOC */
 
 #ifdef __cplusplus
 }

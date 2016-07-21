@@ -1,6 +1,9 @@
 /**
  * @file
  * lwIP internal memory pools (do not use in application code)
+ * This file is deliberately included multiple times: once with empty
+ * definition of LWIP_MEMPOOL() to handle all includes and multiple times
+ * to build up various lists of mem pools.
  */
 
 /*

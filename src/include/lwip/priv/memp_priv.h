@@ -87,6 +87,7 @@ extern "C" {
 
 #endif /* MEMP_OVERFLOW_CHECK */
 
+#if !MEMP_MEM_MALLOC || MEMP_OVERFLOW_CHECK
 struct memp {
   struct memp *next;
 #if MEMP_OVERFLOW_CHECK
@@ -94,6 +95,7 @@ struct memp {
   int line;
 #endif /* MEMP_OVERFLOW_CHECK */
 };
+#endif /* !MEMP_MEM_MALLOC || MEMP_OVERFLOW_CHECK */
 
 #if MEM_USE_POOLS
 /* Use a helper type to get the start and end of the user "memory pools" for mem_malloc */
@@ -126,22 +128,21 @@ typedef enum {
 
 /** Memory pool descriptor */
 struct memp_desc {
-  /** Element size */
-  u16_t size;
-
+#if defined(LWIP_DEBUG) || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY
+  /** Textual description */
+  const char *desc;
+#endif /* LWIP_DEBUG || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY */
 #if MEMP_STATS
   /** Statistics */
   struct stats_mem *stats;
 #endif
 
+  /** Element size */
+  u16_t size;
+
 #if !MEMP_MEM_MALLOC
   /** Number of elements */
   u16_t num;
-
-#if defined(LWIP_DEBUG) || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY
-  /** Textual description */
-  const char *desc;
-#endif /* LWIP_DEBUG || MEMP_OVERFLOW_CHECK || LWIP_STATS_DISPLAY */
 
   /** Base address */
   u8_t *base;
