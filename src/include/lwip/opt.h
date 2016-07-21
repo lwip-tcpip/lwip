@@ -66,7 +66,8 @@
  * NO_SYS==1: Use lwIP without OS-awareness (no thread, semaphores, mutexes or
  * mboxes). This means threaded APIs cannot be used (socket, netconn,
  * i.e. everything in the 'api' folder), only the callback-style raw API is
- * available (and you have to watch out for yourself that 
+ * available (and you have to watch out for yourself that you don't access
+ * lwIP functions/structures from more than one context at a time!)
  */
 #ifndef NO_SYS
 #define NO_SYS                          0
