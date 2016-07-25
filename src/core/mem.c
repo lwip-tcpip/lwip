@@ -117,9 +117,13 @@ again:
   /* and return a pointer to the memory directly after the struct memp_malloc_helper */
   ret = (u8_t*)element + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper));
 
+#if MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS)
+  /* truncating to u16_t is safe because struct memp_desc::size is u16_t */
+  element->size = (u16_t)size;
+  MEM_STATS_INC_USED(used, element->size);
+#endif /* MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS) */
 #if MEMP_OVERFLOW_CHECK
-  /* initialize unused memory */
-  element->size = size;
+  /* initialize unused memory (diff between requested size and selected pool's size) */
   memset((u8_t*)ret + size, 0xcd, memp_pools[poolnr]->size - size);
 #endif /* MEMP_OVERFLOW_CHECK */
   return ret;
@@ -148,12 +152,13 @@ mem_free(void *rmem)
   LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == LWIP_MEM_ALIGN(hmem)));
   LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
 
+  MEM_STATS_DEC_USED(used, hmem->size);
 #if MEMP_OVERFLOW_CHECK
   {
      u16_t i;
      LWIP_ASSERT("MEM_USE_POOLS: invalid chunk size",
         hmem->size <= memp_pools[hmem->poolnr]->size);
-     /* check that unused memory remained untouched */
+     /* check that unused memory remained untouched (diff between requested size and selected pool's size) */
      for (i = hmem->size; i < memp_pools[hmem->poolnr]->size; i++) {
         u8_t data = *((u8_t*)rmem + i);
         LWIP_ASSERT("MEM_USE_POOLS: mem overflow detected", data == 0xcd);

@@ -113,15 +113,15 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 #define LWIP_MEMPOOL_FREE(name, x) memp_free_pool(&memp_ ## name, (x))
 
 #if MEM_USE_POOLS
-/** This structure is used to save the pool one element came from. */
+/** This structure is used to save the pool one element came from.
+ * This has to be defined here as it is required for pool size calculation. */
 struct memp_malloc_helper
 {
    memp_t poolnr;
-#if MEMP_OVERFLOW_CHECK
+#if MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS)
    u16_t size;
-#endif /* MEMP_OVERFLOW_CHECK */
+#endif /* MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS) */
 };
-
 #endif /* MEM_USE_POOLS */
 
 void  memp_init(void);
