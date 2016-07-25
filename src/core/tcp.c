@@ -4,8 +4,9 @@
  *
  * This file contains common functions for the TCP implementation, such as functinos
  * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  *
+ * See also @ref rawapi
  */
 
 /*

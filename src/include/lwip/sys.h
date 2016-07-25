@@ -1,6 +1,7 @@
 /**
  * @file
- * OS abstraction layer
+ * OS abstraction layer\n
+ * See also @ref sys
  */
 
 /*

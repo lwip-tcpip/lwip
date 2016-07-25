@@ -1,7 +1,8 @@
 /**
  * @file
- * User Datagram Protocol module
+ * User Datagram Protocol module\n
  *
+ * See also @ref rawapi
  */
 
 /*
