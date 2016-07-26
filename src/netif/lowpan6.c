@@ -39,6 +39,12 @@
  * <delamer@inicotech.com>
  */
 
+/**
+ * @defgroup sixlowpan 6LowPAN netif
+ * @ingroup addons
+ * 6LowPAN netif implementation
+ */
+
 #include "netif/lowpan6.h"
 
 #if LWIP_IPV6 && LWIP_6LOWPAN

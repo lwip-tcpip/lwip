@@ -79,6 +79,12 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/**
+ * @defgroup ppp PPP netif
+ * @ingroup addons
+ * @verbinclude "ppp.txt"
+ */
+
 #include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
