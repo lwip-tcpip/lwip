@@ -31,6 +31,12 @@
  *
  */
 
+/**
+ * @defgroup netifapi Thread-safe API
+ * @ingroup netif
+ * Thread-safe functions to be called from non-TCPIP threads
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_NETIF_API /* don't build if not configured for use in lwipopts.h */
@@ -108,6 +114,7 @@ netifapi_do_netif_common(struct tcpip_api_call_data *m)
 }
 
 /**
+ * @ingroup netifapi
  * Call netif_add() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *
@@ -152,6 +159,7 @@ netifapi_netif_add(struct netif *netif,
 
 #if LWIP_IPV4
 /**
+ * @ingroup netifapi
  * Call netif_set_addr() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *

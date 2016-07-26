@@ -40,7 +40,7 @@
  * @defgroup udp_raw UDP
  * @ingroup raw_api
  * User Datagram Protocol module\n
- * @see @ref raw_api
+ * @see @ref raw_api and @ref netconn
  */
 
 /* udp.c

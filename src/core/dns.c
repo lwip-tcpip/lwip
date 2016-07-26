@@ -60,6 +60,8 @@
  * must be implemented by the module that uses the resolver).
  * 
  * All functions must be called from TCPIP thread.
+ * 
+ * @see @ref netconn_dns
  */
 
 /*-----------------------------------------------------------------------------
