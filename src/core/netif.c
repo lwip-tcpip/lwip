@@ -35,7 +35,7 @@
  */
 
 /**
- * @defgroup netif Network interface
+ * @defgroup netif Network interface (NETIF)
  */
 
 #include "lwip/opt.h"

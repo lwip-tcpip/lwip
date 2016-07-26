@@ -81,7 +81,7 @@ extern "C" {
 #endif /* LWIP_IPV6 */
 
 
-    /* Helpers to process several netconn_types by the same code */
+/* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)         ((t)&0xF0)
 #define NETCONNTYPE_DATAGRAM(t)      ((t)&0xE0)
 #if LWIP_IPV6
@@ -94,7 +94,9 @@ extern "C" {
 #define NETCONNTYPE_ISUDPNOCHKSUM(t) ((t) == NETCONN_UDPNOCHKSUM)
 #endif /* LWIP_IPV6 */
 
-/** Protocol family and type of the netconn */
+/** @ingroup netconn_common
+ * Protocol family and type of the netconn
+ */
 enum netconn_type {
   NETCONN_INVALID     = 0,
   /* NETCONN_TCP Group */
@@ -252,7 +254,10 @@ struct netconn {
 }} while(0);
 
 /* Network connection functions: */
+
+/** @ingroup netconn_common */
 #define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)
+/** @ingroup netconn_common */
 #define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
 struct netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                              netconn_callback callback);
@@ -262,7 +267,9 @@ err_t   netconn_delete(struct netconn *conn);
 
 err_t   netconn_getaddr(struct netconn *conn, ip_addr_t *addr,
                         u16_t *port, u8_t local);
+/** @ingroup netconn_common */
 #define netconn_peer(c,i,p) netconn_getaddr(c,i,p,0)
+/** @ingroup netconn_common */
 #define netconn_addr(c,i,p) netconn_getaddr(c,i,p,1)
 
 err_t   netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port);
@@ -278,6 +285,7 @@ err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
 err_t   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
                              u8_t apiflags, size_t *bytes_written);
+/** @ingroup netconn_tcp */
 #define netconn_write(conn, dataptr, size, apiflags) \
           netconn_write_partly(conn, dataptr, size, apiflags, NULL)
 err_t   netconn_close(struct netconn *conn);
