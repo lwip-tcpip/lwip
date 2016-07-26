@@ -372,9 +372,9 @@ memp_malloc_pool_fn(const struct memp_desc *desc, const char* file, const int li
   }
 
 #if !MEMP_OVERFLOW_CHECK
-  return memp_malloc_pool(desc);
+  return do_memp_malloc_pool(desc);
 #else
-  return memp_malloc_pool_fn(desc, file, line);
+  return do_memp_malloc_pool_fn(desc, file, line);
 #endif
 }
 
