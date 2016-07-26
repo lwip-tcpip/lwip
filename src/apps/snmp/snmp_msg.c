@@ -285,14 +285,21 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
       request->error_status = SNMP_ERR_GENERROR;
     }
   } else {
+    s16_t len = node_instance.get_value(&node_instance, vb->value);
     vb->type = node_instance.asn1_type;
-    vb->value_len = node_instance.get_value(&node_instance, vb->value);
-    LWIP_ASSERT("SNMP_MAX_VALUE_SIZE is configured too low", (vb->value_len & ~SNMP_GET_VALUE_RAW_DATA) <= SNMP_MAX_VALUE_SIZE);
 
-    err = snmp_append_outbound_varbind(&(request->outbound_pbuf_stream), vb);
-    if (err == ERR_BUF) {
-      request->error_status = SNMP_ERR_TOOBIG;
-    } else if (err != ERR_OK) {
+    if(len >= 0) {
+      vb->value_len = (u16_t)len; /* cast is OK because we checked >= 0 above */
+
+      LWIP_ASSERT("SNMP_MAX_VALUE_SIZE is configured too low", (vb->value_len & ~SNMP_GET_VALUE_RAW_DATA) <= SNMP_MAX_VALUE_SIZE);
+      err = snmp_append_outbound_varbind(&request->outbound_pbuf_stream, vb);
+
+      if (err == ERR_BUF) {
+        request->error_status = SNMP_ERR_TOOBIG;
+      } else if (err != ERR_OK) {
+        request->error_status = SNMP_ERR_GENERROR;
+      }
+    } else {
       request->error_status = SNMP_ERR_GENERROR;
     }
 

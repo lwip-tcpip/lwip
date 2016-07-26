@@ -79,7 +79,7 @@ struct snmp_scalar_array_node_def
   snmp_access_t access;
 };
 
-typedef u16_t (*snmp_scalar_array_get_value_method)(const struct snmp_scalar_array_node_def*, void*);
+typedef s16_t (*snmp_scalar_array_get_value_method)(const struct snmp_scalar_array_node_def*, void*);
 typedef snmp_err_t (*snmp_scalar_array_set_test_method)(const struct snmp_scalar_array_node_def*, u16_t, void*);
 typedef snmp_err_t (*snmp_scalar_array_set_value_method)(const struct snmp_scalar_array_node_def*, u16_t, void*);
 

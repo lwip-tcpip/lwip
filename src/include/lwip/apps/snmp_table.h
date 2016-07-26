@@ -121,9 +121,9 @@ snmp_err_t snmp_table_simple_get_next_instance(const u32_t *root_oid, u8_t root_
   snmp_table_simple_get_next_instance }, \
   (u16_t)LWIP_ARRAYSIZE(columns), (columns), (get_cell_value_method), (get_next_cell_instance_and_value_method) }
 
-u16_t snmp_table_extract_value_from_s32ref(struct snmp_node_instance* instance, void* value);
-u16_t snmp_table_extract_value_from_u32ref(struct snmp_node_instance* instance, void* value);
-u16_t snmp_table_extract_value_from_refconstptr(struct snmp_node_instance* instance, void* value);
+s16_t snmp_table_extract_value_from_s32ref(struct snmp_node_instance* instance, void* value);
+s16_t snmp_table_extract_value_from_u32ref(struct snmp_node_instance* instance, void* value);
+s16_t snmp_table_extract_value_from_refconstptr(struct snmp_node_instance* instance, void* value);
 
 #endif /* LWIP_SNMP */
 

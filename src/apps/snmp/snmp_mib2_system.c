@@ -213,17 +213,17 @@ snmp_mib2_set_syslocation_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 }
 
 
-static u16_t
+static s16_t
 system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   const u8_t*  var = NULL;
-  const u16_t* var_len;
+  const s16_t* var_len;
   u16_t result;
 
   switch (node->oid) {
   case 1: /* sysDescr */
     var     = sysdescr;
-    var_len = sysdescr_len;
+    var_len = (s16_t*)sysdescr_len;
     break;
   case 2: /* sysObjectID */
     {
@@ -236,15 +236,15 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
     return sizeof(u32_t);
   case 4: /* sysContact */
     var     = syscontact;
-    var_len = syscontact_len;
+    var_len = (s16_t*)syscontact_len;
     break;
   case 5: /* sysName */
     var     = sysname;
-    var_len = sysname_len;
+    var_len = (s16_t*)sysname_len;
     break;
   case 6: /* sysLocation */
     var     = syslocation;
-    var_len = syslocation_len;
+    var_len = (s16_t*)syslocation_len;
     break;
   case 7: /* sysServices */
     *(s32_t*)value = SNMP_SYSSERVICES;
@@ -257,7 +257,7 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
   /* handle string values (OID 1,4,5 and 6) */
   LWIP_ASSERT("", (value != NULL));
   if (var_len == NULL) {
-    result = (u16_t)strlen((const char*)var);
+    result = (s16_t)strlen((const char*)var);
   } else {
     result = *var_len;
   }

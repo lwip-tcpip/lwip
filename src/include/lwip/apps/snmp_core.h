@@ -181,7 +181,7 @@ typedef enum {
 
 struct snmp_node_instance;
 
-typedef u16_t (*node_instance_get_value_method)(struct snmp_node_instance*, void*);
+typedef s16_t (*node_instance_get_value_method)(struct snmp_node_instance*, void*);
 typedef snmp_err_t (*node_instance_set_test_method)(struct snmp_node_instance*, u16_t, void*);
 typedef snmp_err_t (*node_instance_set_value_method)(struct snmp_node_instance*, u16_t, void*);
 typedef void (*node_instance_release_method)(struct snmp_node_instance*);
@@ -201,7 +201,7 @@ struct snmp_node_instance
   /** one out of instance access types defined above (SNMP_NODE_INSTANCE_READ_ONLY,...) */
   snmp_access_t access;
   
-  /** returns object value for the given object identifier */
+  /** returns object value for the given object identifier. Return values <0 to indicate an error */
   node_instance_get_value_method get_value;
   /** tests length and/or range BEFORE setting */
   node_instance_set_test_method set_test;

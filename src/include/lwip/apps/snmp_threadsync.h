@@ -58,7 +58,7 @@ struct threadsync_data
 {
   union {
     snmp_err_t u8;
-    u16_t u16;
+    s16_t s16;
   } retval;
   union {
     const u32_t *root_oid;

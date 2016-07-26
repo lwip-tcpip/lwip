@@ -55,12 +55,12 @@ threadsync_get_value_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
-  call_data->retval.u16 = call_data->proxy_instance.get_value(&call_data->proxy_instance, call_data->arg1.value);
+  call_data->retval.s16 = call_data->proxy_instance.get_value(&call_data->proxy_instance, call_data->arg1.value);
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
 
-static u16_t
+static s16_t
 threadsync_get_value(struct snmp_node_instance* instance, void* value)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)instance->reference.ptr;
@@ -68,7 +68,7 @@ threadsync_get_value(struct snmp_node_instance* instance, void* value)
   call_data->arg1.value = value;
   call_synced_function(call_data, threadsync_get_value_synced);
 
-  return call_data->retval.u16;
+  return call_data->retval.s16;
 }
 
 static void
