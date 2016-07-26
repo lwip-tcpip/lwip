@@ -1,3 +1,13 @@
+/**
+ * @defgroup callbackstyle_api Callback-style APIs
+ * Non thread-safe APIs, callback style for maximum performance and minimum
+ * memory footprint.
+ * 
+ * @defgroup threadsafe_api Thread-safe APIs
+ * Thread-safe APIs, blocking functions. More overhead, but can be called
+ * from any thread except TCPIP thread.
+ */
+
 /*! \mainpage lwIP Documentation
  *
  * \section intro_sec Introduction

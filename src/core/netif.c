@@ -36,6 +36,7 @@
 
 /**
  * @defgroup netif Network interface (NETIF)
+ * @ingroup callbackstyle_api
  */
 
 #include "lwip/opt.h"

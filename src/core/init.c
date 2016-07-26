@@ -323,6 +323,7 @@
 /**
  * @ingroup lwIP
  * Initialize all modules.
+ * Use this in NO_SYS mode. Use tcpip_init() otherwise.
  */
 void
 lwip_init(void)

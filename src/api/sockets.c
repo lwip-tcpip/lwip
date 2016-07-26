@@ -40,6 +40,7 @@
 
 /**
  * @defgroup socket Socket API
+ * @ingroup threadsafe_api
  * BSD-style socket API.\n
  * Thread-safe, to be called from non-TCPIP threads only.\n
  * Can be activated by defining LWIP_SOCKET to 1.\n

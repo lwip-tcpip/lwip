@@ -36,6 +36,7 @@
 
 /**
  * @defgroup netconn Netconn API
+ * @ingroup threadsafe_api
  * Thread-safe, to be called from non-TCPIP threads only.
  * TX/RX handling based on @ref netbuf (containing @ref pbuf)
  * to avoid copying data around.
@@ -115,7 +116,6 @@ netconn_apimsg(tcpip_callback_fn fn, struct api_msg *apimsg)
 }
 
 /**
- * @ingroup netconn_common
  * Create a new netconn (of a specific type) that has a callback function.
  * The corresponding pcb is also created.
  *

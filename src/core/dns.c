@@ -39,6 +39,7 @@
 
 /**
  * @defgroup dns DNS
+ * @ingroup callbackstyle_api
  *
  * Implements a DNS host name to IP address resolver.
  *

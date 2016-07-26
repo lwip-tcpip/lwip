@@ -40,6 +40,7 @@
 
 /**
  * @defgroup raw_api RAW API
+ * @ingroup callbackstyle_api
  * @verbinclude "rawapi.txt"
  */
 

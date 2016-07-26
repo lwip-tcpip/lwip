@@ -38,8 +38,10 @@
 
 /**
  * @defgroup ip4 IPv4
+ * @ingroup callbackstyle_api
  *
  * @defgroup ip6 IPv6
+ * @ingroup callbackstyle_api
  * 
  * @defgroup ipaddr IP address handling
  * 

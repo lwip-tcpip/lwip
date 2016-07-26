@@ -257,7 +257,6 @@ struct netconn {
 
 /** @ingroup netconn_common */
 #define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)
-/** @ingroup netconn_common */
 #define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
 struct netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                              netconn_callback callback);
