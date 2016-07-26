@@ -60,6 +60,7 @@ CORE4FILES=$(LWIPDIR)/core/ipv4/autoip.c \
 CORE6FILES=$(LWIPDIR)/core/ipv6/dhcp6.c \
 	$(LWIPDIR)/core/ipv6/ethip6.c \
 	$(LWIPDIR)/core/ipv6/icmp6.c \
+	$(LWIPDIR)/core/ipv6/inet6.c \
 	$(LWIPDIR)/core/ipv6/ip6.c \
 	$(LWIPDIR)/core/ipv6/ip6_addr.c \
 	$(LWIPDIR)/core/ipv6/ip6_frag.c \
