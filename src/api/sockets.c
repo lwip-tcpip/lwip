@@ -38,6 +38,14 @@
  *
  */
 
+/**
+ * @defgroup socket Socket API
+ * BSD-style socket API.\n
+ * Thread-safe, to be called from non-TCPIP threads only.\n
+ * Can be activated by defining LWIP_SOCKET to 1.\n
+ * Header is in posix/sys/socket.h\b
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
