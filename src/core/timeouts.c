@@ -68,7 +68,7 @@
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
-struct lwip_cyclic_timer lwip_cyclic_timers[] = {
+const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
 #if LWIP_TCP
   /* The TCP timer is a special case: it does not have to run always and
      is triggered to start from TCP using tcp_timer_needed() */
@@ -163,7 +163,7 @@ tcp_timer_needed(void)
 static void
 cyclic_timer(void *arg)
 {
-  struct lwip_cyclic_timer* cyclic = (struct lwip_cyclic_timer*)arg;
+  const struct lwip_cyclic_timer* cyclic = (const struct lwip_cyclic_timer*)arg;
 #if LWIP_DEBUG_TIMERNAMES
   LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: %s()\n", cyclic->handler_name));
 #endif
@@ -177,7 +177,9 @@ void sys_timeouts_init(void)
   size_t i;
   /* tcp_tmr() at index 0 is started on demand */
   for (i = 1; i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
-    sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, &lwip_cyclic_timers[i]);
+    /* we have to cast via size_t to get rid of const warning
+      (this is OK as cyclic_timer() casts back to const* */
+    sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, (void*)(size_t)&lwip_cyclic_timers[i]);
   }
 
   /* Initialise timestamp for sys_check_timeouts */
