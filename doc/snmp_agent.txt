@@ -1,3 +1,6 @@
+* THIS DOCUMENTATION IS OUTDATED *
+It was written before the agent was largely rewritten in 2015.
+
 SNMPv1 agent for lwIP
 
 Author: Christiaan Simons
