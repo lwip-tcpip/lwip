@@ -135,7 +135,7 @@ namespace LwipSnmpCodeGeneration
 					FunctionDeclaration  getMethodDecl = new FunctionDeclaration(this.Name + LwipDefs.FnctSuffix_GetValue, isStatic: true);
 					getMethodDecl.Parameter.Add(new VariableType("instance", LwipDefs.Vt_StNodeInstance, "*"));
 					getMethodDecl.Parameter.Add(new VariableType("value", VariableType.VoidString, "*"));
-					getMethodDecl.ReturnType = new VariableType(null, LwipDefs.Vt_U16);
+					getMethodDecl.ReturnType = new VariableType(null, LwipDefs.Vt_S16);
 					mibFile.Declarations.Add(getMethodDecl);
 
 					Function getMethod = Function.FromDeclaration(getMethodDecl);

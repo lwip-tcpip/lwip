@@ -116,7 +116,7 @@ namespace LwipSnmpCodeGeneration
 				FunctionDeclaration getMethodDecl = new FunctionDeclaration(this.GetMethodName, isStatic: true);
 				getMethodDecl.Parameter.Add(instanceType);
 				getMethodDecl.Parameter.Add(new VariableType("value", VariableType.VoidString, "*"));
-				getMethodDecl.ReturnType = new VariableType(null, LwipDefs.Vt_U16);
+				getMethodDecl.ReturnType = new VariableType(null, LwipDefs.Vt_S16);
 
 				if (generateDeclarations)
 				{
