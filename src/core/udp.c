@@ -37,6 +37,11 @@
  *
  */
 
+/**
+ * @defgroup udp_raw UDP
+ * @ingroup raw_api
+ * @see @ref rawapi
+ */
 
 /* udp.c
  *
@@ -84,6 +89,7 @@ static u16_t udp_port = UDP_LOCAL_PORT_RANGE_START;
 struct udp_pcb *udp_pcbs;
 
 /**
+ * @ingroup udp_raw
  * Initialize this module.
  */
 void
@@ -460,6 +466,7 @@ chkerr:
 }
 
 /**
+ * @ingroup udp_raw
  * Send data using UDP.
  *
  * @param pcb UDP PCB used to send the data.
@@ -490,7 +497,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 }
 
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
-/** Same as udp_send() but with checksum
+/** @ingroup udp_raw
+ * Same as udp_send() but with checksum
  */
 err_t
 udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
@@ -507,6 +515,7 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 
 /**
+ * @ingroup udp_raw
  * Send data to a specified address using UDP.
  *
  * @param pcb UDP PCB used to send the data.
@@ -531,7 +540,8 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
 }
 
-/** Same as udp_sendto(), but with checksum */
+/** @ingroup udp_raw
+ * Same as udp_sendto(), but with checksum */
 err_t
 udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
                   u16_t dst_port, u8_t have_chksum, u16_t chksum)
@@ -588,6 +598,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 }
 
 /**
+ * @ingroup udp_raw
  * Send data to a specified address using UDP.
  * The netif used for sending can be specified.
  *
@@ -673,7 +684,8 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 }
 
-/** Same as udp_sendto_if(), but with source address */
+/** @ingroup udp_raw
+ * Same as @ref udp_sendto_if, but with source address */
 err_t
 udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
   const ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif, const ip_addr_t *src_ip)
@@ -876,6 +888,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
 }
 
 /**
+ * @ingroup udp_raw
  * Bind an UDP PCB.
  *
  * @param pcb UDP PCB to be bound with a local address ipaddr and port.
@@ -976,6 +989,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 }
 
 /**
+ * @ingroup udp_raw
  * Connect an UDP PCB.
  *
  * This will associate the UDP PCB with the remote address.
@@ -1031,6 +1045,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 }
 
 /**
+ * @ingroup udp_raw
  * Disconnect a UDP PCB
  *
  * @param pcb the udp pcb to disconnect.
@@ -1054,6 +1069,7 @@ udp_disconnect(struct udp_pcb *pcb)
 }
 
 /**
+ * @ingroup udp_raw
  * Set a receive callback for a UDP PCB
  *
  * This callback will be called when receiving a datagram for the pcb.
@@ -1071,6 +1087,7 @@ udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
 }
 
 /**
+ * @ingroup udp_raw
  * Remove an UDP PCB.
  *
  * @param pcb UDP PCB to be removed. The PCB is removed from the list of
@@ -1103,6 +1120,7 @@ udp_remove(struct udp_pcb *pcb)
 }
 
 /**
+ * @ingroup udp_raw
  * Create a UDP PCB.
  *
  * @return The UDP PCB which was created. NULL if the PCB data structure
@@ -1131,6 +1149,7 @@ udp_new(void)
 }
 
 /**
+ * @ingroup udp_raw
  * Create a UDP PCB for specific IP type.
  *
  * @param type IP address type, see IPADDR_TYPE_XX definitions.

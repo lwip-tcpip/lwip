@@ -41,6 +41,12 @@
  *
  */
 
+/**
+ * @defgroup tcp_raw TCP
+ * @ingroup raw_api
+ * @see @ref rawapi
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
@@ -129,6 +135,7 @@ static u8_t tcp_timer_ctr;
 static u16_t tcp_new_port(void);
 
 /**
+ * @ingroup tcp_raw
  * Initialize this module.
  */
 void
@@ -189,7 +196,8 @@ tcp_listen_closed(struct tcp_pcb *pcb)
 }
 
 #if TCP_LISTEN_BACKLOG
-/** Delay accepting a connection in respect to the listen backlog:
+/** @ingroup tcp_raw
+ * Delay accepting a connection in respect to the listen backlog:
  * the number of outstanding connections is increased until
  * tcp_backlog_accepted() is called.
  *
@@ -211,7 +219,8 @@ tcp_backlog_delayed(struct tcp_pcb* pcb)
   }
 }
 
-/** A delayed-accept a connection is accepted (or closed/aborted): decreases
+/** @ingroup tcp_raw
+ * A delayed-accept a connection is accepted (or closed/aborted): decreases
  * the number of outstanding connections after calling tcp_backlog_delayed().
  *
  * ATTENTION: the caller is responsible for calling tcp_backlog_accepted()
@@ -355,6 +364,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
 }
 
 /**
+ * @ingroup tcp_raw
  * Closes the connection held by the PCB.
  *
  * Listening pcbs are freed and may not be referenced any more.
@@ -383,6 +393,7 @@ tcp_close(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * Causes all or part of a full-duplex connection of this PCB to be shut down.
  * This doesn't deallocate the PCB unless shutting down both sides!
  * Shutting down both sides is the same as calling tcp_close, so if it succeds,
@@ -497,6 +508,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 }
 
 /**
+ * @ingroup tcp_raw
  * Aborts the connection by sending a RST (reset) segment to the remote
  * host. The pcb is deallocated. This function never fails.
  *
@@ -513,6 +525,7 @@ tcp_abort(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * Binds the connection to a local port number and IP address. If the
  * IP address is not given (i.e., ipaddr == NULL), the IP address of
  * the outgoing network interface is used instead.
@@ -614,6 +627,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 #endif /* LWIP_CALLBACK_API */
 
 /**
+ * @ingroup tcp_raw
  * Set the state of the connection to be LISTEN, which means that it
  * is able to accept incoming connections. The protocol control block
  * is reallocated in order to consume less memory. Setting the
@@ -689,7 +703,8 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
  * Returns how much extra window would be advertised if we sent an
  * update now.
  */
-u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
+u32_t
+tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
 {
   u32_t new_right_edge = pcb->rcv_nxt + pcb->rcv_wnd;
 
@@ -715,6 +730,7 @@ u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * This function should be called by the application when it has
  * processed the data. The purpose is to advertise a larger window
  * when the data has been processed.
@@ -792,6 +808,7 @@ again:
 }
 
 /**
+ * @ingroup tcp_raw
  * Connects to another host. The function given as the "connected"
  * argument will be called when the connection has been established.
  *
@@ -1563,6 +1580,7 @@ tcp_alloc(u8_t prio)
 }
 
 /**
+ * @ingroup tcp_raw
  * Creates a new TCP protocol control block but doesn't place it on
  * any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
@@ -1581,6 +1599,7 @@ tcp_new(void)
 }
 
 /**
+ * @ingroup tcp_raw
  * Creates a new TCP protocol control block but doesn't
  * place it on any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
@@ -1605,6 +1624,7 @@ tcp_new_ip_type(u8_t type)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the argument that should be passed callback
  * functions.
  *
@@ -1623,6 +1643,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 #if LWIP_CALLBACK_API
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called when a TCP
  * connection receives data.
  *
@@ -1639,6 +1660,7 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called when TCP data
  * has been successfully delivered to the remote host.
  *
@@ -1655,6 +1677,7 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
  *
@@ -1672,6 +1695,7 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used for specifying the function that should be called when a
  * LISTENing connection has been connected to another host.
  *
@@ -1691,6 +1715,7 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called periodically
  * from TCP. The interval is specified in terms of the TCP coarse
  * timer interval, which is called twice a second.
@@ -1758,6 +1783,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * Purges the PCB and removes it from a PCB list. Any delayed ACKs are sent first.
  *
  * @param pcblist PCB list to purge.
@@ -1904,7 +1930,8 @@ tcp_netif_ipv4_addr_changed_pcblist(const ip4_addr_t* old_addr, struct tcp_pcb* 
  * @param old_addr IPv4 address of the netif before change
  * @param new_addr IPv4 address of the netif after change or NULL if netif has been removed
  */
-void tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
+void
+tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
 {
   struct tcp_pcb_listen *lpcb, *next;
 
