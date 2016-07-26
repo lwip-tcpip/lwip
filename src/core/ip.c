@@ -36,6 +36,20 @@
  *
  */
 
+/**
+ * @defgroup ipaddr IP address handling
+ */
+
+/**
+ * @defgroup ip4addr IPv4 only
+ * @ingroup ipaddr
+ */
+
+/**
+ * @defgroup ip6addr IPv6 only
+ * @ingroup ipaddr
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_IPV4 || LWIP_IPV6
@@ -50,7 +64,9 @@ struct ip_globals ip_data;
 
 const ip_addr_t ip_addr_any_type = IPADDR_ANY_TYPE_INIT;
 
-/** Convert IP address string (both versions) to numeric.
+/**
+ * @ingroup ipaddr
+ * Convert IP address string (both versions) to numeric.
  * The version is auto-detected from the string.
  *
  * @param cp IP address string to convert
