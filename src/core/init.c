@@ -33,7 +33,10 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- *
+ */
+
+/**
+ * @defgroup lwIP lwIP
  */
 
 #include "lwip/opt.h"
@@ -318,6 +321,7 @@
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
+ * @ingroup lwIP
  * Initialize all modules.
  */
 void

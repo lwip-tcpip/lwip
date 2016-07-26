@@ -2083,10 +2083,13 @@ PREDEFINED             = NO_SYS=0 \
                          MEMP_OVERFLOW_CHECK=0 \
                          MEMP_SANITY_CHECK=1 \
                          LWIP_ARP=1 \
+                         LWIP_HAVE_LOOPIF=1 \
                          LWIP_NETIF_HOSTNAME=1 \
                          LWIP_NETIF_API=1 \
                          LWIP_NETIF_CALLBACK=1 \
+                         LWIP_NETIF_REMOVE_CALLBACK=1 \
                          LWIP_NETIF_LINK_CALLBACK=1 \
+                         ENABLE_LOOPBACK=1 \
                          LWIP_AUTOIP=1 \
                          ARP_QUEUEING=1 \
                          LWIP_STATS=1 \
