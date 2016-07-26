@@ -69,7 +69,10 @@ struct snmp_varbind
   void *value;
 };
 
-/** Agent setup, start listening to port 161. */
+/**
+ * @ingroup snmp_core
+ * Agent setup, start listening to port 161.
+ */
 void snmp_init(void);
 void snmp_set_mibs(const struct snmp_mib **mibs, u8_t num_mibs);
 

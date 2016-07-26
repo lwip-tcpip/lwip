@@ -33,6 +33,17 @@
  *         Martin Hentschel <info@cl-soft.de>
 */
 
+/**
+ * @defgroup snmp SNMPv2c agent
+ * @ingroup apps
+ * 
+ * @defgroup snmp_core Core
+ * @ingroup snmp
+ * 
+ * @defgroup snmp_traps Traps
+ * @ingroup snmp
+ */
+
 #include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
@@ -72,6 +83,7 @@ static u8_t snmp_num_mibs                          = 0;
 static struct snmp_mib const * const *snmp_mibs = default_mibs;
 
 /**
+ * @ingroup snmp_core
  * Sets the MIBs to use.
  * Example: call snmp_set_mibs() as follows:
  * static const struct snmp_mib *my_snmp_mibs[] = {
@@ -90,18 +102,19 @@ snmp_set_mibs(const struct snmp_mib **mibs, u8_t num_mibs)
 }
 
 /**
-* 'device enterprise oid' is used for 'device OID' field in trap PDU's (for identification of generating device)
-* as well as for value returned by MIB-2 'sysObjectID' field (if internal MIB2 implementation is used).
-* The 'device enterprise oid' shall point to an OID located under 'private-enterprises' branch (1.3.6.1.4.1.XXX). If a vendor
-* wants to provide a custom object there, he has to get its own enterprise oid from IANA (http://www.iana.org). It
-* is not allowed to use LWIP enterprise ID!
-* In order to identify a specific device it is recommended to create a dedicated OID for each device type under its own 
-* enterprise oid.
-* e.g.
-* device a > 1.3.6.1.4.1.XXX(ent-oid).1(devices).1(device a)
-* device b > 1.3.6.1.4.1.XXX(ent-oid).1(devices).2(device b)
-* for more details see description of 'sysObjectID' field in RFC1213-MIB
-*/
+ * @ingroup snmp_core
+ * 'device enterprise oid' is used for 'device OID' field in trap PDU's (for identification of generating device)
+ * as well as for value returned by MIB-2 'sysObjectID' field (if internal MIB2 implementation is used).
+ * The 'device enterprise oid' shall point to an OID located under 'private-enterprises' branch (1.3.6.1.4.1.XXX). If a vendor
+ * wants to provide a custom object there, he has to get its own enterprise oid from IANA (http://www.iana.org). It
+ * is not allowed to use LWIP enterprise ID!
+ * In order to identify a specific device it is recommended to create a dedicated OID for each device type under its own 
+ * enterprise oid.
+ * e.g.
+ * device a > 1.3.6.1.4.1.XXX(ent-oid).1(devices).1(device a)
+ * device b > 1.3.6.1.4.1.XXX(ent-oid).1(devices).2(device b)
+ * for more details see description of 'sysObjectID' field in RFC1213-MIB
+ */
 void snmp_set_device_enterprise_oid(const struct snmp_obj_id* device_enterprise_oid)
 {
   if (device_enterprise_oid == NULL) {
@@ -111,7 +124,10 @@ void snmp_set_device_enterprise_oid(const struct snmp_obj_id* device_enterprise_
   }
 }
 
-/** Get 'device enterprise oid' */
+/**
+ * @ingroup snmp_core
+ * Get 'device enterprise oid' 
+ */
 const struct snmp_obj_id* snmp_get_device_enterprise_oid(void)
 {
   return snmp_device_enterprise_oid;

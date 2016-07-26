@@ -44,6 +44,7 @@
  * @ingroup callbackstyle_api
  * 
  * @defgroup ipaddr IP address handling
+ * @ingroup infrastructure
  * 
  * @defgroup ip4addr IPv4 only
  * @ingroup ipaddr

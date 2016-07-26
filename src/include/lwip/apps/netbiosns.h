@@ -34,13 +34,10 @@
 
 #include "lwip/apps/netbiosns_opts.h"
 
-/** Init netbios responder */
 void netbiosns_init(void);
 #ifndef NETBIOS_LWIP_NAME
-/** Set netbios name. ATTENTION: the hostname must be <= 15 characters! */
 void netbiosns_set_name(const char* hostname);
 #endif
-/** Stop netbios responder */
 void netbiosns_stop(void);
 
 #endif /* LWIP_HDR_APPS_NETBIOS_H */

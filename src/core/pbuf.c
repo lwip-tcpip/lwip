@@ -5,6 +5,7 @@
 
 /**
  * @defgroup pbuf Payload buffers (PBUF)
+ * @ingroup infrastructure
  *
  * Packets are built from the pbuf data structure. It supports dynamic
  * memory allocation for packet contents or can reference externally

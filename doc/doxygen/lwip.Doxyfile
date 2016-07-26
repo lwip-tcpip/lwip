@@ -2080,6 +2080,7 @@ PREDEFINED             = NO_SYS=0 \
                          LWIP_IGMP=1 \
                          LWIP_TCP=1 \
                          LWIP_SNMP=1 \
+                         SNMP_USE_RAW=1 \
                          MEMP_OVERFLOW_CHECK=0 \
                          MEMP_SANITY_CHECK=1 \
                          LWIP_ARP=1 \

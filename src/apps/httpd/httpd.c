@@ -36,7 +36,11 @@
  *
  */
 
-/* This httpd supports for a
+/**
+ * @defgroup httpd HTTP server
+ * @ingroup apps
+ *
+ * This httpd supports for a
  * rudimentary server-side-include facility which will replace tags of the form
  * <!--#tag--> in any file whose extension is .shtml, .shtm or .ssi with
  * strings provided by an include handler whose pointer is provided to the
@@ -2611,6 +2615,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 
 /**
+ * @ingroup httpd
  * Initialize the httpd: set up a listening PCB and bind it to the defined port
  */
 void

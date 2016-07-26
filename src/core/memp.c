@@ -40,6 +40,8 @@
 
 /**
  * @defgroup mempool Memory pools
+ * @ingroup infrastructure
+ * Custom memory pools
  */
 
 #include "lwip/opt.h"

@@ -67,6 +67,7 @@ snmp_write_callback_fct snmp_write_callback     = NULL;
 void*                   snmp_write_callback_arg = NULL;
 
 /**
+ * @ingroup snmp_core
  * Returns current SNMP community string.
  * @return current SNMP community string
  */
@@ -77,6 +78,7 @@ snmp_get_community(void)
 }
 
 /**
+ * @ingroup snmp_core
  * Sets SNMP community string.
  * The string itself (its storage) must be valid throughout the whole life of
  * program (or until it is changed to sth else).
@@ -91,6 +93,7 @@ snmp_set_community(const char * const community)
 }
 
 /**
+ * @ingroup snmp_core
  * Returns current SNMP write-access community string.
  * @return current SNMP write-access community string
  */
@@ -101,6 +104,7 @@ snmp_get_community_write(void)
 }
 
 /**
+ * @ingroup snmp_traps
  * Returns current SNMP community string used for sending traps.
  * @return current SNMP community string used for sending traps
  */
@@ -111,6 +115,7 @@ snmp_get_community_trap(void)
 }
 
 /**
+ * @ingroup snmp_core
  * Sets SNMP community string for write-access.
  * The string itself (its storage) must be valid throughout the whole life of
  * program (or until it is changed to sth else).
@@ -125,6 +130,7 @@ snmp_set_community_write(const char * const community)
 }
 
 /**
+ * @ingroup snmp_traps
  * Sets SNMP community string used for sending traps.
  * The string itself (its storage) must be valid throughout the whole life of
  * program (or until it is changed to sth else).
@@ -138,6 +144,10 @@ snmp_set_community_trap(const char * const community)
   snmp_community_trap = community;
 }
 
+/**
+ * @ingroup snmp_core
+ * Callback fired on every successful write access
+ */
 void 
 snmp_set_write_callback(snmp_write_callback_fct write_callback, void* callback_arg)
 {

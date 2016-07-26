@@ -98,6 +98,7 @@ static struct snmp_trap_dst trap_dst[SNMP_TRAP_DESTINATIONS];
 static u8_t snmp_auth_traps_enabled = 0;
 
 /**
+ * @ingroup snmp_traps
  * Sets enable switch for this trap destination.
  * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
  * @param enable switch if 0 destination is disabled >0 enabled.
@@ -111,6 +112,7 @@ snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
 }
 
 /**
+ * @ingroup snmp_traps
  * Sets IPv4 address for this trap destination.
  * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
  * @param dst IPv4 address in host order.
@@ -123,14 +125,20 @@ snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
   }
 }
 
-/** Enable/disable authentication traps */
+/**
+ * @ingroup snmp_traps
+ * Enable/disable authentication traps
+ */
 void
 snmp_set_auth_traps_enabled(u8_t enable)
 {
   snmp_auth_traps_enabled = enable;
 }
 
-/** Get authentication traps enabled state */
+/**
+ * @ingroup snmp_traps
+ * Get authentication traps enabled state
+ */
 u8_t
 snmp_get_auth_traps_enabled(void)
 {
@@ -214,7 +222,10 @@ snmp_send_trap(const struct snmp_obj_id *device_enterprise_oid, s32_t generic_tr
   return err;
 }
 
-/** Send generic SNMP trap */
+/**
+ * @ingroup snmp_traps
+ *  Send generic SNMP trap
+ */
 err_t 
 snmp_send_trap_generic(s32_t generic_trap)
 {
@@ -222,21 +233,30 @@ snmp_send_trap_generic(s32_t generic_trap)
   return snmp_send_trap(&oid, generic_trap, 0, NULL);
 }
 
-/** Send specific SNMP trap with variable bindings */
+/**
+ *@ingroup snmp_traps
+ * Send specific SNMP trap with variable bindings
+ */
 err_t
 snmp_send_trap_specific(s32_t specific_trap, struct snmp_varbind *varbinds)
 {
   return snmp_send_trap(NULL, SNMP_GENTRAP_ENTERPRISE_SPECIFIC, specific_trap, varbinds);
 }
 
-/** Send coldstart trap */
+/**
+ * @ingroup snmp_traps
+ * Send coldstart trap
+ */
 void
 snmp_coldstart_trap(void)
 {
   snmp_send_trap_generic(SNMP_GENTRAP_COLDSTART);
 }
 
-/** Send authentication failure trap (used internally by agent) */
+/**
+ * @ingroup snmp_traps
+ * Send authentication failure trap (used internally by agent) 
+ */
 void
 snmp_authfail_trap(void)
 {
