@@ -36,7 +36,8 @@
  */
 
 /**
- * @defgroup lwIP lwIP
+ * @defgroup lwip lwIP
+ * @ingroup infrastructure
  */
 
 #include "lwip/opt.h"
@@ -321,7 +322,7 @@
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
- * @ingroup lwIP
+ * @ingroup lwip
  * Initialize all modules.
  * Use this in NO_SYS mode. Use tcpip_init() otherwise.
  */

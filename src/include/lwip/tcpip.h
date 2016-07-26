@@ -76,6 +76,10 @@ err_t  tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn);
 err_t  tcpip_input(struct pbuf *p, struct netif *inp);
 
 err_t  tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block);
+/** 
+ * @ingroup lwip
+ * @see tcpip_callback_with_block
+ */
 #define tcpip_callback(f, ctx)  tcpip_callback_with_block(f, ctx, 1)
 
 struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx);

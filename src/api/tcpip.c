@@ -441,7 +441,7 @@ tcpip_trycallback(struct tcpip_callback_msg* msg)
 }
 
 /**
- * @ingroup lwIP
+ * @ingroup lwip
  * Initialize this module:
  * - initialize all sub modules
  * - start the tcpip_thread
