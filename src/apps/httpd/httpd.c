@@ -107,8 +107,6 @@
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
 #define HTTP11_CONNECTIONKEEPALIVE  "Connection: keep-alive"
 #define HTTP11_CONNECTIONKEEPALIVE2 "Connection: Keep-Alive"
-#define HTTP11_CONNECTIONCLOSE      "Connection: close"
-#define HTTP11_CONNECTIONCLOSE2     "Connection: Close"
 #endif
 
 /** These defines check whether tcp_write has to copy data or not */
@@ -294,8 +292,8 @@ LWIP_MEMPOOL_DECLARE(HTTPD_SSI_STATE, MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS, sizeof(
 
 static err_t http_close_conn(struct tcp_pcb *pcb, struct http_state *hs);
 static err_t http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_conn);
-static err_t http_find_file(struct http_state *hs, const char *uri, u8_t http_ver);
-static err_t http_init_file(struct http_state *hs, struct fs_file *file, u8_t http_ver, const char *uri, u8_t tag_check, char* params);
+static err_t http_find_file(struct http_state *hs, const char *uri, int is_09);
+static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check, char* params);
 static err_t http_poll(void *arg, struct tcp_pcb *pcb);
 static u8_t http_check_eof(struct tcp_pcb *pcb, struct http_state *hs);
 #if LWIP_HTTPD_FS_ASYNC_READ
@@ -897,14 +895,13 @@ get_tag_insert(struct http_state *hs)
  * them into the supplied buffer.
  */
 static void
-get_http_headers(struct http_state *hs, const char *uri, u8_t http_ver)
+get_http_headers(struct http_state *hs, const char *uri)
 {
   size_t content_type;
   char *tmp;
   char *ext;
   char *vars;
   u8_t add_content_len;
-  int hdroffset11 = (http_ver >= 11) ? HTTP_HDR_OK_11 : 0;
 
   /* In all cases, the second header we send is the server identification
      so set it here. */
@@ -915,7 +912,7 @@ get_http_headers(struct http_state *hs, const char *uri, u8_t http_ver)
   /* Is this a normal file or the special case we use to send back the
      default "404: Page not found" response? */
   if (uri == NULL) {
-    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND + hdroffset11];
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
     if (hs->keepalive) {
       hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = g_psHTTPHeaderStrings[DEFAULT_404_HTML_PERSISTENT];
@@ -935,13 +932,13 @@ get_http_headers(struct http_state *hs, const char *uri, u8_t http_ver)
       indicative of a 404 server error whereas all other files require
       the 200 OK header. */
   if (strstr(uri, "404")) {
-    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND + hdroffset11];
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
   } else if (strstr(uri, "400")) {
-    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_BAD_REQUEST + hdroffset11];
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_BAD_REQUEST];
   } else if (strstr(uri, "501")) {
-    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_IMPL + hdroffset11];
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_IMPL];
   } else {
-    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_OK + hdroffset11];
+    hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_OK];
   }
 
   /* Determine if the URI has any variables and, if so, temporarily remove 
@@ -2024,7 +2021,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
 #if LWIP_HTTPD_SUPPORT_POST
       int is_post = 0;
 #endif /* LWIP_HTTPD_SUPPORT_POST */
-      u8_t http_ver = 0;
+      int is_09 = 0;
       char *sp1, *sp2;
       u16_t left_len, uri_len;
       LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("CRLF received, parsing request\n"));
@@ -2052,52 +2049,32 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
       /* if we come here, method is OK, parse URI */
       left_len = (u16_t)(data_len - ((sp1 +1) - data));
       sp2 = strnstr(sp1 + 1, " ", left_len);
-      if (sp2 == NULL) {
 #if LWIP_HTTPD_SUPPORT_V09
+      if (sp2 == NULL) {
         /* HTTP 0.9: respond with correct protocol version */
         sp2 = strnstr(sp1 + 1, CRLF, left_len);
-        http_ver = 9;
+        is_09 = 1;
 #if LWIP_HTTPD_SUPPORT_POST
         if (is_post) {
           /* HTTP/0.9 does not support POST */
           goto badrequest;
         }
 #endif /* LWIP_HTTPD_SUPPORT_POST */
-#endif /* LWIP_HTTPD_SUPPORT_V09 */
-      } else {
-         if (strstr(sp2, " HTTP/1.") == sp2) {
-            char ver = sp2[8];
-            if ((ver >= '0') && (ver <= '9')) {
-               http_ver = 10 + (ver - '0');
-            }
-         }
       }
+#endif /* LWIP_HTTPD_SUPPORT_V09 */
       uri_len = (u16_t)(sp2 - (sp1 + 1));
       if ((sp2 != 0) && (sp2 > sp1)) {
         /* wait for CRLFCRLF (indicating end of HTTP headers) before parsing anything */
         if (strnstr(data, CRLF CRLF, data_len) != NULL) {
           char *uri = sp1 + 1;
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
-#if LWIP_HTTPD_SUPPORT_V09
-          if (http_ver == 9) {
-            hs->keepalive = 0;
-          } else
-#endif /* LWIP_HTTPD_SUPPORT_V09 */
-            /* If the "close" connection option is present, the connection will not persist after the current response */
-          if (strnstr(data, HTTP11_CONNECTIONCLOSE, data_len) ||
-              strnstr(data, HTTP11_CONNECTIONCLOSE2, data_len)) {
-            hs->keepalive = 0;
-          } else if (http_ver >= 11) {
-            /* If the received protocol is HTTP/1.1 (or later), the connection will persist after the current response */
+          /* This is HTTP/1.0 compatible: for strict 1.1, a connection
+             would always be persistent unless "close" was specified. */
+          if (!is_09 && (strnstr(data, HTTP11_CONNECTIONKEEPALIVE, data_len) ||
+              strnstr(data, HTTP11_CONNECTIONKEEPALIVE2, data_len))) {
             hs->keepalive = 1;
-          } else if (http_ver == 10) {
-            /* HTTP/1.1: keepalive supported when explicitly requested */
-            if (strnstr(data, HTTP11_CONNECTIONKEEPALIVE, data_len) ||
-                strnstr(data, HTTP11_CONNECTIONKEEPALIVE2, data_len)) {
-              hs->keepalive = 1;
-            } else {
-              hs->keepalive = 0;
-            }
+          } else {
+            hs->keepalive = 0;
           }
 #endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
           /* null-terminate the METHOD (pbuf is freed anyway wen returning) */
@@ -2126,7 +2103,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
           } else
 #endif /* LWIP_HTTPD_SUPPORT_POST */
           {
-            return http_find_file(hs, uri, http_ver);
+            return http_find_file(hs, uri, is_09);
           }
         }
       } else {
@@ -2158,12 +2135,12 @@ badrequest:
  *
  * @param hs the connection state
  * @param uri the HTTP header URI
- * @param http_ver major/minor version of the HTTP request ((major*10)+minor)
+ * @param is_09 1 if the request is HTTP/0.9 (no HTTP headers in response)
  * @return ERR_OK if file was found and hs has been initialized correctly
  *         another err_t otherwise
  */
 static err_t
-http_find_file(struct http_state *hs, const char *uri, u8_t http_ver)
+http_find_file(struct http_state *hs, const char *uri, int is_09)
 {
   size_t loop;
   struct fs_file *file = NULL;
@@ -2293,7 +2270,7 @@ http_find_file(struct http_state *hs, const char *uri, u8_t http_ver)
     /* None of the default filenames exist so send back a 404 page */
     file = http_get_404_file(hs, &uri);
   }
-  return http_init_file(hs, file, http_ver, uri, tag_check, params);
+  return http_init_file(hs, file, is_09, uri, tag_check, params);
 }
 
 /** Initialize a http connection with a file to send (if found).
@@ -2301,7 +2278,7 @@ http_find_file(struct http_state *hs, const char *uri, u8_t http_ver)
  *
  * @param hs http connection state
  * @param file file structure to send (or NULL if not found)
- * @param http_ver major/minor version of the HTTP request ((major*10)+minor)
+ * @param is_09 1 if the request is HTTP/0.9 (no HTTP headers in response)
  * @param uri the HTTP header URI
  * @param tag_check enable SSI tag checking
  * @param uri_has_params != NULL if URI has parameters (separated by '?')
@@ -2309,7 +2286,7 @@ http_find_file(struct http_state *hs, const char *uri, u8_t http_ver)
  *         another err_t otherwise
  */
 static err_t
-http_init_file(struct http_state *hs, struct fs_file *file, u8_t http_ver, const char *uri,
+http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri,
                u8_t tag_check, char* params)
 {
   if (file != NULL) {
@@ -2350,7 +2327,7 @@ http_init_file(struct http_state *hs, struct fs_file *file, u8_t http_ver, const
        (hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) != 0);
 #endif /* !LWIP_HTTPD_DYNAMIC_HEADERS */
 #if LWIP_HTTPD_SUPPORT_V09
-    if ((http_ver == 9) && ((hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) != 0)) {
+    if (is_09 && ((hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) != 0)) {
       /* HTTP/0.9 responses are sent without HTTP header,
          search for the end of the header. */
       char *file_start = strnstr(hs->file, CRLF CRLF, hs->left);
@@ -2392,7 +2369,7 @@ http_init_file(struct http_state *hs, struct fs_file *file, u8_t http_ver, const
   /* Determine the HTTP headers to send based on the file extension of
    * the requested URI. */
   if ((hs->handle == NULL) || ((hs->handle->flags & FS_FILE_FLAGS_HEADER_INCLUDED) == 0)) {
-    get_http_headers(hs, uri, http_ver);
+    get_http_headers(hs, uri);
   }
 #else /* LWIP_HTTPD_DYNAMIC_HEADERS */
   LWIP_UNUSED_ARG(uri);
