@@ -223,7 +223,7 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
   switch (node->oid) {
   case 1: /* sysDescr */
     var     = sysdescr;
-    var_len = (s16_t*)sysdescr_len;
+    var_len = (const s16_t*)sysdescr_len;
     break;
   case 2: /* sysObjectID */
     {
@@ -236,15 +236,15 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
     return sizeof(u32_t);
   case 4: /* sysContact */
     var     = syscontact;
-    var_len = (s16_t*)syscontact_len;
+    var_len = (const s16_t*)syscontact_len;
     break;
   case 5: /* sysName */
     var     = sysname;
-    var_len = (s16_t*)sysname_len;
+    var_len = (const s16_t*)sysname_len;
     break;
   case 6: /* sysLocation */
     var     = syslocation;
-    var_len = (s16_t*)syslocation_len;
+    var_len = (const s16_t*)syslocation_len;
     break;
   case 7: /* sysServices */
     *(s32_t*)value = SNMP_SYSSERVICES;
