@@ -228,7 +228,9 @@ memp_overflow_init(const struct memp_desc *desc)
 void
 memp_init_pool(const struct memp_desc *desc)
 {
-#if !MEMP_MEM_MALLOC
+#if MEMP_MEM_MALLOC
+  LWIP_UNUSED_ARG(desc);
+#else
   int i;
   struct memp *memp;
 
@@ -277,7 +279,7 @@ memp_init(void)
   for (i = 0; i < LWIP_ARRAYSIZE(memp_pools); i++) {
     memp_init_pool(memp_pools[i]);
 
-#if LWIP_STATS
+#if LWIP_STATS && MEMP_STATS
     lwip_stats.memp[i] = memp_pools[i]->stats;
 #endif
   }
@@ -436,6 +438,7 @@ do_memp_free_pool(const struct memp_desc* desc, void *mem)
 #endif
 
 #if MEMP_MEM_MALLOC
+  LWIP_UNUSED_ARG(desc);
   SYS_ARCH_UNPROTECT(old_level);
   mem_free(memp);
 #else /* MEMP_MEM_MALLOC */

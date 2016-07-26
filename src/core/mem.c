@@ -54,9 +54,6 @@
  */
 
 #include "lwip/opt.h"
-
-#if !MEM_LIBC_MALLOC /* don't build if not configured for use in lwipopts.h */
-
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/sys.h"
@@ -65,7 +62,91 @@
 
 #include <string.h>
 
-#if MEM_USE_POOLS
+#if MEM_LIBC_MALLOC || MEM_USE_POOLS
+/** mem_init is not used when using pools instead of a heap or using
+ * C library malloc().
+ */
+void
+mem_init(void)
+{
+}
+
+/** mem_trim is not used when using pools instead of a heap or using
+ * C library malloc(): we can't free part of a pool element and the stack
+ * support mem_trim() to return a different pointer
+ */
+void*
+mem_trim(void *mem, mem_size_t size)
+{
+  LWIP_UNUSED_ARG(size);
+  return mem;
+}
+#endif /* MEM_LIBC_MALLOC || MEM_USE_POOLS */
+
+#if MEM_LIBC_MALLOC
+/* lwIP heap implemented using C library malloc() */
+
+/* in case C library malloc() needs extra protection,
+ * allow these defines to be overridden.
+ */
+#ifndef mem_clib_free
+#define mem_clib_free free
+#endif
+#ifndef mem_clib_malloc
+#define mem_clib_malloc malloc
+#endif
+#ifndef mem_clib_calloc
+#define mem_clib_calloc calloc
+#endif
+
+#if LWIP_STATS && MEM_STATS
+#define MEM_LIBC_STATSHELPER_SIZE LWIP_MEM_ALIGN_SIZE(sizeof(mem_size_t))
+#else
+#define MEM_LIBC_STATSHELPER_SIZE 0
+#endif
+
+/**
+ * Allocate a block of memory with a minimum of 'size' bytes.
+ *
+ * @param size is the minimum size of the requested block in bytes.
+ * @return pointer to allocated memory or NULL if no free memory was found.
+ *
+ * Note that the returned value must always be aligned (as defined by MEM_ALIGNMENT).
+ */
+void *
+mem_malloc(mem_size_t size)
+{
+  void* ret = mem_clib_malloc(size + MEM_LIBC_STATSHELPER_SIZE);
+  if (ret == NULL) {
+    MEM_STATS_INC(err);
+  } else {
+    LWIP_ASSERT("malloc() must return aligned memory", LWIP_MEM_ALIGN(ret) == ret);
+#if LWIP_STATS && MEM_STATS
+    *(mem_size_t*)ret = size;
+    ret = (u8_t*)ret + MEM_LIBC_STATSHELPER_SIZE;
+    MEM_STATS_INC_USED(used, size);
+#endif
+  }
+  return ret;
+}
+
+/** Put memory back on the heap
+ *
+ * @param rmem is the pointer as returned by a previous call to mem_malloc()
+ */
+void
+mem_free(void *rmem)
+{
+  LWIP_ASSERT("rmem != NULL", (rmem != NULL));
+  LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
+#if LWIP_STATS && MEM_STATS
+  rmem = (u8_t*)rmem - MEM_LIBC_STATSHELPER_SIZE;
+  MEM_STATS_DEC_USED(used, *(mem_size_t*)rmem);
+#endif
+  mem_clib_free(rmem);
+}
+
+#elif MEM_USE_POOLS
 
 /* lwIP heap implemented with different sized pools */
 
@@ -96,6 +177,7 @@ again:
   }
   if (poolnr > MEMP_POOL_LAST) {
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
+    MEM_STATS_INC(err);
     return NULL;
   }
   element = (struct memp_malloc_helper*)memp_malloc(poolnr);
@@ -109,6 +191,7 @@ again:
       goto again;
     }
 #endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
+    MEM_STATS_INC(err);
     return NULL;
   }
 
@@ -509,7 +592,6 @@ mem_trim(void *rmem, mem_size_t newsize)
 }
 
 /**
- * Adam's mem_malloc() plus solution for bug #17922
  * Allocate a block of memory with a minimum of 'size' bytes.
  *
  * @param size is the minimum size of the requested block in bytes.
@@ -660,6 +742,15 @@ mem_malloc_adjust_lfree:
 }
 
 #endif /* MEM_USE_POOLS */
+
+#if MEM_LIBC_MALLOC && (!LWIP_STATS || !MEM_STATS)
+void *
+mem_calloc(mem_size_t count, mem_size_t size)
+{
+  return mem_clib_calloc(count, size);
+}
+
+#else /* MEM_LIBC_MALLOC && (!LWIP_STATS || !MEM_STATS) */
 /**
  * Contiguously allocates enough space for count objects that are size bytes
  * of memory each and returns a pointer to the allocated memory.
@@ -670,7 +761,8 @@ mem_malloc_adjust_lfree:
  * @param size size of the objects to allocate
  * @return pointer to allocated memory / NULL pointer if there is an error
  */
-void *mem_calloc(mem_size_t count, mem_size_t size)
+void *
+mem_calloc(mem_size_t count, mem_size_t size)
 {
   void *p;
 
@@ -682,5 +774,4 @@ void *mem_calloc(mem_size_t count, mem_size_t size)
   }
   return p;
 }
-
-#endif /* !MEM_LIBC_MALLOC */
+#endif /* MEM_LIBC_MALLOC && (!LWIP_STATS || !MEM_STATS) */

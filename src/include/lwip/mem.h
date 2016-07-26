@@ -46,30 +46,15 @@ extern "C" {
 #if MEM_LIBC_MALLOC
 
 #include <stddef.h> /* for size_t */
-
 typedef size_t mem_size_t;
 #define MEM_SIZE_F SZT_F
 
-/* aliases for C library malloc() */
-#define mem_init()
-/* in case C library malloc() needs extra protection,
- * allow these defines to be overridden.
- */
-#ifndef mem_free
-#define mem_free free
-#endif
-#ifndef mem_malloc
-#define mem_malloc malloc
-#endif
-#ifndef mem_calloc
-#define mem_calloc calloc
-#endif
-/* Since there is no C library allocation function to shrink memory without
-   moving it, define this to nothing. */
-#ifndef mem_trim
-#define mem_trim(mem, size) (mem)
-#endif
-#else /* MEM_LIBC_MALLOC */
+#elif MEM_USE_POOLS
+
+typedef u16_t mem_size_t;
+#define MEM_SIZE_F U16_F
+
+#else
 
 /* MEM_SIZE would have to be aligned, but using 64000 here instead of
  * 65535 leaves some room for alignment...
@@ -81,22 +66,13 @@ typedef u32_t mem_size_t;
 typedef u16_t mem_size_t;
 #define MEM_SIZE_F U16_F
 #endif /* MEM_SIZE > 64000 */
+#endif
 
-#if MEM_USE_POOLS
-/** mem_init is not used when using pools instead of a heap */
-#define mem_init()
-/** mem_trim is not used when using pools instead of a heap:
-    we can't free part of a pool element and don't want to copy the rest */
-#define mem_trim(mem, size) (mem)
-#else /* MEM_USE_POOLS */
-/* lwIP alternative malloc */
 void  mem_init(void);
 void *mem_trim(void *mem, mem_size_t size);
-#endif /* MEM_USE_POOLS */
 void *mem_malloc(mem_size_t size);
 void *mem_calloc(mem_size_t count, mem_size_t size);
 void  mem_free(void *mem);
-#endif /* MEM_LIBC_MALLOC */
 
 #ifdef __cplusplus
 }
