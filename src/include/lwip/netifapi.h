@@ -92,22 +92,39 @@ err_t netifapi_netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr,
 err_t netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
                             netifapi_errt_fn errtfunc);
 
-/** @ingroup netifapi */
+/** @ingroup netifapi_netif */
 #define netifapi_netif_remove(n)      netifapi_netif_common(n, netif_remove, NULL)
-/** @ingroup netifapi */
+/** @ingroup netifapi_netif */
 #define netifapi_netif_set_up(n)      netifapi_netif_common(n, netif_set_up, NULL)
-/** @ingroup netifapi */
+/** @ingroup netifapi_netif */
 #define netifapi_netif_set_down(n)    netifapi_netif_common(n, netif_set_down, NULL)
-/** @ingroup netifapi */
+/** @ingroup netifapi_netif */
 #define netifapi_netif_set_default(n) netifapi_netif_common(n, netif_set_default, NULL)
 
+/**
+ * @defgroup netifapi_dhcp4 DHCPv4
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads
+ */
+/** @ingroup netifapi_dhcp4 */
 #define netifapi_dhcp_start(n)        netifapi_netif_common(n, NULL, dhcp_start)
+/** @ingroup netifapi_dhcp4 */
 #define netifapi_dhcp_stop(n)         netifapi_netif_common(n, dhcp_stop, NULL)
+/** @ingroup netifapi_dhcp4 */
 #define netifapi_dhcp_inform(n)       netifapi_netif_common(n, dhcp_inform, NULL)
+/** @ingroup netifapi_dhcp4 */
 #define netifapi_dhcp_renew(n)        netifapi_netif_common(n, NULL, dhcp_renew)
+/** @ingroup netifapi_dhcp4 */
 #define netifapi_dhcp_release(n)      netifapi_netif_common(n, NULL, dhcp_release)
 
+/**
+ * @defgroup netifapi_autoip AUTOIP
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads
+ */
+/** @ingroup netifapi_autoip */
 #define netifapi_autoip_start(n)      netifapi_netif_common(n, NULL, autoip_start)
+/** @ingroup netifapi_autoip */
 #define netifapi_autoip_stop(n)       netifapi_netif_common(n, NULL, autoip_stop)
 
 #ifdef __cplusplus

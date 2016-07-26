@@ -62,6 +62,12 @@
  *
  */
 
+/**
+ * @defgroup autoip AUTOIP
+ * AUTOIP related functions
+ * @see netifapi_autoip
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_IPV4 && LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
@@ -126,7 +132,9 @@ static err_t autoip_arp_announce(struct netif *netif);
 static void autoip_start_probing(struct netif *netif);
 
 
-/** Set a statically allocated struct autoip to work with.
+/**
+ * @ingroup autoip 
+ * Set a statically allocated struct autoip to work with.
  * Using this prevents autoip_start to allocate it using mem_malloc.
  *
  * @param netif the netif for which to set the struct autoip
@@ -268,6 +276,7 @@ autoip_bind(struct netif *netif)
 }
 
 /**
+ * @ingroup autoip 
  * Start AutoIP client
  *
  * @param netif network interface on which start the AutoIP client
@@ -359,6 +368,7 @@ autoip_network_changed(struct netif *netif)
 }
 
 /**
+ * @ingroup autoip 
  * Stop AutoIP client
  *
  * @param netif network interface on which stop the AutoIP client

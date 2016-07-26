@@ -65,6 +65,12 @@
  *
  */
 
+/**
+ * @defgroup dhcp4 DHCPv4
+ * DHCP (IPv4) related functions
+ * @see netifapi_dhcp4
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_IPV4 && LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
@@ -643,7 +649,9 @@ dhcp_handle_ack(struct netif *netif)
 #endif /* LWIP_DNS */
 }
 
-/** Set a statically allocated struct dhcp to work with.
+/**
+ * @ingroup dhcp4
+ * Set a statically allocated struct dhcp to work with.
  * Using this prevents dhcp_start to allocate it using mem_malloc.
  *
  * @param netif the netif for which to set the struct dhcp
@@ -662,7 +670,9 @@ dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
   netif->dhcp = dhcp;
 }
 
-/** Removes a struct dhcp from a netif.
+/**
+ * @ingroup dhcp4
+ * Removes a struct dhcp from a netif.
  *
  * ATTENTION: Only use this when not using dhcp_set_struct() to allocate the
  *            struct dhcp since the memory is passed back to the heap.
@@ -680,6 +690,7 @@ void dhcp_cleanup(struct netif *netif)
 }
 
 /**
+ * @ingroup dhcp4
  * Start DHCP negotiation for a network interface.
  *
  * If no DHCP client instance was attached to this interface,
@@ -763,6 +774,7 @@ dhcp_start(struct netif *netif)
 }
 
 /**
+ * @ingroup dhcp4
  * Inform a DHCP server of our manual configuration.
  *
  * This informs DHCP servers of our fixed IP address configuration
@@ -1086,6 +1098,7 @@ dhcp_bind(struct netif *netif)
 }
 
 /**
+ * @ingroup dhcp4
  * Renew an existing DHCP lease at the involved DHCP server.
  *
  * @param netif network interface which must renew its lease
@@ -1238,6 +1251,7 @@ dhcp_reboot(struct netif *netif)
 
 
 /**
+ * @ingroup dhcp4
  * Release a DHCP lease.
  *
  * @param netif network interface which must release its lease
@@ -1300,6 +1314,7 @@ dhcp_release(struct netif *netif)
 }
 
 /**
+ * @ingroup dhcp4
  * Remove the DHCP client from the interface.
  *
  * @param netif The network interface to stop DHCP on
