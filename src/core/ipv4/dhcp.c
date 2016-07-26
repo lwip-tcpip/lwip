@@ -67,6 +67,7 @@
 
 /**
  * @defgroup dhcp4 DHCPv4
+ * @ingroup ip4
  * DHCP (IPv4) related functions
  * @see netifapi_dhcp4
  */

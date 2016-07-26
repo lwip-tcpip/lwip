@@ -38,6 +38,12 @@
  * source code.
 */
 
+/**
+ * @defgroup igmp IGMP
+ * @ingroup ip4
+ * To be called from TCPIP thread
+ */
+
 /*-------------------------------------------------------------
 Note 1)
 Although the rfc requires V1 AND V2 capability
@@ -477,6 +483,7 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
 }
 
 /**
+ * @ingroup igmp
  * Join a group on one network interface.
  *
  * @param ifaddr ip address of the network interface which should join a new group
@@ -513,6 +520,7 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 }
 
 /**
+ * @ingroup igmp
  * Join a group on one network interface.
  *
  * @param netif the network interface which should join a new group
@@ -571,6 +579,7 @@ igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 }
 
 /**
+ * @ingroup igmp
  * Leave a group on one network interface.
  *
  * @param ifaddr ip address of the network interface which should leave a group
@@ -606,6 +615,7 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 }
 
 /**
+ * @ingroup igmp
  * Leave a group on one network interface.
  *
  * @param netif the network interface which should leave a group

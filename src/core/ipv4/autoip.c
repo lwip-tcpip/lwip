@@ -64,6 +64,7 @@
 
 /**
  * @defgroup autoip AUTOIP
+ * @ingroup ip4
  * AUTOIP related functions
  * @see netifapi_autoip
  */

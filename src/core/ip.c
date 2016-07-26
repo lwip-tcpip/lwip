@@ -37,15 +37,15 @@
  */
 
 /**
+ * @defgroup ip4 IPv4
+ *
+ * @defgroup ip6 IPv6
+ * 
  * @defgroup ipaddr IP address handling
- */
-
-/**
+ * 
  * @defgroup ip4addr IPv4 only
  * @ingroup ipaddr
- */
-
-/**
+ * 
  * @defgroup ip6addr IPv6 only
  * @ingroup ipaddr
  */
