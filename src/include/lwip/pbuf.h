@@ -73,7 +73,9 @@ typedef enum {
   PBUF_RAW
 } pbuf_layer;
 
-/** Enumeration of pbuf types
+/**
+ * @ingroup pbuf
+ * Enumeration of pbuf types
  */
 typedef enum {
   /** pbuf data is stored in RAM, used for TX mostly, struct pbuf and its payload

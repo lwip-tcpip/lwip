@@ -33,6 +33,12 @@
  *
  */
 
+
+/**
+ * @defgroup netdbapi NETDB API
+ * @ingroup socket
+ */
+
 #include "lwip/netdb.h"
 
 #if LWIP_DNS && LWIP_SOCKET
