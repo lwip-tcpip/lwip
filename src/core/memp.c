@@ -38,6 +38,10 @@
  *
  */
 
+/**
+ * @defgroup mempool Memory pools
+ */
+
 #include "lwip/opt.h"
 
 #include "lwip/memp.h"

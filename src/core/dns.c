@@ -1,18 +1,14 @@
 /**
  * @file
  * DNS - host name to IP address resolver.
- *
  */
 
-/**
-
- * This file implements a DNS host name to IP address resolver.
-
+/*
  * Port to lwIP from uIP
  * by Jim Pettinato April 2007
-
+ *
  * security fixes and more by Simon Goldschmidt
-
+ *
  * uIP version Copyright (c) 2002-2003, Adam Dunkels.
  * All rights reserved.
  *
@@ -39,9 +35,12 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @defgroup dns DNS
  *
- *
- * DNS.C
+ * Implements a DNS host name to IP address resolver.
  *
  * The lwIP DNS resolver functions are used to lookup a host name and
  * map it to a numerical IP address. It maintains a list of resolved
@@ -59,6 +58,8 @@
  * Once a hostname has been resolved (or found to be non-existent),
  * the resolver code calls a specified callback function (which
  * must be implemented by the module that uses the resolver).
+ * 
+ * All functions must be called from TCPIP thread.
  */
 
 /*-----------------------------------------------------------------------------
@@ -408,6 +409,7 @@ dns_init(void)
 }
 
 /**
+ * @ingroup dns
  * Initialize one of the DNS servers.
  *
  * @param numdns the index of the DNS server to set must be < DNS_MAX_SERVERS
@@ -426,6 +428,7 @@ dns_setserver(u8_t numdns, const ip_addr_t *dnsserver)
 }
 
 /**
+ * @ingroup dns
  * Obtain one of the currently configured DNS server.
  *
  * @param numdns the index of the DNS server
@@ -484,6 +487,7 @@ dns_init_local(void)
 }
 
 /**
+ * @ingroup dns
  * Scans the local host-list for a hostname.
  *
  * @param hostname Hostname to look for in the local host-list
@@ -522,7 +526,9 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
 }
 
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
-/** Remove all entries from the local host-list for a specific hostname
+/**
+ * @ingroup dns
+ * Remove all entries from the local host-list for a specific hostname
  * and/or IP address
  *
  * @param hostname hostname for which entries shall be removed from the local
@@ -558,6 +564,7 @@ dns_local_removehost(const char *hostname, const ip_addr_t *addr)
 }
 
 /**
+ * @ingroup dns
  * Add a hostname/IP address pair to the local host-list.
  * Duplicates are not checked.
  *
@@ -591,6 +598,7 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
 #endif /* DNS_LOCAL_HOSTLIST */
 
 /**
+ * @ingroup dns
  * Look up a hostname in the array of known hostnames.
  *
  * @note This function only looks in the internal array of known
@@ -1378,6 +1386,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
 }
 
 /**
+ * @ingroup dns
  * Resolve a hostname (string) into an IP address.
  * NON-BLOCKING callback version for use with raw API!!!
  *
@@ -1403,7 +1412,9 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
   return dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, LWIP_DNS_ADDRTYPE_DEFAULT);
 }
 
-/** Like dns_gethostbyname, but returned address type can be controlled:
+/**
+ * @ingroup dns
+ * Like dns_gethostbyname, but returned address type can be controlled:
  * @param hostname the hostname that is to be queried
  * @param addr pointer to a ip_addr_t where to store the address if it is already
  *             cached in the dns_table (only valid if ERR_OK is returned!)

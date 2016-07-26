@@ -89,7 +89,6 @@ static u16_t udp_port = UDP_LOCAL_PORT_RANGE_START;
 struct udp_pcb *udp_pcbs;
 
 /**
- * @ingroup udp_raw
  * Initialize this module.
  */
 void

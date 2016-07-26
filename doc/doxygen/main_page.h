@@ -47,7 +47,7 @@
  *   http://lists.nongnu.org/archive/html/lwip-devel/\n
  * \n
  * Continuous integration builds (GCC, clang):\n
- *   https://travis-ci.org/yarrick/lwip-merged
+ *   https://travis-ci.org/yarrick/lwip-merged\n
  * \n
  * lwIP was originally written by Adam Dunkels:\n
  *   http://dunkels.com/adam/\n

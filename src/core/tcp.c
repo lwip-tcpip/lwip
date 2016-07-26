@@ -135,7 +135,6 @@ static u8_t tcp_timer_ctr;
 static u16_t tcp_new_port(void);
 
 /**
- * @ingroup tcp_raw
  * Initialize this module.
  */
 void

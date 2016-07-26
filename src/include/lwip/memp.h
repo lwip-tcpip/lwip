@@ -70,12 +70,15 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #else /* MEMP_MEM_MALLOC */
 
-/** Declare a private memory pool 
+/** 
+ * @ingroup mempool
  * Declare prototype for private memory pool if it is used in multiple files
  */
 #define LWIP_MEMPOOL_PROTOTYPE(name) extern const struct memp_desc memp_ ## name
 
-/** Declare a private memory pool
+/**
+ * @ingroup mempool
+ * Declare a private memory pool
  * Private mempools example:
  * .h: only when pool is used in multiple .c files: LWIP_MEMPOOL_PROTOTYPE(my_private_pool);
  * .c:
@@ -105,11 +108,20 @@ extern const struct memp_desc* const memp_pools[MEMP_MAX];
 
 #endif /* MEMP_MEM_MALLOC */
 
-/** Initialize a private memory pool */
+/**
+ * @ingroup mempool
+ * Initialize a private memory pool
+ */
 #define LWIP_MEMPOOL_INIT(name)    memp_init_pool(&memp_ ## name)
-/** Allocate from a private memory pool */
+/**
+ * @ingroup mempool
+ * Allocate from a private memory pool
+ */
 #define LWIP_MEMPOOL_ALLOC(name)   memp_malloc_pool(&memp_ ## name)
-/** Free element from a private memory pool */
+/**
+ * @ingroup mempool
+ * Free element from a private memory pool
+ */
 #define LWIP_MEMPOOL_FREE(name, x) memp_free_pool(&memp_ ## name, (x))
 
 #if MEM_USE_POOLS

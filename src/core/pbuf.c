@@ -1,6 +1,10 @@
 /**
  * @file
  * Packet buffer management
+ */
+
+/**
+ * @defgroup pbuf PBUF
  *
  * Packets are built from the pbuf data structure. It supports dynamic
  * memory allocation for packet contents or can reference externally
@@ -165,6 +169,7 @@ pbuf_pool_is_empty(void)
 #endif /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
 
 /**
+ * @ingroup pbuf
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
  *
  * The actual memory allocated for the pbuf is determined by the
@@ -346,7 +351,9 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
 }
 
 #if LWIP_SUPPORT_CUSTOM_PBUF
-/** Initialize a custom pbuf (already allocated).
+/**
+ * @ingroup pbuf
+ * Initialize a custom pbuf (already allocated).
  *
  * @param l flag to define header size
  * @param length size of the pbuf's payload
@@ -413,6 +420,7 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
 
 /**
+ * @ingroup pbuf
  * Shrink a pbuf chain to a desired length.
  *
  * @param p pbuf to shrink.
@@ -616,6 +624,7 @@ pbuf_header_force(struct pbuf *p, s16_t header_size_increment)
 }
 
 /**
+ * @ingroup pbuf
  * Dereference a pbuf chain or queue and deallocate any no-longer-used
  * pbufs at the head of this chain or queue.
  *
@@ -733,7 +742,6 @@ pbuf_free(struct pbuf *p)
  * @param p first pbuf of chain
  * @return the number of pbufs in a chain
  */
-
 u8_t
 pbuf_clen(struct pbuf *p)
 {
@@ -748,6 +756,7 @@ pbuf_clen(struct pbuf *p)
 }
 
 /**
+ * @ingroup pbuf
  * Increment the reference count of the pbuf.
  *
  * @param p pbuf to increase reference counter of
@@ -766,6 +775,7 @@ pbuf_ref(struct pbuf *p)
 }
 
 /**
+ * @ingroup pbuf
  * Concatenate two pbufs (each may be a pbuf chain) and take over
  * the caller's reference of the tail pbuf.
  *
@@ -774,7 +784,6 @@ pbuf_ref(struct pbuf *p)
  *
  * @see pbuf_chain()
  */
-
 void
 pbuf_cat(struct pbuf *h, struct pbuf *t)
 {
@@ -801,6 +810,7 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 }
 
 /**
+ * @ingroup pbuf
  * Chain two pbufs (or pbuf chains) together.
  *
  * The caller MUST call pbuf_free(t) once it has stopped
@@ -865,7 +875,7 @@ pbuf_dechain(struct pbuf *p)
 }
 
 /**
- *
+ * @ingroup pbuf
  * Create PBUF_RAM copies of pbufs.
  *
  * Used to queue packets on behalf of the lwIP stack, such as
@@ -938,6 +948,7 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 }
 
 /**
+ * @ingroup pbuf
  * Copy (part of) the contents of a packet buffer
  * to an application supplied buffer.
  *
@@ -1037,6 +1048,7 @@ void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
 #endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
 
 /**
+ * @ingroup pbuf
  * Skip a number of bytes at the start of a pbuf
  *
  * @param in input pbuf
@@ -1062,6 +1074,7 @@ pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset)
 }
 
 /**
+ * @ingroup pbuf
  * Copy application supplied data into a pbuf.
  * This function can only be used to copy the equivalent of buf->tot_len data.
  *
@@ -1105,6 +1118,7 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
 }
 
 /**
+ * @ingroup pbuf
  * Same as pbuf_take() but puts data at an offset
  *
  * @param buf pbuf to fill with data
@@ -1138,6 +1152,7 @@ pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset)
 }
 
 /**
+ * @ingroup pbuf
  * Creates a single pbuf out of a queue of pbufs.
  *
  * @remark: Either the source pbuf 'p' is freed by this function or the original
@@ -1209,7 +1224,9 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
 }
 #endif /* LWIP_CHECKSUM_ON_COPY */
 
- /** Get one byte from the specified position in a pbuf
+/** 
+ * @ingroup pbuf
+ * Get one byte from the specified position in a pbuf
  * WARNING: returns zero for offset >= p->tot_len
  *
  * @param p pbuf to parse
@@ -1229,7 +1246,9 @@ pbuf_get_at(struct pbuf* p, u16_t offset)
   return 0;
 }
 
- /** Put one byte to the specified position in a pbuf
+/**
+ * @ingroup pbuf
+ * Put one byte to the specified position in a pbuf
  * WARNING: silently ignores offset >= p->tot_len
  *
  * @param p pbuf to fill
@@ -1248,7 +1267,9 @@ pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data)
   }
 }
 
-/** Compare pbuf contents at specified offset with memory s2, both of length n
+/**
+ * @ingroup pbuf
+ * Compare pbuf contents at specified offset with memory s2, both of length n
  *
  * @param p pbuf to compare
  * @param offset offset into p at which to start comparing
@@ -1283,7 +1304,9 @@ pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
   return 0xffff;
 }
 
-/** Find occurrence of mem (with length mem_len) in pbuf p, starting at offset
+/**
+ * @ingroup pbuf
+ * Find occurrence of mem (with length mem_len) in pbuf p, starting at offset
  * start_offset.
  *
  * @param p pbuf to search, maximum length is 0xFFFE since 0xFFFF is used as
@@ -1309,7 +1332,8 @@ pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
   return 0xFFFF;
 }
 
-/** Find occurrence of substr with length substr_len in pbuf p, start at offset
+/**
+ * Find occurrence of substr with length substr_len in pbuf p, start at offset
  * start_offset
  * WARNING: in contrast to strstr(), this one does not stop at the first \0 in
  * the pbuf/source string!
