@@ -3,7 +3,7 @@
  * Implementation of raw protocol PCBs for low-level handling of
  * different types of protocols besides (or overriding) those
  * already available in lwIP.\n
- * See also @ref rawapi
+ * See also @ref raw_raw
  */
 
 /*
@@ -40,7 +40,16 @@
 
 /**
  * @defgroup raw_api RAW API
- * @see @ref rawapi
+ * @verbinclude "rawapi.txt"
+ */
+
+/**
+ * @defgroup raw_raw RAW
+ * @ingroup raw_api
+ * Implementation of raw protocol PCBs for low-level handling of
+ * different types of protocols besides (or overriding) those
+ * already available in lwIP.\n
+ * @see @ref raw_api
  */
 
 #include "lwip/opt.h"
@@ -190,6 +199,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 }
 
 /**
+ * @ingroup raw_raw
  * Bind a RAW PCB.
  *
  * @param pcb RAW PCB to be bound with a local address ipaddr.
@@ -214,6 +224,7 @@ raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 }
 
 /**
+ * @ingroup raw_raw
  * Connect an RAW PCB. This function is required by upper layers
  * of lwip. Using the raw api you could use raw_sendto() instead
  *
@@ -237,6 +248,7 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 }
 
 /**
+ * @ingroup raw_raw
  * Set the callback function for received packets that match the
  * raw PCB's protocol and binding.
  *
@@ -258,6 +270,7 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 }
 
 /**
+ * @ingroup raw_raw
  * Send the raw IP packet to the given address. Note that actually you cannot
  * modify the IP headers (this is inconsistent with the receive callback where
  * you actually get the IP headers), you can only specify the IP payload here.
@@ -383,6 +396,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 }
 
 /**
+ * @ingroup raw_raw
  * Send the raw IP packet to the address given by raw_connect()
  *
  * @param pcb the raw pcb which to send
@@ -396,6 +410,7 @@ raw_send(struct raw_pcb *pcb, struct pbuf *p)
 }
 
 /**
+ * @ingroup raw_raw
  * Remove an RAW PCB.
  *
  * @param pcb RAW PCB to be removed. The PCB is removed from the list of
@@ -426,6 +441,7 @@ raw_remove(struct raw_pcb *pcb)
 }
 
 /**
+ * @ingroup raw_raw
  * Create a RAW PCB.
  *
  * @return The RAW PCB which was created. NULL if the PCB data structure
@@ -456,7 +472,8 @@ raw_new(u8_t proto)
 }
 
 /**
- * Create a RAW PCB for IPv6.
+ * @ingroup raw_raw
+ * Create a RAW PCB for specific IP type.
  *
  * @return The RAW PCB which was created. NULL if the PCB data structure
  * could not be allocated.

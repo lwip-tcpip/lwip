@@ -1,12 +1,7 @@
 /**
- * @file
+ * @file 
  * Transmission Control Protocol for IP
- *
- * This file contains common functions for the TCP implementation, such as functinos
- * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
- *
- * See also @ref rawapi
+ * See also @ref tcp_raw
  */
 
 /*
@@ -44,7 +39,12 @@
 /**
  * @defgroup tcp_raw TCP
  * @ingroup raw_api
- * @see @ref rawapi
+ * Transmission Control Protocol for IP\n
+ * @see @ref raw_api
+ *
+ * Common functions for the TCP implementation, such as functinos
+ * for manipulating the data structures and the TCP timer functions. TCP functions
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 #include "lwip/opt.h"

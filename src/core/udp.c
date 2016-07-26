@@ -1,8 +1,7 @@
 /**
  * @file
  * User Datagram Protocol module\n
- *
- * See also @ref rawapi
+ * See also @ref udp_raw
  */
 
 /*
@@ -40,7 +39,8 @@
 /**
  * @defgroup udp_raw UDP
  * @ingroup raw_api
- * @see @ref rawapi
+ * User Datagram Protocol module\n
+ * @see @ref raw_api
  */
 
 /* udp.c

@@ -1,4 +1,4 @@
 /**
- * @page ppp PPP
+ * @defgroup ppp PPP
  * @verbinclude "ppp.txt"
  */

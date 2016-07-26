@@ -1,7 +1,7 @@
 /**
  * @file
  * TCP API (to be used from TCPIP thread)\n
- * See also @ref rawapi
+ * See also @ref tcp_raw
  */
 
 /*
