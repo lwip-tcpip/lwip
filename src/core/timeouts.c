@@ -106,7 +106,7 @@ const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
 #endif /* LWIP_IPV6 */
 };
 
-#if LWIP_TIMERS && LWIP_TIMERS_CUSTOM
+#if LWIP_TIMERS && !LWIP_TIMERS_CUSTOM
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
@@ -426,10 +426,10 @@ again:
 
 #endif /* NO_SYS */
 
-#else /* LWIP_TIMERS && LWIP_TIMERS_CUSTOM */
+#else /* LWIP_TIMERS && !LWIP_TIMERS_CUSTOM */
 /* Satisfy the TCP code which calls this function */
 void
 tcp_timer_needed(void)
 {
 }
-#endif /* LWIP_TIMERS && LWIP_TIMERS_CUSTOM */
+#endif /* LWIP_TIMERS && !LWIP_TIMERS_CUSTOM */
