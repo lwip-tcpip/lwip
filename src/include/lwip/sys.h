@@ -68,7 +68,7 @@
  * - Your system uses a high-level OS with e.g. POSIX signals:
  *   Implement as a global mutex
  *
- * @defgroup sys_thread Threads
+ * @defgroup sys_misc Misc
  * @ingroup sys_os
  */
 
@@ -261,7 +261,7 @@ void sys_sem_set_invalid(sys_sem_t *sem);
 
 #ifndef sys_msleep
 /**
- * @ingroup sys_os
+ * @ingroup sys_misc
  * Sleep for specified number of ms
  */
 void sys_msleep(u32_t ms); /* only has a (close to) 1 ms resolution. */
@@ -355,7 +355,7 @@ void sys_mbox_set_invalid(sys_mbox_t *mbox);
 
 
 /**
- * @ingroup sys_thread
+ * @ingroup sys_misc
  * The only thread function:
  * Creates a new thread
  * ATTENTION: although this function returns a value, it MUST NOT FAIL (ports have to assert this!)
