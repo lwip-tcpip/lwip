@@ -1,6 +1,9 @@
 /**
  * @defgroup lwip lwIP
  * 
+ * @defgroup lwip_opts Options (lwipopts.h)
+ * @ingroup lwip
+ *
  * @defgroup infrastructure Infrastructure
  *
  * @defgroup callbackstyle_api Callback-style APIs
@@ -14,8 +17,6 @@
  * @defgroup addons Addons
  * 
  * @defgroup apps Applications
- * 
- * @defgroup lwip_opts lwIP Options (lwipopts.h)
  */
 
 /**
