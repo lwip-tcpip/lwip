@@ -602,7 +602,7 @@
    --------------------------------
 */
 /**
- * @defgroup lwip_opts_ip IP
+ * @defgroup lwip_opts_ip4 IPv4
  * @ingroup lwip_opts
  * @{
  */
