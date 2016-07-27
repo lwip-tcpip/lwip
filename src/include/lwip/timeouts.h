@@ -39,15 +39,6 @@
 #define LWIP_HDR_TIMEOUTS_H
 
 #include "lwip/opt.h"
-
-/** Timers are not supported when NO_SYS==1 and NO_SYS_NO_TIMERS==1.
- * Timer support can be disabled when cyclic timers are implemented
- * differently (use lwip_cyclic_timers array)
- */
-#ifndef LWIP_TIMERS
-#define LWIP_TIMERS (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
-#endif
-
 #include "lwip/err.h"
 #if !NO_SYS
 #include "lwip/sys.h"

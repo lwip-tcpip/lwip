@@ -73,11 +73,28 @@
 #endif
 
 /**
- * NO_SYS_NO_TIMERS==1: Drop support for sys_timeout when NO_SYS==1
- * Mainly for compatibility to old versions.
+ * LWIP_TIMERS==0: Drop support for sys_timeout and lwip-internal cyclic timers.
+ * (the array of lwip-internal cyclic timers is still provided)
  */
-#if !defined NO_SYS_NO_TIMERS || defined __DOXYGEN__
-#define NO_SYS_NO_TIMERS                0
+#ifndef LWIP_TIMERS
+#define LWIP_TIMERS                     1
+#endif
+
+/**
+ * LWIP_TIMERS_CUSTOM==1: Provide your own timer implementation.
+ * Function prototypes in timeouts.h and the array of lwip-internal cyclic timers
+ * are still included, but the implementation is not. The following functions
+ * will be required: sys_timeouts_init(), sys_timeout(), sys_untimeout(),
+ *                   sys_timeouts_mbox_fetch()
+ * (check NO_SYS_NO_TIMERS for compatibility to old versions)
+ */
+#if !defined LWIP_TIMERS_CUSTOM || defined __DOXYGEN__
+#ifdef NO_SYS_NO_TIMERS
+#define LWIP_TIMERS                     (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
+#else
+#define LWIP_TIMERS                     1
+#endif
+#define LWIP_TIMERS_CUSTOM              0
 #endif
 /**
  * @}

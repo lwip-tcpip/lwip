@@ -91,9 +91,9 @@ LWIP_MEMPOOL(ARP_QUEUE,      MEMP_NUM_ARP_QUEUE,       sizeof(struct etharp_q_en
 LWIP_MEMPOOL(IGMP_GROUP,     MEMP_NUM_IGMP_GROUP,      sizeof(struct igmp_group),     "IGMP_GROUP")
 #endif /* LWIP_IGMP */
 
-#if (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS)) /* LWIP_TIMERS */
+#if LWIP_TIMERS && !LWIP_TIMERS_CUSTOM
 LWIP_MEMPOOL(SYS_TIMEOUT,    MEMP_NUM_SYS_TIMEOUT,     sizeof(struct sys_timeo),      "SYS_TIMEOUT")
-#endif /* LWIP_TIMERS */
+#endif /* LWIP_TIMERS && !LWIP_TIMERS_CUSTOM */
 
 #if LWIP_DNS && LWIP_SOCKET
 LWIP_MEMPOOL(NETDB,          MEMP_NUM_NETDB,           NETDB_ELEM_SIZE,               "NETDB")
