@@ -2349,7 +2349,12 @@
    ---------------------------------------
 */
 
-/* Hooks are undefined by default, define them to a function if you need them. */
+/**
+ * @defgroup lwip_opts_hooks Hooks
+ * @ingroup lwip_opts
+ * Hooks are undefined by default, define them to a function if you need them.
+ * @{
+ */
 
 /**
  * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
@@ -2362,6 +2367,9 @@
  * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
  * (i.e. free it when done).
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP4_INPUT(pbuf, input_netif)
+#endif
 
 /**
  * LWIP_HOOK_IP4_ROUTE(dest):
@@ -2370,11 +2378,17 @@
  * Returns the destination netif or NULL if no destination netif is found. In
  * that case, ip_route() continues as normal.
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP4_ROUTE()
+#endif
 
 /**
  * LWIP_HOOK_IP4_ROUTE_SRC(dest, src):
  * - source-based routing for IPv4 (see LWIP_HOOK_IP4_ROUTE(), src may be NULL)
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP4_ROUTE_SRC(dest, src)
+#endif
 
 /**
  * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
@@ -2388,6 +2402,9 @@
  * LWIP_HOOK_IP4_ROUTE(). The actual routing/gateway table implementation is
  * not part of lwIP but can e.g. be hidden in the netif's state argument.
 */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_ETHARP_GET_GW(netif, dest)
+#endif
 
 /**
  * LWIP_HOOK_IP6_INPUT(pbuf, input_netif):
@@ -2400,6 +2417,9 @@
  * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
  * (i.e. free it when done).
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP6_INPUT(pbuf, input_netif)
+#endif
 
 /**
  * LWIP_HOOK_IP6_ROUTE(src, dest):
@@ -2409,6 +2429,9 @@
  * Returns the destination netif or NULL if no destination netif is found. In
  * that case, ip6_route() continues as normal.
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP6_ROUTE(src, dest)
+#endif
 
 /**
  * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
@@ -2420,6 +2443,9 @@
  * - 0: Packet must be dropped.
  * - != 0: Packet must be accepted.
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr)
+#endif
 
 /**
  * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
@@ -2432,10 +2458,19 @@
  * - != 0: Packet shall contain VLAN header.
  * Hook can be used to set prio_vid field of vlan_hdr.
  */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr)
+#endif
 
 /**
  * LWIP_HOOK_MEMP_AVAILABLE(memp_t_type):
  * - called from memp_free() when a memp pool was empty and an item is now available
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_MEMP_AVAILABLE(memp_t_type)
+#endif
+/**
+ * @}
  */
 
 /*
