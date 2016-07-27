@@ -77,7 +77,7 @@ err_t  tcpip_input(struct pbuf *p, struct netif *inp);
 
 err_t  tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block);
 /** 
- * @ingroup lwip
+ * @ingroup lwip_os
  * @see tcpip_callback_with_block
  */
 #define tcpip_callback(f, ctx)  tcpip_callback_with_block(f, ctx, 1)

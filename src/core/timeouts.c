@@ -293,7 +293,7 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
 }
 
 /**
- * @ingroup lwip
+ * @ingroup lwip_nosys
  * Handle timeouts for NO_SYS==1 (i.e. without using
  * tcpip_thread/sys_timeouts_mbox_fetch(). Uses sys_now() to call timeout
  * handler functions when timeouts expire.

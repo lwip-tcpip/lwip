@@ -41,12 +41,15 @@
  *
  * @defgroup sys_os OS abstraction layer
  * @ingroup sys_layer
+ * No need to implement functions in this section in NO_SYS mode.
  *
  * @defgroup sys_sem Semaphores
  * @ingroup sys_os
  *
  * @defgroup sys_mutex Mutexes
  * @ingroup sys_os
+ * Mutexes are recommended to correctly handle priority inversion,
+ * especially if you use LWIP_CORE_LOCKING .
  *
  * @defgroup sys_mbox Mailboxes
  * @ingroup sys_os
@@ -56,6 +59,14 @@
  *
  * @defgroup sys_prot Critical sections
  * @ingroup sys_layer
+ * Used to protect short regions of code against concurrent access.
+ * - Your system is a bare-metal system (probably with an RTOS) 
+ *   and interrupts are under your control:
+ *   Implement this as LockInterrupts() / UnlockInterrupts()
+ * - Your system uses an RTOS with deferred interrupt handling from a 
+ *   worker thread: Implement as a global mutex or lock/unlock scheduler
+ * - Your system uses a high-level OS with e.g. POSIX signals:
+ *   Implement as a global mutex
  *
  * @defgroup sys_thread Threads
  * @ingroup sys_os
@@ -250,7 +261,7 @@ void sys_sem_set_invalid(sys_sem_t *sem);
 
 #ifndef sys_msleep
 /**
- * @ingroup sys_time
+ * @ingroup sys_os
  * Sleep for specified number of ms
  */
 void sys_msleep(u32_t ms); /* only has a (close to) 1 ms resolution. */

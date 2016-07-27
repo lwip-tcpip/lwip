@@ -62,7 +62,7 @@
  * 
  * All functions must be called from TCPIP thread.
  * 
- * @see @ref netconn_dns
+ * @see @ref netconn_common for thread-safe access.
  */
 
 /*-----------------------------------------------------------------------------

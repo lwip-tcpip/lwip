@@ -190,8 +190,10 @@ tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn)
 }
 
 /**
+ * @ingroup lwip_os
  * Pass a received packet to tcpip_thread for input processing with
- * ethernet_input or ip_input
+ * ethernet_input or ip_input. Don't call directly, pass to netif_add()
+ * and call netif->input().
  *
  * @param p the received packet, p->payload pointing to the Ethernet header or
  *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
@@ -441,7 +443,7 @@ tcpip_trycallback(struct tcpip_callback_msg* msg)
 }
 
 /**
- * @ingroup lwip
+ * @ingroup lwip_os
  * Initialize this module:
  * - initialize all sub modules
  * - start the tcpip_thread

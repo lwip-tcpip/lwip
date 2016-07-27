@@ -37,7 +37,22 @@
 
 /**
  * @defgroup lwip lwIP
- * @ingroup infrastructure
+ *
+ * @defgroup lwip_nosys NO_SYS ("mainloop") mode
+ * @ingroup lwip
+ * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
+ * Feed incoming packets to netif->input(pbuf, netif) function from mainloop,
+ * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
+ * context and put it in a queue which is processed from mainloop.\n
+ * Call sys_check_timeouts() periodically in the mainloop.\n
+ * Porting: implement all functions in @ref sys_time and @ref sys_prot.
+ *
+ * @defgroup lwip_os OS mode (TCPIP thread)
+ * @ingroup lwip
+ * Use this mode if you run an OS on your system. It is recommended to
+ * use an RTOS that correctly handles priority inversion and
+ * to use LWIP_TCPIP_CORE_LOCKING.\n
+ * Porting: implement all functions in @ref sys_layer.
  */
 
 #include "lwip/opt.h"
@@ -322,7 +337,7 @@
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
- * @ingroup lwip
+ * @ingroup lwip_nosys
  * Initialize all modules.
  * Use this in NO_SYS mode. Use tcpip_init() otherwise.
  */
