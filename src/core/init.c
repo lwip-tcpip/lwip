@@ -36,8 +36,6 @@
  */
 
 /**
- * @defgroup lwip lwIP
- *
  * @defgroup lwip_nosys NO_SYS ("mainloop") mode
  * @ingroup lwip
  * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
