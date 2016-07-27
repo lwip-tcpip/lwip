@@ -75,9 +75,14 @@
 /**
  * LWIP_TIMERS==0: Drop support for sys_timeout and lwip-internal cyclic timers.
  * (the array of lwip-internal cyclic timers is still provided)
+ * (check NO_SYS_NO_TIMERS for compatibility to old versions)
  */
 #ifndef LWIP_TIMERS
+#ifdef NO_SYS_NO_TIMERS
+#define LWIP_TIMERS                     (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
+#else
 #define LWIP_TIMERS                     1
+#endif
 #endif
 
 /**
@@ -86,14 +91,8 @@
  * are still included, but the implementation is not. The following functions
  * will be required: sys_timeouts_init(), sys_timeout(), sys_untimeout(),
  *                   sys_timeouts_mbox_fetch()
- * (check NO_SYS_NO_TIMERS for compatibility to old versions)
  */
 #if !defined LWIP_TIMERS_CUSTOM || defined __DOXYGEN__
-#ifdef NO_SYS_NO_TIMERS
-#define LWIP_TIMERS                     (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
-#else
-#define LWIP_TIMERS                     1
-#endif
 #define LWIP_TIMERS_CUSTOM              0
 #endif
 /**
