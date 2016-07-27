@@ -423,8 +423,8 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
 static void
 do_memp_free_pool(const struct memp_desc* desc, void *mem)
 {
-  SYS_ARCH_DECL_PROTECT(old_level);
   struct memp *memp;
+  SYS_ARCH_DECL_PROTECT(old_level);
 
   LWIP_ASSERT("memp_free: mem properly aligned",
                 ((mem_ptr_t)mem % MEM_ALIGNMENT) == 0);
