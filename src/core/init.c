@@ -45,14 +45,17 @@
  * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
  * context and put them into a queue which is processed from mainloop.\n
  * Call sys_check_timeouts() periodically in the mainloop.\n
- * Porting: implement all functions in @ref sys_time and @ref sys_prot.
+ * Porting: implement all functions in @ref sys_time and @ref sys_prot.\n
+ * You can only use @ref callbackstyle_api in this mode.
  *
  * @defgroup lwip_os OS mode (TCPIP thread)
  * @ingroup lwip
  * Use this mode if you run an OS on your system. It is recommended to
  * use an RTOS that correctly handles priority inversion and
  * to use LWIP_TCPIP_CORE_LOCKING.\n
- * Porting: implement all functions in @ref sys_layer.
+ * Porting: implement all functions in @ref sys_layer.\n
+ * You can use @ref callbackstyle_api together with \#define tcpip_callback,
+ * and all @ref threadsafe_api.
  */
 
 #include "lwip/opt.h"
