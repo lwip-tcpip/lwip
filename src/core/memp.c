@@ -361,10 +361,6 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char* file, const int
  *
  * @param desc the pool to get an element from
  *
- * the debug version has two more parameters:
- * @param file file name calling this function
- * @param line number of line where this function is called
- *
  * @return a pointer to the allocated memory or a NULL pointer on error
  */
 void *
@@ -390,10 +386,6 @@ memp_malloc_pool_fn(const struct memp_desc *desc, const char* file, const int li
  * Get an element from a specific pool.
  *
  * @param type the pool to get an element from
- *
- * the debug version has two more parameters:
- * @param file file name calling this function
- * @param line number of line where this function is called
  *
  * @return a pointer to the allocated memory or a NULL pointer on error
  */
