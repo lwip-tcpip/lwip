@@ -114,8 +114,7 @@ typedef enum {
 /** indicates this pbuf includes a TCP FIN flag */
 #define PBUF_FLAG_TCP_FIN   0x20U
 
-/** Main payload buffer struct
- */
+/** Main packet buffer struct */
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */
   struct pbuf *next;

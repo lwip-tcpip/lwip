@@ -39,14 +39,17 @@
  * @ingroup infrastructure
  * @verbinclude "sys_arch.txt"
  *
- * @defgroup sys_sem Semaphores
+ * @defgroup sys_os OS abstraction layer
  * @ingroup sys_layer
+ *
+ * @defgroup sys_sem Semaphores
+ * @ingroup sys_os
  *
  * @defgroup sys_mutex Mutexes
- * @ingroup sys_layer
+ * @ingroup sys_os
  *
  * @defgroup sys_mbox Mailboxes
- * @ingroup sys_layer
+ * @ingroup sys_os
  *
  * @defgroup sys_time Time
  * @ingroup sys_layer
@@ -55,7 +58,7 @@
  * @ingroup sys_layer
  *
  * @defgroup sys_thread Threads
- * @ingroup sys_layer
+ * @ingroup sys_os
  */
 
 #ifndef LWIP_HDR_SYS_H
@@ -359,7 +362,6 @@ void sys_init(void);
 
 #ifndef sys_jiffies
 /**
- * @ingroup sys_time
  * Ticks/jiffies since power up.
  */
 u32_t sys_jiffies(void);

@@ -52,10 +52,6 @@
  * @defgroup netconn_udp UDP only
  * @ingroup netconn
  * UDP only functions
- * 
- * @defgroup netconn_dns DNS
- * @ingroup netconn
- * DNS lookup
  */
 
 /* This is the part of the API that is linked with
@@ -204,7 +200,6 @@ netconn_delete(struct netconn *conn)
 }
 
 /**
- * @ingroup netconn_tcp
  * Get the local or remote IP address and port of a netconn.
  * For RAW netconns, this returns the protocol instead of a port!
  *
@@ -893,7 +888,7 @@ netconn_join_leave_group(struct netconn *conn,
 
 #if LWIP_DNS
 /**
- * @ingroup netconn_dns
+ * @ingroup netconn_common
  * Execute a DNS query, only one IP address is returned
  *
  * @param name a string representation of the DNS host name to query

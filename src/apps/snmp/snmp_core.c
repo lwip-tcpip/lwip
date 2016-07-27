@@ -36,6 +36,12 @@
 /**
  * @defgroup snmp SNMPv2c agent
  * @ingroup apps
+ * SNMPv2c compatible agent\n
+ * There is also a MIB compiler and a MIB viewer included in this project.\n
+ * The agent implements the most important MIB2 MIBs including IPv6 support
+ * (interfaces, UDP, TCP, SNMP, ICMP, SYSTEM). IP MIB is an older version
+ * whithout IPv6 statistics (TODO).\n
+ * Work on SNMPv3 has started, but is not finished. 
  * 
  * @defgroup snmp_core Core
  * @ingroup snmp

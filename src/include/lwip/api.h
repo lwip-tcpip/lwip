@@ -275,6 +275,7 @@ err_t   netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port);
 err_t   netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port);
 err_t   netconn_disconnect (struct netconn *conn);
 err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
+/** @ingroup netconn_tcp */
 #define netconn_listen(conn) netconn_listen_with_backlog(conn, TCP_DEFAULT_LISTEN_BACKLOG)
 err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
 err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);

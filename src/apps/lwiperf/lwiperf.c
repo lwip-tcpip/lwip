@@ -1,6 +1,11 @@
 /**
  * @file
  * LWIP iperf server implementation
+ */
+
+/**
+ * @defgroup iperf Iperf server
+ * @ingroup apps
  *
  * This is simple "Iperf" server to check your bandwith using Iperf on a PC as client.
  * It is currently a minimal implementation providing an IPv4 TCP server only.
@@ -562,7 +567,9 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   return ERR_OK;
 }
 
-/** Start a TCP iperf server on the default TCP port (5001) and listen for
+/** 
+ * @ingroup iperf
+ * Start a TCP iperf server on the default TCP port (5001) and listen for
  * incoming connections from iperf clients.
  *
  * @returns a connection handle that can be used to abort the server
@@ -575,7 +582,9 @@ lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void* report_arg)
     report_fn, report_arg);
 }
 
-/** Start a TCP iperf server on a specific IP address and port and listen for
+/**
+ * @ingroup iperf
+ * Start a TCP iperf server on a specific IP address and port and listen for
  * incoming connections from iperf clients.
  *
  * @returns a connection handle that can be used to abort the server
@@ -626,7 +635,10 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
   return s;
 }
 
-/** Abort an iperf session (handle returned by lwiperf_start_tcp_server*()) */
+/**
+ * @ingroup iperf
+ * Abort an iperf session (handle returned by lwiperf_start_tcp_server*())
+ */
 void
 lwiperf_abort(void* lwiperf_session)
 {
