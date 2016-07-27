@@ -52,31 +52,10 @@
 #include "lwip/debug.h"
 
 /*
-   -----------------------------------------------
-   ---------- Platform specific locking ----------
-   -----------------------------------------------
+   ------------------------------------
+   -------------- NO SYS --------------
+   ------------------------------------
 */
-/**
- * @defgroup lwip_opts_locking Platform specific locking
- * @ingroup lwip_opts
- * @{
- */
-
-/**
- * SYS_LIGHTWEIGHT_PROT==1: enable inter-task protection (and task-vs-interrupt
- * protection) for certain critical regions during buffer allocation, deallocation
- * and memory allocation and deallocation.
- * ATTENTION: This is required when using lwIP from more than one context! If
- * you disable this, you must be sure what you are doing!
- */
-#if !defined SYS_LIGHTWEIGHT_PROT || defined __DOXYGEN__
-#define SYS_LIGHTWEIGHT_PROT            1
-#endif
-
-/**
- * @}
- */
-
 /**
  * @defgroup lwip_opts_nosys NO_SYS
  * @ingroup lwip_opts
@@ -128,8 +107,13 @@
  * @}
  */
 
+/*
+   ------------------------------------
+   ----------- Core locking -----------
+   ------------------------------------
+*/
 /**
- * @defgroup lwip_opts_misc Misc
+ * @defgroup lwip_opts_lock Core locking and MPU
  * @ingroup lwip_opts
  * @{
  */
@@ -143,6 +127,41 @@
 #if !defined LWIP_MPU_COMPATIBLE || defined __DOXYGEN__
 #define LWIP_MPU_COMPATIBLE             0
 #endif
+
+/**
+ * LWIP_TCPIP_CORE_LOCKING
+ * Creates a global mutex that is held during TCPIP thread operations.
+ * Can be locked by client code to perform lwIP operations without changing
+ * into TCPIP thread using callbacks. See LOCK_TCPIP_CORE() and
+ * UNLOCK_TCPIP_CORE().
+ * Your system should provide mutexes supporting priority inversion to use this.
+ */
+#if !defined LWIP_TCPIP_CORE_LOCKING || defined __DOXYGEN__
+#define LWIP_TCPIP_CORE_LOCKING         1
+#endif
+
+/**
+ * LWIP_TCPIP_CORE_LOCKING_INPUT: when LWIP_TCPIP_CORE_LOCKING is enabled,
+ * this lets tcpip_input() grab the mutex for input packets as well,
+ * instead of allocating a message and passing it to tcpip_thread.
+ *
+ * ATTENTION: this does not work when tcpip_input() is called from
+ * interrupt context!
+ */
+#if !defined LWIP_TCPIP_CORE_LOCKING_INPUT || defined __DOXYGEN__
+#define LWIP_TCPIP_CORE_LOCKING_INPUT   0
+#endif
+
+/**
+ * SYS_LIGHTWEIGHT_PROT==1: enable inter-task protection (and task-vs-interrupt
+ * protection) for certain critical regions during buffer allocation, deallocation
+ * and memory allocation and deallocation.
+ * ATTENTION: This is required when using lwIP from more than one context! If
+ * you disable this, you must be sure what you are doing!
+ */
+#if !defined SYS_LIGHTWEIGHT_PROT || defined __DOXYGEN__
+#define SYS_LIGHTWEIGHT_PROT            1
+#endif
 /**
  * @}
  */
@@ -153,7 +172,7 @@
    ------------------------------------
 */
 /**
- * @defgroup lwip_opts_misc Misc
+ * @defgroup lwip_opts_mem Heap and memory pools
  * @ingroup lwip_opts
  * @{
  */
@@ -1470,7 +1489,7 @@
    ------------------------------------
 */
 /**
- * @defgroup lwip_opts_loop SLIP interface
+ * @defgroup lwip_opts_slip SLIP interface
  * @ingroup lwip_opts
  * @{
  */
@@ -1635,30 +1654,6 @@
  * @ingroup lwip_opts
  * @{
  */
-/**
- * LWIP_TCPIP_CORE_LOCKING
- * Creates a global mutex that is held during TCPIP thread operations.
- * Can be locked by client code to perform lwIP operations without changing
- * into TCPIP thread using callbacks. See LOCK_TCPIP_CORE() and
- * UNLOCK_TCPIP_CORE().
- * Your system should provide mutexes supporting priority inversion to use this.
- */
-#if !defined LWIP_TCPIP_CORE_LOCKING || defined __DOXYGEN__
-#define LWIP_TCPIP_CORE_LOCKING         1
-#endif
-
-/**
- * LWIP_TCPIP_CORE_LOCKING_INPUT: when LWIP_TCPIP_CORE_LOCKING is enabled,
- * this lets tcpip_input() grab the mutex for input packets as well,
- * instead of allocating a message and passing it to tcpip_thread.
- *
- * ATTENTION: this does not work when tcpip_input() is called from
- * interrupt context!
- */
-#if !defined LWIP_TCPIP_CORE_LOCKING_INPUT || defined __DOXYGEN__
-#define LWIP_TCPIP_CORE_LOCKING_INPUT   0
-#endif
-
 /**
  * LWIP_NETCONN==1: Enable Netconn API (require to use api_lib.c)
  */
