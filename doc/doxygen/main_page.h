@@ -14,6 +14,8 @@
  * @defgroup addons Addons
  * 
  * @defgroup apps Applications
+ * 
+ * @defgroup lwip_opts lwIP Options (lwipopts.h)
  */
 
 /** @mainpage Overview
