@@ -18,11 +18,12 @@
  * @defgroup lwip_opts lwIP Options (lwipopts.h)
  */
 
-/** @mainpage Overview
+/**
+ * @mainpage Overview
  * @verbinclude "README"
  */
 
- /**
+/**
  * @page upgrading Upgrading
  * @verbinclude "UPGRADING"
  */
