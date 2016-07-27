@@ -14,6 +14,16 @@
  * @defgroup apps Applications
  */
 
+ /**
+ * @page contrib How to contribute to lwIP
+ * @verbinclude "contrib.txt"
+ */
+
+ /**
+ * @page upgrading Upgrading
+ * @verbinclude "UPGRADING"
+ */
+ 
 /*! \mainpage lwIP Documentation
  *
  * \section intro_sec Introduction
