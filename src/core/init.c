@@ -36,7 +36,7 @@
  */
 
 /**
- * @defgroup lwip_nosys NO_SYS ("mainloop") mode
+ * @defgroup lwip_nosys Mainloop mode ("NO_SYS")
  * @ingroup lwip
  * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
  * Feed incoming packets to netif->input(pbuf, netif) function from mainloop,

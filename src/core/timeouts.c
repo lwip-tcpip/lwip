@@ -300,7 +300,7 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  *
  * Must be called periodically from your main loop.
  */
-#if !NO_SYS
+#if !NO_SYS && !defined __DOXYGEN__
 static
 #endif /* !NO_SYS */
 void

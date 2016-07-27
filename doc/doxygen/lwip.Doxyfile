@@ -2068,7 +2068,8 @@ INCLUDE_FILE_PATTERNS  = *.c *.h
 # recursively expanded use the := operator instead of the = operator.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-PREDEFINED             = NO_SYS=0 \
+PREDEFINED             = __DOXYGEN__=1 \
+                         NO_SYS=0 \
                          SYS_LIGHTWEIGHT_PROT=1 \
                          LWIP_IPV4=1 \
                          LWIP_IPV6=1 \
