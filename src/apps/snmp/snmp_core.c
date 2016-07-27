@@ -42,7 +42,87 @@
  * (interfaces, UDP, TCP, SNMP, ICMP, SYSTEM). IP MIB is an older version
  * whithout IPv6 statistics (TODO).\n
  * Work on SNMPv3 has started, but is not finished. 
+ *
+ * 0 Agent Capabilities
+ * ====================
  * 
+ * SNMPv1 per RFC1157 and SNMPv2c per RFC 3416
+ * -------------------------------------------
+ *   Note the S in SNMP stands for "Simple". Note that "Simple" is
+ *   relative. SNMP is simple compared to the complex ISO network
+ *   management protocols CMIP (Common Management Information Protocol)
+ *   and CMOT (CMip Over Tcp).
+ * 
+ * MIB II
+ * ------
+ *   The standard lwIP stack management information base.
+ *   This is a required MIB, so this is always enabled.
+ *   The groups EGP, CMOT and transmission are disabled by default.
+ * 
+ *   Most mib-2 objects are not writable except:
+ *   sysName, sysLocation, sysContact, snmpEnableAuthenTraps.
+ *   Writing to or changing the ARP and IP address and route
+ *   tables is not possible.
+ * 
+ *   Note lwIP has a very limited notion of IP routing. It currently
+ *   doen't have a route table and doesn't have a notion of the U,G,H flags.
+ *   Instead lwIP uses the interface list with only one default interface
+ *   acting as a single gateway interface (G) for the default route.
+ * 
+ *   The agent returns a "virtual table" with the default route 0.0.0.0
+ *   for the default interface and network routes (no H) for each
+ *   network interface in the netif_list.
+ *   All routes are considered to be up (U).
+ * 
+ * Loading additional MIBs
+ * -----------------------
+ *   MIBs can only be added in compile-time, not in run-time.
+ *  
+ * 
+ * 1 Building the Agent
+ * ====================
+ * First of all you'll need to add the following define
+ * to your local lwipopts.h:
+ * \#define LWIP_SNMP               1
+ * 
+ * and add the source files your makefile.
+ * 
+ * Note you'll might need to adapt you network driver to update
+ * the mib2 variables for your interface.
+ * 
+ * 2 Running the Agent
+ * ===================
+ * The following function calls must be made in your program to
+ * actually get the SNMP agent running.
+ * 
+ * Before starting the agent you should supply pointers
+ * for sysContact, sysLocation, and snmpEnableAuthenTraps.
+ * You can do this by calling
+ * 
+ * - snmp_mib2_set_syscontact()
+ * - snmp_mib2_set_syslocation()
+ * - snmp_set_auth_traps_enabled()
+ * 
+ * You can register a callback which is called on successful write access: 
+ * snmp_set_write_callback().
+ * 
+ * Additionally you may want to set
+ * 
+ * - snmp_mib2_set_sysdescr()
+ * - snmp_set_device_enterprise_oid()
+ * - snmp_mib2_set_sysname()
+ * 
+ * Also before starting the agent you need to setup
+ * one or more trap destinations using these calls:
+ * 
+ * - snmp_trap_dst_enable()
+ * - snmp_trap_dst_ip_set()
+ * 
+ * If you need more than MIB2, set the MIBs you want to use
+ * by snmp_set_mibs().
+ * 
+ * Finally, enable the agent by calling snmp_init()
+ *
  * @defgroup snmp_core Core
  * @ingroup snmp
  * 
