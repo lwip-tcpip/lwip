@@ -57,7 +57,7 @@ typedef void (*snmp_threadsync_synchronizer_fn)(snmp_threadsync_called_fn fn, vo
 struct threadsync_data
 {
   union {
-    snmp_err_t u8;
+    snmp_err_t err;
     s16_t s16;
   } retval;
   union {
