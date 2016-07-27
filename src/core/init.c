@@ -43,7 +43,7 @@
  * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
  * Feed incoming packets to netif->input(pbuf, netif) function from mainloop,
  * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
- * context and put it in a queue which is processed from mainloop.\n
+ * context and put them into a queue which is processed from mainloop.\n
  * Call sys_check_timeouts() periodically in the mainloop.\n
  * Porting: implement all functions in @ref sys_time and @ref sys_prot.
  *
