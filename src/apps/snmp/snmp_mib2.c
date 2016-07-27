@@ -33,6 +33,11 @@
  *         Christiaan Simons <christiaan.simons@axon.tv>
  */
 
+/**
+ * @defgroup snmp_mib2 MIB2
+ * @ingroup snmp
+ */
+
 #include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP && SNMP_LWIP_MIB2 /* don't build if not configured for use in lwipopts.h */
