@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2016-07-xx: Dirk Ziegelmeier:
+  * Large overhaul of doxygen documentation
+
   2016-04-05: Simon Goldschmidt:
   * timers.h/.c: prepare for overriding current timeout implementation: all
     stack-internal caclic timers are avaliable in the lwip_cyclic_timers array
