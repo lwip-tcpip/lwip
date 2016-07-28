@@ -102,7 +102,7 @@
  * (the array of lwip-internal cyclic timers is still provided)
  * (check NO_SYS_NO_TIMERS for compatibility to old versions)
  */
-#ifndef LWIP_TIMERS || defined __DOXYGEN__
+#if !defined LWIP_TIMERS || defined __DOXYGEN__
 #ifdef NO_SYS_NO_TIMERS
 #define LWIP_TIMERS                     (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
 #else
@@ -1519,26 +1519,6 @@
  */
 #if !defined LWIP_NETIF_LOOPBACK_MULTITHREADING || defined __DOXYGEN__
 #define LWIP_NETIF_LOOPBACK_MULTITHREADING    (!NO_SYS)
-#endif
-/**
- * @}
- */
-
-/*
-   ------------------------------------
-   ---------- SLIPIF options ----------
-   ------------------------------------
-*/
-/**
- * @defgroup lwip_opts_slip SLIP interface
- * @ingroup lwip_opts
- * @{
- */
-/**
- * LWIP_HAVE_SLIPIF==1: Support slip interface and slipif.c
- */
-#if !defined LWIP_HAVE_SLIPIF || defined __DOXYGEN__
-#define LWIP_HAVE_SLIPIF                0
 #endif
 /**
  * @}
