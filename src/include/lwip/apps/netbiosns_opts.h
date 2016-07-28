@@ -46,7 +46,7 @@
  * If not defined, comparision is case sensitive and the provided hostname must be
  * uppercase.
  */
-#ifndef NETBIOS_STRCMP
+#if !defined NETBIOS_STRCMP || defined __DOXYGEN__
 #define NETBIOS_STRCMP(str1, str2) strcmp(str1, str2)
 #endif
 

@@ -53,7 +53,7 @@
  * LWIP_MIB2_CALLBACKS and MIB2_STATS. This will give you the callbacks
  * and statistics counters you need to get MIB2 working.
  */
-#ifndef LWIP_SNMP
+#if !defined LWIP_SNMP || defined __DOXYGEN__
 #define LWIP_SNMP                       0
 #endif
 
@@ -62,7 +62,7 @@
  * Makes SNMP agent run in a worker thread, so blocking operations
  * can be done in MIB calls.
  */
-#ifndef SNMP_USE_NETCONN
+#if !defined SNMP_USE_NETCONN || defined __DOXYGEN__
 #define SNMP_USE_NETCONN           0
 #endif
 
@@ -71,7 +71,7 @@
  * SNMP agent does not run in a worker thread, so blocking operations
  * should not be done in MIB calls.
  */
-#ifndef SNMP_USE_RAW
+#if !defined SNMP_USE_RAW || defined __DOXYGEN__
 #define SNMP_USE_RAW               1
 #endif
 
@@ -87,14 +87,14 @@
 /**
  * SNMP_STACK_SIZE: Stack size of SNMP netconn worker thread
  */
-#ifndef SNMP_STACK_SIZE
+#if !defined SNMP_STACK_SIZE || defined __DOXYGEN__
 #define SNMP_STACK_SIZE            DEFAULT_THREAD_STACKSIZE
 #endif
 
 /**
  * SNMP_THREAD_PRIO: SNMP netconn worker thread priority
  */
-#ifndef SNMP_THREAD_PRIO
+#if !defined SNMP_THREAD_PRIO || defined __DOXYGEN__
 #define SNMP_THREAD_PRIO           DEFAULT_THREAD_PRIO
 #endif
 #endif /* SNMP_USE_NETCONN */
@@ -103,7 +103,7 @@
  * SNMP_TRAP_DESTINATIONS: Number of trap destinations. At least one trap
  * destination is required
  */
-#ifndef SNMP_TRAP_DESTINATIONS
+#if !defined SNMP_TRAP_DESTINATIONS || defined __DOXYGEN__
 #define SNMP_TRAP_DESTINATIONS          1
 #endif
 
@@ -112,14 +112,14 @@
  * a safe action and disabled when SNMP_SAFE_REQUESTS = 1).
  * Unsafe requests are disabled by default!
  */
-#ifndef SNMP_SAFE_REQUESTS
+#if !defined SNMP_SAFE_REQUESTS || defined __DOXYGEN__
 #define SNMP_SAFE_REQUESTS              1
 #endif
 
 /**
  * The maximum length of strings used.
  */
-#ifndef SNMP_MAX_OCTET_STRING_LEN
+#if !defined SNMP_MAX_OCTET_STRING_LEN || defined __DOXYGEN__
 #define SNMP_MAX_OCTET_STRING_LEN       127
 #endif
 
@@ -127,11 +127,11 @@
  * The maximum number of Sub ID's inside an object identifier.
  * Indirectly this also limits the maximum depth of SNMP tree.
  */
-#ifndef SNMP_MAX_OBJ_ID_LEN
+#if !defined SNMP_MAX_OBJ_ID_LEN || defined __DOXYGEN__
 #define SNMP_MAX_OBJ_ID_LEN             50
 #endif
 
-#ifndef SNMP_MAX_VALUE_SIZE
+#if !defined SNMP_MAX_VALUE_SIZE || defined __DOXYGEN__
 /**
  * The maximum size of a value.
  */
@@ -146,7 +146,7 @@
  * The snmp read-access community. Used for write-access and traps, too
  * unless SNMP_COMMUNITY_WRITE or SNMP_COMMUNITY_TRAP are enabled, respectively.
  */
-#ifndef SNMP_COMMUNITY
+#if !defined SNMP_COMMUNITY || defined __DOXYGEN__
 #define SNMP_COMMUNITY                  "public"
 #endif
 
@@ -154,14 +154,14 @@
  * The snmp write-access community.
  * Set this community to "" in order to disallow any write access.
  */
-#ifndef SNMP_COMMUNITY_WRITE
+#if !defined SNMP_COMMUNITY_WRITE || defined __DOXYGEN__
 #define SNMP_COMMUNITY_WRITE            "private"
 #endif
 
 /**
  * The snmp community used for sending traps.
  */
-#ifndef SNMP_COMMUNITY_TRAP
+#if !defined SNMP_COMMUNITY_TRAP || defined __DOXYGEN__
 #define SNMP_COMMUNITY_TRAP             "public"
 #endif
 
@@ -170,14 +170,14 @@
  * If community names shall be adjusted at runtime via snmp_set_community() calls,
  * enter here the possible maximum length (+1 for terminating null character).
  */
-#ifndef SNMP_MAX_COMMUNITY_STR_LEN
+#if !defined SNMP_MAX_COMMUNITY_STR_LEN || defined __DOXYGEN__
 #define SNMP_MAX_COMMUNITY_STR_LEN LWIP_MAX(LWIP_MAX(sizeof(SNMP_COMMUNITY), sizeof(SNMP_COMMUNITY_WRITE)), sizeof(SNMP_COMMUNITY_TRAP))
 #endif
 
 /**
  * The OID identifiying the device. This may be the enterprise OID itself or any OID located below it in tree.
  */
-#ifndef SNMP_DEVICE_ENTERPRISE_OID
+#if !defined SNMP_DEVICE_ENTERPRISE_OID || defined __DOXYGEN__
 #define SNMP_LWIP_ENTERPRISE_OID 26381
 /**
  * IANA assigned enterprise ID for lwIP is 26381
@@ -202,28 +202,28 @@
 /**
  * SNMP_DEBUG: Enable debugging for SNMP messages.
  */
-#ifndef SNMP_DEBUG
+#if !defined SNMP_DEBUG || defined __DOXYGEN__
 #define SNMP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 /**
  * SNMP_MIB_DEBUG: Enable debugging for SNMP MIBs.
  */
-#ifndef SNMP_MIB_DEBUG
+#if !defined SNMP_MIB_DEBUG || defined __DOXYGEN__
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #endif
 
 /**
  * Indicates if the MIB2 implementation of LWIP SNMP stack is used.
  */
-#ifndef SNMP_LWIP_MIB2
+#if !defined SNMP_LWIP_MIB2 || defined __DOXYGEN__
 #define SNMP_LWIP_MIB2                      LWIP_SNMP
 #endif
 
 /**
  * Value return for sysDesc field of MIB2.
  */
-#ifndef SNMP_LWIP_MIB2_SYSDESC
+#if !defined SNMP_LWIP_MIB2_SYSDESC || defined __DOXYGEN__
 #define SNMP_LWIP_MIB2_SYSDESC              "lwIP"
 #endif
 
@@ -231,7 +231,7 @@
  * Value return for sysName field of MIB2.
  * To make sysName field settable, call snmp_mib2_set_sysname() to provide the necessary buffers.
  */
-#ifndef SNMP_LWIP_MIB2_SYSNAME
+#if !defined SNMP_LWIP_MIB2_SYSNAME || defined __DOXYGEN__
 #define SNMP_LWIP_MIB2_SYSNAME              "FQDN-unk"
 #endif
 
@@ -239,7 +239,7 @@
  * Value return for sysContact field of MIB2.
  * To make sysContact field settable, call snmp_mib2_set_syscontact() to provide the necessary buffers.
  */
-#ifndef SNMP_LWIP_MIB2_SYSCONTACT
+#if !defined SNMP_LWIP_MIB2_SYSCONTACT || defined __DOXYGEN__
 #define SNMP_LWIP_MIB2_SYSCONTACT           ""
 #endif
 
@@ -247,7 +247,7 @@
  * Value return for sysLocation field of MIB2.
  * To make sysLocation field settable, call snmp_mib2_set_syslocation() to provide the necessary buffers.
  */
-#ifndef SNMP_LWIP_MIB2_SYSLOCATION
+#if !defined SNMP_LWIP_MIB2_SYSLOCATION || defined __DOXYGEN__
 #define SNMP_LWIP_MIB2_SYSLOCATION          ""
 #endif
 
@@ -259,7 +259,7 @@
  * For the stack this could be useful in case that SNMP processing is done in TCP/IP thread. In this situation a request with many
  * repetitions could block the thread for a longer time. Setting limit here will keep the stack more responsive.
  */
-#ifndef SNMP_LWIP_GETBULK_MAX_REPETITIONS
+#if !defined SNMP_LWIP_GETBULK_MAX_REPETITIONS || defined __DOXYGEN__
 #define SNMP_LWIP_GETBULK_MAX_REPETITIONS 0
 #endif
 
