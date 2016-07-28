@@ -54,6 +54,15 @@
 /** 
  * @defgroup lwip_opts Options (lwipopts.h)
  * @ingroup lwip
+ *
+ * @defgroup lwip_opts_debug Debugging
+ * @ingroup lwip_opts
+ *
+ * @defgroup lwip_opts_callback Callback-style APIs
+ * @ingroup lwip_opts
+ *
+ * @defgroup lwip_opts_threadsafe_apis Thread-safe APIs
+ * @ingroup lwip_opts
  */
 
  /*
@@ -520,7 +529,7 @@
 */
 /**
  * @defgroup lwip_opts_arp ARP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_ipv4
  * @{
  */
 /**
@@ -631,7 +640,7 @@
    --------------------------------
 */
 /**
- * @defgroup lwip_opts_ip4 IPv4
+ * @defgroup lwip_opts_ipv4 IPv4
  * @ingroup lwip_opts
  * @{
  */
@@ -780,7 +789,7 @@
 */
 /**
  * @defgroup lwip_opts_icmp ICMP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_ipv4
  * @{
  */
 /**
@@ -822,7 +831,7 @@
 */
 /**
  * @defgroup lwip_opts_raw RAW
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_callback
  * @{
  */
 /**
@@ -849,7 +858,7 @@
 */
 /**
  * @defgroup lwip_opts_dhcp DHCP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_ipv4
  * @{
  */
 /**
@@ -914,7 +923,7 @@
 */
 /**
  * @defgroup lwip_opts_autoip AUTOIP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_ipv4
  * @{
  */
 /**
@@ -980,7 +989,7 @@
 */
 /**
  * @defgroup lwip_opts_igmp IGMP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_ipv4
  * @{
  */
 /**
@@ -1089,7 +1098,7 @@
 */
 /**
  * @defgroup lwip_opts_udp UDP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_callback
  * @{
  */
 /**
@@ -1130,7 +1139,7 @@
 */
 /**
  * @defgroup lwip_opts_tcp TCP
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_callback
  * @{
  */
 /**
@@ -1680,7 +1689,7 @@
 */
 /**
  * @defgroup lwip_opts_netconn Netconn
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_threadsafe_apis
  * @{
  */
 /**
@@ -1733,7 +1742,7 @@
 */
 /**
  * @defgroup lwip_opts_socket Sockets
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_threadsafe_apis
  * @{
  */
 /**
@@ -1879,7 +1888,7 @@
 */
 /**
  * @defgroup lwip_opts_stats Statistics
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_debug
  * @{
  */
 /**
@@ -2508,8 +2517,8 @@
    ---------------------------------------
 */
 /**
- * @defgroup lwip_opts_debug Debugging
- * @ingroup lwip_opts
+ * @defgroup lwip_opts_debugmsg Debugging
+ * @ingroup lwip_opts_debug
  * @{
  */
 /**
@@ -2764,7 +2773,7 @@
 */
 /**
  * @defgroup lwip_opts_perf Performance
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_debug
  * @{
  */
 /**
