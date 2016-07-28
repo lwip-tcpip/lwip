@@ -1,17 +1,17 @@
 /**
  * @file
- * LWIP iperf server implementation
+ * lwIP iPerf server implementation
  */
 
 /**
  * @defgroup iperf Iperf server
  * @ingroup apps
  *
- * This is simple "Iperf" server to check your bandwith using Iperf on a PC as client.
+ * This is a simple performance measuring server to check your bandwith using
+ * iPerf2 on a PC as client.
  * It is currently a minimal implementation providing an IPv4 TCP server only.
  *
- * @todo:
- * - implement UDP mode
+ * @todo: implement UDP mode and IPv6
  */
 
 /*
