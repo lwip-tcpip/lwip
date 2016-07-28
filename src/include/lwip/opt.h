@@ -71,13 +71,21 @@
 #if !defined NO_SYS || defined __DOXYGEN__
 #define NO_SYS                          0
 #endif
+/**
+ * @}
+ */
 
+/**
+ * @defgroup lwip_opts_timers Timers
+ * @ingroup lwip_opts
+ * @{
+ */
 /**
  * LWIP_TIMERS==0: Drop support for sys_timeout and lwip-internal cyclic timers.
  * (the array of lwip-internal cyclic timers is still provided)
  * (check NO_SYS_NO_TIMERS for compatibility to old versions)
  */
-#ifndef LWIP_TIMERS
+#ifndef LWIP_TIMERS || defined __DOXYGEN__
 #ifdef NO_SYS_NO_TIMERS
 #define LWIP_TIMERS                     (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
 #else
