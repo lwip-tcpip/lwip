@@ -58,6 +58,9 @@
  * @defgroup lwip_opts_debug Debugging
  * @ingroup lwip_opts
  *
+ * @defgroup lwip_opts_infrastructure Infrastructure
+ * @ingroup lwip_opts
+ *
  * @defgroup lwip_opts_callback Callback-style APIs
  * @ingroup lwip_opts
  *
@@ -72,7 +75,7 @@
 */
 /**
  * @defgroup lwip_opts_nosys NO_SYS
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -91,7 +94,7 @@
 
 /**
  * @defgroup lwip_opts_timers Timers
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -123,7 +126,7 @@
 
 /**
  * @defgroup lwip_opts_memcpy memcpy
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -152,7 +155,7 @@
 */
 /**
  * @defgroup lwip_opts_lock Core locking and MPU
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -211,7 +214,7 @@
 */
 /**
  * @defgroup lwip_opts_mem Heap and memory pools
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -334,7 +337,7 @@
 */
 /**
  * @defgroup lwip_opts_memp Internal memory pools
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -966,8 +969,8 @@
    ----------------------------------
 */
 /**
- * @defgroup lwip_opts_mib2 MIB2
- * @ingroup lwip_opts
+ * @defgroup lwip_opts_mib2 SNMP MIB2 callbacks
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -1021,7 +1024,7 @@
 */
 /**
  * @defgroup lwip_opts_dns DNS
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_callback
  * @{
  */
 /**
@@ -1548,7 +1551,7 @@
 */
 /**
  * @defgroup lwip_opts_thread Threading
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -2062,7 +2065,7 @@
 */
 /**
  * @defgroup lwip_opts_checksum Checksum
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * @{
  */
 /**
@@ -2389,7 +2392,7 @@
 
 /**
  * @defgroup lwip_opts_hooks Hooks
- * @ingroup lwip_opts
+ * @ingroup lwip_opts_infrastructure
  * Hooks are undefined by default, define them to a function if you need them.
  * @{
  */
