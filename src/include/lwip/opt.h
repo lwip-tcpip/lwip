@@ -2170,6 +2170,50 @@
 #endif
 
 /**
+ * LWIP_IPV6_FRAG==1: Fragment outgoing IPv6 packets that are too big.
+ */
+#if !defined LWIP_IPV6_FRAG || defined __DOXYGEN__
+#define LWIP_IPV6_FRAG                  0
+#endif
+
+/**
+ * LWIP_IPV6_REASS==1: reassemble incoming IPv6 packets that fragmented
+ */
+#if !defined LWIP_IPV6_REASS || defined __DOXYGEN__ || defined __DOXYGEN__
+#define LWIP_IPV6_REASS                 (LWIP_IPV6)
+#endif
+
+/**
+ * LWIP_IPV6_SEND_ROUTER_SOLICIT==1: Send router solicitation messages during
+ * network startup.
+ */
+#if !defined LWIP_IPV6_SEND_ROUTER_SOLICIT || defined __DOXYGEN__
+#define LWIP_IPV6_SEND_ROUTER_SOLICIT   1
+#endif
+
+/**
+ * LWIP_IPV6_AUTOCONFIG==1: Enable stateless address autoconfiguration as per RFC 4862.
+ */
+#if !defined LWIP_IPV6_AUTOCONFIG || defined __DOXYGEN__
+#define LWIP_IPV6_AUTOCONFIG            (LWIP_IPV6)
+#endif
+
+/**
+ * LWIP_IPV6_DUP_DETECT_ATTEMPTS: Number of duplicate address detection attempts.
+ */
+#if !defined LWIP_IPV6_DUP_DETECT_ATTEMPTS || defined __DOXYGEN__
+#define LWIP_IPV6_DUP_DETECT_ATTEMPTS   1
+#endif
+/**
+ * @}
+ */
+
+/**
+ * @defgroup lwip_opts_icmp6 ICMP6
+ * @ingroup lwip_opts_ipv6
+ * @{
+ */
+/**
  * LWIP_ICMP6==1: Enable ICMPv6 (mandatory per RFC)
  */
 #if !defined LWIP_ICMP6 || defined __DOXYGEN__
@@ -2190,7 +2234,15 @@
 #if !defined LWIP_ICMP6_HL || defined __DOXYGEN__
 #define LWIP_ICMP6_HL                   255
 #endif
+/**
+ * @}
+ */
 
+/**
+ * @defgroup lwip_opts_mld6 Multicast listener discovery
+ * @ingroup lwip_opts_ipv6
+ * @{
+ */
 /**
  * LWIP_IPV6_MLD==1: Enable multicast listener discovery protocol.
  */
@@ -2204,21 +2256,15 @@
 #if !defined MEMP_NUM_MLD6_GROUP || defined __DOXYGEN__
 #define MEMP_NUM_MLD6_GROUP             4
 #endif
+/**
+ * @}
+ */
 
 /**
- * LWIP_IPV6_FRAG==1: Fragment outgoing IPv6 packets that are too big.
+ * @defgroup lwip_opts_nd6 Neighbor discovery
+ * @ingroup lwip_opts_ipv6
+ * @{
  */
-#if !defined LWIP_IPV6_FRAG || defined __DOXYGEN__
-#define LWIP_IPV6_FRAG                  0
-#endif
-
-/**
- * LWIP_IPV6_REASS==1: reassemble incoming IPv6 packets that fragmented
- */
-#if !defined LWIP_IPV6_REASS || defined __DOXYGEN__ || defined __DOXYGEN__
-#define LWIP_IPV6_REASS                 (LWIP_IPV6)
-#endif
-
 /**
  * LWIP_ND6_QUEUEING==1: queue outgoing IPv6 packets while MAC address
  * is being resolved.
@@ -2324,14 +2370,6 @@
 #endif
 
 /**
- * LWIP_IPV6_SEND_ROUTER_SOLICIT==1: Send router solicitation messages during
- * network startup.
- */
-#if !defined LWIP_IPV6_SEND_ROUTER_SOLICIT || defined __DOXYGEN__
-#define LWIP_IPV6_SEND_ROUTER_SOLICIT   1
-#endif
-
-/**
  * LWIP_ND6_TCP_REACHABILITY_HINTS==1: Allow TCP to provide Neighbor Discovery
  * with reachability hints for connected destinations. This helps avoid sending
  * unicast neighbor solicitation messages.
@@ -2339,20 +2377,9 @@
 #if !defined LWIP_ND6_TCP_REACHABILITY_HINTS || defined __DOXYGEN__ || defined __DOXYGEN__
 #define LWIP_ND6_TCP_REACHABILITY_HINTS 1
 #endif
-
 /**
- * LWIP_IPV6_AUTOCONFIG==1: Enable stateless address autoconfiguration as per RFC 4862.
+ * @}
  */
-#if !defined LWIP_IPV6_AUTOCONFIG || defined __DOXYGEN__
-#define LWIP_IPV6_AUTOCONFIG            (LWIP_IPV6)
-#endif
-
-/**
- * LWIP_IPV6_DUP_DETECT_ATTEMPTS: Number of duplicate address detection attempts.
- */
-#if !defined LWIP_IPV6_DUP_DETECT_ATTEMPTS || defined __DOXYGEN__
-#define LWIP_IPV6_DUP_DETECT_ATTEMPTS   1
-#endif
 
 /**
  * LWIP_IPV6_DHCP6==1: enable DHCPv6 stateful address autoconfiguration.
@@ -2360,9 +2387,6 @@
 #if !defined LWIP_IPV6_DHCP6 || defined __DOXYGEN__
 #define LWIP_IPV6_DHCP6                 0
 #endif
-/**
- * @}
- */
 
 /*
    ---------------------------------------
