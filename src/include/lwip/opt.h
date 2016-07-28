@@ -1447,6 +1447,48 @@
 #endif
 
 /**
+ * LWIP_NETIF_TX_SINGLE_PBUF: if this is set to 1, lwIP tries to put all data
+ * to be sent into one single pbuf. This is for compatibility with DMA-enabled
+ * MACs that do not support scatter-gather.
+ * Beware that this might involve CPU-memcpy before transmitting that would not
+ * be needed without this flag! Use this only if you need to!
+ *
+ * @todo: TCP and IP-frag do not work with this, yet:
+ */
+#if !defined LWIP_NETIF_TX_SINGLE_PBUF || defined __DOXYGEN__
+#define LWIP_NETIF_TX_SINGLE_PBUF             0
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+/**
+ * @}
+ */
+
+/*
+   ------------------------------------
+   ---------- LOOPIF options ----------
+   ------------------------------------
+*/
+/**
+ * @defgroup lwip_opts_loop Loopback interface
+ * @ingroup lwip_opts_netif
+ * @{
+ */
+/**
+ * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1).
+ * This is only needed when no real netifs are available. If at least one other
+ * netif is available, loopback traffic uses this netif.
+ */
+#if !defined LWIP_HAVE_LOOPIF || defined __DOXYGEN__
+#define LWIP_HAVE_LOOPIF                LWIP_NETIF_LOOPBACK
+#endif
+
+/**
+ * LWIP_LOOPIF_MULTICAST==1: Support multicast/IGMP on loop interface (127.0.0.1).
+ */
+#if !defined LWIP_LOOPIF_MULTICAST || defined __DOXYGEN__
+#define LWIP_LOOPIF_MULTICAST               0
+#endif
+
+/**
  * LWIP_NETIF_LOOPBACK==1: Support sending packets with a destination IP
  * address equal to the netif IP address, looping them back up the stack.
  */
@@ -1477,48 +1519,6 @@
  */
 #if !defined LWIP_NETIF_LOOPBACK_MULTITHREADING || defined __DOXYGEN__
 #define LWIP_NETIF_LOOPBACK_MULTITHREADING    (!NO_SYS)
-#endif
-
-/**
- * LWIP_NETIF_TX_SINGLE_PBUF: if this is set to 1, lwIP tries to put all data
- * to be sent into one single pbuf. This is for compatibility with DMA-enabled
- * MACs that do not support scatter-gather.
- * Beware that this might involve CPU-memcpy before transmitting that would not
- * be needed without this flag! Use this only if you need to!
- *
- * @todo: TCP and IP-frag do not work with this, yet:
- */
-#if !defined LWIP_NETIF_TX_SINGLE_PBUF || defined __DOXYGEN__
-#define LWIP_NETIF_TX_SINGLE_PBUF             0
-#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
-/**
- * @}
- */
-
-/*
-   ------------------------------------
-   ---------- LOOPIF options ----------
-   ------------------------------------
-*/
-/**
- * @defgroup lwip_opts_loop Loopback interface
- * @ingroup lwip_opts
- * @{
- */
-/**
- * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1).
- * This is only needed when no real netifs are available. If at least one other
- * netif is available, loopback traffic uses this netif.
- */
-#if !defined LWIP_HAVE_LOOPIF || defined __DOXYGEN__
-#define LWIP_HAVE_LOOPIF                LWIP_NETIF_LOOPBACK
-#endif
-
-/**
- * LWIP_LOOPIF_MULTICAST==1: Support multicast/IGMP on loop interface (127.0.0.1).
- */
-#if !defined LWIP_LOOPIF_MULTICAST || defined __DOXYGEN__
-#define LWIP_LOOPIF_MULTICAST               0
 #endif
 /**
  * @}
