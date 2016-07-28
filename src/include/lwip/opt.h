@@ -51,7 +51,12 @@
 #include "lwipopts.h"
 #include "lwip/debug.h"
 
-/*
+/** 
+ * @defgroup lwip_opts Options (lwipopts.h)
+ * @ingroup lwip
+ */
+
+ /*
    ------------------------------------
    -------------- NO SYS --------------
    ------------------------------------
@@ -108,7 +113,7 @@
  */
 
 /**
- * @defgroup lwip_opts_memcpy memcpy at al.
+ * @defgroup lwip_opts_memcpy memcpy
  * @ingroup lwip_opts
  * @{
  */

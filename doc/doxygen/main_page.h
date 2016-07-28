@@ -1,8 +1,5 @@
 /**
  * @defgroup lwip lwIP
- * 
- * @defgroup lwip_opts Options (lwipopts.h)
- * @ingroup lwip
  *
  * @defgroup infrastructure Infrastructure
  *
