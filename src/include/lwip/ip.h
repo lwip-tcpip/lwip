@@ -63,10 +63,7 @@ extern "C" {
 /* This is passed as the destination address to ip_output_if (not
    to ip_output), meaning that an IP header already is constructed
    in the pbuf. This is used when TCP retransmits. */
-#ifdef IP_HDRINCL
-#undef IP_HDRINCL
-#endif /* IP_HDRINCL */
-#define IP_HDRINCL  NULL
+#define LWIP_IP_HDRINCL  NULL
 
 /** pbufs passed to IP must have a ref-count of 1 as their payload pointer
     gets altered as the packet is passed down the stack */

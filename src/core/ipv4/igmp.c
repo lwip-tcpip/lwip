@@ -765,8 +765,8 @@ igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
  * the IP address of the outgoing network interface is filled in as source address.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an IP
-            header and p->payload points to that IP header)
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
+            IP header and p->payload points to that IP header)
  * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to

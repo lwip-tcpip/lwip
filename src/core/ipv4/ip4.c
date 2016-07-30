@@ -716,12 +716,12 @@ ip4_input(struct pbuf *p, struct netif *inp)
  * the IP header and calculates the IP header checksum. If the source
  * IP address is NULL, the IP address of the outgoing network
  * interface is filled in as source address.
- * If the destination IP address is IP_HDRINCL, p is assumed to already
+ * If the destination IP address is LWIP_IP_HDRINCL, p is assumed to already
  * include an IP header and p->payload points to it instead of the data.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an IP
-            header and p->payload points to that IP header)
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
+            IP header and p->payload points to that IP header)
  * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
@@ -758,7 +758,7 @@ ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 {
 #endif /* IP_OPTIONS_SEND */
   const ip4_addr_t *src_used = src;
-  if (dest != IP_HDRINCL) {
+  if (dest != LWIP_IP_HDRINCL) {
     if (ip4_addr_isany(src)) {
       src_used = netif_ip4_addr(netif);
     }
@@ -806,7 +806,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
   MIB2_STATS_INC(mib2.ipoutrequests);
 
   /* Should the IP header be generated or is it already included in p? */
-  if (dest != IP_HDRINCL) {
+  if (dest != LWIP_IP_HDRINCL) {
     u16_t ip_hlen = IP_HLEN;
 #if IP_OPTIONS_SEND
     u16_t optlen_aligned = 0;
@@ -951,8 +951,8 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
  * interface and calls upon ip_output_if to do the actual work.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an IP
-            header and p->payload points to that IP header)
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
+            IP header and p->payload points to that IP header)
  * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
@@ -986,8 +986,8 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  *  before calling ip_output_if.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an IP
-            header and p->payload points to that IP header)
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
+            IP header and p->payload points to that IP header)
  * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to

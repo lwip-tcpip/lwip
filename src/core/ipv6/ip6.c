@@ -781,11 +781,11 @@ ip6_input_cleanup:
  * used as source (usually during network startup). If the source IPv6 address it
  * IP6_ADDR_ANY, the most appropriate IPv6 address of the outgoing network
  * interface is filled in as source address. If the destination IPv6 address is
- * IP_HDRINCL, p is assumed to already include an IPv6 header and p->payload points
- * to it instead of the data.
+ * LWIP_IP_HDRINCL, p is assumed to already include an IPv6 header and
+ * p->payload points to it instead of the data.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IPv6 header and p->payload points to that IPv6 header)
  * @param src the source IPv6 address to send from (if src == IP6_ADDR_ANY, an
  *         IP address of the netif is selected and used as source address.
@@ -805,7 +805,7 @@ ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
              u8_t nexth, struct netif *netif)
 {
   const ip6_addr_t *src_used = src;
-  if (dest != IP_HDRINCL) {
+  if (dest != LWIP_IP_HDRINCL) {
     if (src != NULL && ip6_addr_isany(src)) {
       src = ip_2_ip6(ip6_select_source_address(netif, dest));
       if ((src == NULL) || ip6_addr_isany(src)) {
@@ -834,7 +834,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
   /* Should the IPv6 header be generated or is it already included in p? */
-  if (dest != IP_HDRINCL) {
+  if (dest != LWIP_IP_HDRINCL) {
     /* generate IPv6 header */
     if (pbuf_header(p, IP6_HLEN)) {
       LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: not enough room for IPv6 header in pbuf\n"));
@@ -907,7 +907,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  * interface and calls upon ip6_output_if to do the actual work.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IPv6 header and p->payload points to that IPv6 header)
  * @param src the source IPv6 address to send from (if src == IP6_ADDR_ANY, an
  *         IP address of the netif is selected and used as source address.
@@ -930,7 +930,7 @@ ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-  if (dest != IP_HDRINCL) {
+  if (dest != LWIP_IP_HDRINCL) {
     netif = ip6_route(src, dest);
   } else {
     /* IP header included in p, read addresses. */
@@ -963,7 +963,7 @@ ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  *  before calling ip6_output_if.
  *
  * @param p the packet to send (p->payload points to the data, e.g. next
-            protocol header; if dest == IP_HDRINCL, p already includes an
+            protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IPv6 header and p->payload points to that IPv6 header)
  * @param src the source IPv6 address to send from (if src == IP6_ADDR_ANY, an
  *         IP address of the netif is selected and used as source address.
@@ -989,7 +989,7 @@ ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-  if (dest != IP_HDRINCL) {
+  if (dest != LWIP_IP_HDRINCL) {
     netif = ip6_route(src, dest);
   } else {
     /* IP header included in p, read addresses. */
