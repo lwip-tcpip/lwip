@@ -174,8 +174,13 @@ netif_init(void)
 }
 
 /**
- * Pass a received packet for input processing with
- * ethernet_input or ip_input depending on netif flags.
+ * @ingroup lwip_nosys
+ * Forwards a received packet for input processing with
+ * ethernet_input() or ip_input() depending on netif flags.
+ * Don't call directly, pass to netif_add() and call
+ * netif->input().
+ * Only works if the netif driver correctly sets 
+ * NETIF_FLAG_ETHARP and/or NETIF_FLAG_ETHERNET flag!
  */
 err_t
 netif_input(struct pbuf *p, struct netif *inp)
