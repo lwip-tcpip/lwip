@@ -413,6 +413,8 @@ void netif_poll_all(void);
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
 
+err_t netif_input(struct pbuf *p, struct netif *inp);
+
 #if LWIP_IPV6
 /** @ingroup netif */
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
