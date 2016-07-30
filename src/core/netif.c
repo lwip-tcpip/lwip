@@ -173,6 +173,21 @@ netif_init(void)
 }
 
 /**
+ * Pass a received packet for input processing with
+ * ethernet_input or ip_input depending on netif flags.
+ */
+static err_t
+netif_input(struct pbuf *p, struct netif *inp)
+{
+#if LWIP_ETHERNET
+  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
+    return ethernet_input(p, inp);
+  } else
+#endif /* LWIP_ETHERNET */
+  return ip_input(p, inp);
+}
+
+/**
  * @ingroup netif
  * Add a network interface to the list of lwIP netifs.
  *
@@ -183,7 +198,14 @@ netif_init(void)
  * @param state opaque data passed to the new netif
  * @param init callback function that initializes the interface
  * @param input callback function that is called to pass
- * ingress packets up in the protocol layer stack.
+ * ingress packets up in the protocol layer stack. If a NULL
+ * pointer is supplied, a default input function is used
+ * that uses netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
+ * to decide whether to pass to ethernet_input() or ip_input(). Since
+ * the flags are usually managed by the one implementing the ethernet
+ * driver, the end user does not have to worry about choosing the correct
+ * one here. In other words, this only works when the netif driver is
+ * implemented correctly!
  *
  * @return netif, or NULL if failed.
  */
@@ -254,7 +276,11 @@ netif_add(struct netif *netif,
   /* remember netif specific state information data */
   netif->state = state;
   netif->num = netif_num++;
-  netif->input = input;
+  if(input != NULL) {
+    netif->input = input;
+  } else {
+    netif->input = netif_input;
+  }
   NETIF_SET_HWADDRHINT(netif, NULL);
 #if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
   netif->loop_cnt_current = 0;
