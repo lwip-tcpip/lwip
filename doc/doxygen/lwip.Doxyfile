@@ -2083,6 +2083,7 @@ PREDEFINED             = __DOXYGEN__=1 \
                          LWIP_SNMP=1 \
                          SNMP_USE_NETCONN=1 \
                          SNMP_USE_RAW=1 \
+                         MIB2_STATS=1 \
                          MEMP_OVERFLOW_CHECK=0 \
                          MEMP_SANITY_CHECK=1 \
                          LWIP_ARP=1 \
