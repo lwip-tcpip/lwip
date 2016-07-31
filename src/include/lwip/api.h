@@ -99,25 +99,32 @@ extern "C" {
  */
 enum netconn_type {
   NETCONN_INVALID     = 0,
-  /* NETCONN_TCP Group */
+  /** TCP IPv4 */
   NETCONN_TCP         = 0x10,
 #if LWIP_IPV6
+  /** TCP IPv6 */
   NETCONN_TCP_IPV6    = NETCONN_TCP | NETCONN_TYPE_IPV6 /* 0x18 */,
 #endif /* LWIP_IPV6 */
-  /* NETCONN_UDP Group */
+  /** UDP IPv4 */
   NETCONN_UDP         = 0x20,
+  /** UDP IPv4 lite */
   NETCONN_UDPLITE     = 0x21,
+  /** UDP IPv4 no checksum */
   NETCONN_UDPNOCHKSUM = 0x22,
 
 #if LWIP_IPV6
+  /** UDP IPv6 (dual-stack by default, unless you call @ref netconn_set_ipv6only) */
   NETCONN_UDP_IPV6         = NETCONN_UDP | NETCONN_TYPE_IPV6 /* 0x28 */,
+  /** UDP IPv6 lite (dual-stack by default, unless you call @ref netconn_set_ipv6only) */
   NETCONN_UDPLITE_IPV6     = NETCONN_UDPLITE | NETCONN_TYPE_IPV6 /* 0x29 */,
+  /** UDP IPv6 no checksum (dual-stack by default, unless you call @ref netconn_set_ipv6only) */
   NETCONN_UDPNOCHKSUM_IPV6 = NETCONN_UDPNOCHKSUM | NETCONN_TYPE_IPV6 /* 0x2a */,
 #endif /* LWIP_IPV6 */
 
-  /* NETCONN_RAW Group */
+  /** Raw connection IPv4 */
   NETCONN_RAW         = 0x40
 #if LWIP_IPV6
+  /** Raw connection IPv6 (dual-stack by default, unless you call @ref netconn_set_ipv6only) */
   , NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6 /* 0x48 */
 #endif /* LWIP_IPV6 */
 };
@@ -255,7 +262,9 @@ struct netconn {
 
 /* Network connection functions: */
 
-/** @ingroup netconn_common */
+/** @ingroup netconn_common
+ * Create new netconn connection
+ * @param t @ref netconn_type */
 #define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)
 #define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
 struct netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
@@ -317,12 +326,16 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #define netconn_is_nonblocking(conn)        (((conn)->flags & NETCONN_FLAG_NON_BLOCKING) != 0)
 
 #if LWIP_IPV6
-/** TCP: Set the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY) */
+/** @ingroup netconn_common
+ * TCP: Set the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY) 
+ */
 #define netconn_set_ipv6only(conn, val)  do { if(val) { \
   (conn)->flags |= NETCONN_FLAG_IPV6_V6ONLY; \
 } else { \
   (conn)->flags &= ~ NETCONN_FLAG_IPV6_V6ONLY; }} while(0)
-/** TCP: Get the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY) */
+/** @ingroup netconn_common
+ * TCP: Get the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY)
+ */
 #define netconn_get_ipv6only(conn)        (((conn)->flags & NETCONN_FLAG_IPV6_V6ONLY) != 0)
 #endif /* LWIP_IPV6 */
 
