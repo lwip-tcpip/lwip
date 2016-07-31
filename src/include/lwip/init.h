@@ -43,6 +43,12 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup lwip_version Version
+ * @ingroup lwip
+ * @{
+ */
+    
 /** X.x.x: Major version of the stack */
 #define LWIP_VERSION_MAJOR      2
 /** x.X.x: Minor version of the stack */
@@ -77,7 +83,12 @@ extern "C" {
 /** Provides the version of the stack */
 #define LWIP_VERSION   (((u32_t)LWIP_VERSION_MAJOR) << 24   | ((u32_t)LWIP_VERSION_MINOR) << 16 | \
                         ((u32_t)LWIP_VERSION_REVISION) << 8 | ((u32_t)LWIP_VERSION_RC))
+/** Provides the version of the stack as string */
 #define LWIP_VERSION_STRING     LWIP_VERSTR(LWIP_VERSION_MAJOR) "." LWIP_VERSTR(LWIP_VERSION_MINOR) "." LWIP_VERSTR(LWIP_VERSION_REVISION) LWIP_VERSION_STRING_SUFFIX
+
+/**
+ * @}
+ */
 
 /* Modules initialization */
 void lwip_init(void);
