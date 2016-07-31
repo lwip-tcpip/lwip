@@ -74,7 +74,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup netif_flags
+ * @defgroup netif_flags Flags
  * @ingroup netif
  * @{
  */
