@@ -43,6 +43,12 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup infrastructure_errors Error codes
+ * @ingroup infrastructure
+ * @{
+ */
+    
 /** Define LWIP_ERR_T in cc.h if you want to use
  *  a different type for your platform (must be signed). */
 #ifdef LWIP_ERR_T
@@ -89,6 +95,10 @@ typedef s8_t err_t;
 #define ERR_CLSD       -15
 /** Illegal argument.        */
 #define ERR_ARG        -16
+
+/**
+ * @}
+ */
 
 #ifdef LWIP_DEBUG
 extern const char *lwip_strerr(err_t err);
