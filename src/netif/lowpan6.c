@@ -1186,6 +1186,7 @@ lowpan6_set_pan_id(u16_t pan_id)
   return ERR_OK;
 }
 
+#if !NO_SYS
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
@@ -1198,5 +1199,6 @@ tcpip_6lowpan_input(struct pbuf *p, struct netif *inp)
 {
   return tcpip_inpkt(p, inp, lowpan6_input);
 }
+#endif /* !NO_SYS */
 
 #endif /* LWIP_IPV6 && LWIP_6LOWPAN */
