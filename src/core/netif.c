@@ -205,15 +205,12 @@ netif_input(struct pbuf *p, struct netif *inp)
  * @param init callback function that initializes the interface
  * @param input callback function that is called to pass
  * ingress packets up in the protocol layer stack.\n
- * If a NULL pointer is supplied, a default input function is used
- * that uses netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
- * to decide whether to forward to ethernet_input() or ip_input().\n
- * Depending on NO_SYS, a function that passes the input directly to the stack
- * (netif_input()) or via sending a message to TCPIP thread (tcpip_input())
- * is used.\n
- * Since the flags are usually managed by the one implementing the ethernet
- * driver, the end user does not have to worry about choosing the correct
- * input function here. In other words, this only works when the netif
+ * It is recommended to use a function that passes the input directly
+ * to the stack (netif_input(), NO_SYS=1 mode) or via sending a
+ * message to TCPIP thread (tcpip_input(), NO_SYS=0 mode).\n
+ * These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
+ * to decide whether to forward to ethernet_input() or ip_input().
+ * In other words, the functions only work when the netif
  * driver is implemented correctly!
  *
  * @return netif, or NULL if failed.
@@ -285,15 +282,8 @@ netif_add(struct netif *netif,
   /* remember netif specific state information data */
   netif->state = state;
   netif->num = netif_num++;
-  if(input != NULL) {
-    netif->input = input;
-  } else {
-#if NO_SYS
-    netif->input = netif_input;
-#else
-    netif->input = tcpip_input;
-#endif
-  }
+  netif->input = input;
+
   NETIF_SET_HWADDRHINT(netif, NULL);
 #if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
   netif->loop_cnt_current = 0;
