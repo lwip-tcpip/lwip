@@ -48,7 +48,7 @@ extern "C" {
  * @ingroup lwip
  * @{
  */
-    
+
 /** X.x.x: Major version of the stack */
 #define LWIP_VERSION_MAJOR      2
 /** x.X.x: Minor version of the stack */

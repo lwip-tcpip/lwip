@@ -48,7 +48,7 @@ extern "C" {
  * @ingroup infrastructure
  * @{
  */
-    
+
 /** Define LWIP_ERR_T in cc.h if you want to use
  *  a different type for your platform (must be signed). */
 #ifdef LWIP_ERR_T
