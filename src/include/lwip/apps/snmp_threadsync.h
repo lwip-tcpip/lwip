@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP server MIB API to implement thread synchronization
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -52,8 +57,8 @@ typedef void (*snmp_threadsync_synchronizer_fn)(snmp_threadsync_called_fn fn, vo
 struct threadsync_data
 {
   union {
-    snmp_err_t u8;
-    u16_t u16;
+    snmp_err_t err;
+    s16_t s16;
   } retval;
   union {
     const u32_t *root_oid;
@@ -89,6 +94,7 @@ struct snmp_threadsync_node
 snmp_err_t snmp_threadsync_get_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
 snmp_err_t snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
 
+/** Create thread sync proxy node */
 #define SNMP_CREATE_THREAD_SYNC_NODE(oid, target_leaf_node, threadsync_instance) \
   {{{ SNMP_NODE_THREADSYNC, (oid) }, \
     snmp_threadsync_get_instance, \
@@ -96,6 +102,7 @@ snmp_err_t snmp_threadsync_get_next_instance(const u32_t *root_oid, u8_t root_oi
     (target_leaf_node), \
     (threadsync_instance) }
 
+/** Create thread sync instance data */
 void snmp_threadsync_init(struct snmp_threadsync_instance *instance, snmp_threadsync_synchronizer_fn sync_fn);
 
 #endif /* LWIP_SNMP */

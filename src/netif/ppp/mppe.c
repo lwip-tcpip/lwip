@@ -34,18 +34,7 @@
 #include "netif/ppp/ccp.h"
 #include "netif/ppp/mppe.h"
 #include "netif/ppp/pppdebug.h"
-
-#if LWIP_INCLUDED_POLARSSL_SHA1
-#include "netif/ppp/polarssl/sha1.h"
-#else
-#include "polarssl/sha1.h"
-#endif
-
-#if LWIP_INCLUDED_POLARSSL_ARC4
-#include "netif/ppp/polarssl/arc4.h"
-#else
-#include "polarssl/arc4.h"
-#endif
+#include "netif/ppp/pppcrypt.h"
 
 #define SHA1_SIGNATURE_SIZE 20
 
@@ -71,24 +60,28 @@
  */
 static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 {
-	sha1_context sha1_ctx;
+	lwip_sha1_context sha1_ctx;
 	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
 
 	/*
 	 * Key Derivation, from RFC 3078, RFC 3079.
 	 * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
 	 */
-	sha1_starts(&sha1_ctx);
-	sha1_update(&sha1_ctx, state->master_key, state->keylen);
-	sha1_update(&sha1_ctx, mppe_sha1_pad1, SHA1_PAD_SIZE);
-	sha1_update(&sha1_ctx, state->session_key, state->keylen);
-	sha1_update(&sha1_ctx, mppe_sha1_pad2, SHA1_PAD_SIZE);
-	sha1_finish(&sha1_ctx, sha1_digest);
+	lwip_sha1_init(&sha1_ctx);
+	lwip_sha1_starts(&sha1_ctx);
+	lwip_sha1_update(&sha1_ctx, state->master_key, state->keylen);
+	lwip_sha1_update(&sha1_ctx, mppe_sha1_pad1, SHA1_PAD_SIZE);
+	lwip_sha1_update(&sha1_ctx, state->session_key, state->keylen);
+	lwip_sha1_update(&sha1_ctx, mppe_sha1_pad2, SHA1_PAD_SIZE);
+	lwip_sha1_finish(&sha1_ctx, sha1_digest);
+	lwip_sha1_free(&sha1_ctx);
 	MEMCPY(state->session_key, sha1_digest, state->keylen);
 
 	if (!initial_key) {
-		arc4_setup(&state->arc4, sha1_digest, state->keylen);
-		arc4_crypt(&state->arc4, state->session_key, state->keylen);
+		lwip_arc4_init(&state->arc4);
+		lwip_arc4_setup(&state->arc4, sha1_digest, state->keylen);
+		lwip_arc4_crypt(&state->arc4, state->session_key, state->keylen);
+		lwip_arc4_free(&state->arc4);
 	}
 	if (state->keylen == 8) {
 		/* See RFC 3078 */
@@ -96,7 +89,8 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 		state->session_key[1] = 0x26;
 		state->session_key[2] = 0x9e;
 	}
-	arc4_setup(&state->arc4, state->session_key, state->keylen);
+	lwip_arc4_init(&state->arc4);
+	lwip_arc4_setup(&state->arc4, state->session_key, state->keylen);
 }
 
 /*
@@ -256,7 +250,7 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 
 	/* Encrypt packet */
 	for (n = np; n != NULL; n = n->next) {
-		arc4_crypt(&state->arc4, (u8_t*)n->payload, n->len);
+		lwip_arc4_crypt(&state->arc4, (u8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;
 		}
@@ -392,7 +386,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 
 	/* Decrypt the packet. */
 	for (n = n0; n != NULL; n = n->next) {
-		arc4_crypt(&state->arc4, (u8_t*)n->payload, n->len);
+		lwip_arc4_crypt(&state->arc4, (u8_t*)n->payload, n->len);
 		if (n->tot_len == n->len) {
 			break;
 		}

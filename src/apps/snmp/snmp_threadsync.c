@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP thread synchronization implementation.
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -50,11 +55,12 @@ threadsync_get_value_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
-  call_data->retval.u16 = call_data->proxy_instance.get_value(&call_data->proxy_instance, call_data->arg1.value);
+  call_data->retval.s16 = call_data->proxy_instance.get_value(&call_data->proxy_instance, call_data->arg1.value);
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
-static u16_t
+
+static s16_t
 threadsync_get_value(struct snmp_node_instance* instance, void* value)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)instance->reference.ptr;
@@ -62,7 +68,7 @@ threadsync_get_value(struct snmp_node_instance* instance, void* value)
   call_data->arg1.value = value;
   call_synced_function(call_data, threadsync_get_value_synced);
 
-  return call_data->retval.u16;
+  return call_data->retval.s16;
 }
 
 static void
@@ -70,10 +76,11 @@ threadsync_set_test_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
-  call_data->retval.u8 = call_data->proxy_instance.set_test(&call_data->proxy_instance, call_data->arg2.len, call_data->arg1.value);
+  call_data->retval.err = call_data->proxy_instance.set_test(&call_data->proxy_instance, call_data->arg2.len, call_data->arg1.value);
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static snmp_err_t
 threadsync_set_test(struct snmp_node_instance* instance, u16_t len, void *value)
 {
@@ -83,7 +90,7 @@ threadsync_set_test(struct snmp_node_instance* instance, u16_t len, void *value)
   call_data->arg2.len = len;
   call_synced_function(call_data, threadsync_set_test_synced);
 
-  return call_data->retval.u8;
+  return call_data->retval.err;
 }
 
 static void
@@ -91,10 +98,11 @@ threadsync_set_value_synced(void *ctx)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)ctx;
 
-  call_data->retval.u8 = call_data->proxy_instance.set_value(&call_data->proxy_instance, call_data->arg2.len, call_data->arg1.value);
+  call_data->retval.err = call_data->proxy_instance.set_value(&call_data->proxy_instance, call_data->arg2.len, call_data->arg1.value);
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static snmp_err_t
 threadsync_set_value(struct snmp_node_instance* instance, u16_t len, void *value)
 {
@@ -104,7 +112,7 @@ threadsync_set_value(struct snmp_node_instance* instance, u16_t len, void *value
   call_data->arg2.len = len;
   call_synced_function(call_data, threadsync_set_value_synced);
   
-  return call_data->retval.u8;
+  return call_data->retval.err;
 }
 
 static void
@@ -116,12 +124,13 @@ threadsync_release_instance_synced(void* ctx)
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
+
 static void
 threadsync_release_instance(struct snmp_node_instance *instance)
 {
   struct threadsync_data *call_data = (struct threadsync_data*)instance->reference.ptr;
   
-  if(call_data->proxy_instance.release_instance != NULL) {
+  if (call_data->proxy_instance.release_instance != NULL) {
     call_synced_function(call_data, threadsync_release_instance_synced);
   }
 }
@@ -130,9 +139,9 @@ static void
 get_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data   = (struct threadsync_data*)ctx;
-  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)call_data->proxy_instance.node;
+  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)(const void*)call_data->proxy_instance.node;
 
-  call_data->retval.u8 = leaf->get_instance(call_data->arg1.root_oid, call_data->arg2.root_oid_len, &call_data->proxy_instance);
+  call_data->retval.err = leaf->get_instance(call_data->arg1.root_oid, call_data->arg2.root_oid_len, &call_data->proxy_instance);
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
@@ -141,9 +150,9 @@ static void
 get_next_instance_synced(void* ctx)
 {
   struct threadsync_data *call_data   = (struct threadsync_data*)ctx;
-  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)call_data->proxy_instance.node;
+  const struct snmp_leaf_node *leaf   = (const struct snmp_leaf_node*)(const void*)call_data->proxy_instance.node;
 
-  call_data->retval.u8 = leaf->get_next_instance(call_data->arg1.root_oid, call_data->arg2.root_oid_len, &call_data->proxy_instance);
+  call_data->retval.err = leaf->get_next_instance(call_data->arg1.root_oid, call_data->arg2.root_oid_len, &call_data->proxy_instance);
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
 }
@@ -151,10 +160,10 @@ get_next_instance_synced(void* ctx)
 static snmp_err_t
 do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance, snmp_threadsync_called_fn fn)
 {
-  const struct snmp_threadsync_node *threadsync_node = (const struct snmp_threadsync_node*)instance->node;
+  const struct snmp_threadsync_node *threadsync_node = (const struct snmp_threadsync_node*)(const void*)instance->node;
   struct threadsync_data *call_data = &threadsync_node->instance->data;
 
-  if(threadsync_node->node.node.oid != threadsync_node->target->node.oid) {
+  if (threadsync_node->node.node.oid != threadsync_node->target->node.oid) {
     LWIP_DEBUGF(SNMP_DEBUG, ("Sync node OID does not match target node OID"));
     return SNMP_ERR_NOSUCHINSTANCE;
   }
@@ -171,7 +180,7 @@ do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* ins
   call_data->arg2.root_oid_len   = root_oid_len;
   call_synced_function(call_data, fn);
 
-  if(call_data->retval.u8 == SNMP_ERR_NOERROR) {
+  if (call_data->retval.err == SNMP_ERR_NOERROR) {
     instance->access           = call_data->proxy_instance.access;
     instance->asn1_type        = call_data->proxy_instance.asn1_type;
     instance->release_instance = threadsync_release_instance;
@@ -181,7 +190,7 @@ do_sync(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* ins
     snmp_oid_assign(&instance->instance_oid, call_data->proxy_instance.instance_oid.id, call_data->proxy_instance.instance_oid.len);
   }
 
-  return call_data->retval.u8;
+  return call_data->retval.err;
 }
 
 snmp_err_t

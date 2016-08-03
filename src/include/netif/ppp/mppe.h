@@ -39,11 +39,7 @@
 #ifndef MPPE_H
 #define MPPE_H
 
-#if LWIP_INCLUDED_POLARSSL_ARC4
-#include "netif/ppp/polarssl/arc4.h"
-#else
-#include "polarssl/arc4.h"
-#endif
+#include "netif/ppp/pppcrypt.h"
 
 #define MPPE_PAD		4	/* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
@@ -152,7 +148,7 @@ static const u8_t mppe_sha1_pad2[SHA1_PAD_SIZE] = {
  * State for an MPPE (de)compressor.
  */
 typedef struct ppp_mppe_state {
-	arc4_context arc4;
+	lwip_arc4_context arc4;
 	u8_t master_key[MPPE_MAX_KEY_LEN];
 	u8_t session_key[MPPE_MAX_KEY_LEN];
 	u8_t keylen;                /* key length in bytes */

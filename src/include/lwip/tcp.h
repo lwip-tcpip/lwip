@@ -1,3 +1,9 @@
+/**
+ * @file
+ * TCP API (to be used from TCPIP thread)\n
+ * See also @ref tcp_raw
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -117,7 +123,7 @@ typedef void  (*tcp_err_fn)(void *arg, err_t err);
  *
  * @param arg Additional argument to pass to the callback function (@see tcp_arg())
  * @param tpcb The connection pcb which is connected
- * @param err An unused error code, always ERR_OK currently ;-) TODO!
+ * @param err An unused error code, always ERR_OK currently ;-) @todo!
  *            Only return ERR_ABRT if you have called tcp_abort from within the
  *            callback function!
  *
@@ -259,8 +265,6 @@ struct tcp_pcb {
   tcpwnd_size_t snd_wnd;   /* sender window */
   tcpwnd_size_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
-  tcpwnd_size_t acked;
-
   tcpwnd_size_t snd_buf;   /* Available buffer space for sending (in bytes). */
 #define TCP_SNDQUEUELEN_OVERFLOW (0xffffU-3)
   u16_t snd_queuelen; /* Number of pbufs currently in the send buffer. */
@@ -355,8 +359,11 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 #define          tcp_mss(pcb)             (((pcb)->flags & TF_TIMESTAMP) ? ((pcb)->mss - 12)  : (pcb)->mss)
 #define          tcp_sndbuf(pcb)          (TCPWND16((pcb)->snd_buf))
 #define          tcp_sndqueuelen(pcb)     ((pcb)->snd_queuelen)
+/** @ingroup tcp_raw */
 #define          tcp_nagle_disable(pcb)   ((pcb)->flags |= TF_NODELAY)
+/** @ingroup tcp_raw */
 #define          tcp_nagle_enable(pcb)    ((pcb)->flags = (tcpflags_t)((pcb)->flags & ~TF_NODELAY))
+/** @ingroup tcp_raw */
 #define          tcp_nagle_disabled(pcb)  (((pcb)->flags & TF_NODELAY) != 0)
 
 #if TCP_LISTEN_BACKLOG
@@ -379,6 +386,7 @@ err_t            tcp_connect (struct tcp_pcb *pcb, const ip_addr_t *ipaddr,
                               u16_t port, tcp_connected_fn connected);
 
 struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
+/** @ingroup tcp_raw */
 #define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
 
 void             tcp_abort (struct tcp_pcb *pcb);

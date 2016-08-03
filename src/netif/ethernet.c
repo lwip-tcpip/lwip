@@ -42,7 +42,7 @@
 #include "netif/ethernet.h"
 #include "lwip/def.h"
 #include "lwip/stats.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/snmp.h"
 
@@ -57,9 +57,11 @@ const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
 /**
+ * @ingroup lwip_nosys
  * Process received ethernet frames. Using this function instead of directly
  * calling ip_input and passing ARP frames through etharp in ethernetif_input,
- * the ARP cache is protected from concurrent access.
+ * the ARP cache is protected from concurrent access.\n
+ * Don't call directly, pass to netif_add() and call netif->input().
  *
  * @param p the received packet, p->payload pointing to the ethernet header
  * @param netif the network interface on which the packet was received
@@ -87,9 +89,9 @@ ethernet_input(struct pbuf *p, struct netif *netif)
     ("ethernet_input: dest:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", src:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", type:%"X16_F"\n",
      (unsigned)ethhdr->dest.addr[0], (unsigned)ethhdr->dest.addr[1], (unsigned)ethhdr->dest.addr[2],
      (unsigned)ethhdr->dest.addr[3], (unsigned)ethhdr->dest.addr[4], (unsigned)ethhdr->dest.addr[5],
-     (unsigned)ethhdr->src.addr[0], (unsigned)ethhdr->src.addr[1], (unsigned)ethhdr->src.addr[2],
-     (unsigned)ethhdr->src.addr[3], (unsigned)ethhdr->src.addr[4], (unsigned)ethhdr->src.addr[5],
-     (unsigned)htons(ethhdr->type)));
+     (unsigned)ethhdr->src.addr[0],  (unsigned)ethhdr->src.addr[1],  (unsigned)ethhdr->src.addr[2],
+     (unsigned)ethhdr->src.addr[3],  (unsigned)ethhdr->src.addr[4],  (unsigned)ethhdr->src.addr[5],
+     htons(ethhdr->type)));
 
   type = ethhdr->type;
 #if ETHARP_SUPPORT_VLAN

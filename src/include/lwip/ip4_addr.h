@@ -1,3 +1,8 @@
+/**
+ * @file
+ * IPv4 address API
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -41,13 +46,13 @@
 extern "C" {
 #endif
 
-/* This is the aligned version of ip4_addr_t,
+/** This is the aligned version of ip4_addr_t,
    used as local variable, on the stack, etc. */
 struct ip4_addr {
   u32_t addr;
 };
 
-/* This is the packed version of ip4_addr_t,
+/** This is the packed version of ip4_addr_t,
    used in network headers that are itself packed */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -66,7 +71,7 @@ PACK_STRUCT_END
 typedef struct ip4_addr ip4_addr_t;
 typedef struct ip4_addr_packed ip4_addr_p_t;
 
-/*
+/**
  * struct ipaddr2 is used in the definition of the ARP packet format in
  * order to support compilers that don't have structure packing.
  */
@@ -209,10 +214,10 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
   LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
-                      (ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0,       \
-                      (ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0,       \
-                      (ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0,       \
-                      (ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0)
+                      (u16_t)((ipaddr) != NULL ? ip4_addr1_16(ipaddr) : 0),       \
+                      (u16_t)((ipaddr) != NULL ? ip4_addr2_16(ipaddr) : 0),       \
+                      (u16_t)((ipaddr) != NULL ? ip4_addr3_16(ipaddr) : 0),       \
+                      (u16_t)((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
 #define ip4_addr_debug_print_val(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
                       ip4_addr1_16(&(ipaddr)),       \

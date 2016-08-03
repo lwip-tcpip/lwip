@@ -1,6 +1,6 @@
 /**
  * @file
- * Management Information Base II (RFC1213) objects and functions.
+ * Management Information Base II (RFC1213) ICMP objects and functions.
  */
 
 /*
@@ -55,7 +55,7 @@
 
 /* --- icmp .1.3.6.1.2.1.5 ----------------------------------------------------- */
 
-static u16_t
+static s16_t
 icmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   u32_t *uint_ptr = (u32_t*)value;

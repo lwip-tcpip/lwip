@@ -6,14 +6,21 @@ HISTORY
 
   ++ New features:
 
-  2016-04-05: Simon Goldschmidt:
+  2016-07-27: Simon Goldschmidt
+  * opt.h, timeouts.h/.c: added LWIP_TIMERS_CUSTOM to override the default
+    implementation of timeouts
+
+  2016-07-xx: Dirk Ziegelmeier
+  * Large overhaul of doxygen documentation
+
+  2016-04-05: Simon Goldschmidt
   * timers.h/.c: prepare for overriding current timeout implementation: all
     stack-internal caclic timers are avaliable in the lwip_cyclic_timers array
 
   2016-03-23: Simon Goldschmidt
   * tcp: call accept-callback with ERR_MEM when allocating a pcb fails on
     passive open to inform the application about this error
-	ATTENTION: applications have to handle NULL pcb in accept callback!
+    ATTENTION: applications have to handle NULL pcb in accept callback!
 
   2016-02-22: Ivan Delamer
   * Initial 6LoWPAN support
@@ -320,6 +327,27 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2016-07-20: Simon Goldschmidt
+  * memp.h/.c: fixed bug #48442 (memp stats don't work for MEMP_MEM_MALLOC)
+
+  2016-07-21: Simon Goldschmidt (patch by Ambroz Bizjak)
+  * tcp_in.c, tcp_out.c: fixed bug #48543 (TCP sent callback may prematurely
+    report sent data when only part of a segment is acked) and don't include
+    SYN/FIN in snd_buf counter
+
+  2016-07-19: Simon Goldschmidt
+  * etharp.c: fixed bug #48477 (ARP input packet might update static entry)
+
+  2016-07-11: Simon Goldschmidt
+  * tcp_in.c: fixed bug #48476 (TCP sent callback called wrongly due to picking
+    up old pcb->acked
+
+  2016-06-30: Simon Goldschmidt (original patch by Fabian Koch)
+  * tcp_in.c: fixed bug #48170 (Vulnerable to TCP RST spoofing)
+
+  2016-05-20: Dirk Ziegelmeier
+  * sntp.h/.c: Fix return value of sntp_getserver() call to return a pointer
 
   2016-04-05: Simon Goldschmidt (patch by Philip Gladstone)
   * udp.c: patch #8358: allow more combinations of listening PCB for IPv6

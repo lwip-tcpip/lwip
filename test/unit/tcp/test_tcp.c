@@ -3,6 +3,7 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
 #include "tcp_helper.h"
+#include "lwip/inet_chksum.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4307) /* we explicitly wrap around TCP seqnos */
@@ -59,14 +60,14 @@ START_TEST(test_tcp_new_abort)
   struct tcp_pcb* pcb;
   LWIP_UNUSED_ARG(_i);
 
-  fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 
   pcb = tcp_new();
   fail_unless(pcb != NULL);
   if (pcb != NULL) {
-    fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+    fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
     tcp_abort(pcb);
-    fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+    fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
   }
 }
 END_TEST
@@ -116,11 +117,80 @@ START_TEST(test_tcp_recv_inseq)
   }
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
+
+/** Check that we handle malformed tcp headers, and discard the pbuf(s) */
+START_TEST(test_tcp_malformed_header)
+{
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf* p;
+  char data[] = {1, 2, 3, 4};
+  ip_addr_t remote_ip, local_ip, netmask;
+  u16_t data_len, chksum;
+  u16_t remote_port = 0x100, local_port = 0x101;
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct tcp_hdr *hdr;
+  LWIP_UNUSED_ARG(_i);
+
+  /* initialize local vars */
+  memset(&netif, 0, sizeof(netif));
+  IP_ADDR4(&local_ip, 192, 168, 1, 1);
+  IP_ADDR4(&remote_ip, 192, 168, 1, 2);
+  IP_ADDR4(&netmask,   255, 255, 255, 0);
+  test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
+  data_len = sizeof(data);
+  /* initialize counter struct */
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = data_len;
+  counters.expected_data = data;
+
+  /* create and initialize the pcb */
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
+
+  /* create a segment */
+  p = tcp_create_rx_segment(pcb, counters.expected_data, data_len, 0, 0, 0);
+
+  pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
+
+  hdr = (struct tcp_hdr *)p->payload;
+  TCPH_HDRLEN_FLAGS_SET(hdr, 15, 0x3d1);
+
+  hdr->chksum = 0;
+
+  chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
+                             &remote_ip, &local_ip);
+
+  hdr->chksum = chksum;
+
+  pbuf_header(p, sizeof(struct ip_hdr));
+
+  EXPECT(p != NULL);
+  EXPECT(p->next == NULL);
+  if (p != NULL) {
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+    /* check if counters are as expected */
+    EXPECT(counters.close_calls == 0);
+    EXPECT(counters.recv_calls == 0);
+    EXPECT(counters.recved_bytes == 0);
+    EXPECT(counters.err_calls == 0);
+  }
+
+  /* make sure the pcb is freed */
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
+  tcp_abort(pcb);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+}
+END_TEST
+
 
 /** Provoke fast retransmission by duplicate ACKs and then recover by ACKing all sent data.
  * At the end, send more data. */
@@ -210,7 +280,7 @@ START_TEST(test_tcp_fast_retx_recover)
   /*EXPECT_RET(txcounters.num_tx_calls == 1);*/
   EXPECT_RET(pcb->dupacks == 3);
   memset(&txcounters, 0, sizeof(txcounters));
-  /* TODO: check expected data?*/
+  /* @todo: check expected data?*/
   
   /* send data5, not output yet */
   err = tcp_write(pcb, data5, sizeof(data5), TCP_WRITE_FLAG_COPY);
@@ -288,9 +358,9 @@ START_TEST(test_tcp_fast_retx_recover)
   }
 #endif
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -400,9 +470,9 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   check_seqnos(pcb->unacked, 5, &seqnos[1]);
 
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -490,9 +560,9 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   check_seqnos(pcb->unacked, 6, seqnos);
 
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -635,9 +705,9 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   }
 
   /* make sure the pcb is freed */
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 
 START_TEST(test_tcp_tx_full_window_lost_from_unsent)
@@ -661,6 +731,7 @@ tcp_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_tcp_new_abort),
     TESTFUNC(test_tcp_recv_inseq),
+    TESTFUNC(test_tcp_malformed_header),
     TESTFUNC(test_tcp_fast_retx_recover),
     TESTFUNC(test_tcp_fast_rexmit_wraparound),
     TESTFUNC(test_tcp_rto_rexmit_wraparound),

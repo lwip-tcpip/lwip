@@ -1,3 +1,8 @@
+/**
+ * @file
+ * lwIP iPerf server implementation
+ */
+
 /*
  * Copyright (c) 2014 Simon Goldschmidt
  * All rights reserved.
@@ -41,23 +46,26 @@ extern "C" {
 
 #define LWIPERF_TCP_PORT_DEFAULT  5001
 
+/** lwIPerf test results */
 enum lwiperf_report_type
 {
-  LWIPERF_TCP_STARTED = 0,
+  /** The server side test is done */
   LWIPERF_TCP_DONE_SERVER,
+  /** The client side test is done */
   LWIPERF_TCP_DONE_CLIENT,
+  /** Local error lead to test abort */
   LWIPERF_TCP_ABORTED_LOCAL,
+  /** Data check error lead to test abort */
   LWIPERF_TCP_ABORTED_LOCAL_DATAERROR,
+  /** Transmit error lead to test abort */
   LWIPERF_TCP_ABORTED_LOCAL_TXERROR,
-  LWIPERF_TCP_ABORTED_REMOTE,
-  LWIPERF_UDP_STARTED,
-  LWIPERF_UDP_DONE,
-  LWIPERF_UDP_ABORTED_LOCAL,
-  LWIPERF_UDP_ABORTED_REMOTE
+  /** Remote side aborted the test */
+  LWIPERF_TCP_ABORTED_REMOTE
 };
 
 /** Prototype of a report function that is called when a session is finished.
-    This report function can show the test results. */
+    This report function can show the test results.
+    @param report_type contains the test result */
 typedef void (*lwiperf_report_fn)(void *arg, enum lwiperf_report_type report_type,
   const ip_addr_t* local_addr, u16_t local_port, const ip_addr_t* remote_addr, u16_t remote_port,
   u32_t bytes_transferred, u32_t ms_duration, u32_t bandwidth_kbitpsec);

@@ -48,7 +48,7 @@
 
 #include "lwip/netif.h"
 #include "lwip/def.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 
 #include "ppp.h"
 #include "pppdebug.h"
@@ -141,7 +141,7 @@ struct link_callbacks {
   err_t (*connect) (ppp_pcb *pcb, void *ctx);
 #if PPP_SERVER
   /* Listen for an incoming connection (Passive mode) */
-  err_t (*listen) (ppp_pcb *pcb, void *ctx, const struct ppp_addrs *addrs);
+  err_t (*listen) (ppp_pcb *pcb, void *ctx);
 #endif /* PPP_SERVER */
   /* End a connection (i.e. initiate disconnect phase) */
   void (*disconnect) (ppp_pcb *pcb, void *ctx);
@@ -394,8 +394,8 @@ int ppp_init(void);
 ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, void *link_ctx_cb,
                  ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-/* Set a PPP PCB to its initial state */
-void ppp_clear(ppp_pcb *pcb);
+/* Called when link is starting */
+void ppp_link_start(ppp_pcb *pcb);
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);

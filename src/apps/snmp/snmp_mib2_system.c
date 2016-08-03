@@ -1,6 +1,6 @@
 /**
  * @file
- * Management Information Base II (RFC1213) objects and functions.
+ * Management Information Base II (RFC1213) SYSTEM objects and functions.
  */
 
 /*
@@ -86,6 +86,7 @@ static u16_t*       syslocation_wr_len        = NULL; /* if writable, points to 
 static u16_t        syslocation_bufsize       = 0;    /* 0=not writable */
 
 /**
+ * @ingroup snmp_mib2
  * Initializes sysDescr pointers.
  *
  * @param str if non-NULL then copy str pointer
@@ -101,8 +102,8 @@ snmp_mib2_set_sysdescr(const u8_t *str, const u16_t *len)
 }
 
 /**
- * Initializes sysContact pointers,
- * e.g. ptrs to non-volatile memory external to lwIP.
+ * @ingroup snmp_mib2
+ * Initializes sysContact pointers
  *
  * @param ocstr if non-NULL then copy str pointer
  * @param ocstrlen points to string length, excluding zero terminator. 
@@ -125,6 +126,10 @@ snmp_mib2_set_syscontact(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
   }
 }
 
+/**
+ * @ingroup snmp_mib2
+ * see \ref snmp_mib2_set_syscontact but set pointer to readonly memory
+ */
 void
 snmp_mib2_set_syscontact_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 {
@@ -139,8 +144,8 @@ snmp_mib2_set_syscontact_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 
 
 /**
- * Initializes sysName pointers,
- * e.g. ptrs to non-volatile memory external to lwIP.
+ * @ingroup snmp_mib2
+ * Initializes sysName pointers
  *
  * @param ocstr if non-NULL then copy str pointer
  * @param ocstrlen points to string length, excluding zero terminator. 
@@ -163,6 +168,10 @@ snmp_mib2_set_sysname(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
   }
 }
 
+/**
+ * @ingroup snmp_mib2
+ * see \ref snmp_mib2_set_sysname but set pointer to readonly memory
+ */
 void
 snmp_mib2_set_sysname_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 {
@@ -176,8 +185,8 @@ snmp_mib2_set_sysname_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 }
 
 /**
- * Initializes sysLocation pointers,
- * e.g. ptrs to non-volatile memory external to lwIP.
+ * @ingroup snmp_mib2
+ * Initializes sysLocation pointers
  *
  * @param ocstr if non-NULL then copy str pointer
  * @param ocstrlen points to string length, excluding zero terminator. 
@@ -200,6 +209,10 @@ snmp_mib2_set_syslocation(u8_t *ocstr, u16_t *ocstrlen, u16_t bufsize)
   }
 }
 
+/**
+ * @ingroup snmp_mib2
+ * see \ref snmp_mib2_set_syslocation but set pointer to readonly memory
+ */
 void
 snmp_mib2_set_syslocation_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 {
@@ -213,17 +226,17 @@ snmp_mib2_set_syslocation_readonly(const u8_t *ocstr, const u16_t *ocstrlen)
 }
 
 
-static u16_t
+static s16_t
 system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   const u8_t*  var = NULL;
-  const u16_t* var_len;
+  const s16_t* var_len;
   u16_t result;
 
   switch (node->oid) {
   case 1: /* sysDescr */
     var     = sysdescr;
-    var_len = sysdescr_len;
+    var_len = (const s16_t*)sysdescr_len;
     break;
   case 2: /* sysObjectID */
     {
@@ -236,15 +249,15 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
     return sizeof(u32_t);
   case 4: /* sysContact */
     var     = syscontact;
-    var_len = syscontact_len;
+    var_len = (const s16_t*)syscontact_len;
     break;
   case 5: /* sysName */
     var     = sysname;
-    var_len = sysname_len;
+    var_len = (const s16_t*)sysname_len;
     break;
   case 6: /* sysLocation */
     var     = syslocation;
-    var_len = syslocation_len;
+    var_len = (const s16_t*)syslocation_len;
     break;
   case 7: /* sysServices */
     *(s32_t*)value = SNMP_SYSSERVICES;
@@ -257,7 +270,7 @@ system_get_value(const struct snmp_scalar_array_node_def *node, void *value)
   /* handle string values (OID 1,4,5 and 6) */
   LWIP_ASSERT("", (value != NULL));
   if (var_len == NULL) {
-    result = (u16_t)strlen((const char*)var);
+    result = (s16_t)strlen((const char*)var);
   } else {
     result = *var_len;
   }

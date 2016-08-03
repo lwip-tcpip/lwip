@@ -1,7 +1,6 @@
 /**
  * @file
  * lwIP network interface abstraction
- *
  */
 
 /*
@@ -33,7 +32,11 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- *
+ */
+
+/**
+ * @defgroup netif Network interface (NETIF)
+ * @ingroup callbackstyle_api
  */
 
 #include "lwip/opt.h"
@@ -46,7 +49,7 @@
 #include "lwip/udp.h"
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 #include "lwip/stats.h"
 #include "lwip/sys.h"
 #if ENABLE_LOOPBACK
@@ -68,6 +71,9 @@
 #if LWIP_IPV6_MLD
 #include "lwip/mld6.h"
 #endif /* LWIP_IPV6_MLD */
+#if LWIP_IPV6
+#include "lwip/nd6.h"
+#endif
 
 #if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) do{ if (n->status_callback) { (n->status_callback)(n); }}while(0)
@@ -167,6 +173,27 @@ netif_init(void)
 }
 
 /**
+ * @ingroup lwip_nosys
+ * Forwards a received packet for input processing with
+ * ethernet_input() or ip_input() depending on netif flags.
+ * Don't call directly, pass to netif_add() and call
+ * netif->input().
+ * Only works if the netif driver correctly sets 
+ * NETIF_FLAG_ETHARP and/or NETIF_FLAG_ETHERNET flag!
+ */
+err_t
+netif_input(struct pbuf *p, struct netif *inp)
+{
+#if LWIP_ETHERNET
+  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
+    return ethernet_input(p, inp);
+  } else
+#endif /* LWIP_ETHERNET */
+  return ip_input(p, inp);
+}
+
+/**
+ * @ingroup netif
  * Add a network interface to the list of lwIP netifs.
  *
  * @param netif a pre-allocated netif structure
@@ -176,7 +203,14 @@ netif_init(void)
  * @param state opaque data passed to the new netif
  * @param init callback function that initializes the interface
  * @param input callback function that is called to pass
- * ingress packets up in the protocol layer stack.
+ * ingress packets up in the protocol layer stack.\n
+ * It is recommended to use a function that passes the input directly
+ * to the stack (netif_input(), NO_SYS=1 mode) or via sending a
+ * message to TCPIP thread (tcpip_input(), NO_SYS=0 mode).\n
+ * These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
+ * to decide whether to forward to ethernet_input() or ip_input().
+ * In other words, the functions only work when the netif
+ * driver is implemented correctly!
  *
  * @return netif, or NULL if failed.
  */
@@ -248,6 +282,7 @@ netif_add(struct netif *netif,
   netif->state = state;
   netif->num = netif_num++;
   netif->input = input;
+
   NETIF_SET_HWADDRHINT(netif, NULL);
 #if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
   netif->loop_cnt_current = 0;
@@ -290,6 +325,7 @@ netif_add(struct netif *netif,
 
 #if LWIP_IPV4
 /**
+ * @ingroup netif
  * Change IP address configuration for a network interface (including netmask
  * and default gateway).
  *
@@ -302,14 +338,23 @@ void
 netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
     const ip4_addr_t *gw)
 {
-  netif_set_netmask(netif, netmask);
-  netif_set_gw(netif, gw);
-  /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
-  netif_set_ipaddr(netif, ipaddr);
+  if (ip4_addr_isany(ipaddr)) {
+    /* when removing an address, we have to remove it *before* changing netmask/gw
+       to ensure that tcp RST segment can be sent correctly */
+    netif_set_ipaddr(netif, ipaddr);
+    netif_set_netmask(netif, netmask);
+    netif_set_gw(netif, gw);
+  } else {
+    netif_set_netmask(netif, netmask);
+    netif_set_gw(netif, gw);
+    /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
+    netif_set_ipaddr(netif, ipaddr);
+  }
 }
 #endif /* LWIP_IPV4*/
 
 /**
+ * @ingroup netif
  * Remove a network interface from the list of lwIP netifs.
  *
  * @param netif the network interface to remove
@@ -379,6 +424,7 @@ netif_remove(struct netif *netif)
 }
 
 /**
+ * @ingroup netif
  * Find a network interface by searching for its name
  *
  * @param name the name of the netif (like netif->name) plus concatenated number
@@ -410,6 +456,7 @@ netif_find(const char *name)
 
 #if LWIP_IPV4
 /**
+ * @ingroup netif
  * Change the IP address of a network interface
  *
  * @param netif the network interface to change
@@ -454,6 +501,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 }
 
 /**
+ * @ingroup netif
  * Change the default gateway for a network interface
  *
  * @param netif the network interface to change
@@ -475,6 +523,7 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 }
 
 /**
+ * @ingroup netif
  * Change the netmask of a network interface
  *
  * @param netif the network interface to change
@@ -501,6 +550,7 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 #endif /* LWIP_IPV4 */
 
 /**
+ * @ingroup netif
  * Set a network interface as the default network interface
  * (used to output all packets for which no specific route is found)
  *
@@ -522,6 +572,7 @@ netif_set_default(struct netif *netif)
 }
 
 /**
+ * @ingroup netif
  * Bring an interface up, available for processing
  * traffic.
  */
@@ -580,6 +631,7 @@ netif_issue_reports(struct netif* netif, u8_t report_type)
 }
 
 /**
+ * @ingroup netif
  * Bring an interface down, disabling any traffic processing.
  */
 void
@@ -594,12 +646,18 @@ netif_set_down(struct netif *netif)
       etharp_cleanup_netif(netif);
     }
 #endif /* LWIP_IPV4 && LWIP_ARP */
+
+#if LWIP_IPV6
+    nd6_cleanup_netif(netif);
+#endif /* LWIP_IPV6 */
+
     NETIF_STATUS_CALLBACK(netif);
   }
 }
 
 #if LWIP_NETIF_STATUS_CALLBACK
 /**
+ * @ingroup netif
  * Set callback to be called when interface is brought up/down or address is changed while up
  */
 void
@@ -613,6 +671,7 @@ netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_c
 
 #if LWIP_NETIF_REMOVE_CALLBACK
 /**
+ * @ingroup netif
  * Set callback to be called when the interface has been removed
  */
 void
@@ -625,6 +684,7 @@ netif_set_remove_callback(struct netif *netif, netif_status_callback_fn remove_c
 #endif /* LWIP_NETIF_REMOVE_CALLBACK */
 
 /**
+ * @ingroup netif
  * Called by a driver when its link goes up
  */
 void
@@ -653,6 +713,7 @@ netif_set_link_up(struct netif *netif)
 }
 
 /**
+ * @ingroup netif
  * Called by a driver when its link goes down
  */
 void
@@ -666,6 +727,7 @@ netif_set_link_down(struct netif *netif )
 
 #if LWIP_NETIF_LINK_CALLBACK
 /**
+ * @ingroup netif
  * Set callback to be called when link is brought up/down
  */
 void
@@ -679,6 +741,7 @@ netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callb
 
 #if ENABLE_LOOPBACK
 /**
+ * @ingroup netif
  * Send an IP packet to be received on the same netif (loopif-like).
  * The pbuf is simply copied and handed back to netif->input.
  * In multithreaded mode, this is done directly since netif->input must put
@@ -884,7 +947,8 @@ netif_poll_all(void)
 #endif /* ENABLE_LOOPBACK */
 
 #if LWIP_IPV6
-/** Checks if a specific address is assigned to the netif and returns its
+/**
+ * Checks if a specific address is assigned to the netif and returns its
  * index.
  *
  * @param netif the netif to check
@@ -905,7 +969,9 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
   return -1;
 }
 
-/** Create a link-local IPv6 address on a netif (stored in slot 0)
+/**
+ * @ingroup netif
+ * Create a link-local IPv6 address on a netif (stored in slot 0)
  *
  * @param netif the netif to create the address on
  * @param from_mac_48bit if != 0, assume hwadr is a 48-bit MAC address (std conversion)
@@ -955,7 +1021,9 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
 #endif /* LWIP_IPV6_AUTOCONFIG */
 }
 
-/** This function allows for the easy addition of a new IPv6 address to an interface.
+/**
+ * @ingroup netif
+ * This function allows for the easy addition of a new IPv6 address to an interface.
  * It takes care of finding an empty slot and then sets the address tentative
  * (to make sure that all the subsequent processing happens).
  *

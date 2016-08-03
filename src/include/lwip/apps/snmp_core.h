@@ -1,8 +1,6 @@
 /**
  * @file
- * Generic MIB tree structures.
- *
- * @todo namespace prefixes
+ * SNMP core API for implementing MIBs
  */
 
 /*
@@ -98,7 +96,7 @@ extern "C" {
 #define SNMP_VARBIND_EXCEPTION_OFFSET 0xF0
 #define SNMP_VARBIND_EXCEPTION_MASK   0x0F
 
-/* error codes predefined by SNMP prot. */
+/** error codes predefined by SNMP prot. */
 typedef enum {
   SNMP_ERR_NOERROR             = 0,
 /* 
@@ -139,6 +137,7 @@ struct snmp_obj_id_const_ref
 
 extern const struct snmp_obj_id_const_ref snmp_zero_dot_zero; /* administrative identifier from SNMPv2-SMI */
 
+/** SNMP variant value, used as reference in struct snmp_node_instance and table implementation */
 union snmp_variant_value
 {
   void* ptr;
@@ -170,7 +169,7 @@ struct snmp_node
   u32_t oid;
 };
 
-/* SNMP node instance access types */
+/** SNMP node instance access types */
 typedef enum {
   SNMP_NODE_INSTANCE_ACCESS_READ    = 1,
   SNMP_NODE_INSTANCE_ACCESS_WRITE   = 2,
@@ -182,13 +181,14 @@ typedef enum {
 
 struct snmp_node_instance;
 
-typedef u16_t (*node_instance_get_value_method)(struct snmp_node_instance*, void*);
+typedef s16_t (*node_instance_get_value_method)(struct snmp_node_instance*, void*);
 typedef snmp_err_t (*node_instance_set_test_method)(struct snmp_node_instance*, u16_t, void*);
 typedef snmp_err_t (*node_instance_set_value_method)(struct snmp_node_instance*, u16_t, void*);
 typedef void (*node_instance_release_method)(struct snmp_node_instance*);
 
 #define SNMP_GET_VALUE_RAW_DATA 0x8000
 
+/** SNMP node instance */
 struct snmp_node_instance
 {
   /** prefilled with the node, get_instance() is called on; may be changed by user to any value to pass an arbitrary node between calls to get_instance() and get_value/test_value/set_value */
@@ -201,7 +201,7 @@ struct snmp_node_instance
   /** one out of instance access types defined above (SNMP_NODE_INSTANCE_READ_ONLY,...) */
   snmp_access_t access;
   
-  /** returns object value for the given object identifier */
+  /** returns object value for the given object identifier. Return values <0 to indicate an error */
   node_instance_get_value_method get_value;
   /** tests length and/or range BEFORE setting */
   node_instance_set_test_method set_test;
@@ -217,9 +217,10 @@ struct snmp_node_instance
 };
 
 
+/** SNMP tree node */
 struct snmp_tree_node
 {
-  /* inherited "base class" members */
+  /** inherited "base class" members */
   struct snmp_node node;
   u16_t subnode_count;
   const struct snmp_node* const *subnodes;
@@ -233,15 +234,16 @@ struct snmp_tree_node
   {{ SNMP_NODE_TREE, (oid) }, \
   0, NULL }
 
+/** SNMP leaf node */
 struct snmp_leaf_node
 {
-  /* inherited "base class" members */
+  /** inherited "base class" members */
   struct snmp_node node;
   snmp_err_t (*get_instance)(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
   snmp_err_t (*get_next_instance)(const u32_t *root_oid, u8_t root_oid_len, struct snmp_node_instance* instance);
 };
 
-/* represents a single mib with its base oid and root node */
+/** represents a single mib with its base oid and root node */
 struct snmp_mib
 {
   const u32_t *base_oid;
@@ -281,15 +283,10 @@ struct snmp_next_oid_state
   void* reference;
 };
 
-/** initialize struct next_oid_state using this function before passing it to next_oid_check */
 void snmp_next_oid_init(struct snmp_next_oid_state *state,
   const u32_t *start_oid, u8_t start_oid_len,
   u32_t *next_oid_buf, u8_t next_oid_max_len);
-/** checks if the passed incomplete OID may be a possible candidate for snmp_next_oid_check();
-this methid is intended if the complete OID is not yet known but it is very expensive to build it up,
-so it is possible to test the starting part before building up the complete oid and pass it to snmp_next_oid_check()*/
 u8_t snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len);
-/** checks the passed OID if it is a candidate to be the next one (get_next); returns !=0 if passed oid is currently closest, otherwise 0 */
 u8_t snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len, void* reference);
 
 void snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len);

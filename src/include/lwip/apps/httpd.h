@@ -1,3 +1,8 @@
+/**
+ * @file
+ * HTTP server
+ */
+
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -94,11 +99,6 @@ void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
 
 #if LWIP_HTTPD_CGI || LWIP_HTTPD_CGI_SSI
 
-/* The maximum number of parameters that the CGI handler can be sent. */
-#ifndef LWIP_HTTPD_MAX_CGI_PARAMETERS
-#define LWIP_HTTPD_MAX_CGI_PARAMETERS 16
-#endif
-
 #if LWIP_HTTPD_CGI_SSI
 /** Define this generic CGI handler in your application.
  * It is called once for every URI with parameters.
@@ -165,7 +165,7 @@ typedef u16_t (*tSSIHandler)(
 void http_set_ssi_handler(tSSIHandler pfnSSIHandler,
                           const char **ppcTags, int iNumTags);
 
-/** For LWIP_HTTPD_SSI_RAW==1, return this to indicat the tag is unknown.
+/** For LWIP_HTTPD_SSI_RAW==1, return this to indicate the tag is unknown.
  * In this case, the webserver writes a warning into the page.
  * You can also just return 0 to write nothing for unknown tags.
  */

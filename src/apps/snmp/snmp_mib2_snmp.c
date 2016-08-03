@@ -1,6 +1,6 @@
 /**
  * @file
- * Management Information Base II (RFC1213) objects and functions.
+ * Management Information Base II (RFC1213) SNMP objects and functions.
  */
 
 /*
@@ -45,7 +45,7 @@
 #define MIB2_AUTH_TRAPS_DISABLED 2
 
 /* --- snmp .1.3.6.1.2.1.11 ----------------------------------------------------- */
-static u16_t
+static s16_t
 snmp_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
   u32_t *uint_ptr = (u32_t*)value;

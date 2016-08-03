@@ -1,6 +1,6 @@
 /**
  * @file
- * Additional SNMPv3 functionality RFC3414 and RFC3826.
+ * Additional SNMPv3 functionality RFC3414 and RFC3826 (internal API, do not use in client code).
  */
 
 /*

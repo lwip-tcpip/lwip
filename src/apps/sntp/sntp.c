@@ -1,21 +1,10 @@
 /**
  * @file
  * SNTP client module
- *
- * This is simple "SNTP" client for the lwIP raw API.
- * It is a minimal implementation of SNTPv4 as specified in RFC 4330.
- *
- * For a list of some public NTP servers, see this link :
- * http://support.ntp.org/bin/view/Servers/NTPPoolServers
- *
- * @todo:
- * - set/change servers at runtime
- * - complete SNTP_CHECK_RESPONSE checks 3 and 4
- * - support broadcast/multicast mode?
  */
 
 /*
- * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
+ * Copyright (c) 2007-2009 FrÃ©dÃ©ric Bernon, Simon Goldschmidt
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -42,13 +31,29 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Frédéric Bernon, Simon Goldschmidt
+ * Author: FrÃ©dÃ©ric Bernon, Simon Goldschmidt
+ */
+
+
+/**
+ * @defgroup sntp SNTP
+ * @ingroup apps
+ *
+ * This is simple "SNTP" client for the lwIP raw API.
+ * It is a minimal implementation of SNTPv4 as specified in RFC 4330.
+ *
+ * For a list of some public NTP servers, see this link :
+ * http://support.ntp.org/bin/view/Servers/NTPPoolServers
+ *
+ * @todo:
+ * - set/change servers at runtime
+ * - complete SNTP_CHECK_RESPONSE checks 3 and 4
  */
 
 #include "lwip/apps/sntp.h"
 
 #include "lwip/opt.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/udp.h"
 #include "lwip/dns.h"
 #include "lwip/ip_addr.h"
@@ -523,6 +528,7 @@ sntp_request(void *arg)
 }
 
 /**
+ * @ingroup sntp
  * Initialize this module.
  * Send out request instantly or after SNTP_STARTUP_DELAY(_FUNC).
  */
@@ -559,6 +565,7 @@ sntp_init(void)
 }
 
 /**
+ * @ingroup sntp
  * Stop this module.
  */
 void
@@ -572,6 +579,7 @@ sntp_stop(void)
 }
 
 /**
+ * @ingroup sntp
  * Get enabled state.
  */
 u8_t sntp_enabled(void)
@@ -580,6 +588,7 @@ u8_t sntp_enabled(void)
 }
 
 /**
+ * @ingroup sntp
  * Sets the operating mode.
  * @param operating_mode one of the available operating modes
  */
@@ -592,6 +601,7 @@ sntp_setoperatingmode(u8_t operating_mode)
 }
 
 /**
+ * @ingroup sntp
  * Gets the operating mode.
  */
 u8_t
@@ -616,10 +626,11 @@ sntp_servermode_dhcp(int set_servers_from_dhcp)
 #endif /* SNTP_GET_SERVERS_FROM_DHCP */
 
 /**
+ * @ingroup sntp
  * Initialize one of the NTP servers by IP address
  *
- * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
- * @param dnsserver IP address of the NTP server to set
+ * @param idx the index of the NTP server to set must be < SNTP_MAX_SERVERS
+ * @param server IP address of the NTP server to set
  */
 void
 sntp_setserver(u8_t idx, const ip_addr_t *server)
@@ -664,19 +675,20 @@ dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
 #endif /* LWIP_DHCP && SNTP_GET_SERVERS_FROM_DHCP */
 
 /**
+ * @ingroup sntp
  * Obtain one of the currently configured by IP address (or DHCP) NTP servers
  *
- * @param numdns the index of the NTP server
+ * @param idx the index of the NTP server
  * @return IP address of the indexed NTP server or "ip_addr_any" if the NTP
  *         server has not been configured by address (or at all).
  */
-ip_addr_t
+const ip_addr_t*
 sntp_getserver(u8_t idx)
 {
   if (idx < SNTP_MAX_SERVERS) {
-    return sntp_servers[idx].addr;
+    return &sntp_servers[idx].addr;
   }
-  return *IP_ADDR_ANY;
+  return IP_ADDR_ANY;
 }
 
 #if SNTP_SERVER_DNS

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * DHCP client API
+ */
+
 /*
  * Copyright (c) 2001-2004 Leon Woestenberg <leon.woestenberg@gmx.net>
  * Copyright (c) 2001-2004 Axon Digital Design B.V., The Netherlands.
@@ -199,9 +204,9 @@ void dhcp_fine_tmr(void);
 #define DHCP_STATE_SELECTING    6
 #define DHCP_STATE_INFORMING    7
 #define DHCP_STATE_CHECKING     8
-/** not yet implemented #define DHCP_STATE_PERMANENT 9 */
+/** not yet implemented \#define DHCP_STATE_PERMANENT 9 */
 #define DHCP_STATE_BOUND        10
-/** not yet implemented #define DHCP_STATE_RELEASING 11 */
+/** not yet implemented \#define DHCP_STATE_RELEASING 11 */
 #define DHCP_STATE_BACKING_OFF  12
 
 /** AUTOIP cooperation flags */

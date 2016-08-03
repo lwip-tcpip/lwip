@@ -1,8 +1,5 @@
 /**
  * @file
- *
- * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
- * No support for MLDv2.
  */
 
 /*
@@ -38,6 +35,14 @@
  *
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
+ */
+
+/**
+ * @defgroup mld6 MLD6
+ * @ingroup ip6
+ * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
+ * No support for MLDv2.\n
+ * To be called from TCPIP thread
  */
 
 /* Based on igmp.c implementation of igmp v2 protocol */
@@ -245,7 +250,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
 
   /* Check that mld header fits in packet. */
   if (p->len < sizeof(struct mld_header)) {
-    /* TODO debug message */
+    /* @todo debug message */
     pbuf_free(p);
     MLD6_STATS_INC(mld6.lenerr);
     MLD6_STATS_INC(mld6.drop);
@@ -310,6 +315,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
 }
 
 /**
+ * @ingroup mld6
  * Join a group on a network interface.
  *
  * @param srcaddr ipv6 address of the network interface which should
@@ -343,6 +349,7 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
 }
 
 /**
+ * @ingroup mld6
  * Join a group on a network interface.
  *
  * @param netif the network interface which should join a new group.
@@ -381,6 +388,7 @@ mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
 }
 
 /**
+ * @ingroup mld6
  * Leave a group on a network interface.
  *
  * @param srcaddr ipv6 address of the network interface which should
@@ -414,6 +422,7 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
 }
 
 /**
+ * @ingroup mld6
  * Leave a group on a network interface.
  *
  * @param netif the network interface which should leave the group.

@@ -148,12 +148,12 @@ typedef struct eap_state {
 /*
  * Timeouts.
  */
-#if 0 /* moved to opt.h */
+#if 0 /* moved to ppp_opts.h */
 #define	EAP_DEFTIMEOUT		3	/* Timeout (seconds) for rexmit */
 #define	EAP_DEFTRANSMITS	10	/* max # times to transmit */
 #define	EAP_DEFREQTIME		20	/* Time to wait for peer request */
 #define	EAP_DEFALLOWREQ		20	/* max # times to accept requests */
-#endif /* moved to opt.h */
+#endif /* moved to ppp_opts.h */
 
 void eap_authwithpeer(ppp_pcb *pcb, const char *localname);
 void eap_authpeer(ppp_pcb *pcb, const char *localname);

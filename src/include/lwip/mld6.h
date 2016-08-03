@@ -55,6 +55,7 @@
 extern "C" {
 #endif
 
+/** MLD group */
 struct mld_group {
   /** next link */
   struct mld_group *next;

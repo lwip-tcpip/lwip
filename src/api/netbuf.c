@@ -36,6 +36,15 @@
  *
  */
 
+/**
+ * @defgroup netbuf Network buffers
+ * @ingroup netconn
+ * Network buffer descriptor for @ref netconn. Based on @ref pbuf internally
+ * to avoid copying data around.\n
+ * Buffers must not be shared accross multiple threads, all functions except
+ * netbuf_new() and netbuf_delete() are not thread-safe.
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
@@ -46,6 +55,7 @@
 #include <string.h>
 
 /**
+ * @ingroup netbuf
  * Create (allocate) and initialize a new netbuf.
  * The netbuf doesn't yet contain a packet buffer!
  *
@@ -79,6 +89,7 @@ netbuf *netbuf_new(void)
 }
 
 /**
+ * @ingroup netbuf
  * Deallocate a netbuf allocated by netbuf_new().
  *
  * @param buf pointer to a netbuf allocated by netbuf_new()
@@ -96,6 +107,7 @@ netbuf_delete(struct netbuf *buf)
 }
 
 /**
+ * @ingroup netbuf
  * Allocate memory for a packet buffer for a given netbuf.
  *
  * @param buf the netbuf for which to allocate a packet buffer
@@ -123,6 +135,7 @@ netbuf_alloc(struct netbuf *buf, u16_t size)
 }
 
 /**
+ * @ingroup netbuf
  * Free the packet buffer included in a netbuf
  *
  * @param buf pointer to the netbuf which contains the packet buffer to free
@@ -138,6 +151,7 @@ netbuf_free(struct netbuf *buf)
 }
 
 /**
+ * @ingroup netbuf
  * Let a netbuf reference existing (non-volatile) data.
  *
  * @param buf netbuf which should reference the data
@@ -165,6 +179,7 @@ netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
 }
 
 /**
+ * @ingroup netbuf
  * Chain one netbuf to another (@see pbuf_chain)
  *
  * @param head the first netbuf
@@ -181,6 +196,7 @@ netbuf_chain(struct netbuf *head, struct netbuf *tail)
 }
 
 /**
+ * @ingroup netbuf
  * Get the data pointer and length of the data inside a netbuf.
  *
  * @param buf netbuf to get the data from
@@ -205,6 +221,7 @@ netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
 }
 
 /**
+ * @ingroup netbuf
  * Move the current data pointer of a packet buffer contained in a netbuf
  * to the next part.
  * The packet buffer itself is not modified.
@@ -229,6 +246,7 @@ netbuf_next(struct netbuf *buf)
 }
 
 /**
+ * @ingroup netbuf
  * Move the current data pointer of a packet buffer contained in a netbuf
  * to the beginning of the packet.
  * The packet buffer itself is not modified.

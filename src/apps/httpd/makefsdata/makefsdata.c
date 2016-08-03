@@ -60,7 +60,7 @@ tdefl_compressor g_deflator;
 tinfl_decompressor g_inflator;
 
 int deflate_level = 10; /* default compression level, can be changed via command line */
-#define USAGE_ARG_DEFLATE " [-defl]"
+#define USAGE_ARG_DEFLATE " [-defl<:compr_level>]"
 #else /* MAKEFS_SUPPORT_DEFLATE */
 #define USAGE_ARG_DEFLATE ""
 #endif /* MAKEFS_SUPPORT_DEFLATE */
@@ -108,6 +108,7 @@ int deflate_level = 10; /* default compression level, can be changed via command
 /* define this to get the header variables we use to build HTTP headers */
 #define LWIP_HTTPD_DYNAMIC_HEADERS 1
 #define LWIP_HTTPD_SSI             1
+#include "lwip/init.h"
 #include "../httpd_structs.h"
 #include "lwip/apps/fs.h"
 
@@ -116,6 +117,7 @@ int deflate_level = 10; /* default compression level, can be changed via command
 
 /** (Your server name here) */
 const char *serverID = "Server: "HTTPD_SERVER_AGENT"\r\n";
+char serverIDBuffer[1024];
 
 /* change this to suit your MEM_ALIGNMENT */
 #define PAYLOAD_ALIGNMENT 4
@@ -168,7 +170,7 @@ struct file_entry* last_file = NULL;
 
 static void print_usage(void)
 {
-  printf(" Usage: htmlgen [targetdir] [-s] [-i] [-f:<filename>] [-m]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
+  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-i] [-11] [-nossi] [-c] [-f:<filename>] [-m] [-svr:<name>]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
   printf("   targetdir: relative or absolute path to files to convert" NEWLINE);
   printf("   switch -s: toggle processing of subdirectories (default is on)" NEWLINE);
   printf("   switch -e: exclude HTTP header from file (header is created at runtime, default is off)" NEWLINE);
@@ -177,8 +179,9 @@ static void print_usage(void)
   printf("   switch -c: precalculate checksums for all pages (default is off)" NEWLINE);
   printf("   switch -f: target filename (default is \"fsdata.c\")" NEWLINE);
   printf("   switch -m: include \"Last-Modified\" header based on file time" NEWLINE);
+  printf("   switch -svr: server identifier sent in HTTP response header ('Server' field)" NEWLINE);
 #if MAKEFS_SUPPORT_DEFLATE
-  printf("   switch -defl: deflate-compress all non-SSI files" NEWLINE);
+  printf("   switch -defl: deflate-compress all non-SSI files (with opt. compr.-level, default=10)" NEWLINE);
   printf("                 ATTENTION: browser has to support \"Content-Encoding: deflate\"!" NEWLINE);
 #endif
   printf("   if targetdir not specified, htmlgen will attempt to" NEWLINE);
@@ -204,28 +207,32 @@ int main(int argc, char *argv[])
   printf("     extended by Simon Goldschmidt  - 2009 " NEWLINE NEWLINE);
 
   strcpy(path, "fs");
-  for(i = 1; i < argc; i++) {
+  for (i = 1; i < argc; i++) {
     if (argv[i] == NULL) {
       continue;
     }
     if (argv[i][0] == '-') {
-      if (strstr(argv[i], "-s")) {
+      if (strstr(argv[i], "-svr:") == argv[i]) {
+        snprintf(serverIDBuffer, sizeof(serverIDBuffer), "Server: %s\r\n", &argv[i][5]);
+        serverID = serverIDBuffer;
+        printf("Using Server-ID: \"%s\"\n", serverID);
+      } else if (strstr(argv[i], "-s") == argv[i]) {
         processSubs = 0;
-      } else if (strstr(argv[i], "-e")) {
+      } else if (strstr(argv[i], "-e") == argv[i]) {
         includeHttpHeader = 0;
-      } else if (strstr(argv[i], "-11")) {
+      } else if (strstr(argv[i], "-11") == argv[i]) {
         useHttp11 = 1;
-      } else if (strstr(argv[i], "-nossi")) {
+      } else if (strstr(argv[i], "-nossi") == argv[i]) {
         supportSsi = 0;
-      } else if (strstr(argv[i], "-c")) {
+      } else if (strstr(argv[i], "-c") == argv[i]) {
         precalcChksum = 1;
-      } else if((argv[i][1] == 'f') && (argv[i][2] == ':')) {
+      } else if (strstr(argv[i], "-f:") == argv[i]) {
         strncpy(targetfile, &argv[i][3], sizeof(targetfile) - 1);
         targetfile[sizeof(targetfile) - 1] = 0;
         printf("Writing to file \"%s\"\n", targetfile);
-      } else if (strstr(argv[i], "-m")) {
+      } else if (strstr(argv[i], "-m") == argv[i]) {
         includeLastModified = 1;
-      } else if (strstr(argv[i], "-defl")) {
+      } else if (strstr(argv[i], "-defl") == argv[i]) {
 #if MAKEFS_SUPPORT_DEFLATE
         char* colon = strstr(argv[i], ":");
         if (colon) {
@@ -257,7 +264,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  if(!check_path(path, sizeof(path))) {
+  if (!check_path(path, sizeof(path))) {
     printf("Invalid path: \"%s\"." NEWLINE, path);
     exit(-1);
   }
@@ -396,8 +403,7 @@ static void copy_file(const char *filename_in, FILE *fout)
     exit(-1);
   }
   buf = malloc(COPY_BUFSIZE);
-  while((len = fread(buf, 1, COPY_BUFSIZE, fin)) > 0)
-  {
+  while ((len = fread(buf, 1, COPY_BUFSIZE, fin)) > 0) {
     fwrite(buf, 1, len, fout);
   }
   free(buf);
@@ -486,8 +492,7 @@ u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed,
   }
   fseek(inFile, 0, SEEK_END);
   rs = ftell(inFile);
-  if(rs < 0)
-  {
+  if (rs < 0) {
      printf("ftell failed with %d\n", errno);
      exit(-1);
   }
@@ -636,8 +641,7 @@ static int is_valid_char_for_c_var(char x)
    if (((x >= 'A') && (x <= 'Z')) ||
        ((x >= 'a') && (x <= 'z')) ||
        ((x >= '0') && (x <= '9')) ||
-        (x == '_'))
-   {
+        (x == '_')) {
       return 1;
    }
    return 0;
@@ -720,7 +724,7 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   u8_t* file_data;
   int is_compressed = 0;
 
-  /* create qualified name (TODO: prepend slash or not?) */
+  /* create qualified name (@todo: prepend slash or not?) */
   sprintf(qualifiedName,"%s/%s", curSubdir, filename);
   /* create C variable name */
   strcpy(varname, qualifiedName);
@@ -863,13 +867,13 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
       file_ext++;
     }
   }
-  if((file_ext == NULL) || (*file_ext == 0)) {
+  if ((file_ext == NULL) || (*file_ext == 0)) {
     printf("failed to get extension for file \"%s\", using default.\n", filename);
     file_type = HTTP_HDR_DEFAULT_TYPE;
   } else {
     file_type = NULL;
-    for(j = 0; j < NUM_HTTP_HEADERS; j++) {
-      if(!strcmp(file_ext, g_psHTTPHeaders[j].extension)) {
+    for (j = 0; j < NUM_HTTP_HEADERS; j++) {
+      if (!strcmp(file_ext, g_psHTTPHeaders[j].extension)) {
         file_type = g_psHTTPHeaders[j].content_type;
         break;
       }
@@ -914,14 +918,12 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     memset(&stat_data, 0, sizeof(stat_data));
     cur_string = modbuf;
     strcpy(modbuf, "Last-Modified: ");
-    if(stat(filename, &stat_data) != 0)
-    {
+    if (stat(filename, &stat_data) != 0) {
        printf("stat(%s) failed with error %d\n", filename, errno);
        exit(-1);
     }
     t = gmtime(&stat_data.st_mtime);
-    if(t == NULL)
-    {
+    if (t == NULL) {
        printf("gmtime() failed with error %d\n", errno);
        exit(-1);
     }
@@ -1004,7 +1006,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 int file_put_ascii(FILE *file, const char* ascii_string, int len, int *i)
 {
   int x;
-  for(x = 0; x < len; x++) {
+  for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
     fprintf(file, "0x%02.2x,", cur);
     if ((++(*i) % HEX_BYTES_PER_LINE) == 0) {
@@ -1018,7 +1020,7 @@ int s_put_ascii(char *buf, const char *ascii_string, int len, int *i)
 {
   int x;
   int idx = 0;
-  for(x = 0; x < len; x++) {
+  for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
     sprintf(&buf[idx], "0x%02.2x,", cur);
     idx += 5;

@@ -33,6 +33,11 @@
  *         Christiaan Simons <christiaan.simons@axon.tv>
  */
 
+/**
+ * @defgroup snmp_mib2 MIB2
+ * @ingroup snmp
+ */
+
 #include "lwip/apps/snmp_opts.h"
 
 #if LWIP_SNMP && SNMP_LWIP_MIB2 /* don't build if not configured for use in lwipopts.h */
@@ -61,7 +66,7 @@ snmp_mib2_lwip_synchronizer(snmp_threadsync_called_fn fn, void* arg)
   fn(arg);
   UNLOCK_TCPIP_CORE();
 #else
-  tcpip_callback_with_block(fn, arg, 1);
+  tcpip_callback(fn, arg);
 #endif
 }
 

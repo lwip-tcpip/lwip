@@ -1,18 +1,14 @@
 /**
  * @file
  * DNS - host name to IP address resolver.
- *
  */
 
-/**
-
- * This file implements a DNS host name to IP address resolver.
-
+/*
  * Port to lwIP from uIP
  * by Jim Pettinato April 2007
-
+ *
  * security fixes and more by Simon Goldschmidt
-
+ *
  * uIP version Copyright (c) 2002-2003, Adam Dunkels.
  * All rights reserved.
  *
@@ -39,9 +35,13 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @defgroup dns DNS
+ * @ingroup callbackstyle_api
  *
- *
- * DNS.C
+ * Implements a DNS host name to IP address resolver.
  *
  * The lwIP DNS resolver functions are used to lookup a host name and
  * map it to a numerical IP address. It maintains a list of resolved
@@ -59,6 +59,10 @@
  * Once a hostname has been resolved (or found to be non-existent),
  * the resolver code calls a specified callback function (which
  * must be implemented by the module that uses the resolver).
+ * 
+ * All functions must be called from TCPIP thread.
+ * 
+ * @see @ref netconn_common for thread-safe access.
  */
 
 /*-----------------------------------------------------------------------------
@@ -408,6 +412,7 @@ dns_init(void)
 }
 
 /**
+ * @ingroup dns
  * Initialize one of the DNS servers.
  *
  * @param numdns the index of the DNS server to set must be < DNS_MAX_SERVERS
@@ -426,19 +431,20 @@ dns_setserver(u8_t numdns, const ip_addr_t *dnsserver)
 }
 
 /**
+ * @ingroup dns
  * Obtain one of the currently configured DNS server.
  *
  * @param numdns the index of the DNS server
  * @return IP address of the indexed DNS server or "ip_addr_any" if the DNS
  *         server has not been configured.
  */
-ip_addr_t
+const ip_addr_t*
 dns_getserver(u8_t numdns)
 {
   if (numdns < DNS_MAX_SERVERS) {
-    return dns_servers[numdns];
+    return &dns_servers[numdns];
   } else {
-    return *IP_ADDR_ANY;
+    return IP_ADDR_ANY;
   }
 }
 
@@ -463,7 +469,7 @@ dns_init_local(void)
   /* Dynamic: copy entries from DNS_LOCAL_HOSTLIST_INIT to list */
   struct local_hostlist_entry local_hostlist_init[] = DNS_LOCAL_HOSTLIST_INIT;
   size_t namelen;
-  for (i = 0; i < sizeof(local_hostlist_init) / sizeof(struct local_hostlist_entry); i++) {
+  for (i = 0; i < LWIP_ARRAYSIZE(local_hostlist_init); i++) {
     struct local_hostlist_entry *init_entry = &local_hostlist_init[i];
     LWIP_ASSERT("invalid host name (NULL)", init_entry->name != NULL);
     namelen = strlen(init_entry->name);
@@ -484,6 +490,7 @@ dns_init_local(void)
 }
 
 /**
+ * @ingroup dns
  * Scans the local host-list for a hostname.
  *
  * @param hostname Hostname to look for in the local host-list
@@ -508,7 +515,7 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
   }
 #else /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
   size_t i;
-  for (i = 0; i < sizeof(local_hostlist_static) / sizeof(struct local_hostlist_entry); i++) {
+  for (i = 0; i < LWIP_ARRAYSIZE(local_hostlist_static); i++) {
     if ((LWIP_DNS_STRICMP(local_hostlist_static[i].name, hostname) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, local_hostlist_static[i].addr)) {
       if (addr) {
@@ -522,7 +529,9 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
 }
 
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
-/** Remove all entries from the local host-list for a specific hostname
+/**
+ * @ingroup dns
+ * Remove all entries from the local host-list for a specific hostname
  * and/or IP address
  *
  * @param hostname hostname for which entries shall be removed from the local
@@ -558,6 +567,7 @@ dns_local_removehost(const char *hostname, const ip_addr_t *addr)
 }
 
 /**
+ * @ingroup dns
  * Add a hostname/IP address pair to the local host-list.
  * Duplicates are not checked.
  *
@@ -591,6 +601,7 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
 #endif /* DNS_LOCAL_HOSTLIST */
 
 /**
+ * @ingroup dns
  * Look up a hostname in the array of known hostnames.
  *
  * @note This function only looks in the internal array of known
@@ -616,7 +627,7 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
   }
 #endif /* DNS_LOCAL_HOSTLIST */
 #ifdef DNS_LOOKUP_LOCAL_EXTERN
-  if (DNS_LOOKUP_LOCAL_EXTERN(name, addr, LWIP_DNS_ADDRTYPE_ARG_OR_ZERO(dns_addrtype))) {
+  if (DNS_LOOKUP_LOCAL_EXTERN(name, addr, LWIP_DNS_ADDRTYPE_ARG_OR_ZERO(dns_addrtype)) == ERR_OK) {
     return ERR_OK;
   }
 #endif /* DNS_LOOKUP_LOCAL_EXTERN */
@@ -1058,6 +1069,8 @@ dns_correct_response(u8_t idx, u32_t ttl)
 {
   struct dns_table_entry *entry = &dns_table[idx];
 
+  entry->state = DNS_STATE_DONE;
+
   LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
   ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
   LWIP_DEBUGF(DNS_DEBUG, ("\n"));
@@ -1071,10 +1084,13 @@ dns_correct_response(u8_t idx, u32_t ttl)
 
   if (entry->ttl == 0) {
     /* RFC 883, page 29: "Zero values are
-        interpreted to mean that the RR can only be used for the
-        transaction in progress, and should not be cached."
-        -> flush this entry now */
-    entry->state = DNS_STATE_UNUSED;
+       interpreted to mean that the RR can only be used for the
+       transaction in progress, and should not be cached."
+       -> flush this entry now */
+    /* entry reused during callback? */
+    if (entry->state == DNS_STATE_DONE) {
+      entry->state = DNS_STATE_UNUSED;
+    }
   }
 }
 /**
@@ -1373,6 +1389,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
 }
 
 /**
+ * @ingroup dns
  * Resolve a hostname (string) into an IP address.
  * NON-BLOCKING callback version for use with raw API!!!
  *
@@ -1398,7 +1415,15 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
   return dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, LWIP_DNS_ADDRTYPE_DEFAULT);
 }
 
-/** Like dns_gethostbyname, but returned address type can be controlled:
+/**
+ * @ingroup dns
+ * Like dns_gethostbyname, but returned address type can be controlled:
+ * @param hostname the hostname that is to be queried
+ * @param addr pointer to a ip_addr_t where to store the address if it is already
+ *             cached in the dns_table (only valid if ERR_OK is returned!)
+ * @param found a callback function to be called on success, failure or timeout (only if
+ *              ERR_INPROGRESS is returned!)
+ * @param callback_arg argument to pass to the callback function
  * @param dns_addrtype: - LWIP_DNS_ADDRTYPE_IPV4_IPV6: try to resolve IPv4 first, try IPv6 if IPv4 fails only
  *                      - LWIP_DNS_ADDRTYPE_IPV6_IPV4: try to resolve IPv6 first, try IPv4 if IPv6 fails only
  *                      - LWIP_DNS_ADDRTYPE_IPV4: try to resolve IPv4 only

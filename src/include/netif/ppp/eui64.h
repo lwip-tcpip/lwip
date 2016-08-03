@@ -42,7 +42,7 @@
 #define EUI64_H
 
 /*
- * TODO:
+ * @todo:
  *
  * Maybe this should be done by processing struct in6_addr directly...
  */

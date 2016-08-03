@@ -39,6 +39,12 @@
  * <delamer@inicotech.com>
  */
 
+/**
+ * @defgroup sixlowpan 6LowPAN netif
+ * @ingroup addons
+ * 6LowPAN netif implementation
+ */
+
 #include "netif/lowpan6.h"
 
 #if LWIP_IPV6 && LWIP_6LOWPAN
@@ -320,7 +326,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     }
 
     /* Compress NH?
-    * Only if UDP for now. TODO support other NH compression. */
+    * Only if UDP for now. @todo support other NH compression. */
     if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
       buffer[ieee_header_len] |= 0x04;
     } else {
@@ -364,7 +370,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 
     /* Compress destination address */
     if (ip6_addr_ismulticast(ip_2_ip6(&ip_data.current_iphdr_dest))) {
-      /* TODO support stateful multicast address compression */
+      /* @todo support stateful multicast address compression */
 
       buffer[ieee_header_len + 1] |= 0x08;
 
@@ -407,7 +413,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 
     /* Compress UDP header? */
     if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
-      /* TODO support optional checksum compression */
+      /* @todo support optional checksum compression */
 
       buffer[ieee_header_len + lowpan6_header_len] = 0xf0;
 
@@ -489,7 +495,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 #if LWIP_6LOWPAN_HW_CRC
     /* Leave blank, will be filled by HW. */
 #else /* LWIP_6LOWPAN_HW_CRC */
-    /* TODO calculate CRC */
+    /* @todo calculate CRC */
 #endif /* LWIP_6LOWPAN_HW_CRC */
 
     /* Calculate frame length */
@@ -521,7 +527,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 #if LWIP_6LOWPAN_HW_CRC
       /* Leave blank, will be filled by HW. */
 #else /* LWIP_6LOWPAN_HW_CRC */
-      /* TODO calculate CRC */
+      /* @todo calculate CRC */
 #endif /* LWIP_6LOWPAN_HW_CRC */
 
       /* Calculate frame length */
@@ -544,7 +550,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 #if LWIP_6LOWPAN_HW_CRC
     /* Leave blank, will be filled by HW. */
 #else /* LWIP_6LOWPAN_HW_CRC */
-    /* TODO calculate CRC */
+    /* @todo calculate CRC */
 #endif /* LWIP_6LOWPAN_HW_CRC */
 
     /* Calculate frame length */
@@ -640,7 +646,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   }
 
   /* We have a unicast destination IP address */
-  /* TODO anycast? */
+  /* @todo anycast? */
 
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   if (src.addr_len == 2) {
@@ -672,7 +678,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     neighbor_cache[i].state = ND6_DELAY;
     neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
   }
-  /* TODO should we send or queue if PROBE? send for now, to let unicast NS pass. */
+  /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
   if ((neighbor_cache[i].state == ND6_REACHABLE) ||
       (neighbor_cache[i].state == ND6_DELAY) ||
       (neighbor_cache[i].state == ND6_PROBE)) {
@@ -826,7 +832,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
   if (lowpan6_buffer[1] & 0x08) {
     /* Multicast destination */
     if (lowpan6_buffer[1] & 0x04) {
-      /* TODO support stateful multicast addressing */
+      /* @todo support stateful multicast addressing */
       pbuf_free(p);
       pbuf_free(q);
       return NULL;
@@ -912,7 +918,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       udphdr = (struct udp_hdr *)((u8_t *)q->payload + ip6_offset);
 
       if (lowpan6_buffer[lowpan6_offset] & 0x04) {
-        /* TODO support checksum decompress */
+        /* @todo support checksum decompress */
         pbuf_free(p);
         pbuf_free(q);
         return NULL;
@@ -944,7 +950,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
 
       ip6_offset += UDP_HLEN;
     } else {
-      /* TODO support NHC other than UDP */
+      /* @todo support NHC other than UDP */
       pbuf_free(p);
       pbuf_free(q);
       return NULL;
@@ -980,7 +986,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
 
   MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
 
-  /* Analyze header. TODO validate. */
+  /* Analyze header. @todo validate. */
   puc = (u8_t*)p->payload;
   datagram_offset = 5;
   if ((puc[1] & 0x0c) == 0x0c) {
@@ -1180,6 +1186,7 @@ lowpan6_set_pan_id(u16_t pan_id)
   return ERR_OK;
 }
 
+#if !NO_SYS
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
@@ -1192,5 +1199,6 @@ tcpip_6lowpan_input(struct pbuf *p, struct netif *inp)
 {
   return tcpip_inpkt(p, inp, lowpan6_input);
 }
+#endif /* !NO_SYS */
 
 #endif /* LWIP_IPV6 && LWIP_6LOWPAN */

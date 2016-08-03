@@ -47,11 +47,6 @@ extern "C" {
 struct pppapi_msg_msg {
   ppp_pcb *ppp;
   union {
-    struct {
-      u8_t authtype;
-      const char *user;
-      const char *passwd;
-    } setauth;
 #if PPP_NOTIFY_PHASE
     struct {
       ppp_notify_phase_cb_fn notify_phase_cb;
@@ -92,11 +87,6 @@ struct pppapi_msg_msg {
     struct {
       u16_t holdoff;
     } connect;
-#if PPP_SERVER
-    struct {
-      API_MSG_M_DEF_C(struct ppp_addrs, addrs);
-    } listen;
-#endif /* PPP_SERVER */
     struct {
       u8_t nocarrier;
     } close;
@@ -114,7 +104,6 @@ struct pppapi_msg {
 
 /* API for application */
 err_t pppapi_set_default(ppp_pcb *pcb);
-err_t pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 #if PPP_NOTIFY_PHASE
 err_t pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 #endif /* PPP_NOTIFY_PHASE */
@@ -133,7 +122,7 @@ ppp_pcb *pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_add
 #endif /* PPPOL2TP_SUPPORT */
 err_t pppapi_connect(ppp_pcb *pcb, u16_t holdoff);
 #if PPP_SERVER
-err_t pppapi_listen(ppp_pcb *pcb, struct ppp_addrs *addrs);
+err_t pppapi_listen(ppp_pcb *pcb);
 #endif /* PPP_SERVER */
 err_t pppapi_close(ppp_pcb *pcb, u8_t nocarrier);
 err_t pppapi_free(ppp_pcb *pcb);

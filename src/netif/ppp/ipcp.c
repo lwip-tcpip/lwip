@@ -44,7 +44,7 @@
 #if PPP_SUPPORT && PPP_IPV4_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*
- * TODO:
+ * @todo:
  */
 
 #if 0 /* UNUSED */
@@ -611,7 +611,7 @@ static void ipcp_init(ppp_pcb *pcb) {
      */
     f->maxnakloops = 100;
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
     memset(wo, 0, sizeof(*wo));
     memset(ao, 0, sizeof(*ao));
 #endif /* 0 */
@@ -2244,7 +2244,7 @@ static int ipcp_printpkt(const u_char *p, int plen,
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= (int)sizeof(ipcp_codenames) / (int)sizeof(char *))
+    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ipcp_codenames))
 	printer(arg, " %s", ipcp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

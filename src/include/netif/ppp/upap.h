@@ -88,10 +88,10 @@
 /*
  * Timeouts.
  */
-#if 0 /* moved to opt.h */
+#if 0 /* moved to ppp_opts.h */
 #define UPAP_DEFTIMEOUT	3	/* Timeout (seconds) for retransmitting req */
 #define UPAP_DEFREQTIME	30	/* Time to wait for auth-req from peer */
-#endif /* moved to opt.h */
+#endif /* moved to ppp_opts.h */
 
 /*
  * Each interface is described by upap structure.

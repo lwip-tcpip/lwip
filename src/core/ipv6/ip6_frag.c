@@ -252,7 +252,6 @@ ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed)
  * Reassembles incoming IPv6 fragments into an IPv6 datagram.
  *
  * @param p points to the IPv6 Fragment Header
- * @param len the length of the payload (after Fragment Header)
  * @return NULL if reassembly is incomplete, pbuf pointing to
  *         IPv6 Header if reassembly is complete
  */
@@ -268,8 +267,12 @@ ip6_reass(struct pbuf *p)
 
   IP6_FRAG_STATS_INC(ip6_frag.recv);
 
-  LWIP_ASSERT("ip6_frag_hdr must be in the first pbuf, not chained",
-     (const void*)ip6_current_header() == ((u8_t*)p->payload) - IP6_HLEN);
+  if ((const void*)ip6_current_header() != ((u8_t*)p->payload) - IP6_HLEN) {
+    /* ip6_frag_hdr must be in the first pbuf, not chained */
+    IP6_FRAG_STATS_INC(ip6_frag.proterr);
+    IP6_FRAG_STATS_INC(ip6_frag.drop);
+    goto nullreturn;
+  }
 
   frag_hdr = (struct ip6_frag_hdr *) p->payload;
 
@@ -671,7 +674,7 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
 
   mtu = nd6_get_destination_mtu(dest, netif);
 
-  /* TODO we assume there are no options in the unfragmentable part (IPv6 header). */
+  /* @todo we assume there are no options in the unfragmentable part (IPv6 header). */
   left = p->tot_len - IP6_HLEN;
 
   nfb = (mtu - (IP6_HLEN + IP6_FRAG_HLEN)) & IP6_FRAG_OFFSET_MASK;

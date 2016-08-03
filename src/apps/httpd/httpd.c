@@ -1,3 +1,8 @@
+/**
+ * @file
+ * LWIP HTTP server implementation
+ */
+
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -31,7 +36,11 @@
  *
  */
 
-/* This httpd supports for a
+/**
+ * @defgroup httpd HTTP server
+ * @ingroup apps
+ *
+ * This httpd supports for a
  * rudimentary server-side-include facility which will replace tags of the form
  * <!--#tag--> in any file whose extension is .shtml, .shtm or .ssi with
  * strings provided by an include handler whose pointer is provided to the
@@ -79,11 +88,14 @@
  * about an unknown extension, make sure to add it (and its doctype) to
  * the 'g_psHTTPHeaders' list.
  */
+#include "lwip/init.h"
 #include "lwip/apps/httpd.h"
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 #include "lwip/apps/fs.h"
 #include "httpd_structs.h"
+#include "lwip/def.h"
+#include "lwip/ip.h"
 #include "lwip/tcp.h"
 
 #include <string.h>
@@ -104,7 +116,8 @@
 /** These defines check whether tcp_write has to copy data or not */
 
 /** This was TI's check whether to let TCP copy data or not
-#define HTTP_IS_DATA_VOLATILE(hs) ((hs->file < (char *)0x20000000) ? 0 : TCP_WRITE_FLAG_COPY)*/
+ * \#define HTTP_IS_DATA_VOLATILE(hs) ((hs->file < (char *)0x20000000) ? 0 : TCP_WRITE_FLAG_COPY)
+ */
 #ifndef HTTP_IS_DATA_VOLATILE
 #if LWIP_HTTPD_SSI
 /* Copy for SSI files, no copy for non-SSI files */
@@ -993,7 +1006,8 @@ get_http_headers(struct http_state *hs, const char *uri)
     add_content_len = 0; /* @todo: get maximum file length from SSI */
   } else
 #endif /* LWIP_HTTPD_SSI */
-  if ((hs->handle == NULL) || ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
+  if ((hs->handle == NULL) ||
+      ((hs->handle->flags & (FS_FILE_FLAGS_HEADER_INCLUDED|FS_FILE_FLAGS_HEADER_PERSISTENT)) == FS_FILE_FLAGS_HEADER_INCLUDED)) {
     add_content_len = 0;
   }
   if (add_content_len) {
@@ -2372,7 +2386,8 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
      } else
 #endif /* LWIP_HTTPD_SSI */
      {
-       if ((hs->handle != NULL) && ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
+       if ((hs->handle != NULL) &&
+           ((hs->handle->flags & (FS_FILE_FLAGS_HEADER_INCLUDED|FS_FILE_FLAGS_HEADER_PERSISTENT)) == FS_FILE_FLAGS_HEADER_INCLUDED)) {
          hs->keepalive = 0;
        }
      }
@@ -2543,7 +2558,7 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
        if (hs->post_content_len_left == 0)
 #endif /* LWIP_HTTPD_SUPPORT_POST */
         {
-          LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_recv: data %p len %"S32_F"\n", hs->file, hs->left));
+          LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_recv: data %p len %"S32_F"\n", (const void*)hs->file, hs->left));
           http_send(pcb, hs);
         }
       } else if (parsed == ERR_ARG) {
@@ -2600,6 +2615,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 
 /**
+ * @ingroup httpd
  * Initialize the httpd: set up a listening PCB and bind it to the defined port
  */
 void
@@ -2608,12 +2624,10 @@ httpd_init(void)
   struct tcp_pcb *pcb;
   err_t err;
 
-#if MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS
 #if HTTPD_USE_MEM_POOL
   LWIP_MEMPOOL_INIT(HTTPD_STATE);
 #if LWIP_HTTPD_SSI
   LWIP_MEMPOOL_INIT(HTTPD_SSI_STATE);
-#endif
 #endif
 #endif
   LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));

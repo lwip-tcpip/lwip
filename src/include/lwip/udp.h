@@ -1,3 +1,9 @@
+/**
+ * @file
+ * UDP API (to be used from TCPIP thread)\n
+ * See also @ref udp_raw
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -88,8 +94,9 @@ struct udp_pcb;
 typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     const ip_addr_t *addr, u16_t port);
 
+/** the UDP protocol control block */
 struct udp_pcb {
-/* Common members of all PCB types */
+/** Common members of all PCB types */
   IP_PCB;
 
 /* Protocol specific PCB members */

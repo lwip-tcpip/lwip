@@ -1,7 +1,6 @@
 /**
  * @file
  * Sequential API External module
- *
  */
 
 /*
@@ -33,7 +32,26 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- *
+ */
+
+/**
+ * @defgroup netconn Netconn API
+ * @ingroup threadsafe_api
+ * Thread-safe, to be called from non-TCPIP threads only.
+ * TX/RX handling based on @ref netbuf (containing @ref pbuf)
+ * to avoid copying data around.
+ * 
+ * @defgroup netconn_common Common functions
+ * @ingroup netconn
+ * For use with TCP and UDP
+ * 
+ * @defgroup netconn_tcp TCP only
+ * @ingroup netconn
+ * TCP only functions
+ * 
+ * @defgroup netconn_udp UDP only
+ * @ingroup netconn
+ * UDP only functions
  */
 
 /* This is the part of the API that is linked with
@@ -138,6 +156,7 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 }
 
 /**
+ * @ingroup netconn_common
  * Close a netconn 'connection' and free its resources.
  * UDP and RAW connection are completely closed, TCP pcbs might still be in a waitstate
  * after this returns.
@@ -219,6 +238,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
 }
 
 /**
+ * @ingroup netconn_common
  * Bind a netconn to a specific local IP address and port.
  * Binding one netconn twice might not always be checked correctly!
  *
@@ -252,6 +272,7 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 }
 
 /**
+ * @ingroup netconn_common
  * Connect a netconn to a specific remote IP address and port.
  *
  * @param conn the netconn to connect
@@ -283,10 +304,11 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 }
 
 /**
+ * @ingroup netconn_udp
  * Disconnect a netconn from its current peer (only valid for UDP netconns).
  *
  * @param conn the netconn to disconnect
- * @return TODO: return value is not set here...
+ * @return @todo: return value is not set here...
  */
 err_t
 netconn_disconnect(struct netconn *conn)
@@ -305,6 +327,7 @@ netconn_disconnect(struct netconn *conn)
 }
 
 /**
+ * @ingroup netconn_tcp
  * Set a TCP netconn into listen mode
  *
  * @param conn the tcp netconn to set to listen mode
@@ -341,6 +364,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 }
 
 /**
+ * @ingroup netconn_tcp
  * Accept a new connection on a TCP listening netconn.
  *
  * @param conn the TCP listen netconn
@@ -429,6 +453,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 }
 
 /**
+ * @ingroup netconn_common
  * Receive data: actual implementation that doesn't care whether pbuf or netbuf
  * is received
  *
@@ -445,6 +470,9 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
   err_t err;
 #if LWIP_TCP
   API_MSG_VAR_DECLARE(msg);
+#if LWIP_MPU_COMPATIBLE
+  msg = NULL;
+#endif
 #endif /* LWIP_TCP */
 
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
@@ -479,7 +507,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
     API_MSG_VAR_ALLOC(msg);
   }
 #endif /* LWIP_TCP */
-    
+
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(&conn->recvmbox, &buf, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
 #if LWIP_TCP
@@ -502,7 +530,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   {
     /* Let the stack know that we have taken the data. */
-    /* TODO: Speedup: Don't block and wait for the answer here
+    /* @todo: Speedup: Don't block and wait for the answer here
        (to prevent multiple thread-switches). */
     API_MSG_VAR_REF(msg).conn = conn;
     if (buf != NULL) {
@@ -550,6 +578,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 }
 
 /**
+ * @ingroup netconn_tcp
  * Receive data (in form of a pbuf) from a TCP netconn
  *
  * @param conn the netconn from which to receive data
@@ -568,6 +597,7 @@ netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf)
 }
 
 /**
+ * @ingroup netconn_common
  * Receive data (in form of a netbuf containing a packet buffer) from a netconn
  *
  * @param conn the netconn from which to receive data
@@ -627,6 +657,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 }
 
 /**
+ * @ingroup netconn_udp
  * Send data (in form of a netbuf) to a specific remote IP address and port.
  * Only to be used for UDP and RAW netconns (not TCP).
  *
@@ -648,6 +679,7 @@ netconn_sendto(struct netconn *conn, struct netbuf *buf, const ip_addr_t *addr, 
 }
 
 /**
+ * @ingroup netconn_udp
  * Send data over a UDP or RAW netconn (that is already connected).
  *
  * @param conn the UDP or RAW netconn over which to send data
@@ -673,6 +705,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 }
 
 /**
+ * @ingroup netconn_tcp
  * Send data over a TCP netconn.
  *
  * @param conn the TCP netconn over which to send data
@@ -744,6 +777,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
 }
 
 /**
+ * @ingroup netconn_tcp
  * Close or shutdown a TCP netconn (doesn't delete it).
  *
  * @param conn the TCP netconn to close or shutdown
@@ -780,6 +814,7 @@ netconn_close_shutdown(struct netconn *conn, u8_t how)
 }
 
 /**
+ * @ingroup netconn_tcp
  * Close a TCP netconn (doesn't delete it).
  *
  * @param conn the TCP netconn to close
@@ -793,9 +828,12 @@ netconn_close(struct netconn *conn)
 }
 
 /**
+ * @ingroup netconn_tcp
  * Shut down one or both sides of a TCP netconn (doesn't delete it).
  *
  * @param conn the TCP netconn to shut down
+ * @param shut_rx shut down the RX side (no more read possible after this)
+ * @param shut_tx shut down the TX side (no more write possible after this)
  * @return ERR_OK if the netconn was closed, any other err_t on error
  */
 err_t
@@ -806,6 +844,7 @@ netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx)
 
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 /**
+ * @ingroup netconn_udp
  * Join multicast groups for UDP netconns.
  *
  * @param conn the UDP netconn for which to change multicast addresses
@@ -849,10 +888,12 @@ netconn_join_leave_group(struct netconn *conn,
 
 #if LWIP_DNS
 /**
+ * @ingroup netconn_common
  * Execute a DNS query, only one IP address is returned
  *
  * @param name a string representation of the DNS host name to query
  * @param addr a preallocated ip_addr_t where to store the resolved IP address
+ * @param dns_addrtype IP address type (IPv4 / IPv6)
  * @return ERR_OK: resolving succeeded
  *         ERR_MEM: memory error, try again later
  *         ERR_ARG: dns client not initialized or invalid hostname

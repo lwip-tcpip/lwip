@@ -1,11 +1,7 @@
 /**
- * @file
+ * @file 
  * Transmission Control Protocol for IP
- *
- * This file contains common functions for the TCP implementation, such as functinos
- * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.
- *
+ * See also @ref tcp_raw
  */
 
 /*
@@ -40,6 +36,17 @@
  *
  */
 
+/**
+ * @defgroup tcp_raw TCP
+ * @ingroup raw_api
+ * Transmission Control Protocol for IP\n
+ * @see @ref raw_api and @ref netconn
+ *
+ * Common functions for the TCP implementation, such as functinos
+ * for manipulating the data structures and the TCP timer functions. TCP functions
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
@@ -72,6 +79,13 @@
 #define TCP_KEEP_DUR(pcb)   TCP_MAXIDLE
 #define TCP_KEEP_INTVL(pcb) TCP_KEEPINTVL_DEFAULT
 #endif /* LWIP_TCP_KEEPALIVE */
+
+/* As initial send MSS, we use TCP_MSS but limit it to 536. */
+#if TCP_MSS > 536
+#define INITIAL_MSS 536
+#else
+#define INITIAL_MSS TCP_MSS
+#endif
 
 const char * const tcp_state_str[] = {
   "CLOSED",
@@ -181,7 +195,8 @@ tcp_listen_closed(struct tcp_pcb *pcb)
 }
 
 #if TCP_LISTEN_BACKLOG
-/** Delay accepting a connection in respect to the listen backlog:
+/** @ingroup tcp_raw
+ * Delay accepting a connection in respect to the listen backlog:
  * the number of outstanding connections is increased until
  * tcp_backlog_accepted() is called.
  *
@@ -203,7 +218,8 @@ tcp_backlog_delayed(struct tcp_pcb* pcb)
   }
 }
 
-/** A delayed-accept a connection is accepted (or closed/aborted): decreases
+/** @ingroup tcp_raw
+ * A delayed-accept a connection is accepted (or closed/aborted): decreases
  * the number of outstanding connections after calling tcp_backlog_delayed().
  *
  * ATTENTION: the caller is responsible for calling tcp_backlog_accepted()
@@ -347,6 +363,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
 }
 
 /**
+ * @ingroup tcp_raw
  * Closes the connection held by the PCB.
  *
  * Listening pcbs are freed and may not be referenced any more.
@@ -375,6 +392,7 @@ tcp_close(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * Causes all or part of a full-duplex connection of this PCB to be shut down.
  * This doesn't deallocate the PCB unless shutting down both sides!
  * Shutting down both sides is the same as calling tcp_close, so if it succeds,
@@ -457,9 +475,11 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     errf = pcb->errf;
 #endif /* LWIP_CALLBACK_API */
     errf_arg = pcb->callback_arg;
-    if ((pcb->state == CLOSED) && (pcb->local_port != 0)) {
-      /* bound, not yet opened */
-      TCP_RMV(&tcp_bound_pcbs, pcb);
+    if (pcb->state == CLOSED) {
+      if (pcb->local_port != 0) {
+        /* bound, not yet opened */
+        TCP_RMV(&tcp_bound_pcbs, pcb);
+      }
     } else {
       send_rst = reset;
       local_port = pcb->local_port;
@@ -487,6 +507,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 }
 
 /**
+ * @ingroup tcp_raw
  * Aborts the connection by sending a RST (reset) segment to the remote
  * host. The pcb is deallocated. This function never fails.
  *
@@ -503,6 +524,7 @@ tcp_abort(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * Binds the connection to a local port number and IP address. If the
  * IP address is not given (i.e., ipaddr == NULL), the IP address of
  * the outgoing network interface is used instead.
@@ -604,6 +626,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 #endif /* LWIP_CALLBACK_API */
 
 /**
+ * @ingroup tcp_raw
  * Set the state of the connection to be LISTEN, which means that it
  * is able to accept incoming connections. The protocol control block
  * is reallocated in order to consume less memory. Setting the
@@ -679,7 +702,8 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
  * Returns how much extra window would be advertised if we sent an
  * update now.
  */
-u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
+u32_t
+tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
 {
   u32_t new_right_edge = pcb->rcv_nxt + pcb->rcv_wnd;
 
@@ -705,6 +729,7 @@ u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * This function should be called by the application when it has
  * processed the data. The purpose is to advertise a larger window
  * when the data has been processed.
@@ -748,7 +773,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   }
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: received %"U16_F" bytes, wnd %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F").\n",
-         len, pcb->rcv_wnd, TCP_WND_MAX(pcb) - pcb->rcv_wnd));
+         len, pcb->rcv_wnd, (u16_t)(TCP_WND_MAX(pcb) - pcb->rcv_wnd)));
 }
 
 /**
@@ -782,6 +807,7 @@ again:
 }
 
 /**
+ * @ingroup tcp_raw
  * Connects to another host. The function given as the "connected"
  * argument will be called when the connection has been established.
  *
@@ -868,7 +894,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   pcb->snd_wnd = TCP_WND;
   /* As initial send MSS, we use TCP_MSS but limit it to 536.
      The send MSS is updated when an MSS option is received. */
-  pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
+  pcb->mss = INITIAL_MSS;
 #if TCP_CALCULATE_EFF_SEND_MSS
   pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
@@ -1524,7 +1550,7 @@ tcp_alloc(u8_t prio)
     pcb->ttl = TCP_TTL;
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
        The send MSS is updated when an MSS option is received. */
-    pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
+    pcb->mss = INITIAL_MSS;
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
     pcb->rtime = -1;
@@ -1553,6 +1579,7 @@ tcp_alloc(u8_t prio)
 }
 
 /**
+ * @ingroup tcp_raw
  * Creates a new TCP protocol control block but doesn't place it on
  * any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
@@ -1571,6 +1598,7 @@ tcp_new(void)
 }
 
 /**
+ * @ingroup tcp_raw
  * Creates a new TCP protocol control block but doesn't
  * place it on any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
@@ -1584,7 +1612,7 @@ tcp_new_ip_type(u8_t type)
   struct tcp_pcb * pcb;
   pcb = tcp_alloc(TCP_PRIO_NORMAL);
 #if LWIP_IPV4 && LWIP_IPV6
-  if(pcb != NULL) {
+  if (pcb != NULL) {
     IP_SET_TYPE_VAL(pcb->local_ip, type);
     IP_SET_TYPE_VAL(pcb->remote_ip, type);
   }
@@ -1595,6 +1623,7 @@ tcp_new_ip_type(u8_t type)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the argument that should be passed callback
  * functions.
  *
@@ -1613,6 +1642,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 #if LWIP_CALLBACK_API
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called when a TCP
  * connection receives data.
  *
@@ -1629,6 +1659,7 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called when TCP data
  * has been successfully delivered to the remote host.
  *
@@ -1645,6 +1676,7 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
  *
@@ -1662,6 +1694,7 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 }
 
 /**
+ * @ingroup tcp_raw
  * Used for specifying the function that should be called when a
  * LISTENing connection has been connected to another host.
  *
@@ -1681,6 +1714,7 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 
 
 /**
+ * @ingroup tcp_raw
  * Used to specify the function that should be called periodically
  * from TCP. The interval is specified in terms of the TCP coarse
  * timer interval, which is called twice a second.
@@ -1894,7 +1928,8 @@ tcp_netif_ipv4_addr_changed_pcblist(const ip4_addr_t* old_addr, struct tcp_pcb* 
  * @param old_addr IPv4 address of the netif before change
  * @param new_addr IPv4 address of the netif after change or NULL if netif has been removed
  */
-void tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
+void
+tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
 {
   struct tcp_pcb_listen *lpcb, *next;
 
@@ -1912,7 +1947,7 @@ void tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* n
             (ip4_addr_cmp(ip_2_ip4(&lpcb->local_ip), old_addr))) {
           /* The PCB is listening to the old ipaddr and
            * is set to listen to the new one instead */
-              ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
+          ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
         }
       }
     }
@@ -1948,12 +1983,12 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("| %2"U16_F" |   |%"U16_F"%"U16_F"%"U16_F"%"U16_F"%"U16_F"%"U16_F"|     %5"U16_F"     | (hdrlen, flags (",
        TCPH_HDRLEN(tcphdr),
-         TCPH_FLAGS(tcphdr) >> 5 & 1,
-         TCPH_FLAGS(tcphdr) >> 4 & 1,
-         TCPH_FLAGS(tcphdr) >> 3 & 1,
-         TCPH_FLAGS(tcphdr) >> 2 & 1,
-         TCPH_FLAGS(tcphdr) >> 1 & 1,
-         TCPH_FLAGS(tcphdr) & 1,
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 5 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 4 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 3 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 2 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr) >> 1 & 1),
+         (u16_t)(TCPH_FLAGS(tcphdr)      & 1),
          ntohs(tcphdr->wnd)));
   tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
   LWIP_DEBUGF(TCP_DEBUG, ("), win)\n"));
@@ -2016,6 +2051,8 @@ void
 tcp_debug_print_pcbs(void)
 {
   struct tcp_pcb *pcb;
+  struct tcp_pcb_listen *pcbl;
+
   LWIP_DEBUGF(TCP_DEBUG, ("Active PCB states:\n"));
   for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",
@@ -2023,13 +2060,13 @@ tcp_debug_print_pcbs(void)
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
   }
+
   LWIP_DEBUGF(TCP_DEBUG, ("Listen PCB states:\n"));
-  for (pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
-    LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",
-                       pcb->local_port, pcb->remote_port,
-                       pcb->snd_nxt, pcb->rcv_nxt));
-    tcp_debug_print_state(pcb->state);
+  for (pcbl = tcp_listen_pcbs.listen_pcbs; pcbl != NULL; pcbl = pcbl->next) {
+    LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F" ", pcbl->local_port));
+    tcp_debug_print_state(pcbl->state);
   }
+
   LWIP_DEBUGF(TCP_DEBUG, ("TIME-WAIT PCB states:\n"));
   for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %"U16_F", foreign port %"U16_F" snd_nxt %"U32_F" rcv_nxt %"U32_F" ",

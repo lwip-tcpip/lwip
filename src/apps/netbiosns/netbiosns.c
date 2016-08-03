@@ -1,6 +1,11 @@
 /**
  * @file
  * NetBIOS name service responder
+ */
+
+/**
+ * @defgroup netbiosns NETBIOS responder
+ * @ingroup apps
  *
  * This is an example implementation of a NetBIOS name server.
  * It responds to name queries for a configurable name.
@@ -308,6 +313,10 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
   }
 }
 
+/**
+ * @ingroup netbiosns 
+ * Init netbios responder
+ */
 void
 netbiosns_init(void)
 {
@@ -325,19 +334,26 @@ netbiosns_init(void)
 }
 
 #ifndef NETBIOS_LWIP_NAME
-/* ATTENTION: the hostname must be <= 15 characters! */
+/**
+ * @ingroup netbiosns 
+ * Set netbios name. ATTENTION: the hostname must be less than 15 characters!
+ */
 void
 netbiosns_set_name(const char* hostname)
 {
   size_t copy_len = strlen(hostname);
   LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
-  if(copy_len >= NETBIOS_NAME_LEN) {
+  if (copy_len >= NETBIOS_NAME_LEN) {
     copy_len = NETBIOS_NAME_LEN - 1;
   }
   memcpy(netbiosns_local_name, hostname, copy_len + 1);
 }
 #endif
 
+/**
+ * @ingroup netbiosns 
+ * Stop netbios responder
+ */
 void
 netbiosns_stop(void)
 {

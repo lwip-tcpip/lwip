@@ -1,5 +1,10 @@
+/**
+ * @file
+ * SNTP client API
+ */
+
 /*
- * Copyright (c) 2007-2009 Fr�d�ric Bernon, Simon Goldschmidt
+ * Copyright (c) 2007-2009 Frédéric Bernon, Simon Goldschmidt
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -26,7 +31,7 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Fr�d�ric Bernon, Simon Goldschmidt
+ * Author: Frédéric Bernon, Simon Goldschmidt
  *
  */
 #ifndef LWIP_HDR_APPS_SNTP_H
@@ -51,7 +56,7 @@ void sntp_stop(void);
 u8_t sntp_enabled(void);
 
 void sntp_setserver(u8_t idx, const ip_addr_t *addr);
-ip_addr_t sntp_getserver(u8_t idx);
+const ip_addr_t* sntp_getserver(u8_t idx);
 
 #if SNTP_SERVER_DNS
 void sntp_setservername(u8_t idx, char *server);

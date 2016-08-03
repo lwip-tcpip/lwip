@@ -30,10 +30,10 @@
 #
 
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.
-COREFILES=$(LWIPDIR)/core/def.c \
+COREFILES=$(LWIPDIR)/core/init.c \
+	$(LWIPDIR)/core/def.c \
 	$(LWIPDIR)/core/dns.c \
 	$(LWIPDIR)/core/inet_chksum.c \
-	$(LWIPDIR)/core/init.c \
 	$(LWIPDIR)/core/ip.c \
 	$(LWIPDIR)/core/mem.c \
 	$(LWIPDIR)/core/memp.c \
@@ -45,20 +45,22 @@ COREFILES=$(LWIPDIR)/core/def.c \
 	$(LWIPDIR)/core/tcp.c \
 	$(LWIPDIR)/core/tcp_in.c \
 	$(LWIPDIR)/core/tcp_out.c \
-	$(LWIPDIR)/core/timers.c \
+	$(LWIPDIR)/core/timeouts.c \
 	$(LWIPDIR)/core/udp.c
 
 CORE4FILES=$(LWIPDIR)/core/ipv4/autoip.c \
 	$(LWIPDIR)/core/ipv4/dhcp.c \
+	$(LWIPDIR)/core/ipv4/etharp.c \
 	$(LWIPDIR)/core/ipv4/icmp.c \
 	$(LWIPDIR)/core/ipv4/igmp.c \
-	$(LWIPDIR)/core/ipv4/ip_frag.c \
+	$(LWIPDIR)/core/ipv4/ip4_frag.c \
 	$(LWIPDIR)/core/ipv4/ip4.c \
 	$(LWIPDIR)/core/ipv4/ip4_addr.c
 
 CORE6FILES=$(LWIPDIR)/core/ipv6/dhcp6.c \
 	$(LWIPDIR)/core/ipv6/ethip6.c \
 	$(LWIPDIR)/core/ipv6/icmp6.c \
+	$(LWIPDIR)/core/ipv6/inet6.c \
 	$(LWIPDIR)/core/ipv6/ip6.c \
 	$(LWIPDIR)/core/ipv6/ip6_addr.c \
 	$(LWIPDIR)/core/ipv6/ip6_frag.c \
@@ -76,7 +78,7 @@ APIFILES=$(LWIPDIR)/api/api_lib.c \
 	$(LWIPDIR)/api/tcpip.c
 
 # NETIFFILES: Files implementing various generic network interface functions
-NETIFFILES=$(LWIPDIR)/netif/ethernet.c $(LWIPDIR)/netif/etharp.c \
+NETIFFILES=$(LWIPDIR)/netif/ethernet.c \
 	$(LWIPDIR)/netif/slipif.c
 
 # SIXLOWPAN: 6LoWPAN

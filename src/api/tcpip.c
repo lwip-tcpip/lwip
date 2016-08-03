@@ -47,7 +47,7 @@
 #include "lwip/init.h"
 #include "lwip/ip.h"
 #include "lwip/pbuf.h"
-#include "netif/etharp.h"
+#include "lwip/etharp.h"
 
 #define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
 #define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
@@ -190,8 +190,10 @@ tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn)
 }
 
 /**
+ * @ingroup lwip_os
  * Pass a received packet to tcpip_thread for input processing with
- * ethernet_input or ip_input
+ * ethernet_input or ip_input. Don't call directly, pass to netif_add()
+ * and call netif->input().
  *
  * @param p the received packet, p->payload pointing to the Ethernet header or
  *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
@@ -215,7 +217,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
  * A function called in that way may access lwIP core code
  * without fearing concurrent access.
  *
- * @param f the function to call
+ * @param function the function to call
  * @param ctx parameter passed to f
  * @param block 1 to block until the request is posted, 0 to non-blocking mode
  * @return ERR_OK if the function was called, another err_t if not
@@ -363,16 +365,15 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
   return err;
 #else /* LWIP_TCPIP_CORE_LOCKING */
   TCPIP_MSG_VAR_DECLARE(msg);
-  err_t err;
-
-  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
 
 #if !LWIP_NETCONN_SEM_PER_THREAD
-  err = sys_sem_new(&call->sem, 0);
+  err_t err = sys_sem_new(&call->sem, 0);
   if (err != ERR_OK) {
     return err;
   }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
+
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
     
   TCPIP_MSG_VAR_ALLOC(msg);
   TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
@@ -442,6 +443,7 @@ tcpip_trycallback(struct tcpip_callback_msg* msg)
 }
 
 /**
+ * @ingroup lwip_os
  * Initialize this module:
  * - initialize all sub modules
  * - start the tcpip_thread

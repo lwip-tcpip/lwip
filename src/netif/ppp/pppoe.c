@@ -76,7 +76,7 @@
 #include <stdio.h>
 #endif /* UNUSED */
 
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/memp.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
@@ -470,6 +470,10 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
         break;
       case PPPOE_TAG_ACCOOKIE:
         if (ac_cookie == NULL) {
+          if (len > PPPOE_MAX_AC_COOKIE_LEN) {
+            PPPDEBUG(LOG_DEBUG, ("pppoe: AC cookie is too long: len = %d, max = %d\n", len, PPPOE_MAX_AC_COOKIE_LEN));
+            goto done;
+          }
           ac_cookie = (u8_t*)pb->payload + off + sizeof(pt);
           ac_cookie_len = len;
         }
@@ -921,13 +925,15 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   }
 #endif
 
-  ppp_clear(ppp);
+  ppp_link_start(ppp);
 
   lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
   lcp_wo->neg_asyncmap = 0;
   lcp_wo->neg_pcompression = 0;
   lcp_wo->neg_accompression = 0;
+  lcp_wo->passive = 0;
+  lcp_wo->silent = 0;
 
   lcp_ao = &ppp->lcp_allowoptions;
   lcp_ao->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */

@@ -54,9 +54,6 @@
  */
 
 #include "lwip/opt.h"
-
-#if !MEM_LIBC_MALLOC /* don't build if not configured for use in lwipopts.h */
-
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/sys.h"
@@ -65,13 +62,93 @@
 
 #include <string.h>
 
-#if MEM_USE_POOLS
+#if MEM_LIBC_MALLOC || MEM_USE_POOLS
+/** mem_init is not used when using pools instead of a heap or using
+ * C library malloc().
+ */
+void
+mem_init(void)
+{
+}
 
-#if MEMP_MEM_MALLOC
-#error MEM_USE_POOLS and MEMP_MEM_MALLOC cannot be used together
+/** mem_trim is not used when using pools instead of a heap or using
+ * C library malloc(): we can't free part of a pool element and the stack
+ * support mem_trim() to return a different pointer
+ */
+void*
+mem_trim(void *mem, mem_size_t size)
+{
+  LWIP_UNUSED_ARG(size);
+  return mem;
+}
+#endif /* MEM_LIBC_MALLOC || MEM_USE_POOLS */
+
+#if MEM_LIBC_MALLOC
+/* lwIP heap implemented using C library malloc() */
+
+/* in case C library malloc() needs extra protection,
+ * allow these defines to be overridden.
+ */
+#ifndef mem_clib_free
+#define mem_clib_free free
+#endif
+#ifndef mem_clib_malloc
+#define mem_clib_malloc malloc
+#endif
+#ifndef mem_clib_calloc
+#define mem_clib_calloc calloc
 #endif
 
-/* lwIP head implemented with different sized pools */
+#if LWIP_STATS && MEM_STATS
+#define MEM_LIBC_STATSHELPER_SIZE LWIP_MEM_ALIGN_SIZE(sizeof(mem_size_t))
+#else
+#define MEM_LIBC_STATSHELPER_SIZE 0
+#endif
+
+/**
+ * Allocate a block of memory with a minimum of 'size' bytes.
+ *
+ * @param size is the minimum size of the requested block in bytes.
+ * @return pointer to allocated memory or NULL if no free memory was found.
+ *
+ * Note that the returned value must always be aligned (as defined by MEM_ALIGNMENT).
+ */
+void *
+mem_malloc(mem_size_t size)
+{
+  void* ret = mem_clib_malloc(size + MEM_LIBC_STATSHELPER_SIZE);
+  if (ret == NULL) {
+    MEM_STATS_INC(err);
+  } else {
+    LWIP_ASSERT("malloc() must return aligned memory", LWIP_MEM_ALIGN(ret) == ret);
+#if LWIP_STATS && MEM_STATS
+    *(mem_size_t*)ret = size;
+    ret = (u8_t*)ret + MEM_LIBC_STATSHELPER_SIZE;
+    MEM_STATS_INC_USED(used, size);
+#endif
+  }
+  return ret;
+}
+
+/** Put memory back on the heap
+ *
+ * @param rmem is the pointer as returned by a previous call to mem_malloc()
+ */
+void
+mem_free(void *rmem)
+{
+  LWIP_ASSERT("rmem != NULL", (rmem != NULL));
+  LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
+#if LWIP_STATS && MEM_STATS
+  rmem = (u8_t*)rmem - MEM_LIBC_STATSHELPER_SIZE;
+  MEM_STATS_DEC_USED(used, *(mem_size_t*)rmem);
+#endif
+  mem_clib_free(rmem);
+}
+
+#elif MEM_USE_POOLS
+
+/* lwIP heap implemented with different sized pools */
 
 /**
  * Allocate memory: determine the smallest pool that is big enough
@@ -100,6 +177,7 @@ again:
   }
   if (poolnr > MEMP_POOL_LAST) {
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
+    MEM_STATS_INC(err);
     return NULL;
   }
   element = (struct memp_malloc_helper*)memp_malloc(poolnr);
@@ -113,6 +191,7 @@ again:
       goto again;
     }
 #endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
+    MEM_STATS_INC(err);
     return NULL;
   }
 
@@ -121,9 +200,13 @@ again:
   /* and return a pointer to the memory directly after the struct memp_malloc_helper */
   ret = (u8_t*)element + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper));
 
+#if MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS)
+  /* truncating to u16_t is safe because struct memp_desc::size is u16_t */
+  element->size = (u16_t)size;
+  MEM_STATS_INC_USED(used, element->size);
+#endif /* MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS) */
 #if MEMP_OVERFLOW_CHECK
-  /* initialize unused memory */
-  element->size = size;
+  /* initialize unused memory (diff between requested size and selected pool's size) */
   memset((u8_t*)ret + size, 0xcd, memp_pools[poolnr]->size - size);
 #endif /* MEMP_OVERFLOW_CHECK */
   return ret;
@@ -145,18 +228,20 @@ mem_free(void *rmem)
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 
   /* get the original struct memp_malloc_helper */
+  /* cast through void* to get rid of alignment warnings */
   hmem = (struct memp_malloc_helper*)(void*)((u8_t*)rmem - LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper)));
 
   LWIP_ASSERT("hmem != NULL", (hmem != NULL));
   LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == LWIP_MEM_ALIGN(hmem)));
   LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
 
+  MEM_STATS_DEC_USED(used, hmem->size);
 #if MEMP_OVERFLOW_CHECK
   {
      u16_t i;
      LWIP_ASSERT("MEM_USE_POOLS: invalid chunk size",
         hmem->size <= memp_pools[hmem->poolnr]->size);
-     /* check that unused memory remained untouched */
+     /* check that unused memory remained untouched (diff between requested size and selected pool's size) */
      for (i = hmem->size; i < memp_pools[hmem->poolnr]->size; i++) {
         u8_t data = *((u8_t*)rmem + i);
         LWIP_ASSERT("MEM_USE_POOLS: mem overflow detected", data == 0xcd);
@@ -202,7 +287,7 @@ struct mem {
  * how that space is calculated). */
 #ifndef LWIP_RAM_HEAP_POINTER
 /** the heap. we need one struct mem at the end and some room for alignment */
-u8_t ram_heap[MEM_SIZE_ALIGNED + (2U*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];
+LWIP_DECLARE_MEMORY_ALIGNED(ram_heap, MEM_SIZE_ALIGNED + (2U*SIZEOF_STRUCT_MEM));
 #define LWIP_RAM_HEAP_POINTER ram_heap
 #endif /* LWIP_RAM_HEAP_POINTER */
 
@@ -357,6 +442,7 @@ mem_free(void *rmem)
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
   /* Get the corresponding struct mem ... */
+  /* cast through void* to get rid of alignment warnings */
   mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... which has to be in a used state ... */
   LWIP_ASSERT("mem_free: mem->used", mem->used);
@@ -423,6 +509,7 @@ mem_trim(void *rmem, mem_size_t newsize)
     return rmem;
   }
   /* Get the corresponding struct mem ... */
+  /* cast through void* to get rid of alignment warnings */
   mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... and its offset pointer */
   ptr = (mem_size_t)((u8_t *)mem - ram);
@@ -505,7 +592,6 @@ mem_trim(void *rmem, mem_size_t newsize)
 }
 
 /**
- * Adam's mem_malloc() plus solution for bug #17922
  * Allocate a block of memory with a minimum of 'size' bytes.
  *
  * @param size is the minimum size of the requested block in bytes.
@@ -656,6 +742,15 @@ mem_malloc_adjust_lfree:
 }
 
 #endif /* MEM_USE_POOLS */
+
+#if MEM_LIBC_MALLOC && (!LWIP_STATS || !MEM_STATS)
+void *
+mem_calloc(mem_size_t count, mem_size_t size)
+{
+  return mem_clib_calloc(count, size);
+}
+
+#else /* MEM_LIBC_MALLOC && (!LWIP_STATS || !MEM_STATS) */
 /**
  * Contiguously allocates enough space for count objects that are size bytes
  * of memory each and returns a pointer to the allocated memory.
@@ -666,7 +761,8 @@ mem_malloc_adjust_lfree:
  * @param size size of the objects to allocate
  * @return pointer to allocated memory / NULL pointer if there is an error
  */
-void *mem_calloc(mem_size_t count, mem_size_t size)
+void *
+mem_calloc(mem_size_t count, mem_size_t size)
 {
   void *p;
 
@@ -678,5 +774,4 @@ void *mem_calloc(mem_size_t count, mem_size_t size)
   }
   return p;
 }
-
-#endif /* !MEM_LIBC_MALLOC */
+#endif /* MEM_LIBC_MALLOC && (!LWIP_STATS || !MEM_STATS) */

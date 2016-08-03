@@ -33,7 +33,27 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
+ */
+
+/**
+ * @defgroup lwip_nosys Mainloop mode ("NO_SYS")
+ * @ingroup lwip
+ * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
+ * Feed incoming packets to netif->input(pbuf, netif) function from mainloop,
+ * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
+ * context and put them into a queue which is processed from mainloop.\n
+ * Call sys_check_timeouts() periodically in the mainloop.\n
+ * Porting: implement all functions in @ref sys_time and @ref sys_prot.\n
+ * You can only use @ref callbackstyle_api in this mode.
  *
+ * @defgroup lwip_os OS mode (TCPIP thread)
+ * @ingroup lwip
+ * Use this mode if you run an OS on your system. It is recommended to
+ * use an RTOS that correctly handles priority inversion and
+ * to use LWIP_TCPIP_CORE_LOCKING.\n
+ * Porting: implement all functions in @ref sys_layer.\n
+ * You can use @ref callbackstyle_api together with \#define tcpip_callback,
+ * and all @ref threadsafe_api.
  */
 
 #include "lwip/opt.h"
@@ -53,8 +73,8 @@
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
-#include "lwip/timers.h"
-#include "netif/etharp.h"
+#include "lwip/timeouts.h"
+#include "lwip/etharp.h"
 #include "lwip/ip6.h"
 #include "lwip/nd6.h"
 #include "lwip/mld6.h"
@@ -252,6 +272,9 @@
 #ifdef ETHARP_ALWAYS_INSERT
   #error "ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h."
 #endif
+#if !NO_SYS && LWIP_TCPIP_CORE_LOCKING && LWIP_COMPAT_MUTEX && !defined(LWIP_COMPAT_MUTEX_ALLOWED)
+  #error "LWIP_COMPAT_MUTEX cannot prevent priority inversion. It is recommended to implement priority-aware mutexes. (Define LWIP_COMPAT_MUTEX_ALLOWED to disable this error.)"
+#endif
 
 #ifndef LWIP_DISABLE_TCP_SANITY_CHECKS
 #define LWIP_DISABLE_TCP_SANITY_CHECKS  0
@@ -261,9 +284,9 @@
 #endif
 
 /* MEMP sanity checks */
-#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
-#if LWIP_NETCONN
 #if MEMP_MEM_MALLOC
+#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
+#if LWIP_NETCONN || LWIP_SOCKET
 #if !MEMP_NUM_NETCONN && LWIP_SOCKET
 #error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN cannot be 0 when using sockets!"
 #endif
@@ -271,9 +294,15 @@
 #if MEMP_NUM_NETCONN > (MEMP_NUM_TCP_PCB+MEMP_NUM_TCP_PCB_LISTEN+MEMP_NUM_UDP_PCB+MEMP_NUM_RAW_PCB)
 #error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN should be less than the sum of MEMP_NUM_{TCP,RAW,UDP}_PCB+MEMP_NUM_TCP_PCB_LISTEN. If you know what you are doing, define LWIP_DISABLE_MEMP_SANITY_CHECKS to 1 to disable this error."
 #endif
-#endif /* MEMP_MEM_MALLOC */
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 #endif /* !LWIP_DISABLE_MEMP_SANITY_CHECKS */
+#if MEM_USE_POOLS
+#error "MEMP_MEM_MALLOC and MEM_USE_POOLS cannot be enabled at the same time"
+#endif
+#ifdef LWIP_HOOK_MEMP_AVAILABLE
+#error "LWIP_HOOK_MEMP_AVAILABLE doesn't make sense with MEMP_MEM_MALLOC"
+#endif
+#endif /* MEMP_MEM_MALLOC */
 
 /* TCP sanity checks */
 #if !LWIP_DISABLE_TCP_SANITY_CHECKS
@@ -309,7 +338,9 @@
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
+ * @ingroup lwip_nosys
  * Initialize all modules.
+ * Use this in NO_SYS mode. Use tcpip_init() otherwise.
  */
 void
 lwip_init(void)

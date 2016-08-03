@@ -70,21 +70,21 @@ extern "C" {
 #define IP6_NEXTH_UDPLITE   136
 
 
-/* The IPv6 header. */
+/** The IPv6 header. */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
 struct ip6_hdr {
-  /* version / traffic class / flow label */
+  /** version / traffic class / flow label */
   PACK_STRUCT_FIELD(u32_t _v_tc_fl);
-  /* payload length */
+  /** payload length */
   PACK_STRUCT_FIELD(u16_t _plen);
-  /* next header */
+  /** next header */
   PACK_STRUCT_FLD_8(u8_t _nexth);
-  /* hop limit */
+  /** hop limit */
   PACK_STRUCT_FLD_8(u8_t _hoplim);
-  /* source and destination IP addresses */
+  /** source and destination IP addresses */
   PACK_STRUCT_FLD_S(ip6_addr_p_t src);
   PACK_STRUCT_FLD_S(ip6_addr_p_t dest);
 } PACK_STRUCT_STRUCT;

@@ -1,3 +1,9 @@
+/**
+ * @file
+ * raw API (to be used from TCPIP thread)\n
+ * See also @ref raw_raw
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -61,6 +67,7 @@ struct raw_pcb;
 typedef u8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     const ip_addr_t *addr);
 
+/** the RAW protocol control block */
 struct raw_pcb {
   /* Common members of all PCB types */
   IP_PCB;

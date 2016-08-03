@@ -36,12 +36,21 @@
  *
  * Author: Magnus Ivarsson <magnus.ivarsson(at)volvo.com>
  *         Simon Goldschmidt
- *
- * Usage: This netif can be used in three ways:
+ */
+
+
+/**
+ * @defgroup slipif SLIP netif
+ * @ingroup addons
+ * 
+ * This is an arch independent SLIP netif. The specific serial hooks must be
+ * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send
+ * 
+ * Usage: This netif can be used in three ways:\n
  *        1) For NO_SYS==0, an RX thread can be used which blocks on sio_read()
- *           until data is received.
+ *           until data is received.\n
  *        2) In your main loop, call slipif_poll() to check for new RX bytes,
- *           completed packets are fed into netif->input().
+ *           completed packets are fed into netif->input().\n
  *        3) Call slipif_received_byte[s]() from your serial RX ISR and
  *           slipif_process_rxqueue() from your main loop. ISR level decodes
  *           packets and puts completed packets on a queue which is fed into
@@ -50,15 +59,8 @@
  *
  */
 
-/*
- * This is an arch independent SLIP netif. The specific serial hooks must be
- * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send
- */
-
 #include "netif/slipif.h"
 #include "lwip/opt.h"
-
-#if LWIP_HAVE_SLIPIF
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
@@ -551,5 +553,3 @@ slipif_received_bytes(struct netif *netif, u8_t *data, u8_t len)
   }
 }
 #endif /* SLIP_RX_FROM_ISR */
-
-#endif /* LWIP_HAVE_SLIPIF */

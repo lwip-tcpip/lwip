@@ -1,12 +1,17 @@
 /**
  * @file
- * LWIP iperf server implementation
+ * lwIP iPerf server implementation
+ */
+
+/**
+ * @defgroup iperf Iperf server
+ * @ingroup apps
  *
- * This is simple "Iperf" server to check your bandwith using Iperf on a PC as client.
+ * This is a simple performance measuring server to check your bandwith using
+ * iPerf2 on a PC as client.
  * It is currently a minimal implementation providing an IPv4 TCP server only.
  *
- * @todo:
- * - implement UDP mode
+ * @todo: implement UDP mode and IPv6
  */
 
 /*
@@ -373,7 +378,7 @@ lwiperf_tx_start(lwiperf_state_tcp_t* conn)
   client_conn->base.server = 0;
   client_conn->server_pcb = NULL;
   client_conn->conn_pcb = newpcb;
-  client_conn->time_started = sys_now(); /* TODO: set this again on 'connected' */
+  client_conn->time_started = sys_now(); /* @todo: set this again on 'connected' */
   client_conn->poll_count = 0;
   client_conn->next_num = 4; /* initial nr is '4' since the header has 24 byte */
   client_conn->bytes_transferred = 0;
@@ -458,7 +463,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
       }
     }
     conn->bytes_transferred += sizeof(lwiperf_settings_t);
-    if(conn->bytes_transferred <= 24) {
+    if (conn->bytes_transferred <= 24) {
       conn->time_started = sys_now();
       tcp_recved(tpcb, p->tot_len);
       pbuf_free(p);
@@ -562,7 +567,9 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   return ERR_OK;
 }
 
-/** Start a TCP iperf server on the default TCP port (5001) and listen for
+/** 
+ * @ingroup iperf
+ * Start a TCP iperf server on the default TCP port (5001) and listen for
  * incoming connections from iperf clients.
  *
  * @returns a connection handle that can be used to abort the server
@@ -575,7 +582,9 @@ lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void* report_arg)
     report_fn, report_arg);
 }
 
-/** Start a TCP iperf server on a specific IP address and port and listen for
+/**
+ * @ingroup iperf
+ * Start a TCP iperf server on a specific IP address and port and listen for
  * incoming connections from iperf clients.
  *
  * @returns a connection handle that can be used to abort the server
@@ -589,7 +598,7 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
   struct tcp_pcb* pcb;
   lwiperf_state_tcp_t* s;
 
-  if(local_addr == NULL) {
+  if (local_addr == NULL) {
     return NULL;
   }
 
@@ -626,7 +635,10 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
   return s;
 }
 
-/** Abort an iperf session (handle returned by lwiperf_start_tcp_server*()) */
+/**
+ * @ingroup iperf
+ * Abort an iperf session (handle returned by lwiperf_start_tcp_server*())
+ */
 void
 lwiperf_abort(void* lwiperf_session)
 {
@@ -639,7 +651,7 @@ lwiperf_abort(void* lwiperf_session)
       if (last != NULL) {
         last->next = i;
       }
-      LWIPERF_FREE(lwiperf_state_tcp_t, dealloc); /* TODO: type? */
+      LWIPERF_FREE(lwiperf_state_tcp_t, dealloc); /* @todo: type? */
     } else {
       last = i;
       i = i->next;

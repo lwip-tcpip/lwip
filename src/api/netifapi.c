@@ -31,6 +31,16 @@
  *
  */
 
+/**
+ * @defgroup netifapi NETIF API
+ * @ingroup threadsafe_api
+ * Thread-safe functions to be called from non-TCPIP threads
+ * 
+ * @defgroup netifapi_netif NETIF related
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads 
+ */
+
 #include "lwip/opt.h"
 
 #if LWIP_NETIF_API /* don't build if not configured for use in lwipopts.h */
@@ -50,7 +60,9 @@
 static err_t
 netifapi_do_netif_add(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
   
   if (!netif_add( msg->netif,
 #if LWIP_IPV4
@@ -74,7 +86,9 @@ netifapi_do_netif_add(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
 
   netif_set_addr( msg->netif,
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -91,7 +105,9 @@ netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_common(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
 
   if (msg->msg.common.errtfunc != NULL) {
     return msg->msg.common.errtfunc(msg->netif);
@@ -102,6 +118,7 @@ netifapi_do_netif_common(struct tcpip_api_call_data *m)
 }
 
 /**
+ * @ingroup netifapi_netif
  * Call netif_add() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *
@@ -146,6 +163,7 @@ netifapi_netif_add(struct netif *netif,
 
 #if LWIP_IPV4
 /**
+ * @ingroup netifapi_netif
  * Call netif_set_addr() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *

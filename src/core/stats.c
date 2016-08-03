@@ -49,25 +49,10 @@
 
 struct stats_ lwip_stats;
 
-#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
-#if MEMP_STATS
-static const char * memp_names[] = {
-#define LWIP_MEMPOOL(name,num,size,desc) desc,
-#include "lwip/priv/memp_std.h"
-};
-#endif /* MEMP_STATS */
-#endif /* LWIP_DEBUG || LWIP_STATS_DISPLAY */
-
 void
 stats_init(void)
 {
 #ifdef LWIP_DEBUG
-#if MEMP_STATS
-  int i;
-  for (i = 0; i < MEMP_MAX; i++) {
-    lwip_stats.memp[i].name = memp_names[i];
-  }
-#endif /* MEMP_STATS */
 #if MEM_STATS
   lwip_stats.mem.name = "MEM";
 #endif /* MEM_STATS */
@@ -131,7 +116,7 @@ void
 stats_display_memp(struct stats_mem *mem, int index)
 {
   if (index < MEMP_MAX) {
-    stats_display_mem(mem, memp_names[index]);
+    stats_display_mem(mem, mem->name);
   }
 }
 #endif /* MEMP_STATS */

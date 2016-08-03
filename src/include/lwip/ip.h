@@ -1,3 +1,8 @@
+/**
+ * @file
+ * IP API
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -75,7 +80,7 @@ extern "C" {
 #define IP_PCB_ADDRHINT
 #endif /* LWIP_NETIF_HWADDRHINT */
 
-/* This is the common part of all PCB types. It needs to be at the
+/** This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
@@ -107,7 +112,7 @@ struct ip_pcb {
 /* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
 #define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE)
 
-/* Global variables of this module, kept in a struct for efficient access using base+index. */
+/** Global variables of this module, kept in a struct for efficient access using base+index. */
 struct ip_globals
 {
   /** The interface that accepted the packet for the current callback invocation. */
@@ -225,26 +230,32 @@ extern struct ip_globals ip_data;
 #define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
 
 #if LWIP_IPV4 && LWIP_IPV6
+/** Output IP packet, netif is selected by source address */
 #define ip_output(p, src, dest, ttl, tos, proto) \
         (IP_IS_V6(dest) ? \
         ip6_output(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto) : \
         ip4_output(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto))
+/** Output IP packet to specified interface */
 #define ip_output_if(p, src, dest, ttl, tos, proto, netif) \
         (IP_IS_V6(dest) ? \
         ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
         ip4_output_if(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
+/** Output IP packet to interface specifying source address */
 #define ip_output_if_src(p, src, dest, ttl, tos, proto, netif) \
         (IP_IS_V6(dest) ? \
         ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
         ip4_output_if_src(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
+/** Output IP packet with addr_hint */
 #define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
         (IP_IS_V6(dest) ? \
         ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, addr_hint) : \
         ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, addr_hint))
+/** Get netif for address combination. See \ref ip6_route and \ref ip4_route */
 #define ip_route(src, dest) \
         (IP_IS_V6(dest) ? \
         ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) : \
         ip4_route_src(ip_2_ip4(dest), ip_2_ip4(src)))
+/** Get netif for IP.*/
 #define ip_netif_get_local_ip(netif, dest) (IP_IS_V6(dest) ? \
         ip6_netif_get_local_ip(netif, ip_2_ip6(dest)) : \
         ip4_netif_get_local_ip(netif))

@@ -79,6 +79,12 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/**
+ * @defgroup ppp PPP netif
+ * @ingroup addons
+ * @verbinclude "ppp.txt"
+ */
+
 #include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
@@ -88,7 +94,6 @@
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
 #include "lwip/snmp.h"
-#include "lwip/sio.h"
 #include "lwip/sys.h"
 #include "lwip/ip4.h" /* for ip4_input() */
 #if PPP_IPV6_SUPPORT
@@ -210,8 +215,8 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
-void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 #if PPP_AUTH_SUPPORT
+void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 #if PAP_SUPPORT
   pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
 #endif /* PAP_SUPPORT */
@@ -227,13 +232,23 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #endif /* EAP_SUPPORT */
   pcb->settings.user = user;
   pcb->settings.passwd = passwd;
-#else /* PPP_AUTH_SUPPORT */
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(authtype);
-  LWIP_UNUSED_ARG(user);
-  LWIP_UNUSED_ARG(passwd);
-#endif /* PPP_AUTH_SUPPORT */
 }
+#endif /* PPP_AUTH_SUPPORT */
+
+#if MPPE_SUPPORT
+/* Set MPPE configuration */
+void ppp_set_mppe(ppp_pcb *pcb, u8_t flags) {
+  if (flags == PPP_MPPE_DISABLE) {
+    pcb->settings.require_mppe = 0;
+    return;
+  }
+
+  pcb->settings.require_mppe = 1;
+  pcb->settings.refuse_mppe_stateful = !(flags & PPP_MPPE_ALLOW_STATEFUL);
+  pcb->settings.refuse_mppe_40 = !!(flags & PPP_MPPE_REFUSE_40);
+  pcb->settings.refuse_mppe_128 = !!(flags & PPP_MPPE_REFUSE_128);
+}
+#endif /* MPPE_SUPPORT */
 
 #if PPP_NOTIFY_PHASE
 void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
@@ -275,13 +290,10 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
  *
  * This can only be called if PPP is in the dead phase.
  *
- * Local and remote interface IP addresses, as well as DNS are
- * provided through a previously filled struct ppp_addrs.
- *
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_listen(ppp_pcb *pcb, const struct ppp_addrs *addrs) {
+err_t ppp_listen(ppp_pcb *pcb) {
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_ALREADY;
   }
@@ -289,7 +301,7 @@ err_t ppp_listen(ppp_pcb *pcb, const struct ppp_addrs *addrs) {
   PPPDEBUG(LOG_DEBUG, ("ppp_listen[%d]\n", pcb->netif->num));
 
   if (pcb->link_cb->listen) {
-    return pcb->link_cb->listen(pcb, pcb->link_ctx_cb, addrs);
+    return pcb->link_cb->listen(pcb, pcb->link_ctx_cb);
   }
   return ERR_IF;
 }
@@ -580,21 +592,27 @@ err:
 int ppp_init(void)
 {
 #if PPPOS_SUPPORT
-    LWIP_MEMPOOL_INIT(PPPOS_PCB);
+  LWIP_MEMPOOL_INIT(PPPOS_PCB);
 #endif
 #if PPPOE_SUPPORT
-    LWIP_MEMPOOL_INIT(PPPOE_IF);
+  LWIP_MEMPOOL_INIT(PPPOE_IF);
 #endif
 #if PPPOL2TP_SUPPORT
-    LWIP_MEMPOOL_INIT(PPPOL2TP_PCB);
+  LWIP_MEMPOOL_INIT(PPPOL2TP_PCB);
 #endif
 #if LWIP_PPP_API && LWIP_MPU_COMPATIBLE
-    LWIP_MEMPOOL_INIT(PPPAPI_MSG);
+  LWIP_MEMPOOL_INIT(PPPAPI_MSG);
 #endif
 
-    LWIP_MEMPOOL_INIT(PPP_PCB);
+  LWIP_MEMPOOL_INIT(PPP_PCB);
 
-    return 0;
+  /*
+   * Initialize magic number generator now so that protocols may
+   * use magic numbers in initialization.
+   */
+  magic_init();
+
+  return 0;
 }
  
 /*
@@ -608,6 +626,8 @@ int ppp_init(void)
  */
 ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, void *link_ctx_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
+  const struct protent *protp;
+  int i;
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -623,10 +643,6 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   memset(pcb, 0, sizeof(ppp_pcb));
 
   /* default configuration */
-#if LWIP_DNS
-  pcb->settings.usepeerdns = 1;
-#endif /* LWIP_DNS */
-
 #if PAP_SUPPORT
   pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
   pcb->settings.pap_max_transmits = UPAP_DEFTRANSMITS;
@@ -651,10 +667,6 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
 #endif /* PPP_SERVER */
 #endif /* EAP_SUPPORT */
-
-#if MPPE_SUPPORT
-  pcb->settings.refuse_mppe_stateful = 1;
-#endif /* MPPE_SUPPORT */
 
   pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
@@ -681,22 +693,6 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   pcb->link_ctx_cb = link_ctx_cb;
   pcb->link_status_cb = link_status_cb;
   pcb->ctx_cb = ctx_cb;
-  new_phase(pcb, PPP_PHASE_DEAD);
-  return pcb;
-}
-
-/* Set a PPP PCB to its initial state */
-void ppp_clear(ppp_pcb *pcb) {
-  const struct protent *protp;
-  int i;
-
-  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
-
-#if PPP_STATS_SUPPORT
-  link_stats_valid = 0;
-#endif /* PPP_STATS_SUPPORT */
-
-  memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
 
   /*
    * Initialize each protocol.
@@ -705,24 +701,43 @@ void ppp_clear(ppp_pcb *pcb) {
       (*protp->init)(pcb);
   }
 
-#if VJ_SUPPORT && LWIP_TCP
-  vj_compress_init(&pcb->vj_comp);
-#endif /* VJ_SUPPORT && LWIP_TCP */
+  new_phase(pcb, PPP_PHASE_DEAD);
+  return pcb;
+}
 
+/** Called when link is starting */
+void ppp_link_start(ppp_pcb *pcb) {
+  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
+  PPPDEBUG(LOG_DEBUG, ("ppp_link_start[%d]\n", pcb->netif->num));
   new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
 /** Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_start[%d]\n", pcb->netif->num));
-  lcp_open(pcb); /* Start protocol */
+
+  /* Clean data not taken care by anything else, mostly shared data. */
+#if PPP_STATS_SUPPORT
+  link_stats_valid = 0;
+#endif /* PPP_STATS_SUPPORT */
+#if MPPE_SUPPORT
+  pcb->mppe_keys_set = 0;
+  memset(&pcb->mppe_comp, 0, sizeof(pcb->mppe_comp));
+  memset(&pcb->mppe_decomp, 0, sizeof(pcb->mppe_decomp));
+#endif /* MPPE_SUPPORT */
+#if VJ_SUPPORT && LWIP_TCP
+  vj_compress_init(&pcb->vj_comp);
+#endif /* VJ_SUPPORT && LWIP_TCP */
+
+  /* Start protocol */
+  lcp_open(pcb);
   lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start[%d]: finished\n", pcb->netif->num));
 }
 
 /** Called when link failed to setup */
 void ppp_link_failed(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_failed[%d]\n", pcb->netif->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_link_failed[%d]\n", pcb->netif->num));
   new_phase(pcb, PPP_PHASE_DEAD);
   pcb->err_code = PPPERR_OPEN;
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
@@ -730,7 +745,7 @@ void ppp_link_failed(ppp_pcb *pcb) {
 
 /** Called when link is normally down (i.e. it was asked to end) */
 void ppp_link_end(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_end[%d]\n", pcb->netif->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_link_end[%d]\n", pcb->netif->num));
   if (pcb->err_code == PPPERR_NONE) {
     pcb->err_code = PPPERR_CONNECT;
   }
@@ -1117,17 +1132,18 @@ int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
  * cdns - Clear the DNS servers
  */
 int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
-  ip_addr_t nsa, nsb;
+  const ip_addr_t *nsa;
+  ip_addr_t nsb;
   LWIP_UNUSED_ARG(pcb);
 
   nsa = dns_getserver(0);
   ip_addr_set_ip4_u32(&nsb, ns1);
-  if (ip_addr_cmp(&nsa, &nsb)) {
+  if (ip_addr_cmp(nsa, &nsb)) {
     dns_setserver(0, IP_ADDR_ANY);
   }
   nsa = dns_getserver(1);
   ip_addr_set_ip4_u32(&nsb, ns2);
-  if (ip_addr_cmp(&nsa, &nsb)) {
+  if (ip_addr_cmp(nsa, &nsb)) {
     dns_setserver(1, IP_ADDR_ANY);
   }
   return 1;

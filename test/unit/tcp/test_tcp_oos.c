@@ -272,9 +272,9 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
   }
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -448,9 +448,9 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
   }
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 END_TEST
 
@@ -471,7 +471,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   int datalen = 0;
   int datalen2;
 
-  for(i = 0; i < sizeof(data_full_wnd); i++) {
+  for(i = 0; i < (int)sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
   }
 
@@ -542,9 +542,9 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   EXPECT(pcb->ooseq == NULL);
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 #endif /* !TCP_OOSEQ_MAX_BYTES && !TCP_OOSEQ_MAX_PBUFS */
   LWIP_UNUSED_ARG(_i);
 }
@@ -635,9 +635,9 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin_edge)
   EXPECT(pcb->ooseq == NULL);
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 #endif /* !TCP_OOSEQ_MAX_BYTES && !TCP_OOSEQ_MAX_PBUFS */
   LWIP_UNUSED_ARG(_i);
 }
@@ -716,9 +716,9 @@ START_TEST(test_tcp_recv_ooseq_max_bytes)
   EXPECT_OOSEQ(datalen2 == ((i-1) * TCP_MSS));
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 #endif /* TCP_OOSEQ_MAX_BYTES && (TCP_OOSEQ_MAX_BYTES < (TCP_WND + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN)) */
   LWIP_UNUSED_ARG(_i);
 }
@@ -797,9 +797,9 @@ START_TEST(test_tcp_recv_ooseq_max_pbufs)
   EXPECT_OOSEQ(datalen2 == (i-1));
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 #endif /* TCP_OOSEQ_MAX_PBUFS && (TCP_OOSEQ_MAX_BYTES < (TCP_WND + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN)) */
   LWIP_UNUSED_ARG(_i);
 }
@@ -840,7 +840,7 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
   u32_t exp_rx_calls = 0, exp_rx_bytes = 0, exp_close_calls = 0, exp_oos_pbufs = 0, exp_oos_tcplen = 0;
   int first_dropped = 0xff;
 
-  for(i = 0; i < sizeof(data_full_wnd); i++) {
+  for(i = 0; i < (int)sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
   }
 
@@ -985,9 +985,9 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
   EXPECT(pcb->ooseq == NULL);
 
   /* make sure the pcb is freed */
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
   tcp_abort(pcb);
-  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
 }
 
 /** create multiple segments and pass them to tcp_input with the first segment missing

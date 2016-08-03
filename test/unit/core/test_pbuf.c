@@ -46,7 +46,7 @@ START_TEST(test_pbuf_copy_zero_pbuf)
   LWIP_UNUSED_ARG(_i);
 
   fail_unless(lwip_stats.mem.used == 0);
-  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 
   p1 = pbuf_alloc(PBUF_RAW, 1024, PBUF_RAM);
   fail_unless(p1 != NULL);
@@ -70,7 +70,7 @@ START_TEST(test_pbuf_copy_zero_pbuf)
   fail_unless(lwip_stats.mem.used == 0);
 
   fail_unless(lwip_stats.mem.used == 0);
-  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 }
 END_TEST
 
@@ -164,8 +164,8 @@ START_TEST(test_pbuf_take_at_edge)
   res = pbuf_take_at(p, &testdata, sizeof(testdata), 0);
   fail_unless(res == ERR_OK);
 
-  out = p->payload;
-  for (i = 0; i < sizeof(testdata); i++) {
+  out = (u8_t*)p->payload;
+  for (i = 0; i < (int)sizeof(testdata); i++) {
     fail_unless(out[i] == testdata[i],
       "Bad data at pos %d, was %02X, expected %02X", i, out[i], testdata[i]);
   }
@@ -174,11 +174,11 @@ START_TEST(test_pbuf_take_at_edge)
   res = pbuf_take_at(p, &testdata, sizeof(testdata), p->len - 1);
   fail_unless(res == ERR_OK);
 
-  out = p->payload;
+  out = (u8_t*)p->payload;
   fail_unless(out[p->len - 1] == testdata[0],
     "Bad data at pos %d, was %02X, expected %02X", p->len - 1, out[p->len - 1], testdata[0]);
-  out = q->payload;
-  for (i = 1; i < sizeof(testdata); i++) {
+  out = (u8_t*)q->payload;
+  for (i = 1; i < (int)sizeof(testdata); i++) {
     fail_unless(out[i-1] == testdata[i],
       "Bad data at pos %d, was %02X, expected %02X", p->len - 1 + i, out[i-1], testdata[i]);
   }
@@ -187,8 +187,8 @@ START_TEST(test_pbuf_take_at_edge)
   res = pbuf_take_at(p, &testdata, sizeof(testdata), p->len);
   fail_unless(res == ERR_OK);
 
-  out = p->payload;
-  for (i = 0; i < sizeof(testdata); i++) {
+  out = (u8_t*)p->payload;
+  for (i = 0; i < (int)sizeof(testdata); i++) {
     fail_unless(out[i] == testdata[i],
       "Bad data at pos %d, was %02X, expected %02X", p->len+i, out[i], testdata[i]);
   }
@@ -214,7 +214,7 @@ START_TEST(test_pbuf_get_put_at_edge)
   /* put byte at the beginning of second pbuf */
   pbuf_put_at(p, p->len, testdata);
 
-  out = q->payload;
+  out = (u8_t*)q->payload;
   fail_unless(*out == testdata,
     "Bad data at pos %d, was %02X, expected %02X", p->len, *out, testdata);
 

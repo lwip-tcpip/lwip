@@ -47,21 +47,14 @@
 #if PPP_SUPPORT && EAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #include "netif/ppp/ppp_impl.h"
-
-#if LWIP_INCLUDED_POLARSSL_MD5
-#include "netif/ppp/polarssl/md5.h"
-#else
-#include "polarssl/md5.h"
-#endif
-
 #include "netif/ppp/eap.h"
 #include "netif/ppp/magic.h"
+#include "netif/ppp/pppcrypt.h"
 
 #ifdef USE_SRP
 #include <t_pwd.h>
 #include <t_server.h>
 #include <t_client.h>
-#include "netif/ppp/pppcrypt.h"
 #endif /* USE_SRP */
 
 #ifndef SHA_DIGESTSIZE
@@ -1321,7 +1314,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	int secret_len;
 	char secret[MAXSECRETLEN];
 	char rhostname[MAXNAMELEN];
-	md5_context mdContext;
+	lwip_md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];
 #ifdef USE_SRP
 	struct t_client *tc;
@@ -1450,13 +1443,15 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			eap_send_nak(pcb, id, EAPT_SRP);
 			break;
 		}
-		md5_starts(&mdContext);
+		lwip_md5_init(&mdContext);
+		lwip_md5_starts(&mdContext);
 		typenum = id;
-		md5_update(&mdContext, &typenum, 1);
-		md5_update(&mdContext, (u_char *)secret, secret_len);
+		lwip_md5_update(&mdContext, &typenum, 1);
+		lwip_md5_update(&mdContext, (u_char *)secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		md5_update(&mdContext, inp, vallen);
-		md5_finish(&mdContext, hash);
+		lwip_md5_update(&mdContext, inp, vallen);
+		lwip_md5_finish(&mdContext, hash);
+		lwip_md5_free(&mdContext);
 		eap_chap_response(pcb, id, hash, pcb->eap.es_client.ea_name,
 		    pcb->eap.es_client.ea_namelen);
 		break;
@@ -1733,7 +1728,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	int secret_len;
 	char secret[MAXSECRETLEN];
 	char rhostname[MAXNAMELEN];
-	md5_context mdContext;
+	lwip_md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];
 #ifdef USE_SRP
 	struct t_server *ts;
@@ -1876,12 +1871,14 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			eap_send_failure(pcb);
 			break;
 		}
-		md5_starts(&mdContext);
-		md5_update(&mdContext, &pcb->eap.es_server.ea_id, 1);
-		md5_update(&mdContext, (u_char *)secret, secret_len);
+		lwip_md5_init(&mdContext);
+		lwip_md5_starts(&mdContext);
+		lwip_md5_update(&mdContext, &pcb->eap.es_server.ea_id, 1);
+		lwip_md5_update(&mdContext, (u_char *)secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		md5_update(&mdContext, pcb->eap.es_challenge, pcb->eap.es_challen);
-		md5_finish(&mdContext, hash);
+		lwip_md5_update(&mdContext, pcb->eap.es_challenge, pcb->eap.es_challen);
+		lwip_md5_finish(&mdContext, hash);
+		lwip_md5_free(&mdContext);
 		if (BCMP(hash, inp, MD5_SIGNATURE_SIZE) != 0) {
 			eap_send_failure(pcb);
 			break;
@@ -2149,7 +2146,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 	if (len < EAP_HEADERLEN || len > inlen)
 		return (0);
 
-	if (code >= 1 && code <= (int)sizeof(eap_codenames) / (int)sizeof(char *))
+	if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(eap_codenames))
 		printer(arg, " %s", eap_codenames[code-1]);
 	else
 		printer(arg, " code=0x%x", code);
@@ -2163,8 +2160,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 		}
 		GETCHAR(rtype, inp);
 		len--;
-		if (rtype >= 1 &&
-		    rtype <= (int)sizeof (eap_typenames) / (int)sizeof (char *))
+		if (rtype >= 1 && rtype <= (int)LWIP_ARRAYSIZE(eap_typenames))
 			printer(arg, " %s", eap_typenames[rtype-1]);
 		else
 			printer(arg, " type=0x%x", rtype);
@@ -2302,8 +2298,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 			break;
 		GETCHAR(rtype, inp);
 		len--;
-		if (rtype >= 1 &&
-		    rtype <= (int)sizeof (eap_typenames) / (int)sizeof (char *))
+		if (rtype >= 1 && rtype <= (int)LWIP_ARRAYSIZE(eap_typenames))
 			printer(arg, " %s", eap_typenames[rtype-1]);
 		else
 			printer(arg, " type=0x%x", rtype);
@@ -2326,8 +2321,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 			GETCHAR(rtype, inp);
 			len--;
 			printer(arg, " <Suggested-type %02X", rtype);
-			if (rtype >= 1 &&
-			    rtype < (int)sizeof (eap_typenames) / (int)sizeof (char *))
+			if (rtype >= 1 && rtype < (int)LWIP_ARRAYSIZE(eap_typenames))
 				printer(arg, " (%s)", eap_typenames[rtype-1]);
 			printer(arg, ">");
 			break;

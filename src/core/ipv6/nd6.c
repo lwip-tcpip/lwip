@@ -69,7 +69,7 @@ struct nd6_router_list_entry default_router_list[LWIP_ND6_NUM_ROUTERS];
 
 /* Default values, can be updated by a RA message. */
 u32_t reachable_time = LWIP_ND6_REACHABLE_TIME;
-u32_t retrans_timer = LWIP_ND6_RETRANS_TIMER; /* TODO implement this value in timer */
+u32_t retrans_timer = LWIP_ND6_RETRANS_TIMER; /* @todo implement this value in timer */
 
 /* Index for cache entries. */
 static u8_t nd6_cached_neighbor_index;
@@ -132,7 +132,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* Check that na header fits in packet. */
     if (p->len < (sizeof(struct na_header))) {
-      /* TODO debug message */
+      /* @todo debug message */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
@@ -149,7 +149,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
       /* Check that link-layer address option also fits in packet. */
       if (p->len < (sizeof(struct na_header) + 2)) {
-        /* TODO debug message */
+        /* @todo debug message */
         pbuf_free(p);
         ND6_STATS_INC(nd6.lenerr);
         ND6_STATS_INC(nd6.drop);
@@ -159,7 +159,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
 
       if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
-        /* TODO debug message */
+        /* @todo debug message */
         pbuf_free(p);
         ND6_STATS_INC(nd6.lenerr);
         ND6_STATS_INC(nd6.drop);
@@ -231,7 +231,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
           (neighbor_cache[i].state == ND6_INCOMPLETE)) {
         /* Check that link-layer address option also fits in packet. */
         if (p->len < (sizeof(struct na_header) + 2)) {
-          /* TODO debug message */
+          /* @todo debug message */
           pbuf_free(p);
           ND6_STATS_INC(nd6.lenerr);
           ND6_STATS_INC(nd6.drop);
@@ -241,7 +241,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
 
         if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
-          /* TODO debug message */
+          /* @todo debug message */
           pbuf_free(p);
           ND6_STATS_INC(nd6.lenerr);
           ND6_STATS_INC(nd6.drop);
@@ -268,7 +268,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* Check that ns header fits in packet. */
     if (p->len < sizeof(struct ns_header)) {
-      /* TODO debug message */
+      /* @todo debug message */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
@@ -380,7 +380,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* Check that RA header fits in packet. */
     if (p->len < sizeof(struct ra_header)) {
-      /* TODO debug message */
+      /* @todo debug message */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
@@ -425,7 +425,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
 
-    /* TODO set default hop limit... */
+    /* @todo set default hop limit... */
     /* ra_hdr->current_hop_limit;*/
 
     /* Update flags in local entry (incl. preference). */
@@ -442,6 +442,13 @@ nd6_input(struct pbuf *p, struct netif *inp)
       } else {
         buffer = nd6_ra_buffer;
         pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset);
+      }
+      if (buffer[1] == 0) {
+        /* zero-length extension. drop packet */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
       }
       switch (buffer[0]) {
       case ND6_OPTION_TYPE_SOURCE_LLADDR:
@@ -501,7 +508,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         break;
       }
       case ND6_OPTION_TYPE_ROUTE_INFO:
-        /* TODO implement preferred routes.
+        /* @todo implement preferred routes.
         struct route_option * route_opt;
         route_opt = (struct route_option *)buffer;*/
 
@@ -511,6 +518,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         ND6_STATS_INC(nd6.proterr);
         break;
       }
+      /* option length is checked earlier to be non-zero to make sure loop ends */
       offset += 8 * ((u16_t)buffer[1]);
     }
 
@@ -523,7 +531,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* Check that Redir header fits in packet. */
     if (p->len < sizeof(struct redirect_header)) {
-      /* TODO debug message */
+      /* @todo debug message */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);
       ND6_STATS_INC(nd6.drop);
@@ -798,7 +806,7 @@ nd6_tmr(void)
         if ((netif->ip6_addr_state[i] & 0x07) >= LWIP_IPV6_DUP_DETECT_ATTEMPTS) {
           /* No NA received in response. Mark address as valid. */
           netif->ip6_addr_state[i] = IP6_ADDR_PREFERRED;
-          /* TODO implement preferred and valid lifetimes. */
+          /* @todo implement preferred and valid lifetimes. */
         } else if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_IPV6_MLD
           if ((netif->ip6_addr_state[i] & 0x07) == 0) {
@@ -810,7 +818,7 @@ nd6_tmr(void)
           /* Send a NS for this address. */
           nd6_send_ns(netif, netif_ip6_addr(netif, i), ND6_SEND_FLAG_MULTICAST_DEST);
           netif->ip6_addr_state[i]++;
-          /* TODO send max 1 NS per tmr call? enable return*/
+          /* @todo send max 1 NS per tmr call? enable return*/
           /*return;*/
         }
       }
@@ -1295,9 +1303,9 @@ nd6_select_router(const ip6_addr_t * ip6addr, struct netif * netif)
    * in RFC). This is more robust in case one router is not reachable,
    * we are not stuck trying to resolve it. */
   static s8_t last_router;
-  (void)ip6addr; /* TODO match preferred routes!! (must implement ND6_OPTION_TYPE_ROUTE_INFO) */
+  (void)ip6addr; /* @todo match preferred routes!! (must implement ND6_OPTION_TYPE_ROUTE_INFO) */
 
-  /* TODO: implement default router preference */
+  /* @todo: implement default router preference */
 
   /* Look for reachable routers. */
   for (i = 0; i < LWIP_ND6_NUM_ROUTERS; i++) {
@@ -1842,5 +1850,35 @@ nd6_reachability_hint(const ip6_addr_t * ip6addr)
   neighbor_cache[i].counter.reachable_time = reachable_time;
 }
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
+
+/**
+ * Remove all prefix, neighbor_cache and router entries of the specified netif.
+ *
+ * @param netif points to a network interface
+ */
+void
+nd6_cleanup_netif(struct netif * netif)
+{
+  u8_t i;
+  s8_t router_index;
+  for (i = 0; i < LWIP_ND6_NUM_PREFIXES; i++) {
+    if (prefix_list[i].netif == netif) {
+      prefix_list[i].netif = NULL;
+      prefix_list[i].flags = 0;
+    }
+  }
+  for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
+    if (neighbor_cache[i].netif == netif) {
+      for (router_index = 0; router_index < LWIP_ND6_NUM_ROUTERS; router_index++) {
+        if (default_router_list[router_index].neighbor_entry == &neighbor_cache[i]) {
+          default_router_list[router_index].neighbor_entry = NULL;
+          default_router_list[router_index].flags = 0;
+        }
+      }
+      neighbor_cache[i].isrouter = 0;
+      nd6_free_neighbor_cache_entry(i);
+    }
+  }
+}
 
 #endif /* LWIP_IPV6 */

@@ -160,11 +160,11 @@ START_TEST(test_etharp_table)
       struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 10, PBUF_RAM);
       fail_unless(p != NULL);
       if (p != NULL) {
-        err_t err;
+        err_t err2;
         ip_addr_t dst;
         ip_addr_copy_from_ip4(dst, adrs[i]);
-        err = udp_sendto(pcb, p, &dst, 123);
-        fail_unless(err == ERR_OK);
+        err2 = udp_sendto(pcb, p, &dst, 123);
+        fail_unless(err2 == ERR_OK);
         /* etharp request sent? */
         fail_unless(linkoutput_ctr == (2*i) + 1);
         pbuf_free(p);
@@ -195,11 +195,11 @@ START_TEST(test_etharp_table)
       struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 10, PBUF_RAM);
       fail_unless(p != NULL);
       if (p != NULL) {
-        err_t err;
+        err_t err2;
         ip_addr_t dst;
         ip_addr_copy_from_ip4(dst, adrs[i]);
-        err = udp_sendto(pcb, p, &dst, 123);
-        fail_unless(err == ERR_OK);
+        err2 = udp_sendto(pcb, p, &dst, 123);
+        fail_unless(err2 == ERR_OK);
         /* etharp request sent? */
         fail_unless(linkoutput_ctr == (2*i) + 1);
         pbuf_free(p);

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * TCPIP API internal implementations (do not use in application code)
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -38,7 +43,7 @@
 
 #include "lwip/tcpip.h"
 #include "lwip/sys.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 
 #ifdef __cplusplus
 extern "C" {

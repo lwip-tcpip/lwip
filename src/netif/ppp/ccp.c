@@ -367,15 +367,13 @@ setdeflate(argv)
  */
 static void ccp_init(ppp_pcb *pcb) {
     fsm *f = &pcb->ccp_fsm;
-    ccp_options *wo = &pcb->ccp_wantoptions;
-    ccp_options *ao = &pcb->ccp_allowoptions;
 
     f->pcb = pcb;
     f->protocol = PPP_CCP;
     f->callbacks = &ccp_callbacks;
     fsm_init(f);
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
     memset(wo, 0, sizeof(*wo));
     memset(go, 0, sizeof(*go));
     memset(ao, 0, sizeof(*ao));
@@ -403,14 +401,6 @@ static void ccp_init(ppp_pcb *pcb) {
 #if PREDICTOR_SUPPORT
     ao->predictor_1 = 1;
 #endif /* PREDICTOR_SUPPORT */
-
-#if MPPE_SUPPORT
-    if (pcb->settings.require_mppe) {
-	wo->mppe = ao->mppe =
-		    (pcb->settings.refuse_mppe_40 ? 0 : MPPE_OPT_40)
-		  | (pcb->settings.refuse_mppe_128 ? 0 : MPPE_OPT_128);
-    }
-#endif /* MPPE_SUPPORT */
 }
 
 /*
@@ -552,6 +542,9 @@ static void ccp_resetci(fsm *f) {
     ppp_pcb *pcb = f->pcb;
     ccp_options *go = &pcb->ccp_gotoptions;
     ccp_options *wo = &pcb->ccp_wantoptions;
+#if MPPE_SUPPORT
+    ccp_options *ao = &pcb->ccp_allowoptions;
+#endif /* MPPE_SUPPORT */
 #if DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT || PREDICTOR_SUPPORT
     u_char opt_buf[CCP_MAX_OPTION_LENGTH];
 #endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT || PREDICTOR_SUPPORT */
@@ -559,12 +552,19 @@ static void ccp_resetci(fsm *f) {
     int res;
 #endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT */
 
+#if MPPE_SUPPORT
+    if (pcb->settings.require_mppe) {
+	wo->mppe = ao->mppe =
+		    (pcb->settings.refuse_mppe_40 ? 0 : MPPE_OPT_40)
+		  | (pcb->settings.refuse_mppe_128 ? 0 : MPPE_OPT_128);
+    }
+#endif /* MPPE_SUPPORT */
+
     *go = *wo;
     pcb->ccp_all_rejected = 0;
 
 #if MPPE_SUPPORT
     if (go->mppe) {
-	ccp_options *ao = &pcb->ccp_allowoptions;
 	int auth_mschap_bits = pcb->auth_done;
 	int numbits;
 
@@ -1533,8 +1533,7 @@ static int ccp_printpkt(const u_char *p, int plen, void (*printer) (void *, cons
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= (int)(sizeof(ccp_codenames) / sizeof(char *))
-	&& ccp_codenames[code-1] != NULL)
+    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ccp_codenames) && ccp_codenames[code-1] != NULL)
 	printer(arg, " %s", ccp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

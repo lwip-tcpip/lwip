@@ -10,6 +10,75 @@ with newer versions.
 
   * TODO
 
+(2.0.0)
+
+  ++ Application changes:
+
+  * Changed netif "up" flag handling to be an administrative flag (as opposed to the previous meaning of
+    "ip4-address-valid", a netif will now not be used for transmission if not up) -> even a DHCP netif
+    has to be set "up" before starting the DHCP client
+  * Added IPv6 support (dual-stack or IPv4/IPv6 only)
+  * Changed ip_addr_t to be a union in dual-stack mode (use ip4_addr_t where referring to IPv4 only).
+  * Major rewrite of SNMP (added MIB parser that creates code stubs for custom MIBs);
+    supports SNMP2vc (experimental v3 support)
+  * Moved some core applications from contrib repository to src/apps (and include/lwip/apps)
+
+  +++ Raw API:
+    * Changed TCP listen backlog: removed tcp_accepted(), added the function pair tcp_backlog_delayed()/
+      tcp_backlog_accepted() to explicitly delay backlog handling on a connection pcb
+
+  +++ Socket API:
+    * Added an implementation for posix sendmsg()
+    * Added LWIP_FIONREAD_LINUXMODE that makes ioctl/FIONREAD return the size of the next pending datagram
+
+  ++ Port changes
+
+  +++ new files:
+    * MANY new and moved files!
+    * Continued moving stack-internal parts from abc.h to abc_priv.h in sub-folder "priv"
+      to let abc.h only contain the actual application programmer's API
+
+  +++ sys layer:
+    * Made LWIP_TCPIP_CORE_LOCKING==1 the default as it usually performs better than
+      the traditional message passing (although with LWIP_COMPAT_MUTEX you are still
+      open to priority inversion, so this is not recommended any more)
+    * Added LWIP_NETCONN_SEM_PER_THREAD to use one "op_completed" semaphore per thread
+      instead of using one per netconn (these semaphores are used even with core locking
+      enabled as some longer lasting functions like big writes still need to delay)
+
+  +++ new options:
+     * TODO
+
+  +++ new pools:
+     * Added LWIP_MEMPOOL_* (declare/init/alloc/free) to declare private memp pools
+       that share memp.c code but do not have to be made global via lwippools.h
+     * Added pools for IPv6, MPU_COMPATIBLE, dns-api, netif-api, etc.
+     * added hook LWIP_HOOK_MEMP_AVAILABLE() to get informed when a memp pool was empty and an item
+       is now available
+
+  * LWIP_DECLARE_MEMORY_ALIGNED() may be used to declare aligned memory buffers (mem/memp)
+    or to move buffers to dedicated memory using compiler attributes
+
+  * Standard C headers are used to define sized types and printf formatters
+    (disable by setting LWIP_NO_STDINT_H=1 or LWIP_NO_INTTYPES_H=1 if your compiler
+    does not support these)
+
+
+  ++ Major bugfixes/improvements
+
+  * Added IPv6 support (dual-stack or IPv4/IPv6 only)
+  * Major rewrite of PPP (incl. keep-up with apache pppd)
+  * Major rewrite of SNMP (incl. MIB parser)
+  * Fixed timing issues that might have lead to losing a DHCP lease
+  * Made rx processing path more robust against crafted errors
+  * TCP window scaling support
+  * modification of api modules to support FreeRTOS-MPU (don't pass stack-pointers to other threads)
+  * made DNS client more robust
+  * support PBUF_REF for RX packets
+  * LWIP_NETCONN_FULLDUPLEX allows netconn/sockets to be used for reading/writing from separate
+    threads each (needs LWIP_NETCONN_SEM_PER_THREAD)
+  * Moved and reorderd stats (mainly memp/mib2)
+
 (1.4.0)
 
   ++ Application changes:

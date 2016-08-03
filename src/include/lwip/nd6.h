@@ -58,7 +58,7 @@
 extern "C" {
 #endif
 
-/* Struct for tables. */
+/** Struct for tables. */
 struct nd6_neighbor_cache_entry {
   ip6_addr_t next_hop_address;
   struct netif * netif;
@@ -332,7 +332,7 @@ PACK_STRUCT_END
 #define ND6_TMR_INTERVAL 1000
 
 /* Router tables. */
-/* TODO make these static? and entries accessible through API? */
+/* @todo make these static? and entries accessible through API? */
 extern struct nd6_neighbor_cache_entry neighbor_cache[];
 extern struct nd6_destination_cache_entry destination_cache[];
 extern struct nd6_prefix_list_entry prefix_list[];
@@ -351,6 +351,7 @@ err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf * p);
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 void nd6_reachability_hint(const ip6_addr_t * ip6addr);
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
+void nd6_cleanup_netif(struct netif * netif);
 
 #ifdef __cplusplus
 }

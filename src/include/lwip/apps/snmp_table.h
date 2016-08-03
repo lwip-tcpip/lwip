@@ -1,3 +1,8 @@
+/**
+ * @file
+ * SNMP server MIB API to implement table nodes
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -42,8 +47,7 @@ extern "C" {
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-/* default (customizable) read/write table */
-
+/** default (customizable) read/write table */
 struct snmp_table_col_def
 {
   u32_t index;
@@ -51,9 +55,10 @@ struct snmp_table_col_def
   snmp_access_t access;
 };
 
+/** table node */
 struct snmp_table_node
 {
-  /* inherited "base class" members */
+  /** inherited "base class" members */
   struct snmp_leaf_node node;
   u16_t column_count;
   const struct snmp_table_col_def* columns;
@@ -81,8 +86,7 @@ snmp_err_t snmp_table_get_next_instance(const u32_t *root_oid, u8_t root_oid_len
 #define SNMP_TABLE_GET_COLUMN_FROM_OID(oid) ((oid)[1]) /* first array value is (fixed) row entry (fixed to 1) and 2nd value is column, follow3ed by instance */
 
   
-/* simple read-only table */
-
+/** simple read-only table */
 typedef enum {
   SNMP_VARIANT_VALUE_TYPE_U32,
   SNMP_VARIANT_VALUE_TYPE_S32,
@@ -97,6 +101,7 @@ struct snmp_table_simple_col_def
   snmp_table_column_data_type_t data_type; /* depending of what union member is used to store the value*/
 };
 
+/** simple read-only table node */
 struct snmp_table_simple_node
 {
   /* inherited "base class" members */
@@ -116,9 +121,9 @@ snmp_err_t snmp_table_simple_get_next_instance(const u32_t *root_oid, u8_t root_
   snmp_table_simple_get_next_instance }, \
   (u16_t)LWIP_ARRAYSIZE(columns), (columns), (get_cell_value_method), (get_next_cell_instance_and_value_method) }
 
-u16_t snmp_table_extract_value_from_s32ref(struct snmp_node_instance* instance, void* value);
-u16_t snmp_table_extract_value_from_u32ref(struct snmp_node_instance* instance, void* value);
-u16_t snmp_table_extract_value_from_refconstptr(struct snmp_node_instance* instance, void* value);
+s16_t snmp_table_extract_value_from_s32ref(struct snmp_node_instance* instance, void* value);
+s16_t snmp_table_extract_value_from_u32ref(struct snmp_node_instance* instance, void* value);
+s16_t snmp_table_extract_value_from_refconstptr(struct snmp_node_instance* instance, void* value);
 
 #endif /* LWIP_SNMP */
 

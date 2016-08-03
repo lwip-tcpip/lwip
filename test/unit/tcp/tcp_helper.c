@@ -31,10 +31,10 @@ tcp_remove_all(void)
   tcp_remove(tcp_listen_pcbs.pcbs);
   tcp_remove(tcp_active_pcbs);
   tcp_remove(tcp_tw_pcbs);
-  fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
-  fail_unless(lwip_stats.memp[MEMP_TCP_PCB_LISTEN].used == 0);
-  fail_unless(lwip_stats.memp[MEMP_TCP_SEG].used == 0);
-  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB_LISTEN) == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_SEG) == 0);
+  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 }
 
 /** Create a TCP segment usable for passing to tcp_input */
@@ -62,7 +62,7 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
     memset(q->payload, 0, q->len);
   }
 
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr*)p->payload;
   /* fill IP header */
   iphdr->dest.addr = ip_2_ip4(dst_ip)->addr;
   iphdr->src.addr = ip_2_ip4(src_ip)->addr;
@@ -74,7 +74,7 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   /* let p point to TCP header */
   pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
 
-  tcphdr = p->payload;
+  tcphdr = (struct tcp_hdr*)p->payload;
   tcphdr->src   = htons(src_port);
   tcphdr->dest  = htons(dst_port);
   tcphdr->seqno = htonl(seqno);
@@ -168,7 +168,7 @@ tcp_set_state(struct tcp_pcb* pcb, enum tcp_state state, ip_addr_t* local_ip,
 void
 test_tcp_counters_err(void* arg, err_t err)
 {
-  struct test_tcp_counters* counters = arg;
+  struct test_tcp_counters* counters = (struct test_tcp_counters*)arg;
   EXPECT_RET(arg != NULL);
   counters->err_calls++;
   counters->last_err = err;
@@ -186,7 +186,7 @@ test_tcp_counters_check_rxdata(struct test_tcp_counters* counters, struct pbuf* 
   EXPECT_RET(counters->recved_bytes + p->tot_len <= counters->expected_data_len);
   received = counters->recved_bytes;
   for(q = p; q != NULL; q = q->next) {
-    char *data = q->payload;
+    char *data = (char*)q->payload;
     for(i = 0; i < q->len; i++) {
       EXPECT_RET(data[i] == counters->expected_data[received]);
       received++;
@@ -198,7 +198,7 @@ test_tcp_counters_check_rxdata(struct test_tcp_counters* counters, struct pbuf* 
 err_t
 test_tcp_counters_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err)
 {
-  struct test_tcp_counters* counters = arg;
+  struct test_tcp_counters* counters = (struct test_tcp_counters*)arg;
   EXPECT_RETX(arg != NULL, ERR_OK);
   EXPECT_RETX(pcb != NULL, ERR_OK);
   EXPECT_RETX(err == ERR_OK, ERR_OK);
