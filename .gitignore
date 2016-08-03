@@ -1,4 +1,4 @@
-/doc/doxygen/output
+/doc/doxygen/output/html
 /src/apps/snmp/LwipMibCompiler/CCodeGeneration/bin/
 /src/apps/snmp/LwipMibCompiler/CCodeGeneration/obj/
 /src/apps/snmp/LwipMibCompiler/LwipMibCompiler/bin/
