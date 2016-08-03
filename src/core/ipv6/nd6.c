@@ -738,7 +738,7 @@ nd6_tmr(void)
 
   /* Process prefix entries. */
   for (i = 0; i < LWIP_ND6_NUM_PREFIXES; i++) {
-  	if (prefix_list[i].netif != NULL) {
+    if (prefix_list[i].netif != NULL) {
       if (prefix_list[i].invalidation_timer < ND6_TMR_INTERVAL / 1000) {
         /* Entry timed out, remove it */
         prefix_list[i].invalidation_timer = 0;
@@ -795,7 +795,7 @@ nd6_tmr(void)
         }
 #endif /* LWIP_IPV6_AUTOCONFIG */
       }
-  	}
+    }
   }
 
 
