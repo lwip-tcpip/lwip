@@ -68,6 +68,7 @@ with newer versions.
 
   * Added IPv6 support (dual-stack or IPv4/IPv6 only)
   * Major rewrite of PPP (incl. keep-up with apache pppd)
+    see doc/ppp.txt for an upgrading how-to
   * Major rewrite of SNMP (incl. MIB parser)
   * Fixed timing issues that might have lead to losing a DHCP lease
   * Made rx processing path more robust against crafted errors
