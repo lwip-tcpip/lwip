@@ -276,6 +276,7 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
   PPPDEBUG(LOG_DEBUG, ("ppp_connect[%d]: holdoff=%d\n", pcb->netif->num, holdoff));
 
   if (holdoff == 0) {
+    new_phase(pcb, PPP_PHASE_INITIALIZE);
     return pcb->link_cb->connect(pcb, pcb->link_ctx_cb);
   }
 
@@ -301,6 +302,7 @@ err_t ppp_listen(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_listen[%d]\n", pcb->netif->num));
 
   if (pcb->link_cb->listen) {
+    new_phase(pcb, PPP_PHASE_INITIALIZE);
     return pcb->link_cb->listen(pcb, pcb->link_ctx_cb);
   }
   return ERR_IF;
@@ -432,6 +434,7 @@ static void ppp_do_connect(void *arg) {
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
+  new_phase(pcb, PPP_PHASE_INITIALIZE);
   pcb->link_cb->connect(pcb, pcb->link_ctx_cb);
 }
 
@@ -703,13 +706,6 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
 
   new_phase(pcb, PPP_PHASE_DEAD);
   return pcb;
-}
-
-/** Called when link is starting */
-void ppp_link_start(ppp_pcb *pcb) {
-  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
-  PPPDEBUG(LOG_DEBUG, ("ppp_link_start[%d]\n", pcb->netif->num));
-  new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
 /** Initiate LCP open request */

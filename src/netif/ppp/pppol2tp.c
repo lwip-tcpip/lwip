@@ -264,8 +264,6 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
 
   pppol2tp_clear(l2tp);
 
-  ppp_link_start(ppp);
-
   lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->mru = PPPOL2TP_DEFMRU;
   lcp_wo->neg_asyncmap = 0;
