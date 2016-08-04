@@ -262,10 +262,6 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   ipcp_options *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
-  if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
-    return ERR_VAL;
-  }
-
   pppol2tp_clear(l2tp);
 
   ppp_link_start(ppp);
@@ -328,10 +324,6 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
 
-  if (l2tp->phase < PPPOL2TP_STATE_DATA) {
-    return;
-  }
-
   l2tp->our_ns++;
   pppol2tp_send_stopccn(l2tp, l2tp->our_ns);
 
@@ -346,6 +338,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
   u8_t *inp;
   LWIP_UNUSED_ARG(pcb);
 
+  /* we can't unbound a UDP pcb, thus we can still receive UDP frames after the link is closed */
   if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
     goto free_and_return;
   }
@@ -1112,12 +1105,6 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns) {
 
 static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   u8_t *p;
-
-  /* are we ready to process data yet? */
-  if (l2tp->phase < PPPOL2TP_STATE_DATA) {
-    pbuf_free(pb);
-    return ERR_CONN;
-  }
 
   /* make room for L2TP header - should not fail */
   if (pbuf_header(pb, (s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
