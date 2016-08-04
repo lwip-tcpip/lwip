@@ -731,11 +731,6 @@ pppoe_output(struct pppoe_softc *sc, struct pbuf *pb)
   u16_t etype;
   err_t res;
 
-  if (!sc->sc_ethif) {
-    pbuf_free(pb);
-    return ERR_IF;
-  }
-
   /* make room for Ethernet header - should not fail */
   if (pbuf_header(pb, (s16_t)(sizeof(struct eth_hdr))) != 0) {
     /* bail out */
@@ -772,10 +767,6 @@ pppoe_send_padi(struct pppoe_softc *sc)
 #ifdef PPPOE_TODO
   int l1 = 0, l2 = 0; /* XXX: gcc */
 #endif /* PPPOE_TODO */
-
-  if (sc->sc_state >PPPOE_STATE_PADI_SENT) {
-    PPPDEBUG(LOG_ERR, ("ERROR: pppoe_send_padi in state %d", sc->sc_state));
-  }
 
   /* calculate length of frame (excluding ethernet header + pppoe header) */
   len = 2 + 2 + 2 + 2 + sizeof sc;  /* service name tag is required, host unique is send too */
@@ -909,10 +900,6 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   ipcp_options *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
-  if (sc->sc_state != PPPOE_STATE_INITIAL) {
-    return EBUSY;
-  }
-
   /* stop any timer */
   sys_untimeout(pppoe_timeout, sc);
   sc->sc_session = 0;
@@ -966,10 +953,6 @@ pppoe_disconnect(ppp_pcb *ppp, void *ctx)
 {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
 
-  if (sc->sc_state < PPPOE_STATE_SESSION) {
-    return;
-  }
-
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
   pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
 
@@ -1019,10 +1002,6 @@ pppoe_send_padr(struct pppoe_softc *sc)
 #ifdef PPPOE_TODO
   size_t l1 = 0; /* XXX: gcc */
 #endif /* PPPOE_TODO */
-
-  if (sc->sc_state != PPPOE_STATE_PADR_SENT) {
-    return ERR_CONN;
-  }
 
   len = 2 + 2 + 2 + 2 + sizeof(sc);    /* service name, host unique */
 #ifdef PPPOE_TODO
@@ -1106,10 +1085,6 @@ pppoe_send_pado(struct pppoe_softc *sc)
   u8_t *p;
   size_t len;
 
-  if (sc->sc_state != PPPOE_STATE_PADO_SENT) {
-    return ERR_CONN;
-  }
-
   /* calc length */
   len = 0;
   /* include ac_cookie */
@@ -1139,10 +1114,6 @@ pppoe_send_pads(struct pppoe_softc *sc)
   struct pbuf *pb;
   u8_t *p;
   size_t len, l1 = 0;  /* XXX: gcc */
-
-  if (sc->sc_state != PPPOE_STATE_PADO_SENT) {
-    return ERR_CONN;
-  }
 
   sc->sc_session = mono_time.tv_sec % 0xff + 1;
   /* calc length */
@@ -1180,13 +1151,6 @@ pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb)
 {
   u8_t *p;
   size_t len;
-
-  /* are we ready to process data yet? */
-  if (sc->sc_state < PPPOE_STATE_SESSION) {
-    /*sppp_flush(&sc->sc_sppp.pp_if);*/
-    pbuf_free(pb);
-    return ERR_CONN;
-  }
 
   len = pb->tot_len;
 
