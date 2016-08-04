@@ -639,7 +639,6 @@ void link_terminated(ppp_pcb *pcb) {
 
     lcp_lowerdown(pcb);
 
-    new_phase(pcb, PPP_PHASE_DEAD);
     ppp_link_terminated(pcb);
 #if 0
     /*
