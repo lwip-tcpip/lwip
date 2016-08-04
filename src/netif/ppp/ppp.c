@@ -730,6 +730,7 @@ void ppp_start(ppp_pcb *pcb) {
 #endif /* VJ_SUPPORT && LWIP_TCP */
 
   /* Start protocol */
+  new_phase(pcb, PPP_PHASE_ESTABLISH);
   lcp_open(pcb);
   lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start[%d]: finished\n", pcb->netif->num));
