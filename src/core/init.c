@@ -44,7 +44,9 @@
  * context and put them into a queue which is processed from mainloop.\n
  * Call sys_check_timeouts() periodically in the mainloop.\n
  * Porting: implement all functions in @ref sys_time and @ref sys_prot.\n
- * You can only use @ref callbackstyle_api in this mode.
+ * You can only use @ref callbackstyle_api in this mode.\n
+ * Sample code:\n
+ * @verbinclude NO_SYS_SampleCode.c
  *
  * @defgroup lwip_os OS mode (TCPIP thread)
  * @ingroup lwip
