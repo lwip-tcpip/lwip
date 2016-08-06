@@ -37,11 +37,14 @@
  */
 
 /**
- * @defgroup ip4 IPv4
+ * @defgroup ip IP
  * @ingroup callbackstyle_api
+ * 
+ * @defgroup ip4 IPv4
+ * @ingroup ip
  *
  * @defgroup ip6 IPv6
- * @ingroup callbackstyle_api
+ * @ingroup ip
  * 
  * @defgroup ipaddr IP address handling
  * @ingroup infrastructure

@@ -227,17 +227,26 @@ extern struct ip_globals ip_data;
 #define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
 
 #if LWIP_IPV4 && LWIP_IPV6
-/** Output IP packet, netif is selected by source address */
+/**
+ * @ingroup ip
+ * Output IP packet, netif is selected by source address
+ */
 #define ip_output(p, src, dest, ttl, tos, proto) \
         (IP_IS_V6(dest) ? \
         ip6_output(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto) : \
         ip4_output(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto))
-/** Output IP packet to specified interface */
+/**
+ * @ingroup ip
+ * Output IP packet to specified interface
+ */
 #define ip_output_if(p, src, dest, ttl, tos, proto, netif) \
         (IP_IS_V6(dest) ? \
         ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
         ip4_output_if(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
-/** Output IP packet to interface specifying source address */
+/**
+ * @ingroup ip
+ * Output IP packet to interface specifying source address
+ */
 #define ip_output_if_src(p, src, dest, ttl, tos, proto, netif) \
         (IP_IS_V6(dest) ? \
         ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
@@ -247,12 +256,18 @@ extern struct ip_globals ip_data;
         (IP_IS_V6(dest) ? \
         ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, addr_hint) : \
         ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, addr_hint))
-/** Get netif for address combination. See \ref ip6_route and \ref ip4_route */
+/** 
+ * @ingroup ip
+ * Get netif for address combination. See \ref ip6_route and \ref ip4_route 
+ */
 #define ip_route(src, dest) \
         (IP_IS_V6(dest) ? \
         ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) : \
         ip4_route_src(ip_2_ip4(dest), ip_2_ip4(src)))
-/** Get netif for IP.*/
+/**
+ * @ingroup ip
+ * Get netif for IP.
+ */
 #define ip_netif_get_local_ip(netif, dest) (IP_IS_V6(dest) ? \
         ip6_netif_get_local_ip(netif, ip_2_ip6(dest)) : \
         ip4_netif_get_local_ip(netif))
