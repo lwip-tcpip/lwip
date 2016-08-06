@@ -60,6 +60,7 @@
 #include "lwip/stats.h"
 
 /**
+ * @ingroup ip6
  * Finds the appropriate network interface for a given IPv6 address. It tries to select
  * a netif following a sequence of heuristics:
  * 1) if there is only 1 netif, return it
@@ -192,6 +193,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
 }
 
 /**
+ * @ingroup ip6
  * Select the best IPv6 source address for a given destination
  * IPv6 address. Loosely follows RFC 3484. "Strong host" behavior
  * is assumed.
@@ -776,6 +778,7 @@ ip6_input_cleanup:
 
 
 /**
+ * @igroup ip6
  * Sends an IPv6 packet on a network interface. This function constructs
  * the IPv6 header. If the source IPv6 address is NULL, the IPv6 "ANY" address is
  * used as source (usually during network startup). If the source IPv6 address it
@@ -820,6 +823,7 @@ ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 }
 
 /**
+ * @ingroup ip6
  * Same as ip6_output_if() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
@@ -903,6 +907,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 }
 
 /**
+ * @ingroup ip6
  * Simple interface to ip6_output_if. It finds the outgoing network
  * interface and calls upon ip6_output_if to do the actual work.
  *

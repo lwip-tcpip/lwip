@@ -65,11 +65,33 @@ extern "C" {
 #define PBUF_IP_HLEN        20
 #endif
 
+/**
+ * @ingroup pbuf
+ * Enumeration of pbuf layers
+ */
 typedef enum {
+  /** Includes spare room for transport layer header, e.g. TCP header.
+   * Use this if you intend to pass the pbuf to functions like udp_send(),
+   * tcp_write(), netconn_send() or netconn_write().
+   */
   PBUF_TRANSPORT,
+  /** Includes spare room for IP header.
+   * Use this if you intend to pass the pbuf to functions like raw_send().
+   */
   PBUF_IP,
+  /** Includes spare room for link layer header (ethernet header).
+   * Use this if you intend to pass the pbuf to functions like ip4_output(),
+   * ip6_output() or ip_output().
+   */
   PBUF_LINK,
+  /** Includes spare room for additional encapsulation header before ethernet headers (e.g. 802.11).
+   * Use this if you intend to pass the pbuf to functions like netif->linkoutput()
+   */
   PBUF_RAW_TX,
+  /** No spare room, final packet for sending.
+   * Use this if you intend to pass the pbuf to functions like netif->linkoutput()
+   * or for input packets received by ethernet-layer netif drivers.
+   */
   PBUF_RAW
 } pbuf_layer;
 

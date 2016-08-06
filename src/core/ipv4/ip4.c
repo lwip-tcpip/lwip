@@ -134,6 +134,7 @@ ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src)
 #endif /* LWIP_HOOK_IP4_ROUTE_SRC */
 
 /**
+ * @ingroup ip4
  * Finds the appropriate network interface for a given IP address. It
  * searches the list of network interfaces linearly. A match is found
  * if the masked IP address of the network interface equals the masked
@@ -712,6 +713,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
 }
 
 /**
+ * @ingroup ip4
  * Sends an IP packet on a network interface. This function constructs
  * the IP header and calculates the IP header checksum. If the source
  * IP address is NULL, the IP address of the outgoing network
@@ -746,6 +748,7 @@ ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 }
 
 /**
+ * @ingroup ip4
  * Same as ip_output_if() but with the possibility to include IP options:
  *
  * @ param ip_options pointer to the IP options, copied into the IP header
@@ -773,6 +776,7 @@ ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 }
 
 /**
+ * @ingroup ip4
  * Same as ip_output_if() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
@@ -786,6 +790,7 @@ ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 }
 
 /**
+ * @ingroup ip4
  * Same as ip_output_if_opt() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
@@ -947,6 +952,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 }
 
 /**
+ * @ingroup ip4
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
  *

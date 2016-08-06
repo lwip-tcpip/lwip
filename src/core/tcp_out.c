@@ -350,6 +350,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
 }
 
 /**
+ * @ingroup tcp_raw
  * Write data for sending (but does not send it immediately).
  *
  * It waits in the expectation of more data being sent soon (as
@@ -874,7 +875,9 @@ tcp_build_wnd_scale_option(u32_t *opts)
 }
 #endif
 
-/** Send an ACK without data.
+/**
+ * @ingroup tcp_raw
+ * Send an ACK without data.
  *
  * @param pcb Protocol control block for the TCP connection to send the ACK
  */
@@ -946,6 +949,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
 }
 
 /**
+ * @ingroup tcp_raw
  * Find out what we can send and send it
  *
  * @param pcb Protocol control block for the TCP connection to send data
@@ -1465,6 +1469,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
 
 
 /**
+ * @ingroup tcp_raw
  * Send keepalive packets to keep a connection active although
  * no data is sent over it.
  *
