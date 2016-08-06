@@ -82,16 +82,15 @@ typedef enum {
   /** Includes spare room for link layer header (ethernet header).
    * Use this if you intend to pass the pbuf to functions like ip4_output(),
    * ip6_output() or ip_output().
+   * @see @ref PBUF_LINK_HLEN
    */
   PBUF_LINK,
   /** Includes spare room for additional encapsulation header before ethernet headers (e.g. 802.11).
-   * Use this if you intend to pass the pbuf to functions like netif->linkoutput()
+   * Use this if you intend to pass the pbuf to functions like netif->linkoutput().
+   * @see @ref PBUF_LINK_ENCAPSULATION_HLEN
    */
   PBUF_RAW_TX,
-  /** No spare room, final packet for sending.
-   * Use this if you intend to pass the pbuf to functions like netif->linkoutput()
-   * or for input packets received by ethernet-layer netif drivers.
-   */
+  /** Use this for input packets received by ethernet-layer netif drivers. */
   PBUF_RAW
 } pbuf_layer;
 
