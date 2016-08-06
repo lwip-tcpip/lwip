@@ -2,8 +2,8 @@ void eth_mac_irq()
 {
   /* Service MAC IRQ here */
 
-  /* Allocate pbuf */
-  struct pbuf* p = pbuf_alloc(PBUF_RAW, eth_data_count, PBUF_RAM);
+  /* Allocate pbuf from pool (avoid using heap in interrupts) */
+  struct pbuf* p = pbuf_alloc(PBUF_RAW, eth_data_count, PBUF_POOL);
 
   if(p != NULL) {
     /* Copy ethernet frame into pbuf */
