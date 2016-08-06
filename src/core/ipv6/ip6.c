@@ -778,7 +778,7 @@ ip6_input_cleanup:
 
 
 /**
- * @igroup ip6
+ * @ingroup ip6
  * Sends an IPv6 packet on a network interface. This function constructs
  * the IPv6 header. If the source IPv6 address is NULL, the IPv6 "ANY" address is
  * used as source (usually during network startup). If the source IPv6 address it
