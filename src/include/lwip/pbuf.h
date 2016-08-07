@@ -71,8 +71,8 @@ extern "C" {
  */
 typedef enum {
   /** Includes spare room for transport layer header, e.g. TCP header.
-   * Use this if you intend to pass the pbuf to functions like udp_send(),
-   * tcp_write(), netconn_send() or netconn_write().
+   * Use this if you intend to pass the pbuf to functions like udp_send() or
+   * tcp_write().
    */
   PBUF_TRANSPORT,
   /** Includes spare room for IP header.
