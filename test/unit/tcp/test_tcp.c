@@ -206,7 +206,7 @@ START_TEST(test_tcp_fast_retx_recover)
   char data3[] = { 9, 10, 11, 12};
   char data4[] = {13, 14, 15, 16};
   char data5[] = {17, 18, 19, 20};
-  char data6[] = {21, 22, 23, 24};
+  char data6[TCP_MSS] = {21, 22, 23, 24};
   ip_addr_t remote_ip, local_ip, netmask;
   u16_t remote_port = 0x100, local_port = 0x101;
   err_t err;
