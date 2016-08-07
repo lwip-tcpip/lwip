@@ -336,6 +336,11 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
     return ERR_OK;
   }
 
+  /* Already terminating, nothing to do */
+  if (pcb->phase >= PPP_PHASE_TERMINATE) {
+    return ERR_INPROGRESS;
+  }
+
   /*
    * Only accept carrier lost signal on the stable running phase in order
    * to prevent changing the PPP phase FSM in transition phases.
@@ -346,14 +351,14 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
   if (nocarrier && pcb->phase == PPP_PHASE_RUNNING) {
     PPPDEBUG(LOG_DEBUG, ("ppp_close[%d]: carrier lost -> lcp_lowerdown\n", pcb->netif->num));
     lcp_lowerdown(pcb);
-    /* forced link termination, this will leave us at PPP_PHASE_DEAD. */
+    /* forced link termination, this will force link protocol to disconnect. */
     link_terminated(pcb);
     return ERR_OK;
   }
 
   /* Disconnect */
   PPPDEBUG(LOG_DEBUG, ("ppp_close[%d]: kill_link -> lcp_close\n", pcb->netif->num));
-  /* LCP close request, this will leave us at PPP_PHASE_DEAD. */
+  /* LCP soft close request. */
   lcp_close(pcb, "User request");
   return ERR_OK;
 }
