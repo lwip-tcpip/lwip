@@ -81,7 +81,6 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, struct pbuf *p, u16_t ns, u16_t nr);
 static void pppol2tp_timeout(void *arg);
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp);
-static void pppol2tp_clear(pppol2tp_pcb *l2tp);
 static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp);
 static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns);
@@ -262,7 +261,15 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   ipcp_options *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
-  pppol2tp_clear(l2tp);
+  l2tp->tunnel_port = l2tp->remote_port;
+  l2tp->our_ns = 0;
+  l2tp->peer_nr = 0;
+  l2tp->peer_ns = 0;
+  l2tp->source_tunnel_id = 0;
+  l2tp->remote_tunnel_id = 0;
+  l2tp->source_session_id = 0;
+  l2tp->remote_session_id = 0;
+  /* l2tp->*_retried are cleared when used */
 
   lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->mru = PPPOL2TP_DEFMRU;
@@ -325,7 +332,9 @@ static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
   l2tp->our_ns++;
   pppol2tp_send_stopccn(l2tp, l2tp->our_ns);
 
-  pppol2tp_clear(l2tp);
+  /* stop any timer, disconnect can be called while initiating is in progress */
+  sys_untimeout(pppol2tp_timeout, l2tp);
+  l2tp->phase = PPPOL2TP_STATE_INITIAL;
   ppp_link_end(ppp); /* notify upper layers */
 }
 
@@ -763,24 +772,8 @@ static void pppol2tp_timeout(void *arg) {
 /* Connection attempt aborted */
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp) {
   PPPDEBUG(LOG_DEBUG, ("pppol2tp: could not establish connection\n"));
-  pppol2tp_clear(l2tp);
-  ppp_link_failed(l2tp->ppp); /* notify upper layers */
-}
-
-/* Reset L2TP control block to its initial state */
-static void pppol2tp_clear(pppol2tp_pcb *l2tp) {
-  /* stop any timer */
-  sys_untimeout(pppol2tp_timeout, l2tp);
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
-  l2tp->tunnel_port = l2tp->remote_port;
-  l2tp->our_ns = 0;
-  l2tp->peer_nr = 0;
-  l2tp->peer_ns = 0;
-  l2tp->source_tunnel_id = 0;
-  l2tp->remote_tunnel_id = 0;
-  l2tp->source_session_id = 0;
-  l2tp->remote_session_id = 0;
-  /* l2tp->*_retried are cleared when used */
+  ppp_link_failed(l2tp->ppp); /* notify upper layers */
 }
 
 /* Initiate a new tunnel */
