@@ -110,18 +110,18 @@
  * Values for phase.
  */
 #define PPP_PHASE_DEAD          0
-#define PPP_PHASE_INITIALIZE    1
-#define PPP_PHASE_SERIALCONN    2
-#define PPP_PHASE_DORMANT       3
-#define PPP_PHASE_ESTABLISH     4
-#define PPP_PHASE_AUTHENTICATE  5
-#define PPP_PHASE_CALLBACK      6
-#define PPP_PHASE_NETWORK       7
-#define PPP_PHASE_RUNNING       8
-#define PPP_PHASE_TERMINATE     9
-#define PPP_PHASE_DISCONNECT    10
-#define PPP_PHASE_HOLDOFF       11
-#define PPP_PHASE_MASTER        12
+#define PPP_PHASE_MASTER        1
+#define PPP_PHASE_HOLDOFF       2
+#define PPP_PHASE_INITIALIZE    3
+#define PPP_PHASE_SERIALCONN    4
+#define PPP_PHASE_DORMANT       5
+#define PPP_PHASE_ESTABLISH     6
+#define PPP_PHASE_AUTHENTICATE  7
+#define PPP_PHASE_CALLBACK      8
+#define PPP_PHASE_NETWORK       9
+#define PPP_PHASE_RUNNING       10
+#define PPP_PHASE_TERMINATE     11
+#define PPP_PHASE_DISCONNECT    12
 
 /* Error codes. */
 #define PPPERR_NONE         0  /* No error. */
