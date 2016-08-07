@@ -510,7 +510,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
   }
 #endif /* MPPE_SUPPORT */
 
-#if VJ_SUPPORT && LWIP_TCP
+#if VJ_SUPPORT
   /*
    * Attempt Van Jacobson header compression if VJ is configured and
    * this is an IP packet.
@@ -541,7 +541,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
         return ERR_VAL;
     }
   }
-#endif /* VJ_SUPPORT && LWIP_TCP */
+#endif /* VJ_SUPPORT */
 
 #if CCP_SUPPORT
   switch (pcb->ccp_transmit_method) {
@@ -720,9 +720,9 @@ void ppp_start(ppp_pcb *pcb) {
   memset(&pcb->mppe_comp, 0, sizeof(pcb->mppe_comp));
   memset(&pcb->mppe_decomp, 0, sizeof(pcb->mppe_decomp));
 #endif /* MPPE_SUPPORT */
-#if VJ_SUPPORT && LWIP_TCP
+#if VJ_SUPPORT
   vj_compress_init(&pcb->vj_comp);
-#endif /* VJ_SUPPORT && LWIP_TCP */
+#endif /* VJ_SUPPORT */
 
   /* Start protocol */
   new_phase(pcb, PPP_PHASE_ESTABLISH);
@@ -871,7 +871,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       return;
 #endif /* PPP_IPV6_SUPPORT */
 
-#if VJ_SUPPORT && LWIP_TCP
+#if VJ_SUPPORT
     case PPP_VJC_COMP:      /* VJ compressed TCP */
       /*
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
@@ -899,7 +899,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       /* Something's wrong so drop it. */
       PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
       break;
-#endif /* VJ_SUPPORT && LWIP_TCP */
+#endif /* VJ_SUPPORT */
 
     default: {
       int i;
