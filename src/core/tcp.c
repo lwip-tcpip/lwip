@@ -1094,7 +1094,9 @@ tcp_slowtmr_start:
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
       struct tcp_pcb *pcb2;
+#if LWIP_CALLBACK_API
       tcp_err_fn err_fn;
+#endif /* LWIP_CALLBACK_API */
       void *err_arg;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_active_pcbs list. */
@@ -1112,7 +1114,9 @@ tcp_slowtmr_start:
                  pcb->local_port, pcb->remote_port);
       }
 
+#if LWIP_CALLBACK_API
       err_fn = pcb->errf;
+#endif /* LWIP_CALLBACK_API */
       err_arg = pcb->callback_arg;
       pcb2 = pcb;
       pcb = pcb->next;
