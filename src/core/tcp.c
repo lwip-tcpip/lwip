@@ -4,7 +4,7 @@
  * See also @ref tcp_raw
  *
  * @defgroup tcp_raw TCP
- * @ingroup raw_api
+ * @ingroup callbackstyle_api
  * Transmission Control Protocol for IP\n
  * @see @ref raw_api and @ref netconn
  *

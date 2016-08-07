@@ -6,7 +6,7 @@
  * See also @ref raw_raw
  * 
  * @defgroup raw_raw RAW
- * @ingroup raw_api
+ * @ingroup callbackstyle_api
  * Implementation of raw protocol PCBs for low-level handling of
  * different types of protocols besides (or overriding) those
  * already available in lwIP.\n

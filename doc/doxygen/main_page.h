@@ -57,7 +57,6 @@
  */
 
 /**
- * @defgroup raw_api RAW API
- * @ingroup callbackstyle_api
+ * @page raw_api lwIP API
  * @verbinclude "rawapi.txt"
  */

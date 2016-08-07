@@ -5,7 +5,7 @@
  * See also @ref udp_raw
  * 
  * @defgroup udp_raw UDP
- * @ingroup raw_api
+ * @ingroup callbackstyle_api
  * User Datagram Protocol module\n
  * @see @ref raw_api and @ref netconn
  */
