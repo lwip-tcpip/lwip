@@ -52,7 +52,7 @@
  * use an RTOS that correctly handles priority inversion and
  * to use @ref LWIP_TCPIP_CORE_LOCKING.\n
  * Porting: implement all functions in @ref sys_layer.\n
- * You can use @ref callbackstyle_api together with \#define tcpip_callback,
+ * You can use @ref callbackstyle_api together with @ref tcpip_callback,
  * and all @ref threadsafe_api.
  */
 
