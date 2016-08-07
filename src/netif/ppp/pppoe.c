@@ -321,10 +321,6 @@ pppoe_destroy(ppp_pcb *ppp, void *ctx)
 static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct netif *rcvif) {
   struct pppoe_softc *sc;
 
-  if (session == 0) {
-    return NULL;
-  }
-
   for (sc = pppoe_softc_list; sc != NULL; sc = sc->next) {
     if (sc->sc_state == PPPOE_STATE_SESSION
         && sc->sc_session == session
@@ -339,10 +335,6 @@ static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct net
  * or NULL if token is bogus. */
 static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif) {
   struct pppoe_softc *sc, *t;
-
-  if (pppoe_softc_list == NULL) {
-    return NULL;
-  }
 
   if (len != sizeof sc) {
     return NULL;
