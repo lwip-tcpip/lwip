@@ -106,7 +106,9 @@ static u16_t ip_id;
 /** The default netif used for multicast */
 static struct netif* ip4_default_multicast_netif;
 
-/** Set a default netif for IPv4 multicast. */
+/**
+ * @ingroup ip4
+ * Set a default netif for IPv4 multicast. */
 void
 ip4_set_default_multicast_netif(struct netif* default_multicast_netif)
 {
@@ -713,7 +715,6 @@ ip4_input(struct pbuf *p, struct netif *inp)
 }
 
 /**
- * @ingroup ip4
  * Sends an IP packet on a network interface. This function constructs
  * the IP header and calculates the IP header checksum. If the source
  * IP address is NULL, the IP address of the outgoing network
@@ -748,7 +749,6 @@ ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 }
 
 /**
- * @ingroup ip4
  * Same as ip_output_if() but with the possibility to include IP options:
  *
  * @ param ip_options pointer to the IP options, copied into the IP header
@@ -776,7 +776,6 @@ ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 }
 
 /**
- * @ingroup ip4
  * Same as ip_output_if() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
@@ -790,7 +789,6 @@ ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 }
 
 /**
- * @ingroup ip4
  * Same as ip_output_if_opt() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
@@ -952,7 +950,6 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 }
 
 /**
- * @ingroup ip4
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
  *
