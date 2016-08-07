@@ -952,7 +952,12 @@ pppoe_disconnect(ppp_pcb *ppp, void *ctx)
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
 
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-  pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
+  if (sc->sc_state == PPPOE_STATE_SESSION) {
+    pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
+  }
+
+  /* stop any timer, disconnect can be called while initiating is in progress */
+  sys_untimeout(pppoe_timeout, sc);
 
   /* cleanup softc */
   sc->sc_state = PPPOE_STATE_INITIAL;
