@@ -618,7 +618,11 @@ void start_link(unit)
  * physical layer down.
  */
 void link_terminated(ppp_pcb *pcb) {
-    if (pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_MASTER)
+    if (pcb->phase == PPP_PHASE_DEAD
+#ifdef HAVE_MULTILINK
+    || pcb->phase == PPP_PHASE_MASTER
+#endif /* HAVE_MULTILINK */
+    )
 	return;
     new_phase(pcb, PPP_PHASE_DISCONNECT);
 
@@ -698,7 +702,11 @@ void link_down(ppp_pcb *pcb) {
 
     if (!doing_multilink) {
 	upper_layers_down(pcb);
-	if (pcb->phase != PPP_PHASE_DEAD && pcb->phase != PPP_PHASE_MASTER)
+	if (pcb->phase != PPP_PHASE_DEAD
+#ifdef HAVE_MULTILINK
+	&& pcb->phase != PPP_PHASE_MASTER
+#endif /* HAVE_MULTILINK */
+	)
 	    new_phase(pcb, PPP_PHASE_ESTABLISH);
     }
     /* XXX if doing_multilink, should do something to stop
