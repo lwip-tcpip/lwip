@@ -341,6 +341,12 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
     return ERR_INPROGRESS;
   }
 
+  /* LCP not open, close link protocol */
+  if (pcb->phase < PPP_PHASE_ESTABLISH) {
+    ppp_link_terminated(pcb);
+    return ERR_OK;
+  }
+
   /*
    * Only accept carrier lost signal on the stable running phase in order
    * to prevent changing the PPP phase FSM in transition phases.
