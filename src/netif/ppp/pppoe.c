@@ -189,8 +189,6 @@ ppp_pcb *pppoe_create(struct netif *pppif,
   }
 
   memset(sc, 0, sizeof(struct pppoe_softc));
-  /* changed to real address later */
-  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
   sc->pcb = ppp;
   sc->sc_ethif = ethif;
   /* put the new interface at the head of the list */
@@ -900,11 +898,12 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   ipcp_options *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
-  /* stop any timer */
-  sys_untimeout(pppoe_timeout, sc);
   sc->sc_session = 0;
+  sc->sc_ac_cookie_len = 0;
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
+  /* changed to real address later */
+  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
 #ifdef PPPOE_SERVER
   /* wait PADI if IFF_PASSIVE */
   if ((sc->sc_sppp.pp_if.if_flags & IFF_PASSIVE)) {
@@ -958,22 +957,14 @@ pppoe_disconnect(ppp_pcb *ppp, void *ctx)
 
   /* stop any timer, disconnect can be called while initiating is in progress */
   sys_untimeout(pppoe_timeout, sc);
-
-  /* cleanup softc */
   sc->sc_state = PPPOE_STATE_INITIAL;
-  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
-  sc->sc_ac_cookie_len = 0;
 #ifdef PPPOE_SERVER
   if (sc->sc_hunique) {
     mem_free(sc->sc_hunique);
-    sc->sc_hunique = NULL;
+    sc->sc_hunique = NULL; /* probably not necessary, if state is initial we shouldn't have to access hunique anyway  */
   }
-  sc->sc_hunique_len = 0;
+  sc->sc_hunique_len = 0; /* probably not necessary, if state is initial we shouldn't have to access hunique anyway  */
 #endif
-  sc->sc_session = 0;
-  sc->sc_padi_retried = 0;
-  sc->sc_padr_retried = 0;
-
   ppp_link_end(ppp); /* notify upper layers */
   return;
 }
@@ -983,15 +974,7 @@ static void
 pppoe_abort_connect(struct pppoe_softc *sc)
 {
   PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": could not establish connection\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-
-  /* clear connection state */
   sc->sc_state = PPPOE_STATE_INITIAL;
-  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
-  sc->sc_ac_cookie_len = 0;
-  sc->sc_session = 0;
-  sc->sc_padi_retried = 0;
-  sc->sc_padr_retried = 0;
-
   ppp_link_failed(sc->pcb); /* notify upper layers */
 }
 
@@ -1209,18 +1192,8 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   /* stop timer */
   sys_untimeout(pppoe_timeout, sc);
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": session 0x%x terminated, %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, sc->sc_session, message));
-  /* fix our state */
   sc->sc_state = PPPOE_STATE_INITIAL;
-
-  /* notify upper layers */
-  ppp_link_end(sc->pcb);  /* /!\ dangerous /!\ */
-
-  /* clean up softc */
-  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
-  sc->sc_ac_cookie_len = 0;
-  sc->sc_session = 0;
-  sc->sc_padi_retried = 0;
-  sc->sc_padr_retried = 0;
+  ppp_link_end(sc->pcb);  /* notify upper layers - /!\ dangerous /!\ - see pppoe_disc_input() */
 }
 #endif /* UNUSED */
 #endif /* PPP_SUPPORT && PPPOE_SUPPORT */
