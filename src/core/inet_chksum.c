@@ -1,7 +1,16 @@
 /**
  * @file
- * Incluse internet checksum functions.
+ * Incluse internet checksum functions.\n
  *
+ * These are some reference implementations of the checksum algorithm, with the
+ * aim of being simple, correct and fully portable. Checksumming is the
+ * first thing you would want to optimize for your platform. If you create
+ * your own version, link it in and in your cc.h put:
+ *
+ * \#define LWIP_CHKSUM your_checksum_routine
+ * 
+ * Or you can select from the implementations below by defining
+ * LWIP_CHKSUM_ALGORITHM to 1, 2 or 3.
  */
 
 /*
@@ -44,17 +53,6 @@
 
 #include <stddef.h>
 #include <string.h>
-
-/* These are some reference implementations of the checksum algorithm, with the
- * aim of being simple, correct and fully portable. Checksumming is the
- * first thing you would want to optimize for your platform. If you create
- * your own version, link it in and in your cc.h put:
- *
- * #define LWIP_CHKSUM <your_checksum_routine>
- *
- * Or you can select from the implementations below by defining
- * LWIP_CHKSUM_ALGORITHM to 1, 2 or 3.
- */
 
 #ifndef LWIP_CHKSUM
 # define LWIP_CHKSUM lwip_standard_chksum

@@ -1,7 +1,13 @@
 /**
  * @file
  * User Datagram Protocol module\n
+ * The code for the User Datagram Protocol UDP & UDPLite (RFC 3828).\n
  * See also @ref udp_raw
+ * 
+ * @defgroup udp_raw UDP
+ * @ingroup raw_api
+ * User Datagram Protocol module\n
+ * @see @ref raw_api and @ref netconn
  */
 
 /*
@@ -33,19 +39,6 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- *
- */
-
-/**
- * @defgroup udp_raw UDP
- * @ingroup raw_api
- * User Datagram Protocol module\n
- * @see @ref raw_api and @ref netconn
- */
-
-/* udp.c
- *
- * The code for the User Datagram Protocol UDP & UDPLite (RFC 3828).
  *
  */
 

@@ -1,6 +1,9 @@
 /**
  * @file
  * lwIP network interface abstraction
+ * 
+ * @defgroup netif Network interface (NETIF)
+ * @ingroup callbackstyle_api
  */
 
 /*
@@ -32,11 +35,6 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- */
-
-/**
- * @defgroup netif Network interface (NETIF)
- * @ingroup callbackstyle_api
  */
 
 #include "lwip/opt.h"

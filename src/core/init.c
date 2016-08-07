@@ -35,29 +35,6 @@
  * Author: Adam Dunkels <adam@sics.se>
  */
 
-/**
- * @defgroup lwip_nosys Mainloop mode ("NO_SYS")
- * @ingroup lwip
- * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
- * Feed incoming packets to netif->input(pbuf, netif) function from mainloop,
- * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
- * context and put them into a queue which is processed from mainloop.\n
- * Call sys_check_timeouts() periodically in the mainloop.\n
- * Porting: implement all functions in @ref sys_time and @ref sys_prot.\n
- * You can only use @ref callbackstyle_api in this mode.\n
- * Sample code:\n
- * @verbinclude NO_SYS_SampleCode.c
- *
- * @defgroup lwip_os OS mode (TCPIP thread)
- * @ingroup lwip
- * Use this mode if you run an OS on your system. It is recommended to
- * use an RTOS that correctly handles priority inversion and
- * to use LWIP_TCPIP_CORE_LOCKING.\n
- * Porting: implement all functions in @ref sys_layer.\n
- * You can use @ref callbackstyle_api together with \#define tcpip_callback,
- * and all @ref threadsafe_api.
- */
-
 #include "lwip/opt.h"
 
 #include "lwip/init.h"

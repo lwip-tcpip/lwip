@@ -2,6 +2,8 @@
  * @file
  * API functions for name resolving
  *
+ * @defgroup netdbapi NETDB API
+ * @ingroup socket
  */
 
 /*
@@ -31,12 +33,6 @@
  *
  * Author: Simon Goldschmidt
  *
- */
-
-
-/**
- * @defgroup netdbapi NETDB API
- * @ingroup socket
  */
 
 #include "lwip/netdb.h"

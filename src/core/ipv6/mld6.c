@@ -1,5 +1,12 @@
 /**
  * @file
+ * Multicast listener discovery
+ *
+ * @defgroup mld6 MLD6
+ * @ingroup ip6
+ * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
+ * No support for MLDv2.\n
+ * To be called from TCPIP thread
  */
 
 /*
@@ -35,14 +42,6 @@
  *
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
- */
-
-/**
- * @defgroup mld6 MLD6
- * @ingroup ip6
- * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
- * No support for MLDv2.\n
- * To be called from TCPIP thread
  */
 
 /* Based on igmp.c implementation of igmp v2 protocol */

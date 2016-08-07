@@ -1,6 +1,24 @@
 /**
  * @file
  * Sequential API External module
+ * 
+ * @defgroup netconn Netconn API
+ * @ingroup threadsafe_api
+ * Thread-safe, to be called from non-TCPIP threads only.
+ * TX/RX handling based on @ref netbuf (containing @ref pbuf)
+ * to avoid copying data around.
+ * 
+ * @defgroup netconn_common Common functions
+ * @ingroup netconn
+ * For use with TCP and UDP
+ * 
+ * @defgroup netconn_tcp TCP only
+ * @ingroup netconn
+ * TCP only functions
+ * 
+ * @defgroup netconn_udp UDP only
+ * @ingroup netconn
+ * UDP only functions
  */
 
 /*
@@ -32,26 +50,6 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- */
-
-/**
- * @defgroup netconn Netconn API
- * @ingroup threadsafe_api
- * Thread-safe, to be called from non-TCPIP threads only.
- * TX/RX handling based on @ref netbuf (containing @ref pbuf)
- * to avoid copying data around.
- * 
- * @defgroup netconn_common Common functions
- * @ingroup netconn
- * For use with TCP and UDP
- * 
- * @defgroup netconn_tcp TCP only
- * @ingroup netconn
- * TCP only functions
- * 
- * @defgroup netconn_udp UDP only
- * @ingroup netconn
- * UDP only functions
  */
 
 /* This is the part of the API that is linked with

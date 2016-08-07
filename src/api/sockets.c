@@ -2,6 +2,12 @@
  * @file
  * Sockets BSD-Like API module
  *
+ * @defgroup socket Socket API
+ * @ingroup threadsafe_api
+ * BSD-style socket API.\n
+ * Thread-safe, to be called from non-TCPIP threads only.\n
+ * Can be activated by defining @ref LWIP_SOCKET to 1.\n
+ * Header is in posix/sys/socket.h\b
  */
 
 /*
@@ -36,15 +42,6 @@
  *
  * Improved by Marc Boucher <marc@mbsi.ca> and David Haas <dhaas@alum.rpi.edu>
  *
- */
-
-/**
- * @defgroup socket Socket API
- * @ingroup threadsafe_api
- * BSD-style socket API.\n
- * Thread-safe, to be called from non-TCPIP threads only.\n
- * Can be activated by defining LWIP_SOCKET to 1.\n
- * Header is in posix/sys/socket.h\b
  */
 
 #include "lwip/opt.h"

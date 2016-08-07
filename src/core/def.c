@@ -2,6 +2,16 @@
  * @file
  * Common functions used throughout the stack.
  *
+ * These are reference implementations of the byte swapping functions.
+ * Again with the aim of being simple, correct and fully portable.
+ * Byte swapping is the second thing you would want to optimize. You will
+ * need to port it to your architecture and in your cc.h:
+ *
+ * \#define LWIP_PLATFORM_BYTESWAP 1
+ * \#define LWIP_PLATFORM_HTONS(x) your_htons
+ * \#define LWIP_PLATFORM_HTONL(x) your_htonl
+ *
+ * Note ntohs() and ntohl() are merely references to the htonx counterparts.
  */
 
 /*
@@ -38,19 +48,6 @@
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
-
-/**
- * These are reference implementations of the byte swapping functions.
- * Again with the aim of being simple, correct and fully portable.
- * Byte swapping is the second thing you would want to optimize. You will
- * need to port it to your architecture and in your cc.h:
- *
- * #define LWIP_PLATFORM_BYTESWAP 1
- * #define LWIP_PLATFORM_HTONS(x) <your_htons>
- * #define LWIP_PLATFORM_HTONL(x) <your_htonl>
- *
- * Note ntohs() and ntohl() are merely references to the htonx counterparts.
- */
 
 #if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
 

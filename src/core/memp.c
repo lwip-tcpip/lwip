@@ -4,6 +4,11 @@
  *
  * lwIP has dedicated pools for many structures (netconn, protocol control blocks,
  * packet buffers, ...). All these pools are managed here.
+ *
+ * @defgroup mempool Memory pools
+ * @ingroup infrastructure
+ * Custom memory pools
+
  */
 
 /*
@@ -36,12 +41,6 @@
  *
  * Author: Adam Dunkels <adam@sics.se>
  *
- */
-
-/**
- * @defgroup mempool Memory pools
- * @ingroup infrastructure
- * Custom memory pools
  */
 
 #include "lwip/opt.h"

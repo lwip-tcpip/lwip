@@ -4,6 +4,13 @@
  * different types of protocols besides (or overriding) those
  * already available in lwIP.\n
  * See also @ref raw_raw
+ * 
+ * @defgroup raw_raw RAW
+ * @ingroup raw_api
+ * Implementation of raw protocol PCBs for low-level handling of
+ * different types of protocols besides (or overriding) those
+ * already available in lwIP.\n
+ * @see @ref raw_api
  */
 
 /*
@@ -36,21 +43,6 @@
  *
  * Author: Adam Dunkels <adam@sics.se>
  *
- */
-
-/**
- * @defgroup raw_api RAW API
- * @ingroup callbackstyle_api
- * @verbinclude "rawapi.txt"
- */
-
-/**
- * @defgroup raw_raw RAW
- * @ingroup raw_api
- * Implementation of raw protocol PCBs for low-level handling of
- * different types of protocols besides (or overriding) those
- * already available in lwIP.\n
- * @see @ref raw_api
  */
 
 #include "lwip/opt.h"

@@ -2,6 +2,13 @@
  * @file
  * Network Interface Sequential API module
  *
+ * @defgroup netifapi NETIF API
+ * @ingroup threadsafe_api
+ * Thread-safe functions to be called from non-TCPIP threads
+ * 
+ * @defgroup netifapi_netif NETIF related
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads 
  */
 
 /*
@@ -29,16 +36,6 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- */
-
-/**
- * @defgroup netifapi NETIF API
- * @ingroup threadsafe_api
- * Thread-safe functions to be called from non-TCPIP threads
- * 
- * @defgroup netifapi_netif NETIF related
- * @ingroup netifapi
- * To be called from non-TCPIP threads 
  */
 
 #include "lwip/opt.h"

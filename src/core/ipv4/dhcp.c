@@ -2,6 +2,26 @@
  * @file
  * Dynamic Host Configuration Protocol client
  *
+ * @defgroup dhcp4 DHCPv4
+ * @ingroup ip4
+ * DHCP (IPv4) related functions
+ * This is a DHCP client for the lwIP TCP/IP stack. It aims to conform
+ * with RFC 2131 and RFC 2132.
+ *
+ * @todo:
+ * - Support for interfaces other than Ethernet (SLIP, PPP, ...)
+ *
+ * Options:
+ * @ref DHCP_COARSE_TIMER_SECS (recommended 60 which is a minute)
+ * @ref DHCP_FINE_TIMER_MSECS (recommended 500 which equals TCP coarse timer)
+ *
+ * dhcp_start() starts a DHCP client instance which
+ * configures the interface by obtaining an IP address lease and maintaining it.
+ *
+ * Use dhcp_release() to end the lease and use dhcp_stop()
+ * to remove the DHCP client.
+ *
+ * @see netifapi_dhcp4
  */
 
 /*
@@ -38,38 +58,6 @@
  *
  * Author: Leon Woestenberg <leon.woestenberg@gmx.net>
  *
- * This is a DHCP client for the lwIP TCP/IP stack. It aims to conform
- * with RFC 2131 and RFC 2132.
- *
- * @todo:
- * - Support for interfaces other than Ethernet (SLIP, PPP, ...)
- *
- * Please coordinate changes and requests with Leon Woestenberg
- * <leon.woestenberg@gmx.net>
- *
- * Integration with your code:
- *
- * In lwip/dhcp.h
- * #define DHCP_COARSE_TIMER_SECS (recommended 60 which is a minute)
- * #define DHCP_FINE_TIMER_MSECS (recommended 500 which equals TCP coarse timer)
- *
- * Then have your application call dhcp_coarse_tmr() and
- * dhcp_fine_tmr() on the defined intervals.
- *
- * dhcp_start(struct netif *netif);
- * starts a DHCP client instance which configures the interface by
- * obtaining an IP address lease and maintaining it.
- *
- * Use dhcp_release(netif) to end the lease and use dhcp_stop(netif)
- * to remove the DHCP client.
- *
- */
-
-/**
- * @defgroup dhcp4 DHCPv4
- * @ingroup ip4
- * DHCP (IPv4) related functions
- * @see netifapi_dhcp4
  */
 
 #include "lwip/opt.h"

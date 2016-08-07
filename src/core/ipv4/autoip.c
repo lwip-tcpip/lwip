@@ -2,6 +2,28 @@
  * @file
  * AutoIP Automatic LinkLocal IP Configuration
  *
+ * This is a AutoIP implementation for the lwIP TCP/IP stack. It aims to conform
+ * with RFC 3927.
+ *
+ * @defgroup autoip AUTOIP
+ * @ingroup ip4
+ * AUTOIP related functions
+ * USAGE:
+ *
+ * define @ref LWIP_AUTOIP 1 in your lwipopts.h
+ * Options:
+ * @ref AUTOIP_TMR_INTERVAL msecs,
+ *   I recommend a value of 100. The value must divide 1000 with a remainder almost 0.
+ *   Possible values are 1000, 500, 333, 250, 200, 166, 142, 125, 111, 100 ....
+ *
+ * Without DHCP:
+ * - Call autoip_start() after netif_add().
+ *
+ * With DHCP:
+ * - define @ref LWIP_DHCP_AUTOIP_COOP 1 in your lwipopts.h.
+ * - Configure your DHCP Client.
+ * 
+ * @see netifapi_autoip
  */
 
 /*
@@ -32,41 +54,6 @@
  * OF SUCH DAMAGE.
  *
  * Author: Dominik Spies <kontakt@dspies.de>
- *
- * This is a AutoIP implementation for the lwIP TCP/IP stack. It aims to conform
- * with RFC 3927.
- *
- *
- * Please coordinate changes and requests with Dominik Spies
- * <kontakt@dspies.de>
- */
-
-/*******************************************************************************
- * USAGE:
- *
- * define LWIP_AUTOIP 1  in your lwipopts.h
- *
- * If you don't use tcpip.c (so, don't call, you don't call tcpip_init):
- * - First, call autoip_init().
- * - call autoip_tmr() all AUTOIP_TMR_INTERVAL msces,
- *   that should be defined in autoip.h.
- *   I recommend a value of 100. The value must divide 1000 with a remainder almost 0.
- *   Possible values are 1000, 500, 333, 250, 200, 166, 142, 125, 111, 100 ....
- *
- * Without DHCP:
- * - Call autoip_start() after netif_add().
- *
- * With DHCP:
- * - define LWIP_DHCP_AUTOIP_COOP 1 in your lwipopts.h.
- * - Configure your DHCP Client.
- *
- */
-
-/**
- * @defgroup autoip AUTOIP
- * @ingroup ip4
- * AUTOIP related functions
- * @see netifapi_autoip
  */
 
 #include "lwip/opt.h"

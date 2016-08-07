@@ -2,6 +2,9 @@
  * @file
  * IGMP - Internet Group Management Protocol
  *
+ * @defgroup igmp IGMP
+ * @ingroup ip4
+ * To be called from TCPIP thread
  */
 
 /*
@@ -37,12 +40,6 @@
  * are specifically granted permission to redistribute this
  * source code.
 */
-
-/**
- * @defgroup igmp IGMP
- * @ingroup ip4
- * To be called from TCPIP thread
- */
 
 /*-------------------------------------------------------------
 Note 1)
