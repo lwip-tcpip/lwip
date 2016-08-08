@@ -42,10 +42,47 @@
  * The agent implements the most important MIB2 MIBs including IPv6 support
  * (interfaces, UDP, TCP, SNMP, ICMP, SYSTEM). IP MIB is an older version
  * whithout IPv6 statistics (TODO).\n
- * Work on SNMPv3 has started, but is not finished. 
+ * Rewritten by Martin Hentschel <info@cl-soft.de> and
+ * Dirk Ziegelmeier <dziegel@gmx.de>\n
+ * Work on SNMPv3 has started, but is not finished.\n
  *
  * 0 Agent Capabilities
  * ====================
+ * 
+ * Features:
+ * ---------
+ * - SNMPv2c support.
+ * - Low RAM usage - no memory pools, stack only.
+ * - MIB2 implementation is separated from SNMP stack.
+ * - Support for multiple MIBs (snmp_set_mibs() call) - e.g. for private MIB.
+ * - Simple and generic API for MIB implementation.
+ * - Comfortable node types and helper functions for scalar arrays and tables.
+ * - Counter64, bit and truthvalue datatype support.
+ * - Callbacks for SNMP writes e.g. to implement persistency.
+ * - Runs on two APIs: RAW and netconn.
+ * - Async API is gone - the stack now supports netconn API instead,
+ *   so blocking operations can be done in MIB calls.
+ *   SNMP runs in a worker thread when netconn API is used.
+ * - Simplified thread sync support for MIBs - useful when MIBs
+ *   need to access variables shared with other threads where no locking is
+ *   possible. Used in MIB2 to access lwIP stats from lwIP thread.
+ * 
+ * MIB compiler (code generator):
+ * ------------------------------
+ * - Provided in lwIP contrib repository.
+ * - Written in C#. MIB viewer used Windows Forms.
+ * - Developed on Windows with Visual Studio 2010.
+ * - Can be compiled and used on all platforms with http://www.monodevelop.com/.
+ * - Based on a heavily modified version of of SharpSnmpLib (a4bd05c6afb4)
+ *   (https://sharpsnmplib.codeplex.com/SourceControl/network/forks/Nemo157/MIBParserUpdate).
+ * - MIB parser, C file generation framework and LWIP code generation are cleanly
+ *   separated, which means the code may be useful as a base for code generation
+ *   of other SNMP agents.
+ * 
+ * Notes:
+ * ------
+ * - Stack and MIB compiler were used to implement a Profinet device.
+ *   Compiled/implemented MIBs: LLDP-MIB, LLDP-EXT-DOT3-MIB, LLDP-EXT-PNO-MIB.
  * 
  * SNMPv1 per RFC1157 and SNMPv2c per RFC 3416
  * -------------------------------------------
