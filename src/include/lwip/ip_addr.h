@@ -34,8 +34,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_IP_ADDR_H__
-#define LWIP_HDR_IP_ADDR_H__
+#ifndef LWIP_HDR_IP_ADDR_H
+#define LWIP_HDR_IP_ADDR_H
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -357,4 +357,4 @@ extern const ip_addr_t ip6_addr_any;
 }
 #endif
 
-#endif /* LWIP_HDR_IP_ADDR_H__ */
+#endif /* LWIP_HDR_IP_ADDR_H */

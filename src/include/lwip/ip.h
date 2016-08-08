@@ -34,8 +34,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_IP_H__
-#define LWIP_HDR_IP_H__
+#ifndef LWIP_HDR_IP_H
+#define LWIP_HDR_IP_H
 
 #include "lwip/opt.h"
 
@@ -322,6 +322,6 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
 }
 #endif
 
-#endif /* LWIP_HDR_IP_H__ */
+#endif /* LWIP_HDR_IP_H */
 
 

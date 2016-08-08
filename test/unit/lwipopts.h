@@ -29,8 +29,8 @@
  * Author: Simon Goldschmidt
  *
  */
-#ifndef LWIP_HDR_LWIPOPTS_H__
-#define LWIP_HDR_LWIPOPTS_H__
+#ifndef LWIP_HDR_LWIPOPTS_H
+#define LWIP_HDR_LWIPOPTS_H
 
 /* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
 #define NO_SYS                          1
@@ -54,4 +54,4 @@
 /* Minimal changes to opt.h required for etharp unit tests: */
 #define ETHARP_SUPPORT_STATIC_ENTRIES   1
 
-#endif /* LWIP_HDR_LWIPOPTS_H__ */
+#endif /* LWIP_HDR_LWIPOPTS_H */
