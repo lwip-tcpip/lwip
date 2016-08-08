@@ -1359,7 +1359,7 @@
  * Ethernet.
  */
 #if !defined PBUF_LINK_HLEN || defined __DOXYGEN__
-#if defined LWIP_HOOK_VLAN_SET || defined __DOXYGEN__
+#if defined LWIP_HOOK_VLAN_SET
 #define PBUF_LINK_HLEN                  (18 + ETH_PAD_SIZE)
 #else /* LWIP_HOOK_VLAN_SET */
 #define PBUF_LINK_HLEN                  (14 + ETH_PAD_SIZE)
