@@ -2,6 +2,15 @@
  * @file 
  * Transmission Control Protocol for IP
  * See also @ref tcp_raw
+ *
+ * @defgroup tcp_raw TCP
+ * @ingroup callbackstyle_api
+ * Transmission Control Protocol for IP\n
+ * @see @ref raw_api and @ref netconn
+ *
+ * Common functions for the TCP implementation, such as functinos
+ * for manipulating the data structures and the TCP timer functions. TCP functions
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 /*
@@ -34,17 +43,6 @@
  *
  * Author: Adam Dunkels <adam@sics.se>
  *
- */
-
-/**
- * @defgroup tcp_raw TCP
- * @ingroup raw_api
- * Transmission Control Protocol for IP\n
- * @see @ref raw_api and @ref netconn
- *
- * Common functions for the TCP implementation, such as functinos
- * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 #include "lwip/opt.h"
