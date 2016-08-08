@@ -78,7 +78,7 @@ with newer versions.
   * support PBUF_REF for RX packets
   * LWIP_NETCONN_FULLDUPLEX allows netconn/sockets to be used for reading/writing from separate
     threads each (needs LWIP_NETCONN_SEM_PER_THREAD)
-  * Moved and reorderd stats (mainly memp/mib2)
+  * Moved and reordered stats (mainly memp/mib2)
 
 (1.4.0)
 
