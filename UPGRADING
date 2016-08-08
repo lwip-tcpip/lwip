@@ -20,7 +20,7 @@ with newer versions.
   * Added IPv6 support (dual-stack or IPv4/IPv6 only)
   * Changed ip_addr_t to be a union in dual-stack mode (use ip4_addr_t where referring to IPv4 only).
   * Major rewrite of SNMP (added MIB parser that creates code stubs for custom MIBs);
-    supports SNMP2vc (experimental v3 support)
+    supports SNMPv2c (experimental v3 support)
   * Moved some core applications from contrib repository to src/apps (and include/lwip/apps)
 
   +++ Raw API:
@@ -34,7 +34,8 @@ with newer versions.
   ++ Port changes
 
   +++ new files:
-    * MANY new and moved files!
+    * MANY new and moved files! 
+    * Added src/Filelists.mk for use in Makefile projects
     * Continued moving stack-internal parts from abc.h to abc_priv.h in sub-folder "priv"
       to let abc.h only contain the actual application programmer's API
 
