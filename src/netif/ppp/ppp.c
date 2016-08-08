@@ -343,6 +343,7 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
 
   /* LCP not open, close link protocol */
   if (pcb->phase < PPP_PHASE_ESTABLISH) {
+    new_phase(pcb, PPP_PHASE_DISCONNECT);
     ppp_link_terminated(pcb);
     return ERR_OK;
   }
