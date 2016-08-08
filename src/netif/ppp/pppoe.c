@@ -881,7 +881,7 @@ pppoe_timeout(void *arg)
 static err_t
 pppoe_connect(ppp_pcb *ppp, void *ctx)
 {
-  int err;
+  err_t err;
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   lcp_options *lcp_wo;
   lcp_options *lcp_ao;
