@@ -2,15 +2,6 @@
  * @file 
  * Transmission Control Protocol for IP
  * See also @ref tcp_raw
- *
- * @defgroup tcp_raw TCP
- * @ingroup callbackstyle_api
- * Transmission Control Protocol for IP\n
- * @see @ref raw_api and @ref netconn
- *
- * Common functions for the TCP implementation, such as functinos
- * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 /*
@@ -43,6 +34,17 @@
  *
  * Author: Adam Dunkels <adam@sics.se>
  *
+ */
+
+/**
+ * @defgroup tcp_raw TCP
+ * @ingroup raw_api
+ * Transmission Control Protocol for IP\n
+ * @see @ref raw_api and @ref netconn
+ *
+ * Common functions for the TCP implementation, such as functinos
+ * for manipulating the data structures and the TCP timer functions. TCP functions
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 #include "lwip/opt.h"
@@ -1095,7 +1097,7 @@ tcp_slowtmr_start:
     if (pcb_remove) {
       struct tcp_pcb *pcb2;
 #if LWIP_CALLBACK_API
-      tcp_err_fn err_fn;
+      tcp_err_fn err_fn = pcb->errf;
 #endif /* LWIP_CALLBACK_API */
       void *err_arg;
       tcp_pcb_purge(pcb);
@@ -1114,9 +1116,6 @@ tcp_slowtmr_start:
                  pcb->local_port, pcb->remote_port);
       }
 
-#if LWIP_CALLBACK_API
-      err_fn = pcb->errf;
-#endif /* LWIP_CALLBACK_API */
       err_arg = pcb->callback_arg;
       pcb2 = pcb;
       pcb = pcb->next;
@@ -1681,7 +1680,6 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
  * @ingroup tcp_raw
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
- * @note The corresponding pcb is already freed when this callback is called!
  *
  * @param pcb tcp_pcb to set the err callback
  * @param err callback function to call for this pcb when a fatal error

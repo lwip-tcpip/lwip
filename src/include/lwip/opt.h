@@ -1325,6 +1325,13 @@
 #if !defined(LWIP_EVENT_API) && !defined(LWIP_CALLBACK_API) || defined __DOXYGEN__
 #define LWIP_EVENT_API                  0
 #define LWIP_CALLBACK_API               1
+#else
+#ifndef LWIP_EVENT_API
+#define LWIP_EVENT_API                  0
+#endif
+#ifndef LWIP_CALLBACK_API
+#define LWIP_CALLBACK_API               0
+#endif
 #endif
 
 /**
@@ -1359,7 +1366,7 @@
  * Ethernet.
  */
 #if !defined PBUF_LINK_HLEN || defined __DOXYGEN__
-#if defined LWIP_HOOK_VLAN_SET
+#if defined LWIP_HOOK_VLAN_SET || defined __DOXYGEN__
 #define PBUF_LINK_HLEN                  (18 + ETH_PAD_SIZE)
 #else /* LWIP_HOOK_VLAN_SET */
 #define PBUF_LINK_HLEN                  (14 + ETH_PAD_SIZE)
