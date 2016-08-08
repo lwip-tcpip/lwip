@@ -54,13 +54,14 @@
  */
 
 #include "lwip/opt.h"
-#include "lwip/def.h"
 #include "lwip/mem.h"
+#include "lwip/def.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
 #include "lwip/err.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #if MEM_LIBC_MALLOC || MEM_USE_POOLS
 /** mem_init is not used when using pools instead of a heap or using
