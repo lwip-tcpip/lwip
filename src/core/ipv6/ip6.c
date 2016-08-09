@@ -60,7 +60,6 @@
 #include "lwip/stats.h"
 
 /**
- * @ingroup ip6
  * Finds the appropriate network interface for a given IPv6 address. It tries to select
  * a netif following a sequence of heuristics:
  * 1) if there is only 1 netif, return it

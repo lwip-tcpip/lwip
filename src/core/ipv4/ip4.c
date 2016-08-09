@@ -136,7 +136,6 @@ ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src)
 #endif /* LWIP_HOOK_IP4_ROUTE_SRC */
 
 /**
- * @ingroup ip4
  * Finds the appropriate network interface for a given IP address. It
  * searches the list of network interfaces linearly. A match is found
  * if the masked IP address of the network interface equals the masked
