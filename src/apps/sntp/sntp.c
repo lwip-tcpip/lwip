@@ -94,7 +94,7 @@
 #define SNTP_DEBUG_WARN_STATE   (SNTP_DEBUG | LWIP_DBG_LEVEL_WARNING | LWIP_DBG_STATE)
 #define SNTP_DEBUG_SERIOUS      (SNTP_DEBUG | LWIP_DBG_LEVEL_SERIOUS)
 
-#define SNTP_ERR_KOD                ERR_CLSD
+#define SNTP_ERR_KOD                1
 
 /* SNTP protocol defines */
 #define SNTP_MSG_LEN                48
