@@ -73,7 +73,7 @@ int
 ip6addr_aton(const char *cp, ip6_addr_t *addr)
 {
   u32_t addr_index, zero_blocks, current_block_index, current_block_value;
-  const char * s;
+  const char *s;
 
   /* Count the number of colons, to count the number of blocks in a "::" sequence
      zero_blocks may be 1 even if there are no :: sequences */

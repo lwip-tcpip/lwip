@@ -80,7 +80,7 @@ static struct mld_group* mld_group_list;
 
 
 /* Forward declarations. */
-static struct mld_group * mld6_new_group(struct netif *ifp, const ip6_addr_t *addr);
+static struct mld_group *mld6_new_group(struct netif *ifp, const ip6_addr_t *addr);
 static err_t mld6_free_group(struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, u16_t maxresp);
 static void mld6_send(struct mld_group *group, u8_t type);
@@ -242,8 +242,8 @@ mld6_free_group(struct mld_group *group)
 void
 mld6_input(struct pbuf *p, struct netif *inp)
 {
-  struct mld_header * mld_hdr;
-  struct mld_group* group;
+  struct mld_header *mld_hdr;
+  struct mld_group *group;
 
   MLD6_STATS_INC(mld6.recv);
 
@@ -538,9 +538,9 @@ mld6_delayed_report(struct mld_group *group, u16_t maxresp)
 static void
 mld6_send(struct mld_group *group, u8_t type)
 {
-  struct mld_header * mld_hdr;
-  struct pbuf * p;
-  const ip6_addr_t * src_addr;
+  struct mld_header *mld_hdr;
+  struct pbuf *p;
+  const ip6_addr_t *src_addr;
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
   p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + sizeof(struct ip6_hbh_hdr), PBUF_RAM);

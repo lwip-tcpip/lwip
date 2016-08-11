@@ -203,7 +203,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
  *         source address is found
  */
 const ip_addr_t *
-ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest)
+ip6_select_source_address(struct netif *netif, const ip6_addr_t *dest)
 {
   const ip_addr_t *src = NULL;
   u8_t i;
@@ -642,7 +642,7 @@ netif_found:
 
     case IP6_NEXTH_FRAGMENT:
     {
-      struct ip6_frag_hdr * frag_hdr;
+      struct ip6_frag_hdr *frag_hdr;
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Fragment header\n"));
 
       frag_hdr = (struct ip6_frag_hdr *)p->payload;
@@ -1034,9 +1034,9 @@ ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  * @return ERR_OK if hop-by-hop header was added, ERR_* otherwise
  */
 err_t
-ip6_options_add_hbh_ra(struct pbuf * p, u8_t nexth, u8_t value)
+ip6_options_add_hbh_ra(struct pbuf *p, u8_t nexth, u8_t value)
 {
-  struct ip6_hbh_hdr * hbh_hdr;
+  struct ip6_hbh_hdr *hbh_hdr;
 
   /* Move pointer to make room for hop-by-hop options header. */
   if (pbuf_header(p, sizeof(struct ip6_hbh_hdr))) {

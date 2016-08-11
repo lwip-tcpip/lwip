@@ -260,7 +260,7 @@ ip6_reass(struct pbuf *p)
 {
   struct ip6_reassdata *ipr, *ipr_prev;
   struct ip6_reass_helper *iprh, *iprh_tmp, *iprh_prev=NULL;
-  struct ip6_frag_hdr * frag_hdr;
+  struct ip6_frag_hdr *frag_hdr;
   u16_t offset, len;
   u8_t clen, valid = 1;
   struct pbuf *q;
@@ -655,7 +655,7 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
 {
   struct ip6_hdr *original_ip6hdr;
   struct ip6_hdr *ip6hdr;
-  struct ip6_frag_hdr * frag_hdr;
+  struct ip6_frag_hdr *frag_hdr;
   struct pbuf *rambuf;
   struct pbuf *newpbuf;
   static u32_t identification;

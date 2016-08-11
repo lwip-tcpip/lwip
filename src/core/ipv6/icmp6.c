@@ -80,8 +80,8 @@ void
 icmp6_input(struct pbuf *p, struct netif *inp)
 {
   struct icmp6_hdr *icmp6hdr;
-  struct pbuf * r;
-  const ip6_addr_t * reply_src;
+  struct pbuf *r;
+  const ip6_addr_t *reply_src;
 
   ICMP6_STATS_INC(icmp6.recv);
 
