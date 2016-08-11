@@ -1,7 +1,6 @@
 /**
  * @file
- *
- * AutoIP Automatic LinkLocal IP Configuration
+ * AutoIP protocol definitions
  */
 
 /*
@@ -38,53 +37,41 @@
  *
  */
 
-#ifndef LWIP_HDR_AUTOIP_H
-#define LWIP_HDR_AUTOIP_H
+#ifndef LWIP_HDR_PROT_AUTOIP_H
+#define LWIP_HDR_PROT_AUTOIP_H
 
 #include "lwip/opt.h"
 
 #if LWIP_IPV4 && LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/netif.h"
-/* #include "lwip/udp.h" */
-#include "lwip/etharp.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** AutoIP Timing */
-#define AUTOIP_TMR_INTERVAL      100
-#define AUTOIP_TICKS_PER_SECOND (1000 / AUTOIP_TMR_INTERVAL)
+/* 169.254.0.0 */
+#define AUTOIP_NET              0xA9FE0000
+/* 169.254.1.0 */
+#define AUTOIP_RANGE_START      (AUTOIP_NET | 0x0100)
+/* 169.254.254.255 */
+#define AUTOIP_RANGE_END        (AUTOIP_NET | 0xFEFF)
 
-/** AutoIP state information per netif */
-struct autoip
-{
-  /** the currently selected, probed, announced or used LL IP-Address */
-  ip4_addr_t llipaddr;
-  /** current AutoIP state machine state */
-  u8_t state;
-  /** sent number of probes or announces, dependent on state */
-  u8_t sent_num;
-  /** ticks to wait, tick is AUTOIP_TMR_INTERVAL long */
-  u16_t ttw;
-  /** ticks until a conflict can be solved by defending */
-  u8_t lastconflict;
-  /** total number of probed/used Link Local IP-Addresses */
-  u8_t tried_llipaddr;
-};
+/* RFC 3927 Constants */
+#define PROBE_WAIT              1   /* second   (initial random delay)                 */
+#define PROBE_MIN               1   /* second   (minimum delay till repeated probe)    */
+#define PROBE_MAX               2   /* seconds  (maximum delay till repeated probe)    */
+#define PROBE_NUM               3   /*          (number of probe packets)              */
+#define ANNOUNCE_NUM            2   /*          (number of announcement packets)       */
+#define ANNOUNCE_INTERVAL       2   /* seconds  (time between announcement packets)    */
+#define ANNOUNCE_WAIT           2   /* seconds  (delay before announcing)              */
+#define MAX_CONFLICTS           10  /*          (max conflicts before rate limiting)   */
+#define RATE_LIMIT_INTERVAL     60  /* seconds  (delay between successive attempts)    */
+#define DEFEND_INTERVAL         10  /* seconds  (min. wait between defensive ARPs)     */
 
-
-#define autoip_init() /* Compatibility define, no init needed. */
-void autoip_set_struct(struct netif *netif, struct autoip *autoip);
-/** Remove a struct autoip previously set to the netif using autoip_set_struct() */
-#define autoip_remove_struct(netif) do { (netif)->autoip = NULL; } while (0)
-err_t autoip_start(struct netif *netif);
-err_t autoip_stop(struct netif *netif);
-void autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr);
-void autoip_tmr(void);
-void autoip_network_changed(struct netif *netif);
-u8_t autoip_supplied_address(const struct netif *netif);
+/* AutoIP client states */
+#define AUTOIP_STATE_OFF        0
+#define AUTOIP_STATE_PROBING    1
+#define AUTOIP_STATE_ANNOUNCING 2
+#define AUTOIP_STATE_BOUND      3
 
 #ifdef __cplusplus
 }
@@ -92,4 +79,4 @@ u8_t autoip_supplied_address(const struct netif *netif);
 
 #endif /* LWIP_IPV4 && LWIP_AUTOIP */
 
-#endif /* LWIP_HDR_AUTOIP_H */
+#endif /* LWIP_HDR_PROT_AUTOIP_H */

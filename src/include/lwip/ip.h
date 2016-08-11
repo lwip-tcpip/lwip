@@ -46,19 +46,11 @@
 #include "lwip/netif.h"
 #include "lwip/ip4.h"
 #include "lwip/ip6.h"
+#include "lwip/prot/ip.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define IP_PROTO_ICMP    1
-#define IP_PROTO_IGMP    2
-#define IP_PROTO_UDP     17
-#define IP_PROTO_UDPLITE 136
-#define IP_PROTO_TCP     6
-
-/** This operates on a void* by loading the first byte */
-#define IP_HDR_GET_VERSION(ptr)   ((*(u8_t*)(ptr)) >> 4)
 
 /* This is passed as the destination address to ip_output_if (not
    to ip_output), meaning that an IP header already is constructed

@@ -74,6 +74,7 @@
 #include "lwip/autoip.h"
 #include "lwip/dns.h"
 #include "lwip/etharp.h"
+#include "lwip/prot/dhcp.h"
 
 #include <string.h>
 
@@ -384,6 +385,7 @@ dhcp_select(struct netif *netif)
 
 /**
  * The DHCP timer that checks for lease renewal/rebind timeouts.
+ * Must be called once a minute (see @ref DHCP_COARSE_TIMER_SECS).
  */
 void
 dhcp_coarse_tmr(void)
@@ -419,7 +421,8 @@ dhcp_coarse_tmr(void)
 }
 
 /**
- * DHCP transaction timeout handling
+ * DHCP transaction timeout handling (this function must be called every 500ms,
+ * see @ref DHCP_FINE_TIMER_MSECS).
  *
  * A DHCP server is expected to respond within a short period of time.
  * This timer checks whether an outstanding DHCP request is timed out.
@@ -850,7 +853,8 @@ dhcp_network_changed(struct netif *netif)
 
 #if DHCP_DOES_ARP_CHECK
 /**
- * Match an ARP reply with the offered IP address.
+ * Match an ARP reply with the offered IP address:
+ * check whether the offered IP address is not in use using ARP
  *
  * @param netif the network interface on which the reply was received
  * @param addr The IP address we received a reply from
@@ -1241,7 +1245,7 @@ dhcp_reboot(struct netif *netif)
 
 /**
  * @ingroup dhcp4
- * Release a DHCP lease.
+ * Release a DHCP lease (usually called before @ref dhcp_stop).
  *
  * @param netif network interface which must release its lease
  */
