@@ -40,10 +40,6 @@
 #ifndef LWIP_HDR_PROT_AUTOIP_H
 #define LWIP_HDR_PROT_AUTOIP_H
 
-#include "lwip/opt.h"
-
-#if LWIP_IPV4 && LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,7 +72,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_IPV4 && LWIP_AUTOIP */
 
 #endif /* LWIP_HDR_PROT_AUTOIP_H */

@@ -37,10 +37,6 @@
 #ifndef LWIP_HDR_PROT_IP4_H
 #define LWIP_HDR_PROT_IP4_H
 
-#include "lwip/opt.h"
-
-#if LWIP_IPV4
-
 #include "lwip/arch.h"
 #include "lwip/ip4_addr.h"
 
@@ -111,8 +107,6 @@ PACK_STRUCT_END
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_IPV4 */
 
 #endif /* LWIP_HDR_PROT_IP4_H */
 

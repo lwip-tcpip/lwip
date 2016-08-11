@@ -40,11 +40,6 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
-
-#include "lwip/netif.h"
-#include "lwip/udp.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -186,7 +181,5 @@ PACK_STRUCT_END
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_DHCP */
 
 #endif /*LWIP_HDR_PROT_DHCP_H*/

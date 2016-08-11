@@ -37,7 +37,6 @@
 #ifndef LWIP_HDR_PROT_IP_H
 #define LWIP_HDR_PROT_IP_H
 
-#include "lwip/opt.h"
 #include "lwip/arch.h"
 
 #define IP_PROTO_ICMP    1
