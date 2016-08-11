@@ -64,10 +64,12 @@ extern "C" {
 #define DEFEND_INTERVAL         10  /* seconds  (min. wait between defensive ARPs)     */
 
 /* AutoIP client states */
-#define AUTOIP_STATE_OFF        0
-#define AUTOIP_STATE_PROBING    1
-#define AUTOIP_STATE_ANNOUNCING 2
-#define AUTOIP_STATE_BOUND      3
+typedef enum {
+  AUTOIP_STATE_OFF        = 0,
+  AUTOIP_STATE_PROBING    = 1,
+  AUTOIP_STATE_ANNOUNCING = 2,
+  AUTOIP_STATE_BOUND      = 3
+} autoip_state_enum_t;
 
 #ifdef __cplusplus
 }
