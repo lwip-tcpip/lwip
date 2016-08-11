@@ -2,6 +2,7 @@
 
 #include "lwip/netif.h"
 #include "lwip/dhcp.h"
+#include "lwip/prot/dhcp.h"
 #include "netif/etharp.h"
 
 struct netif net_test;
