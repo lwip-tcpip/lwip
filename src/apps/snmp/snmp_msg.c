@@ -1547,7 +1547,7 @@ snmp_execute_write_callbacks(struct snmp_request *request)
   snmp_vb_enumerator_init(&inbound_varbind_enumerator, request->inbound_pbuf, request->inbound_varbind_offset, request->inbound_varbind_len);
   vb.value = NULL; /* do NOT decode value (we enumerate outbound buffer here, so all varbinds have values assigned, which we don't need here) */
 
-  while (snmp_vb_enumerator_get_next(&inbound_varbind_enumerator, &vb) == ERR_OK) {
+  while (snmp_vb_enumerator_get_next(&inbound_varbind_enumerator, &vb) == SNMP_VB_ENUMERATOR_ERR_OK) {
     snmp_write_callback(vb.oid.id, vb.oid.len, snmp_write_callback_arg);
   }
 }
