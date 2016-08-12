@@ -205,10 +205,12 @@ static u16_t dns_txid;
 #define DNS_FLAG2_ERR_NAME        0x03
 
 /* DNS protocol states */
-#define DNS_STATE_UNUSED            0
-#define DNS_STATE_NEW               1
-#define DNS_STATE_ASKING            2
-#define DNS_STATE_DONE              3
+typedef enum {
+  DNS_STATE_UNUSED           = 0,
+  DNS_STATE_NEW              = 1,
+  DNS_STATE_ASKING           = 2,
+  DNS_STATE_DONE             = 3
+} dns_state_enum_t;
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
