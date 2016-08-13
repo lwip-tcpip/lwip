@@ -620,7 +620,7 @@ void ppp_warn(const char *fmt, ...);      /* log a warning message */
 void ppp_error(const char *fmt, ...);     /* log an error message */
 void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
 #if PRINTPKT_SUPPORT
-void ppp_dump_packet(const char *tag, unsigned char *p, int len);
+void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len);
                                 /* dump packet to debug log if interesting */
 #endif /* PRINTPKT_SUPPORT */
 

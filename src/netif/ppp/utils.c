@@ -702,7 +702,7 @@ void ppp_dbglog(const char *fmt, ...) {
  * ppp_dump_packet - print out a packet in readable form if it is interesting.
  * Assumes len >= PPP_HDRLEN.
  */
-void ppp_dump_packet(const char *tag, unsigned char *p, int len) {
+void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len) {
     int proto;
 
     /*
@@ -713,9 +713,9 @@ void ppp_dump_packet(const char *tag, unsigned char *p, int len) {
 	return;
 
     /*
-     * don't print LCP echo request/reply packets if the link is up.
+     * don't print valid LCP echo request/reply packets if the link is up.
      */
-    if (proto == PPP_LCP && len >= 2 + HEADERLEN) {
+    if (proto == PPP_LCP && pcb->phase == PPP_PHASE_RUNNING && len >= 2 + HEADERLEN) {
 	unsigned char *lcp = p + 2;
 	int l = (lcp[2] << 8) + lcp[3];
 

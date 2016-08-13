@@ -780,7 +780,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
 #if PRINTPKT_SUPPORT
-  ppp_dump_packet("rcvd", (unsigned char *)pb->payload, pb->len);
+  ppp_dump_packet(pcb, "rcvd", (unsigned char *)pb->payload, pb->len);
 #endif /* PRINTPKT_SUPPORT */
 
   pbuf_header(pb, -(s16_t)sizeof(protocol));
@@ -1006,7 +1006,7 @@ struct pbuf *ppp_singlebuf(struct pbuf *p) {
  */
 err_t ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #if PRINTPKT_SUPPORT
-  ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
+  ppp_dump_packet(pcb, "sent", (unsigned char *)p->payload+2, p->len-2);
 #endif /* PRINTPKT_SUPPORT */
   return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
 }
