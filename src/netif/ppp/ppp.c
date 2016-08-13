@@ -1003,9 +1003,6 @@ struct pbuf *ppp_singlebuf(struct pbuf *p) {
  * IPv4 and IPv6 packets from lwIP are sent, respectively,
  * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
  * functions (which are callbacks of the netif PPP interface).
- *
- *  RETURN: >= 0 Number of characters written
- *           -1 Failed to write to device
  */
 err_t ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #if PRINTPKT_SUPPORT
