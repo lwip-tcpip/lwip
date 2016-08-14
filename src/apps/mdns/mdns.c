@@ -309,9 +309,10 @@ mdns_strncasecmp(const char* str1, const char* str2, size_t len)
 
 
 /**
+ * @ingroup mdns
  * Add a label part to a domain
  * @param domain The domain to add a label to
- * @param label The label to add, like <hostname>, 'local', 'com' or ''
+ * @param label The label to add, like &lt;hostname&gt;, 'local', 'com' or ''
  * @param len The length of the label
  * @return ERR_OK on success, an err_t otherwise if label too long
  */
@@ -407,8 +408,9 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
 }
 
 /**
+ * @ingroup mdns
  * Read possibly compressed domain name from packet buffer
- * @param pbuf The packet
+ * @param p The packet
  * @param offset start position of domain name in packet
  * @param domain The domain name destination
  * @return The new offset after the domain, or MDNS_READNAME_ERROR
@@ -444,6 +446,7 @@ mdns_domain_debug_print(int debug, struct mdns_domain *domain)
 }
 
 /**
+ * @ingroup mdns
  * Return 1 if contents of domains match (case-insensitive)
  * @param a Domain name to compare 1
  * @param b Domain name to compare 2
@@ -760,6 +763,7 @@ check_service(struct mdns_service *service, struct mdns_rr_info *rr)
 }
 
 /**
+ * @ingroup mdns
  * Return bytes needed to write before jump for best result of compressing supplied domain
  * against domain in outpacket starting at specified offset.
  * If a match is found, offset is updated to where to jump to
@@ -1847,6 +1851,7 @@ dealloc:
 }
 
 /**
+ * @ingroup mdns
  * Initiate MDNS responder. Will open UDP sockets on port 5353
  */
 void
@@ -1875,9 +1880,10 @@ mdns_resp_init(void)
 }
 
 /**
+ * @ingroup mdns
  * Activate MDNS responder for a network interface and send announce packets.
  * @param netif The network interface to activate.
- * @param hostname Name to use. Queries for <hostname>.local will be answered
+ * @param hostname Name to use. Queries for &lt;hostname&gt;.local will be answered
  *                 with the IP addresses of the netif. The hostname will be copied, the
  *                 given pointer can be on the stack.
  * @param dns_ttl Validity time in seconds to send out for IP address data in DNS replies
@@ -1930,6 +1936,7 @@ cleanup:
 }
 
 /**
+ * @ingroup mdns
  * Stop responding to MDNS queries on this interface, leave multicast groups,
  * and free the helper structure and any of its services.
  * @param netif The network interface to remove.
@@ -1963,6 +1970,7 @@ mdns_resp_remove_netif(struct netif *netif)
 }
 
 /**
+ * @ingroup mdns
  * Add a service to the selected network interface.
  * @param netif The network interface to publish this service on
  * @param name The name of the service
@@ -2025,6 +2033,7 @@ mdns_resp_add_service(struct netif *netif, char *name, char *service, u16_t prot
 }
 
 /**
+ * @ingroup mdns
  * Call this function from inside the service_get_txt_fn_t callback to add text data.
  * Buffer for TXT data is 256 bytes, and each field is prefixed with a length byte.
  * @param service The service provided to the get_txt callback
