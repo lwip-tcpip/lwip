@@ -42,8 +42,8 @@
  * @defgroup mdns MDNS
  * @ingroup apps
  *
- * RFC 6762 - Multicast DNS
- * RFC 6763 - DNS-Based Service Discovery
+ * RFC 6762 - Multicast DNS\n
+ * RFC 6763 - DNS-Based Service Discovery\n
  * 
  * @verbinclude mdns.txt
  * 
