@@ -107,14 +107,7 @@ static const ip_addr_t v6group = IPADDR6_INIT(PP_HTONL(0xFF020000UL), PP_HTONL(0
 #define DOMAIN_JUMP_SIZE 2
 #define DOMAIN_JUMP 0xc000
 
-static struct mdns_data {
-#if LWIP_IPV4
-  struct udp_pcb *v4pcb;
-#endif
-#if LWIP_IPV6
-  struct udp_pcb *v6pcb;
-#endif
-} mdns_data;
+static struct udp_pcb *mdns_pcb;
 
 #define TOPDOMAIN_LOCAL "local"
 
@@ -1450,7 +1443,6 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
 
   if (outpkt->pbuf) {
     const ip_addr_t *mcast_destaddr;
-    struct udp_pcb *pcb = NULL;
     struct dns_hdr hdr;
 
     /* Write header */
@@ -1470,20 +1462,18 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     if (IP_IS_V6_VAL(outpkt->dest_addr)) {
 #if LWIP_IPV6
       mcast_destaddr = &v6group;
-      pcb = mdns_data.v6pcb;
 #endif
     } else {
 #if LWIP_IPV4
       mcast_destaddr = &v4group;
-      pcb = mdns_data.v4pcb;
 #endif
     }
     /* Send created packet */
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d, unicast=%d\n", outpkt->write_offset, outpkt->unicast_reply));
     if (outpkt->unicast_reply) {
-      udp_sendto_if(pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
+      udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
     } else {
-      udp_sendto_if(pcb, outpkt->pbuf, mcast_destaddr, MDNS_PORT, outpkt->netif);
+      udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, MDNS_PORT, outpkt->netif);
     }
   }
 
@@ -1858,25 +1848,13 @@ void
 mdns_resp_init(void)
 {
   err_t res;
-  memset(&mdns_data, 0, sizeof(mdns_data));
 
-#if LWIP_IPV4
-  mdns_data.v4pcb = udp_new();
-  LWIP_ASSERT("Failed to allocate pcb", mdns_data.v4pcb != NULL);
-  udp_set_multicast_ttl(mdns_data.v4pcb, MDNS_TTL);
-  res = udp_bind(mdns_data.v4pcb, IP_ADDR_ANY, MDNS_PORT);
+  mdns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
+  LWIP_ASSERT("Failed to allocate pcb", mdns_pcb != NULL);
+  udp_set_multicast_ttl(mdns_pcb, MDNS_TTL);
+  res = udp_bind(mdns_pcb, IP_ADDR_ANY, MDNS_PORT);
   LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
-  udp_recv(mdns_data.v4pcb, mdns_recv, &mdns_data);
-#endif
-
-#if LWIP_IPV6
-  mdns_data.v6pcb = udp_new_ip6();
-  LWIP_ASSERT("Failed to allocate pcb", mdns_data.v6pcb != NULL);
-  udp_set_multicast_ttl(mdns_data.v6pcb, MDNS_TTL);
-  res = udp_bind(mdns_data.v6pcb, IP6_ADDR_ANY, MDNS_PORT);
-  LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
-  udp_recv(mdns_data.v6pcb, mdns_recv, &mdns_data);
-#endif
+  udp_recv(mdns_pcb, mdns_recv, NULL);
 }
 
 /**
