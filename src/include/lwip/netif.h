@@ -38,6 +38,7 @@
 #define LWIP_HDR_NETIF_H
 
 #include "lwip/opt.h"
+#include "lwip/apps/mdns_opts.h"
 
 #define ENABLE_LOOPBACK (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF)
 
@@ -58,6 +59,9 @@ struct autoip;
 #if LWIP_IPV6_DHCP6
 struct dhcp6;
 #endif /* LWIP_IPV6_DHCP6 */
+#if LWIP_MDNS
+struct mdns_host;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -255,6 +259,10 @@ struct netif {
   /** the AutoIP client state information for this netif */
   struct autoip *autoip;
 #endif
+#if LWIP_MDNS
+  /** Interface-specific info for multicast DNS */
+  struct mdns_host *mdns;
+#endif /* LWIP_MDNS */
 #if LWIP_IPV6_AUTOCONFIG
   /** is this netif enabled for IPv6 autoconfiguration */
   u8_t ip6_autoconfig_enabled;

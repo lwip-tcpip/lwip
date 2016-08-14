@@ -69,12 +69,15 @@ extern "C" {
 #define DNS_RRTYPE_MX             15    /* mail exchange */
 #define DNS_RRTYPE_TXT            16    /* text strings */
 #define DNS_RRTYPE_AAAA           28    /* IPv6 address */
+#define DNS_RRTYPE_SRV            33    /* service location */
+#define DNS_RRTYPE_ANY            255   /* any type */
 
 /* DNS field CLASS used for "Resource Records" */
 #define DNS_RRCLASS_IN            1     /* the Internet */
 #define DNS_RRCLASS_CS            2     /* the CSNET class (Obsolete - used only for examples in some obsolete RFCs) */
 #define DNS_RRCLASS_CH            3     /* the CHAOS class */
 #define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
+#define DNS_RRCLASS_ANY           255   /* any class */
 #define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
 
 /* DNS protocol flags */
@@ -89,6 +92,8 @@ extern "C" {
 #define DNS_FLAG2_ERR_MASK        0x0f
 #define DNS_FLAG2_ERR_NONE        0x00
 #define DNS_FLAG2_ERR_NAME        0x03
+
+#define DNS_HDR_GET_OPCODE(hdr) ((((hdr)->flags1) >> 3) & 0xF)
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -122,5 +127,5 @@ typedef enum {
 }
 #endif
 
-#endif	/* DNS_H */
+#endif	/* LWIP_HDR_PROT_DNS_H */
 

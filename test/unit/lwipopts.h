@@ -51,6 +51,10 @@
 #define TCP_RCV_SCALE                   0
 #define PBUF_POOL_SIZE                  400 /* pbuf tests need ~200KByte */
 
+/* Enable IGMP and MDNS for MDNS tests */
+#define LWIP_IGMP                       1
+#define LWIP_MDNS                       1
+
 /* Minimal changes to opt.h required for etharp unit tests: */
 #define ETHARP_SUPPORT_STATIC_ENTRIES   1
 

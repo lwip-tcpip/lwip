@@ -28,6 +28,7 @@ FEATURES
   * raw/native API for enhanced performance
   * Optional Berkeley-like socket API
   * DNS (Domain names resolver)
+  * MDNS (Multicast DNS) responder
 
 
 APPLICATIONS
