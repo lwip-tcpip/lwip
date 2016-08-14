@@ -302,7 +302,6 @@ mdns_strncasecmp(const char* str1, const char* str2, size_t len)
 
 
 /**
- * @ingroup mdns
  * Add a label part to a domain
  * @param domain The domain to add a label to
  * @param label The label to add, like &lt;hostname&gt;, 'local', 'com' or ''
@@ -401,7 +400,6 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
 }
 
 /**
- * @ingroup mdns
  * Read possibly compressed domain name from packet buffer
  * @param p The packet
  * @param offset start position of domain name in packet
@@ -439,7 +437,6 @@ mdns_domain_debug_print(int debug, struct mdns_domain *domain)
 }
 
 /**
- * @ingroup mdns
  * Return 1 if contents of domains match (case-insensitive)
  * @param a Domain name to compare 1
  * @param b Domain name to compare 2
@@ -756,7 +753,6 @@ check_service(struct mdns_service *service, struct mdns_rr_info *rr)
 }
 
 /**
- * @ingroup mdns
  * Return bytes needed to write before jump for best result of compressing supplied domain
  * against domain in outpacket starting at specified offset.
  * If a match is found, offset is updated to where to jump to
