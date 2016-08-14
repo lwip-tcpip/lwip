@@ -1852,7 +1852,7 @@ mdns_resp_init(void)
   mdns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("Failed to allocate pcb", mdns_pcb != NULL);
   udp_set_multicast_ttl(mdns_pcb, MDNS_TTL);
-  res = udp_bind(mdns_pcb, IP_ADDR_ANY, MDNS_PORT);
+  res = udp_bind(mdns_pcb, IP_ANY_TYPE, MDNS_PORT);
   LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
   udp_recv(mdns_pcb, mdns_recv, NULL);
 }
