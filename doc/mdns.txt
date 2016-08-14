@@ -22,7 +22,7 @@ in lwipopts.h and add src/apps/mdns/mdns.c to your list of files to build.
 The max number of services supported per netif is defined by MDNS_MAX_SERVICES,
 default is 1.
 
-Increase MEMP_NUM_UDP_PCB. MDNS needs one PCB for IPv4 and one for IPv6.
+Increase MEMP_NUM_UDP_PCB. MDNS needs one PCB.
 
 MDNS with IPv4 requires LWIP_IGMP = 1, and preferably LWIP_AUTOIP = 1.
 MDNS with IPv6 requires LWIP_IPV6_MLD = 1, and that a link-local address is
