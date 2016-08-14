@@ -1890,7 +1890,7 @@ mdns_resp_init(void)
  * @return ERR_OK if netif was added, an err_t otherwise
  */
 err_t
-mdns_resp_add_netif(struct netif *netif, char *hostname, u32_t dns_ttl)
+mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
 {
   err_t res;
 
@@ -1985,7 +1985,7 @@ mdns_resp_remove_netif(struct netif *netif)
  * @return ERR_OK if the service was added to the netif, an err_t otherwise
  */
 err_t
-mdns_resp_add_service(struct netif *netif, char *name, char *service, u16_t proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_data)
+mdns_resp_add_service(struct netif *netif, const char *name, const char *service, u16_t proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_data)
 {
   int i;
   int slot = -1;
@@ -2042,7 +2042,7 @@ mdns_resp_add_service(struct netif *netif, char *name, char *service, u16_t prot
  * @return ERR_OK if the string was added to the reply, an err_t otherwise
  */
 err_t
-mdns_resp_add_service_txtitem(struct mdns_service *service, char *txt, int txt_len)
+mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, int txt_len)
 {
   LWIP_ASSERT("mdns_resp_add_service: service != NULL", service);
 

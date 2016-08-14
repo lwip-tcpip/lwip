@@ -4,7 +4,7 @@ Author: Erik Ekman
 
 
 Note! The MDNS responder does not have all features required by the standards.
-See notes in src/core/mdns.c for what is left. It is however usable in normal
+See notes in src/apps/mdns/mdns.c for what is left. It is however usable in normal
 cases - but watch out if many devices on the same network try to use the same
 host/service instance names.
 
@@ -17,7 +17,7 @@ MDNS supports using IPv4 only, v6 only, or v4+v6.
 
 To enable MDNS responder, set
   LWIP_MDNS = 1
-in lwipopts.h and add src/core/mdns.c to your list of files to build.
+in lwipopts.h and add src/apps/mdns/mdns.c to your list of files to build.
 
 The max number of services supported per netif is defined by MDNS_MAX_SERVICES,
 default is 1.
