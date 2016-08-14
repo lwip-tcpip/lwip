@@ -28,7 +28,6 @@ FEATURES
   * raw/native API for enhanced performance
   * Optional Berkeley-like socket API
   * DNS (Domain names resolver)
-  * MDNS (Multicast DNS) responder
 
 
 APPLICATIONS
@@ -36,6 +35,9 @@ APPLICATIONS
   * HTTP server with SSI and CGI
   * SNMPv2c agent with MIB compiler (Simple Network Management Protocol)
   * SNTP (Simple network time protocol)
+  * NetBIOS name service responder
+  * MDNS (Multicast DNS) responder
+  * iPerf server implementation
 
 
 LICENSE
