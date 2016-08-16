@@ -1,4 +1,9 @@
-/*
+/**
+ * @file
+ * MDNS responder
+ */
+
+ /*
  * Copyright (c) 2015 Verisure Innovation AB
  * All rights reserved.
  *
