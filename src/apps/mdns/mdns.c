@@ -1,6 +1,27 @@
 /**
  * @file
  * MDNS responder implementation
+ *
+ * @defgroup mdns MDNS
+ * @ingroup apps
+ *
+ * RFC 6762 - Multicast DNS\n
+ * RFC 6763 - DNS-Based Service Discovery\n
+ * 
+ * @verbinclude mdns.txt
+ * 
+ * Things left to implement:
+ * -------------------------
+ *
+ * - Probing/conflict resolution
+ * - Sending goodbye messages (zero ttl)
+ * - Checking that source address of unicast requests are on the same network
+ * - Limiting multicast responses to 1 per second per resource record
+ * - Fragmenting replies if required
+ * - Subscribe to netif address/link change events and act on them
+ * - Handling multi-packet known answers
+ * - Individual known answer detection for all local IPv6 addresses
+ * - Dynamic size of outgoing packet
  */
 
 /*
@@ -37,31 +58,6 @@
  * <erik.ekman@verisure.com>
  *
  */
-
-/**
- * @defgroup mdns MDNS
- * @ingroup apps
- *
- * RFC 6762 - Multicast DNS\n
- * RFC 6763 - DNS-Based Service Discovery\n
- * 
- * @verbinclude mdns.txt
- * 
- * Things left to implement:
- * -------------------------
- *
- * - Probing/conflict resolution
- * - Sending goodbye messages (zero ttl)
- * - Checking that source address of unicast requests are on the same network
- * - Limiting multicast responses to 1 per second per resource record
- * - Fragmenting replies if required
- * - Subscribe to netif address/link change events and act on them
- * - Handling multi-packet known answers
- * - Individual known answer detection for all local IPv6 addresses
- * - Dynamic size of outgoing packet
- */
-
-#include "lwip/opt.h"
 
 #include "lwip/apps/mdns.h"
 #include "lwip/netif.h"

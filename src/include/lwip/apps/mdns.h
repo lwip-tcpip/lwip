@@ -32,7 +32,7 @@
 #ifndef LWIP_HDR_MDNS_H
 #define LWIP_HDR_MDNS_H
 
-#include "lwip/opt.h"
+#include "lwip/apps/mdns_opts.h"
 #include "lwip/netif.h"
 
 #if LWIP_MDNS
