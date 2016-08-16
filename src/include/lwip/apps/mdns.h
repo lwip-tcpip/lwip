@@ -52,7 +52,7 @@ err_t mdns_resp_remove_netif(struct netif *netif);
 
 typedef void (*service_get_txt_fn_t)(struct mdns_service *service, void *txt_userdata);
 err_t mdns_resp_add_service(struct netif *netif, const char *name, const char *service, u16_t proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_userdata);
-err_t mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, int txt_len);
+err_t mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_t txt_len);
 
 
 /* Domain struct and methods - visible for unit tests */
@@ -68,10 +68,10 @@ struct mdns_domain {
   u8_t skip_compression;
 };
 
-err_t mdns_domain_add_label(struct mdns_domain *domain, const char *label, unsigned len);
+err_t mdns_domain_add_label(struct mdns_domain *domain, const char *label, u8_t len);
 u16_t mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain);
 int mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b);
-u8_t mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain);
+u16_t mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain);
 
 #endif /* LWIP_MDNS */
 
