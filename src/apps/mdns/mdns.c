@@ -359,12 +359,12 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
       offset++;
       if (jumpaddr >= SIZEOF_DNS_HDR && jumpaddr < p->tot_len) {
         u16_t res;
-	/* Recursive call, maximum depth will be checked */
+      /* Recursive call, maximum depth will be checked */
         res = mdns_readname_loop(p, jumpaddr, domain, depth + 1);
         /* Dont return offset since new bytes were not read (jumped to somewhere in packet) */
         if (res == MDNS_READNAME_ERROR) {
           return res;
-	}
+        }
       } else {
         return MDNS_READNAME_ERROR;
       }
@@ -1620,7 +1620,7 @@ mdns_handle_question(struct mdns_packet *pkt)
               reply.host_reverse_v6_replies &= ~rev_v6;
               if (reply.host_reverse_v6_replies == 0) {
                 reply.host_replies &= ~REPLY_HOST_PTR_V6;
-	      }
+              }
           }
 #endif
         }
@@ -1686,26 +1686,26 @@ mdns_handle_question(struct mdns_packet *pkt)
             len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
             if (len != sizeof(field16) || ntohs(field16) != SRV_PRIORITY) {
               break;
-	    }
+            }
             read_pos += len;
             /* Check weight field */
             len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
             if (len != sizeof(field16) || ntohs(field16) != SRV_WEIGHT) {
               break;
-	    }
+            }
             read_pos += len;
             /* Check port field */
             len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
             if (len != sizeof(field16) || ntohs(field16) != service->port) {
               break;
-	    }
+            }
             read_pos += len;
             /* Check host field */
             len = mdns_readname(pkt->pbuf, read_pos, &known_ans);
             mdns_build_host_domain(&my_ans, pkt->netif);
             if (len == MDNS_READNAME_ERROR || !mdns_domain_eq(&known_ans, &my_ans)) {
               break;
-	    }
+            }
             LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: SRV\n"));
             reply.serv_replies[i] &= ~REPLY_SERVICE_SRV;
           } while (0);
@@ -1847,7 +1847,11 @@ mdns_resp_init(void)
 
   mdns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("Failed to allocate pcb", mdns_pcb != NULL);
+#if LWIP_MULTICAST_TX_OPTIONS
   udp_set_multicast_ttl(mdns_pcb, MDNS_TTL);
+#else
+  mdns_pcb->ttl = MDNS_TTL;
+#endif
   res = udp_bind(mdns_pcb, IP_ANY_TYPE, MDNS_PORT);
   LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
   udp_recv(mdns_pcb, mdns_recv, NULL);
