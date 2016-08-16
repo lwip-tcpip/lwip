@@ -32,6 +32,9 @@
 
 #ifndef LWIP_HDR_APPS_MDNS_OPTS_H
 #define	LWIP_HDR_APPS_MDNS_OPTS_H
+
+#include "lwip/opt.h"
+
 /**
  * @defgroup mdns_opts Options
  * @ingroup mdns
