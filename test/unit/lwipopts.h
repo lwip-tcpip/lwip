@@ -53,7 +53,7 @@
 
 /* Enable IGMP and MDNS for MDNS tests */
 #define LWIP_IGMP                       1
-#define LWIP_MDNS                       1
+#define LWIP_MDNS_RESPONDER             1
 
 /* Minimal changes to opt.h required for etharp unit tests: */
 #define ETHARP_SUPPORT_STATIC_ENTRIES   1
