@@ -69,7 +69,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#if LWIP_MDNS
+#if LWIP_MDNS_RESPONDER
 
 #if (LWIP_IPV4 && !LWIP_IGMP)
   #error "If you want to use MDNS with IPv4, you have to define LWIP_IGMP=1 in your lwipopts.h"
@@ -2024,4 +2024,4 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
   return mdns_domain_add_label(&service->txtdata, txt, txt_len);
 }
 
-#endif /* LWIP_MDNS */
+#endif /* LWIP_MDNS_RESPONDER */

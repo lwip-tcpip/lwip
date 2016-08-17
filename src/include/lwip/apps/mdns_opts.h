@@ -47,12 +47,12 @@
  */
 
 /**
- * LWIP_MDNS==1: Turn on multicast DNS module. UDP must be available for MDNS
+ * LWIP_MDNS_RESPONDER==1: Turn on multicast DNS module. UDP must be available for MDNS
  * transport. IGMP is needed for IPv4 multicast.
  */
-#ifndef LWIP_MDNS
-#define LWIP_MDNS                       0
-#endif /* LWIP_MDNS */
+#ifndef LWIP_MDNS_RESPONDER
+#define LWIP_MDNS_RESPONDER                       0
+#endif /* LWIP_MDNS_RESPONDER */
 
 /** The maximum number of services per netif */
 #ifndef MDNS_MAX_SERVICES

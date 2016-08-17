@@ -247,10 +247,10 @@ netif_add(struct netif *netif,
   /* netif not under AutoIP control by default */
   netif->autoip = NULL;
 #endif /* LWIP_AUTOIP */
-#if LWIP_MDNS
+#if LWIP_MDNS_RESPONDER
   /* netif not using MDNS by default */
   netif->mdns = NULL;
-#endif /* LWIP_MDNS */
+#endif /* LWIP_MDNS_RESPONDER */
 #if LWIP_IPV6_AUTOCONFIG
   /* IPv6 address autoconfiguration not enabled by default */
   netif->ip6_autoconfig_enabled = 0;

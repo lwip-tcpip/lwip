@@ -40,7 +40,7 @@
 #include "lwip/apps/mdns_opts.h"
 #include "lwip/netif.h"
 
-#if LWIP_MDNS
+#if LWIP_MDNS_RESPONDER
 
 #define DNSSD_PROTO_UDP 0
 #define DNSSD_PROTO_TCP 1
@@ -78,6 +78,6 @@ u16_t mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain);
 int mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b);
 u16_t mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain);
 
-#endif /* LWIP_MDNS */
+#endif /* LWIP_MDNS_RESPONDER */
 
 #endif /* LWIP_HDR_MDNS_H */

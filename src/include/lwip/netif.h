@@ -59,7 +59,7 @@ struct autoip;
 #if LWIP_IPV6_DHCP6
 struct dhcp6;
 #endif /* LWIP_IPV6_DHCP6 */
-#if LWIP_MDNS
+#if LWIP_MDNS_RESPONDER
 struct mdns_host;
 #endif
 
@@ -259,10 +259,10 @@ struct netif {
   /** the AutoIP client state information for this netif */
   struct autoip *autoip;
 #endif
-#if LWIP_MDNS
+#if LWIP_MDNS_RESPONDER
   /** Interface-specific info for multicast DNS */
   struct mdns_host *mdns;
-#endif /* LWIP_MDNS */
+#endif /* LWIP_MDNS_RESPONDER */
 #if LWIP_IPV6_AUTOCONFIG
   /** is this netif enabled for IPv6 autoconfiguration */
   u8_t ip6_autoconfig_enabled;
