@@ -49,15 +49,9 @@
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
 
-#if LWIP_DHCP
-struct dhcp;
-#endif
 #if LWIP_AUTOIP
 struct autoip;
 #endif
-#if LWIP_IPV6_DHCP6
-struct dhcp6;
-#endif /* LWIP_IPV6_DHCP6 */
 
 #ifdef __cplusplus
 extern "C" {
@@ -247,10 +241,6 @@ struct netif {
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
-#if LWIP_DHCP
-  /** the DHCP client state information for this netif */
-  struct dhcp *dhcp;
-#endif /* LWIP_DHCP */
 #if LWIP_AUTOIP
   /** the AutoIP client state information for this netif */
   struct autoip *autoip;
@@ -266,10 +256,6 @@ struct netif {
   /** Number of Router Solicitation messages that remain to be sent. */
   u8_t rs_count;
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
-#if LWIP_IPV6_DHCP6
-  /** the DHCPv6 client state information for this netif */
-  struct dhcp6 *dhcp6;
-#endif /* LWIP_IPV6_DHCP6 */
 #if LWIP_NETIF_HOSTNAME
   /* the hostname for this netif, NULL is a valid value */
   const char*  hostname;

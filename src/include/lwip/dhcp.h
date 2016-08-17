@@ -118,6 +118,7 @@ u8_t dhcp_supplied_address(const struct netif *netif);
 void dhcp_coarse_tmr(void);
 /* to be called every half second */
 void dhcp_fine_tmr(void);
+void dhcp_init(void);
 
 
 #if LWIP_DHCP_GET_NTP_SRV

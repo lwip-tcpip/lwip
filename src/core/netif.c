@@ -241,10 +241,6 @@ netif_add(struct netif *netif,
 #endif /* LWIP_IPV6 */
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
   netif->flags = 0;
-#if LWIP_DHCP
-  /* netif not under DHCP control by default */
-  netif->dhcp = NULL;
-#endif /* LWIP_DHCP */
 #if LWIP_AUTOIP
   /* netif not under AutoIP control by default */
   netif->autoip = NULL;
@@ -259,10 +255,6 @@ netif_add(struct netif *netif,
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
   netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
-#if LWIP_IPV6_DHCP6
-  /* netif not under DHCPv6 control by default */
-  netif->dhcp6 = NULL;
-#endif /* LWIP_IPV6_DHCP6 */
 #if LWIP_NETIF_STATUS_CALLBACK
   netif->status_callback = NULL;
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
@@ -696,9 +688,7 @@ netif_set_link_up(struct netif *netif)
     netif->flags |= NETIF_FLAG_LINK_UP;
 
 #if LWIP_DHCP
-    if (netif->dhcp) {
-      dhcp_network_changed(netif);
-    }
+    dhcp_network_changed(netif);
 #endif /* LWIP_DHCP */
 
 #if LWIP_AUTOIP
@@ -961,7 +951,7 @@ u8_t netif_alloc_client_data_id(void)
 {
    u8_t result = netif_client_id;
    netif_client_id++;
-   LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", netif_client_id<LWIP_NUM_NETIF_CLIENT_DATA);
+   LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", netif_client_id<=LWIP_NUM_NETIF_CLIENT_DATA);
    return result;
 }
 #endif

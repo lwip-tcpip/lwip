@@ -50,6 +50,7 @@
 #include "lwip/udp.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/autoip.h"
+#include "lwip/dhcp.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
 #include "lwip/timeouts.h"
@@ -351,6 +352,9 @@ lwip_init(void)
 #if LWIP_AUTOIP
   autoip_init();
 #endif /* LWIP_AUTOIP */
+#if LWIP_DHCP
+  dhcp_init();
+#endif /* LWIP_DHCP */
 #if LWIP_IGMP
   igmp_init();
 #endif /* LWIP_IGMP */
