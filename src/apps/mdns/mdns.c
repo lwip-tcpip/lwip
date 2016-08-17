@@ -1170,9 +1170,9 @@ static err_t
 mdns_add_aaaa_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif->mdns);
+  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_t), NULL);
+  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_t), NULL);
 }
 
 /** Write a x.y.z.ip6.arpa -> hostname.local PTR RR to outpacket */
@@ -1180,10 +1180,10 @@ static err_t
 mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
 {
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, netif->mdns);
+  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
   mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(netif, addrindex));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v6 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, NULL, 0, &host);
 }
 #endif
 
