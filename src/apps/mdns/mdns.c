@@ -577,17 +577,16 @@ mdns_add_dotlocal(struct mdns_domain *domain)
 /**
  * Build the <hostname>.local. domain name
  * @param domain Where to write the domain name
- * @param netif The network interface to use, its MDNS struct will be referenced to
- *              get the hostname.
+ * @param mdns TMDNS netif descriptor.
  * @return ERR_OK if domain <hostname>.local. was written, an err_t otherwise
  */
 static err_t
-mdns_build_host_domain(struct mdns_domain *domain, struct netif *netif)
+mdns_build_host_domain(struct mdns_domain *domain, struct mdns_host *mdns)
 {
   err_t res;
   memset(domain, 0, sizeof(struct mdns_domain));
-  LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (netif->mdns != NULL), return ERR_VAL);
-  res = mdns_domain_add_label(domain, netif->mdns->name, (u8_t)strlen(netif->mdns->name));
+  LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
+  res = mdns_domain_add_label(domain, mdns->name, (u8_t)strlen(mdns->name));
   LWIP_ERROR("mdns_build_host_domain: Failed to add label", (res == ERR_OK), return res);
   return mdns_add_dotlocal(domain);
 }
@@ -683,7 +682,7 @@ check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
 #endif
   }
 
-  res = mdns_build_host_domain(&mydomain, netif);
+  res = mdns_build_host_domain(&mydomain, netif->mdns);
   /* Handle requests for our hostname */
   if (res == ERR_OK && mdns_domain_eq(&rr->domain, &mydomain)) {
     /* TODO return NSEC if unsupported protocol requested */
@@ -1147,7 +1146,7 @@ static err_t
 mdns_add_a_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif);
+  mdns_build_host_domain(&host, netif->mdns);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with A record\n"));
   return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, (const u8_t *) netif_ip4_addr(netif), sizeof(ip4_addr_t), NULL);
 }
@@ -1157,7 +1156,7 @@ static err_t
 mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
 {
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, netif);
+  mdns_build_host_domain(&host, netif->mdns);
   mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(netif));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v4 PTR record\n"));
   return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, NULL, 0, &host);
@@ -1170,7 +1169,7 @@ static err_t
 mdns_add_aaaa_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif);
+  mdns_build_host_domain(&host, netif->mdns);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
   return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_t), NULL);
 }
@@ -1180,7 +1179,7 @@ static err_t
 mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
 {
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, netif);
+  mdns_build_host_domain(&host, netif->mdns);
   mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(netif, addrindex));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v6 PTR record\n"));
   return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, NULL, 0, &host);
@@ -1211,12 +1210,12 @@ mdns_add_servicename_ptr_answer(struct mdns_outpacket *reply, struct mdns_servic
 
 /** Write a SRV RR to outpacket */
 static err_t
-mdns_add_srv_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, struct mdns_service *service)
+mdns_add_srv_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct mdns_host *mdns, struct mdns_service *service)
 {
   struct mdns_domain service_instance, srvhost;
   u16_t srvdata[3];
   mdns_build_service_domain(&service_instance, service, 1);
-  mdns_build_host_domain(&srvhost, netif);
+  mdns_build_host_domain(&srvhost, mdns);
   if (reply->legacy_query) {
     /* RFC 6762 section 18.14:
      * In legacy unicast responses generated to answer legacy queries,
@@ -1359,7 +1358,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     }
 
     if (outpkt->serv_replies[i] & REPLY_SERVICE_SRV) {
-      res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, outpkt->netif, service);
+      res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, outpkt->netif->mdns, service);
       if (res != ERR_OK) {
         goto cleanup;
       }
@@ -1386,7 +1385,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       /* Our service instance requested, include SRV & TXT
        * if they are already not requested. */
       if (!(outpkt->serv_replies[i] & REPLY_SERVICE_SRV)) {
-        res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, outpkt->netif, service);
+        res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, outpkt->netif->mdns, service);
         if (res != ERR_OK) {
           goto cleanup;
         }
@@ -1602,7 +1601,7 @@ mdns_handle_question(struct mdns_packet *pkt)
         struct mdns_domain known_ans, my_ans;
         u16_t len;
         len = mdns_readname(pkt->pbuf, ans.rd_offset, &known_ans);
-        res = mdns_build_host_domain(&my_ans, pkt->netif);
+        res = mdns_build_host_domain(&my_ans, pkt->netif->mdns);
         if (len != MDNS_READNAME_ERROR && res == ERR_OK && mdns_domain_eq(&known_ans, &my_ans)) {
 #if LWIP_IPV4
           if (match & REPLY_HOST_PTR_V4) {
@@ -1698,7 +1697,7 @@ mdns_handle_question(struct mdns_packet *pkt)
             read_pos += len;
             /* Check host field */
             len = mdns_readname(pkt->pbuf, read_pos, &known_ans);
-            mdns_build_host_domain(&my_ans, pkt->netif);
+            mdns_build_host_domain(&my_ans, pkt->netif->mdns);
             if (len == MDNS_READNAME_ERROR || !mdns_domain_eq(&known_ans, &my_ans)) {
               break;
             }
