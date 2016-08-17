@@ -509,8 +509,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #if LWIP_AUTOIP
         /* connections to link-local addresses must persist after changing
            the netif's address (RFC3927 ch. 1.9) */
-        if ((netif->autoip != NULL) &&
-            ip4_addr_cmp(ip4_current_dest_addr(), &(netif->autoip->llipaddr))) {
+        if (autoip_accept_packet(netif, ip4_current_dest_addr())) {
           LWIP_DEBUGF(IP_DEBUG, ("ip4_input: LLA packet accepted on interface %c%c\n",
               netif->name[0], netif->name[1]));
           /* break out of for loop */

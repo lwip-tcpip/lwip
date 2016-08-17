@@ -49,10 +49,6 @@
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
 
-#if LWIP_AUTOIP
-struct autoip;
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -241,10 +237,6 @@ struct netif {
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
-#if LWIP_AUTOIP
-  /** the AutoIP client state information for this netif */
-  struct autoip *autoip;
-#endif
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
   void* client_data[LWIP_NUM_NETIF_CLIENT_DATA];
 #endif

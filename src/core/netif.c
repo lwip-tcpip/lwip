@@ -241,10 +241,6 @@ netif_add(struct netif *netif,
 #endif /* LWIP_IPV6 */
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
   netif->flags = 0;
-#if LWIP_AUTOIP
-  /* netif not under AutoIP control by default */
-  netif->autoip = NULL;
-#endif /* LWIP_AUTOIP */
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
   memset(netif->client_data, 0, sizeof(netif->client_data));
 #endif /* LWIP_NUM_NETIF_CLIENT_DATA */
@@ -692,9 +688,7 @@ netif_set_link_up(struct netif *netif)
 #endif /* LWIP_DHCP */
 
 #if LWIP_AUTOIP
-    if (netif->autoip) {
-      autoip_network_changed(netif);
-    }
+    autoip_network_changed(netif);
 #endif /* LWIP_AUTOIP */
 
     if (netif->flags & NETIF_FLAG_UP) {
