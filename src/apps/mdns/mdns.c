@@ -1928,9 +1928,10 @@ err_t
 mdns_resp_remove_netif(struct netif *netif)
 {
   int i;
-  struct mdns_host* mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
+  struct mdns_host* mdns;
 
   LWIP_ASSERT("mdns_resp_remove_netif: Null pointer", netif);
+  mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
   LWIP_ERROR("mdns_resp_remove_netif: Not an active netif", (mdns != NULL), return ERR_VAL);
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
@@ -1974,9 +1975,10 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   int i;
   int slot = -1;
   struct mdns_service *srv;
-  struct mdns_host* mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
+  struct mdns_host* mdns;
 
   LWIP_ASSERT("mdns_resp_add_service: netif != NULL", netif);
+  mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
   LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
 
   LWIP_ERROR("mdns_resp_add_service: Name too long", (strlen(name) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
