@@ -215,7 +215,7 @@ memp_overflow_init(const struct memp_desc *desc)
   u16_t i;
   struct memp *p;
 
-  p = (struct memp *)(size_t)(desc->base);
+  p = (struct memp*)LWIP_MEM_ALIGN(desc->base);
   for (i = 0; i < desc->num; ++i) {
     memp_overflow_init_element(p, desc);
     p = (struct memp*)(size_t)((u8_t*)p + MEMP_SIZE + desc->size + MEMP_SANITY_REGION_AFTER_ALIGNED);
