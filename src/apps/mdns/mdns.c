@@ -103,6 +103,7 @@ static const ip_addr_t v6group = IPADDR6_INIT(PP_HTONL(0xFF020000UL), PP_HTONL(0
 #define DOMAIN_JUMP_SIZE 2
 #define DOMAIN_JUMP 0xc000
 
+static u8_t mdns_netif_client_id;
 static struct udp_pcb *mdns_pcb;
 
 #define TOPDOMAIN_LOCAL "local"
@@ -682,7 +683,7 @@ check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
 #endif
   }
 
-  res = mdns_build_host_domain(&mydomain, netif->mdns);
+  res = mdns_build_host_domain(&mydomain, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
   /* Handle requests for our hostname */
   if (res == ERR_OK && mdns_domain_eq(&rr->domain, &mydomain)) {
     /* TODO return NSEC if unsupported protocol requested */
@@ -1146,9 +1147,9 @@ static err_t
 mdns_add_a_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif->mdns);
+  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with A record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, (const u8_t *) netif_ip4_addr(netif), sizeof(ip4_addr_t), NULL);
+  return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, (const u8_t *) netif_ip4_addr(netif), sizeof(ip4_addr_t), NULL);
 }
 
 /** Write a 4.3.2.1.in-addr.arpa -> hostname.local PTR RR to outpacket */
@@ -1156,10 +1157,10 @@ static err_t
 mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
 {
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, netif->mdns);
+  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
   mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(netif));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v4 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, netif->mdns->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, NULL, 0, &host);
 }
 #endif
 
@@ -1286,6 +1287,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
   struct mdns_service *service;
   err_t res;
   int i;
+  struct mdns_host* mdns = (struct mdns_host*)outpkt->netif->client_data[mdns_netif_client_id];
 
   /* Write answers to host questions */
 #if LWIP_IPV4
@@ -1336,7 +1338,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
 
   /* Write answers to service questions */
   for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
-    service = outpkt->netif->mdns->services[i];
+    service = mdns->services[i];
     if (!service) {
       continue;
     }
@@ -1358,7 +1360,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     }
 
     if (outpkt->serv_replies[i] & REPLY_SERVICE_SRV) {
-      res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, outpkt->netif->mdns, service);
+      res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, mdns, service);
       if (res != ERR_OK) {
         goto cleanup;
       }
@@ -1376,7 +1378,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
 
   /* All answers written, add additional RRs */
   for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
-    service = outpkt->netif->mdns->services[i];
+    service = mdns->services[i];
     if (!service) {
       continue;
     }
@@ -1385,7 +1387,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       /* Our service instance requested, include SRV & TXT
        * if they are already not requested. */
       if (!(outpkt->serv_replies[i] & REPLY_SERVICE_SRV)) {
-        res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, outpkt->netif->mdns, service);
+        res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, mdns, service);
         if (res != ERR_OK) {
           goto cleanup;
         }
@@ -1485,6 +1487,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 {
   struct mdns_outpacket announce;
   int i;
+  struct mdns_host* mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
 
   memset(&announce, 0, sizeof(announce));
   announce.netif = netif;
@@ -1499,7 +1502,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 #endif
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
-    struct mdns_service *serv = netif->mdns->services[i];
+    struct mdns_service *serv = mdns->services[i];
     if (serv) {
       announce.serv_replies[i] = REPLY_SERVICE_TYPE_PTR | REPLY_SERVICE_NAME_PTR |
           REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
@@ -1525,6 +1528,7 @@ mdns_handle_question(struct mdns_packet *pkt)
   int replies = 0;
   int i;
   err_t res;
+  struct mdns_host* mdns = (struct mdns_host*)pkt->netif->client_data[mdns_netif_client_id];
 
   mdns_init_outpacket(&reply, pkt);
 
@@ -1550,7 +1554,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     replies |= reply.host_replies;
 
     for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
-      service = pkt->netif->mdns->services[i];
+      service = mdns->services[i];
       if (!service) {
         continue;
       }
@@ -1591,7 +1595,7 @@ mdns_handle_question(struct mdns_packet *pkt)
 
     rev_v6 = 0;
     match = reply.host_replies & check_host(pkt->netif, &ans.info, &rev_v6);
-    if (match && (ans.ttl > (pkt->netif->mdns->dns_ttl / 2))) {
+    if (match && (ans.ttl > (mdns->dns_ttl / 2))) {
       /* The RR in the known answer matches an RR we are planning to send,
        * and the TTL is less than half gone.
        * If the payload matches we should not send that answer.
@@ -1601,7 +1605,7 @@ mdns_handle_question(struct mdns_packet *pkt)
         struct mdns_domain known_ans, my_ans;
         u16_t len;
         len = mdns_readname(pkt->pbuf, ans.rd_offset, &known_ans);
-        res = mdns_build_host_domain(&my_ans, pkt->netif->mdns);
+        res = mdns_build_host_domain(&my_ans, mdns);
         if (len != MDNS_READNAME_ERROR && res == ERR_OK && mdns_domain_eq(&known_ans, &my_ans)) {
 #if LWIP_IPV4
           if (match & REPLY_HOST_PTR_V4) {
@@ -1640,7 +1644,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
 
     for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
-      service = pkt->netif->mdns->services[i];
+      service = mdns->services[i];
       if (!service) {
         continue;
       }
@@ -1697,7 +1701,7 @@ mdns_handle_question(struct mdns_packet *pkt)
             read_pos += len;
             /* Check host field */
             len = mdns_readname(pkt->pbuf, read_pos, &known_ans);
-            mdns_build_host_domain(&my_ans, pkt->netif->mdns);
+            mdns_build_host_domain(&my_ans, mdns);
             if (len == MDNS_READNAME_ERROR || !mdns_domain_eq(&known_ans, &my_ans)) {
               break;
             }
@@ -1780,7 +1784,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Received IPv%d MDNS packet, len %d\n", IP_IS_V6(addr)? 6 : 4, p->tot_len));
 
-  if (!recv_netif->mdns) {
+  if (recv_netif->client_data[mdns_netif_client_id] == NULL) {
     /* From netif not configured for MDNS */
     goto dealloc;
   }
@@ -1850,6 +1854,8 @@ mdns_resp_init(void)
   res = udp_bind(mdns_pcb, IP_ANY_TYPE, MDNS_PORT);
   LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
   udp_recv(mdns_pcb, mdns_recv, NULL);
+
+  mdns_netif_client_id = netif_alloc_client_data_id();
 }
 
 /**
@@ -1866,17 +1872,20 @@ err_t
 mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
 {
   err_t res;
+  struct mdns_host* mdns;
 
   LWIP_ERROR("mdns_resp_add_netif: netif != NULL", (netif != NULL), return ERR_VAL);
   LWIP_ERROR("mdns_resp_add_netif: Hostname too long", (strlen(hostname) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
 
-  LWIP_ASSERT("mdns_resp_add_netif: Double add", netif->mdns == NULL);
-  netif->mdns = (struct mdns_host *) mem_malloc(sizeof(struct mdns_host));
-  LWIP_ERROR("mdns_resp_add_netif: Alloc failed", (netif->mdns != NULL), return ERR_MEM);
+  LWIP_ASSERT("mdns_resp_add_netif: Double add", netif->client_data[mdns_netif_client_id] == NULL);
+  mdns = (struct mdns_host *) mem_malloc(sizeof(struct mdns_host));
+  LWIP_ERROR("mdns_resp_add_netif: Alloc failed", (mdns != NULL), return ERR_MEM);
 
-  memset(netif->mdns, 0, sizeof(struct mdns_host));
-  memcpy(&netif->mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
-  netif->mdns->dns_ttl = dns_ttl;
+  netif->client_data[mdns_netif_client_id] = mdns;
+
+  memset(mdns, 0, sizeof(struct mdns_host));
+  memcpy(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
+  mdns->dns_ttl = dns_ttl;
 
   /* Join multicast groups */
 #if LWIP_IPV4
@@ -1903,8 +1912,8 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   return ERR_OK;
 
 cleanup:
-  mem_free(netif->mdns);
-  netif->mdns = NULL;
+  mem_free(mdns);
+  netif->client_data[mdns_netif_client_id] = NULL;
   return res;
 }
 
@@ -1919,11 +1928,13 @@ err_t
 mdns_resp_remove_netif(struct netif *netif)
 {
   int i;
+  struct mdns_host* mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
+
   LWIP_ASSERT("mdns_resp_remove_netif: Null pointer", netif);
-  LWIP_ERROR("mdns_resp_remove_netif: Not an active netif", (netif->mdns != NULL), return ERR_VAL);
+  LWIP_ERROR("mdns_resp_remove_netif: Not an active netif", (mdns != NULL), return ERR_VAL);
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
-    struct mdns_service *service = netif->mdns->services[i];
+    struct mdns_service *service = mdns->services[i];
     if (service) {
       mem_free(service);
     }
@@ -1937,8 +1948,8 @@ mdns_resp_remove_netif(struct netif *netif)
   mld6_leavegroup_netif(netif, ip_2_ip6(&v6group));
 #endif
 
-  mem_free(netif->mdns);
-  netif->mdns = NULL;
+  mem_free(mdns);
+  netif->client_data[mdns_netif_client_id] = NULL;
   return ERR_OK;
 }
 
@@ -1963,16 +1974,17 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   int i;
   int slot = -1;
   struct mdns_service *srv;
+  struct mdns_host* mdns = (struct mdns_host*)netif->client_data[mdns_netif_client_id];
 
   LWIP_ASSERT("mdns_resp_add_service: netif != NULL", netif);
-  LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (netif->mdns != NULL), return ERR_VAL);
+  LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
 
   LWIP_ERROR("mdns_resp_add_service: Name too long", (strlen(name) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
   LWIP_ERROR("mdns_resp_add_service: Service too long", (strlen(service) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
   LWIP_ERROR("mdns_resp_add_service: Bad proto (need TCP or UDP)", (proto == DNSSD_PROTO_TCP || proto == DNSSD_PROTO_UDP), return ERR_VAL);
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
-    if (netif->mdns->services[i] == NULL) {
+    if (mdns->services[i] == NULL) {
       slot = i;
       break;
     }
@@ -1992,7 +2004,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   srv->port = port;
   srv->dns_ttl = dns_ttl;
 
-  netif->mdns->services[slot] = srv;
+  mdns->services[slot] = srv;
 
   /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6

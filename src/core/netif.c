@@ -39,6 +39,8 @@
 
 #include "lwip/opt.h"
 
+#include <string.h>
+
 #include "lwip/def.h"
 #include "lwip/ip_addr.h"
 #include "lwip/ip6_addr.h"
@@ -247,10 +249,9 @@ netif_add(struct netif *netif,
   /* netif not under AutoIP control by default */
   netif->autoip = NULL;
 #endif /* LWIP_AUTOIP */
-#if LWIP_MDNS_RESPONDER
-  /* netif not using MDNS by default */
-  netif->mdns = NULL;
-#endif /* LWIP_MDNS_RESPONDER */
+#if LWIP_NUM_NETIF_CLIENT_DATA > 0
+  memset(netif->client_data, 0, sizeof(netif->client_data));
+#endif /* LWIP_NUM_NETIF_CLIENT_DATA */
 #if LWIP_IPV6_AUTOCONFIG
   /* IPv6 address autoconfiguration not enabled by default */
   netif->ip6_autoconfig_enabled = 0;
@@ -946,6 +947,24 @@ netif_poll_all(void)
 }
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
+
+#if LWIP_NUM_NETIF_CLIENT_DATA > 0
+static u8_t netif_client_id = 0;
+
+/**
+ * @ingroup netif
+ * Allocate an index to store data in client_data member of struct netif.
+ * Returned value is an index in mentioned array.
+ * @see LWIP_NUM_NETIF_CLIENT_DATA
+ */
+u8_t netif_alloc_client_data_id(void)
+{
+   u8_t result = netif_client_id;
+   netif_client_id++;
+   LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", netif_client_id<LWIP_NUM_NETIF_CLIENT_DATA);
+   return result;
+}
+#endif
 
 #if LWIP_IPV6
 /**

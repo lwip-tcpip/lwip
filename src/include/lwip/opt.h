@@ -1465,6 +1465,14 @@
 #if !defined LWIP_NETIF_TX_SINGLE_PBUF || defined __DOXYGEN__
 #define LWIP_NETIF_TX_SINGLE_PBUF             0
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+
+/**
+ * LWIP_NUM_NETIF_CLIENT_DATA: Number of clients that may store
+ * per data in client_data member array of struct netif.
+ */
+#if !defined LWIP_NUM_NETIF_CLIENT_DATA || defined __DOXYGEN__
+#define LWIP_NUM_NETIF_CLIENT_DATA            (LWIP_DHCP + LWIP_AUTOIP)
+#endif
 /**
  * @}
  */
