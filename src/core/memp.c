@@ -204,24 +204,6 @@ memp_overflow_check_all(void)
   SYS_ARCH_UNPROTECT(old_level);
 }
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
-
-#if !MEMP_MEM_MALLOC
-/**
- * Initialize the restricted areas of all memp elements in a pool.
- */
-static void
-memp_overflow_init(const struct memp_desc *desc)
-{
-  u16_t i;
-  struct memp *p;
-
-  p = (struct memp*)LWIP_MEM_ALIGN(desc->base);
-  for (i = 0; i < desc->num; ++i) {
-    memp_overflow_init_element(p, desc);
-    p = (struct memp*)(size_t)((u8_t*)p + MEMP_SIZE + desc->size + MEMP_SANITY_REGION_AFTER_ALIGNED);
-  }
-}
-#endif /* !MEMP_MEM_MALLOC */
 #endif /* MEMP_OVERFLOW_CHECK */
 
 /**
@@ -245,6 +227,9 @@ memp_init_pool(const struct memp_desc *desc)
   for (i = 0; i < desc->num; ++i) {
     memp->next = *desc->tab;
     *desc->tab = memp;
+#if MEMP_OVERFLOW_CHECK
+    memp_overflow_init_element(memp, desc);
+#endif /* MEMP_OVERFLOW_CHECK */
    /* cast through void* to get rid of alignment warnings */
    memp = (struct memp *)(void *)((u8_t *)memp + MEMP_SIZE + desc->size
 #if MEMP_OVERFLOW_CHECK
@@ -252,10 +237,6 @@ memp_init_pool(const struct memp_desc *desc)
 #endif
     );
   }
-
-#if MEMP_OVERFLOW_CHECK
-  memp_overflow_init(desc);
-#endif /* MEMP_OVERFLOW_CHECK */
 #endif /* !MEMP_MEM_MALLOC */
 
 #if MEMP_STATS
