@@ -12,7 +12,7 @@
  *
  * define @ref LWIP_AUTOIP 1 in your lwipopts.h
  * Options:
- * @ref AUTOIP_TMR_INTERVAL msecs,
+ * AUTOIP_TMR_INTERVAL msecs,
  *   I recommend a value of 100. The value must divide 1000 with a remainder almost 0.
  *   Possible values are 1000, 500, 333, 250, 200, 166, 142, 125, 111, 100 ....
  *
