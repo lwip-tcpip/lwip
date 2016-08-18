@@ -58,33 +58,8 @@ extern "C" {
 
 #if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
-#ifndef ETHARP_HWADDR_LEN
-#define ETHARP_HWADDR_LEN     ETH_HWADDR_LEN
-#endif
-
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-/** the ARP message, see RFC 826 ("Packet format") */
-struct etharp_hdr {
-  PACK_STRUCT_FIELD(u16_t hwtype);
-  PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FLD_8(u8_t  hwlen);
-  PACK_STRUCT_FLD_8(u8_t  protolen);
-  PACK_STRUCT_FIELD(u16_t opcode);
-  PACK_STRUCT_FLD_S(struct eth_addr shwaddr);
-  PACK_STRUCT_FLD_S(struct ip4_addr2 sipaddr);
-  PACK_STRUCT_FLD_S(struct eth_addr dhwaddr);
-  PACK_STRUCT_FLD_S(struct ip4_addr2 dipaddr);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-#define SIZEOF_ETHARP_HDR 28
-
+#include "lwip/prot/arp.h"
+    
 #define SIZEOF_ETHARP_PACKET    (SIZEOF_ETH_HDR + SIZEOF_ETHARP_HDR)
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
 #define SIZEOF_ETHARP_PACKET_TX (SIZEOF_ETHARP_PACKET + SIZEOF_VLAN_HDR)
