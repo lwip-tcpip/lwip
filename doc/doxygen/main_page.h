@@ -32,6 +32,13 @@
  */
 
 /**
+ * @page bugs Reporting bugs
+ * Please report bugs in the lwIP bug tracker at savannah.\n
+ * BEFORE submitting, please check if the bug has already been reported!\n
+ * https://savannah.nongnu.org/bugs/?group=lwip
+ */
+
+/**
  * @defgroup lwip_nosys Mainloop mode ("NO_SYS")
  * @ingroup lwip
  * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
