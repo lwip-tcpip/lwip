@@ -46,6 +46,7 @@
 #if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/nd6.h"
+#include "lwip/prot/nd6.h"
 #include "lwip/pbuf.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
