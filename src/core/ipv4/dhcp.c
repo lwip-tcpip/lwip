@@ -156,7 +156,7 @@ static u8_t xid_initialised;
 
 static struct udp_pcb *dhcp_pcb;
 static u8_t dhcp_pcb_refcount;
-static u8_t dhcp_netif_client_id;
+u8_t dhcp_netif_client_id;
 
 /* DHCP client state machine functions */
 static err_t dhcp_discover(struct netif *netif);
