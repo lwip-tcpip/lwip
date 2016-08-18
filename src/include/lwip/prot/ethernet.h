@@ -1,6 +1,6 @@
 /**
  * @file
- * UDP protocol definitions
+ * Ethernet protocol definitions
  */
 
 /*

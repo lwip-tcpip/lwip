@@ -1,6 +1,6 @@
 /**
  * @file
- * UDP protocol definitions
+ * MLD6 protocol definitions
  */
 
 /*

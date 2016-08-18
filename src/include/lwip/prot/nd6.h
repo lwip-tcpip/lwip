@@ -1,6 +1,6 @@
 /**
  * @file
- * UDP protocol definitions
+ * ND6 protocol definitions
  */
 
 /*
