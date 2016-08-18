@@ -91,6 +91,10 @@ struct netif *netif_default;
 
 static u8_t netif_num;
 
+#if LWIP_NUM_NETIF_CLIENT_DATA > 0
+static u8_t netif_client_id = 0;
+#endif
+
 #define NETIF_REPORT_TYPE_IPV4  0x01
 #define NETIF_REPORT_TYPE_IPV6  0x02
 static void netif_issue_reports(struct netif* netif, u8_t report_type);
@@ -933,20 +937,19 @@ netif_poll_all(void)
 #endif /* ENABLE_LOOPBACK */
 
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
-static u8_t netif_client_id = 0;
-
 /**
  * @ingroup netif
  * Allocate an index to store data in client_data member of struct netif.
  * Returned value is an index in mentioned array.
  * @see LWIP_NUM_NETIF_CLIENT_DATA
  */
-u8_t netif_alloc_client_data_id(void)
+u8_t
+netif_alloc_client_data_id(void)
 {
-   u8_t result = netif_client_id;
-   netif_client_id++;
-   LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", netif_client_id<=LWIP_NUM_NETIF_CLIENT_DATA);
-   return result;
+  u8_t result = netif_client_id;
+  netif_client_id++;
+  LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", netif_client_id<=LWIP_NUM_NETIF_CLIENT_DATA);
+  return result;
 }
 #endif
 
