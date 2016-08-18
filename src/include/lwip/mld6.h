@@ -50,7 +50,6 @@
 #include "lwip/pbuf.h"
 #include "lwip/netif.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,32 +72,12 @@ struct mld_group {
   u8_t               use;
 };
 
-/** Multicast listener report/query/done message header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct mld_header {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u16_t max_resp_delay);
-  PACK_STRUCT_FIELD(u16_t reserved);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t multicast_address);
-  /* Options follow. */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */
 
 /* MAC Filter Actions, these are passed to a netif's
  * mld_mac_filter callback function. */
 #define MLD6_DEL_MAC_FILTER            0
 #define MLD6_ADD_MAC_FILTER            1
-
 
 err_t  mld6_stop(struct netif *netif);
 void   mld6_report_groups(struct netif *netif);
@@ -109,7 +88,6 @@ err_t  mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
 err_t  mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
 err_t  mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
 err_t  mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
-
 
 #ifdef __cplusplus
 }

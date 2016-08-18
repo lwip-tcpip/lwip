@@ -51,6 +51,7 @@
 #if LWIP_IPV6 && LWIP_IPV6_MLD  /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/mld6.h"
+#include "lwip/prot/mld6.h"
 #include "lwip/icmp6.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
