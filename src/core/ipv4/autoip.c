@@ -78,7 +78,7 @@
                                    ((u32_t)((netif->hwaddr[3]) & 0xff) << 16) | \
                                    ((u32_t)((netif->hwaddr[2]) & 0xff) << 8) | \
                                    ((u32_t)((netif->hwaddr[4]) & 0xff))) + \
-                                   (netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP]? ((struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP])->tried_llipaddr : 0))
+                                   (netif_autoip_data(netif)? netif_autoip_data(netif)->tried_llipaddr : 0))
 #endif /* LWIP_AUTOIP_RAND */
 
 /**
@@ -95,6 +95,7 @@
 static err_t autoip_arp_announce(struct netif *netif);
 static void autoip_start_probing(struct netif *netif);
 
+#define netif_autoip_data(netif) ((struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP])
 
 /**
  * @ingroup autoip 
@@ -110,7 +111,7 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("autoip != NULL", autoip != NULL);
   LWIP_ASSERT("netif already has a struct autoip set", 
-              netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP] == NULL);
+              netif_autoip_data(netif) == NULL);
 
   /* clear data structure */
   memset(autoip, 0, sizeof(struct autoip));
@@ -125,7 +126,7 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
 static void
 autoip_restart(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
   autoip->tried_llipaddr++;
   autoip_start(netif);
 }
@@ -136,7 +137,7 @@ autoip_restart(struct netif *netif)
 static void
 autoip_handle_arp_conflict(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
 
   /* RFC3927, 2.5 "Conflict Detection and Defense" allows two options where
      a) means retreat on the first conflict and
@@ -169,7 +170,7 @@ autoip_handle_arp_conflict(struct netif *netif)
 static void
 autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
 
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
@@ -204,7 +205,7 @@ autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
 static err_t
 autoip_arp_probe(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
   /* this works because netif->ip_addr is ANY */
   return etharp_request(netif, &autoip->llipaddr);
 }
@@ -228,7 +229,7 @@ autoip_arp_announce(struct netif *netif)
 static err_t
 autoip_bind(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
   ip4_addr_t sn_mask, gw_addr;
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
@@ -255,7 +256,7 @@ autoip_bind(struct netif *netif)
 err_t
 autoip_start(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
   err_t result = ERR_OK;
 
   LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
@@ -299,7 +300,7 @@ autoip_start(struct netif *netif)
 static void
 autoip_start_probing(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
 
   autoip->state = AUTOIP_STATE_PROBING;
   autoip->sent_num = 0;
@@ -333,7 +334,7 @@ autoip_start_probing(struct netif *netif)
 void
 autoip_network_changed(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
 
   if (autoip && (autoip->state != AUTOIP_STATE_OFF)) {
     autoip_start_probing(netif);
@@ -349,7 +350,7 @@ autoip_network_changed(struct netif *netif)
 err_t
 autoip_stop(struct netif *netif)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
 
   if (autoip != NULL) {
     autoip->state = AUTOIP_STATE_OFF;
@@ -369,7 +370,7 @@ autoip_tmr(void)
   struct netif *netif = netif_list;
   /* loop through netif's */
   while (netif != NULL) {
-    struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+    struct autoip* autoip = netif_autoip_data(netif);
     /* only act on AutoIP configured interfaces */
     if (autoip != NULL) {
       if (autoip->lastconflict > 0) {
@@ -454,7 +455,7 @@ autoip_tmr(void)
 void
 autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  struct autoip* autoip = netif_autoip_data(netif);
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_arp_reply()\n"));
   if ((autoip != NULL) && (autoip->state != AUTOIP_STATE_OFF)) {
@@ -511,8 +512,8 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
 u8_t
 autoip_supplied_address(const struct netif *netif)
 {
-  if ((netif != NULL) && (netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP] != NULL)) {
-    struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];
+  if ((netif != NULL) && (netif_autoip_data(netif) != NULL)) {
+    struct autoip* autoip = netif_autoip_data(netif);
     return (autoip->state == AUTOIP_STATE_BOUND) || (autoip->state == AUTOIP_STATE_ANNOUNCING);
   }
   return 0;
@@ -521,7 +522,7 @@ autoip_supplied_address(const struct netif *netif)
 u8_t
 autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
 {
-  struct autoip* autoip = (struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP];  
+  struct autoip* autoip = netif_autoip_data(netif);  
   return (autoip != NULL) && ip4_addr_cmp(addr, &(autoip->llipaddr));
 }
 

@@ -193,6 +193,8 @@ static void dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif);
 /* always add the DHCP options trailer to end and pad */
 static void dhcp_option_trailer(struct dhcp *dhcp);
 
+#define netif_dhcp_data(netif) ((struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP])
+
 /** Ensure DHCP PCB is allocated and bound */
 static err_t
 dhcp_inc_pcb_refcount(void)
@@ -248,7 +250,7 @@ dhcp_dec_pcb_refcount(void)
 static void
 dhcp_handle_nak(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n",
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
@@ -274,7 +276,7 @@ dhcp_handle_nak(struct netif *netif)
 static void
 dhcp_check(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_check(netif=%p) %c%c\n", (void *)netif, (s16_t)netif->name[0],
@@ -303,7 +305,7 @@ dhcp_check(struct netif *netif)
 static void
 dhcp_handle_offer(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_offer(netif=%p) %c%c%"U16_F"\n",
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
@@ -335,7 +337,7 @@ dhcp_handle_offer(struct netif *netif)
 static err_t
 dhcp_select(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
   u16_t msecs;
   u8_t i;
@@ -397,7 +399,7 @@ dhcp_coarse_tmr(void)
   /* iterate through all network interfaces */
   while (netif != NULL) {
     /* only act on DHCP configured interfaces */
-    struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+    struct dhcp *dhcp = netif_dhcp_data(netif);
     if ((dhcp != NULL) && (dhcp->state != DHCP_STATE_OFF)) {
       /* compare lease time to expire timeout */
       if (dhcp->t0_timeout && (++dhcp->lease_used == dhcp->t0_timeout)) {
@@ -435,7 +437,7 @@ dhcp_fine_tmr(void)
   struct netif *netif = netif_list;
   /* loop through netif's */
   while (netif != NULL) {
-    struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+    struct dhcp *dhcp = netif_dhcp_data(netif);
     /* only act on DHCP configured interfaces */
     if (dhcp != NULL) {
       /* timer is active (non zero), and is about to trigger now */
@@ -466,7 +468,7 @@ dhcp_fine_tmr(void)
 static void
 dhcp_timeout(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_timeout()\n"));
   /* back-off period has passed, or server selection timed out */
@@ -513,7 +515,7 @@ dhcp_timeout(struct netif *netif)
 static void
 dhcp_t1_timeout(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_t1_timeout()\n"));
   if ((dhcp->state == DHCP_STATE_REQUESTING) || (dhcp->state == DHCP_STATE_BOUND) ||
@@ -541,7 +543,7 @@ dhcp_t1_timeout(struct netif *netif)
 static void
 dhcp_t2_timeout(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_t2_timeout()\n"));
   if ((dhcp->state == DHCP_STATE_REQUESTING) || (dhcp->state == DHCP_STATE_BOUND) ||
@@ -568,7 +570,7 @@ dhcp_t2_timeout(struct netif *netif)
 static void
 dhcp_handle_ack(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
 #if LWIP_DNS || LWIP_DHCP_GET_NTP_SRV
   u8_t n;
@@ -661,7 +663,7 @@ dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
 {
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("dhcp != NULL", dhcp != NULL);
-  LWIP_ASSERT("netif already has a struct dhcp set", netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] == NULL);
+  LWIP_ASSERT("netif already has a struct dhcp set", netif_dhcp_data(netif) == NULL);
 
   /* clear data structure */
   memset(dhcp, 0, sizeof(struct dhcp));
@@ -682,8 +684,8 @@ void dhcp_cleanup(struct netif *netif)
 {
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
-  if (netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] != NULL) {
-    mem_free(netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP]);
+  if (netif_dhcp_data(netif) != NULL) {
+    mem_free(netif_dhcp_data(netif));
     netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] = NULL;
   }
 }
@@ -709,7 +711,7 @@ dhcp_start(struct netif *netif)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return ERR_ARG;);
   LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
-  dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  dhcp = netif_dhcp_data(netif);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
 
   /* check MTU of the netif */
@@ -827,7 +829,7 @@ dhcp_inform(struct netif *netif)
 void
 dhcp_network_changed(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
 
   if (!dhcp)
     return;
@@ -873,7 +875,7 @@ dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
   struct dhcp *dhcp;
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
-  dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  dhcp = netif_dhcp_data(netif);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_arp_reply()\n"));
   /* is a DHCP client doing an ARP check? */
   if ((dhcp != NULL) && (dhcp->state == DHCP_STATE_CHECKING)) {
@@ -902,7 +904,7 @@ dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
 static err_t
 dhcp_decline(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result = ERR_OK;
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_decline()\n"));
@@ -944,7 +946,7 @@ dhcp_decline(struct netif *netif)
 static err_t
 dhcp_discover(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result = ERR_OK;
   u16_t msecs;
   u8_t i;
@@ -1004,7 +1006,7 @@ dhcp_bind(struct netif *netif)
   struct dhcp *dhcp;
   ip4_addr_t sn_mask, gw_addr;
   LWIP_ERROR("dhcp_bind: netif != NULL", (netif != NULL), return;);
-  dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  dhcp = netif_dhcp_data(netif);
   LWIP_ERROR("dhcp_bind: dhcp != NULL", (dhcp != NULL), return;);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_bind(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
 
@@ -1110,7 +1112,7 @@ dhcp_bind(struct netif *netif)
 err_t
 dhcp_renew(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
   u16_t msecs;
   u8_t i;
@@ -1162,7 +1164,7 @@ dhcp_renew(struct netif *netif)
 static err_t
 dhcp_rebind(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
   u16_t msecs;
   u8_t i;
@@ -1212,7 +1214,7 @@ dhcp_rebind(struct netif *netif)
 static err_t
 dhcp_reboot(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
   u16_t msecs;
   u8_t i;
@@ -1263,7 +1265,7 @@ dhcp_reboot(struct netif *netif)
 err_t
 dhcp_release(struct netif *netif)
 {
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   err_t result;
   ip_addr_t server_ip_addr;
   u8_t is_dhcp_supplied_address;
@@ -1328,7 +1330,7 @@ dhcp_stop(struct netif *netif)
 {
   struct dhcp *dhcp;
   LWIP_ERROR("dhcp_stop: netif != NULL", (netif != NULL), return;);
-  dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  dhcp = netif_dhcp_data(netif);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_stop()\n"));
   /* netif is DHCP configured? */
@@ -1653,7 +1655,7 @@ static void
 dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
   struct netif *netif = ip_current_input_netif();
-  struct dhcp *dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   struct dhcp_msg *reply_msg = (struct dhcp_msg *)p->payload;
   u8_t msg_type;
   u8_t i;
@@ -1915,8 +1917,8 @@ dhcp_option_trailer(struct dhcp *dhcp)
 u8_t
 dhcp_supplied_address(const struct netif *netif)
 {
-  if ((netif != NULL) && (netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] != NULL)) {
-    struct dhcp* dhcp = (struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP];
+  if ((netif != NULL) && (netif_dhcp_data(netif) != NULL)) {
+    struct dhcp* dhcp = netif_dhcp_data(netif);
     return (dhcp->state == DHCP_STATE_BOUND) || (dhcp->state == DHCP_STATE_RENEWING);
   }
   return 0;
