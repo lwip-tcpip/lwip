@@ -104,6 +104,17 @@ extern "C" {
  * @}
  */
 
+enum lwip_internal_netif_client_data_index
+{
+#if LWIP_DHCP
+   LWIP_NETIF_CLIENT_DATA_INDEX_DHCP,
+#endif
+#if LWIP_AUTOIP
+   LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP,
+#endif
+   LWIP_NETIF_CLIENT_DATA_INDEX_MAX
+};
+
 #if LWIP_CHECKSUM_CTRL_PER_NETIF
 #define NETIF_CHECKSUM_GEN_IP       0x0001
 #define NETIF_CHECKSUM_GEN_UDP      0x0002
@@ -237,8 +248,8 @@ struct netif {
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
-#if LWIP_NUM_NETIF_CLIENT_DATA > 0
-  void* client_data[LWIP_NUM_NETIF_CLIENT_DATA];
+#if LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
+  void* client_data[LWIP_NETIF_CLIENT_DATA_INDEX_MAX + LWIP_NUM_NETIF_CLIENT_DATA];
 #endif
 #if LWIP_IPV6_AUTOCONFIG
   /** is this netif enabled for IPv6 autoconfiguration */

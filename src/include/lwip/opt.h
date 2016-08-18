@@ -1468,10 +1468,10 @@
 
 /**
  * LWIP_NUM_NETIF_CLIENT_DATA: Number of clients that may store
- * per data in client_data member array of struct netif.
+ * data in client_data member array of struct netif.
  */
 #if !defined LWIP_NUM_NETIF_CLIENT_DATA || defined __DOXYGEN__
-#define LWIP_NUM_NETIF_CLIENT_DATA            (LWIP_DHCP + LWIP_AUTOIP)
+#define LWIP_NUM_NETIF_CLIENT_DATA            0
 #endif
 /**
  * @}

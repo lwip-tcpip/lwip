@@ -92,7 +92,7 @@ struct netif *netif_default;
 static u8_t netif_num;
 
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
-static u8_t netif_client_id = 0;
+static u8_t netif_client_id;
 #endif
 
 #define NETIF_REPORT_TYPE_IPV4  0x01
@@ -245,7 +245,7 @@ netif_add(struct netif *netif,
 #endif /* LWIP_IPV6 */
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
   netif->flags = 0;
-#if LWIP_NUM_NETIF_CLIENT_DATA > 0
+#if LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
   memset(netif->client_data, 0, sizeof(netif->client_data));
 #endif /* LWIP_NUM_NETIF_CLIENT_DATA */
 #if LWIP_IPV6_AUTOCONFIG
@@ -948,8 +948,9 @@ netif_alloc_client_data_id(void)
 {
   u8_t result = netif_client_id;
   netif_client_id++;
-  LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", netif_client_id<=LWIP_NUM_NETIF_CLIENT_DATA);
-  return result;
+
+  LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", result<LWIP_NUM_NETIF_CLIENT_DATA);
+  return result + LWIP_NETIF_CLIENT_DATA_INDEX_MAX;
 }
 #endif
 

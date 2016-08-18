@@ -84,7 +84,6 @@ void autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr);
 void autoip_tmr(void);
 void autoip_network_changed(struct netif *netif);
 u8_t autoip_supplied_address(const struct netif *netif);
-void autoip_init(void);
 
 /* for lwIP internal use by ip4.c */
 u8_t autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr);
