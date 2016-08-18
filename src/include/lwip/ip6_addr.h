@@ -263,6 +263,8 @@ Little-endian version, stored in network order (no htonl). */
 #define IP6_ADDR_PREFERRED    0x30
 #define IP6_ADDR_DEPRECATED   0x50
 
+#define IP6_ADDR_TENTATIVE_COUNT_MASK 0x07 /* 1-7 probes sent */
+
 #define ip6_addr_isinvalid(addr_state) (addr_state == IP6_ADDR_INVALID)
 #define ip6_addr_istentative(addr_state) (addr_state & IP6_ADDR_TENTATIVE)
 #define ip6_addr_isvalid(addr_state) (addr_state & IP6_ADDR_VALID) /* Include valid, preferred, and deprecated. */

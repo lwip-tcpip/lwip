@@ -62,6 +62,9 @@
 
 #include <string.h>
 
+#if LWIP_IPV6_DUP_DETECT_ATTEMPTS > IP6_ADDR_TENTATIVE_COUNT_MASK
+#error LWIP_IPV6_DUP_DETECT_ATTEMPTS > IP6_ADDR_TENTATIVE_COUNT_MASK
+#endif
 
 /* Router tables. */
 struct nd6_neighbor_cache_entry neighbor_cache[LWIP_ND6_NUM_NEIGHBORS];
@@ -805,13 +808,13 @@ nd6_tmr(void)
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
       if (ip6_addr_istentative(netif->ip6_addr_state[i])) {
-        if ((netif->ip6_addr_state[i] & 0x07) >= LWIP_IPV6_DUP_DETECT_ATTEMPTS) {
+        if ((netif->ip6_addr_state[i] & IP6_ADDR_TENTATIVE_COUNT_MASK) >= LWIP_IPV6_DUP_DETECT_ATTEMPTS) {
           /* No NA received in response. Mark address as valid. */
           netif->ip6_addr_state[i] = IP6_ADDR_PREFERRED;
           /* @todo implement preferred and valid lifetimes. */
         } else if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_IPV6_MLD
-          if ((netif->ip6_addr_state[i] & 0x07) == 0) {
+          if ((netif->ip6_addr_state[i] & IP6_ADDR_TENTATIVE_COUNT_MASK) == 0) {
             /* Join solicited node multicast group. */
             ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, i)->addr[3]);
             mld6_joingroup(netif_ip6_addr(netif, i), &multicast_address);
