@@ -18,7 +18,7 @@
  * - Checking that source address of unicast requests are on the same network
  * - Limiting multicast responses to 1 per second per resource record
  * - Fragmenting replies if required
- * - Subscribe to netif address/link change events and act on them
+ * - Subscribe to netif address/link change events and act on them (currently needs to be done manually)
  * - Handling multi-packet known answers
  * - Individual known answer detection for all local IPv6 addresses
  * - Dynamic size of outgoing packet
@@ -1510,7 +1510,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   }
 
   announce.dest_port = MDNS_PORT;
-  memcpy(&announce.dest_addr, destination, sizeof(ip_addr_t));
+  memcpy(&announce.dest_addr, destination, sizeof(announce.dest_addr));
   mdns_send_outpacket(&announce);
 }
 
@@ -1860,6 +1860,32 @@ mdns_resp_init(void)
 
 /**
  * @ingroup mdns
+ * Announce IP settings have changed on netif.
+ * Call this in your callback registered by netif_set_status_callback().
+ * This function may go away in the future when netif supports registering
+ * multiple callback functions.
+ * @param netif The network interface where settings have changed.
+ */
+void
+mdns_resp_netif_settings_changed(struct netif *netif)
+{
+  LWIP_ERROR("mdns_resp_netif_ip_changed: netif != NULL", (netif != NULL), return);
+
+  if (netif->client_data[mdns_netif_client_id] == NULL) {
+    return;
+  }
+
+  /* Announce on IPv6 and IPv4 */
+#if LWIP_IPV6
+   mdns_announce(netif, IP6_ADDR_ANY);
+#endif
+#if LWIP_IPV4
+   mdns_announce(netif, IP_ADDR_ANY);
+#endif
+}
+
+/**
+ * @ingroup mdns
  * Activate MDNS responder for a network interface and send announce packets.
  * @param netif The network interface to activate.
  * @param hostname Name to use. Queries for &lt;hostname&gt;.local will be answered
@@ -1901,14 +1927,7 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   }
 #endif
 
-  /* Announce on IPv6 and IPv4 */
-#if LWIP_IPV6
-  mdns_announce(netif, IP6_ADDR_ANY);
-#endif
-#if LWIP_IPV4
-  mdns_announce(netif, IP_ADDR_ANY);
-#endif
-
+  mdns_resp_netif_settings_changed(netif);
   return ERR_OK;
 
 cleanup:

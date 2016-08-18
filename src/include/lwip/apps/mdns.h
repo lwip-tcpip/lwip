@@ -58,6 +58,7 @@ err_t mdns_resp_remove_netif(struct netif *netif);
 typedef void (*service_get_txt_fn_t)(struct mdns_service *service, void *txt_userdata);
 err_t mdns_resp_add_service(struct netif *netif, const char *name, const char *service, u16_t proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_userdata);
 err_t mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_t txt_len);
+void mdns_resp_netif_settings_changed(struct netif *netif);
 
 
 /* Domain struct and methods - visible for unit tests */
