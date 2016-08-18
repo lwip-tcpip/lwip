@@ -382,7 +382,7 @@ START_TEST(add_label_long_label)
   memset(&domain, 0, sizeof(domain));
   res = mdns_domain_add_label(&domain, "multi", 5);
   fail_unless(res == ERR_OK);
-  res = mdns_domain_add_label(&domain, toolong, strlen(toolong));
+  res = mdns_domain_add_label(&domain, toolong, (u8_t)strlen(toolong));
   fail_unless(res == ERR_VAL);
 }
 END_TEST
@@ -394,28 +394,28 @@ START_TEST(add_label_full)
   err_t res;
 
   memset(&domain, 0, sizeof(domain));
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 33);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 66);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 99);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 132);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 165);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 198);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_OK);
   fail_unless(domain.length == 231);
-  res = mdns_domain_add_label(&domain, label, strlen(label));
+  res = mdns_domain_add_label(&domain, label, (u8_t)strlen(label));
   fail_unless(res == ERR_VAL);
   fail_unless(domain.length == 231);
   res = mdns_domain_add_label(&domain, label, 25);
@@ -517,27 +517,27 @@ END_TEST
 
 START_TEST(domain_eq_anydata)
 {
-  static const char data1[] = { 0x05, (char)0xcc, (char)0xdc,       0x00, (char)0xa0 };
-  static const char data2[] = { 0x7f, (char)0x8c,       0x01, (char)0xff, (char)0xcf };
+  static const u8_t data1[] = { 0x05, 0xcc, 0xdc, 0x00, 0xa0 };
+  static const u8_t data2[] = { 0x7f, 0x8c, 0x01, 0xff, 0xcf };
   struct mdns_domain domain1, domain2;
   err_t res;
 
   memset(&domain1, 0, sizeof(domain1));
-  res = mdns_domain_add_label(&domain1, data1, sizeof(data1));
+  res = mdns_domain_add_label(&domain1, (char*)data1, sizeof(data1));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain1, "cast", 4);
   fail_unless(res == ERR_OK);
-  res = mdns_domain_add_label(&domain1, data2, sizeof(data2));
+  res = mdns_domain_add_label(&domain1, (char*)data2, sizeof(data2));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain1, NULL, 0);
   fail_unless(res == ERR_OK);
 
   memset(&domain2, 0, sizeof(domain2));
-  res = mdns_domain_add_label(&domain2, data1, sizeof(data1));
+  res = mdns_domain_add_label(&domain2, (char*)data1, sizeof(data1));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain2, "casT", 4);
   fail_unless(res == ERR_OK);
-  res = mdns_domain_add_label(&domain2, data2, sizeof(data2));
+  res = mdns_domain_add_label(&domain2, (char*)data2, sizeof(data2));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain2, NULL, 0);
   fail_unless(res == ERR_OK);
@@ -578,7 +578,7 @@ START_TEST(compress_full_match)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -612,7 +612,7 @@ START_TEST(compress_full_match_subset)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -648,7 +648,7 @@ START_TEST(compress_full_match_jump)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -682,7 +682,7 @@ START_TEST(compress_no_match)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -715,7 +715,7 @@ START_TEST(compress_2nd_label)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -749,7 +749,7 @@ START_TEST(compress_2nd_label_short)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -785,7 +785,7 @@ START_TEST(compress_jump_to_jump)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
@@ -824,7 +824,7 @@ START_TEST(compress_long_match)
   struct pbuf *p;
   struct mdns_domain domain;
   u16_t offset;
-  u8_t length;
+  u16_t length;
   err_t res;
 
   p = pbuf_alloc(PBUF_RAW, sizeof(data), PBUF_ROM);
