@@ -487,7 +487,7 @@ memp_free(memp_t type, void *mem)
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 
 #ifdef LWIP_HOOK_MEMP_AVAILABLE
-  old_first = memp_pools[type].tab;
+  old_first = *memp_pools[type]->tab;
 #endif
 
   do_memp_free_pool(memp_pools[type], mem);
