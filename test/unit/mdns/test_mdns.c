@@ -523,21 +523,21 @@ START_TEST(domain_eq_anydata)
   err_t res;
 
   memset(&domain1, 0, sizeof(domain1));
-  res = mdns_domain_add_label(&domain1, (char*)data1, sizeof(data1));
+  res = mdns_domain_add_label(&domain1, (const char*)data1, sizeof(data1));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain1, "cast", 4);
   fail_unless(res == ERR_OK);
-  res = mdns_domain_add_label(&domain1, (char*)data2, sizeof(data2));
+  res = mdns_domain_add_label(&domain1, (const char*)data2, sizeof(data2));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain1, NULL, 0);
   fail_unless(res == ERR_OK);
 
   memset(&domain2, 0, sizeof(domain2));
-  res = mdns_domain_add_label(&domain2, (char*)data1, sizeof(data1));
+  res = mdns_domain_add_label(&domain2, (const char*)data1, sizeof(data1));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain2, "casT", 4);
   fail_unless(res == ERR_OK);
-  res = mdns_domain_add_label(&domain2, (char*)data2, sizeof(data2));
+  res = mdns_domain_add_label(&domain2, (const char*)data2, sizeof(data2));
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain2, NULL, 0);
   fail_unless(res == ERR_OK);
