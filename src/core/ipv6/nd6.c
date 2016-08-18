@@ -47,6 +47,7 @@
 
 #include "lwip/nd6.h"
 #include "lwip/prot/nd6.h"
+#include "lwip/prot/icmp6.h"
 #include "lwip/pbuf.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"

@@ -138,40 +138,6 @@ enum icmp6_pp_code {
   ICMP6_PP_OPTION = 2
 };
 
-/** This is the standard ICMP6 header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct icmp6_hdr {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u32_t data);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** This is the ICMP6 header adapted for echo req/resp. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct icmp6_echo_hdr {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u16_t id);
-  PACK_STRUCT_FIELD(u16_t seqno);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-
 #if LWIP_ICMP6 && LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
 
 void icmp6_input(struct pbuf *p, struct netif *inp);
