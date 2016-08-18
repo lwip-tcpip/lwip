@@ -2113,10 +2113,8 @@ PREDEFINED             = __DOXYGEN__=1 \
                          SO_REUSE=1 \
                          SO_REUSE_RXTOALL=1 \
                          LWIP_HAVE_SLIPIF=1 \
-                         LWIP_6LOWPAN=1 \
-                         "LWIP_DNS && LWIP_SOCKET   " \
-                         "(LWIP_DNS && LWIP_SOCKET)=1   "
-
+                         LWIP_6LOWPAN=1
+ 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The
 # macro definition that is found in the sources will be used. Use the PREDEFINED

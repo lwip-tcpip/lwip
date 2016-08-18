@@ -16,13 +16,14 @@ MDNS support does not depend on DNS.
 MDNS supports using IPv4 only, v6 only, or v4+v6.
 
 To enable MDNS responder, set
-  LWIP_MDNS = 1
+  LWIP_MDNS_RESPONDER = 1
 in lwipopts.h and add src/apps/mdns/mdns.c to your list of files to build.
 
 The max number of services supported per netif is defined by MDNS_MAX_SERVICES,
 default is 1.
 
-Increase MEMP_NUM_UDP_PCB. MDNS needs one PCB.
+Increase MEMP_NUM_UDP_PCB by 1. MDNS needs one PCB.
+Increase LWIP_NUM_NETIF_CLIENT_DATA by 1 (MDNS needs one entry on netif).
 
 MDNS with IPv4 requires LWIP_IGMP = 1, and preferably LWIP_AUTOIP = 1.
 MDNS with IPv6 requires LWIP_IPV6_MLD = 1, and that a link-local address is
@@ -58,6 +59,9 @@ since the default case-insensitive comparison assumes this.
 
 It is recommended to call this function after an IPv4 address has been set,
 since there is currently no check if the v4 address is valid.
+
+Call mdns_resp_netif_settings_changed() every time the IP address
+on the netif has changed.
 
 To stop responding on a netif, run
   mdns_resp_remove_netif(struct netif *netif)

@@ -1,6 +1,32 @@
 /**
  * @file
  * DNS - host name to IP address resolver.
+ *
+ * @defgroup dns DNS
+ * @ingroup callbackstyle_api
+ *
+ * Implements a DNS host name to IP address resolver.
+ *
+ * The lwIP DNS resolver functions are used to lookup a host name and
+ * map it to a numerical IP address. It maintains a list of resolved
+ * hostnames that can be queried with the dns_lookup() function.
+ * New hostnames can be resolved using the dns_query() function.
+ *
+ * The lwIP version of the resolver also adds a non-blocking version of
+ * gethostbyname() that will work with a raw API application. This function
+ * checks for an IP address string first and converts it if it is valid.
+ * gethostbyname() then does a dns_lookup() to see if the name is
+ * already in the table. If so, the IP is returned. If not, a query is
+ * issued and the function returns with a ERR_INPROGRESS status. The app
+ * using the dns client must then go into a waiting state.
+ *
+ * Once a hostname has been resolved (or found to be non-existent),
+ * the resolver code calls a specified callback function (which
+ * must be implemented by the module that uses the resolver).
+ * 
+ * All functions must be called from TCPIP thread.
+ * 
+ * @see @ref netconn_common for thread-safe access.
  */
 
 /*
@@ -35,34 +61,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/**
- * @defgroup dns DNS
- * @ingroup callbackstyle_api
- *
- * Implements a DNS host name to IP address resolver.
- *
- * The lwIP DNS resolver functions are used to lookup a host name and
- * map it to a numerical IP address. It maintains a list of resolved
- * hostnames that can be queried with the dns_lookup() function.
- * New hostnames can be resolved using the dns_query() function.
- *
- * The lwIP version of the resolver also adds a non-blocking version of
- * gethostbyname() that will work with a raw API application. This function
- * checks for an IP address string first and converts it if it is valid.
- * gethostbyname() then does a dns_lookup() to see if the name is
- * already in the table. If so, the IP is returned. If not, a query is
- * issued and the function returns with a ERR_INPROGRESS status. The app
- * using the dns client must then go into a waiting state.
- *
- * Once a hostname has been resolved (or found to be non-existent),
- * the resolver code calls a specified callback function (which
- * must be implemented by the module that uses the resolver).
- * 
- * All functions must be called from TCPIP thread.
- * 
- * @see @ref netconn_common for thread-safe access.
  */
 
 /*-----------------------------------------------------------------------------
