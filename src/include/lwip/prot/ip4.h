@@ -46,7 +46,7 @@ extern "C" {
 
 /* Size of the IPv4 header. Same as 'sizeof(struct ip_hdr)'. */
 #define IP_HLEN 20
-  
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -109,5 +109,3 @@ PACK_STRUCT_END
 #endif
 
 #endif /* LWIP_HDR_PROT_IP4_H */
-
-

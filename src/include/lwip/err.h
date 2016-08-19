@@ -60,7 +60,7 @@ typedef s8_t err_t;
 /** Definitions for error constants. */
 typedef enum {
 /** No error, everything OK. */
-  ERR_OK         = 0, 
+  ERR_OK         = 0,
 /** Out of memory error.     */
   ERR_MEM        = -1,
 /** Buffer error.            */

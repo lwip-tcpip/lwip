@@ -60,10 +60,10 @@
  * @defgroup sys_prot Critical sections
  * @ingroup sys_layer
  * Used to protect short regions of code against concurrent access.
- * - Your system is a bare-metal system (probably with an RTOS) 
+ * - Your system is a bare-metal system (probably with an RTOS)
  *   and interrupts are under your control:
  *   Implement this as LockInterrupts() / UnlockInterrupts()
- * - Your system uses an RTOS with deferred interrupt handling from a 
+ * - Your system uses an RTOS with deferred interrupt handling from a
  *   worker thread: Implement as a global mutex or lock/unlock scheduler
  * - Your system uses a high-level OS with e.g. POSIX signals:
  *   Implement as a global mutex

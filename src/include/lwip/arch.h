@@ -48,7 +48,7 @@
 #include "arch/cc.h"
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the stdint.h header. This cannot be \#defined in lwipopts.h since 
+ * the stdint.h header. This cannot be \#defined in lwipopts.h since
  * this is not an option of lwIP itself, but an option of the lwIP port
  * to your system.
  * Additionally, this header is meant to be \#included in lwipopts.h
@@ -71,7 +71,7 @@ typedef uintptr_t mem_ptr_t;
 #endif
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the inttypes.h header. This cannot be \#defined in lwipopts.h since 
+ * the inttypes.h header. This cannot be \#defined in lwipopts.h since
  * this is not an option of lwIP itself, but an option of the lwIP port
  * to your system.
  * Additionally, this header is meant to be \#included in lwipopts.h

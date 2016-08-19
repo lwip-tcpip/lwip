@@ -199,7 +199,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* remember the pointer to the second part of the options */
     tcphdr_opt2 = (u8_t*)p->next->payload;
-    
+
     /* advance p->next to point after the options, and manually
         adjust p->tot_len to keep it consistent with the changed p->next */
     pbuf_header(p->next, -(s16_t)opt2len);

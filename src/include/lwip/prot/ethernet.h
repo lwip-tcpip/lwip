@@ -138,7 +138,7 @@ PACK_STRUCT_END
 #ifndef ETHADDR16_COPY
 #define ETHADDR16_COPY(dst, src)  SMEMCPY(dst, src, ETH_HWADDR_LEN)
 #endif
- 
+
 #define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0)
 
 #ifdef __cplusplus

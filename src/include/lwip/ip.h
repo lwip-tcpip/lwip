@@ -248,9 +248,9 @@ extern struct ip_globals ip_data;
         (IP_IS_V6(dest) ? \
         ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, addr_hint) : \
         ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, addr_hint))
-/** 
+/**
  * @ingroup ip
- * Get netif for address combination. See \ref ip6_route and \ref ip4_route 
+ * Get netif for address combination. See \ref ip6_route and \ref ip4_route
  */
 #define ip_route(src, dest) \
         (IP_IS_V6(dest) ? \

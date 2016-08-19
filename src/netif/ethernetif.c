@@ -266,7 +266,7 @@ ethernetif_input(struct netif *netif)
   /* if no packet could be read, silently ignore this */
   if (p != NULL) {
     /* pass all packets to ethernet_input, which decides what packets it supports */
-    if (netif->input(p, netif) != ERR_OK) { 
+    if (netif->input(p, netif) != ERR_OK) {
       LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
       pbuf_free(p);
       p = NULL;

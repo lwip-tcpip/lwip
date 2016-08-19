@@ -36,8 +36,8 @@
  *
  */
 
-/* 
- * NOTE: || defined __DOXYGEN__ is a workaround for doxygen bug - 
+/*
+ * NOTE: || defined __DOXYGEN__ is a workaround for doxygen bug -
  * without this, doxygen does not see the actual #define
  */
 
@@ -51,7 +51,7 @@
 #include "lwipopts.h"
 #include "lwip/debug.h"
 
-/** 
+/**
  * @defgroup lwip_opts Options (lwipopts.h)
  * @ingroup lwip
  *

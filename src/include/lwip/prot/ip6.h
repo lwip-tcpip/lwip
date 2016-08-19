@@ -146,7 +146,7 @@ PACK_STRUCT_END
 #define IP6H_PLEN_SET(hdr, plen) (hdr)->_plen = htons(plen)
 #define IP6H_NEXTH_SET(hdr, nexth) (hdr)->_nexth = (nexth)
 #define IP6H_HOPLIM_SET(hdr, hl) (hdr)->_hoplim = (u8_t)(hl)
-        
+
 #ifdef __cplusplus
 }
 #endif

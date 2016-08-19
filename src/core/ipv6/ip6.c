@@ -452,7 +452,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
     IP6_STATS_INC(ip6.drop);
     return ERR_OK;
   }
-  
+
   /* current header pointer. */
   ip_data.current_ip6_header = ip6hdr;
 

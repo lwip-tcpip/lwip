@@ -110,7 +110,7 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
 {
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("autoip != NULL", autoip != NULL);
-  LWIP_ASSERT("netif already has a struct autoip set", 
+  LWIP_ASSERT("netif already has a struct autoip set",
               netif_autoip_data(netif) == NULL);
 
   /* clear data structure */
@@ -522,7 +522,7 @@ autoip_supplied_address(const struct netif *netif)
 u8_t
 autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
 {
-  struct autoip* autoip = netif_autoip_data(netif);  
+  struct autoip* autoip = netif_autoip_data(netif);
   return (autoip != NULL) && ip4_addr_cmp(addr, &(autoip->llipaddr));
 }
 

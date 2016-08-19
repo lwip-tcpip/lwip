@@ -375,7 +375,7 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
   LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
-    
+
   TCPIP_MSG_VAR_ALLOC(msg);
   TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API_CALL;
   TCPIP_MSG_VAR_REF(msg).msg.api_call.arg = call;

@@ -62,7 +62,7 @@ enum icmp6_type {
   /** Parameter problem */
   ICMP6_TYPE_PP = 4,
   /** Private experimentation */
-  ICMP6_TYPE_PE1 = 100,  
+  ICMP6_TYPE_PE1 = 100,
   /** Private experimentation */
   ICMP6_TYPE_PE2 = 101,
   /** Reserved for expansion of error messages */
@@ -73,7 +73,7 @@ enum icmp6_type {
   /** Echo reply */
   ICMP6_TYPE_EREP = 129,
   /** Multicast listener query */
-  ICMP6_TYPE_MLQ = 130,  
+  ICMP6_TYPE_MLQ = 130,
   /** Multicast listener report */
   ICMP6_TYPE_MLR = 131,
   /** Multicast listener done */

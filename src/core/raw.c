@@ -80,7 +80,7 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
     return 1;
   }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-  
+
   /* Only need to check PCB if incoming IP version matches PCB IP version */
   if (IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ip_current_dest_addr())) {
 #if LWIP_IPV4
@@ -103,7 +103,7 @@ raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
       return 1;
     }
   }
-  
+
   return 0;
 }
 

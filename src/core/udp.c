@@ -191,7 +191,7 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
       return 1;
     }
   }
-  
+
   return 0;
 }
 

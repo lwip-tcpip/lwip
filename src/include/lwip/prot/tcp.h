@@ -77,7 +77,7 @@ PACK_STRUCT_END
 
 #define TCPH_SET_FLAG(phdr, flags ) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags | htons(flags))
 #define TCPH_UNSET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags & ~htons(flags))
-    
+
 #ifdef __cplusplus
 }
 #endif

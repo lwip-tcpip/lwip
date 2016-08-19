@@ -1778,7 +1778,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   struct mdns_packet packet;
   struct netif *recv_netif = ip_current_input_netif();
   u16_t offset = 0;
-  
+
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(pcb);
 

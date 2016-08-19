@@ -353,7 +353,7 @@ strnstr(const char* buffer, const char* token, size_t n)
     }
   }
   return NULL;
-} 
+}
 #endif /* LWIP_HTTPD_STRNSTR_PRIVATE */
 
 #if LWIP_HTTPD_STRICMP_PRIVATE
@@ -1112,7 +1112,7 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
      * (which would happen when sending files from async read). */
     if(http_check_eof(pcb, hs)) {
       data_to_send = HTTP_DATA_TO_SEND_CONTINUE;
-    } 
+    }
   }
   /* If we get here and there are still header bytes to send, we send
    * the header information we just wrote immediately. If there are no
@@ -2584,7 +2584,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
   LWIP_UNUSED_ARG(err);
   LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(HTTPD_DEBUG, ("http_accept %p / %p\n", (void*)pcb, arg));
-  
+
   if ((err != ERR_OK) || (pcb == NULL)) {
     return ERR_VAL;
   }
@@ -2684,7 +2684,7 @@ http_set_cgi_handlers(const tCGI *cgis, int num_handlers)
 {
   LWIP_ASSERT("no cgis given", cgis != NULL);
   LWIP_ASSERT("invalid number of handlers", num_handlers > 0);
-  
+
   g_pCGIs = cgis;
   g_iNumCGIs = num_handlers;
 }

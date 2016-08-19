@@ -68,7 +68,7 @@ extern "C" {
  * @ingroup netif
  * @{
  */
-  
+
 /** Whether the network interface is 'up'. This is
  * a software flag used to control whether this network
  * interface is enabled and processes traffic.

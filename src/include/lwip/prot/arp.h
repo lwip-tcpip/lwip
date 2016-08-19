@@ -71,7 +71,7 @@ PACK_STRUCT_END
 #endif
 
 #define SIZEOF_ETHARP_HDR 28
-    
+
 #ifdef __cplusplus
 }
 #endif

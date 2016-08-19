@@ -60,7 +60,7 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
-    
+
 #ifdef __cplusplus
 }
 #endif

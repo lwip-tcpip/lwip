@@ -36,7 +36,7 @@
  */
 
 #ifndef LWIP_HDR_APPS_MDNS_OPTS_H
-#define	LWIP_HDR_APPS_MDNS_OPTS_H
+#define LWIP_HDR_APPS_MDNS_OPTS_H
 
 #include "lwip/opt.h"
 
@@ -70,5 +70,5 @@
  * @}
  */
 
-#endif	/* LWIP_HDR_APPS_MDNS_OPTS_H */
+#endif /* LWIP_HDR_APPS_MDNS_OPTS_H */
 

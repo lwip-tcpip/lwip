@@ -1086,7 +1086,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     } else {
       pbuf_cat(chain_buf->p, p);
     }
-  }    
+  }
   /* save size of total chain */
   if (err == ERR_OK) {
     size = netbuf_len(chain_buf);

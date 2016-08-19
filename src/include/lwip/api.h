@@ -327,7 +327,7 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 
 #if LWIP_IPV6
 /** @ingroup netconn_common
- * TCP: Set the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY) 
+ * TCP: Set the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY)
  */
 #define netconn_set_ipv6only(conn, val)  do { if(val) { \
   (conn)->flags |= NETCONN_FLAG_IPV6_V6ONLY; \
