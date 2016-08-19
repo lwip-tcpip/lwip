@@ -167,31 +167,26 @@ mem_malloc(mem_size_t size)
   mem_size_t required_size = size + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper));
 
   for (poolnr = MEMP_POOL_FIRST; poolnr <= MEMP_POOL_LAST; poolnr = (memp_t)(poolnr + 1)) {
-#if MEM_USE_POOLS_TRY_BIGGER_POOL
-again:
-#endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
     /* is this pool big enough to hold an element of the required size
        plus a struct memp_malloc_helper that saves the pool this element came from? */
     if (required_size <= memp_pools[poolnr]->size) {
+      element = (struct memp_malloc_helper*)memp_malloc(poolnr);
+      if (element == NULL) {
+        /* No need to DEBUGF or ASSERT: This error is already taken care of in memp.c */
+#if MEM_USE_POOLS_TRY_BIGGER_POOL
+        /** Try a bigger pool if this one is empty! */
+        if (poolnr < MEMP_POOL_LAST) {
+          continue;
+        }
+#endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
+        MEM_STATS_INC(err);
+        return NULL;
+      }
       break;
     }
   }
   if (poolnr > MEMP_POOL_LAST) {
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
-    MEM_STATS_INC(err);
-    return NULL;
-  }
-  element = (struct memp_malloc_helper*)memp_malloc(poolnr);
-  if (element == NULL) {
-    /* No need to DEBUGF or ASSERT: This error is already
-       taken care of in memp.c */
-#if MEM_USE_POOLS_TRY_BIGGER_POOL
-    /** Try a bigger pool if this one is empty! */
-    if (poolnr < MEMP_POOL_LAST) {
-      poolnr++;
-      goto again;
-    }
-#endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
     MEM_STATS_INC(err);
     return NULL;
   }
