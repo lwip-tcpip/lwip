@@ -9,7 +9,7 @@
  *
  * To let mem_malloc() use pools (prevents fragmentation and is much faster than
  * a heap but might waste some memory), define MEM_USE_POOLS to 1, define
- * MEM_USE_CUSTOM_POOLS to 1 and create a file "lwippools.h" that includes a list
+ * MEMP_USE_CUSTOM_POOLS to 1 and create a file "lwippools.h" that includes a list
  * of pools like this (more pools can be added between _START and _END):
  *
  * Define three pools with sizes 256, 512, and 1512 bytes
