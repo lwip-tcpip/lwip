@@ -34,8 +34,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_PROT_ARP_H
-#define LWIP_HDR_PROT_ARP_H
+#ifndef LWIP_HDR_PROT_ETHARP_H
+#define LWIP_HDR_PROT_ETHARP_H
 
 #include "lwip/arch.h"
 #include "lwip/prot/ethernet.h"
@@ -84,9 +84,8 @@ enum etharp_opcode {
   ARP_REPLY   = 2
 };
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_PROT_ARP_H */
+#endif /* LWIP_HDR_PROT_ETHARP_H */

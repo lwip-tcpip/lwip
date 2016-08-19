@@ -58,7 +58,7 @@ extern "C" {
 
 #if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/prot/arp.h"
+#include "lwip/prot/etharp.h"
 
 #define SIZEOF_ETHARP_PACKET    (SIZEOF_ETH_HDR + SIZEOF_ETHARP_HDR)
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
