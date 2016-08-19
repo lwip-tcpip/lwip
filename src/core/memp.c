@@ -124,9 +124,9 @@ memp_sanity(const struct memp_desc *desc)
 static void
 memp_overflow_check_element_overflow(struct memp *p, const struct memp_desc *desc)
 {
+#if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
   u16_t k;
   u8_t *m;
-#if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
   m = (u8_t*)p + MEMP_SIZE + desc->size;
   for (k = 0; k < MEMP_SANITY_REGION_AFTER_ALIGNED; k++) {
     if (m[k] != 0xcd) {
@@ -135,7 +135,10 @@ memp_overflow_check_element_overflow(struct memp *p, const struct memp_desc *des
       LWIP_ASSERT(errstr, 0);
     }
   }
-#endif
+#else /* MEMP_SANITY_REGION_AFTER_ALIGNED > 0 */
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(desc);
+#endif /* MEMP_SANITY_REGION_AFTER_ALIGNED > 0 */
 }
 
 /**
@@ -148,9 +151,9 @@ memp_overflow_check_element_overflow(struct memp *p, const struct memp_desc *des
 static void
 memp_overflow_check_element_underflow(struct memp *p, const struct memp_desc *desc)
 {
+#if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0
   u16_t k;
   u8_t *m;
-#if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0
   m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE_ALIGNED;
   for (k = 0; k < MEMP_SANITY_REGION_BEFORE_ALIGNED; k++) {
     if (m[k] != 0xcd) {
@@ -159,7 +162,10 @@ memp_overflow_check_element_underflow(struct memp *p, const struct memp_desc *de
       LWIP_ASSERT(errstr, 0);
     }
   }
-#endif
+#else /* MEMP_SANITY_REGION_BEFORE_ALIGNED > 0 */
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(desc);
+#endif /* MEMP_SANITY_REGION_BEFORE_ALIGNED > 0 */
 }
 
 /**
@@ -168,6 +174,7 @@ memp_overflow_check_element_underflow(struct memp *p, const struct memp_desc *de
 static void
 memp_overflow_init_element(struct memp *p, const struct memp_desc *desc)
 {
+#if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0 || MEMP_SANITY_REGION_AFTER_ALIGNED > 0
   u8_t *m;
 #if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0
   m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE_ALIGNED;
@@ -177,6 +184,10 @@ memp_overflow_init_element(struct memp *p, const struct memp_desc *desc)
   m = (u8_t*)p + MEMP_SIZE + desc->size;
   memset(m, 0xcd, MEMP_SANITY_REGION_AFTER_ALIGNED);
 #endif
+#else /* MEMP_SANITY_REGION_BEFORE_ALIGNED > 0 || MEMP_SANITY_REGION_AFTER_ALIGNED > 0 */
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(desc);
+#endif /* MEMP_SANITY_REGION_BEFORE_ALIGNED > 0 || MEMP_SANITY_REGION_AFTER_ALIGNED > 0 */
 }
 
 #if MEMP_OVERFLOW_CHECK >= 2
