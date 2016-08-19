@@ -81,6 +81,7 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 
+#include "netif/ethernet.h"
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/lcp.h"
 #include "netif/ppp/ipcp.h"
