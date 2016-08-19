@@ -237,17 +237,14 @@ memp_init_pool(const struct memp_desc *desc)
 #endif
     );
   }
-#endif /* !MEMP_MEM_MALLOC */
-
 #if MEMP_STATS
-#if !MEMP_MEM_MALLOC
   desc->stats->avail = desc->num;
+#endif /* MEMP_STATS */
 #endif /* !MEMP_MEM_MALLOC */
 
-#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
+#if MEMP_STATS && (defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY)
   desc->stats->name  = desc->desc;
-#endif /* defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY */
-#endif /* MEMP_STATS */
+#endif /* MEMP_STATS && (defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY) */
 }
 
 /**
