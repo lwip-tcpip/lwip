@@ -110,7 +110,7 @@ low_level_init(struct netif *netif)
   if (netif->mld_mac_filter != NULL) {
     ip6_addr_t ip6_allnodes_ll;
     ip6_addr_set_allnodes_linklocal(&ip6_allnodes_ll);
-    netif->mld_mac_filter(netif, &ip6_allnodes_ll, MLD6_ADD_MAC_FILTER);
+    netif->mld_mac_filter(netif, &ip6_allnodes_ll, NETIF_ADD_MAC_FILTER);
   }
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 

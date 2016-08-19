@@ -114,7 +114,7 @@ mld6_stop(struct netif *netif)
       }
       /* disable the group at the MAC level */
       if (netif->mld_mac_filter != NULL) {
-        netif->mld_mac_filter(netif, &(group->group_address), MLD6_DEL_MAC_FILTER);
+        netif->mld_mac_filter(netif, &(group->group_address), NETIF_DEL_MAC_FILTER);
       }
       /* free group */
       memp_free(MEMP_MLD6_GROUP, group);
@@ -373,7 +373,7 @@ mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
 
     /* Activate this address on the MAC layer. */
     if (netif->mld_mac_filter != NULL) {
-      netif->mld_mac_filter(netif, groupaddr, MLD6_ADD_MAC_FILTER);
+      netif->mld_mac_filter(netif, groupaddr, NETIF_ADD_MAC_FILTER);
     }
 
     /* Report our membership. */
@@ -448,7 +448,7 @@ mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
 
       /* Disable the group at the MAC level */
       if (netif->mld_mac_filter != NULL) {
-        netif->mld_mac_filter(netif, groupaddr, MLD6_DEL_MAC_FILTER);
+        netif->mld_mac_filter(netif, groupaddr, NETIF_DEL_MAC_FILTER);
       }
 
       /* Free the group */

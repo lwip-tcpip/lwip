@@ -56,6 +56,10 @@ extern "C" {
 #define IGMP_V1_DELAYING_MEMBER_TMR   (1000/IGMP_TMR_INTERVAL)
 #define IGMP_JOIN_DELAYING_MEMBER_TMR (500 /IGMP_TMR_INTERVAL)
 
+/* Compatibility defines (don't use for new code) */
+#define IGMP_DEL_MAC_FILTER            NETIF_DEL_MAC_FILTER
+#define IGMP_ADD_MAC_FILTER            NETIF_ADD_MAC_FILTER
+
 /**
  * igmp group structure - there is
  * a list of groups for each interface

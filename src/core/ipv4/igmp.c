@@ -143,7 +143,7 @@ igmp_start(struct netif *netif)
       LWIP_DEBUGF(IGMP_DEBUG, ("igmp_start: igmp_mac_filter(ADD "));
       ip4_addr_debug_print_val(IGMP_DEBUG, allsystems);
       LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
-      netif->igmp_mac_filter(netif, &allsystems, IGMP_ADD_MAC_FILTER);
+      netif->igmp_mac_filter(netif, &allsystems, NETIF_ADD_MAC_FILTER);
     }
 
     return ERR_OK;
@@ -182,7 +182,7 @@ igmp_stop(struct netif *netif)
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp_stop: igmp_mac_filter(DEL "));
         ip4_addr_debug_print(IGMP_DEBUG, &group->group_address);
         LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
-        netif->igmp_mac_filter(netif, &(group->group_address), IGMP_DEL_MAC_FILTER);
+        netif->igmp_mac_filter(netif, &(group->group_address), NETIF_DEL_MAC_FILTER);
       }
       /* free group */
       memp_free(MEMP_IGMP_GROUP, group);
@@ -513,7 +513,7 @@ igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: igmp_mac_filter(ADD "));
         ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
         LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
-        netif->igmp_mac_filter(netif, groupaddr, IGMP_ADD_MAC_FILTER);
+        netif->igmp_mac_filter(netif, groupaddr, NETIF_ADD_MAC_FILTER);
       }
 
       IGMP_STATS_INC(igmp.tx_join);
@@ -613,7 +613,7 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: igmp_mac_filter(DEL "));
         ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
         LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
-        netif->igmp_mac_filter(netif, groupaddr, IGMP_DEL_MAC_FILTER);
+        netif->igmp_mac_filter(netif, groupaddr, NETIF_DEL_MAC_FILTER);
       }
 
       LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: remove group: "));
