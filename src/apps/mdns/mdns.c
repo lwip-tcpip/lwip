@@ -1989,7 +1989,7 @@ mdns_resp_remove_netif(struct netif *netif)
  * @return ERR_OK if the service was added to the netif, an err_t otherwise
  */
 err_t
-mdns_resp_add_service(struct netif *netif, const char *name, const char *service, u16_t proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_data)
+mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_data)
 {
   int i;
   int slot = -1;
@@ -2021,7 +2021,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   memcpy(&srv->service, service, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(service)));
   srv->txt_fn = txt_fn;
   srv->txt_userdata = txt_data;
-  srv->proto = proto;
+  srv->proto = (u16_t)proto;
   srv->port = port;
   srv->dns_ttl = dns_ttl;
 
