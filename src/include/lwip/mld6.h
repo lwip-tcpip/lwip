@@ -74,11 +74,6 @@ struct mld_group {
 
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */
 
-/* MAC Filter Actions, these are passed to a netif's
- * mld_mac_filter callback function. */
-#define MLD6_DEL_MAC_FILTER            0
-#define MLD6_ADD_MAC_FILTER            1
-
 err_t  mld6_stop(struct netif *netif);
 void   mld6_report_groups(struct netif *netif);
 void   mld6_tmr(void);

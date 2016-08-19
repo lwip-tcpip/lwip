@@ -51,17 +51,10 @@
 extern "C" {
 #endif
 
-
 /* IGMP timer */
 #define IGMP_TMR_INTERVAL              100 /* Milliseconds */
 #define IGMP_V1_DELAYING_MEMBER_TMR   (1000/IGMP_TMR_INTERVAL)
 #define IGMP_JOIN_DELAYING_MEMBER_TMR (500 /IGMP_TMR_INTERVAL)
-
-/* MAC Filter Actions, these are passed to a netif's
- * igmp_mac_filter callback function. */
-#define IGMP_DEL_MAC_FILTER            0
-#define IGMP_ADD_MAC_FILTER            1
-
 
 /**
  * igmp group structure - there is

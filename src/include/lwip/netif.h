@@ -181,15 +181,31 @@ typedef err_t (*netif_output_ip6_fn)(struct netif *netif, struct pbuf *p,
 typedef err_t (*netif_linkoutput_fn)(struct netif *netif, struct pbuf *p);
 /** Function prototype for netif status- or link-callback functions. */
 typedef void (*netif_status_callback_fn)(struct netif *netif);
+
 #if LWIP_IPV4 && LWIP_IGMP
+/** MAC Filter Actions, these are passed to a netif's igmp_mac_filter callback function. */
+enum netif_igmp_filter_action {
+  /** Delete a filter entry */
+  IGMP_DEL_MAC_FILTER = 0,
+  /** Add a filter entry */
+  IGMP_ADD_MAC_FILTER = 1
+};
 /** Function prototype for netif igmp_mac_filter functions */
 typedef err_t (*netif_igmp_mac_filter_fn)(struct netif *netif,
-       const ip4_addr_t *group, u8_t action);
+       const ip4_addr_t *group, enum netif_igmp_filter_action action);
 #endif /* LWIP_IPV4 && LWIP_IGMP */
+
 #if LWIP_IPV6 && LWIP_IPV6_MLD
+/** MAC Filter Actions, these are passed to a netif's mld_mac_filter callback function. */
+enum netif_mld6_filter_action {
+  /** Delete a filter entry */
+  MLD6_DEL_MAC_FILTER = 0,
+  /** Add a filter entry */
+  MLD6_ADD_MAC_FILTER = 1
+};
 /** Function prototype for netif mld_mac_filter functions */
 typedef err_t (*netif_mld_mac_filter_fn)(struct netif *netif,
-       const ip6_addr_t *group, u8_t action);
+       const ip6_addr_t *group, enum netif_mld6_filter_action action);
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
 /** Generic data structure used for all lwIP network interfaces.
