@@ -58,6 +58,12 @@ extern "C" {
 
 #define DHCP_BOOT_FILE_LEN      128U
 
+/* AutoIP cooperation flags (struct dhcp.autoip_coop_state) */
+typedef enum {
+  DHCP_AUTOIP_COOP_STATE_OFF  = 0,
+  DHCP_AUTOIP_COOP_STATE_ON   = 1
+} dhcp_autoip_coop_state_enum_t;
+
 struct dhcp
 {
   /** transaction identifier of last sent request */

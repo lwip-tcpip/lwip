@@ -183,6 +183,14 @@ struct dns_answer {
 /* maximum allowed size for the struct due to non-packed */
 #define SIZEOF_DNS_ANSWER_ASSERT 12
 
+/* DNS table entry states */
+typedef enum {
+  DNS_STATE_UNUSED           = 0,
+  DNS_STATE_NEW              = 1,
+  DNS_STATE_ASKING           = 2,
+  DNS_STATE_DONE             = 3
+} dns_state_enum_t;
+
 /** DNS table entry */
 struct dns_table_entry {
   u32_t ttl;

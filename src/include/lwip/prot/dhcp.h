@@ -114,12 +114,6 @@ typedef enum {
   DHCP_STATE_BACKING_OFF     = 12
 } dhcp_state_enum_t;
 
-/* AutoIP cooperation flags */
-typedef enum {
-  DHCP_AUTOIP_COOP_STATE_OFF  = 0,
-  DHCP_AUTOIP_COOP_STATE_ON   = 1
-} dhcp_autoip_coop_state_enum_t;
-
 /* DHCP op codes */
 #define DHCP_BOOTREQUEST            1
 #define DHCP_BOOTREPLY              2
@@ -172,7 +166,7 @@ typedef enum {
 #define DHCP_OPTION_T2              59 /* T2 rebinding time */
 #define DHCP_OPTION_US              60
 #define DHCP_OPTION_CLIENT_ID       61
-#define DHCP_OPTION_TFTP_SERVERNAME 66  
+#define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE        67
 
 /* possible combinations of overloading the file and sname fields with options */

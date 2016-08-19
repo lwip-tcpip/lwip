@@ -42,7 +42,7 @@
 
 #include "lwip/arch.h"
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -114,18 +114,9 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 #define SIZEOF_DNS_HDR 12
-        
-/* DNS protocol states */
-typedef enum {
-  DNS_STATE_UNUSED           = 0,
-  DNS_STATE_NEW              = 1,
-  DNS_STATE_ASKING           = 2,
-  DNS_STATE_DONE             = 3
-} dns_state_enum_t;
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif	/* LWIP_HDR_PROT_DNS_H */
-
+#endif /* LWIP_HDR_PROT_DNS_H */
