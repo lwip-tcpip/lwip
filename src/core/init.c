@@ -61,6 +61,25 @@
 #include "netif/ppp/ppp_opts.h"
 #include "netif/ppp/ppp_impl.h"
 
+#ifndef LWIP_SKIP_PACKING_CHECK
+
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct packed_struct_test
+{
+  PACK_STRUCT_FLD_8(u8_t  dummy1);
+  PACK_STRUCT_FIELD(u32_t dummy2);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+#define PACKED_STRUCT_TEST_EXPECTED_SIZE 5
+
+#endif
+
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
  */
@@ -323,6 +342,10 @@
 void
 lwip_init(void)
 {
+#ifndef LWIP_SKIP_PACKING_CHECK
+  LWIP_ASSERT("Struct packing not implemented correctly. Check your lwIP port.", sizeof(struct packed_struct_test) == PACKED_STRUCT_TEST_EXPECTED_SIZE);
+#endif
+
   /* Modules initialization */
   stats_init();
 #if !NO_SYS
