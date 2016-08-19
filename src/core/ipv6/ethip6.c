@@ -51,7 +51,7 @@
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp6.h"
-#include "netif/ethernet.h"
+#include "lwip/prot/ethernet.h"
 
 #include <string.h>
 

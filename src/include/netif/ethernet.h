@@ -51,18 +51,6 @@
 extern "C" {
 #endif
 
-/** MEMCPY-like macro to copy to/from struct eth_addr's that are local variables
- * or known to be 32-bit aligned within the protocol header. */
-#ifndef ETHADDR32_COPY
-#define ETHADDR32_COPY(dst, src)  SMEMCPY(dst, src, ETH_HWADDR_LEN)
-#endif
-
-/** MEMCPY-like macro to copy to/from struct eth_addr's that are no local
- * variables and known to be 16-bit aligned within the protocol header. */
-#ifndef ETHADDR16_COPY
-#define ETHADDR16_COPY(dst, src)  SMEMCPY(dst, src, ETH_HWADDR_LEN)
-#endif
-
 #if LWIP_ARP || LWIP_ETHERNET
 
 /** Define this to 1 and define LWIP_ARP_FILTER_NETIF_FN(pbuf, netif, type)
@@ -76,8 +64,6 @@ extern "C" {
 #endif
 
 err_t ethernet_input(struct pbuf *p, struct netif *netif);
-
-#define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0)
 
 extern const struct eth_addr ethbroadcast, ethzero;
 
