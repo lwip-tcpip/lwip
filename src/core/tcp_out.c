@@ -1379,7 +1379,7 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
 /**
  * Requeue the first unacked segment for retransmission
  *
- * Called by tcp_receive() for fast retramsmit.
+ * Called by tcp_receive() for fast retransmit.
  *
  * @param pcb the tcp_pcb for which to retransmit the first unacked segment
  */
