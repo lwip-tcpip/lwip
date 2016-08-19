@@ -1384,7 +1384,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
   /* Calculate padding for encryption */
   if (request->version == SNMP_VERSION_3 && (request->msg_flags & SNMP_V3_PRIV_FLAG)) {
     u8_t i;
-    outbound_padding = (u8_t)((frame_size - request->outbound_scoped_pdu_seq_offset) & 0x03);
+    outbound_padding = (8 - (u8_t)((frame_size - request->outbound_scoped_pdu_seq_offset) & 0x07)) & 0x07;
     for (i = 0; i < outbound_padding; i++) {
       snmp_pbuf_stream_write(&request->outbound_pbuf_stream, 0);
     }
