@@ -112,16 +112,6 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 #define TCP_SEQ_BETWEEN(a,b,c) ((c)-(b) >= (a)-(b))
 #endif
 #define TCP_SEQ_BETWEEN(a,b,c) (TCP_SEQ_GEQ(a,b) && TCP_SEQ_LEQ(a,c))
-#define TCP_FIN 0x01U
-#define TCP_SYN 0x02U
-#define TCP_RST 0x04U
-#define TCP_PSH 0x08U
-#define TCP_ACK 0x10U
-#define TCP_URG 0x20U
-#define TCP_ECE 0x40U
-#define TCP_CWR 0x80U
-
-#define TCP_FLAGS 0x3fU
 
 #ifndef TCP_TMR_INTERVAL
 #define TCP_TMR_INTERVAL       250  /* The TCP timer interval in milliseconds. */
