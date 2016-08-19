@@ -60,7 +60,7 @@
  */
 
 #include "lwip/apps/mdns.h"
-#include "lwip/apps/mdns_privs.h"
+#include "lwip/apps/mdns_priv.h"
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
