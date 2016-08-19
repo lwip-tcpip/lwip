@@ -72,8 +72,6 @@
  */
 #define ARP_MAXPENDING 5
 
-#define HWTYPE_ETHERNET 1
-
 enum etharp_state {
   ETHARP_STATE_EMPTY = 0,
   ETHARP_STATE_PENDING,
@@ -1246,10 +1244,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
  *         ERR_MEM if the ARP packet couldn't be allocated
  *         any other err_t on failure
  */
-#if !LWIP_AUTOIP
-static
-#endif /* LWIP_AUTOIP */
-err_t
+static err_t
 etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
            const struct eth_addr *ethdst_addr,
            const struct eth_addr *hwsrc_addr, const ip4_addr_t *ipsrc_addr,

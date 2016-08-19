@@ -70,10 +70,6 @@ extern "C" {
 /** 1 seconds period */
 #define ARP_TMR_INTERVAL 1000
 
-/** ARP message types (opcodes) */
-#define ARP_REQUEST 1
-#define ARP_REPLY   2
-
 #if ARP_QUEUEING
 /** struct for queueing outgoing packets for unknown address
   * defined here to be accessed by memp.h
@@ -104,14 +100,6 @@ void etharp_ip_input(struct netif *netif, struct pbuf *p);
 err_t etharp_add_static_entry(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr);
 err_t etharp_remove_static_entry(const ip4_addr_t *ipaddr);
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
-
-#if LWIP_AUTOIP
-err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
-                 const struct eth_addr *ethdst_addr,
-                 const struct eth_addr *hwsrc_addr, const ip4_addr_t *ipsrc_addr,
-                 const struct eth_addr *hwdst_addr, const ip4_addr_t *ipdst_addr,
-                 const u16_t opcode);
-#endif /* LWIP_AUTOIP */
 
 #endif /* LWIP_IPV4 && LWIP_ARP */
 

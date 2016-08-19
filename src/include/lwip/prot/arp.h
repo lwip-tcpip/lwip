@@ -72,6 +72,19 @@ PACK_STRUCT_END
 
 #define SIZEOF_ETHARP_HDR 28
 
+/* ARP hwtype values */
+enum etharp_hwtype {
+  HWTYPE_ETHERNET = 1
+  /* others not used */
+};
+
+/* ARP message types (opcodes) */
+enum etharp_opcode {
+  ARP_REQUEST = 1,
+  ARP_REPLY   = 2
+};
+
+
 #ifdef __cplusplus
 }
 #endif
