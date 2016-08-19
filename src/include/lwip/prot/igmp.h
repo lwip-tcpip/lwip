@@ -38,6 +38,7 @@
 #define LWIP_HDR_PROT_IGMP_H
 
 #include "lwip/arch.h"
+#include "lwip/ip4_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
