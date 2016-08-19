@@ -1,6 +1,6 @@
 /**
  * @file
- * UDP protocol definitions
+ * IGMP protocol definitions
  */
 
 /*
