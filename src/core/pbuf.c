@@ -766,12 +766,9 @@ pbuf_clen(struct pbuf *p)
 void
 pbuf_ref(struct pbuf *p)
 {
-  SYS_ARCH_DECL_PROTECT(old_level);
   /* pbuf given? */
   if (p != NULL) {
-    SYS_ARCH_PROTECT(old_level);
-    ++(p->ref);
-    SYS_ARCH_UNPROTECT(old_level);
+    SYS_ARCH_INC(p->ref, 1);
   }
 }
 
