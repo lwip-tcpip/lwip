@@ -208,10 +208,17 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #endif /* LWIP_IPV6 */
 
     default:
-      ETHARP_STATS_INC(etharp.proterr);
-      ETHARP_STATS_INC(etharp.drop);
-      MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
-      goto free_and_return;
+#ifdef LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+      if(LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(p, netif) != ERR_OK) {
+#endif
+        ETHARP_STATS_INC(etharp.proterr);
+        ETHARP_STATS_INC(etharp.drop);
+        MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
+        goto free_and_return;
+#ifdef LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+      }
+      break;
+#endif
   }
 
   /* This means the pbuf is freed or consumed,

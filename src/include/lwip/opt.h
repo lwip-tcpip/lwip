@@ -2529,6 +2529,15 @@
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_MEMP_AVAILABLE(memp_t_type)
 #endif
+
+/**
+ * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif):
+ * Called from ethernet_input() when an unknown eth type is encountered.
+ * Return ERR_OK if packet is accepted, any error code otherwise.
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif)
+#endif
 /**
  * @}
  */
