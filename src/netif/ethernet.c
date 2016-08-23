@@ -209,16 +209,14 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 
     default:
 #ifdef LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
-      if(LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(p, netif) != ERR_OK) {
-#endif
-        ETHARP_STATS_INC(etharp.proterr);
-        ETHARP_STATS_INC(etharp.drop);
-        MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
-        goto free_and_return;
-#ifdef LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+      if(LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(p, netif) == ERR_OK) {
+        break;
       }
-      break;
 #endif
+      ETHARP_STATS_INC(etharp.proterr);
+      ETHARP_STATS_INC(etharp.drop);
+      MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
+      goto free_and_return;
   }
 
   /* This means the pbuf is freed or consumed,
