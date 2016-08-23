@@ -222,4 +222,62 @@ free_and_return:
   pbuf_free(p);
   return ERR_OK;
 }
+
+/**
+ * Send an ethernet packet on the network using netif->linkoutput
+ * The ethernet header is filled in before sending.
+ *
+ * @params netif the lwIP network interface on which to send the packet
+ * @params p the packet to send, p->payload pointing to the (uninitialized) ethernet header
+ * @params src the source MAC address to be copied into the ethernet header
+ * @params dst the destination MAC address to be copied into the ethernet header
+ * @params eth_type ethernet type
+ * @return ERR_OK if the packet was sent, any other err_t on failure
+ */
+err_t
+ethernet_output(struct netif* netif, struct pbuf* p, const struct eth_addr* src, const struct eth_addr* dst, u16_t eth_type)
+{
+  struct eth_hdr *ethhdr;
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  struct eth_vlan_hdr *vlanhdr;
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+  
+  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_send!", (netif->hwaddr_len == ETH_HWADDR_LEN));
+
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  if (pbuf_header(p, sizeof(struct eth_hdr) + SIZEOF_VLAN_HDR) != 0) {
+#else /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+  if (pbuf_header(p, sizeof(struct eth_hdr)) != 0) {
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
+      ("ethernet_send: could not allocate room for header.\n"));
+    LINK_STATS_INC(link.lenerr);
+    return ERR_BUF;
+  }
+  ethhdr = (struct eth_hdr *)p->payload;
+
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  ethhdr->type = PP_HTONS(ETHTYPE_VLAN);
+  vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR);
+  vlanhdr->prio_vid = 0;
+  vlanhdr->tpid = ntohs(eth_type);
+  if (!LWIP_HOOK_VLAN_SET(netif, ethhdr, vlanhdr)) {
+    /* packet shall not contain VLAN header, so hide it and set correct ethertype */
+    pbuf_header(p, -SIZEOF_VLAN_HDR);
+    ethhdr = (struct eth_hdr *)p->payload;
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+    ethhdr->type = ntohs(eth_type);
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  }
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+
+  ETHADDR32_COPY(&ethhdr->dest, dst);
+  ETHADDR16_COPY(&ethhdr->src,  src);
+
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethernet_send: sending packet %p\n", (void *)p));
+
+  /* send the packet */
+  return netif->linkoutput(netif, p);
+}
+
 #endif /* LWIP_ARP || LWIP_ETHERNET */

@@ -394,47 +394,6 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
 }
 
 /**
- * Send an IP packet on the network using netif->linkoutput
- * The ethernet header is filled in before sending.
- *
- * @params netif the lwIP network interface on which to send the packet
- * @params p the packet to send, p->payload pointing to the (uninitialized) ethernet header
- * @params src the source MAC address to be copied into the ethernet header
- * @params dst the destination MAC address to be copied into the ethernet header
- * @return ERR_OK if the packet was sent, any other err_t on failure
- */
-static err_t
-etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, const struct eth_addr *dst)
-{
-  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  struct eth_vlan_hdr *vlanhdr;
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-
-  LWIP_ASSERT("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
-              (netif->hwaddr_len == ETH_HWADDR_LEN));
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  ethhdr->type = PP_HTONS(ETHTYPE_VLAN);
-  vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR);
-  vlanhdr->prio_vid = 0;
-  vlanhdr->tpid = PP_HTONS(ETHTYPE_IP);
-  if (!LWIP_HOOK_VLAN_SET(netif, ethhdr, vlanhdr)) {
-    /* packet shall not contain VLAN header, so hide it and set correct ethertype */
-    pbuf_header(p, -SIZEOF_VLAN_HDR);
-    ethhdr = (struct eth_hdr *)p->payload;
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-    ethhdr->type = PP_HTONS(ETHTYPE_IP);
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  }
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-  ETHADDR32_COPY(&ethhdr->dest, dst);
-  ETHADDR16_COPY(&ethhdr->src, src);
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_send_ip: sending packet %p\n", (void *)p));
-  /* send the packet */
-  return netif->linkoutput(netif, p);
-}
-
-/**
  * Update (or insert) a IP/MAC address pair in the ARP cache.
  *
  * If a pending entry is resolved, any queued packets will be sent
@@ -517,7 +476,7 @@ etharp_update_arp_entry(struct netif *netif, const ip4_addr_t *ipaddr, struct et
     arp_table[i].q = NULL;
 #endif /* ARP_QUEUEING */
     /* send the queued IP packet */
-    etharp_send_ip(netif, p, (struct eth_addr*)(netif->hwaddr), ethaddr);
+    ethernet_output(netif, p, (struct eth_addr*)(netif->hwaddr), ethaddr, ETHTYPE_IP);
     /* free the queued IP packet */
     pbuf_free(p);
   }
@@ -898,8 +857,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
     }
   }
 
-  return etharp_send_ip(netif, q, (struct eth_addr*)(netif->hwaddr),
-    &arp_table[arp_idx].ethaddr);
+  return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), &arp_table[arp_idx].ethaddr, ETHTYPE_IP);
 }
 
 /**
@@ -931,19 +889,6 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
   LWIP_ASSERT("q != NULL", q != NULL);
   LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);
 
-  /* make room for Ethernet header - should not fail */
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  if (pbuf_header(q, sizeof(struct eth_hdr) + SIZEOF_VLAN_HDR) != 0) {
-#else /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-    /* bail out */
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-      ("etharp_output: could not allocate room for header.\n"));
-    LINK_STATS_INC(link.lenerr);
-    return ERR_BUF;
-  }
-
   /* Determine on destination hardware address. Broadcasts and multicasts
    * are special, other IP addresses are looked up in the ARP table. */
 
@@ -970,11 +915,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
     if (!ip4_addr_netcmp(ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif)) &&
         !ip4_addr_islinklocal(ipaddr)) {
 #if LWIP_AUTOIP
-      struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-        SIZEOF_VLAN_HDR +
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-        sizeof(struct eth_hdr));
+      struct ip_hdr *iphdr = (struct ip_hdr*)(size_t)q->payload;
       /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
          a link-local source address must always be "directly to its destination
          on the same physical link. The host MUST NOT send the packet to any
@@ -1036,7 +977,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
   /* continuation for multicast/broadcast destinations */
   /* obtain source Ethernet address of the given interface */
   /* send packet directly on the link */
-  return etharp_send_ip(netif, q, (struct eth_addr*)(netif->hwaddr), dest);
+  return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), dest, ETHTYPE_IP);
 }
 
 /**
@@ -1136,7 +1077,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     /* we have a valid IP->Ethernet address mapping */
     ETHARP_SET_HINT(netif, i);
     /* send the packet */
-    result = etharp_send_ip(netif, q, srcaddr, &(arp_table[i].ethaddr));
+    result = ethernet_output(netif, q, srcaddr, &(arp_table[i].ethaddr), ETHTYPE_IP);
   /* pending entry? (either just created or already pending */
   } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
     /* entry is still pending, queue the given packet 'q' */
