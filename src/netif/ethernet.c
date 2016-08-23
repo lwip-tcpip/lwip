@@ -175,7 +175,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
         goto free_and_return;
       }
       /* pass p to ARP module */
-      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
+      etharp_input(p, netif);
       break;
 #endif /* LWIP_IPV4 && LWIP_ARP */
 #if PPPOE_SUPPORT

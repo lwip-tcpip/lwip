@@ -102,7 +102,7 @@ err_t etharp_remove_static_entry(const ip4_addr_t *ipaddr);
 
 #endif /* LWIP_IPV4 && LWIP_ARP */
 
-void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p);
+void etharp_input(struct pbuf *p, struct netif *netif);
 
 #ifdef __cplusplus
 }

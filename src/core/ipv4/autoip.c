@@ -447,7 +447,7 @@ autoip_tmr(void)
 }
 
 /**
- * Handles every incoming ARP Packet, called by etharp_arp_input.
+ * Handles every incoming ARP Packet, called by etharp_input().
  *
  * @param netif network interface to use for autoip processing
  * @param hdr Incoming ARP packet
