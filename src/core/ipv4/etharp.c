@@ -1144,19 +1144,12 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 {
   struct pbuf *p;
   err_t result = ERR_OK;
-  struct eth_hdr *ethhdr;
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  struct eth_vlan_hdr *vlanhdr;
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   struct etharp_hdr *hdr;
-#if LWIP_AUTOIP
-  const u8_t * ethdst_hwaddr;
-#endif /* LWIP_AUTOIP */
 
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
   /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_RAW_TX, SIZEOF_ETHARP_PACKET_TX, PBUF_RAM);
+  p = pbuf_alloc(PBUF_LINK, SIZEOF_ETHARP_PACKET_TX, PBUF_RAM);
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
@@ -1167,24 +1160,13 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
               (p->len >= SIZEOF_ETHARP_PACKET_TX));
 
-  ethhdr = (struct eth_hdr *)p->payload;
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR);
-  hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR);
-#else /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-  hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+  hdr = (struct etharp_hdr *)p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
   hdr->opcode = htons(opcode);
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETH_HWADDR_LEN));
-#if LWIP_AUTOIP
-  /* If we are using Link-Local, all ARP packets that contain a Link-Local
-   * 'sender IP address' MUST be sent using link-layer broadcast instead of
-   * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
-  ethdst_hwaddr = ip4_addr_islinklocal(ipsrc_addr) ? (const u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
-#endif /* LWIP_AUTOIP */
+
   /* Write the ARP MAC-Addresses */
   ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);
   ETHADDR16_COPY(&hdr->dhwaddr, hwdst_addr);
@@ -1199,30 +1181,20 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   hdr->hwlen = ETH_HWADDR_LEN;
   hdr->protolen = sizeof(ip4_addr_t);
 
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  ethhdr->type = PP_HTONS(ETHTYPE_VLAN);
-  vlanhdr->tpid = PP_HTONS(ETHTYPE_ARP);
-  vlanhdr->prio_vid = 0;
-  if (!LWIP_HOOK_VLAN_SET(netif, ethhdr, vlanhdr)) {
-    /* packet shall not contain VLAN header, so hide it and set correct ethertype */
-    pbuf_header(p, -SIZEOF_VLAN_HDR);
-    ethhdr = (struct eth_hdr *)p->payload;
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-    ethhdr->type = PP_HTONS(ETHTYPE_ARP);
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  }
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-
-  /* Write the Ethernet MAC-Addresses */
-#if LWIP_AUTOIP
-  ETHADDR16_COPY(&ethhdr->dest, ethdst_hwaddr);
-#else  /* LWIP_AUTOIP */
-  ETHADDR16_COPY(&ethhdr->dest, ethdst_addr);
-#endif /* LWIP_AUTOIP */
-  ETHADDR16_COPY(&ethhdr->src, ethsrc_addr);
-
   /* send ARP query */
-  result = netif->linkoutput(netif, p);
+#if LWIP_AUTOIP
+  /* If we are using Link-Local, all ARP packets that contain a Link-Local
+   * 'sender IP address' MUST be sent using link-layer broadcast instead of
+   * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
+  if(ip4_addr_islinklocal(ipsrc_addr)) {
+    ethernet_output(netif, p, ethsrc_addr, &ethbroadcast, ETHTYPE_ARP);
+  } else {
+    ethernet_output(netif, p, ethsrc_addr, ethdst_addr, ETHTYPE_ARP);
+  }
+#else  /* LWIP_AUTOIP */
+  ethernet_output(netif, p, ethsrc_addr, ethdst_addr, ETHTYPE_ARP);
+#endif /* LWIP_AUTOIP */
+
   ETHARP_STATS_INC(etharp.xmit);
   /* free ARP query packet */
   pbuf_free(p);
