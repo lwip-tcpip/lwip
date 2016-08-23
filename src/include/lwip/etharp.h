@@ -94,7 +94,6 @@ err_t etharp_request(struct netif *netif, const ip4_addr_t *ipaddr);
  *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6. */
 #define etharp_gratuitous(netif) etharp_request((netif), netif_ip4_addr(netif))
 void etharp_cleanup_netif(struct netif *netif);
-void etharp_ip_input(struct netif *netif, struct pbuf *p);
 
 #if ETHARP_SUPPORT_STATIC_ENTRIES
 err_t etharp_add_static_entry(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr);

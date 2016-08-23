@@ -157,10 +157,6 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
-#if ETHARP_TRUST_IP_MAC
-      /* update ARP table */
-      etharp_ip_input(netif, p);
-#endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
       if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,

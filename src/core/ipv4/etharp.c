@@ -616,56 +616,6 @@ etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_a
   }
 }
 
-#if ETHARP_TRUST_IP_MAC
-/**
- * Updates the ARP table using the given IP packet.
- *
- * Uses the incoming IP packet's source address to update the
- * ARP cache for the local network. The function does not alter
- * or free the packet. This function must be called before the
- * packet p is passed to the IP layer.
- *
- * @param netif The lwIP network interface on which the IP packet pbuf arrived.
- * @param p The IP packet that arrived on netif.
- *
- * @return NULL
- *
- * @see pbuf_free()
- */
-void
-etharp_ip_input(struct netif *netif, struct pbuf *p)
-{
-  struct eth_hdr *ethhdr;
-  struct ip_hdr *iphdr;
-  ip4_addr_t iphdr_src;
-  LWIP_ERROR("netif != NULL", (netif != NULL), return;);
-
-  /* Only insert an entry if the source IP address of the
-     incoming IP packet comes from a host on the local network. */
-  ethhdr = (struct eth_hdr *)p->payload;
-  iphdr = (struct ip_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
-#if ETHARP_SUPPORT_VLAN
-  if (ethhdr->type == PP_HTONS(ETHTYPE_VLAN)) {
-    iphdr = (struct ip_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR);
-  }
-#endif /* ETHARP_SUPPORT_VLAN */
-
-  ip4_addr_copy(iphdr_src, iphdr->src);
-
-  /* source is not on the local network? */
-  if (!ip4_addr_netcmp(&iphdr_src, netif_ip4_addr(netif), netif_ip4_netmask(netif))) {
-    /* do nothing */
-    return;
-  }
-
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
-  /* update the source IP address in the cache, if present */
-  /* @todo We could use ETHARP_FLAG_TRY_HARD if we think we are going to talk
-   * back soon (for example, if the destination IP address is ours. */
-  etharp_update_arp_entry(netif, &iphdr_src, &(ethhdr->src), ETHARP_FLAG_FIND_ONLY);
-}
-#endif /* ETHARP_TRUST_IP_MAC */
-
 /**
  * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache
  * send out queued IP packets. Updates cache with snooped address pairs.
