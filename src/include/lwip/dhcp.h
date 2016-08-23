@@ -100,7 +100,7 @@ struct dhcp
   u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
   u32_t offered_t2_rebind; /* recommended rebind time (usually 87.5 of lease period)  */
 #if LWIP_DHCP_BOOTP_FILE
-  ip_addr_t offered_si_addr;
+  ip4_addr_t offered_si_addr;
   char boot_file_name[DHCP_BOOT_FILE_LEN];
 #endif /* LWIP_DHCP_BOOTPFILE */
 };

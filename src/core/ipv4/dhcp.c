@@ -615,7 +615,7 @@ dhcp_handle_ack(struct netif *netif)
 #if LWIP_DHCP_BOOTP_FILE
   /* copy boot server address,
      boot file name copied in dhcp_parse_reply if not overloaded */
-  ip_addr_copy(dhcp->offered_si_addr, dhcp->msg_in->siaddr);
+  ip4_addr_copy(dhcp->offered_si_addr, dhcp->msg_in->siaddr);
 #endif /* LWIP_DHCP_BOOTP_FILE */
 
   /* subnet mask given? */
@@ -1415,14 +1415,15 @@ dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif)
   if (netif->hostname != NULL) {
     size_t namelen = strlen(netif->hostname);
     if (namelen > 0) {
-      u8_t len;
+      size_t len;
       const char *p = netif->hostname;
       /* Shrink len to available bytes (need 2 bytes for OPTION_HOSTNAME
          and 1 byte for trailer) */
       size_t available = DHCP_OPTIONS_LEN - dhcp->options_out_len - 3;
       LWIP_ASSERT("DHCP: hostname is too long!", namelen <= available);
       len = LWIP_MIN(namelen, available);
-      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, len);
+      LWIP_ASSERT("DHCP: hostname is too long!", len <= 0xFF);
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, (u8_t)len);
       while (len--) {
         dhcp_option_byte(dhcp, *p++);
       }
