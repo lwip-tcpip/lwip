@@ -1097,7 +1097,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     }
     if (copy_needed) {
       /* copy the whole packet into new pbufs */
-      p = pbuf_alloc(PBUF_RAW_TX, p->tot_len, PBUF_RAM);
+      p = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
       if (p != NULL) {
         if (pbuf_copy(p, q) != ERR_OK) {
           pbuf_free(p);
