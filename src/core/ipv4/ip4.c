@@ -267,6 +267,7 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   struct netif *netif;
 
   PERF_START;
+  LWIP_UNUSED_ARG(inp);
 
   if (!ip4_canforward(p)) {
     goto return_noroute;
