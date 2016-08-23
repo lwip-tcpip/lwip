@@ -2534,6 +2534,7 @@
  * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif):
  * Called from ethernet_input() when an unknown eth type is encountered.
  * Return ERR_OK if packet is accepted, any error code otherwise.
+ * Payload points to ethernet header!
  */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif)
