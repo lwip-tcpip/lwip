@@ -174,8 +174,19 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
-      /* pass p to ARP module */
-      etharp_input(p, netif);
+      /* skip Ethernet header */
+      if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+          ("ethernet_input: ARP response packet dropped, too short (%"S16_F"/%"S16_F")\n",
+          p->tot_len, ip_hdr_offset));
+        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
+        ETHARP_STATS_INC(etharp.lenerr);
+        ETHARP_STATS_INC(etharp.drop);
+        goto free_and_return;
+      } else {
+        /* pass p to ARP module */
+        etharp_input(p, netif);
+      }
       break;
 #endif /* LWIP_IPV4 && LWIP_ARP */
 #if PPPOE_SUPPORT

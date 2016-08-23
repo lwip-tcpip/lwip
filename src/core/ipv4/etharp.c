@@ -634,35 +634,13 @@ void
 etharp_input(struct pbuf *p, struct netif *netif)
 {
   struct etharp_hdr *hdr;
-  struct eth_hdr *ethhdr;
   /* these are aligned properly, whereas the ARP header fields might not be */
   ip4_addr_t sipaddr, dipaddr;
   u8_t for_us;
-#if LWIP_AUTOIP
-  const u8_t * ethdst_hwaddr;
-#endif /* LWIP_AUTOIP */
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
-  /* drop short ARP packets: we have to check for p->len instead of p->tot_len here
-     since a struct etharp_hdr is pointed to p->payload, so it musn't be chained! */
-  if (p->len < SIZEOF_ETHARP_PACKET) {
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
-      ("etharp_input: packet dropped, too short (%"S16_F"/%"S16_F")\n", p->tot_len,
-      (s16_t)SIZEOF_ETHARP_PACKET));
-    ETHARP_STATS_INC(etharp.lenerr);
-    ETHARP_STATS_INC(etharp.drop);
-    pbuf_free(p);
-    return;
-  }
-
-  ethhdr = (struct eth_hdr *)p->payload;
-  hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
-#if ETHARP_SUPPORT_VLAN
-  if (ethhdr->type == PP_HTONS(ETHTYPE_VLAN)) {
-    hdr = (struct etharp_hdr *)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR);
-  }
-#endif /* ETHARP_SUPPORT_VLAN */
+  hdr = (struct etharp_hdr *)p->payload;
 
   /* RFC 826 "Packet Reception": */
   if ((hdr->hwtype != PP_HTONS(HWTYPE_ETHERNET)) ||
@@ -730,27 +708,26 @@ etharp_input(struct pbuf *p, struct netif *netif)
 
       LWIP_ASSERT("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
                   (netif->hwaddr_len == ETH_HWADDR_LEN));
-#if LWIP_AUTOIP
-      /* If we are using Link-Local, all ARP packets that contain a Link-Local
-       * 'sender IP address' MUST be sent using link-layer broadcast instead of
-       * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
-      ethdst_hwaddr = ip4_addr_islinklocal(netif_ip4_addr(netif)) ? (const u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
-#endif /* LWIP_AUTOIP */
-
-      ETHADDR16_COPY(&hdr->dhwaddr, &hdr->shwaddr);
-#if LWIP_AUTOIP
-      ETHADDR16_COPY(&ethhdr->dest, ethdst_hwaddr);
-#else  /* LWIP_AUTOIP */
-      ETHADDR16_COPY(&ethhdr->dest, &hdr->shwaddr);
-#endif /* LWIP_AUTOIP */
-      ETHADDR16_COPY(&hdr->shwaddr, netif->hwaddr);
-      ETHADDR16_COPY(&ethhdr->src, netif->hwaddr);
 
       /* hwtype, hwaddr_len, proto, protolen and the type in the ethernet header
          are already correct, we tested that before */
 
+      ETHADDR16_COPY(&hdr->dhwaddr, &hdr->shwaddr);
+      ETHADDR16_COPY(&hdr->shwaddr, netif->hwaddr);
+
       /* return ARP reply */
-      netif->linkoutput(netif, p);
+#if LWIP_AUTOIP
+      /* If we are using Link-Local, all ARP packets that contain a Link-Local
+       * 'sender IP address' MUST be sent using link-layer broadcast instead of
+       * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
+      if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
+        ethernet_output(netif, p, &hdr->shwaddr, &ethbroadcast, ETHTYPE_ARP);
+      } else
+#endif /* LWIP_AUTOIP */
+      {
+        ethernet_output(netif, p, &hdr->shwaddr, &hdr->dhwaddr, ETHTYPE_ARP);
+      }
+
     /* we are not configured? */
     } else if (ip4_addr_isany_val(*netif_ip4_addr(netif))) {
       /* { for_us == 0 and netif->ip_addr.addr == 0 } */
@@ -1187,12 +1164,11 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
    * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
   if(ip4_addr_islinklocal(ipsrc_addr)) {
     ethernet_output(netif, p, ethsrc_addr, &ethbroadcast, ETHTYPE_ARP);
-  } else {
+  } else
+#endif /* LWIP_AUTOIP */
+  {
     ethernet_output(netif, p, ethsrc_addr, ethdst_addr, ETHTYPE_ARP);
   }
-#else  /* LWIP_AUTOIP */
-  ethernet_output(netif, p, ethsrc_addr, ethdst_addr, ETHTYPE_ARP);
-#endif /* LWIP_AUTOIP */
 
   ETHARP_STATS_INC(etharp.xmit);
   /* free ARP query packet */
