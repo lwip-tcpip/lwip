@@ -1125,7 +1125,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
   /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_LINK, SIZEOF_ETHARP_PACKET_TX, PBUF_RAM);
+  p = pbuf_alloc(PBUF_LINK, SIZEOF_ETHARP_HDR, PBUF_RAM);
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
@@ -1134,7 +1134,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
     return ERR_MEM;
   }
   LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
-              (p->len >= SIZEOF_ETHARP_PACKET_TX));
+              (p->len >= SIZEOF_ETHARP_HDR));
 
   hdr = (struct etharp_hdr *)p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
