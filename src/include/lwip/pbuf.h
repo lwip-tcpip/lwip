@@ -80,7 +80,7 @@ typedef enum {
    */
   PBUF_IP,
   /** Includes spare room for link layer header (ethernet header).
-   * Use this if you intend to pass the pbuf to functions like ip_output().
+   * Use this if you intend to pass the pbuf to functions like ethernet_output().
    * @see @ref PBUF_LINK_HLEN
    */
   PBUF_LINK,
