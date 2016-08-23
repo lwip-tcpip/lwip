@@ -102,6 +102,7 @@ static s8_t nd6_new_onlink_prefix(ip6_addr_t *prefix, struct netif *netif);
 #define ND6_SEND_FLAG_ALLNODES_DEST 0x02
 static void nd6_send_ns(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags);
 static void nd6_send_na(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags);
+static void nd6_send_neighbor_cache_probe(struct nd6_neighbor_cache_entry *entry, u8_t flags);
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
 static err_t nd6_send_rs(struct netif *netif);
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
@@ -673,7 +674,7 @@ nd6_tmr(void)
       } else {
         /* Send a NS for this entry. */
         neighbor_cache[i].counter.probes_sent++;
-        nd6_send_ns(neighbor_cache[i].netif, &(neighbor_cache[i].next_hop_address), ND6_SEND_FLAG_MULTICAST_DEST);
+        nd6_send_neighbor_cache_probe(&neighbor_cache[i], ND6_SEND_FLAG_MULTICAST_DEST);
       }
       break;
     case ND6_REACHABLE:
@@ -709,7 +710,7 @@ nd6_tmr(void)
       } else {
         /* Send a NS for this entry. */
         neighbor_cache[i].counter.probes_sent++;
-        nd6_send_ns(neighbor_cache[i].netif, &(neighbor_cache[i].next_hop_address), 0);
+        nd6_send_neighbor_cache_probe(&neighbor_cache[i], 0);
       }
       break;
     case ND6_NO_ENTRY:
@@ -842,6 +843,17 @@ nd6_tmr(void)
   }
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
+}
+
+/** Send a neighbor solicitation message for a specific neighbor cache entry
+ *
+ * @param entry the neightbor cache entry for wich to send the message
+ * @param flags one of ND6_SEND_FLAG_*
+ */
+static void
+nd6_send_neighbor_cache_probe(struct nd6_neighbor_cache_entry *entry, u8_t flags)
+{
+  nd6_send_ns(entry->netif, &entry->next_hop_address, flags);
 }
 
 /**
@@ -1403,7 +1415,8 @@ nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif)
     neighbor_cache[neighbor_index].netif = netif;
     neighbor_cache[neighbor_index].q = NULL;
     neighbor_cache[neighbor_index].state = ND6_INCOMPLETE;
-    neighbor_cache[neighbor_index].counter.probes_sent = 0;
+    neighbor_cache[neighbor_index].counter.probes_sent = 1;
+    nd6_send_neighbor_cache_probe(&neighbor_cache[neighbor_index], ND6_SEND_FLAG_MULTICAST_DEST);
   }
 
   /* Mark neighbor as router. */
@@ -1587,7 +1600,8 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
       neighbor_cache[i].isrouter = 0;
       neighbor_cache[i].netif = netif;
       neighbor_cache[i].state = ND6_INCOMPLETE;
-      neighbor_cache[i].counter.probes_sent = 0;
+      neighbor_cache[i].counter.probes_sent = 1;
+      nd6_send_neighbor_cache_probe(&neighbor_cache[i], ND6_SEND_FLAG_MULTICAST_DEST);
     }
   }
 
