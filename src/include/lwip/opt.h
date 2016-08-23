@@ -2509,7 +2509,7 @@
 
 /**
  * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
- * - called from etharp_raw() and etharp_send_ip() if VLAN support is enabled
+ * - called from etharp_raw() and ethernet_output() if VLAN support is enabled
  * - netif: struct netif that the packet will be sent through
  * - eth_hdr: struct eth_hdr of the packet
  * - vlan_hdr: struct eth_vlan_hdr of the packet

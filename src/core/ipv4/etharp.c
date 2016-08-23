@@ -876,7 +876,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
  *
  * @return
  * - ERR_RTE No route to destination (no gateway to external networks),
- * or the return type of either etharp_query() or etharp_send_ip().
+ * or the return type of either etharp_query() or ethernet_output().
  */
 err_t
 etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)

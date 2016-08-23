@@ -72,7 +72,7 @@
  *
  * @return
  * - ERR_RTE No route to destination (no gateway to external networks),
- * or the return type of either etharp_query() or etharp_send_ip().
+ * or the return type of either etharp_query() or ethernet_output().
  */
 err_t
 ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
