@@ -39,11 +39,6 @@
  */
 
 /**
- * @page ports Example ports
- * - RTEMS and FreeRTOS: https://sourceforge.net/p/ulan/lwip-omk/ci/omk-devel/tree/ports/os/
- */
-
-/**
  * @defgroup lwip_nosys Mainloop mode ("NO_SYS")
  * @ingroup lwip
  * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
