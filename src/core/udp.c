@@ -1166,32 +1166,26 @@ udp_new_ip_type(u8_t type)
   return pcb;
 }
 
-#if LWIP_IPV4
 /** This function is called from netif.c when address is changed
  *
- * @param old_addr IPv4 address of the netif before change
- * @param new_addr IPv4 address of the netif after change
+ * @param old_addr IP address of the netif before change
+ * @param new_addr IP address of the netif after change
  */
-void udp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
+void udp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr)
 {
   struct udp_pcb* upcb;
 
-  if (!ip4_addr_isany(new_addr)) {
+  if (!ip_addr_isany(old_addr) && !ip_addr_isany(new_addr)) {
     for (upcb = udp_pcbs; upcb != NULL; upcb = upcb->next) {
-      /* Is this an IPv4 pcb? */
-      if (IP_IS_V4_VAL(upcb->local_ip)) {
-        /* PCB bound to current local interface address? */
-        if (!ip4_addr_isany(ip_2_ip4(&upcb->local_ip)) &&
-            ip4_addr_cmp(ip_2_ip4(&upcb->local_ip), old_addr)) {
-          /* The PCB is bound to the old ipaddr and
-            * is set to bound to the new one instead */
-          ip_addr_copy_from_ip4(upcb->local_ip, *new_addr);
-        }
+      /* PCB bound to current local interface address? */
+      if (ip_addr_cmp(&upcb->local_ip, old_addr)) {
+        /* The PCB is bound to the old ipaddr and
+         * is set to bound to the new one instead */
+        ip_addr_copy(upcb->local_ip, *new_addr);
       }
     }
   }
 }
-#endif /* LWIP_IPV4 */
 
 #if UDP_DEBUG
 /**

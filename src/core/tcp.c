@@ -1896,19 +1896,18 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
 }
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-#if LWIP_IPV4
-/** Helper function for tcp_netif_ipv4_addr_changed() that iterates a pcb list */
+/** Helper function for tcp_netif_ip_addr_changed() that iterates a pcb list */
 static void
-tcp_netif_ipv4_addr_changed_pcblist(const ip4_addr_t* old_addr, struct tcp_pcb* pcb_list)
+tcp_netif_ip_addr_changed_pcblist(const ip_addr_t* old_addr, struct tcp_pcb* pcb_list)
 {
   struct tcp_pcb *pcb;
   pcb = pcb_list;
   while (pcb != NULL) {
     /* PCB bound to current local interface address? */
-    if (IP_IS_V4_VAL(pcb->local_ip) && ip4_addr_cmp(ip_2_ip4(&pcb->local_ip), old_addr)
+    if (ip_addr_cmp(&pcb->local_ip, old_addr)
 #if LWIP_AUTOIP
       /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-      && !ip4_addr_islinklocal(ip_2_ip4(&pcb->local_ip))
+      && (!IP_IS_V4_VAL(pcb->local_ip) || !ip4_addr_islinklocal(ip_2_ip4(&pcb->local_ip)))
 #endif /* LWIP_AUTOIP */
       ) {
       /* this connection must be aborted */
@@ -1924,35 +1923,32 @@ tcp_netif_ipv4_addr_changed_pcblist(const ip4_addr_t* old_addr, struct tcp_pcb* 
 
 /** This function is called from netif.c when address is changed or netif is removed
  *
- * @param old_addr IPv4 address of the netif before change
- * @param new_addr IPv4 address of the netif after change or NULL if netif has been removed
+ * @param old_addr IP address of the netif before change
+ * @param new_addr IP address of the netif after change or NULL if netif has been removed
  */
 void
-tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
+tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr)
 {
   struct tcp_pcb_listen *lpcb, *next;
 
-  tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_active_pcbs);
-  tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
+  if (!ip_addr_isany(old_addr)) {
+    tcp_netif_ip_addr_changed_pcblist(old_addr, tcp_active_pcbs);
+    tcp_netif_ip_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
 
-  if (!ip4_addr_isany(new_addr)) {
-    /* PCB bound to current local interface address? */
-    for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
-      next = lpcb->next;
-      /* Is this an IPv4 pcb? */
-      if (IP_IS_V4_VAL(lpcb->local_ip)) {
+    if (!ip_addr_isany(new_addr)) {
+      /* PCB bound to current local interface address? */
+      for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
+        next = lpcb->next;
         /* PCB bound to current local interface address? */
-        if ((!(ip4_addr_isany(ip_2_ip4(&lpcb->local_ip)))) &&
-            (ip4_addr_cmp(ip_2_ip4(&lpcb->local_ip), old_addr))) {
+        if (ip_addr_cmp(&lpcb->local_ip, old_addr)) {
           /* The PCB is listening to the old ipaddr and
-           * is set to listen to the new one instead */
-          ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
+            * is set to listen to the new one instead */
+          ip_addr_copy(lpcb->local_ip, *new_addr);
         }
       }
     }
   }
 }
-#endif /* LWIP_IPV4 */
 
 const char*
 tcp_debug_state_str(enum tcp_state s)

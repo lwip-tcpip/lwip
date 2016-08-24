@@ -358,6 +358,10 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
 void
 netif_remove(struct netif *netif)
 {
+#if LWIP_IPV6
+  int i;
+#endif
+
   if (netif == NULL) {
     return;
   }
@@ -365,9 +369,11 @@ netif_remove(struct netif *netif)
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
 #if LWIP_TCP
-    tcp_netif_ipv4_addr_changed(netif_ip4_addr(netif), NULL);
+    tcp_netif_ip_addr_changed(netif_ip_addr4(netif), NULL);
 #endif /* LWIP_TCP */
-    /* cannot do this for UDP, as there is no 'err' callback in udp pcbs */
+#if LWIP_UDP
+    udp_netif_ip_addr_changed(netif_ip_addr4(netif), NULL);
+#endif /* LWIP_UDP */
   }
 
 #if LWIP_IGMP
@@ -378,10 +384,22 @@ netif_remove(struct netif *netif)
 #endif /* LWIP_IGMP */
 #endif /* LWIP_IPV4*/
 
-#if LWIP_IPV6 && LWIP_IPV6_MLD
+#if LWIP_IPV6
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
+#if LWIP_TCP
+      tcp_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
+#endif /* LWIP_TCP */
+#if LWIP_UDP
+      udp_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
+#endif /* LWIP_UDP */
+    }
+  }
+#if LWIP_IPV6_MLD
   /* stop MLD processing */
   mld6_stop(netif);
-#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+#endif /* LWIP_IPV6_MLD */
+#endif /* LWIP_IPV6 */
   if (netif_is_up(netif)) {
     /* set netif down before removing (call callback function) */
     netif_set_down(netif);
@@ -464,15 +482,18 @@ netif_find(const char *name)
 void
 netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
-  ip4_addr_t new_addr = (ipaddr ? *ipaddr : *IP4_ADDR_ANY);
+  ip_addr_t new_addr;
+  *ip_2_ip4(&new_addr) = (ipaddr ? *ipaddr : *IP4_ADDR_ANY);
+  IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
+
   /* address is actually being changed? */
-  if (ip4_addr_cmp(&new_addr, netif_ip4_addr(netif)) == 0) {
+  if (ip4_addr_cmp(ip_2_ip4(&new_addr), netif_ip4_addr(netif)) == 0) {
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
 #if LWIP_TCP
-    tcp_netif_ipv4_addr_changed(netif_ip4_addr(netif), ipaddr);
+    tcp_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
 #endif /* LWIP_TCP */
 #if LWIP_UDP
-    udp_netif_ipv4_addr_changed(netif_ip4_addr(netif), ipaddr);
+    udp_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
 #endif /* LWIP_UDP */
 
     mib2_remove_ip4(netif);
@@ -957,6 +978,16 @@ netif_alloc_client_data_id(void)
 #endif
 
 #if LWIP_IPV6
+/**
+ * @ingroup netif
+ * Change an IPv6 address of a network interface
+ *
+ * @param netif the network interface to change
+ * @param addr_idx index of the IPv6 address
+ * @param addr6 the new IPv6 address
+ *
+ * @note call netif_ip6_addr_set_state() to set the address valid/temptative
+ */
 void
 netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
 {
@@ -965,6 +996,16 @@ netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
     addr6->addr[2], addr6->addr[3]);
 }
 
+/*
+ * Change an IPv6 address of a network interface (internal version taking 4 * u32_t)
+ *
+ * @param netif the network interface to change
+ * @param addr_idx index of the IPv6 address
+ * @param i0 word0 of the new IPv6 address
+ * @param i1 word1 of the new IPv6 address
+ * @param i2 word2 of the new IPv6 address
+ * @param i3 word3 of the new IPv6 address
+ */
 void
 netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3)
 {
@@ -978,7 +1019,18 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
       (old_addr->addr[2] != i2) || (old_addr->addr[3] != i3)) {
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
 
-    /* @todo: tcp_netif_ipv6_addr_changed()/udp_netif_ipv6_addr_changed() */
+    if (netif_ip6_addr_state(netif, addr_idx) & IP6_ADDR_VALID) {
+#if LWIP_TCP || LWIP_UDP
+      ip_addr_t new_ipaddr;
+      IP_ADDR6(&new_ipaddr, i0, i1, i2, i3);
+#endif /* LWIP_TCP || LWIP_UDP */
+#if LWIP_TCP
+      tcp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
+#endif /* LWIP_TCP */
+#if LWIP_UDP
+      udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
+#endif /* LWIP_UDP */
+    }
     /* @todo: remove/readd mib2 ip6 entries? */
 
     IP6_ADDR(ip_2_ip6(&(netif->ip6_addr[addr_idx])), i0, i1, i2, i3);
@@ -995,6 +1047,16 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
     netif_ip6_addr_state(netif, addr_idx)));
 }
 
+/**
+ * @ingroup netif
+ * Change the state of an IPv6 address of a network interface
+ * (INVALID, TEMPTATIVE, PREFERRED, DEPRECATED, where TEMPTATIVE
+ * includes the number of checks done, see ip6_addr.h)
+ *
+ * @param netif the network interface to change
+ * @param addr_idx index of the IPv6 address
+ * @param state the new IPv6 address state
+ */
 void
 netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
 {
@@ -1011,7 +1073,12 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
 
     if (old_valid && !new_valid) {
       /* address about to be removed by setting invalid */
-      /* @todo: tcp_netif_ipv6_addr_changed()/udp_netif_ipv6_addr_changed() */
+#if LWIP_TCP
+      tcp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
+#endif /* LWIP_TCP */
+#if LWIP_UDP
+      udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
+#endif /* LWIP_UDP */
       /* @todo: remove mib2 ip6 entries? */
     }
     netif->ip6_addr_state[addr_idx] = state;
