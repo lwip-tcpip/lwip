@@ -102,9 +102,10 @@ typedef enum {
 typedef enum {
   /** pbuf data is stored in RAM, used for TX mostly, struct pbuf and its payload
       are allocated in one piece of contiguous memory (so the first payload byte
-      can be calculated from struct pbuf)
+      can be calculated from struct pbuf).
       pbuf_alloc() allocates PBUF_RAM pbufs as unchained pbufs (although that might
-      change in future versions) */
+      change in future versions).
+      This should be used for all OUTGOING packets (TX).*/
   PBUF_RAM,
   /** pbuf data is stored in ROM, i.e. struct pbuf and its payload are located in
       totally different memory areas. Since it points to ROM, payload does not
@@ -117,7 +118,9 @@ typedef enum {
   /** pbuf payload refers to RAM. This one comes from a pool and should be used
       for RX. Payload can be chained (scatter-gather RX) but like PBUF_RAM, struct
       pbuf and its payload are allocated in one piece of contiguous memory (so
-      the first payload byte can be calculated from struct pbuf) */
+      the first payload byte can be calculated from struct pbuf).
+      Don't use this for TX, if the pool becomes empty e.g. because of TCP queuing,
+      you are unable to receive TCP acks! */
   PBUF_POOL
 } pbuf_type;
 
