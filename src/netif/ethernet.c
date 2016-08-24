@@ -1,6 +1,9 @@
 /**
  * @file
  * Ethernet common functions
+ * 
+ * @defgroup ethernet Ethernet
+ * @ingroup callbackstyle_api
  */
 
 /*
@@ -236,14 +239,17 @@ free_and_return:
 }
 
 /**
- * Send an ethernet packet on the network using netif->linkoutput
+ * @ingroup ethernet
+ * Send an ethernet packet on the network using netif->linkoutput().
  * The ethernet header is filled in before sending.
+ *
+ * @see @ref LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
  *
  * @param netif the lwIP network interface on which to send the packet
  * @param p the packet to send, p->payload pointing to the (uninitialized) ethernet header
  * @param src the source MAC address to be copied into the ethernet header
  * @param dst the destination MAC address to be copied into the ethernet header
- * @param eth_type ethernet type
+ * @param eth_type ethernet type (@ref eth_type)
  * @return ERR_OK if the packet was sent, any other err_t on failure
  */
 err_t

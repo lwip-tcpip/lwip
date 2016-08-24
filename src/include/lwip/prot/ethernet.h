@@ -102,21 +102,43 @@ PACK_STRUCT_END
 #define SIZEOF_VLAN_HDR 4
 #define VLAN_ID(vlan_hdr) (htons((vlan_hdr)->prio_vid) & 0xFFF)
 
-/* A list of often ethtypes (although lwIP does not use all of them): */
-#define ETHTYPE_IP        0x0800U  /* Internet protocol v4 */
-#define ETHTYPE_ARP       0x0806U  /* Address resolution protocol */
-#define ETHTYPE_WOL       0x0842U  /* Wake on lan */
-#define ETHTYPE_VLAN      0x8100U  /* Virtual local area network */
-#define ETHTYPE_IPV6      0x86DDU  /* Internet protocol v6 */
-#define ETHTYPE_PPPOEDISC 0x8863U  /* PPP Over Ethernet Discovery Stage */
-#define ETHTYPE_PPPOE     0x8864U  /* PPP Over Ethernet Session Stage */
-#define ETHTYPE_JUMBO     0x8870U  /* Jumbo Frames */
-#define ETHTYPE_PROFINET  0x8892U  /* Process field network */
-#define ETHTYPE_ETHERCAT  0x88A4U  /* Ethernet for control automation technology */
-#define ETHTYPE_LLDP      0x88CCU  /* Link layer discovery protocol */
-#define ETHTYPE_SERCOS    0x88CDU  /* Serial real-time communication system */
-#define ETHTYPE_PTP       0x88F7U  /* Precision time protocol */
-#define ETHTYPE_QINQ      0x9100U  /* Q-in-Q, 802.1ad */
+/**
+ * @ingroup ethernet
+ * A list of often ethtypes (although lwIP does not use all of them): */
+enum eth_type {
+  /** Internet protocol v4 */
+  ETHTYPE_IP        = 0x0800U,
+  /** Address resolution protocol */
+  ETHTYPE_ARP       = 0x0806U, 
+  /** Wake on lan */
+  ETHTYPE_WOL       = 0x0842U,
+  /** RARP */
+  ETHTYPE_RARP      = 0x8035U,
+  /** Virtual local area network */
+  ETHTYPE_VLAN      = 0x8100U,
+  /** Internet protocol v6 */
+  ETHTYPE_IPV6      = 0x86DDU,
+  /** PPP Over Ethernet Discovery Stage */
+  ETHTYPE_PPPOEDISC = 0x8863U,
+  /** PPP Over Ethernet Session Stage */
+  ETHTYPE_PPPOE     = 0x8864U,
+  /** Jumbo Frames */
+  ETHTYPE_JUMBO     = 0x8870U,
+  /** Process field network */
+  ETHTYPE_PROFINET  = 0x8892U,
+  /** Ethernet for control automation technology */
+  ETHTYPE_ETHERCAT  = 0x88A4U,
+  /** Link layer discovery protocol */
+  ETHTYPE_LLDP      = 0x88CCU,
+  /** Serial real-time communication system */
+  ETHTYPE_SERCOS    = 0x88CDU,
+  /** Media redundancy protocol */
+  ETHTYPE_MRP       = 0x88E3U,
+  /** Precision time protocol */
+  ETHTYPE_PTP       = 0x88F7U,
+  /** Q-in-Q, 802.1ad */
+  ETHTYPE_QINQ      = 0x9100U
+};
 
 /** The 24-bit IANA IPv4-multicast OUI is 01-00-5e: */
 #define LL_IP4_MULTICAST_ADDR_0 0x01
