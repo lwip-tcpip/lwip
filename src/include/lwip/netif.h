@@ -433,7 +433,7 @@ u8_t netif_alloc_client_data_id(void);
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
 /** @ingroup netif */
 #define netif_ip6_addr(netif, i)  ((const ip6_addr_t*)ip_2_ip6(&((netif)->ip6_addr[i])))
-void netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, ip6_addr_t *addr6);
+void netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6);
 void netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3);
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])
 void netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state);

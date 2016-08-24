@@ -958,7 +958,7 @@ netif_alloc_client_data_id(void)
 
 #if LWIP_IPV6
 void
-netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, ip6_addr_t *addr6)
+netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
 {
   LWIP_ASSERT("addr6 != NULL", addr6 != NULL);
   netif_ip6_addr_set_parts(netif, addr_idx, addr6->addr[0], addr6->addr[1],
