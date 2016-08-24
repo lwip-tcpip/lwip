@@ -259,9 +259,9 @@ Little-endian version, stored in network order (no htonl). */
 #define IP6_ADDR_TENTATIVE_5  0x0d /* 5 probes sent */
 #define IP6_ADDR_TENTATIVE_6  0x0e /* 6 probes sent */
 #define IP6_ADDR_TENTATIVE_7  0x0f /* 7 probes sent */
-#define IP6_ADDR_VALID        0x10
+#define IP6_ADDR_VALID        0x10 /* This bit marks an address as valid (preferred or deprecated) */
 #define IP6_ADDR_PREFERRED    0x30
-#define IP6_ADDR_DEPRECATED   0x50
+#define IP6_ADDR_DEPRECATED   0x10 /* Same as VALID (valid but not preferred) */
 
 #define IP6_ADDR_TENTATIVE_COUNT_MASK 0x07 /* 1-7 probes sent */
 
