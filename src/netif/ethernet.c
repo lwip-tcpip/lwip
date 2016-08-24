@@ -260,7 +260,7 @@ ethernet_output(struct netif* netif, struct pbuf* p, const struct eth_addr* src,
   struct eth_vlan_hdr *vlanhdr;
 #endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   
-  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_send!", (netif->hwaddr_len == ETH_HWADDR_LEN));
+  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!", (netif->hwaddr_len == ETH_HWADDR_LEN));
 
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
   if (pbuf_header(p, sizeof(struct eth_hdr) + SIZEOF_VLAN_HDR) != 0) {
@@ -268,7 +268,7 @@ ethernet_output(struct netif* netif, struct pbuf* p, const struct eth_addr* src,
   if (pbuf_header(p, sizeof(struct eth_hdr)) != 0) {
 #endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-      ("ethernet_send: could not allocate room for header.\n"));
+      ("ethernet_output: could not allocate room for header.\n"));
     LINK_STATS_INC(link.lenerr);
     return ERR_BUF;
   }
@@ -292,7 +292,7 @@ ethernet_output(struct netif* netif, struct pbuf* p, const struct eth_addr* src,
   ETHADDR32_COPY(&ethhdr->dest, dst);
   ETHADDR16_COPY(&ethhdr->src,  src);
 
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethernet_send: sending packet %p\n", (void *)p));
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethernet_output: sending packet %p\n", (void *)p));
 
   /* send the packet */
   return netif->linkoutput(netif, p);
