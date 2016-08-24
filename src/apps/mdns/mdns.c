@@ -882,7 +882,7 @@ mdns_add_question(struct mdns_outpacket *outpkt, struct mdns_domain *domain, u16
 
   if (!outpkt->pbuf) {
     /* If no pbuf is active, allocate one */
-    outpkt->pbuf = pbuf_alloc(PBUF_TRANSPORT, OUTPACKET_SIZE, PBUF_POOL);
+    outpkt->pbuf = pbuf_alloc(PBUF_TRANSPORT, OUTPACKET_SIZE, PBUF_RAM);
     if (!outpkt->pbuf) {
       return ERR_MEM;
     }
@@ -954,7 +954,7 @@ mdns_add_answer(struct mdns_outpacket *reply, struct mdns_domain *domain, u16_t 
 
   if (!reply->pbuf) {
     /* If no pbuf is active, allocate one */
-    reply->pbuf = pbuf_alloc(PBUF_TRANSPORT, OUTPACKET_SIZE, PBUF_POOL);
+    reply->pbuf = pbuf_alloc(PBUF_TRANSPORT, OUTPACKET_SIZE, PBUF_RAM);
     if (!reply->pbuf) {
       return ERR_MEM;
     }
