@@ -271,7 +271,7 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
  * then.)
  *
  * @param pcb the raw pcb which to send
- * @param p the IP payload to send. pbuf layer must be @ref PBUF_IP.
+ * @param p the IP payload to send
  * @param ipaddr the destination address of the IP packet
  *
  */
@@ -393,7 +393,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
  * Send the raw IP packet to the address given by raw_connect()
  *
  * @param pcb the raw pcb which to send
- * @param p the IP payload to send. pbuf layer must be @ref PBUF_IP.
+ * @param p the IP payload to send
  *
  */
 err_t
