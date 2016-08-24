@@ -462,7 +462,7 @@ chkerr:
  * Send data using UDP.
  *
  * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
+ * @param p chain of pbuf's to be sent. pbuf layer must be @ref PBUF_TRANSPORT.
  *
  * The datagram will be sent to the current remote_ip & remote_port
  * stored in pcb. If the pcb is not bound to a port, it will
@@ -511,7 +511,7 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
  * Send data to a specified address using UDP.
  *
  * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
+ * @param p chain of pbuf's to be sent. pbuf layer must be @ref PBUF_TRANSPORT.
  * @param dst_ip Destination IP address.
  * @param dst_port Destination UDP port.
  *
@@ -598,7 +598,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
  * on a netif that is still down.
  *
  * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
+ * @param p chain of pbuf's to be sent. pbuf layer must be @ref PBUF_TRANSPORT.
  * @param dst_ip Destination IP address.
  * @param dst_port Destination UDP port.
  * @param netif the netif used for sending.

@@ -246,7 +246,7 @@ free_and_return:
  * @see @ref LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
  *
  * @param netif the lwIP network interface on which to send the packet
- * @param p the packet to send, p->payload pointing to the (uninitialized) ethernet header
+ * @param p the packet to send. pbuf layer must be @ref PBUF_LINK.
  * @param src the source MAC address to be copied into the ethernet header
  * @param dst the destination MAC address to be copied into the ethernet header
  * @param eth_type ethernet type (@ref eth_type)
