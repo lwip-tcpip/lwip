@@ -751,8 +751,7 @@ nd6_tmr(void)
 
 #if LWIP_IPV6_AUTOCONFIG
         /* If any addresses were configured with this prefix, remove them */
-        if (prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED)
-        {
+        if (prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED) {
           s8_t j;
 
           for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
@@ -784,7 +783,7 @@ nd6_tmr(void)
           for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
             if (netif_ip6_addr_state(prefix_list[i].netif, j) == IP6_ADDR_INVALID) {
               /* Generate an address using this prefix and interface ID from link-local address. */
-              IP_ADDR6(&prefix_list[i].netif->ip6_addr[j],
+              netif_ip6_addr_set_parts(prefix_list[i].netif, j,
                 prefix_list[i].prefix.addr[0], prefix_list[i].prefix.addr[1],
                 netif_ip6_addr(prefix_list[i].netif, 0)->addr[2], netif_ip6_addr(prefix_list[i].netif, 0)->addr[3]);
 
@@ -808,14 +807,15 @@ nd6_tmr(void)
   /* Process our own addresses, if DAD configured. */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
-      if (ip6_addr_istentative(netif->ip6_addr_state[i])) {
-        if ((netif->ip6_addr_state[i] & IP6_ADDR_TENTATIVE_COUNT_MASK) >= LWIP_IPV6_DUP_DETECT_ATTEMPTS) {
+      u8_t addr_state = netif_ip6_addr_state(netif, i);
+      if (ip6_addr_istentative(addr_state)) {
+        if ((addr_state & IP6_ADDR_TENTATIVE_COUNT_MASK) >= LWIP_IPV6_DUP_DETECT_ATTEMPTS) {
           /* No NA received in response. Mark address as valid. */
-          netif->ip6_addr_state[i] = IP6_ADDR_PREFERRED;
+          netif_ip6_addr_set_state(netif, i, IP6_ADDR_PREFERRED);
           /* @todo implement preferred and valid lifetimes. */
         } else if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_IPV6_MLD
-          if ((netif->ip6_addr_state[i] & IP6_ADDR_TENTATIVE_COUNT_MASK) == 0) {
+          if ((addr_state & IP6_ADDR_TENTATIVE_COUNT_MASK) == 0) {
             /* Join solicited node multicast group. */
             ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, i)->addr[3]);
             mld6_joingroup(netif_ip6_addr(netif, i), &multicast_address);
@@ -823,7 +823,8 @@ nd6_tmr(void)
 #endif /* LWIP_IPV6_MLD */
           /* Send a NS for this address. */
           nd6_send_ns(netif, netif_ip6_addr(netif, i), ND6_SEND_FLAG_MULTICAST_DEST);
-          netif->ip6_addr_state[i]++;
+          /* tentative: set next state by increasing by one */
+          netif_ip6_addr_set_state(netif, i, addr_state + 1);
           /* @todo send max 1 NS per tmr call? enable return*/
           /*return;*/
         }
@@ -943,7 +944,7 @@ nd6_send_na(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
   u16_t lladdr_opt_len;
 
   /* Use link-local address as source address. */
-  /* src_addr = &(netif->ip6_addr[0]); */
+  /* src_addr = netif_ip6_addr(netif, 0); */
   /* Use target address as source address. */
   src_addr = target_addr;
 

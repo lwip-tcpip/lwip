@@ -433,9 +433,10 @@ u8_t netif_alloc_client_data_id(void);
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
 /** @ingroup netif */
 #define netif_ip6_addr(netif, i)  ((const ip6_addr_t*)ip_2_ip6(&((netif)->ip6_addr[i])))
-#define netif_ip6_addr_set(netif, i, addr6) do { ip6_addr_set(ip_2_ip6(&((netif)->ip6_addr[i])), addr6); IP_SET_TYPE_VAL((netif)->ip6_addr[i], IPADDR_TYPE_V6); } while(0)
+void netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, ip6_addr_t *addr6);
+void netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3);
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])
-#define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[i] = (state))
+void netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state);
 s8_t netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr);
 void netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit);
 err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chosen_idx);

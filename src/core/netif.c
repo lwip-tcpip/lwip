@@ -227,7 +227,7 @@ netif_add(struct netif *netif,
           void *state, netif_init_fn init, netif_input_fn input)
 {
 #if LWIP_IPV6
-  u32_t i;
+  s8_t i;
 #endif
 
   LWIP_ASSERT("No init function given", init != NULL);
@@ -241,7 +241,7 @@ netif_add(struct netif *netif,
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     ip_addr_set_zero_ip6(&netif->ip6_addr[i]);
-    netif_ip6_addr_set_state(netif, i, IP6_ADDR_INVALID);
+    netif->ip6_addr_state[0] = IP6_ADDR_INVALID;
   }
   netif->output_ip6 = netif_null_output_ip6;
 #endif /* LWIP_IPV6 */
@@ -951,12 +951,88 @@ netif_alloc_client_data_id(void)
   u8_t result = netif_client_id;
   netif_client_id++;
 
-  LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", result<LWIP_NUM_NETIF_CLIENT_DATA);
+  LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", result < LWIP_NUM_NETIF_CLIENT_DATA);
   return result + LWIP_NETIF_CLIENT_DATA_INDEX_MAX;
 }
 #endif
 
 #if LWIP_IPV6
+void
+netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, ip6_addr_t *addr6)
+{
+  LWIP_ASSERT("addr6 != NULL", addr6 != NULL);
+  netif_ip6_addr_set_parts(netif, addr_idx, addr6->addr[0], addr6->addr[1],
+    addr6->addr[2], addr6->addr[3]);
+}
+
+void
+netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3)
+{
+  const ip6_addr_t *old_addr;
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
+
+  old_addr = netif_ip6_addr(netif, addr_idx);
+  /* address is actually being changed? */
+  if ((old_addr->addr[0] != i0) || (old_addr->addr[1] != i1) ||
+      (old_addr->addr[2] != i2) || (old_addr->addr[3] != i3)) {
+    LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
+
+    /* @todo: tcp_netif_ipv6_addr_changed()/udp_netif_ipv6_addr_changed() */
+    /* @todo: remove/readd mib2 ip6 entries? */
+
+    IP6_ADDR(ip_2_ip6(&(netif->ip6_addr[addr_idx])), i0, i1, i2, i3);
+    IP_SET_TYPE_VAL(netif->ip6_addr[addr_idx], IPADDR_TYPE_V6);
+
+    if (netif_ip6_addr_state(netif, addr_idx) & IP6_ADDR_VALID) {
+      netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV6);
+      NETIF_STATUS_CALLBACK(netif);
+    }
+  }
+
+  LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
+    addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
+    netif_ip6_addr_state(netif, addr_idx)));
+}
+
+void
+netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
+{
+  u8_t old_state;
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
+
+  old_state = netif_ip6_addr_state(netif, addr_idx);
+  /* state is actually being changed? */
+  if (old_state != state) {
+    u8_t old_valid = old_state & IP6_ADDR_VALID;
+    u8_t new_valid = state & IP6_ADDR_VALID;
+    LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
+
+    if (old_valid && !new_valid) {
+      /* address about to be removed by setting invalid */
+      /* @todo: tcp_netif_ipv6_addr_changed()/udp_netif_ipv6_addr_changed() */
+      /* @todo: remove mib2 ip6 entries? */
+    }
+    netif->ip6_addr_state[addr_idx] = state;
+
+    if (!old_valid && new_valid) {
+      /* address added by setting valid */
+      /* @todo: add mib2 ip6 entries? */
+      netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV6);
+    }
+    if ((old_state & IP6_ADDR_PREFERRED) != (state & IP6_ADDR_PREFERRED)) {
+      /* address state has changed (valid flag changed or switched between
+         preferred and deprecated) -> call the callback function */
+      NETIF_STATUS_CALLBACK(netif);
+    }
+  }
+
+  LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
+    addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
+    netif_ip6_addr_state(netif, addr_idx)));
+}
+
 /**
  * Checks if a specific address is assigned to the netif and returns its
  * index.
