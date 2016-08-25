@@ -112,10 +112,10 @@ enum tcpip_msg_type {
   TCPIP_MSG_API,
   TCPIP_MSG_API_CALL,
   TCPIP_MSG_INPKT,
-#if LWIP_TCPIP_TIMEOUT
+#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
   TCPIP_MSG_TIMEOUT,
   TCPIP_MSG_UNTIMEOUT,
-#endif /* LWIP_TCPIP_TIMEOUT */
+#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
   TCPIP_MSG_CALLBACK,
   TCPIP_MSG_CALLBACK_STATIC
 };
@@ -141,13 +141,13 @@ struct tcpip_msg {
       tcpip_callback_fn function;
       void *ctx;
     } cb;
-#if LWIP_TCPIP_TIMEOUT
+#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
     struct {
       u32_t msecs;
       sys_timeout_handler h;
       void *arg;
     } tmo;
-#endif /* LWIP_TCPIP_TIMEOUT */
+#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
   } msg;
 };
 

@@ -65,6 +65,13 @@ static sys_mbox_t mbox;
 sys_mutex_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
+#if LWIP_TIMERS
+/* wait for a message, timeouts are processed while waiting */
+#define TCPIP_MBOX_FETCH(mbox, msg) sys_timeouts_mbox_fetch(mbox, msg)
+#else /* LWIP_TIMERS */
+/* wait for a message with timers disabled (e.g. pass a timer-check trigger into tcpip_thread) */
+#define TCPIP_MBOX_FETCH(mbox, msg) sys_mbox_fetch(mbox, msg)
+#endif /* LWIP_TIMERS */
 
 /**
  * The main lwIP thread. This thread has exclusive access to lwIP core functions
@@ -91,7 +98,7 @@ tcpip_thread(void *arg)
     UNLOCK_TCPIP_CORE();
     LWIP_TCPIP_THREAD_ALIVE();
     /* wait for a message, timeouts are processed while waiting */
-    sys_timeouts_mbox_fetch(&mbox, (void **)&msg);
+    TCPIP_MBOX_FETCH(&mbox, (void **)&msg);
     LOCK_TCPIP_CORE();
     if (msg == NULL) {
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: invalid message: NULL\n"));
@@ -119,7 +126,7 @@ tcpip_thread(void *arg)
       break;
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */
 
-#if LWIP_TCPIP_TIMEOUT
+#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
     case TCPIP_MSG_TIMEOUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
       sys_timeout(msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
@@ -130,7 +137,7 @@ tcpip_thread(void *arg)
       sys_untimeout(msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
-#endif /* LWIP_TCPIP_TIMEOUT */
+#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
 
     case TCPIP_MSG_CALLBACK:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
@@ -249,7 +256,7 @@ tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
   return ERR_OK;
 }
 
-#if LWIP_TCPIP_TIMEOUT
+#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
 /**
  * call sys_timeout in tcpip_thread
  *
@@ -304,7 +311,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
   sys_mbox_post(&mbox, msg);
   return ERR_OK;
 }
-#endif /* LWIP_TCPIP_TIMEOUT */
+#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
 
 
 /**

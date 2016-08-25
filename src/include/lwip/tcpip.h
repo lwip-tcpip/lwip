@@ -90,10 +90,10 @@ err_t  tcpip_trycallback(struct tcpip_callback_msg* msg);
 err_t  pbuf_free_callback(struct pbuf *p);
 err_t  mem_free_callback(void *m);
 
-#if LWIP_TCPIP_TIMEOUT
+#if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
 err_t  tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 err_t  tcpip_untimeout(sys_timeout_handler h, void *arg);
-#endif /* LWIP_TCPIP_TIMEOUT */
+#endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
 
 #ifdef __cplusplus
 }
