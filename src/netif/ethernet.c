@@ -258,7 +258,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
                 u16_t eth_type)
 {
   struct eth_hdr* ethhdr;
-  u16_t eth_type_be = ntohs(eth_type);
+  u16_t eth_type_be = htons(eth_type);
 
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
   s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
@@ -272,7 +272,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
     }
     vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)p->payload) + SIZEOF_ETH_HDR);
     vlanhdr->tpid     = eth_type_be;
-    vlanhdr->prio_vid = ntohs((u16_t)vlan_prio_vid);
+    vlanhdr->prio_vid = htons((u16_t)vlan_prio_vid);
 
     eth_type_be = PP_HTONS(ETHTYPE_VLAN);
   } else
