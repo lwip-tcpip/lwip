@@ -997,7 +997,6 @@ tcp_receive(struct tcp_pcb *pcb)
 #if TCP_QUEUE_OOSEQ
   struct tcp_seg *prev, *cseg;
 #endif /* TCP_QUEUE_OOSEQ */
-  struct pbuf *p;
   s32_t off;
   s16_t m;
   u32_t right_wnd_edge;
@@ -1314,8 +1313,8 @@ tcp_receive(struct tcp_pcb *pcb)
          adjust the ->data pointer in the seg and the segment
          length.*/
 
+      struct pbuf *p = inseg.p;
       off = pcb->rcv_nxt - seqno;
-      p = inseg.p;
       LWIP_ASSERT("inseg.p != NULL", inseg.p);
       LWIP_ASSERT("insane offset!", (off < 0x7fff));
       if (inseg.p->len < off) {
