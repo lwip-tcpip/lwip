@@ -2497,6 +2497,7 @@
  * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
  * Hook can be used to set prio_vid field of vlan_hdr.
  * Called from ethernet_output() if VLAN support is enabled.
+ * Signature: s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct eth_addr* src, const struct eth_addr* dst, u16_t eth_type);
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - p: struct pbuf packet to be sent

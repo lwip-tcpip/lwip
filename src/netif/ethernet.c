@@ -265,6 +265,8 @@ ethernet_output(struct netif* netif, struct pbuf* p,
   if (vlan_prio_vid >= 0) {
     struct eth_vlan_hdr* vlanhdr;
 
+    LWIP_ASSERT("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
+
     if (pbuf_header(p, SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) != 0) {
       goto pbuf_header_failed;
     }
