@@ -253,49 +253,52 @@ free_and_return:
  * @return ERR_OK if the packet was sent, any other err_t on failure
  */
 err_t
-ethernet_output(struct netif* netif, struct pbuf* p, const struct eth_addr* src, const struct eth_addr* dst, u16_t eth_type)
+ethernet_output(struct netif* netif, struct pbuf* p,
+                const struct eth_addr* src, const struct eth_addr* dst,
+                u16_t eth_type)
 {
-  struct eth_hdr *ethhdr;
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  struct eth_vlan_hdr *vlanhdr;
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-  
-  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!", (netif->hwaddr_len == ETH_HWADDR_LEN));
+  struct eth_hdr* ethhdr;
+  u16_t eth_type_be = ntohs(eth_type);
 
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  if (pbuf_header(p, sizeof(struct eth_hdr) + SIZEOF_VLAN_HDR) != 0) {
-#else /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-  if (pbuf_header(p, sizeof(struct eth_hdr)) != 0) {
+  s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
+  if (vlan_prio_vid >= 0) {
+    struct eth_vlan_hdr* vlanhdr;
+
+    if (pbuf_header(p, SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) != 0) {
+      goto pbuf_header_failed;
+    }
+    vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)p->payload) + SIZEOF_ETH_HDR);
+    vlanhdr->tpid     = eth_type_be;
+    vlanhdr->prio_vid = ntohs((u16_t)vlan_prio_vid);
+
+    eth_type_be = PP_HTONS(ETHTYPE_VLAN);
+  } else
 #endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-      ("ethernet_output: could not allocate room for header.\n"));
-    LINK_STATS_INC(link.lenerr);
-    return ERR_BUF;
+  {
+    if (pbuf_header(p, SIZEOF_ETH_HDR) != 0) {
+      goto pbuf_header_failed;
+    }
   }
-  ethhdr = (struct eth_hdr *)p->payload;
 
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  ethhdr->type = PP_HTONS(ETHTYPE_VLAN);
-  vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR);
-  vlanhdr->prio_vid = 0;
-  vlanhdr->tpid = ntohs(eth_type);
-  if (!LWIP_HOOK_VLAN_SET(netif, ethhdr, vlanhdr)) {
-    /* packet shall not contain VLAN header, so hide it and set correct ethertype */
-    pbuf_header(p, -SIZEOF_VLAN_HDR);
-    ethhdr = (struct eth_hdr *)p->payload;
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-    ethhdr->type = ntohs(eth_type);
-#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
-  }
-#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
-
+  ethhdr = (struct eth_hdr*)p->payload;
+  ethhdr->type = eth_type_be;
   ETHADDR32_COPY(&ethhdr->dest, dst);
   ETHADDR16_COPY(&ethhdr->src,  src);
 
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethernet_output: sending packet %p\n", (void *)p));
+  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
+    (netif->hwaddr_len == ETH_HWADDR_LEN));
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
+    ("ethernet_output: sending packet %p\n", (void *)p));
 
   /* send the packet */
   return netif->linkoutput(netif, p);
+
+pbuf_header_failed:
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
+    ("ethernet_output: could not allocate room for header.\n"));
+  LINK_STATS_INC(link.lenerr);
+  return ERR_BUF;
 }
 
 #endif /* LWIP_ARP || LWIP_ETHERNET */

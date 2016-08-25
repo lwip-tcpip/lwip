@@ -2495,17 +2495,20 @@
 
 /**
  * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
- * - called from etharp_raw() and ethernet_output() if VLAN support is enabled
- * - netif: struct netif that the packet will be sent through
- * - eth_hdr: struct eth_hdr of the packet
- * - vlan_hdr: struct eth_vlan_hdr of the packet
- * Return values:
- * - 0: Packet shall not contain VLAN header.
- * - != 0: Packet shall contain VLAN header.
  * Hook can be used to set prio_vid field of vlan_hdr.
+ * Called from ethernet_output() if VLAN support is enabled.
+ * Arguments:
+ * - netif: struct netif that the packet will be sent through
+ * - p: struct pbuf packet to be sent
+ * - src: source eth address
+ * - dst: destination eth address
+ * - eth_type: ethernet type to packet to be sent
+ * Return values:
+ * - <0: Packet shall not contain VLAN header.
+ * - 0 <= return value <= 0xFFFF: Packet shall contain VLAN header. Return value is prio_vid in host byte order.
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr)
+#define LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type)
 #endif
 
 /**

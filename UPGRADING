@@ -57,6 +57,8 @@ with newer versions.
      * added hook LWIP_HOOK_MEMP_AVAILABLE() to get informed when a memp pool was empty and an item
        is now available
 
+  * Signature of LWIP_HOOK_VLAN_SET macro was changed
+
   * LWIP_DECLARE_MEMORY_ALIGNED() may be used to declare aligned memory buffers (mem/memp)
     or to move buffers to dedicated memory using compiler attributes
 
