@@ -4,6 +4,12 @@
  * 
  * @defgroup netif Network interface (NETIF)
  * @ingroup callbackstyle_api
+ * 
+ * @defgroup netif_ip4 IPv4 address handling
+ * @ingroup netif
+ * 
+ * @defgroup netif_ip6 IPv6 address handling
+ * @ingroup netif
  */
 
 /*
@@ -321,7 +327,7 @@ netif_add(struct netif *netif,
 
 #if LWIP_IPV4
 /**
- * @ingroup netif
+ * @ingroup netif_ip4
  * Change IP address configuration for a network interface (including netmask
  * and default gateway).
  *
@@ -470,7 +476,7 @@ netif_find(const char *name)
 
 #if LWIP_IPV4
 /**
- * @ingroup netif
+ * @ingroup netif_ip4
  * Change the IP address of a network interface
  *
  * @param netif the network interface to change
@@ -518,7 +524,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 }
 
 /**
- * @ingroup netif
+ * @ingroup netif_ip4
  * Change the default gateway for a network interface
  *
  * @param netif the network interface to change
@@ -540,7 +546,7 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 }
 
 /**
- * @ingroup netif
+ * @ingroup netif_ip4
  * Change the netmask of a network interface
  *
  * @param netif the network interface to change
@@ -979,7 +985,7 @@ netif_alloc_client_data_id(void)
 
 #if LWIP_IPV6
 /**
- * @ingroup netif
+ * @ingroup netif_ip6
  * Change an IPv6 address of a network interface
  *
  * @param netif the network interface to change
@@ -1048,7 +1054,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
 }
 
 /**
- * @ingroup netif
+ * @ingroup netif_ip6
  * Change the state of an IPv6 address of a network interface
  * (INVALID, TEMPTATIVE, PREFERRED, DEPRECATED, where TEMPTATIVE
  * includes the number of checks done, see ip6_addr.h)
@@ -1123,7 +1129,7 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
 }
 
 /**
- * @ingroup netif
+ * @ingroup netif_ip6
  * Create a link-local IPv6 address on a netif (stored in slot 0)
  *
  * @param netif the netif to create the address on
@@ -1175,7 +1181,7 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
 }
 
 /**
- * @ingroup netif
+ * @ingroup netif_ip6
  * This function allows for the easy addition of a new IPv6 address to an interface.
  * It takes care of finding an empty slot and then sets the address tentative
  * (to make sure that all the subsequent processing happens).

@@ -359,17 +359,17 @@ void netif_set_default(struct netif *netif);
 void netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr);
 void netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask);
 void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
-/** @ingroup netif */
+/** @ingroup netif_ip4 */
 #define netif_ip4_addr(netif)    ((const ip4_addr_t*)ip_2_ip4(&((netif)->ip_addr)))
-/** @ingroup netif */
+/** @ingroup netif_ip4 */
 #define netif_ip4_netmask(netif) ((const ip4_addr_t*)ip_2_ip4(&((netif)->netmask)))
-/** @ingroup netif */
+/** @ingroup netif_ip4 */
 #define netif_ip4_gw(netif)      ((const ip4_addr_t*)ip_2_ip4(&((netif)->gw)))
-/** @ingroup netif */
+/** @ingroup netif_ip4 */
 #define netif_ip_addr4(netif)    ((const ip_addr_t*)&((netif)->ip_addr))
-/** @ingroup netif */
+/** @ingroup netif_ip4 */
 #define netif_ip_netmask4(netif) ((const ip_addr_t*)&((netif)->netmask))
-/** @ingroup netif */
+/** @ingroup netif_ip4 */
 #define netif_ip_gw4(netif)      ((const ip_addr_t*)&((netif)->gw))
 #endif /* LWIP_IPV4 */
 
@@ -429,9 +429,9 @@ u8_t netif_alloc_client_data_id(void);
 #endif
 
 #if LWIP_IPV6
-/** @ingroup netif */
+/** @ingroup netif_ip6 */
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
-/** @ingroup netif */
+/** @ingroup netif_ip6 */
 #define netif_ip6_addr(netif, i)  ((const ip6_addr_t*)ip_2_ip6(&((netif)->ip6_addr[i])))
 void netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6);
 void netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3);
