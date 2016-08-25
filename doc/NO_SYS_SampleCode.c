@@ -10,7 +10,7 @@ void eth_mac_irq()
     pbuf_take(p, eth_data, eth_data_count);
 
     /* Put in a queue which is processed in main loop */
-    if(!queue->tryPut(p)) {
+    if(!queue_try_put(&queue, p)) {
       /* queue is full -> packet loss */
       pbuf_free(p);
     }
@@ -30,10 +30,10 @@ static err_t netif_output(struct netif *netif, struct pbuf *p)
     MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
   }
 
-  LockInterrupts();
+  lock_interrupts();
   pbuf_copy_partial(p, mac_send_buffer, p->tot_len, 0);
   /* Start MAC transmit here */
-  UnlockInterrupts();
+  unlock_interrupts();
 
   return ERR_OK;
 }
@@ -71,13 +71,14 @@ void main(void)
   netif_set_default(&netif);
   netif_set_up(&netif);
   
-  /* Start DHCP */
+  /* Start DHCP and HTTPD */
   dhcp_init();
+  httpd_init();
 
   while(1) {
     /* Check link state, e.g. via MDIO communication with PHY */
-    if(linkStateChanged()) {
-      if(linkIsUp()) {
+    if(link_state_changed()) {
+      if(link_is_up()) {
         netif_set_link_up(&netif);
       } else {
         netif_set_link_down(&netif);
@@ -85,9 +86,9 @@ void main(void)
     }
 
     /* Check for received frames, feed them to lwIP */
-    LockInterrupts();
-    struct pbuf* p = queue->tryGet();
-    UnlockInterrupts();
+    lock_interrupts();
+    struct pbuf* p = queue_try_get(&queue);
+    unlock_interrupts();
 
     if(p != NULL) {
       LINK_STATS_INC(link.recv);

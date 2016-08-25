@@ -69,7 +69,9 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
  * @param p the received packet, p->payload pointing to the ethernet header
  * @param netif the network interface on which the packet was received
  * 
- * @see @ref LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+ * @see @ref LWIP_HOOK_UNKNOWN_ETH_PROTOCOL,
+ * @ref ETHARP_SUPPORT_VLAN and
+ * @ref LWIP_HOOK_VLAN_CHECK.
  */
 err_t
 ethernet_input(struct pbuf *p, struct netif *netif)
