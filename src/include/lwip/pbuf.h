@@ -70,7 +70,7 @@ extern "C" {
  * Enumeration of pbuf layers
  */
 typedef enum {
-  /** Includes spare room for transport layer header, e.g. TCP header.
+  /** Includes spare room for transport layer header, e.g. UDP header.
    * Use this if you intend to pass the pbuf to functions like udp_send().
    */
   PBUF_TRANSPORT,
