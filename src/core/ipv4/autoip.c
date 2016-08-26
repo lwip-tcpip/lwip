@@ -95,7 +95,7 @@
 static err_t autoip_arp_announce(struct netif *netif);
 static void autoip_start_probing(struct netif *netif);
 
-#define netif_autoip_data(netif) ((struct autoip*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP])
+#define netif_autoip_data(netif) ((struct autoip*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP))
 
 /**
  * @ingroup autoip 
@@ -116,7 +116,7 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
   /* clear data structure */
   memset(autoip, 0, sizeof(struct autoip));
   /* autoip->state = AUTOIP_STATE_OFF; */
-  netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP] = autoip;
+  netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
 }
 
 /** Restart AutoIP client and check the next address (conflict detected)
@@ -281,7 +281,7 @@ autoip_start(struct netif *netif)
     }
     memset(autoip, 0, sizeof(struct autoip));
     /* store this AutoIP client in the netif */
-    netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP] = autoip;
+    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip"));
   } else {
     autoip->state = AUTOIP_STATE_OFF;

@@ -2096,6 +2096,7 @@ PREDEFINED             = __DOXYGEN__=1 \
                          LWIP_NETIF_STATUS_CALLBACK=1 \
                          LWIP_NETIF_REMOVE_CALLBACK=1 \
                          LWIP_NETIF_LINK_CALLBACK=1 \
+                         LWIP_NUM_NETIF_CLIENT_DATA=1 \
                          ENABLE_LOOPBACK=1 \
                          LWIP_AUTOIP=1 \
                          ARP_QUEUEING=1 \

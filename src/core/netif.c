@@ -10,6 +10,11 @@
  * 
  * @defgroup netif_ip6 IPv6 address handling
  * @ingroup netif
+ * 
+ * @defgroup netif_cd Client data handling
+ * Store data (void*) on a netif for application usage.
+ * @see @ref LWIP_NUM_NETIF_CLIENT_DATA
+ * @ingroup netif
  */
 
 /*
@@ -967,7 +972,7 @@ netif_poll_all(void)
 
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
 /**
- * @ingroup netif
+ * @ingroup netif_cd
  * Allocate an index to store data in client_data member of struct netif.
  * Returned value is an index in mentioned array.
  * @see LWIP_NUM_NETIF_CLIENT_DATA

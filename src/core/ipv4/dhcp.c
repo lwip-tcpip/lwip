@@ -193,7 +193,7 @@ static void dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif);
 /* always add the DHCP options trailer to end and pad */
 static void dhcp_option_trailer(struct dhcp *dhcp);
 
-#define netif_dhcp_data(netif) ((struct dhcp*)netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP])
+#define netif_dhcp_data(netif) ((struct dhcp*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP))
 
 /** Ensure DHCP PCB is allocated and bound */
 static err_t
@@ -668,7 +668,7 @@ dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
   /* clear data structure */
   memset(dhcp, 0, sizeof(struct dhcp));
   /* dhcp_set_state(&dhcp, DHCP_STATE_OFF); */
-  netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] = dhcp;
+  netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, dhcp);
 }
 
 /**
@@ -686,7 +686,7 @@ void dhcp_cleanup(struct netif *netif)
 
   if (netif_dhcp_data(netif) != NULL) {
     mem_free(netif_dhcp_data(netif));
-    netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] = NULL;
+    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, NULL);
   }
 }
 
@@ -730,7 +730,7 @@ dhcp_start(struct netif *netif)
     }
 
     /* store this dhcp client in the netif */
-    netif->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP] = dhcp;
+    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): allocated dhcp"));
   /* already has DHCP client attached */
   } else {

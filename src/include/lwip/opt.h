@@ -2495,7 +2495,8 @@
 
 /**
  * LWIP_HOOK_VLAN_SET:
- * Hook can be used to set prio_vid field of vlan_hdr.
+ * Hook can be used to set prio_vid field of vlan_hdr. If you need to store data
+ * on per-netif basis to implement this callback, see @ref netif_cd.
  * Called from ethernet_output() if VLAN support (@ref ETHARP_SUPPORT_VLAN) is enabled.\n
  * Signature: s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct eth_addr* src, const struct eth_addr* dst, u16_t eth_type);\n
  * Arguments:

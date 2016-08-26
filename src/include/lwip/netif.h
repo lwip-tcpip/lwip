@@ -426,6 +426,14 @@ err_t netif_input(struct pbuf *p, struct netif *inp);
 
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
 u8_t netif_alloc_client_data_id(void);
+/** @ingroup netif_cd
+ * Set client data. Obtain ID from netif_alloc_client_data_id().
+ */
+#define netif_set_client_data(netif, id, data) netif_get_client_data(netif, id) = (data)
+/** @ingroup netif_cd
+ * Get client data. Obtain ID from netif_alloc_client_data_id().
+ */
+#define netif_get_client_data(netif, id)       (netif)->client_data[(id)]
 #endif
 
 #if LWIP_IPV6
