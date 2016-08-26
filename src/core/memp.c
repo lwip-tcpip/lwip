@@ -119,7 +119,7 @@ memp_sanity(const struct memp_desc *desc)
  * (e.g. the restricted area after it has been altered)
  *
  * @param p the memp element to check
- * @param memp_type the pool p comes from
+ * @param desc the pool p comes from
  */
 static void
 memp_overflow_check_element_overflow(struct memp *p, const struct memp_desc *desc)
@@ -146,7 +146,7 @@ memp_overflow_check_element_overflow(struct memp *p, const struct memp_desc *des
  * (e.g. the restricted area before it has been altered)
  *
  * @param p the memp element to check
- * @param memp_type the pool p comes from
+ * @param desc the pool p comes from
  */
 static void
 memp_overflow_check_element_underflow(struct memp *p, const struct memp_desc *desc)
