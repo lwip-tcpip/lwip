@@ -1145,6 +1145,8 @@ udp_new(void)
  * Create a UDP PCB for specific IP type.
  *
  * @param type IP address type, see IPADDR_TYPE_XX definitions.
+ * If you want to listen to IPv4 and IPv6 (dual-stack) packets,
+ * supply @ref IPADDR_TYPE_ANY as argument and bind to @ref IP_ANY_TYPE.
  * @return The UDP PCB which was created. NULL if the PCB data structure
  * could not be allocated.
  *

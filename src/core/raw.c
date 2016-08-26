@@ -472,6 +472,8 @@ raw_new(u8_t proto)
  * could not be allocated.
  *
  * @param type IP address type, see IPADDR_TYPE_XX definitions.
+ * If you want to listen to IPv4 and IPv6 (dual-stack) packets,
+ * supply @ref IPADDR_TYPE_ANY as argument and bind to @ref IP_ANY_TYPE.
  * @param proto the protocol number (next header) of the IPv6 packet payload
  *              (e.g. IP6_NEXTH_ICMP6)
  *

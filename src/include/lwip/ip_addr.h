@@ -47,9 +47,13 @@
 extern "C" {
 #endif
 
-/** These are the values for ip_addr_t.type */
+/** Value for ip_addr_t.type: IPv4 */
 #define IPADDR_TYPE_V4                0U
+/** Value for ip_addr_t.type: IPv6 */
 #define IPADDR_TYPE_V6                6U
+/** Value for ip_addr_t.type: IPv4+IPv6 ("dual-stack")
+ * @see tcp_new_ip_type(), udp_new_ip_type(), raw_new_ip_type().
+ */
 #define IPADDR_TYPE_ANY               46U
 
 #if LWIP_IPV4 && LWIP_IPV6
