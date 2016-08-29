@@ -632,7 +632,7 @@ mdns_build_service_domain(struct mdns_domain *domain, struct mdns_service *servi
   }
   res = mdns_domain_add_label(domain, service->service, (u8_t)strlen(service->service));
   LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, dnssd_protos[service->proto], (u8_t)(sizeof((dnssd_protos[service->proto])-1)));
+  res = mdns_domain_add_label(domain, dnssd_protos[service->proto], (u8_t)(sizeof(dnssd_protos[DNSSD_PROTO_UDP])-1));
   LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
   return mdns_add_dotlocal(domain);
 }
@@ -819,7 +819,7 @@ mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain)
   u16_t jump_offset = 0;
   u16_t jump;
 
-  if (outpkt && outpkt->pbuf && !domain->skip_compression) {
+  if (!domain->skip_compression) {
     for (i = 0; i < NUM_DOMAIN_OFFSETS; ++i) {
       u16_t offset = outpkt->domain_offsets[i];
       if (offset) {
