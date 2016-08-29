@@ -414,11 +414,10 @@ mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain)
 
 /**
  * Print domain name to debug output
- * @param debug debug level
  * @param domain The domain name
  */
 static void
-mdns_domain_debug_print(int debug, struct mdns_domain *domain)
+mdns_domain_debug_print(struct mdns_domain *domain)
 {
   u8_t *src = domain->name;
   u8_t i;
@@ -427,10 +426,10 @@ mdns_domain_debug_print(int debug, struct mdns_domain *domain)
     u8_t label_len = *src;
     src++;
     for (i = 0; i < label_len; i++) {
-      LWIP_DEBUGF(debug, ("%c", src[i]));
+      LWIP_DEBUGF(MDNS_DEBUG, ("%c", src[i]));
     }
     src += label_len;
-    LWIP_DEBUGF(debug, ("."));
+    LWIP_DEBUGF(MDNS_DEBUG, ("."));
   }
 }
 
@@ -1543,7 +1542,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
 
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Query for domain "));
-    mdns_domain_debug_print(MDNS_DEBUG, &q.info.domain);
+    mdns_domain_debug_print(&q.info.domain);
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", q.info.type, q.info.klass));
 
     if (q.unicast) {
@@ -1585,7 +1584,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
 
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Known answer for domain "));
-    mdns_domain_debug_print(MDNS_DEBUG, &ans.info.domain);
+    mdns_domain_debug_print(&ans.info.domain);
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", ans.info.type, ans.info.klass));
 
 
@@ -1761,7 +1760,7 @@ mdns_handle_response(struct mdns_packet *pkt)
     }
 
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Answer for domain "));
-    mdns_domain_debug_print(MDNS_DEBUG, &ans.info.domain);
+    mdns_domain_debug_print(&ans.info.domain);
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", ans.info.type, ans.info.klass));
   }
 }
