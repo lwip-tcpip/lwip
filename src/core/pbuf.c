@@ -1223,7 +1223,7 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
 }
 #endif /* LWIP_CHECKSUM_ON_COPY */
 
-/** 
+/**
  * @ingroup pbuf
  * Get one byte from the specified position in a pbuf
  * WARNING: returns zero for offset >= p->tot_len
@@ -1235,6 +1235,24 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
 u8_t
 pbuf_get_at(struct pbuf* p, u16_t offset)
 {
+  int ret = pbuf_try_get_at(p, offset);
+  if (ret >= 0) {
+    return (u8_t)ret;
+  }
+  return 0;
+}
+
+/**
+ * @ingroup pbuf
+ * Get one byte from the specified position in a pbuf
+ *
+ * @param p pbuf to parse
+ * @param offset offset into p of the byte to return
+ * @return byte at an offset into p [0..0xFF] OR negative if 'offset' >= p->tot_len
+ */
+int
+pbuf_try_get_at(struct pbuf* p, u16_t offset)
+{
   u16_t q_idx;
   struct pbuf* q = pbuf_skip(p, offset, &q_idx);
 
@@ -1242,7 +1260,7 @@ pbuf_get_at(struct pbuf* p, u16_t offset)
   if ((q != NULL) && (q->len > q_idx)) {
     return ((u8_t*)q->payload)[q_idx];
   }
-  return 0;
+  return -1;
 }
 
 /**
