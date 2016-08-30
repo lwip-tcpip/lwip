@@ -601,11 +601,14 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
 static u16_t
 dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
 {
-  unsigned char n;
+  int n;
   u16_t response_offset = start_offset;
 
   do {
-    n = pbuf_get_at(p, response_offset++);
+    n = pbuf_try_get_at(p, response_offset++);
+    if (n < 0) {
+      return 0xFFFF;
+    }
     /** @see RFC 1035 - 4.1.4. Message compression */
     if ((n & 0xc0) == 0xc0) {
       /* Compressed name: cannot be equal since we don't send them */
@@ -613,7 +616,11 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
     } else {
       /* Not compressed name */
       while (n > 0) {
-        if ((*query) != pbuf_get_at(p, response_offset)) {
+        int c = pbuf_try_get_at(p, response_offset);
+        if (c < 0) {
+          return 0xFFFF;
+        }
+        if ((*query) != (u8_t)c) {
           return 0xFFFF;
         }
         ++response_offset;
@@ -622,7 +629,11 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
       }
       ++query;
     }
-  } while (pbuf_get_at(p, response_offset) != 0);
+    n = pbuf_try_get_at(p, response_offset);
+    if (n < 0) {
+      return 0xFFFF;
+    }
+  } while (n != 0);
 
   return response_offset + 1;
 }
@@ -635,28 +646,34 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
  * @return index to end of the name
  */
 static u16_t
-dns_parse_name(struct pbuf* p, u16_t query_idx)
+dns_skip_name(struct pbuf* p, u16_t query_idx)
 {
-  unsigned char n;
+  int n;
+  u16_t offset = query_idx;
 
   do {
-    /* pbuf_get_at() returns 0 on out-of-bounds access, so we will terminate */
-    n = pbuf_get_at(p, query_idx++);
+    n = pbuf_try_get_at(p, offset++);
+    if (n < 0) {
+      return 0xFFFF;
+    }
     /** @see RFC 1035 - 4.1.4. Message compression */
     if ((n & 0xc0) == 0xc0) {
-      /* Compressed name */
+      /* Compressed name: since we only want to skip it (not check it), stop here */
       break;
     } else {
       /* Not compressed name */
-      while (n > 0) {
-        ++query_idx;
-        --n;
+      if (offset + n >= p->tot_len) {
+        return 0xFFFF;
       }
+      offset = (u16_t)(offset + n);
     }
-  /* pbuf_get_at() returns 0 on out-of-bounds access, so we will terminate */
-  } while (pbuf_get_at(p, query_idx) != 0);
+    n = pbuf_try_get_at(p, offset);
+    if (n < 0) {
+      return 0xFFFF;
+    }
+  } while (n != 0);
 
-  return query_idx + 1;
+  return offset + 1;
 }
 
 /**
@@ -1116,10 +1133,10 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         } else {
           while ((nanswers > 0) && (res_idx < p->tot_len)) {
             /* skip answer resource record's host name */
-            res_idx = dns_parse_name(p, res_idx);
-            /* dns_parse_name() may return an res_idx out of pbuf bounds.
-             * This will be caught in pbuf_copy_partial() below.
-             */
+            res_idx = dns_skip_name(p, res_idx);
+            if (res_idx == 0xFFFF) {
+              goto memerr; /* ignore this packet */
+            }
 
             /* Check for IP address type and Internet class. Others are discarded. */
             if (pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx) != SIZEOF_DNS_ANSWER) {
@@ -1168,6 +1185,9 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
 #endif /* LWIP_IPV6 */
             }
             /* skip this answer */
+            if ((int)(res_idx + htons(ans.len)) > 0xFFFF) {
+              goto memerr; /* ignore this packet */
+            }
             res_idx += htons(ans.len);
             --nanswers;
           }
