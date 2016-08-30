@@ -640,6 +640,7 @@ dns_parse_name(struct pbuf* p, u16_t query_idx)
   unsigned char n;
 
   do {
+    /* pbuf_get_at() returns 0 on out-of-bounds access, so we will terminate */
     n = pbuf_get_at(p, query_idx++);
     /** @see RFC 1035 - 4.1.4. Message compression */
     if ((n & 0xc0) == 0xc0) {
@@ -652,6 +653,7 @@ dns_parse_name(struct pbuf* p, u16_t query_idx)
         --n;
       }
     }
+  /* pbuf_get_at() returns 0 on out-of-bounds access, so we will terminate */
   } while (pbuf_get_at(p, query_idx) != 0);
 
   return query_idx + 1;
@@ -1096,7 +1098,9 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         }
 
         /* check if "question" part matches the request */
-        pbuf_copy_partial(p, &qry, SIZEOF_DNS_QUERY, res_idx);
+        if (pbuf_copy_partial(p, &qry, SIZEOF_DNS_QUERY, res_idx) != SIZEOF_DNS_QUERY) {
+          goto memerr; /* ignore this packet */
+        }
         if ((qry.cls != PP_HTONS(DNS_RRCLASS_IN)) ||
           (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_AAAA))) ||
           (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_A)))) {
@@ -1113,10 +1117,16 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
           while ((nanswers > 0) && (res_idx < p->tot_len)) {
             /* skip answer resource record's host name */
             res_idx = dns_parse_name(p, res_idx);
+            /* dns_parse_name() may return an res_idx out of pbuf bounds.
+             * This will be caught in pbuf_copy_partial() below.
+             */
 
             /* Check for IP address type and Internet class. Others are discarded. */
-            pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx);
+            if (pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx) != SIZEOF_DNS_ANSWER) {
+              goto memerr; /* ignore this packet */
+            }
             res_idx += SIZEOF_DNS_ANSWER;
+
             if (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) {
 #if LWIP_IPV4
               if ((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.len == PP_HTONS(sizeof(ip4_addr_t)))) {
@@ -1126,7 +1136,9 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
                 {
                   ip4_addr_t ip4addr;
                   /* read the IP address after answer resource record's header */
-                  pbuf_copy_partial(p, &ip4addr, sizeof(ip4_addr_t), res_idx);
+                  if (pbuf_copy_partial(p, &ip4addr, sizeof(ip4_addr_t), res_idx) != sizeof(ip4_addr_t)) {
+                    goto memerr; /* ignore this packet */
+                  }
                   ip_addr_copy_from_ip4(dns_table[i].ipaddr, ip4addr);
                   pbuf_free(p);
                   /* handle correct response */
@@ -1143,7 +1155,9 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
                 {
                   ip6_addr_t ip6addr;
                   /* read the IP address after answer resource record's header */
-                  pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_t), res_idx);
+                  if (pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_t), res_idx) != sizeof(ip6_addr_t)) {
+                    goto memerr; /* ignore this packet */
+                  }
                   ip_addr_copy_from_ip6(dns_table[i].ipaddr, ip6addr);
                   pbuf_free(p);
                   /* handle correct response */
