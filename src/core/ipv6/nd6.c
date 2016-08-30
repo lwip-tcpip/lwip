@@ -447,7 +447,12 @@ nd6_input(struct pbuf *p, struct netif *inp)
         buffer = &((u8_t*)p->payload)[offset];
       } else {
         buffer = nd6_ra_buffer;
-        pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset);
+        if (pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset) != sizeof(struct prefix_option)) {
+          pbuf_free(p);
+          ND6_STATS_INC(nd6.lenerr);
+          ND6_STATS_INC(nd6.drop);
+          return;
+        }
       }
       if (buffer[1] == 0) {
         /* zero-length extension. drop packet */
