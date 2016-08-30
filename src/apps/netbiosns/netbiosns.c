@@ -346,7 +346,7 @@ netbiosns_set_name(const char* hostname)
   if (copy_len >= NETBIOS_NAME_LEN) {
     copy_len = NETBIOS_NAME_LEN - 1;
   }
-  memcpy(netbiosns_local_name, hostname, copy_len + 1);
+  MEMCPY(netbiosns_local_name, hostname, copy_len + 1);
 }
 #endif
 

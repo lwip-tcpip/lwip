@@ -1067,7 +1067,7 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
 
     /* msgAuthoritativeEngineID */
     snmpv3_get_engine_id(&id, &request->msg_authoritative_engine_id_len);
-    memcpy(request->msg_authoritative_engine_id, id, request->msg_authoritative_engine_id_len);
+    MEMCPY(request->msg_authoritative_engine_id, id, request->msg_authoritative_engine_id_len);
     SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OCTET_STRING, 0, request->msg_authoritative_engine_id_len);
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
     OF_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, request->msg_authoritative_engine_id, request->msg_authoritative_engine_id_len));
@@ -1142,7 +1142,7 @@ snmp_prepare_outbound_frame(struct snmp_request *request)
 
     /* contextEngineID */
     snmpv3_get_engine_id(&id, &request->context_engine_id_len);
-    memcpy(request->context_engine_id, id, request->context_engine_id_len);
+    MEMCPY(request->context_engine_id, id, request->context_engine_id_len);
     SNMP_ASN1_SET_TLV_PARAMS(tlv, SNMP_ASN1_TYPE_OCTET_STRING, 0, request->context_engine_id_len);
     OF_BUILD_EXEC(snmp_ans1_enc_tlv(pbuf_stream, &tlv));
     OF_BUILD_EXEC(snmp_asn1_enc_raw(pbuf_stream, request->context_engine_id, request->context_engine_id_len));
@@ -1519,7 +1519,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
         request->outbound_pbuf, 0, request->outbound_pbuf->tot_len));
     OF_BUILD_EXEC(snmpv3_auth(&request->outbound_pbuf_stream, frame_size + outbound_padding, key, algo, hmac));
 
-    memcpy(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH);
+    MEMCPY(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH);
     OF_BUILD_EXEC(snmp_pbuf_stream_init(&request->outbound_pbuf_stream,
                   request->outbound_pbuf, 0, request->outbound_pbuf->tot_len));
     OF_BUILD_EXEC(snmp_pbuf_stream_seek_abs(&request->outbound_pbuf_stream,

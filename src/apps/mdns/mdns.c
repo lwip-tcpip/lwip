@@ -322,7 +322,7 @@ mdns_domain_add_label(struct mdns_domain *domain, const char *label, u8_t len)
   domain->name[domain->length] = len;
   domain->length++;
   if (len) {
-    memcpy(&domain->name[domain->length], label, len);
+    MEMCPY(&domain->name[domain->length], label, len);
     domain->length += len;
   }
   return ERR_OK;
@@ -1256,7 +1256,7 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
   /* Copy source IP/port to use when responding unicast, or to choose
    * which pcb to use for multicast (IPv4/IPv6)
    */
-  memcpy(&out->dest_addr, &in->source_addr, sizeof(ip_addr_t));
+  SMEMCPY(&out->dest_addr, &in->source_addr, sizeof(ip_addr_t));
   out->dest_port = in->source_port;
 
   if (in->source_port != MDNS_PORT) {
@@ -1509,7 +1509,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   }
 
   announce.dest_port = MDNS_PORT;
-  memcpy(&announce.dest_addr, destination, sizeof(announce.dest_addr));
+  SMEMCPY(&announce.dest_addr, destination, sizeof(announce.dest_addr));
   mdns_send_outpacket(&announce);
 }
 
@@ -1800,7 +1800,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   }
 
   memset(&packet, 0, sizeof(packet));
-  memcpy(&packet.source_addr, addr, sizeof(packet.source_addr));
+  SMEMCPY(&packet.source_addr, addr, sizeof(packet.source_addr));
   packet.source_port = port;
   packet.netif = recv_netif;
   packet.pbuf = p;
@@ -1909,7 +1909,7 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   netif->client_data[mdns_netif_client_id] = mdns;
 
   memset(mdns, 0, sizeof(struct mdns_host));
-  memcpy(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
+  MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
   mdns->dns_ttl = dns_ttl;
 
   /* Join multicast groups */
@@ -2016,8 +2016,8 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 
   memset(srv, 0, sizeof(struct mdns_service));
 
-  memcpy(&srv->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(name)));
-  memcpy(&srv->service, service, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(service)));
+  MEMCPY(&srv->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(name)));
+  MEMCPY(&srv->service, service, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(service)));
   srv->txt_fn = txt_fn;
   srv->txt_userdata = txt_data;
   srv->proto = (u16_t)proto;

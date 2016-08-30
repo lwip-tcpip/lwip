@@ -374,7 +374,7 @@ lwiperf_tx_start(lwiperf_state_tcp_t* conn)
     return ERR_MEM;
   }
 
-  memcpy(client_conn, conn, sizeof(lwiperf_state_tcp_t));
+  MEMCPY(client_conn, conn, sizeof(lwiperf_state_tcp_t));
   client_conn->base.server = 0;
   client_conn->server_pcb = NULL;
   client_conn->conn_pcb = newpcb;
