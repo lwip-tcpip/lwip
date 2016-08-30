@@ -982,8 +982,9 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
     } else {
       /* copy from this buffer. maybe only partially. */
       buf_copy_len = p->len - offset;
-      if (buf_copy_len > len)
-          buf_copy_len = len;
+      if (buf_copy_len > len) {
+        buf_copy_len = len;
+      }
       /* copy the necessary parts of the buffer */
       MEMCPY(&((char*)dataptr)[left], &((char*)p->payload)[offset], buf_copy_len);
       copied_total += buf_copy_len;
