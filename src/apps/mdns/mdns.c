@@ -377,9 +377,8 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
       if (c + domain->length >= MDNS_DOMAIN_MAXLEN) {
         return MDNS_READNAME_ERROR;
       }
-      if (c) {
-        u16_t copied = pbuf_copy_partial(p, label, c, offset);
-        if (copied != c) {
+      if (c != 0) {
+        if (pbuf_copy_partial(p, label, c, offset) != c) {
           return MDNS_READNAME_ERROR;
         }
         offset += c;
@@ -392,7 +391,7 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
       /* bad length byte */
       return MDNS_READNAME_ERROR;
     }
-  } while (c);
+  } while (c != 0);
 
   return offset;
 }
