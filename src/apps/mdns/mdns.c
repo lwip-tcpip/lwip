@@ -586,7 +586,7 @@ mdns_build_host_domain(struct mdns_domain *domain, struct mdns_host *mdns)
 {
   err_t res;
   memset(domain, 0, sizeof(struct mdns_domain));
-  LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
+  LWIP_ERROR("mdns_build_host_domain: Not an mdns netif", (mdns != NULL), return ERR_VAL);
   res = mdns_domain_add_label(domain, mdns->name, (u8_t)strlen(mdns->name));
   LWIP_ERROR("mdns_build_host_domain: Failed to add label", (res == ERR_OK), return res);
   return mdns_add_dotlocal(domain);
