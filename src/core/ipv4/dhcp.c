@@ -1493,7 +1493,7 @@ again:
     int decode_idx = -1;
     u16_t val_offset = offset + 2;
     /* len byte might be in the next pbuf */
-    if (offset + 1 < q->len) {
+    if ((offset + 1) < q->len) {
       len = options[offset + 1];
     } else {
       len = (q->next != NULL ? ((u8_t*)q->next->payload)[0] : 0);
@@ -1572,7 +1572,9 @@ decode_next:
       LWIP_ASSERT("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
       if (!dhcp_option_given(dhcp, decode_idx)) {
         copy_len = LWIP_MIN(decode_len, 4);
-        pbuf_copy_partial(q, &value, copy_len, val_offset);
+        if (pbuf_copy_partial(q, &value, copy_len, val_offset) != copy_len) {
+          return ERR_BUF;
+        }
         if (decode_len > 4) {
           /* decode more than one u32_t */
           LWIP_ERROR("decode_len % 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
@@ -1628,7 +1630,9 @@ decode_next:
       if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE) &&
         (dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE) == DHCP_ACK))
       /* copy bootp file name, don't care for sname (server hostname) */
-      pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN-1, DHCP_FILE_OFS);
+      if (pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN-1, DHCP_FILE_OFS) != (DHCP_FILE_LEN-1)) {
+        return ERR_BUF;
+      }
       /* make sure the string is really NULL-terminated */
       dhcp->boot_file_name[DHCP_FILE_LEN-1] = 0;
     }
