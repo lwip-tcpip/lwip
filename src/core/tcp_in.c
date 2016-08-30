@@ -55,7 +55,6 @@
 #include "lwip/stats.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/inet_chksum.h"
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 #include "lwip/nd6.h"
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */

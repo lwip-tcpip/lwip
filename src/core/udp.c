@@ -56,7 +56,6 @@
 #include "lwip/ip_addr.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp.h"
 #include "lwip/icmp6.h"
