@@ -1300,28 +1300,29 @@ pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
 {
   u16_t start = offset;
   struct pbuf* q = p;
-
-  /* get the correct pbuf */
+  u16_t i;
+ 
+  /* pbuf long enough to perform check? */
+  if(p->tot_len < (offset + n)) {
+    return 0xffff;
+  }
+ 
+  /* get the correct pbuf from chain. We know it succeeds because of p->tot_len check above. */
   while ((q != NULL) && (q->len <= start)) {
     start -= q->len;
     q = q->next;
   }
+ 
   /* return requested data if pbuf is OK */
-  if ((q != NULL) && (q->len > start)) {
-    u16_t i;
-    for (i = 0; i < n; i++) {
-      u8_t b = ((const u8_t*)s2)[i];
-      int a = pbuf_try_get_at(q, start + i);
-      if (a < 0) {
-        return 0xffff;
-      }
-      if (a != b) {
-        return i+1;
-      }
+  for (i = 0; i < n; i++) {
+    /* We know pbuf_get_at() succeeds because of p->tot_len check above. */
+    u8_t a = pbuf_get_at(q, start + i);
+    u8_t b = ((const u8_t*)s2)[i];
+    if (a != b) {
+      return i+1;
     }
-    return 0;
   }
-  return 0xffff;
+  return 0;
 }
 
 /**
