@@ -171,7 +171,7 @@ netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
 void
 netbuf_chain(struct netbuf *head, struct netbuf *tail)
 {
-  LWIP_ERROR("netbuf_ref: invalid head", (head != NULL), return;);
+  LWIP_ERROR("netbuf_chain: invalid head", (head != NULL), return;);
   LWIP_ERROR("netbuf_chain: invalid tail", (tail != NULL), return;);
   pbuf_cat(head->p, tail->p);
   head->ptr = head->p;
@@ -217,7 +217,7 @@ netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
 s8_t
 netbuf_next(struct netbuf *buf)
 {
-  LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return -1;);
+  LWIP_ERROR("netbuf_next: invalid buf", (buf != NULL), return -1;);
   if (buf->ptr->next == NULL) {
     return -1;
   }
@@ -239,7 +239,7 @@ netbuf_next(struct netbuf *buf)
 void
 netbuf_first(struct netbuf *buf)
 {
-  LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return;);
+  LWIP_ERROR("netbuf_first: invalid buf", (buf != NULL), return;);
   buf->ptr = buf->p;
 }
 
