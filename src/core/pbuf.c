@@ -1310,8 +1310,11 @@ pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
   if ((q != NULL) && (q->len > start)) {
     u16_t i;
     for (i = 0; i < n; i++) {
-      u8_t a = pbuf_get_at(q, start + i);
       u8_t b = ((const u8_t*)s2)[i];
+      int a = pbuf_try_get_at(q, start + i);
+      if (a < 0) {
+        return 0xffff;
+      }
       if (a != b) {
         return i+1;
       }
