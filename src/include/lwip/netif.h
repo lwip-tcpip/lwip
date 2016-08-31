@@ -424,7 +424,7 @@ void netif_poll_all(void);
 
 err_t netif_input(struct pbuf *p, struct netif *inp);
 
-#if LWIP_NUM_NETIF_CLIENT_DATA > 0
+#if LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
 u8_t netif_alloc_client_data_id(void);
 /** @ingroup netif_cd
  * Set client data. Obtain ID from netif_alloc_client_data_id().
@@ -434,7 +434,7 @@ u8_t netif_alloc_client_data_id(void);
  * Get client data. Obtain ID from netif_alloc_client_data_id().
  */
 #define netif_get_client_data(netif, id)       (netif)->client_data[(id)]
-#endif
+#endif /* LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0) */
 
 #if LWIP_IPV6
 /** @ingroup netif_ip6 */
