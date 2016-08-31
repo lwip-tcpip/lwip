@@ -401,9 +401,9 @@
 /**
  * MEMP_NUM_FRAG_PBUF: the number of IP fragments simultaneously sent
  * (fragments, not whole packets!).
- * This is only used with IP_FRAG_USES_STATIC_BUF==0 and
- * LWIP_NETIF_TX_SINGLE_PBUF==0 and only has to be > 1 with DMA-enabled MACs
- * where the packet is not yet sent when netif->output returns.
+ * This is only used with LWIP_NETIF_TX_SINGLE_PBUF==0 and only has to be > 1
+ * with DMA-enabled MACs where the packet is not yet sent when netif->output
+ * returns.
  */
 #if !defined MEMP_NUM_FRAG_PBUF || defined __DOXYGEN__
 #define MEMP_NUM_FRAG_PBUF              15
@@ -703,25 +703,6 @@
  */
 #if !defined IP_REASS_MAX_PBUFS || defined __DOXYGEN__
 #define IP_REASS_MAX_PBUFS              10
-#endif
-
-/**
- * IP_FRAG_USES_STATIC_BUF==1: Use a static MTU-sized buffer for IP
- * fragmentation. Otherwise pbufs are allocated and reference the original
- * packet data to be fragmented (or with LWIP_NETIF_TX_SINGLE_PBUF==1,
- * new PBUF_RAM pbufs are used for fragments).
- * ATTENTION: IP_FRAG_USES_STATIC_BUF==1 may not be used for DMA-enabled MACs!
- */
-#if !defined IP_FRAG_USES_STATIC_BUF || defined __DOXYGEN__
-#define IP_FRAG_USES_STATIC_BUF         0
-#endif
-
-/**
- * IP_FRAG_MAX_MTU: Assumed max MTU on any interface for IP frag buffer
- * (requires IP_FRAG_USES_STATIC_BUF==1)
- */
-#if IP_FRAG_USES_STATIC_BUF && !defined(IP_FRAG_MAX_MTU) || defined __DOXYGEN__
-#define IP_FRAG_MAX_MTU                 1500
 #endif
 
 /**

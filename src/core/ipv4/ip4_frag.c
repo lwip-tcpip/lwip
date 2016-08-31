@@ -340,7 +340,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
 {
   struct ip_reass_helper *iprh, *iprh_tmp, *iprh_prev=NULL;
   struct pbuf *q;
-  u16_t offset,len;
+  u16_t offset, len;
   struct ip_hdr *fraghdr;
   int valid = 1;
 
@@ -639,10 +639,6 @@ nullreturn:
 #endif /* IP_REASSEMBLY */
 
 #if IP_FRAG
-#if IP_FRAG_USES_STATIC_BUF
-static LWIP_DECLARE_MEMORY_ALIGNED(buf, IP_FRAG_MAX_MTU);
-#else /* IP_FRAG_USES_STATIC_BUF */
-
 #if !LWIP_NETIF_TX_SINGLE_PBUF
 /** Allocate a new struct pbuf_custom_ref */
 static struct pbuf_custom_ref*
@@ -673,14 +669,12 @@ ipfrag_free_pbuf_custom(struct pbuf *p)
   ip_frag_free_pbuf_custom_ref(pcr);
 }
 #endif /* !LWIP_NETIF_TX_SINGLE_PBUF */
-#endif /* IP_FRAG_USES_STATIC_BUF */
 
 /**
  * Fragment an IP datagram if too large for the netif.
  *
  * Chop the datagram in MTU sized chunks and send them in order
- * by using a fixed size static memory buffer (PBUF_REF) or
- * point PBUF_REFs into p (depending on IP_FRAG_USES_STATIC_BUF).
+ * by pointing PBUF_REFs into p.
  *
  * @param p ip packet to send
  * @param netif the netif on which to send
@@ -692,14 +686,10 @@ err_t
 ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 {
   struct pbuf *rambuf;
-#if IP_FRAG_USES_STATIC_BUF
-  struct pbuf *header;
-#else
 #if !LWIP_NETIF_TX_SINGLE_PBUF
   struct pbuf *newpbuf;
 #endif
   struct ip_hdr *original_iphdr;
-#endif
   struct ip_hdr *iphdr;
   u16_t nfb;
   u16_t left, cop;
@@ -708,32 +698,13 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
   u16_t last;
   u16_t poff = IP_HLEN;
   u16_t tmp;
-#if !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF
+#if !LWIP_NETIF_TX_SINGLE_PBUF
   u16_t newpbuflen = 0;
   u16_t left_to_copy;
 #endif
 
-  /* Get a RAM based MTU sized pbuf */
-#if IP_FRAG_USES_STATIC_BUF
-  /* When using a static buffer, we use a PBUF_REF, which we will
-   * use to reference the packet (without link header).
-   * Layer and length is irrelevant.
-   */
-  rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
-  if (rambuf == NULL) {
-    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc(PBUF_LINK, 0, PBUF_REF) failed\n"));
-    goto memerr;
-  }
-  rambuf->tot_len = rambuf->len = mtu;
-  rambuf->payload = LWIP_MEM_ALIGN((void *)buf);
-
-  /* Copy the IP header in it */
-  iphdr = (struct ip_hdr *)rambuf->payload;
-  SMEMCPY(iphdr, p->payload, IP_HLEN);
-#else /* IP_FRAG_USES_STATIC_BUF */
   original_iphdr = (struct ip_hdr *)p->payload;
   iphdr = original_iphdr;
-#endif /* IP_FRAG_USES_STATIC_BUF */
 
   /* Save original offset */
   tmp = ntohs(IPH_OFFSET(iphdr));
@@ -756,9 +727,6 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
     /* Fill this fragment */
     cop = last ? left : nfb * 8;
 
-#if IP_FRAG_USES_STATIC_BUF
-    poff += pbuf_copy_partial(p, (u8_t*)iphdr + IP_HLEN, cop, poff);
-#else /* IP_FRAG_USES_STATIC_BUF */
 #if LWIP_NETIF_TX_SINGLE_PBUF
     rambuf = pbuf_alloc(PBUF_IP, cop, PBUF_RAM);
     if (rambuf == NULL) {
@@ -830,7 +798,6 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
     }
     poff = newpbuflen;
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
-#endif /* IP_FRAG_USES_STATIC_BUF */
 
     /* Correct header */
     IPH_OFFSET_SET(iphdr, htons(tmp));
@@ -842,29 +809,6 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
     }
 #endif /* CHECKSUM_GEN_IP */
 
-#if IP_FRAG_USES_STATIC_BUF
-    if (last) {
-      pbuf_realloc(rambuf, left + IP_HLEN);
-    }
-
-    /* This part is ugly: we alloc a RAM based pbuf for
-     * the link level header for each chunk and then
-     * free it. A PBUF_ROM style pbuf for which pbuf_header
-     * worked would make things simpler.
-     */
-    header = pbuf_alloc(PBUF_LINK, 0, PBUF_RAM);
-    if (header != NULL) {
-      pbuf_chain(header, rambuf);
-      netif->output(netif, header, dest);
-      IPFRAG_STATS_INC(ip_frag.xmit);
-      MIB2_STATS_INC(mib2.ipfragcreates);
-      pbuf_free(header);
-    } else {
-      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc() for header failed\n"));
-      pbuf_free(rambuf);
-      goto memerr;
-    }
-#else /* IP_FRAG_USES_STATIC_BUF */
     /* No need for separate header pbuf - we allowed room for it in rambuf
      * when allocated.
      */
@@ -879,13 +823,9 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
      */
 
     pbuf_free(rambuf);
-#endif /* IP_FRAG_USES_STATIC_BUF */
     left -= cop;
     ofo += nfb;
   }
-#if IP_FRAG_USES_STATIC_BUF
-  pbuf_free(rambuf);
-#endif /* IP_FRAG_USES_STATIC_BUF */
   MIB2_STATS_INC(mib2.ipfragoks);
   return ERR_OK;
 memerr:
