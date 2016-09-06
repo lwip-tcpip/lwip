@@ -969,8 +969,6 @@ int
 lwip_sendmsg(int s, const struct msghdr *msg, int flags)
 {
   struct lwip_sock *sock;
-  struct netbuf *chain_buf;
-  u16_t remote_port;
   int i;
 #if LWIP_TCP
   u8_t write_flags;
@@ -1027,82 +1025,85 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   }
   /* else, UDP and RAW NETCONNs */
 #if LWIP_UDP || LWIP_RAW
+  {
+    struct netbuf *chain_buf;
 
-  LWIP_UNUSED_ARG(flags);
-  LWIP_ERROR("lwip_sendmsg: invalid msghdr name", (((msg->msg_name == NULL) && (msg->msg_namelen == 0)) ||
-             IS_SOCK_ADDR_LEN_VALID(msg->msg_namelen)) ,
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+    LWIP_UNUSED_ARG(flags);
+    LWIP_ERROR("lwip_sendmsg: invalid msghdr name", (((msg->msg_name == NULL) && (msg->msg_namelen == 0)) ||
+               IS_SOCK_ADDR_LEN_VALID(msg->msg_namelen)) ,
+               sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
-  /* initialize chain buffer with destination */
-  chain_buf = netbuf_new();
-  if (!chain_buf) {
-    sock_set_errno(sock, err_to_errno(ERR_MEM));
-    return -1;
-  }
-  if (msg->msg_name) {
-    SOCKADDR_TO_IPADDR_PORT((const struct sockaddr *)msg->msg_name, &chain_buf->addr, remote_port);
-    netbuf_fromport(chain_buf) = remote_port;
-  }
+    /* initialize chain buffer with destination */
+    chain_buf = netbuf_new();
+    if (!chain_buf) {
+      sock_set_errno(sock, err_to_errno(ERR_MEM));
+      return -1;
+    }
+    if (msg->msg_name) {
+      u16_t remote_port;
+      SOCKADDR_TO_IPADDR_PORT((const struct sockaddr *)msg->msg_name, &chain_buf->addr, remote_port);
+      netbuf_fromport(chain_buf) = remote_port;
+    }
 #if LWIP_NETIF_TX_SINGLE_PBUF
-  for (i = 0; i < msg->msg_iovlen; i++) {
-    size += msg->msg_iov[i].iov_len;
-  }
-  /* Allocate a new netbuf and copy the data into it. */
-  if (netbuf_alloc(chain_buf, (u16_t)size) == NULL) {
-    err = ERR_MEM;
-  }
-  else {
-    /* flatten the IO vectors */
-    size_t offset = 0;
     for (i = 0; i < msg->msg_iovlen; i++) {
-      MEMCPY(&((u8_t*)chain_buf->p->payload)[offset], msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
-      offset += msg->msg_iov[i].iov_len;
+      size += msg->msg_iov[i].iov_len;
     }
-#if LWIP_CHECKSUM_ON_COPY
-    {
-      /* This can be improved by using LWIP_CHKSUM_COPY() and aggregating the checksum for each IO vector */
-      u16_t chksum = ~inet_chksum_pbuf(chain_buf->p);
-      netbuf_set_chksum(chain_buf, chksum);
-    }
-#endif /* LWIP_CHECKSUM_ON_COPY */
-    err = ERR_OK;
-  }
-#else /* LWIP_NETIF_TX_SINGLE_PBUF */
-  /* create a chained netbuf from the IO vectors. NOTE: we assemble a pbuf chain
-     manually to avoid having to allocate, chain, and delete a netbuf for each iov */
-  for (i = 0; i < msg->msg_iovlen; i++) {
-    struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
-    if (p == NULL) {
-      err = ERR_MEM; /* let netbuf_delete() cleanup chain_buf */
-      break;
-    }
-    p->payload = msg->msg_iov[i].iov_base;
-    LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
-    p->len = p->tot_len = (u16_t)msg->msg_iov[i].iov_len;
-    /* netbuf empty, add new pbuf */
-    if (chain_buf->p == NULL) {
-      chain_buf->p = chain_buf->ptr = p;
-    /* add pbuf to existing pbuf chain */
+    /* Allocate a new netbuf and copy the data into it. */
+    if (netbuf_alloc(chain_buf, (u16_t)size) == NULL) {
+       err = ERR_MEM;
     } else {
-      pbuf_cat(chain_buf->p, p);
+      /* flatten the IO vectors */
+      size_t offset = 0;
+      for (i = 0; i < msg->msg_iovlen; i++) {
+        MEMCPY(&((u8_t*)chain_buf->p->payload)[offset], msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
+        offset += msg->msg_iov[i].iov_len;
+      }
+#if LWIP_CHECKSUM_ON_COPY
+      {
+        /* This can be improved by using LWIP_CHKSUM_COPY() and aggregating the checksum for each IO vector */
+        u16_t chksum = ~inet_chksum_pbuf(chain_buf->p);
+        netbuf_set_chksum(chain_buf, chksum);
+      }
+#endif /* LWIP_CHECKSUM_ON_COPY */
+      err = ERR_OK;
     }
-  }
-  /* save size of total chain */
-  if (err == ERR_OK) {
-    size = netbuf_len(chain_buf);
-  }
+#else /* LWIP_NETIF_TX_SINGLE_PBUF */
+    /* create a chained netbuf from the IO vectors. NOTE: we assemble a pbuf chain
+       manually to avoid having to allocate, chain, and delete a netbuf for each iov */
+    for (i = 0; i < msg->msg_iovlen; i++) {
+      struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
+      if (p == NULL) {
+        err = ERR_MEM; /* let netbuf_delete() cleanup chain_buf */
+        break;
+      }
+      p->payload = msg->msg_iov[i].iov_base;
+      LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
+      p->len = p->tot_len = (u16_t)msg->msg_iov[i].iov_len;
+      /* netbuf empty, add new pbuf */
+      if (chain_buf->p == NULL) {
+        chain_buf->p = chain_buf->ptr = p;
+        /* add pbuf to existing pbuf chain */
+      } else {
+        pbuf_cat(chain_buf->p, p);
+      }
+    }
+    /* save size of total chain */
+    if (err == ERR_OK) {
+      size = netbuf_len(chain_buf);
+    }
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
-  if (err == ERR_OK) {
-    /* send the data */
-    err = netconn_send(sock->conn, chain_buf);
+    if (err == ERR_OK) {
+      /* send the data */
+      err = netconn_send(sock->conn, chain_buf);
+    }
+
+    /* deallocated the buffer */
+    netbuf_delete(chain_buf);
+
+    sock_set_errno(sock, err_to_errno(err));
+    return (err == ERR_OK ? size : -1);
   }
-
-  /* deallocated the buffer */
-  netbuf_delete(chain_buf);
-
-  sock_set_errno(sock, err_to_errno(err));
-  return (err == ERR_OK ? size : -1);
 #else /* LWIP_UDP || LWIP_RAW */
   sock_set_errno(sock, err_to_errno(ERR_ARG));
   return -1;
