@@ -938,12 +938,9 @@ dns_check_entry(u8_t i)
   LWIP_ASSERT("array index out of bounds", i < DNS_TABLE_SIZE);
 
   switch (entry->state) {
-
-    case DNS_STATE_NEW: {
-      u16_t txid;
+    case DNS_STATE_NEW:
       /* initialize new entry */
-      txid = dns_create_txid();
-      entry->txid = txid;
+      entry->txid = dns_create_txid();
       entry->state = DNS_STATE_ASKING;
       entry->server_idx = 0;
       entry->tmr = 1;
@@ -956,8 +953,6 @@ dns_check_entry(u8_t i)
                     ("dns_send returned error: %s\n", lwip_strerr(err)));
       }
       break;
-    }
-
     case DNS_STATE_ASKING:
       if (--entry->tmr == 0) {
         if (++entry->retries == DNS_MAX_RETRIES) {
