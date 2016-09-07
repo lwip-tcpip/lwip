@@ -46,6 +46,7 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/netif.h"
+#include "lwip/ip.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
 #include "lwip/ip6_frag.h"

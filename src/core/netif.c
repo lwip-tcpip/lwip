@@ -63,6 +63,7 @@
 #include "lwip/etharp.h"
 #include "lwip/stats.h"
 #include "lwip/sys.h"
+#include "lwip/ip.h"
 #if ENABLE_LOOPBACK
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
 #include "lwip/tcpip.h"
