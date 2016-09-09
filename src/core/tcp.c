@@ -1681,6 +1681,8 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
  *
+ * @note The corresponding pcb is already freed when this callback is called!
+ * 
  * @param pcb tcp_pcb to set the err callback
  * @param err callback function to call for this pcb when a fatal error
  *        has occurred on the connection
