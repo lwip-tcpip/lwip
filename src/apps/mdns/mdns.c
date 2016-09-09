@@ -1008,9 +1008,6 @@ mdns_add_answer(struct mdns_outpacket *reply, struct mdns_domain *domain, u16_t 
   /* Write rd_length after when we know the answer size */
   field16 = htons(reply->write_offset - answer_offset);
   res = pbuf_take_at(reply->pbuf, &field16, sizeof(field16), rdlen_offset);
-  if (res == ERR_OK) {
-    reply->answers++;
-  }
 
   return res;
 }
@@ -1298,12 +1295,14 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     if (res != ERR_OK) {
       goto cleanup;
     }
+    outpkt->answers++;
   }
   if (outpkt->host_replies & REPLY_HOST_PTR_V4) {
     res = mdns_add_hostv4_ptr_answer(outpkt, outpkt->cache_flush, outpkt->netif);
     if (res != ERR_OK) {
       goto cleanup;
     }
+    outpkt->answers++;
   }
 #endif
 #if LWIP_IPV6
@@ -1315,6 +1314,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
         if (res != ERR_OK) {
           goto cleanup;
         }
+        outpkt->answers++;
       }
     }
   }
@@ -1327,6 +1327,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
         if (res != ERR_OK) {
           goto cleanup;
         }
+        outpkt->answers++;
       }
       addrindex++;
       rev_addrs >>= 1;
@@ -1346,6 +1347,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       if (res != ERR_OK) {
         goto cleanup;
       }
+      outpkt->answers++;
     }
 
     if (outpkt->serv_replies[i] & REPLY_SERVICE_NAME_PTR) {
@@ -1353,6 +1355,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       if (res != ERR_OK) {
         goto cleanup;
       }
+      outpkt->answers++;
     }
 
     if (outpkt->serv_replies[i] & REPLY_SERVICE_SRV) {
@@ -1360,6 +1363,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       if (res != ERR_OK) {
         goto cleanup;
       }
+      outpkt->answers++;
     }
 
     if (outpkt->serv_replies[i] & REPLY_SERVICE_TXT) {
@@ -1367,6 +1371,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       if (res != ERR_OK) {
         goto cleanup;
       }
+      outpkt->answers++;
     }
   }
 
