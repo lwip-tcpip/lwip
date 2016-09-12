@@ -272,8 +272,7 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
     }
   }
 
-  if (request->error_status != SNMP_ERR_NOERROR)
-  {
+  if (request->error_status != SNMP_ERR_NOERROR)  {
     if (request->error_status >= SNMP_VARBIND_EXCEPTION_OFFSET) {
       if ((request->version == SNMP_VERSION_2c) || request->version == SNMP_VERSION_3) {
         /* in SNMP v2c a varbind related exception is stored in varbind and not in frame header */
@@ -512,8 +511,7 @@ snmp_process_set_request(struct snmp_request *request)
       memset(&node_instance, 0, sizeof(node_instance));
       
       request->error_status = snmp_get_node_instance_from_oid(vb.oid.id, vb.oid.len, &node_instance);
-      if (request->error_status == SNMP_ERR_NOERROR)
-      {
+      if (request->error_status == SNMP_ERR_NOERROR) {
         if (node_instance.asn1_type != vb.type) {
           request->error_status = SNMP_ERR_WRONGTYPE;
         } else if (((node_instance.access & SNMP_NODE_INSTANCE_ACCESS_WRITE) != SNMP_NODE_INSTANCE_ACCESS_WRITE) || (node_instance.set_value == NULL)) {
@@ -528,8 +526,7 @@ snmp_process_set_request(struct snmp_request *request)
           node_instance.release_instance(&node_instance);
         }
       }
-    }
-    else if (err == SNMP_VB_ENUMERATOR_ERR_EOVB) {
+    } else if (err == SNMP_VB_ENUMERATOR_ERR_EOVB) {
       /* no more varbinds in request */
       break;
     } else if (err == SNMP_VB_ENUMERATOR_ERR_INVALIDLENGTH) {
@@ -551,10 +548,8 @@ snmp_process_set_request(struct snmp_request *request)
         struct snmp_node_instance node_instance;
         memset(&node_instance, 0, sizeof(node_instance));
         request->error_status = snmp_get_node_instance_from_oid(vb.oid.id, vb.oid.len, &node_instance);
-        if (request->error_status == SNMP_ERR_NOERROR)
-        {
-          if (node_instance.set_value(&node_instance, vb.value_len, vb.value) != SNMP_ERR_NOERROR)
-          {
+        if (request->error_status == SNMP_ERR_NOERROR) {
+          if (node_instance.set_value(&node_instance, vb.value_len, vb.value) != SNMP_ERR_NOERROR) {
             if (request->inbound_varbind_enumerator.varbind_count == 1) {
               request->error_status = SNMP_ERR_COMMITFAILED;
             } else {
