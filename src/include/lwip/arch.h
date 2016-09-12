@@ -85,7 +85,7 @@ typedef uintptr_t mem_ptr_t;
 #if !LWIP_NO_INTTYPES_H
 #include <inttypes.h>
 #ifndef X8_F
-#define X8_F  "02"PRIx8
+#define X8_F  "02" PRIx8
 #endif
 #ifndef U16_F
 #define U16_F PRIu16
