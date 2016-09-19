@@ -609,10 +609,6 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
         igmp_send(group, IGMP_LEAVE_GROUP);
       }
 
-      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: remove group: "));
-      ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-      LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-
       /* Disable the group at the MAC level */
       if (netif->igmp_mac_filter != NULL) {
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: igmp_mac_filter(DEL "));
