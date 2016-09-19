@@ -104,7 +104,7 @@ static void   igmp_delaying_member(struct igmp_group *group, u8_t maxresp);
 static err_t  igmp_ip_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest, struct netif *netif);
 static void   igmp_send(struct igmp_group *group, u8_t type);
 
-static struct igmp_group* igmp_group_list;
+struct igmp_group* igmp_group_list;
 static ip4_addr_t     allsystems;
 static ip4_addr_t     allrouters;
 

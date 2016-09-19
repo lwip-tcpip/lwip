@@ -72,6 +72,9 @@ struct mld_group {
   u8_t               use;
 };
 
+/* Head of MLD group list */
+extern struct mld_group* mld_group_list;
+
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */
 
 err_t  mld6_stop(struct netif *netif);

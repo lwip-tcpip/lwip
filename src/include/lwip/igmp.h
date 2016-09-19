@@ -88,6 +88,9 @@ struct igmp_group {
   u8_t               use;
 };
 
+/* Head of IGMP group list */
+extern struct igmp_group* igmp_group_list;
+
 /*  Prototypes */
 void   igmp_init(void);
 err_t  igmp_start(struct netif *netif);
