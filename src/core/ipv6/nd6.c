@@ -491,7 +491,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         prefix_opt = (struct prefix_option *)buffer;
 
         if ((prefix_opt->flags & ND6_PREFIX_FLAG_ON_LINK) &&
-            (prefix_opt->length == 64)  &&
+            (prefix_opt->prefix_length == 64)  &&
             !ip6_addr_islinklocal(&(prefix_opt->prefix))) {
           /* Add to on-link prefix list. */
           s8_t prefix;
