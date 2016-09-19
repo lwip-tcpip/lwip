@@ -82,7 +82,7 @@ struct mld_group* mld_group_list;
 
 /* Forward declarations. */
 static struct mld_group *mld6_new_group(struct netif *ifp, const ip6_addr_t *addr);
-static err_t mld6_free_group(struct mld_group *group);
+static err_t mld6_remove_group(struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, u16_t maxresp);
 static void mld6_send(struct mld_group *group, u8_t type);
 
@@ -200,13 +200,13 @@ mld6_new_group(struct netif *ifp, const ip6_addr_t *addr)
 }
 
 /**
- * Remove a group in the mld_group_list and free
+ * Remove a group from the mld_group_list, but do not free it yet
  *
  * @param group the group to remove
  * @return ERR_OK if group was removed from the list, an err_t otherwise
  */
 static err_t
-mld6_free_group(struct mld_group *group)
+mld6_remove_group(struct mld_group *group)
 {
   err_t err = ERR_OK;
 
@@ -227,8 +227,6 @@ mld6_free_group(struct mld_group *group)
       err = ERR_ARG;
     }
   }
-  /* free group */
-  memp_free(MEMP_MLD6_GROUP, group);
 
   return err;
 }
@@ -440,6 +438,9 @@ mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
   if (group != NULL) {
     /* Leave if there is no other use of the group */
     if (group->use <= 1) {
+      /* Remove the group from the list */
+      mld6_remove_group(group);
+
       /* If we are the last reporter for this group */
       if (group->last_reporter_flag) {
         MLD6_STATS_INC(mld6.tx_leave);
@@ -451,8 +452,8 @@ mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
         netif->mld_mac_filter(netif, groupaddr, NETIF_DEL_MAC_FILTER);
       }
 
-      /* Free the group */
-      mld6_free_group(group);
+      /* free group struct */
+      memp_free(MEMP_MLD6_GROUP, group);
     } else {
       /* Decrement group use */
       group->use--;

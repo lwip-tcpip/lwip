@@ -284,7 +284,7 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
 }
 
 /**
- * Remove a group in the global igmp_group_list
+ * Remove a group in the global igmp_group_list, but don't free it yet
  *
  * @param group the group to remove from the global igmp_group_list
  * @return ERR_OK if group was removed from the list, an err_t otherwise
@@ -311,8 +311,6 @@ igmp_remove_group(struct igmp_group *group)
       err = ERR_ARG;
     }
   }
-  /* free group */
-  memp_free(MEMP_IGMP_GROUP, group);
 
   return err;
 }
@@ -601,12 +599,19 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 
     /* If there is no other use of the group */
     if (group->use <= 1) {
+      /* Remove the group from the list */
+      igmp_remove_group(group);
+
       /* If we are the last reporter for this group */
       if (group->last_reporter_flag) {
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: sending leaving group\n"));
         IGMP_STATS_INC(igmp.tx_leave);
         igmp_send(group, IGMP_LEAVE_GROUP);
       }
+
+      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: remove group: "));
+      ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
+      LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
 
       /* Disable the group at the MAC level */
       if (netif->igmp_mac_filter != NULL) {
@@ -616,12 +621,8 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
         netif->igmp_mac_filter(netif, groupaddr, NETIF_DEL_MAC_FILTER);
       }
 
-      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: remove group: "));
-      ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-      LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-
-      /* Free the group */
-      igmp_remove_group(group);
+      /* Free group struct */
+      memp_free(MEMP_IGMP_GROUP, group);
     } else {
       /* Decrement group use */
       group->use--;
