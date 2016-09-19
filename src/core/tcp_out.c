@@ -1537,6 +1537,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   struct tcp_seg *seg;
   u16_t len;
   u8_t is_fin;
+  u32_t snd_nxt;
   struct netif *netif;
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: sending ZERO WINDOW probe to "));
@@ -1579,6 +1580,12 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
        (unsent), seg->p->payload points to the IP header or TCP header.
        Ensure we copy the first TCP data byte: */
     pbuf_copy_partial(seg->p, d, 1, seg->p->tot_len - seg->len);
+  }
+
+  /* The byte may be acknowledged without the window being opened. */
+  snd_nxt = ntohl(seg->tcphdr->seqno) + 1;
+  if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
+    pcb->snd_nxt = snd_nxt;
   }
 
   netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
