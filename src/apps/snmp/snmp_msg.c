@@ -525,9 +525,6 @@ snmp_process_set_request(struct snmp_request *request)
         if (node_instance.release_instance != NULL) {
           node_instance.release_instance(&node_instance);
         }
-      } else if ((request->error_status == SNMP_ERR_NOSUCHINSTANCE) || (request->error_status == SNMP_ERR_NOSUCHOBJECT) || (request->error_status == SNMP_ERR_ENDOFMIBVIEW)) {
-        /* according to RFC 1905 (4.2.5.  The SetRequest-PDU) return 'NotWritable' for unknown OIDs */
-        request->error_status = SNMP_ERR_NOTWRITABLE;
       }
     } else if (err == SNMP_VB_ENUMERATOR_ERR_EOVB) {
       /* no more varbinds in request */
@@ -1361,6 +1358,19 @@ snmp_complete_outbound_frame(struct snmp_request *request)
        }
     }
   } else {
+    if (request->request_type == SNMP_ASN1_CONTEXT_PDU_SET_REQ) {
+      /* map error codes to according to RFC 1905 (4.2.5.  The SetRequest-PDU) return 'NotWritable' for unknown OIDs) */
+      switch (request->error_status) {
+        case SNMP_ERR_NOSUCHINSTANCE:
+        case SNMP_ERR_NOSUCHOBJECT:
+        case SNMP_ERR_ENDOFMIBVIEW:
+          request->error_status = SNMP_ERR_NOTWRITABLE;
+          break;
+        default:
+          break;
+      }
+    }
+
     if (request->error_status >= SNMP_VARBIND_EXCEPTION_OFFSET) {
       /* should never occur because v2 frames store exceptions directly inside varbinds and not as frame error_status */
       LWIP_DEBUGF(SNMP_DEBUG, ("snmp_complete_outbound_frame() > Found v2 request with varbind exception code stored as error status!\n"));
