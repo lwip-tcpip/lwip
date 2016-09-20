@@ -681,9 +681,11 @@ check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
     }
 #endif
 #if LWIP_IPV4
-    res = mdns_build_reverse_v4_domain(&mydomain, netif_ip4_addr(netif));
-    if (res == ERR_OK && mdns_domain_eq(&rr->domain, &mydomain)) {
-      replies |= REPLY_HOST_PTR_V4;
+    if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
+      res = mdns_build_reverse_v4_domain(&mydomain, netif_ip4_addr(netif));
+      if (res == ERR_OK && mdns_domain_eq(&rr->domain, &mydomain)) {
+        replies |= REPLY_HOST_PTR_V4;
+      }
     }
 #endif
   }
@@ -693,7 +695,8 @@ check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
   if (res == ERR_OK && mdns_domain_eq(&rr->domain, &mydomain)) {
     /* TODO return NSEC if unsupported protocol requested */
 #if LWIP_IPV4
-    if (rr->type == DNS_RRTYPE_A || rr->type == DNS_RRTYPE_ANY) {
+    if (!ip4_addr_isany_val(*netif_ip4_addr(netif))
+        && (rr->type == DNS_RRTYPE_A || rr->type == DNS_RRTYPE_ANY)) {
       replies |= REPLY_HOST_A;
     }
 #endif
@@ -1497,10 +1500,14 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   memset(&announce, 0, sizeof(announce));
   announce.netif = netif;
   announce.cache_flush = 1;
-  announce.host_replies = REPLY_HOST_A | REPLY_HOST_AAAA | REPLY_HOST_PTR_V4 | REPLY_HOST_PTR_V6;
+#if LWIP_IPV4
+  if (!ip4_addr_isany_val(*netif_ip4_addr(netif)))
+    announce.host_replies = REPLY_HOST_A | REPLY_HOST_PTR_V4;
+#endif
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
+      announce.host_replies |= REPLY_HOST_AAAA | REPLY_HOST_PTR_V6;
       announce.host_reverse_v6_replies |= (1 << i);
     }
   }
