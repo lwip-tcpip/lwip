@@ -525,6 +525,9 @@ snmp_process_set_request(struct snmp_request *request)
         if (node_instance.release_instance != NULL) {
           node_instance.release_instance(&node_instance);
         }
+      } else if ((request->error_status == SNMP_ERR_NOSUCHINSTANCE) || (request->error_status == SNMP_ERR_NOSUCHOBJECT) || (request->error_status == SNMP_ERR_ENDOFMIBVIEW)) {
+        /* according to RFC 1905 (4.2.5.  The SetRequest-PDU) return 'NotWritable' for unknown OIDs */
+        request->error_status = SNMP_ERR_NOTWRITABLE;
       }
     } else if (err == SNMP_VB_ENUMERATOR_ERR_EOVB) {
       /* no more varbinds in request */
