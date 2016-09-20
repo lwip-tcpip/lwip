@@ -63,7 +63,9 @@ void eth_rx_irq()
      dma_desc->rx_data,
      dma_desc->max_buffer_size);
 
-  netif->input(p, netif);
+  if(netif->input(p, netif) != ERR_OK) {
+    pbuf_free(p);
+  }
 }
   @endcode
  */
