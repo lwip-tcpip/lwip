@@ -32,6 +32,40 @@
  *
  * Therefore, looping through a pbuf of a single packet, has an
  * loop end condition (tot_len == p->len), NOT (next == NULL).
+ *
+ * Example of custom pbuf usage for zero-copy RX:
+  @code{.c}
+typedef struct my_custom_pbuf
+{
+   struct pbuf_custom p;
+   void* dma_descriptor;
+} my_custom_pbuf_t;
+
+void my_pbuf_free_custom(void* p)
+{
+  my_custom_pbuf_t* my_puf = (my_custom_pbuf_t*)p;
+  free_rx_dma_descriptor(my_pbuf->dma_descriptor);
+  my_pbuf_pool_put(my_pbuf);
+}
+
+void eth_rx_irq()
+{
+  dma_descriptor*   dma_desc = get_RX_DMA_descriptor_from_ethernet();
+  my_custom_pbuf_t* my_pbuf  = my_pbuf_pool_get();
+
+  my_pbuf->p.custom_free_function = my_pbuf_free_custom;
+  my_pbuf->dma_descriptor         = dma_desc;
+
+  struct pbuf* p = pbuf_alloced_custom(PBUF_RAW,
+     dma_desc->rx_length,
+     PBUF_REF,
+     &my_pbuf.p,
+     dma_desc->rx_data,
+     dma_desc->max_buffer_size);
+
+  netif->input(p, netif);
+}
+  @endcode
  */
 
 /*
