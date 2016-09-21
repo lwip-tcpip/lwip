@@ -475,6 +475,7 @@ mld6_tmr(void)
       }
       group = group->next;
     }
+    netif = netif->next;
   }
 }
 
