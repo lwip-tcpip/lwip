@@ -59,7 +59,7 @@ void eth_rx_irq()
   struct pbuf* p = pbuf_alloced_custom(PBUF_RAW,
      dma_desc->rx_length,
      PBUF_REF,
-     &my_pbuf.p,
+     &my_pbuf->p,
      dma_desc->rx_data,
      dma_desc->max_buffer_size);
 

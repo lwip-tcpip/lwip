@@ -14,7 +14,7 @@
  * -------------------------
  *
  * - Probing/conflict resolution
- * - Sending goodbye messages (zero ttl)
+ * - Sending goodbye messages (zero ttl) - shutdown, DHCP lease about to expire, DHCP turned off...
  * - Checking that source address of unicast requests are on the same network
  * - Limiting multicast responses to 1 per second per resource record
  * - Fragmenting replies if required
