@@ -186,7 +186,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 #if LWIP_IPV6_MLD
           /* Leave solicited node multicast group. */
           ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(inp, i)->addr[3]);
-          mld6_leavegroup(netif_ip6_addr(inp, i), &multicast_address);
+          mld6_leavegroup_netif(inp, &multicast_address);
 #endif /* LWIP_IPV6_MLD */
 
 #if LWIP_IPV6_AUTOCONFIG
@@ -825,7 +825,7 @@ nd6_tmr(void)
           if ((addr_state & IP6_ADDR_TENTATIVE_COUNT_MASK) == 0) {
             /* Join solicited node multicast group. */
             ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, i)->addr[3]);
-            mld6_joingroup(netif_ip6_addr(netif, i), &multicast_address);
+            mld6_joingroup_netif(netif, &multicast_address);
           }
 #endif /* LWIP_IPV6_MLD */
           /* Send a NS for this address. */
