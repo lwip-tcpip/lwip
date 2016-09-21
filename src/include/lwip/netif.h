@@ -112,6 +112,12 @@ enum lwip_internal_netif_client_data_index
 #if LWIP_AUTOIP
    LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP,
 #endif
+#if LWIP_IGMP
+   LWIP_NETIF_CLIENT_DATA_INDEX_IGMP,
+#endif
+#if LWIP_IPV6_MLD
+   LWIP_NETIF_CLIENT_DATA_INDEX_MLD6,
+#endif
    LWIP_NETIF_CLIENT_DATA_INDEX_MAX
 };
 
@@ -201,6 +207,18 @@ typedef err_t (*netif_mld_mac_filter_fn)(struct netif *netif,
        const ip6_addr_t *group, enum netif_mac_filter_action action);
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
+#if LWIP_DHCP || LWIP_AUTOIP || LWIP_IGMP || LWIP_IPV6_MLD || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
+u8_t netif_alloc_client_data_id(void);
+/** @ingroup netif_cd
+ * Set client data. Obtain ID from netif_alloc_client_data_id().
+ */
+#define netif_set_client_data(netif, id, data) netif_get_client_data(netif, id) = (data)
+/** @ingroup netif_cd
+ * Get client data. Obtain ID from netif_alloc_client_data_id().
+ */
+#define netif_get_client_data(netif, id)       (netif)->client_data[(id)]
+#endif /* LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0) */
+
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
  *  function for the device driver: hwaddr_len, hwaddr[], mtu, flags */
@@ -257,7 +275,7 @@ struct netif {
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
-#if LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
+#ifdef netif_get_client_data
   void* client_data[LWIP_NETIF_CLIENT_DATA_INDEX_MAX + LWIP_NUM_NETIF_CLIENT_DATA];
 #endif
 #if LWIP_IPV6_AUTOCONFIG
@@ -423,18 +441,6 @@ void netif_poll_all(void);
 #endif /* ENABLE_LOOPBACK */
 
 err_t netif_input(struct pbuf *p, struct netif *inp);
-
-#if LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
-u8_t netif_alloc_client_data_id(void);
-/** @ingroup netif_cd
- * Set client data. Obtain ID from netif_alloc_client_data_id().
- */
-#define netif_set_client_data(netif, id, data) netif_get_client_data(netif, id) = (data)
-/** @ingroup netif_cd
- * Get client data. Obtain ID from netif_alloc_client_data_id().
- */
-#define netif_get_client_data(netif, id)       (netif)->client_data[(id)]
-#endif /* LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0) */
 
 #if LWIP_IPV6
 /** @ingroup netif_ip6 */

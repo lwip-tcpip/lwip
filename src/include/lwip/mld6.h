@@ -58,8 +58,6 @@ extern "C" {
 struct mld_group {
   /** next link */
   struct mld_group *next;
-  /** interface on which the group is active */
-  struct netif      *netif;
   /** multicast address */
   ip6_addr_t         group_address;
   /** signifies we were the last person to report */
@@ -72,9 +70,6 @@ struct mld_group {
   u8_t               use;
 };
 
-/* Head of MLD group list */
-extern struct mld_group* mld_group_list;
-
 #define MLD6_TMR_INTERVAL              100 /* Milliseconds */
 
 err_t  mld6_stop(struct netif *netif);
@@ -86,6 +81,9 @@ err_t  mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
 err_t  mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
 err_t  mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
 err_t  mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
+
+/* Get list of MLD6 groups for netif */
+#define netif_mld6_data(netif) ((struct mld_group *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6))
 
 #ifdef __cplusplus
 }
