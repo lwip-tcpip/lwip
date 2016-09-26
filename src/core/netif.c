@@ -227,7 +227,9 @@ netif_input(struct pbuf *p, struct netif *inp)
  * These functions use netif flags NETIF_FLAG_ETHARP and NETIF_FLAG_ETHERNET
  * to decide whether to forward to ethernet_input() or ip_input().
  * In other words, the functions only work when the netif
- * driver is implemented correctly!
+ * driver is implemented correctly!\n
+ * Members of struct netif should be be initialized by the 
+ * netif init function = netif driver (init parameter of this function).
  *
  * @return netif, or NULL if failed.
  */

@@ -245,17 +245,19 @@ struct netif {
 #if LWIP_IPV4
   /** This function is called by the IP module when it wants
    *  to send a packet on the interface. This function typically
-   *  first resolves the hardware address, then sends the packet. */
+   *  first resolves the hardware address, then sends the packet.
+   *  For ethernet physical layer, this is usually etharp_output() */
   netif_output_fn output;
 #endif /* LWIP_IPV4 */
-  /** This function is called by the ARP module when it wants
+  /** This function is called by ethernet_output() when it wants
    *  to send a packet on the interface. This function outputs
    *  the pbuf as-is on the link medium. */
   netif_linkoutput_fn linkoutput;
 #if LWIP_IPV6
   /** This function is called by the IPv6 module when it wants
    *  to send a packet on the interface. This function typically
-   *  first resolves the hardware address, then sends the packet. */
+   *  first resolves the hardware address, then sends the packet.
+   *  For ethernet physical layer, this is usually ethip6_output() */
   netif_output_ip6_fn output_ip6;
 #endif /* LWIP_IPV6 */
 #if LWIP_NETIF_STATUS_CALLBACK
