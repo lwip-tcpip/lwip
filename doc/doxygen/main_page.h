@@ -49,7 +49,7 @@
  * Porting: implement all functions in @ref sys_time and @ref sys_prot.\n
  * You can only use @ref callbackstyle_api in this mode.\n
  * Sample code:\n
- * @verbinclude NO_SYS_SampleCode.c
+ * @include NO_SYS_SampleCode.c
  */
 
 /**

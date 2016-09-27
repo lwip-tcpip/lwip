@@ -82,7 +82,9 @@ err_t  mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
 err_t  mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr);
 err_t  mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr);
 
-/* Get list of MLD6 groups for netif */
+/** @ingroup mld6
+ * Get list head of MLD6 groups for netif
+ */
 #define netif_mld6_data(netif) ((struct mld_group *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_MLD6))
 
 #ifdef __cplusplus
