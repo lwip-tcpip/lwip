@@ -147,7 +147,8 @@ snmp_get_auth_traps_enabled(void)
 
 
 /**
- * Sends an generic or enterprise specific trap message.
+ * @ingroup snmp_traps
+ * Sends a generic or enterprise specific trap message.
  *
  * @param eoid points to enterprise object identifier
  * @param generic_trap is the trap code
@@ -225,7 +226,7 @@ snmp_send_trap(const struct snmp_obj_id* eoid, s32_t generic_trap, s32_t specifi
 
 /**
  * @ingroup snmp_traps
- *  Send generic SNMP trap
+ * Send generic SNMP trap
  */
 err_t 
 snmp_send_trap_generic(s32_t generic_trap)
@@ -235,7 +236,7 @@ snmp_send_trap_generic(s32_t generic_trap)
 }
 
 /**
- *@ingroup snmp_traps
+ * @ingroup snmp_traps
  * Send specific SNMP trap with variable bindings
  */
 err_t
