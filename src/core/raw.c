@@ -471,7 +471,7 @@ raw_new(u8_t proto)
  * @return The RAW PCB which was created. NULL if the PCB data structure
  * could not be allocated.
  *
- * @param type IP address type, see IPADDR_TYPE_XX definitions.
+ * @param type IP address type, see @ref lwip_ip_addr_type definitions.
  * If you want to listen to IPv4 and IPv6 (dual-stack) packets,
  * supply @ref IPADDR_TYPE_ANY as argument and bind to @ref IP_ANY_TYPE.
  * @param proto the protocol number (next header) of the IPv6 packet payload
