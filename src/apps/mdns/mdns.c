@@ -265,42 +265,6 @@ struct mdns_answer {
   u16_t rd_offset;
 };
 
-#ifndef LWIP_MDNS_STRNCASECMP
-#define LWIP_MDNS_STRNCASECMP(str1, str2, len) mdns_strncasecmp(str1, str2, len)
-/**
- * A small but sufficient implementation for case insensitive strncmp.
- * This can be defined to e.g. strnicmp for windows or strncasecmp for linux.
- */
-static int
-mdns_strncasecmp(const char* str1, const char* str2, size_t len)
-{
-  char c1, c2;
-
-  do {
-    c1 = *str1++;
-    c2 = *str2++;
-    if (c1 != c2) {
-      char c1_upc = c1 | 0x20;
-      if ((c1_upc >= 'a') && (c1_upc <= 'z')) {
-        /* characters are not equal an one is in the alphabet range:
-        downcase both chars and check again */
-        char c2_upc = c2 | 0x20;
-        if (c1_upc != c2_upc) {
-          /* still not equal */
-          /* don't care for < or > */
-          return 1;
-        }
-      } else {
-        /* characters are not equal but none is in the alphabet range */
-        return 1;
-      }
-    }
-  } while (len-- && c1 != 0);
-  return 0;
-}
-#endif /* LWIP_MDNS_STRNCASECMP */
-
-
 /**
  * Add a label part to a domain
  * @param domain The domain to add a label to
@@ -460,7 +424,7 @@ mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b)
     len = *ptra;
     ptra++;
     ptrb++;
-    res = LWIP_MDNS_STRNCASECMP((char *) ptra, (char *) ptrb, len);
+    res = lwip_strnicmp((char *) ptra, (char *) ptrb, len);
     if (res != 0) {
       return 0;
     }

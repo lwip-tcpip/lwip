@@ -80,6 +80,7 @@
 
 #if LWIP_DNS /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/def.h"
 #include "lwip/udp.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
@@ -271,40 +272,6 @@ static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
 static struct dns_req_entry   dns_requests[DNS_MAX_REQUESTS];
 static ip_addr_t              dns_servers[DNS_MAX_SERVERS];
 
-#ifndef LWIP_DNS_STRICMP
-#define LWIP_DNS_STRICMP(str1, str2) dns_stricmp(str1, str2)
-/**
- * A small but sufficient implementation for case insensitive strcmp.
- * This can be defined to e.g. stricmp for windows or strcasecmp for linux. */
-static int
-dns_stricmp(const char* str1, const char* str2)
-{
-  char c1, c2;
-
-  do {
-    c1 = *str1++;
-    c2 = *str2++;
-    if (c1 != c2) {
-      char c1_upc = c1 | 0x20;
-      if ((c1_upc >= 'a') && (c1_upc <= 'z')) {
-        /* characters are not equal an one is in the alphabet range:
-        downcase both chars and check again */
-        char c2_upc = c2 | 0x20;
-        if (c1_upc != c2_upc) {
-          /* still not equal */
-          /* don't care for < or > */
-          return 1;
-        }
-      } else {
-        /* characters are not equal but none is in the alphabet range */
-        return 1;
-      }
-    }
-  } while (c1 != 0);
-  return 0;
-}
-#endif /* LWIP_DNS_STRICMP */
-
 /**
  * Initialize the resolver: set up the UDP pcb and configure the default server
  * (if DNS_SERVER_ADDRESS is set).
@@ -441,7 +408,7 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
   struct local_hostlist_entry *entry = local_hostlist_dynamic;
   while (entry != NULL) {
-    if ((LWIP_DNS_STRICMP(entry->name, hostname) == 0) &&
+    if ((lwip_stricmp(entry->name, hostname) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, entry->addr)) {
       if (addr) {
         ip_addr_copy(*addr, entry->addr);
@@ -453,7 +420,7 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
 #else /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
   size_t i;
   for (i = 0; i < LWIP_ARRAYSIZE(local_hostlist_static); i++) {
-    if ((LWIP_DNS_STRICMP(local_hostlist_static[i].name, hostname) == 0) &&
+    if ((lwip_stricmp(local_hostlist_static[i].name, hostname) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, local_hostlist_static[i].addr)) {
       if (addr) {
         ip_addr_copy(*addr, local_hostlist_static[i].addr);
@@ -483,7 +450,7 @@ dns_local_removehost(const char *hostname, const ip_addr_t *addr)
   struct local_hostlist_entry *entry = local_hostlist_dynamic;
   struct local_hostlist_entry *last_entry = NULL;
   while (entry != NULL) {
-    if (((hostname == NULL) || !LWIP_DNS_STRICMP(entry->name, hostname)) &&
+    if (((hostname == NULL) || !lwip_stricmp(entry->name, hostname)) &&
         ((addr == NULL) || ip_addr_cmp(&entry->addr, addr))) {
       struct local_hostlist_entry *free_entry;
       if (last_entry != NULL) {
@@ -572,7 +539,7 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
   /* Walk through name list, return entry if found. If not, return NULL. */
   for (i = 0; i < DNS_TABLE_SIZE; ++i) {
     if ((dns_table[i].state == DNS_STATE_DONE) &&
-        (LWIP_DNS_STRICMP(name, dns_table[i].name) == 0) &&
+        (lwip_strnicmp(name, dns_table[i].name, sizeof(dns_table[i].name)) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, dns_table[i].ipaddr)) {
       LWIP_DEBUGF(DNS_DEBUG, ("dns_lookup: \"%s\": found = ", name));
       ip_addr_debug_print(DNS_DEBUG, &(dns_table[i].ipaddr));
@@ -1243,7 +1210,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
   /* check for duplicate entries */
   for (i = 0; i < DNS_TABLE_SIZE; i++) {
     if ((dns_table[i].state == DNS_STATE_ASKING) &&
-        (LWIP_DNS_STRICMP(name, dns_table[i].name) == 0)) {
+        (lwip_strnicmp(name, dns_table[i].name, sizeof(dns_table[i].name)) == 0)) {
 #if LWIP_IPV4 && LWIP_IPV6
       if (dns_table[i].reqaddrtype != dns_addrtype) {
         /* requested address types don't match

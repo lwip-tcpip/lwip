@@ -133,9 +133,26 @@ u32_t lwip_ntohl(u32_t x);
 
 #endif /* BYTE_ORDER == BIG_ENDIAN */
 
+/* Functions that are not available as standard implementations.
+ * In lwipopts.h, you can #define these to implementations available on
+ * your platform to save some code bytes if you use these functions
+ * in your application, too.
+ */
+#ifndef lwip_itoa
+void  lwip_itoa(int value, char* result);
+#endif
+#ifndef lwip_strnicmp
+int   lwip_strnicmp(const char* str1, const char* str2, size_t len);
+#endif
+#ifndef lwip_stricmp
+int   lwip_stricmp(const char* str1, const char* str2);
+#endif
+#ifndef lwip_strnstr
+char* lwip_strnstr(const char* buffer, const char* token, size_t n);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* LWIP_HDR_DEF_H */
-
