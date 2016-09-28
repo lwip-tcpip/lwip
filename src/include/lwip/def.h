@@ -134,7 +134,7 @@ u32_t lwip_ntohl(u32_t x);
 #endif /* BYTE_ORDER == BIG_ENDIAN */
 
 /* Functions that are not available as standard implementations.
- * In lwipopts.h, you can #define these to implementations available on
+ * In cc.h, you can #define these to implementations available on
  * your platform to save some code bytes if you use these functions
  * in your application, too.
  */
