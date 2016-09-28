@@ -1193,7 +1193,7 @@ mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, stru
   mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
   mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(netif, addrindex));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v6 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif)->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, NULL, 0, &host);
 }
 #endif
 
