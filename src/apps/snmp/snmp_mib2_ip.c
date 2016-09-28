@@ -326,7 +326,7 @@ ip_RouteTable_get_cell_value_core(struct netif *netif, u8_t default_route, const
   case 1: /* ipRouteDest */
     if (default_route) {
        /* default rte has 0.0.0.0 dest */
-      value->u32 = IP4_ADDR_ANY->addr;
+      value->u32 = IP4_ADDR_ANY4->addr;
     } else {
       /* netifs have netaddress dest */
       ip4_addr_t tmp;
@@ -378,7 +378,7 @@ ip_RouteTable_get_cell_value_core(struct netif *netif, u8_t default_route, const
   case 11: /* ipRouteMask */
     if (default_route) {
       /* default rte use 0.0.0.0 mask */
-      value->u32 = IP4_ADDR_ANY->addr;
+      value->u32 = IP4_ADDR_ANY4->addr;
     } else {
       /* other rtes use netmask */
       value->u32 = netif_ip4_netmask(netif)->addr;
@@ -449,7 +449,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
 
   /* check default route */
   if (netif_default != NULL) {
-    snmp_ip4_to_oid(IP4_ADDR_ANY, &test_oid[0]);
+    snmp_ip4_to_oid(IP4_ADDR_ANY4, &test_oid[0]);
     snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges), netif_default);
   }
 

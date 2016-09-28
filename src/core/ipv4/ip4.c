@@ -724,7 +724,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
  * @param p the packet to send (p->payload points to the data, e.g. next
             protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IP header and p->payload points to that IP header)
- * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ * @param src the source IP address to send from (if src == IP4_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
  * @param ttl the TTL value to be set in the IP header
@@ -881,7 +881,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     ++ip_id;
 
     if (src == NULL) {
-      ip4_addr_copy(iphdr->src, *IP4_ADDR_ANY);
+      ip4_addr_copy(iphdr->src, *IP4_ADDR_ANY4);
     } else {
       /* src cannot be NULL here */
       ip4_addr_copy(iphdr->src, *src);
@@ -955,7 +955,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
  * @param p the packet to send (p->payload points to the data, e.g. next
             protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IP header and p->payload points to that IP header)
- * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ * @param src the source IP address to send from (if src == IP4_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
  * @param ttl the TTL value to be set in the IP header
@@ -990,7 +990,7 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  * @param p the packet to send (p->payload points to the data, e.g. next
             protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IP header and p->payload points to that IP header)
- * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ * @param src the source IP address to send from (if src == IP4_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
  * @param ttl the TTL value to be set in the IP header

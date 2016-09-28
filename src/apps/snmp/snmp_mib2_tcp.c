@@ -172,7 +172,7 @@ tcp_ConnTable_get_cell_value_core(struct tcp_pcb *pcb, const u32_t* column, unio
     break;
   case 4: /* tcpConnRemAddress */
     if (pcb->state == LISTEN) {
-      value->u32 = IP4_ADDR_ANY->addr;
+      value->u32 = IP4_ADDR_ANY4->addr;
     } else {
       value->u32 = ip_2_ip4(&pcb->remote_ip)->addr;
     }
@@ -224,7 +224,7 @@ tcp_ConnTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
 
         /* PCBs in state LISTEN are not connected and have no remote_ip or remote_port */
         if (pcb->state == LISTEN) {
-          if (ip4_addr_cmp(&remote_ip, IP4_ADDR_ANY) && (remote_port == 0)) {
+          if (ip4_addr_cmp(&remote_ip, IP4_ADDR_ANY4) && (remote_port == 0)) {
             /* fill in object properties */
             return tcp_ConnTable_get_cell_value_core(pcb, column, value, value_len);
           }
@@ -268,7 +268,7 @@ tcp_ConnTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
 
         /* PCBs in state LISTEN are not connected and have no remote_ip or remote_port */
         if (pcb->state == LISTEN) {
-          snmp_ip4_to_oid(IP4_ADDR_ANY, &test_oid[5]);
+          snmp_ip4_to_oid(IP4_ADDR_ANY4, &test_oid[5]);
           test_oid[9] = 0;
         } else {
           if (IP_IS_V6_VAL(pcb->remote_ip)) { /* should never happen */

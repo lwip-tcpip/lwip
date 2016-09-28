@@ -196,7 +196,7 @@ raw_input(struct pbuf *p, struct netif *inp)
  * Bind a RAW PCB.
  *
  * @param pcb RAW PCB to be bound with a local address ipaddr.
- * @param ipaddr local IP address to bind with. Use IP_ADDR_ANY to
+ * @param ipaddr local IP address to bind with. Use IP4_ADDR_ANY to
  * bind to all local interfaces.
  *
  * @return lwIP error code.

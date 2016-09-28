@@ -695,7 +695,7 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
   MIB2_INIT_NETIF(pppif, snmp_ifType_ppp, 0);
   if (!netif_add(pcb->netif,
 #if LWIP_IPV4
-                 IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY,
+                 IP4_ADDR_ANY4, IP4_ADDR_BROADCAST, IP4_ADDR_ANY4,
 #endif /* LWIP_IPV4 */
                  (void *)pcb, ppp_netif_init_cb, NULL)) {
     LWIP_MEMPOOL_FREE(PPP_PCB, pcb);
@@ -1090,7 +1090,7 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
 
-  netif_set_addr(pcb->netif, IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY);
+  netif_set_addr(pcb->netif, IP4_ADDR_ANY4, IP4_ADDR_BROADCAST, IP4_ADDR_ANY4);
   return 1;
 }
 
@@ -1145,12 +1145,12 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
   nsa = dns_getserver(0);
   ip_addr_set_ip4_u32(&nsb, ns1);
   if (ip_addr_cmp(nsa, &nsb)) {
-    dns_setserver(0, IP_ADDR_ANY);
+    dns_setserver(0, IP4_ADDR_ANY);
   }
   nsa = dns_getserver(1);
   ip_addr_set_ip4_u32(&nsb, ns2);
   if (ip_addr_cmp(nsa, &nsb)) {
-    dns_setserver(1, IP_ADDR_ANY);
+    dns_setserver(1, IP4_ADDR_ANY);
   }
   return 1;
 }

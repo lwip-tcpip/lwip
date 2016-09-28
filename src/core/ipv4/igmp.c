@@ -711,7 +711,7 @@ igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
  * @param p the packet to send (p->payload points to the data, e.g. next
             protocol header; if dest == LWIP_IP_HDRINCL, p already includes an
             IP header and p->payload points to that IP header)
- * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ * @param src the source IP address to send from (if src == IP4_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
  * @param ttl the TTL value to be set in the IP header
@@ -743,7 +743,7 @@ igmp_send(struct netif *netif, struct igmp_group *group, u8_t type)
 {
   struct pbuf*     p    = NULL;
   struct igmp_msg* igmp = NULL;
-  ip4_addr_t   src  = *IP4_ADDR_ANY;
+  ip4_addr_t   src  = *IP4_ADDR_ANY4;
   ip4_addr_t*  dest = NULL;
 
   /* IP header + "router alert" option + IGMP header */

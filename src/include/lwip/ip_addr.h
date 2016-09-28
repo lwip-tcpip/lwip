@@ -313,19 +313,25 @@ extern const ip_addr_t ip_addr_any;
 extern const ip_addr_t ip_addr_broadcast;
 
 /**
- * @ingroup ipaddr
- * IP_ADDR_ can be used as a fixed/const ip_addr_t
- * for the IPv4 wildcard and the broadcast address
+ * @ingroup ip4addr
+ * Provided for compatibility. Use IP4_ADDR_ANY for better readability.
  */
-#define IP_ADDR_ANY         (&ip_addr_any)
-/** @ingroup ipaddr */
-#define IP_ADDR_BROADCAST   (&ip_addr_broadcast)
+#define IP_ADDR_ANY         IP4_ADDR_ANY
 /**
  * @ingroup ip4addr
- * IP4_ADDR_ can be used as a fixed/const ip4_addr_t
+ * Can be used as a fixed/const ip_addr_t
+ * for the IPv4 wildcard and the broadcast address
+ */
+#define IP4_ADDR_ANY        (&ip_addr_any)
+/**
+ * @ingroup ip4addr
+ * Can be used as a fixed/const ip4_addr_t
  * for the wildcard and the broadcast address
  */
-#define IP4_ADDR_ANY        (ip_2_ip4(&ip_addr_any))
+#define IP4_ADDR_ANY4       (ip_2_ip4(&ip_addr_any))
+
+/** @ingroup ip4addr */
+#define IP_ADDR_BROADCAST   (&ip_addr_broadcast)
 /** @ingroup ip4addr */
 #define IP4_ADDR_BROADCAST  (ip_2_ip4(&ip_addr_broadcast))
 

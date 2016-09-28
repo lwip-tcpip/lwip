@@ -529,7 +529,7 @@ tcp_abort(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb to bind (no check is done whether this pcb is
  *        already bound!)
- * @param ipaddr the local ip address to bind to (use IP_ADDR_ANY to bind
+ * @param ipaddr the local ip address to bind to (use IP4_ADDR_ANY to bind
  *        to any local address
  * @param port the local port to bind to
  * @return ERR_USE if the port is already in use
@@ -546,7 +546,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
-    ipaddr = IP_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY;
   }
 #endif /* LWIP_IPV4 */
 

@@ -264,7 +264,7 @@ autoip_start(struct netif *netif)
   /* Set IP-Address, Netmask and Gateway to 0 to make sure that
    * ARP Packets are formed correctly
    */
-  netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
+  netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
     ("autoip_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0],
@@ -355,7 +355,7 @@ autoip_stop(struct netif *netif)
   if (autoip != NULL) {
     autoip->state = AUTOIP_STATE_OFF;
     if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
-      netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
+      netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
     }
   }
   return ERR_OK;

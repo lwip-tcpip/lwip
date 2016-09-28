@@ -579,7 +579,7 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
 void*
 lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void* report_arg)
 {
-  return lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT,
+  return lwiperf_start_tcp_server(IP4_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT,
     report_fn, report_arg);
 }
 

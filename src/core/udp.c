@@ -883,7 +883,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
  * Bind an UDP PCB.
  *
  * @param pcb UDP PCB to be bound with a local address ipaddr and port.
- * @param ipaddr local IP address to bind with. Use IP_ADDR_ANY to
+ * @param ipaddr local IP address to bind with. Use IP4_ADDR_ANY to
  * bind to all local interfaces.
  * @param port local UDP port to bind with. Use 0 to automatically bind
  * to a random port between UDP_LOCAL_PORT_RANGE_START and
@@ -907,7 +907,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
-    ipaddr = IP_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY;
   }
 #endif /* LWIP_IPV4 */
 

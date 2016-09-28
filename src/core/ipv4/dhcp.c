@@ -212,8 +212,8 @@ dhcp_inc_pcb_refcount(void)
     ip_set_option(dhcp_pcb, SOF_BROADCAST);
 
     /* set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs */
-    udp_bind(dhcp_pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp_pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    udp_bind(dhcp_pcb, IP4_ADDR_ANY, DHCP_CLIENT_PORT);
+    udp_connect(dhcp_pcb, IP4_ADDR_ANY, DHCP_SERVER_PORT);
     udp_recv(dhcp_pcb, dhcp_recv, NULL);
   }
 
@@ -258,7 +258,7 @@ dhcp_handle_nak(struct netif *netif)
      to ensure the callback can use dhcp_supplied_address() */
   dhcp_set_state(dhcp, DHCP_STATE_BACKING_OFF);
   /* remove IP address from interface (must no longer be used, as per RFC2131) */
-  netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
+  netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
   /* We can immediately restart discovery */
   dhcp_discover(netif);
 }
@@ -372,7 +372,7 @@ dhcp_select(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* send broadcast to any DHCP server */
-    udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP_ADDR_ANY);
+    udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
     dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_select: REQUESTING\n"));
   } else {
@@ -920,7 +920,7 @@ dhcp_decline(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* per section 4.4.4, broadcast DECLINE messages */
-    udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP_ADDR_ANY);
+    udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
     dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_decline: BACKING OFF\n"));
   } else {
@@ -971,7 +971,7 @@ dhcp_discover(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
-    udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP_ADDR_ANY);
+    udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover: SELECTING\n"));
@@ -1314,7 +1314,7 @@ dhcp_release(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_release: could not allocate DHCP request\n"));
   }
   /* remove IP address from interface (prevents routing from selecting this interface) */
-  netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
+  netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
 
   return result;
 }

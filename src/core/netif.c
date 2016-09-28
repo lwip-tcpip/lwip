@@ -497,7 +497,7 @@ void
 netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
   ip_addr_t new_addr;
-  *ip_2_ip4(&new_addr) = (ipaddr ? *ipaddr : *IP4_ADDR_ANY);
+  *ip_2_ip4(&new_addr) = (ipaddr ? *ipaddr : *IP4_ADDR_ANY4);
   IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
 
   /* address is actually being changed? */

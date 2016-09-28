@@ -43,7 +43,7 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
-/* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
+/* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
 const ip_addr_t ip_addr_any = IPADDR4_INIT(IPADDR_ANY);
 const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
 

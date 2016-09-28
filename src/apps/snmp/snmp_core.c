@@ -270,7 +270,7 @@ snmp_oid_to_ip4(const u32_t *oid, ip4_addr_t *ip)
       (oid[1] > 0xFF) ||
       (oid[2] > 0xFF) ||
       (oid[3] > 0xFF)) {
-    ip4_addr_copy(*ip, *IP4_ADDR_ANY);
+    ip4_addr_copy(*ip, *IP4_ADDR_ANY4);
     return 0;
   }
 
