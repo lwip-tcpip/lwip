@@ -183,17 +183,18 @@ lwip_strnicmp(const char* str1, const char* str2, size_t len)
 
 #ifndef lwip_itoa
 void
-lwip_itoa(int value, char* result)
+lwip_itoa(char* result, size_t bufsize, int number)
 {
   const int base = 10;
   char* ptr = result, *ptr1 = result, tmp_char;
   int tmp_value;
+  LWIP_UNUSED_ARG(bufsize);
 
   do {
-    tmp_value = value;
-    value /= base;
-    *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + (tmp_value - value * base)];
-  } while(value);
+    tmp_value = number;
+    number /= base;
+    *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"[35 + (tmp_value - number * base)];
+  } while(number);
 
    /* Apply negative sign */
   if (tmp_value < 0) {

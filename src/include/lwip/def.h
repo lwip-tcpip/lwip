@@ -139,7 +139,7 @@ u32_t lwip_ntohl(u32_t x);
  * in your application, too.
  */
 #ifndef lwip_itoa
-void  lwip_itoa(int value, char* result);
+void  lwip_itoa(char* result, size_t bufsize, int number);
 #endif
 #ifndef lwip_strnicmp
 int   lwip_strnicmp(const char* str1, const char* str2, size_t len);
