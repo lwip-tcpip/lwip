@@ -1477,6 +1477,8 @@ http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
             }
           }
           break;
+        default:
+          break;
       }
     }
   }
