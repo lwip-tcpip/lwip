@@ -102,6 +102,8 @@ lwip_ntohl(u32_t n)
   return lwip_htonl(n);
 }
 
+#endif /* (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN) */
+
 #ifndef lwip_strnstr
 /** Like strstr but does not need 'buffer' to be NULL-terminated */
 char*
@@ -208,5 +210,3 @@ lwip_itoa(char* result, size_t bufsize, int number)
   }
 }
 #endif
-
-#endif /* (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN) */
