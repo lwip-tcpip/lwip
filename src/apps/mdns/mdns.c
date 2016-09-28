@@ -107,6 +107,8 @@ static const ip_addr_t v6group = IPADDR6_INIT(PP_HTONL(0xFF020000UL), PP_HTONL(0
 static u8_t mdns_netif_client_id;
 static struct udp_pcb *mdns_pcb;
 
+#define NETIF_TO_HOST(netif) (struct mdns_host*)((netif)->client_data[mdns_netif_client_id])
+
 #define TOPDOMAIN_LOCAL "local"
 
 #define REVERSE_PTR_TOPDOMAIN "arpa"
@@ -690,7 +692,7 @@ check_host(struct netif *netif, struct mdns_rr_info *rr, u8_t *reverse_v6_reply)
 #endif
   }
 
-  res = mdns_build_host_domain(&mydomain, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
+  res = mdns_build_host_domain(&mydomain, NETIF_TO_HOST(netif));
   /* Handle requests for our hostname */
   if (res == ERR_OK && mdns_domain_eq(&rr->domain, &mydomain)) {
     /* TODO return NSEC if unsupported protocol requested */
@@ -1155,9 +1157,9 @@ static err_t
 mdns_add_a_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
+  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with A record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, (const u8_t *) netif_ip4_addr(netif), sizeof(ip4_addr_t), NULL);
+  return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, (const u8_t *) netif_ip4_addr(netif), sizeof(ip4_addr_t), NULL);
 }
 
 /** Write a 4.3.2.1.in-addr.arpa -> hostname.local PTR RR to outpacket */
@@ -1165,10 +1167,10 @@ static err_t
 mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
 {
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
+  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
   mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(netif));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v4 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, NULL, 0, &host);
 }
 #endif
 
@@ -1178,9 +1180,9 @@ static err_t
 mdns_add_aaaa_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
+  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_t), NULL);
+  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_t), NULL);
 }
 
 /** Write a x.y.z.ip6.arpa -> hostname.local PTR RR to outpacket */
@@ -1188,10 +1190,10 @@ static err_t
 mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
 {
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, (struct mdns_host*)netif->client_data[mdns_netif_client_id]);
+  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
   mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(netif, addrindex));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v6 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, ((struct mdns_host*)netif->client_data[mdns_netif_client_id])->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif)->dns_ttl, NULL, 0, &host);
 }
 #endif
 
@@ -1295,7 +1297,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
   struct mdns_service *service;
   err_t res;
   int i;
-  struct mdns_host* mdns = (struct mdns_host*)outpkt->netif->client_data[mdns_netif_client_id];
+  struct mdns_host* mdns = NETIF_TO_HOST(outpkt->netif);
 
   /* Write answers to host questions */
 #if LWIP_IPV4
