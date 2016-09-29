@@ -3,7 +3,7 @@
  * Network Interface Sequential API module
  *
  * @defgroup netifapi NETIF API
- * @ingroup threadsafe_api
+ * @ingroup sequential_api
  * Thread-safe functions to be called from non-TCPIP threads
  * 
  * @defgroup netifapi_netif NETIF related

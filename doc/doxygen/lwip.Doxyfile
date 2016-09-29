@@ -2071,6 +2071,7 @@ INCLUDE_FILE_PATTERNS  = *.h
 PREDEFINED             = __DOXYGEN__=1 \
                          NO_SYS=0 \
                          SYS_LIGHTWEIGHT_PROT=1 \
+                         LWIP_TCPIP_CORE_LOCKING=1 \
                          LWIP_IPV4=1 \
                          LWIP_IPV6=1 \
                          LWIP_ICMP=1 \

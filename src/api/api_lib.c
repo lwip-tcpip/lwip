@@ -3,7 +3,7 @@
  * Sequential API External module
  * 
  * @defgroup netconn Netconn API
- * @ingroup threadsafe_api
+ * @ingroup sequential_api
  * Thread-safe, to be called from non-TCPIP threads only.
  * TX/RX handling based on @ref netbuf (containing @ref pbuf)
  * to avoid copying data around.
