@@ -228,9 +228,12 @@ netif_input(struct pbuf *p, struct netif *inp)
  * to decide whether to forward to ethernet_input() or ip_input().
  * In other words, the functions only work when the netif
  * driver is implemented correctly!\n
- * Members of struct netif should be be initialized by the 
- * netif init function = netif driver (init parameter of this function).
- *
+ * Most members of struct netif should be be initialized by the 
+ * netif init function = netif driver (init parameter of this function).\n
+ * IPv6: Don't forget to call netif_create_ip6_linklocal_address() after
+ * setting the MAC address in struct netif.hwaddr
+ * (IPv6 requires a link-local address).
+ * 
  * @return netif, or NULL if failed.
  */
 struct netif *
