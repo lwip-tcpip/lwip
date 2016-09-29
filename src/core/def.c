@@ -49,6 +49,8 @@
 #include "lwip/opt.h"
 #include "lwip/def.h"
 
+#include <string.h>
+
 #if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
 
 /**
