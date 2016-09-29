@@ -470,15 +470,11 @@ mdns_build_reverse_v4_domain(struct mdns_domain *domain, const ip4_addr_t *addr)
   memset(domain, 0, sizeof(struct mdns_domain));
   ptr = (const u8_t *) addr;
   for (i = sizeof(ip4_addr_t) - 1; i >= 0; i--) {
-    char buf[3];
-    size_t pos = sizeof(buf);
+    char buf[4];
     u8_t val = ptr[i];
-    do {
-      pos--;
-      buf[pos] = '0' + (val % 10);
-      val /= 10;
-    } while (val != 0); /* loop is correct because u8_t needs at most 3 chars */
-    res = mdns_domain_add_label(domain, &buf[pos], (u8_t)(3 - pos));
+
+    lwip_itoa(buf, sizeof(buf), val);
+    res = mdns_domain_add_label(domain, buf, (u8_t)strlen(buf));
     LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
   }
   res = mdns_domain_add_label(domain, REVERSE_PTR_V4_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V4_DOMAIN)-1));
