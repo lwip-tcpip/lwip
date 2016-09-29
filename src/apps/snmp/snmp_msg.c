@@ -125,6 +125,7 @@ snmp_get_community_trap(void)
 void
 snmp_set_community_write(const char * const community)
 {
+  LWIP_ASSERT("community string must not be NULL", community != NULL);
   LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_MAX_COMMUNITY_STR_LEN);
   snmp_community_write = community;
 }
@@ -910,7 +911,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     snmp_authfail_trap();
     return ERR_ARG;
   } else if (request->request_type == SNMP_ASN1_CONTEXT_PDU_SET_REQ) {
-    if (strnlen(snmp_community_write, SNMP_MAX_COMMUNITY_STR_LEN) == 0) {
+    if (snmp_community_write[0] == 0) {
       /* our write community is empty, that means all our objects are readonly */
       request->error_status = SNMP_ERR_NOTWRITABLE;
       request->error_index  = 1;
