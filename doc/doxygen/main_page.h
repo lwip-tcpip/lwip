@@ -8,7 +8,7 @@
  * memory footprint.
  * 
  * @defgroup sequential_api Sequential-style APIs
- * Thread-safe APIs, blocking functions. More overhead, but can be called
+ * Sequential-style APIs, blocking functions. More overhead, but can be called
  * from any thread except TCPIP thread.
  * 
  * @defgroup addons Addons
