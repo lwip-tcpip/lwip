@@ -791,7 +791,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   err_t err;
   struct pbuf *last;
 #if LWIP_LOOPBACK_MAX_PBUFS
-  u8_t clen = 0;
+  u16_t clen = 0;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */

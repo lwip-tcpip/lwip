@@ -147,7 +147,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
 {
   struct ip6_reassdata *prev;
   u16_t pbufs_freed = 0;
-  u8_t clen;
+  u16_t clen;
   struct pbuf *p;
   struct ip6_reass_helper *iprh;
 
@@ -262,7 +262,8 @@ ip6_reass(struct pbuf *p)
   struct ip6_reass_helper *iprh, *iprh_tmp, *iprh_prev=NULL;
   struct ip6_frag_hdr *frag_hdr;
   u16_t offset, len;
-  u8_t clen, valid = 1;
+  u16_t clen;
+  u8_t valid = 1;
   struct pbuf *q;
 
   IP6_FRAG_STATS_INC(ip6_frag.recv);

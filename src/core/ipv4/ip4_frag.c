@@ -160,7 +160,7 @@ static int
 ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
 {
   u16_t pbufs_freed = 0;
-  u8_t clen;
+  u16_t clen;
   struct pbuf *p;
   struct ip_reass_helper *iprh;
 
@@ -487,8 +487,7 @@ ip4_reass(struct pbuf *p)
   struct ip_hdr *fraghdr;
   struct ip_reassdata *ipr;
   struct ip_reass_helper *iprh;
-  u16_t offset, len;
-  u8_t clen;
+  u16_t offset, len, clen;
 
   IPFRAG_STATS_INC(ip_frag.recv);
   MIB2_STATS_INC(mib2.ipreasmreqds);

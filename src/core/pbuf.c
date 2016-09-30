@@ -779,10 +779,10 @@ pbuf_free(struct pbuf *p)
  * @param p first pbuf of chain
  * @return the number of pbufs in a chain
  */
-u8_t
+u16_t
 pbuf_clen(struct pbuf *p)
 {
-  u8_t len;
+  u16_t len;
 
   len = 0;
   while (p != NULL) {
