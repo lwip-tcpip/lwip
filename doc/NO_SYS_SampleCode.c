@@ -46,12 +46,10 @@ static void netif_status_callback(struct netif *netif)
 static err_t netif_init(struct netif *netif)
 {
   netif->linkoutput = netif_output;
-  netif->output = etharp_output;
-  netif->name[0] = 'e';
-  netif->name[1] = '0';
-  netif->mtu = ETHERNET_MTU;
-
-  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET | NETIF_FLAG_IGMP;
+  netif->output     = etharp_output;
+  netif->output_ip6 = ethip6_output;
+  netif->mtu        = ETHERNET_MTU;
+  netif->flags      = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET | NETIF_FLAG_IGMP | NETIF_FLAG_MLD6;
   MIB2_INIT_NETIF(netif, snmp_ifType_ethernet_csmacd, 100000000);
 
   SMEMCPY(netif->hwaddr, your_mac_address_goes_here, sizeof(netif->hwaddr));
@@ -66,7 +64,11 @@ void main(void)
 
   lwip_init();
 
-  netif_add(&netif, IPADDR_ANY, IPADDR_ANY, IPADDR_ANY, NULL, netif_init, netif_input);
+  netif_add(&netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY, NULL, netif_init, netif_input);
+  netif.name[0] = 'e';
+  netif.name[1] = '0';
+  netif_create_ip6_linklocal_address(&netif, 1);
+  netif.ip6_autoconfig_enabled = 1;
   netif_set_status_callback(&netif, netif_status_callback);
   netif_set_default(&netif);
   netif_set_up(&netif);
