@@ -665,6 +665,8 @@ igmp_timeout(struct netif *netif, struct igmp_group *group)
     ip4_addr_debug_print(IGMP_DEBUG, &(group->group_address));
     LWIP_DEBUGF(IGMP_DEBUG, (" on if %p\n", (void*)netif));
 
+    group->group_state = IGMP_GROUP_IDLE_MEMBER;
+    
     IGMP_STATS_INC(igmp.tx_report);
     igmp_send(netif, group, IGMP_V2_MEMB_REPORT);
   }
