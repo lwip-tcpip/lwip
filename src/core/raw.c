@@ -495,4 +495,25 @@ raw_new_ip_type(u8_t type, u8_t proto)
   return pcb;
 }
 
+/** This function is called from netif.c when address is changed
+ *
+ * @param old_addr IP address of the netif before change
+ * @param new_addr IP address of the netif after change
+ */
+void raw_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr)
+{
+  struct raw_pcb* rpcb;
+
+  if (!ip_addr_isany(old_addr) && !ip_addr_isany(new_addr)) {
+    for (rpcb = raw_pcbs; rpcb != NULL; rpcb = rpcb->next) {
+      /* PCB bound to current local interface address? */
+      if (ip_addr_cmp(&rpcb->local_ip, old_addr)) {
+        /* The PCB is bound to the old ipaddr and
+         * is set to bound to the new one instead */
+        ip_addr_copy(rpcb->local_ip, *new_addr);
+      }
+    }
+  }
+}
+
 #endif /* LWIP_RAW */

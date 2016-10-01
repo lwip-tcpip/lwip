@@ -58,6 +58,7 @@
 #include "lwip/netif.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/udp.h"
+#include "lwip/raw.h"
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
 #include "lwip/etharp.h"
@@ -391,6 +392,9 @@ netif_remove(struct netif *netif)
 #if LWIP_UDP
     udp_netif_ip_addr_changed(netif_ip_addr4(netif), NULL);
 #endif /* LWIP_UDP */
+#if LWIP_RAW
+    raw_netif_ip_addr_changed(netif_ip_addr4(netif), NULL);
+#endif /* LWIP_RAW */
   }
 
 #if LWIP_IGMP
@@ -410,6 +414,9 @@ netif_remove(struct netif *netif)
 #if LWIP_UDP
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
 #endif /* LWIP_UDP */
+#if LWIP_RAW
+    raw_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
+#endif /* LWIP_RAW */
     }
   }
 #if LWIP_IPV6_MLD
@@ -512,6 +519,9 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 #if LWIP_UDP
     udp_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
 #endif /* LWIP_UDP */
+#if LWIP_RAW
+    raw_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
+#endif /* LWIP_RAW */
 
     mib2_remove_ip4(netif);
     mib2_remove_route_ip4(0, netif);
@@ -1047,6 +1057,9 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
 #if LWIP_UDP
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_UDP */
+#if LWIP_RAW
+    raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
+#endif /* LWIP_RAW */
     }
     /* @todo: remove/readd mib2 ip6 entries? */
 
@@ -1096,6 +1109,9 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
 #if LWIP_UDP
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
 #endif /* LWIP_UDP */
+#if LWIP_RAW
+    raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
+#endif /* LWIP_RAW */
       /* @todo: remove mib2 ip6 entries? */
     }
     netif->ip6_addr_state[addr_idx] = state;
