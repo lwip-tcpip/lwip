@@ -100,7 +100,9 @@ err_t  igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr);
 void   igmp_tmr(void);
 
 /** @ingroup igmp 
- * Get list head of IGMP groups for netif
+ * Get list head of IGMP groups for netif.
+ * Note: The allsystems group IP is contained in the list as first entry.
+ * @see @ref netif_set_igmp_mac_filter()
  */
 #define netif_igmp_data(netif) ((struct igmp_group *)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_IGMP))
 
