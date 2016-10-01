@@ -195,10 +195,13 @@ igmp_report_groups(struct netif *netif)
 
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_report_groups: sending IGMP reports on if %p\n", (void*)netif));
 
+  /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
+  if(group != NULL) {
+    group = group->next;
+  }
+  
   while (group != NULL) {
-    if (!(ip4_addr_cmp(&(group->group_address), &allsystems))) {
-      igmp_delaying_member(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
-    }
+    igmp_delaying_member(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
     group = group->next;
   }
 }
@@ -368,11 +371,15 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
       }
 
       groupref = netif_igmp_data(inp);
+      
+      /* Do not send messages on the all systems group address! */
+      /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
+      if(group != NULL) {
+        group = group->next;
+      }
+
       while (groupref) {
-        /* Do not send messages on the all systems group address! */
-        if (!(ip4_addr_cmp(&(groupref->group_address), &allsystems))) {
-          igmp_delaying_member(groupref, igmp->igmp_maxresp);
-        }
+        igmp_delaying_member(groupref, igmp->igmp_maxresp);
         groupref = groupref->next;
       }
     } else {
