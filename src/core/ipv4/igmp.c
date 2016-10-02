@@ -374,8 +374,8 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
       
       /* Do not send messages on the all systems group address! */
       /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
-      if(group != NULL) {
-        group = group->next;
+      if(groupref != NULL) {
+        groupref = groupref->next;
       }
 
       while (groupref) {
