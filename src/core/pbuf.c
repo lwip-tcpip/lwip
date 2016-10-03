@@ -56,6 +56,8 @@ void eth_rx_irq()
   my_pbuf->p.custom_free_function = my_pbuf_free_custom;
   my_pbuf->dma_descriptor         = dma_desc;
 
+  invalidate_cpu_cache(dma_desc->rx_data, dma_desc->rx_length);
+  
   struct pbuf* p = pbuf_alloced_custom(PBUF_RAW,
      dma_desc->rx_length,
      PBUF_REF,
