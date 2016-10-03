@@ -48,6 +48,9 @@
  */
 
 #include "lwip/apps/tftp_server.h"
+
+#if LWIP_UDP
+
 #include "lwip/udp.h"
 #include "lwip/timeouts.h"
 #include "lwip/debug.h"
@@ -410,3 +413,5 @@ tftp_init(const struct tftp_context *ctx)
 
   return ERR_OK;
 }
+
+#endif /* LWIP_UDP */
