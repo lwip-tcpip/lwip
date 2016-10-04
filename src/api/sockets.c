@@ -266,8 +266,8 @@ union sockaddr_aligned {
 /* This is to keep track of IP_ADD_MEMBERSHIP calls to drop the membership when
    a socket is closed */
 struct lwip_socket_multicast_pair {
-  /** the socket (+1 to not require initialization) */
-  int sa;
+  /** the socket */
+  struct lwip_sock* sock;
   /** the interface address */
   ip4_addr_t if_addr;
   /** the group address */
@@ -2730,14 +2730,16 @@ lwip_fcntl(int s, int cmd, int val)
 static int
 lwip_socket_register_membership(int s, const ip4_addr_t *if_addr, const ip4_addr_t *multi_addr)
 {
-  /* s+1 is stored in the array to prevent having to initialize the array
-     (default initialization is to 0) */
-  int sa = s + 1 - LWIP_SOCKET_OFFSET;
+  struct lwip_sock *sock = get_socket(s);
   int i;
 
+  if (!sock) {
+    return 0;
+  }
+
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
-    if (socket_ipv4_multicast_memberships[i].sa == 0) {
-      socket_ipv4_multicast_memberships[i].sa = sa;
+    if (socket_ipv4_multicast_memberships[i].sock == NULL) {
+      socket_ipv4_multicast_memberships[i].sock = sock;
       ip4_addr_copy(socket_ipv4_multicast_memberships[i].if_addr, *if_addr);
       ip4_addr_copy(socket_ipv4_multicast_memberships[i].multi_addr, *multi_addr);
       return 1;
@@ -2754,16 +2756,18 @@ lwip_socket_register_membership(int s, const ip4_addr_t *if_addr, const ip4_addr
 static void
 lwip_socket_unregister_membership(int s, const ip4_addr_t *if_addr, const ip4_addr_t *multi_addr)
 {
-  /* s+1 is stored in the array to prevent having to initialize the array
-     (default initialization is to 0) */
-  int sa = s + 1 - LWIP_SOCKET_OFFSET;
+  struct lwip_sock *sock = get_socket(s);
   int i;
 
+  if (!sock) {
+    return;
+  }
+
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
-    if ((socket_ipv4_multicast_memberships[i].sa == sa) &&
+    if ((socket_ipv4_multicast_memberships[i].sock == sock) &&
         ip4_addr_cmp(&socket_ipv4_multicast_memberships[i].if_addr, if_addr) &&
         ip4_addr_cmp(&socket_ipv4_multicast_memberships[i].multi_addr, multi_addr)) {
-      socket_ipv4_multicast_memberships[i].sa = 0;
+      socket_ipv4_multicast_memberships[i].sock = NULL;
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
       return;
@@ -2775,21 +2779,22 @@ lwip_socket_unregister_membership(int s, const ip4_addr_t *if_addr, const ip4_ad
  *
  * ATTENTION: this function is NOT called from tcpip_thread (or under CORE_LOCK).
  */
-static void lwip_socket_drop_registered_memberships(int s)
+static void
+lwip_socket_drop_registered_memberships(int s)
 {
-  /* s+1 is stored in the array to prevent having to initialize the array
-     (default initialization is to 0) */
-  int sa = s + 1 - LWIP_SOCKET_OFFSET;
+  struct lwip_sock *sock = get_socket(s);
   int i;
 
-  LWIP_ASSERT("socket has no netconn", sockets[s].conn != NULL);
+  if (!sock) {
+    return;
+  }
 
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
-    if (socket_ipv4_multicast_memberships[i].sa == sa) {
+    if (socket_ipv4_multicast_memberships[i].sock == sock) {
       ip_addr_t multi_addr, if_addr;
       ip_addr_copy_from_ip4(multi_addr, socket_ipv4_multicast_memberships[i].multi_addr);
       ip_addr_copy_from_ip4(if_addr, socket_ipv4_multicast_memberships[i].if_addr);
-      socket_ipv4_multicast_memberships[i].sa = 0;
+      socket_ipv4_multicast_memberships[i].sock = NULL;
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
 
