@@ -121,7 +121,7 @@ send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *
   struct pbuf* p;
   u16_t* payload;
   
-  p = pbuf_alloc(PBUF_TRANSPORT, TFTP_HEADER_LENGTH + str_length + 1, PBUF_RAM);
+  p = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(TFTP_HEADER_LENGTH + str_length + 1), PBUF_RAM);
   if(p == NULL) {
     return;
   }
@@ -196,7 +196,7 @@ send_data(void)
     return;
   }
 
-  pbuf_realloc(tftp_state.last_data, TFTP_HEADER_LENGTH + ret);
+  pbuf_realloc(tftp_state.last_data, (u16_t)(TFTP_HEADER_LENGTH + ret));
   resend_data();
 }
 
