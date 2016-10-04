@@ -45,7 +45,7 @@
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -87,7 +87,7 @@ struct tftp_context {
 
 err_t tftp_init(const struct tftp_context* ctx);
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
