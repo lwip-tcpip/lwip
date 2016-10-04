@@ -345,7 +345,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
           /* Delay probe in case we get confirmation of reachability from upper layer (TCP). */
           neighbor_cache[i].state = ND6_DELAY;
-          neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
+          neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
         }
       } else {
         /* Add their IPv6 address and link-layer address to neighbor cache.
@@ -366,7 +366,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         /* Receiving a message does not prove reachability: only in one direction.
          * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
         neighbor_cache[i].state = ND6_DELAY;
-        neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
+        neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
       }
 
       /* Override ip6_current_dest_addr() so that we have an aligned copy. */
@@ -593,7 +593,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
             /* Receiving a message does not prove reachability: only in one direction.
              * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
             neighbor_cache[i].state = ND6_DELAY;
-            neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
+            neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
           }
         }
         if (i >= 0) {
@@ -602,7 +602,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
             /* Receiving a message does not prove reachability: only in one direction.
              * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
             neighbor_cache[i].state = ND6_DELAY;
-            neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
+            neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
           }
         }
       }
@@ -698,15 +698,15 @@ nd6_tmr(void)
       }
       break;
     case ND6_STALE:
-      neighbor_cache[i].counter.stale_time += ND6_TMR_INTERVAL;
+      neighbor_cache[i].counter.stale_time++;
       break;
     case ND6_DELAY:
-      if (neighbor_cache[i].counter.delay_time <= ND6_TMR_INTERVAL) {
+      if (neighbor_cache[i].counter.delay_time <= 1) {
         /* Change to PROBE state. */
         neighbor_cache[i].state = ND6_PROBE;
         neighbor_cache[i].counter.probes_sent = 0;
       } else {
-        neighbor_cache[i].counter.delay_time -= ND6_TMR_INTERVAL;
+        neighbor_cache[i].counter.delay_time--;
       }
       break;
     case ND6_PROBE:
