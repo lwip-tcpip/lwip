@@ -231,8 +231,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
 
       /* Update cache entry. */
-      neighbor_cache[i].netif = inp;
-      neighbor_cache[i].counter.reachable_time = reachable_time;
       if ((na_hdr->flags & ND6_FLAG_OVERRIDE) ||
           (neighbor_cache[i].state == ND6_INCOMPLETE)) {
         /* Check that link-layer address option also fits in packet. */
@@ -256,7 +254,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
         MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
       }
+
+      neighbor_cache[i].netif = inp;
       neighbor_cache[i].state = ND6_REACHABLE;
+      neighbor_cache[i].counter.reachable_time = reachable_time;
 
       /* Send queued packets, if any. */
       if (neighbor_cache[i].q != NULL) {
