@@ -781,16 +781,18 @@ netconn_drain(struct netconn *conn)
 #if LWIP_TCP
   if (sys_mbox_valid(&conn->acceptmbox)) {
     while (sys_mbox_tryfetch(&conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
-      struct netconn *newconn = (struct netconn *)mem;
-      /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
-      /* pcb might be set to NULL already by err_tcp() */
-      /* drain recvmbox */
-      netconn_drain(newconn);
-      if (newconn->pcb.tcp != NULL) {
-        tcp_abort(newconn->pcb.tcp);
-        newconn->pcb.tcp = NULL;
+      if (mem != &netconn_aborted) {
+        struct netconn *newconn = (struct netconn *)mem;
+        /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
+        /* pcb might be set to NULL already by err_tcp() */
+        /* drain recvmbox */
+        netconn_drain(newconn);
+        if (newconn->pcb.tcp != NULL) {
+          tcp_abort(newconn->pcb.tcp);
+          newconn->pcb.tcp = NULL;
+        }
+        netconn_free(newconn);
       }
-      netconn_free(newconn);
     }
     sys_mbox_free(&conn->acceptmbox);
     sys_mbox_set_invalid(&conn->acceptmbox);
