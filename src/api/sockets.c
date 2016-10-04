@@ -2732,7 +2732,7 @@ lwip_socket_register_membership(int s, const ip4_addr_t *if_addr, const ip4_addr
 {
   /* s+1 is stored in the array to prevent having to initialize the array
      (default initialization is to 0) */
-  int sa = s + 1;
+  int sa = s + 1 - LWIP_SOCKET_OFFSET;
   int i;
 
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
@@ -2756,7 +2756,7 @@ lwip_socket_unregister_membership(int s, const ip4_addr_t *if_addr, const ip4_ad
 {
   /* s+1 is stored in the array to prevent having to initialize the array
      (default initialization is to 0) */
-  int sa = s + 1;
+  int sa = s + 1 - LWIP_SOCKET_OFFSET;
   int i;
 
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
@@ -2779,7 +2779,7 @@ static void lwip_socket_drop_registered_memberships(int s)
 {
   /* s+1 is stored in the array to prevent having to initialize the array
      (default initialization is to 0) */
-  int sa = s + 1;
+  int sa = s + 1 - LWIP_SOCKET_OFFSET;
   int i;
 
   LWIP_ASSERT("socket has no netconn", sockets[s].conn != NULL);
