@@ -38,6 +38,7 @@
 
 #include "lwip/err.h"
 #include "lwip/def.h"
+#include "lwip/sys.h"
 
 #include "lwip/errno.h"
 
