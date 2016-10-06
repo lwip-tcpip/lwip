@@ -267,7 +267,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 #endif /* do we always have strerror() in embedded ? */
 	case 'I':
 	    ip = va_arg(args, u32_t);
-	    ip = ntohl(ip);
+	    ip = lwip_ntohl(ip);
 	    ppp_slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
 	    str = num;

@@ -128,7 +128,7 @@ send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *
 
   payload = (u16_t*) p->payload;
   payload[0] = PP_HTONS(TFTP_ERROR);
-  payload[1] = htons(code);
+  payload[1] = lwip_htons(code);
   MEMCPY(&payload[2], str, str_length + 1);
 
   udp_sendto(tftp_state.upcb, p, addr, port);
@@ -148,7 +148,7 @@ send_ack(u16_t blknum)
   payload = (u16_t*) p->payload;
   
   payload[0] = PP_HTONS(TFTP_ACK);
-  payload[1] = htons(blknum);
+  payload[1] = lwip_htons(blknum);
   udp_sendto(tftp_state.upcb, p, &tftp_state.addr, tftp_state.port);
   pbuf_free(p);
 }
@@ -187,7 +187,7 @@ send_data(void)
 
   payload = (u16_t *) tftp_state.last_data->payload;
   payload[0] = PP_HTONS(TFTP_DATA);
-  payload[1] = htons(tftp_state.blknum);
+  payload[1] = lwip_htons(tftp_state.blknum);
 
   ret = tftp_state.ctx->read(tftp_state.handle, &payload[2], TFTP_MAX_PAYLOAD_SIZE);
   if (ret < 0) {
@@ -295,7 +295,7 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
         break;
       }
 
-      blknum = ntohs(sbuf[1]);
+      blknum = lwip_ntohs(sbuf[1]);
       pbuf_header(p, -TFTP_HEADER_LENGTH);
 
       ret = tftp_state.ctx->write(tftp_state.handle, p);
@@ -327,7 +327,7 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
         break;
       }
 
-      blknum = ntohs(sbuf[1]);
+      blknum = lwip_ntohs(sbuf[1]);
       if (blknum != tftp_state.blknum) {
         send_error(addr, port, TFTP_ERROR_UNKNOWN_TRFR_ID, "Wrong block number");
         break;

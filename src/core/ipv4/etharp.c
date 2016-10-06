@@ -701,7 +701,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
       /* Re-use pbuf to send ARP reply.
          Since we are re-using an existing pbuf, we can't call etharp_raw since
          that would allocate a new pbuf. */
-      hdr->opcode = htons(ARP_REPLY);
+      hdr->opcode = lwip_htons(ARP_REPLY);
 
       IPADDR2_COPY(&hdr->dipaddr, &hdr->sipaddr);
       IPADDR2_COPY(&hdr->sipaddr, netif_ip4_addr(netif));
@@ -750,7 +750,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
 #endif /* (LWIP_DHCP && DHCP_DOES_ARP_CHECK) */
     break;
   default:
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: ARP unknown opcode type %"S16_F"\n", htons(hdr->opcode)));
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: ARP unknown opcode type %"S16_F"\n", lwip_htons(hdr->opcode)));
     ETHARP_STATS_INC(etharp.err);
     break;
   }
@@ -1144,7 +1144,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   hdr = (struct etharp_hdr *)p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
-  hdr->opcode = htons(opcode);
+  hdr->opcode = lwip_htons(opcode);
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETH_HWADDR_LEN));

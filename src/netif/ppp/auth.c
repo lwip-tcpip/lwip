@@ -2121,10 +2121,10 @@ set_allowed_addrs(unit, addrs, opts)
 	} else {
 	    np = getnetbyname (ptr_word);
 	    if (np != NULL && np->n_addrtype == AF_INET) {
-		a = htonl ((u32_t)np->n_net);
+		a = lwip_htonl ((u32_t)np->n_net);
 		if (ptr_mask == NULL) {
 		    /* calculate appropriate mask for net */
-		    ah = ntohl(a);
+		    ah = lwip_ntohl(a);
 		    if (IN_CLASSA(ah))
 			mask = IN_CLASSA_NET;
 		    else if (IN_CLASSB(ah))
@@ -2150,10 +2150,10 @@ set_allowed_addrs(unit, addrs, opts)
 		     ifunit, ptr_word);
 		continue;
 	    }
-	    a = htonl((ntohl(a) & mask) + offset);
+	    a = lwip_htonl((lwip_ntohl(a) & mask) + offset);
 	    mask = ~(u32_t)0;
 	}
-	ip[n].mask = htonl(mask);
+	ip[n].mask = lwip_htonl(mask);
 	ip[n].base = a & ip[n].mask;
 	++n;
 	if (~mask == 0 && suggested_ip == 0)
@@ -2234,7 +2234,7 @@ int
 bad_ip_adrs(addr)
     u32_t addr;
 {
-    addr = ntohl(addr);
+    addr = lwip_ntohl(addr);
     return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
 	|| IN_MULTICAST(addr) || IN_BADCLASS(addr);
 }

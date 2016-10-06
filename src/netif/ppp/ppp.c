@@ -1219,7 +1219,7 @@ u32_t get_mask(u32_t addr) {
 #if 0
   u32_t mask, nmask;
 
-  addr = htonl(addr);
+  addr = lwip_htonl(addr);
   if (IP_CLASSA(addr)) { /* determine network mask for address class */
     nmask = IP_CLASSA_NET;
   } else if (IP_CLASSB(addr)) {
@@ -1229,7 +1229,7 @@ u32_t get_mask(u32_t addr) {
   }
 
   /* class D nets are disallowed by bad_ip_adrs */
-  mask = PP_HTONL(0xffffff00UL) | htonl(nmask);
+  mask = PP_HTONL(0xffffff00UL) | lwip_htonl(nmask);
 
   /* XXX
    * Scan through the system's network interfaces.

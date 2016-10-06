@@ -1175,11 +1175,11 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
   /* Generate interface ID. */
   if (from_mac_48bit) {
     /* Assume hwaddr is a 48-bit IEEE 802 MAC. Convert to EUI-64 address. Complement Group bit. */
-    ip_2_ip6(&netif->ip6_addr[0])->addr[2] = htonl((((u32_t)(netif->hwaddr[0] ^ 0x02)) << 24) |
+    ip_2_ip6(&netif->ip6_addr[0])->addr[2] = lwip_htonl((((u32_t)(netif->hwaddr[0] ^ 0x02)) << 24) |
         ((u32_t)(netif->hwaddr[1]) << 16) |
         ((u32_t)(netif->hwaddr[2]) << 8) |
         (0xff));
-    ip_2_ip6(&netif->ip6_addr[0])->addr[3] = htonl((0xfeul << 24) |
+    ip_2_ip6(&netif->ip6_addr[0])->addr[3] = lwip_htonl((0xfeul << 24) |
         ((u32_t)(netif->hwaddr[3]) << 16) |
         ((u32_t)(netif->hwaddr[4]) << 8) |
         (netif->hwaddr[5]));

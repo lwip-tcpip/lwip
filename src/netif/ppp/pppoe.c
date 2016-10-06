@@ -419,8 +419,8 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
     PPPDEBUG(LOG_DEBUG, ("pppoe: unknown version/type packet: 0x%x\n", ph->vertype));
     goto done;
   }
-  session = ntohs(ph->session);
-  plen = ntohs(ph->plen);
+  session = lwip_ntohs(ph->session);
+  plen = lwip_ntohs(ph->plen);
   off += sizeof(*ph);
 
   if (plen + off > pb->len) {
@@ -436,8 +436,8 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   sc = NULL;
   while (off + sizeof(pt) <= pb->len) {
     MEMCPY(&pt, (u8_t*)pb->payload + off, sizeof(pt));
-    tag = ntohs(pt.tag);
-    len = ntohs(pt.len);
+    tag = lwip_ntohs(pt.tag);
+    len = lwip_ntohs(pt.len);
     if (off + sizeof(pt) + len > pb->len) {
       PPPDEBUG(LOG_DEBUG, ("pppoe: tag 0x%x len 0x%x is too long\n", tag, len));
       goto done;
@@ -680,7 +680,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
     goto drop;
   }
 
-  session = ntohs(ph->session);
+  session = lwip_ntohs(ph->session);
   sc = pppoe_find_softc_by_session(session, netif);
   if (sc == NULL) {
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
@@ -690,7 +690,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
     goto drop;
   }
 
-  plen = ntohs(ph->plen);
+  plen = lwip_ntohs(ph->plen);
 
   if (pbuf_header(pb, -(s16_t)(PPPOE_HEADERLEN)) != 0) {
     /* bail out */
@@ -732,7 +732,7 @@ pppoe_output(struct pppoe_softc *sc, struct pbuf *pb)
   }
   ethhdr = (struct eth_hdr *)pb->payload;
   etype = sc->sc_state == PPPOE_STATE_SESSION ? ETHTYPE_PPPOE : ETHTYPE_PPPOEDISC;
-  ethhdr->type = htons(etype);
+  ethhdr->type = lwip_htons(etype);
   MEMCPY(&ethhdr->dest.addr, &sc->sc_dest.addr, sizeof(ethhdr->dest.addr));
   MEMCPY(&ethhdr->src.addr, &sc->sc_ethif->hwaddr, sizeof(ethhdr->src.addr));
 

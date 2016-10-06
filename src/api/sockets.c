@@ -81,25 +81,25 @@
 #define IP4ADDR_PORT_TO_SOCKADDR(sin, ipaddr, port) do { \
       (sin)->sin_len = sizeof(struct sockaddr_in); \
       (sin)->sin_family = AF_INET; \
-      (sin)->sin_port = htons((port)); \
+      (sin)->sin_port = lwip_htons((port)); \
       inet_addr_from_ipaddr(&(sin)->sin_addr, ipaddr); \
       memset((sin)->sin_zero, 0, SIN_ZERO_LEN); }while(0)
 #define SOCKADDR4_TO_IP4ADDR_PORT(sin, ipaddr, port) do { \
     inet_addr_to_ipaddr(ip_2_ip4(ipaddr), &((sin)->sin_addr)); \
-    (port) = ntohs((sin)->sin_port); }while(0)
+    (port) = lwip_ntohs((sin)->sin_port); }while(0)
 #endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
 #define IP6ADDR_PORT_TO_SOCKADDR(sin6, ipaddr, port) do { \
       (sin6)->sin6_len = sizeof(struct sockaddr_in6); \
       (sin6)->sin6_family = AF_INET6; \
-      (sin6)->sin6_port = htons((port)); \
+      (sin6)->sin6_port = lwip_htons((port)); \
       (sin6)->sin6_flowinfo = 0; \
       inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipaddr); \
       (sin6)->sin6_scope_id = 0; }while(0)
 #define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipaddr, port) do { \
     inet6_addr_to_ip6addr(ip_2_ip6(ipaddr), &((sin6)->sin6_addr)); \
-    (port) = ntohs((sin6)->sin6_port); }while(0)
+    (port) = lwip_ntohs((sin6)->sin6_port); }while(0)
 #endif /* LWIP_IPV6 */
 
 #if LWIP_IPV4 && LWIP_IPV6

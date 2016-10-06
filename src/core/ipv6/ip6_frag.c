@@ -279,12 +279,12 @@ ip6_reass(struct pbuf *p)
 
   clen = pbuf_clen(p);
 
-  offset = ntohs(frag_hdr->_fragment_offset);
+  offset = lwip_ntohs(frag_hdr->_fragment_offset);
 
   /* Calculate fragment length from IPv6 payload length.
    * Adjust for headers before Fragment Header.
    * And finally adjust by Fragment Header length. */
-  len = ntohs(ip6_current_header()->_plen);
+  len = lwip_ntohs(ip6_current_header()->_plen);
   len -= (u16_t)(((u8_t*)p->payload - (const u8_t*)ip6_current_header()) - IP6_HLEN);
   len -= IP6_FRAG_HLEN;
 
@@ -560,7 +560,7 @@ ip6_reass(struct pbuf *p)
                          - IP6_HLEN);
 
     /* Set payload length in ip header. */
-    iphdr_ptr->_plen = htons(ipr->datagram_len);
+    iphdr_ptr->_plen = lwip_htons(ipr->datagram_len);
 
     /* Get the first pbuf. */
     p = ipr->p;
@@ -748,8 +748,8 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
     /* Set headers */
     frag_hdr->_nexth = original_ip6hdr->_nexth;
     frag_hdr->reserved = 0;
-    frag_hdr->_fragment_offset = htons((fragment_offset & IP6_FRAG_OFFSET_MASK) | (last ? 0 : IP6_FRAG_MORE_FLAG));
-    frag_hdr->_identification = htonl(identification);
+    frag_hdr->_fragment_offset = lwip_htons((fragment_offset & IP6_FRAG_OFFSET_MASK) | (last ? 0 : IP6_FRAG_MORE_FLAG));
+    frag_hdr->_identification = lwip_htonl(identification);
 
     IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_FRAGMENT);
     IP6H_PLEN_SET(ip6hdr, cop + IP6_FRAG_HLEN);

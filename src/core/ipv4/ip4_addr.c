@@ -260,7 +260,7 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
     break;
   }
   if (addr) {
-    ip4_addr_set_u32(addr, htonl(val));
+    ip4_addr_set_u32(addr, lwip_htonl(val));
   }
   return 1;
 }

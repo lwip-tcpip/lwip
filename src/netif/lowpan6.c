@@ -160,13 +160,13 @@ lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct ieee_802154_add
   if (mac_addr->addr_len == 2) {
     if ((ip6addr->addr[2] == (u32_t)PP_HTONL(0x000000ff)) &&
       ((ip6addr->addr[3]  & PP_HTONL(0xffff0000)) == PP_NTOHL(0xfe000000))) {
-      if ((ip6addr->addr[3]  & PP_HTONL(0x0000ffff)) == ntohl((mac_addr->addr[0] << 8) | mac_addr->addr[1])) {
+      if ((ip6addr->addr[3]  & PP_HTONL(0x0000ffff)) == lwip_ntohl((mac_addr->addr[0] << 8) | mac_addr->addr[1])) {
         return 3;
       }
     }
   } else if (mac_addr->addr_len == 8) {
-    if ((ip6addr->addr[2] == ntohl(((mac_addr->addr[0] ^ 2) << 24) | (mac_addr->addr[1] << 16) | mac_addr->addr[2] << 8 | mac_addr->addr[3])) &&
-      (ip6addr->addr[3] == ntohl((mac_addr->addr[4] << 24) | (mac_addr->addr[5] << 16) | mac_addr->addr[6] << 8 | mac_addr->addr[7]))) {
+    if ((ip6addr->addr[2] == lwip_ntohl(((mac_addr->addr[0] ^ 2) << 24) | (mac_addr->addr[1] << 16) | mac_addr->addr[2] << 8 | mac_addr->addr[3])) &&
+      (ip6addr->addr[3] == lwip_ntohl((mac_addr->addr[4] << 24) | (mac_addr->addr[5] << 16) | mac_addr->addr[6] << 8 | mac_addr->addr[7]))) {
       return 3;
     }
   }
@@ -768,7 +768,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       ip6hdr->src.addr[0] = PP_HTONL(0xfe800000UL);
       ip6hdr->src.addr[1] = 0;
       ip6hdr->src.addr[2] = PP_HTONL(0x000000ffUL);
-      ip6hdr->src.addr[3] = htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) |
+      ip6hdr->src.addr[3] = lwip_htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) |
                                   lowpan6_buffer[lowpan6_offset+1]);
       lowpan6_offset += 2;
     } else if ((lowpan6_buffer[1] & 0x30) == 0x30) {
@@ -776,11 +776,11 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       ip6hdr->src.addr[1] = 0;
       if (src->addr_len == 2) {
         ip6hdr->src.addr[2] = PP_HTONL(0x000000ffUL);
-        ip6hdr->src.addr[3] = htonl(0xfe000000UL | (src->addr[0] << 8) | src->addr[1]);
+        ip6hdr->src.addr[3] = lwip_htonl(0xfe000000UL | (src->addr[0] << 8) | src->addr[1]);
       } else {
-        ip6hdr->src.addr[2] = htonl(((src->addr[0] ^ 2) << 24) | (src->addr[1] << 16) |
+        ip6hdr->src.addr[2] = lwip_htonl(((src->addr[0] ^ 2) << 24) | (src->addr[1] << 16) |
                                     (src->addr[2] << 8) | src->addr[3]);
-        ip6hdr->src.addr[3] = htonl((src->addr[4] << 24) | (src->addr[5] << 16) |
+        ip6hdr->src.addr[3] = lwip_htonl((src->addr[4] << 24) | (src->addr[5] << 16) |
                                     (src->addr[6] << 8) | src->addr[7]);
       }
     }
@@ -815,15 +815,15 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       lowpan6_offset += 8;
     } else if ((lowpan6_buffer[1] & 0x30) == 0x20) {
       ip6hdr->src.addr[2] = PP_HTONL(0x000000ffUL);
-      ip6hdr->src.addr[3] = htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) | lowpan6_buffer[lowpan6_offset+1]);
+      ip6hdr->src.addr[3] = lwip_htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) | lowpan6_buffer[lowpan6_offset+1]);
       lowpan6_offset += 2;
     } else if ((lowpan6_buffer[1] & 0x30) == 0x30) {
       if (src->addr_len == 2) {
         ip6hdr->src.addr[2] = PP_HTONL(0x000000ffUL);
-        ip6hdr->src.addr[3] = htonl(0xfe000000UL | (src->addr[0] << 8) | src->addr[1]);
+        ip6hdr->src.addr[3] = lwip_htonl(0xfe000000UL | (src->addr[0] << 8) | src->addr[1]);
       } else {
-        ip6hdr->src.addr[2] = htonl(((src->addr[0] ^ 2) << 24) | (src->addr[1] << 16) | (src->addr[2] << 8) | src->addr[3]);
-        ip6hdr->src.addr[3] = htonl((src->addr[4] << 24) | (src->addr[5] << 16) | (src->addr[6] << 8) | src->addr[7]);
+        ip6hdr->src.addr[2] = lwip_htonl(((src->addr[0] ^ 2) << 24) | (src->addr[1] << 16) | (src->addr[2] << 8) | src->addr[3]);
+        ip6hdr->src.addr[3] = lwip_htonl((src->addr[4] << 24) | (src->addr[5] << 16) | (src->addr[6] << 8) | src->addr[7]);
       }
     }
   }
@@ -843,22 +843,22 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       MEMCPY(&ip6hdr->dest.addr[0], lowpan6_buffer + lowpan6_offset, 16);
       lowpan6_offset += 16;
     } else if ((lowpan6_buffer[1] & 0x03) == 0x01) {
-      ip6hdr->dest.addr[0] = htonl(0xff000000UL | (lowpan6_buffer[lowpan6_offset++] << 16));
+      ip6hdr->dest.addr[0] = lwip_htonl(0xff000000UL | (lowpan6_buffer[lowpan6_offset++] << 16));
       ip6hdr->dest.addr[1] = 0;
-      ip6hdr->dest.addr[2] = htonl(lowpan6_buffer[lowpan6_offset++]);
-      ip6hdr->dest.addr[3] = htonl((lowpan6_buffer[lowpan6_offset] << 24) | (lowpan6_buffer[lowpan6_offset + 1] << 16) | (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset + 3]);
+      ip6hdr->dest.addr[2] = lwip_htonl(lowpan6_buffer[lowpan6_offset++]);
+      ip6hdr->dest.addr[3] = lwip_htonl((lowpan6_buffer[lowpan6_offset] << 24) | (lowpan6_buffer[lowpan6_offset + 1] << 16) | (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset + 3]);
       lowpan6_offset += 4;
     } else if ((lowpan6_buffer[1] & 0x03) == 0x02) {
-      ip6hdr->dest.addr[0] = htonl(0xff000000UL | lowpan6_buffer[lowpan6_offset++]);
+      ip6hdr->dest.addr[0] = lwip_htonl(0xff000000UL | lowpan6_buffer[lowpan6_offset++]);
       ip6hdr->dest.addr[1] = 0;
       ip6hdr->dest.addr[2] = 0;
-      ip6hdr->dest.addr[3] = htonl((lowpan6_buffer[lowpan6_offset] << 16) | (lowpan6_buffer[lowpan6_offset + 1] << 8) | lowpan6_buffer[lowpan6_offset + 2]);
+      ip6hdr->dest.addr[3] = lwip_htonl((lowpan6_buffer[lowpan6_offset] << 16) | (lowpan6_buffer[lowpan6_offset + 1] << 8) | lowpan6_buffer[lowpan6_offset + 2]);
       lowpan6_offset += 3;
     } else if ((lowpan6_buffer[1] & 0x03) == 0x03) {
       ip6hdr->dest.addr[0] = PP_HTONL(0xff020000UL);
       ip6hdr->dest.addr[1] = 0;
       ip6hdr->dest.addr[2] = 0;
-      ip6hdr->dest.addr[3] = htonl(lowpan6_buffer[lowpan6_offset++]);
+      ip6hdr->dest.addr[3] = lwip_htonl(lowpan6_buffer[lowpan6_offset++]);
     }
 
   } else {
@@ -894,15 +894,15 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       lowpan6_offset += 8;
     } else if ((lowpan6_buffer[1] & 0x03) == 0x02) {
       ip6hdr->dest.addr[2] = PP_HTONL(0x000000ffUL);
-      ip6hdr->dest.addr[3] = htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) | lowpan6_buffer[lowpan6_offset + 1]);
+      ip6hdr->dest.addr[3] = lwip_htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) | lowpan6_buffer[lowpan6_offset + 1]);
       lowpan6_offset += 2;
     } else if ((lowpan6_buffer[1] & 0x03) == 0x03) {
       if (dest->addr_len == 2) {
         ip6hdr->dest.addr[2] = PP_HTONL(0x000000ffUL);
-        ip6hdr->dest.addr[3] = htonl(0xfe000000UL | (dest->addr[0] << 8) | dest->addr[1]);
+        ip6hdr->dest.addr[3] = lwip_htonl(0xfe000000UL | (dest->addr[0] << 8) | dest->addr[1]);
       } else {
-        ip6hdr->dest.addr[2] = htonl(((dest->addr[0] ^ 2) << 24) | (dest->addr[1] << 16) | dest->addr[2] << 8 | dest->addr[3]);
-        ip6hdr->dest.addr[3] = htonl((dest->addr[4] << 24) | (dest->addr[5] << 16) | dest->addr[6] << 8 | dest->addr[7]);
+        ip6hdr->dest.addr[2] = lwip_htonl(((dest->addr[0] ^ 2) << 24) | (dest->addr[1] << 16) | dest->addr[2] << 8 | dest->addr[3]);
+        ip6hdr->dest.addr[3] = lwip_htonl((dest->addr[4] << 24) | (dest->addr[5] << 16) | dest->addr[6] << 8 | dest->addr[7]);
       }
     }
   }
@@ -927,26 +927,26 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       /* Decompress ports */
       i = lowpan6_buffer[lowpan6_offset++] & 0x03;
       if (i == 0) {
-        udphdr->src = htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
-        udphdr->dest = htons(lowpan6_buffer[lowpan6_offset + 2] << 8 | lowpan6_buffer[lowpan6_offset + 3]);
+        udphdr->src = lwip_htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
+        udphdr->dest = lwip_htons(lowpan6_buffer[lowpan6_offset + 2] << 8 | lowpan6_buffer[lowpan6_offset + 3]);
         lowpan6_offset += 4;
       } else if (i == 0x01) {
-        udphdr->src = htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
-        udphdr->dest = htons(0xf000 | lowpan6_buffer[lowpan6_offset + 2]);
+        udphdr->src = lwip_htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
+        udphdr->dest = lwip_htons(0xf000 | lowpan6_buffer[lowpan6_offset + 2]);
         lowpan6_offset += 3;
       } else if (i == 0x02) {
-        udphdr->src = htons(0xf000 | lowpan6_buffer[lowpan6_offset]);
-        udphdr->dest = htons(lowpan6_buffer[lowpan6_offset + 1] << 8 | lowpan6_buffer[lowpan6_offset + 2]);
+        udphdr->src = lwip_htons(0xf000 | lowpan6_buffer[lowpan6_offset]);
+        udphdr->dest = lwip_htons(lowpan6_buffer[lowpan6_offset + 1] << 8 | lowpan6_buffer[lowpan6_offset + 2]);
         lowpan6_offset += 3;
       } else if (i == 0x03) {
-        udphdr->src = htons(0xf0b0 | ((lowpan6_buffer[lowpan6_offset] >> 4) & 0x0f));
-        udphdr->dest = htons(0xf0b0 | (lowpan6_buffer[lowpan6_offset] & 0x0f));
+        udphdr->src = lwip_htons(0xf0b0 | ((lowpan6_buffer[lowpan6_offset] >> 4) & 0x0f));
+        udphdr->dest = lwip_htons(0xf0b0 | (lowpan6_buffer[lowpan6_offset] & 0x0f));
         lowpan6_offset += 1;
       }
 
-      udphdr->chksum = htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
+      udphdr->chksum = lwip_htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
       lowpan6_offset += 2;
-      udphdr->len = htons(p->tot_len - lowpan6_offset + UDP_HLEN);
+      udphdr->len = lwip_htons(p->tot_len - lowpan6_offset + UDP_HLEN);
 
       ip6_offset += UDP_HLEN;
     } else {

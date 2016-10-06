@@ -262,7 +262,7 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
       /* this session is time-limited */
       u32_t now = sys_now();
       u32_t diff_ms = now - conn->time_started;
-      u32_t time = (u32_t)-(s32_t)htonl(conn->settings.amount);
+      u32_t time = (u32_t)-(s32_t)lwip_htonl(conn->settings.amount);
       u32_t time_ms = time * 10;
       if (diff_ms >= time_ms) {
         /* time specified by the client is over -> close the connection */
@@ -271,7 +271,7 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
       }
     } else {
       /* this session is byte-limited */
-      u32_t amount_bytes = htonl(conn->settings.amount);
+      u32_t amount_bytes = lwip_htonl(conn->settings.amount);
       /* @todo: this can send up to 1*MSS more than requested... */
       if (amount_bytes >= conn->bytes_transferred) {
         /* all requested bytes transferred -> close the connection */
@@ -390,7 +390,7 @@ lwiperf_tx_start(lwiperf_state_tcp_t* conn)
   tcp_err(newpcb, lwiperf_tcp_err);
 
   ip_addr_copy(remote_addr, conn->conn_pcb->remote_ip);
-  remote_port = (u16_t)htonl(client_conn->settings.remote_port);
+  remote_port = (u16_t)lwip_htonl(client_conn->settings.remote_port);
 
   err = tcp_connect(newpcb, &remote_addr, remote_port, lwiperf_tcp_client_connected);
   if (err != ERR_OK) {

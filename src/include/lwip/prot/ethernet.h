@@ -100,7 +100,7 @@ PACK_STRUCT_END
 #endif
 
 #define SIZEOF_VLAN_HDR 4
-#define VLAN_ID(vlan_hdr) (htons((vlan_hdr)->prio_vid) & 0xFFF)
+#define VLAN_ID(vlan_hdr) (lwip_htons((vlan_hdr)->prio_vid) & 0xFFF)
 
 /**
  * @ingroup ethernet

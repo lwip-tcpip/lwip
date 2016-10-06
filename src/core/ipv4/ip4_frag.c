@@ -346,8 +346,8 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
 
   /* Extract length and fragment offset from current fragment */
   fraghdr = (struct ip_hdr*)new_p->payload;
-  len = ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;
-  offset = (ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;
+  len = lwip_ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;
+  offset = (lwip_ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;
 
   /* overwrite the fragment's ip header from the pbuf with our helper struct,
    * and setup the embedded helper structure. */
@@ -500,8 +500,8 @@ ip4_reass(struct pbuf *p)
     goto nullreturn;
   }
 
-  offset = (ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;
-  len = ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;
+  offset = (lwip_ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) * 8;
+  len = lwip_ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;
 
   /* Check if we are allowed to enqueue more datagrams. */
   clen = pbuf_clen(p);
@@ -529,7 +529,7 @@ ip4_reass(struct pbuf *p)
        fragment into the buffer. */
     if (IP_ADDRESSES_AND_ID_MATCH(&ipr->iphdr, fraghdr)) {
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip4_reass: matching previous fragment ID=%"X16_F"\n",
-        ntohs(IPH_ID(fraghdr))));
+        lwip_ntohs(IPH_ID(fraghdr))));
       IPFRAG_STATS_INC(ip_frag.cachehit);
       break;
     }
@@ -543,8 +543,8 @@ ip4_reass(struct pbuf *p)
       goto nullreturn;
     }
   } else {
-    if (((ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) == 0) &&
-      ((ntohs(IPH_OFFSET(&ipr->iphdr)) & IP_OFFMASK) != 0)) {
+    if (((lwip_ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) == 0) &&
+      ((lwip_ntohs(IPH_OFFSET(&ipr->iphdr)) & IP_OFFMASK) != 0)) {
       /* ipr->iphdr is not the header from the first fragment, but fraghdr is
        * -> copy fraghdr into ipr->iphdr since we want to have the header
        * of the first fragment (for ICMP time exceeded and later, for copying
@@ -581,7 +581,7 @@ ip4_reass(struct pbuf *p)
     /* copy the original ip header back to the first pbuf */
     fraghdr = (struct ip_hdr*)(ipr->p->payload);
     SMEMCPY(fraghdr, &ipr->iphdr, IP_HLEN);
-    IPH_LEN_SET(fraghdr, htons(ipr->datagram_len));
+    IPH_LEN_SET(fraghdr, lwip_htons(ipr->datagram_len));
     IPH_OFFSET_SET(fraghdr, 0);
     IPH_CHKSUM_SET(fraghdr, 0);
     /* @todo: do we need to set/calculate the correct checksum? */
@@ -706,7 +706,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
   iphdr = original_iphdr;
 
   /* Save original offset */
-  tmp = ntohs(IPH_OFFSET(iphdr));
+  tmp = lwip_ntohs(IPH_OFFSET(iphdr));
   ofo = tmp & IP_OFFMASK;
   omf = tmp & IP_MF;
 
@@ -799,8 +799,8 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
     /* Correct header */
-    IPH_OFFSET_SET(iphdr, htons(tmp));
-    IPH_LEN_SET(iphdr, htons(cop + IP_HLEN));
+    IPH_OFFSET_SET(iphdr, lwip_htons(tmp));
+    IPH_LEN_SET(iphdr, lwip_htons(cop + IP_HLEN));
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_IP) {

@@ -290,7 +290,7 @@ struct tcp_seg {
   (flags & TF_SEG_OPTS_WND_SCALE ? LWIP_TCP_OPT_LEN_WS_OUT : 0)
 
 /** This returns a TCP header option for MSS in an u32_t */
-#define TCP_BUILD_MSS_OPTION(mss) htonl(0x02040000 | ((mss) & 0xFFFF))
+#define TCP_BUILD_MSS_OPTION(mss) lwip_htonl(0x02040000 | ((mss) & 0xFFFF))
 
 #if LWIP_WND_SCALE
 #define TCPWNDSIZE_F       U32_F

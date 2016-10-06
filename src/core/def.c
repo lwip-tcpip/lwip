@@ -7,11 +7,10 @@
  * Byte swapping is the second thing you would want to optimize. You will
  * need to port it to your architecture and in your cc.h:
  *
- * \#define LWIP_PLATFORM_BYTESWAP 1
- * \#define LWIP_PLATFORM_HTONS(x) your_htons
- * \#define LWIP_PLATFORM_HTONL(x) your_htonl
+ * \#define lwip_htons(x) your_htons
+ * \#define lwip_htonl(x) your_htonl
  *
- * Note ntohs() and ntohl() are merely references to the htonx counterparts.
+ * Note lwip_ntohs() and lwip_ntohl() are merely references to the htonx counterparts.
  */
 
 /*
@@ -51,8 +50,9 @@
 
 #include <string.h>
 
-#if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
+#if BYTE_ORDER == LITTLE_ENDIAN
 
+#if !defined(lwip_htons)
 /**
  * Convert an u16_t from host- to network byte order.
  *
@@ -64,19 +64,9 @@ lwip_htons(u16_t n)
 {
   return (u16_t)PP_HTONS(n);
 }
+#endif /* lwip_htons */
 
-/**
- * Convert an u16_t from network- to host byte order.
- *
- * @param n u16_t in network byte order
- * @return n in host byte order
- */
-u16_t
-lwip_ntohs(u16_t n)
-{
-  return lwip_htons(n);
-}
-
+#if !defined(lwip_htonl)
 /**
  * Convert an u32_t from host- to network byte order.
  *
@@ -88,20 +78,9 @@ lwip_htonl(u32_t n)
 {
   return (u32_t)PP_HTONL(n);
 }
+#endif /* lwip_htonl */
 
-/**
- * Convert an u32_t from network- to host byte order.
- *
- * @param n u32_t in network byte order
- * @return n in host byte order
- */
-u32_t
-lwip_ntohl(u32_t n)
-{
-  return lwip_htonl(n);
-}
-
-#endif /* (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN) */
+#endif /* BYTE_ORDER == LITTLE_ENDIAN */
 
 #ifndef lwip_strnstr
 /** Like strstr but does not need 'buffer' to be NULL-terminated */

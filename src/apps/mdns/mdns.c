@@ -820,7 +820,7 @@ mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain)
   }
   if (jump_offset) {
     /* Write jump */
-    jump = htons(DOMAIN_JUMP | jump_offset);
+    jump = lwip_htons(DOMAIN_JUMP | jump_offset);
     res = pbuf_take_at(outpkt->pbuf, &jump, DOMAIN_JUMP_SIZE, outpkt->write_offset);
     if (res != ERR_OK) {
       return res;
@@ -872,7 +872,7 @@ mdns_add_question(struct mdns_outpacket *outpkt, struct mdns_domain *domain, u16
   }
 
   /* Write type */
-  field16 = htons(type);
+  field16 = lwip_htons(type);
   res = pbuf_take_at(outpkt->pbuf, &field16, sizeof(field16), outpkt->write_offset);
   if (res != ERR_OK) {
     return res;
@@ -883,7 +883,7 @@ mdns_add_question(struct mdns_outpacket *outpkt, struct mdns_domain *domain, u16
   if (unicast) {
     klass |= 0x8000;
   }
-  field16 = htons(klass);
+  field16 = lwip_htons(klass);
   res = pbuf_take_at(outpkt->pbuf, &field16, sizeof(field16), outpkt->write_offset);
   if (res != ERR_OK) {
     return res;
@@ -947,7 +947,7 @@ mdns_add_answer(struct mdns_outpacket *reply, struct mdns_domain *domain, u16_t 
   mdns_add_question(reply, domain, type, klass, cache_flush);
 
   /* Write TTL */
-  field32 = htonl(ttl);
+  field32 = lwip_htonl(ttl);
   res = pbuf_take_at(reply->pbuf, &field32, sizeof(field32), reply->write_offset);
   if (res != ERR_OK) {
     return res;
@@ -977,7 +977,7 @@ mdns_add_answer(struct mdns_outpacket *reply, struct mdns_domain *domain, u16_t 
   }
 
   /* Write rd_length after when we know the answer size */
-  field16 = htons(reply->write_offset - answer_offset);
+  field16 = lwip_htons(reply->write_offset - answer_offset);
   res = pbuf_take_at(reply->pbuf, &field16, sizeof(field16), rdlen_offset);
 
   return res;
@@ -1005,14 +1005,14 @@ mdns_read_rr_info(struct mdns_packet *pkt, struct mdns_rr_info *info)
     return ERR_VAL;
   }
   pkt->parse_offset += copied;
-  info->type = ntohs(field16);
+  info->type = lwip_ntohs(field16);
 
   copied = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), pkt->parse_offset);
   if (copied != sizeof(field16)) {
     return ERR_VAL;
   }
   pkt->parse_offset += copied;
-  info->klass = ntohs(field16);
+  info->klass = lwip_ntohs(field16);
 
   return ERR_OK;
 }
@@ -1094,14 +1094,14 @@ mdns_read_answer(struct mdns_packet *pkt, struct mdns_answer *answer)
       return ERR_VAL;
     }
     pkt->parse_offset += copied;
-    answer->ttl = ntohl(ttl);
+    answer->ttl = lwip_ntohl(ttl);
 
     copied = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), pkt->parse_offset);
     if (copied != sizeof(field16)) {
       return ERR_VAL;
     }
     pkt->parse_offset += copied;
-    answer->rd_length = ntohs(field16);
+    answer->rd_length = lwip_ntohs(field16);
 
     answer->rd_offset = pkt->parse_offset;
     pkt->parse_offset += answer->rd_length;
@@ -1194,9 +1194,9 @@ mdns_add_srv_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct mdns
      */
     srvhost.skip_compression = 1;
   }
-  srvdata[0] = htons(SRV_PRIORITY);
-  srvdata[1] = htons(SRV_WEIGHT);
-  srvdata[2] = htons(service->port);
+  srvdata[0] = lwip_htons(SRV_PRIORITY);
+  srvdata[1] = lwip_htons(SRV_WEIGHT);
+  srvdata[2] = lwip_htons(service->port);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with SRV record\n"));
   return mdns_add_answer(reply, &service_instance, DNS_RRTYPE_SRV, DNS_RRCLASS_IN, cache_flush, service->dns_ttl,
                          (const u8_t *) &srvdata, sizeof(srvdata), &srvhost);
@@ -1411,11 +1411,11 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     /* Write header */
     memset(&hdr, 0, sizeof(hdr));
     hdr.flags1 = DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
-    hdr.numanswers = htons(outpkt->answers);
-    hdr.numextrarr = htons(outpkt->additional);
+    hdr.numanswers = lwip_htons(outpkt->answers);
+    hdr.numextrarr = lwip_htons(outpkt->additional);
     if (outpkt->legacy_query) {
-      hdr.numquestions = htons(1);
-      hdr.id = htons(outpkt->tx_id);
+      hdr.numquestions = lwip_htons(1);
+      hdr.id = lwip_htons(outpkt->tx_id);
     }
     pbuf_take(outpkt->pbuf, &hdr, sizeof(hdr));
 
@@ -1657,19 +1657,19 @@ mdns_handle_question(struct mdns_packet *pkt)
           do {
             /* Check priority field */
             len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
-            if (len != sizeof(field16) || ntohs(field16) != SRV_PRIORITY) {
+            if (len != sizeof(field16) || lwip_ntohs(field16) != SRV_PRIORITY) {
               break;
             }
             read_pos += len;
             /* Check weight field */
             len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
-            if (len != sizeof(field16) || ntohs(field16) != SRV_WEIGHT) {
+            if (len != sizeof(field16) || lwip_ntohs(field16) != SRV_WEIGHT) {
               break;
             }
             read_pos += len;
             /* Check port field */
             len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
-            if (len != sizeof(field16) || ntohs(field16) != service->port) {
+            if (len != sizeof(field16) || lwip_ntohs(field16) != service->port) {
               break;
             }
             read_pos += len;
@@ -1780,9 +1780,9 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   packet.netif = recv_netif;
   packet.pbuf = p;
   packet.parse_offset = offset;
-  packet.tx_id = ntohs(hdr.id);
-  packet.questions = packet.questions_left = ntohs(hdr.numquestions);
-  packet.answers = packet.answers_left = ntohs(hdr.numanswers) + ntohs(hdr.numauthrr) + ntohs(hdr.numextrarr);
+  packet.tx_id = lwip_ntohs(hdr.id);
+  packet.questions = packet.questions_left = lwip_ntohs(hdr.numquestions);
+  packet.answers = packet.answers_left = lwip_ntohs(hdr.numanswers) + lwip_ntohs(hdr.numauthrr) + lwip_ntohs(hdr.numextrarr);
 
 #if LWIP_IPV6
   if (IP_IS_V6(ip_current_dest_addr())) {
