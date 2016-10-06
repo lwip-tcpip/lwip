@@ -160,9 +160,11 @@ typedef void (*lwip_thread_fn)(void *arg);
 
 /**
  * @ingroup sys_mutex
- * Create a new mutex
+ * Create a new mutex.
+ * Note that mutexes are expected to not be taken recursively by the lwIP code,
+ * so both implementation types (recursive or non-recursive) should work.
  * @param mutex pointer to the mutex to create
- * @return a new mutex
+ * @return ERR_OK if successful, another err_t otherwise
  */
 err_t sys_mutex_new(sys_mutex_t *mutex);
 /**
