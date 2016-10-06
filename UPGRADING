@@ -49,6 +49,10 @@ with newer versions.
     * Added generalized abstraction for itoa(), strnicmp(), stricmp() and strnstr()
       in def.h (to be overridden in cc.h) instead of config 
       options for netbiosns, httpd, dns, etc. ...
+    * New abstraction for hton* and ntoh* functions in def.h.
+      To override them, use the following in cc.h: 
+      #define lwip_htons(x) <your_htons>
+      #define lwip_htonl(x) <your_htonl>
 
   +++ new options:
      * TODO
