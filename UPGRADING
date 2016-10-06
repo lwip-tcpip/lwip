@@ -46,6 +46,9 @@ with newer versions.
     * Added LWIP_NETCONN_SEM_PER_THREAD to use one "op_completed" semaphore per thread
       instead of using one per netconn (these semaphores are used even with core locking
       enabled as some longer lasting functions like big writes still need to delay)
+    * Added generalized abstraction for itoa(), strnicmp(), stricmp() and strnstr()
+      in def.h (to be overridden in cc.h) instead of config 
+      options for netbiosns, httpd, dns, etc. ...
 
   +++ new options:
      * TODO
