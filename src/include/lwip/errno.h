@@ -173,6 +173,13 @@
 extern int errno;
 #endif
 
+#else /* LWIP_PROVIDE_ERRNO */
+
+/* Define LWIP_ERRNO_INCLUDE to <errno.h> to include the error defines here */
+#ifdef LWIP_ERRNO_INCLUDE
+#include LWIP_ERRNO_INCLUDE
+#endif /* LWIP_ERRNO_INCLUDE */
+
 #endif /* LWIP_PROVIDE_ERRNO */
 
 #ifdef __cplusplus

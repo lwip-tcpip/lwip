@@ -108,7 +108,9 @@ extern const char *lwip_strerr(err_t err);
 #define lwip_strerr(x) ""
 #endif /* LWIP_DEBUG */
 
+#if !NO_SYS
 int err_to_errno(err_t err);
+#endif /* !NO_SYS */
 
 #ifdef __cplusplus
 }
