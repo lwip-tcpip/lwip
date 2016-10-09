@@ -723,8 +723,6 @@ igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
  * @param src the source IP address to send from (if src == IP4_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
  * @param dest the destination IP address to send the packet to
- * @param ttl the TTL value to be set in the IP header
- * @param proto the PROTOCOL to be set in the IP header
  * @param netif the netif on which to send this packet
  * @return ERR_OK if the packet was sent OK
  *         ERR_BUF if p doesn't have enough space for IP/LINK headers

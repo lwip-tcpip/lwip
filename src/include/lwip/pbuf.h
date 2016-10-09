@@ -80,13 +80,13 @@ typedef enum {
   PBUF_IP,
   /** Includes spare room for link layer header (ethernet header).
    * Use this if you intend to pass the pbuf to functions like ethernet_output().
-   * @see @ref PBUF_LINK_HLEN
+   * @see PBUF_LINK_HLEN
    */
   PBUF_LINK,
   /** Includes spare room for additional encapsulation header before ethernet
    * headers (e.g. 802.11).
    * Use this if you intend to pass the pbuf to functions like netif->linkoutput().
-   * @see @ref PBUF_LINK_ENCAPSULATION_HLEN
+   * @see PBUF_LINK_ENCAPSULATION_HLEN
    */
   PBUF_RAW_TX,
   /** Use this for input packets in a netif driver when calling netif->input()

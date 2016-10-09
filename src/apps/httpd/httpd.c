@@ -1879,7 +1879,7 @@ http_continue(void *connection)
  * When data has been received in the correct state, try to parse it
  * as a HTTP request.
  *
- * @param p the received pbuf
+ * @param inp the received pbuf
  * @param hs the connection state
  * @param pcb the tcp_pcb which received this packet
  * @return ERR_OK if request was OK and hs has been initialized correctly
@@ -2211,7 +2211,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
  * @param is_09 1 if the request is HTTP/0.9 (no HTTP headers in response)
  * @param uri the HTTP header URI
  * @param tag_check enable SSI tag checking
- * @param uri_has_params != NULL if URI has parameters (separated by '?')
+ * @param params != NULL if URI has parameters (separated by '?')
  * @return ERR_OK if file was found and hs has been initialized correctly
  *         another err_t otherwise
  */

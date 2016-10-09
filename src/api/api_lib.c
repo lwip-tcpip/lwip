@@ -306,7 +306,7 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
  * Disconnect a netconn from its current peer (only valid for UDP netconns).
  *
  * @param conn the netconn to disconnect
- * @return @todo: return value is not set here...
+ * @return See @ref err_t
  */
 err_t
 netconn_disconnect(struct netconn *conn)

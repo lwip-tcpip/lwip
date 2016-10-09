@@ -69,9 +69,9 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
  * @param p the received packet, p->payload pointing to the ethernet header
  * @param netif the network interface on which the packet was received
  * 
- * @see @ref LWIP_HOOK_UNKNOWN_ETH_PROTOCOL,
- * @ref ETHARP_SUPPORT_VLAN and
- * @ref LWIP_HOOK_VLAN_CHECK.
+ * @see LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+ * @see ETHARP_SUPPORT_VLAN
+ * @see LWIP_HOOK_VLAN_CHECK
  */
 err_t
 ethernet_input(struct pbuf *p, struct netif *netif)
@@ -247,7 +247,7 @@ free_and_return:
  * Send an ethernet packet on the network using netif->linkoutput().
  * The ethernet header is filled in before sending.
  *
- * @see @ref LWIP_HOOK_VLAN_SET
+ * @see LWIP_HOOK_VLAN_SET
  *
  * @param netif the lwIP network interface on which to send the packet
  * @param p the packet to send. pbuf layer must be @ref PBUF_LINK.

@@ -72,6 +72,7 @@
  */
 #define ARP_MAXPENDING 5
 
+/** ARP states */
 enum etharp_state {
   ETHARP_STATE_EMPTY = 0,
   ETHARP_STATE_PENDING,
@@ -239,7 +240,7 @@ etharp_tmr(void)
  * old entries. Heuristic choose the least important entry for recycling.
  *
  * @param ipaddr IP address to find in ARP cache, or to add if not found.
- * @param flags @see definition of ETHARP_FLAG_*
+ * @param flags See @ref etharp_state
  * @param netif netif related to this address (used for NETIF_HWADDRHINT)
  *
  * @return The ARP entry index that matched or is created, ERR_MEM if no
@@ -402,7 +403,7 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
  * @param netif netif related to this entry (used for NETIF_ADDRHINT)
  * @param ipaddr IP address of the inserted ARP entry.
  * @param ethaddr Ethernet address of the inserted ARP entry.
- * @param flags @see definition of ETHARP_FLAG_*
+ * @param flags See @ref etharp_state
  *
  * @return
  * - ERR_OK Successfully updated ARP cache.
@@ -625,8 +626,6 @@ etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_a
  *
  * @param p The ARP packet that arrived on netif. Is freed by this function.
  * @param netif The lwIP network interface on which the ARP packet pbuf arrived.
- *
- * @return NULL
  *
  * @see pbuf_free()
  */

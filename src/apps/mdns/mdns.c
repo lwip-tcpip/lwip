@@ -1742,8 +1742,6 @@ mdns_handle_response(struct mdns_packet *pkt)
 /**
  * Receive input function for MDNS packets.
  * Handles both IPv4 and IPv6 UDP pcbs.
- *
- * @params see udp.h
  */
 static void
 mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)

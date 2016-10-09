@@ -222,7 +222,6 @@ ip4_route(const ip4_addr_t *dest)
  * that may not be forwarded, or whether datagrams to that destination
  * may be forwarded.
  * @param p the packet to forward
- * @param dest the destination IP address
  * @return 1: can forward 0: discard
  */
 static int

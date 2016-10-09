@@ -146,7 +146,7 @@ ip_get_value(struct snmp_node_instance* instance, void* value)
 /**
  * Test ip object value before setting.
  *
- * @param od is the object definition
+ * @param instance node instance
  * @param len return value space (in bytes)
  * @param value points to (varbind) space to copy value from.
  *

@@ -534,10 +534,7 @@ dropped:
  * connection (from tcp_input()).
  *
  * @param pcb the tcp_pcb_listen for which a segment arrived
- * @return ERR_OK if the segment was processed
- *         another err_t on error
  *
- * @note the return value is not (yet?) used in tcp_input()
  * @note the segment which arrived is saved in global variables, therefore only the pcb
  *       involved is passed as a parameter to this function
  */

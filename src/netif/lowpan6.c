@@ -611,7 +611,7 @@ lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
  * @param q The pbuf(s) containing the IP packet to be sent.
  * @param ip6addr The IP address of the packet destination.
  *
- * @return
+ * @return err_t
  */
 err_t
 lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)

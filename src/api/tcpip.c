@@ -260,7 +260,7 @@ tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
 /**
  * call sys_timeout in tcpip_thread
  *
- * @param msec time in milliseconds for timeout
+ * @param msecs time in milliseconds for timeout
  * @param h function to be called on timeout
  * @param arg argument to pass to timeout function h
  * @return ERR_MEM on memory error, ERR_OK otherwise
@@ -288,7 +288,6 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 /**
  * call sys_untimeout in tcpip_thread
  *
- * @param msec time in milliseconds for timeout
  * @param h function to be called on timeout
  * @param arg argument to pass to timeout function h
  * @return ERR_MEM on memory error, ERR_OK otherwise

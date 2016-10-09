@@ -331,7 +331,7 @@ ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
  * will grow over time as  new pbufs are rx.
  * Also checks that the datagram passes basic continuity checks (if the last
  * fragment was received at least once).
- * @param root_p points to the 'root' pbuf for the current datagram being assembled.
+ * @param ipr points to the reassembly state
  * @param new_p points to the pbuf for the current fragment
  * @return 0 if invalid, >0 otherwise
  */

@@ -540,7 +540,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
  * Called from lwip_netconn_do_newconn().
  *
  * @param msg the api_msg_msg describing the connection type
- * @return msg->conn->err, but the return value is currently ignored
  */
 static void
 pcb_new(struct api_msg *msg)
@@ -807,7 +806,6 @@ netconn_drain(struct netconn *conn)
  * places.
  *
  * @param conn the TCP netconn to close
- * [@param delay 1 if called from sent/poll (wake up calling thread on end)]
  */
 static err_t
 lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
@@ -1492,7 +1490,6 @@ lwip_netconn_do_accepted(void *m)
  * blocking application thread (waiting in netconn_write) is released.
  *
  * @param conn netconn (that is currently in state NETCONN_WRITE) to process
- * [@param delay 1 if called from sent/poll (wake up calling thread on end)]
  * @return ERR_OK
  *         ERR_MEM if LWIP_TCPIP_CORE_LOCKING=1 and sending hasn't yet finished
  */

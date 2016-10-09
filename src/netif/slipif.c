@@ -304,7 +304,7 @@ slipif_rxbyte(struct netif *netif, u8_t c)
 /** Like slipif_rxbyte, but passes completed packets to netif->input
  *
  * @param netif The lwip network interface structure for this slipif
- * @param data received character
+ * @param c received character
  */
 static void
 slipif_rxbyte_input(struct netif *netif, u8_t c)

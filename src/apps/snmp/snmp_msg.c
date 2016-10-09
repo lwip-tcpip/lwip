@@ -323,7 +323,7 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
 /**
  * Service an internal or external event for SNMP GET.
  *
- * @param msg_ps points to the associated message process state
+ * @param request points to the associated message process state
  */
 static err_t
 snmp_process_get_request(struct snmp_request *request)
@@ -359,7 +359,7 @@ snmp_process_get_request(struct snmp_request *request)
 /**
  * Service an internal or external event for SNMP GET.
  *
- * @param msg_ps points to the associated message process state
+ * @param request points to the associated message process state
  */
 static err_t
 snmp_process_getnext_request(struct snmp_request *request)
@@ -395,7 +395,7 @@ snmp_process_getnext_request(struct snmp_request *request)
 /**
  * Service an internal or external event for SNMP GETBULKT.
  *
- * @param msg_ps points to the associated message process state
+ * @param request points to the associated message process state
  */
 static err_t
 snmp_process_getbulk_request(struct snmp_request *request)
@@ -493,7 +493,7 @@ snmp_process_getbulk_request(struct snmp_request *request)
 /**
  * Service an internal or external event for SNMP SET.
  *
- * @param msg_ps points to the associated message process state
+ * @param request points to the associated message process state
  */
 static err_t
 snmp_process_set_request(struct snmp_request *request)

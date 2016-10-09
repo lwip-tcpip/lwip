@@ -297,8 +297,8 @@ snmp_trap_varbind_sum(struct snmp_msg_trap *trap, struct snmp_varbind *varbinds)
  * Sums trap header field lengths from tail to head and
  * returns trap_header_lengths for second encoding pass.
  *
+ * @param trap Trap message
  * @param vb_len varbind-list length
- * @param thl points to returned header lengths
  * @return the required length for encoding the trap header
  */
 static u16_t

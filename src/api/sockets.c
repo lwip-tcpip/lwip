@@ -1258,12 +1258,12 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
  * the sockets enabled that had events.
  *
  * @param maxfdp1 the highest socket index in the sets
- * @param readset_in:    set of sockets to check for read events
- * @param writeset_in:   set of sockets to check for write events
- * @param exceptset_in:  set of sockets to check for error events
- * @param readset_out:   set of sockets that had read events
- * @param writeset_out:  set of sockets that had write events
- * @param exceptset_out: set os sockets that had error events
+ * @param readset_in    set of sockets to check for read events
+ * @param writeset_in   set of sockets to check for write events
+ * @param exceptset_in  set of sockets to check for error events
+ * @param readset_out   set of sockets that had read events
+ * @param writeset_out  set of sockets that had write events
+ * @param exceptset_out set os sockets that had error events
  * @return number of sockets that had events (read/write/exception) (>= 0)
  */
 static int

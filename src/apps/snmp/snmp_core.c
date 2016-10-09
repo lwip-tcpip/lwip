@@ -359,9 +359,9 @@ snmp_ip6_to_oid(const ip6_addr_t *ip, u32_t *oid)
 #if LWIP_IPV4 || LWIP_IPV6
 /**
  * Convert to InetAddressType+InetAddress+InetPortNumber
- * @param ip
- * @param port
- * @param oid
+ * @param ip IP address
+ * @param port Port
+ * @param oid OID
  * @return OID length
  */
 u8_t
@@ -378,8 +378,8 @@ snmp_ip_port_to_oid(const ip_addr_t *ip, u16_t port, u32_t *oid)
 
 /**
  * Convert to InetAddressType+InetAddress
- * @param ip
- * @param oid
+ * @param ip IP address
+ * @param oid OID
  * @return OID length
  */
 u8_t
@@ -412,9 +412,9 @@ snmp_ip_to_oid(const ip_addr_t *ip, u32_t *oid)
 
 /**
  * Convert from InetAddressType+InetAddress to ip_addr_t
- * @param oid
- * @param oid_len
- * @param ip
+ * @param oid OID
+ * @param oid_len OID length
+ * @param ip IP address
  * @return Parsed OID length
  */
 u8_t
@@ -487,10 +487,10 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
 
 /**
  * Convert from InetAddressType+InetAddress+InetPortNumber to ip_addr_t and u16_t
- * @param oid
- * @param oid_len
- * @param ip
- * @param port
+ * @param oid OID
+ * @param oid_len OID length
+ * @param ip IP address
+ * @param port Port
  * @return Parsed OID length
  */
 u8_t
@@ -520,10 +520,10 @@ snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port)
 #endif /* LWIP_IPV4 || LWIP_IPV6 */
 
 /**
- * Assign an OID to \struct snmp_obj_id
- * @param target
- * @param oid
- * @param oid_len
+ * Assign an OID to struct snmp_obj_id
+ * @param target Assignment target 
+ * @param oid OID
+ * @param oid_len OID length
  */
 void
 snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
@@ -538,10 +538,10 @@ snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 }
 
 /**
- * Prefix an OID to OID in \struct snmp_obj_id
- * @param target
- * @param oid
- * @param oid_len
+ * Prefix an OID to OID in struct snmp_obj_id
+ * @param target Assignment target to prefix
+ * @param oid OID
+ * @param oid_len OID length
  */
 void
 snmp_oid_prefix(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
@@ -561,12 +561,12 @@ snmp_oid_prefix(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 }
 
 /**
- * Combine two OIDs into \struct snmp_obj_id
- * @param target
- * @param oid1
- * @param oid1_len
- * @param oid2
- * @param oid2_len
+ * Combine two OIDs into struct snmp_obj_id
+ * @param target Assignmet target
+ * @param oid1 OID 1
+ * @param oid1_len OID 1 length
+ * @param oid2 OID 2
+ * @param oid2_len OID 2 length
  */
 void
 snmp_oid_combine(struct snmp_obj_id* target, const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
@@ -576,10 +576,10 @@ snmp_oid_combine(struct snmp_obj_id* target, const u32_t *oid1, u8_t oid1_len, c
 }
 
 /**
- * Append OIDs to \struct snmp_obj_id
- * @param target
- * @param oid
- * @param oid_len
+ * Append OIDs to struct snmp_obj_id
+ * @param target Assignment target to append to
+ * @param oid OID
+ * @param oid_len OID length
  */
 void
 snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
@@ -594,11 +594,11 @@ snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 
 /**
  * Compare two OIDs
- * @param oid1
- * @param oid1_len
- * @param oid2
- * @param oid2_len
- * @return
+ * @param oid1 OID 1
+ * @param oid1_len OID 1 length
+ * @param oid2 OID 2
+ * @param oid2_len OID 2 length
+ * @return -1: OID1&lt;OID2  1: OID1 &gt;OID2 0: equal
  */
 s8_t
 snmp_oid_compare(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
@@ -635,11 +635,11 @@ snmp_oid_compare(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_
 
 /**
  * Check of two OIDs are equal
- * @param oid1
- * @param oid1_len
- * @param oid2
- * @param oid2_len
- * @return
+ * @param oid1 OID 1
+ * @param oid1_len OID 1 length
+ * @param oid2 OID 2
+ * @param oid2_len OID 2 length
+ * @return 1: equal 0: non-equal
  */
 u8_t
 snmp_oid_equal(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len)
@@ -649,7 +649,7 @@ snmp_oid_equal(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_le
 
 /**
  * Convert netif to interface index
- * @param netif
+ * @param netif netif
  * @return index
  */
 u8_t

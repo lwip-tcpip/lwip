@@ -288,7 +288,7 @@ snmp_asn1_enc_oid(struct snmp_pbuf_stream* pbuf_stream, const u32_t *oid, u16_t 
 /**
  * Returns octet count for length.
  *
- * @param length
+ * @param length parameter length
  * @param octets_needed points to the return value
  */
 void
@@ -306,7 +306,7 @@ snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed)
 /**
  * Returns octet count for an u32_t.
  *
- * @param value
+ * @param value value to be encoded
  * @param octets_needed points to the return value
  *
  * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
@@ -332,7 +332,7 @@ snmp_asn1_enc_u32t_cnt(u32_t value, u16_t *octets_needed)
 /**
  * Returns octet count for an u64_t.
  *
- * @param value
+ * @param value value to be encoded
  * @param octets_needed points to the return value
  *
  * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
@@ -357,7 +357,7 @@ snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
 /**
  * Returns octet count for an s32_t.
  *
- * @param value
+ * @param value value to be encoded
  * @param octets_needed points to the return value
  *
  * @note ASN coded integers are _always_ signed.

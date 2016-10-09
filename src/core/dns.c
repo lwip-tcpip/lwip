@@ -1013,8 +1013,6 @@ dns_correct_response(u8_t idx, u32_t ttl)
 }
 /**
  * Receive input function for DNS response packets arriving for the dns UDP pcb.
- *
- * @params see udp.h
  */
 static void
 dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
@@ -1193,7 +1191,7 @@ memerr:
  * @param hostnamelen length of the hostname
  * @param found a callback function to be called on success, failure or timeout
  * @param callback_arg argument to pass to the callback function
- * @return @return a err_t return code.
+ * @return err_t return code.
  */
 static err_t
 dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
@@ -1357,7 +1355,7 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
  * @param found a callback function to be called on success, failure or timeout (only if
  *              ERR_INPROGRESS is returned!)
  * @param callback_arg argument to pass to the callback function
- * @param dns_addrtype: - LWIP_DNS_ADDRTYPE_IPV4_IPV6: try to resolve IPv4 first, try IPv6 if IPv4 fails only
+ * @param dns_addrtype - LWIP_DNS_ADDRTYPE_IPV4_IPV6: try to resolve IPv4 first, try IPv6 if IPv4 fails only
  *                      - LWIP_DNS_ADDRTYPE_IPV6_IPV4: try to resolve IPv6 first, try IPv4 if IPv6 fails only
  *                      - LWIP_DNS_ADDRTYPE_IPV4: try to resolve IPv4 only
  *                      - LWIP_DNS_ADDRTYPE_IPV6: try to resolve IPv6 only

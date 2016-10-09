@@ -404,9 +404,9 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
 /** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
  *
- * @param pcb PPP descriptor index, returned by pppos_create()
- * @param data received data
- * @param len length of received data
+ * @param ppp PPP descriptor index, returned by pppos_create()
+ * @param s received data
+ * @param l length of received data
  */
 err_t
 pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
@@ -458,9 +458,9 @@ PACK_STRUCT_END
 
 /** Pass received raw characters to PPPoS to be decoded.
  *
- * @param pcb PPP descriptor index, returned by pppos_create()
- * @param data received data
- * @param len length of received data
+ * @param ppp PPP descriptor index, returned by pppos_create()
+ * @param s received data
+ * @param l length of received data
  */
 void
 pppos_input(ppp_pcb *ppp, u8_t *s, int l)
