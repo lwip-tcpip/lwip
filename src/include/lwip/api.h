@@ -162,7 +162,7 @@ enum netconn_state {
  * Socket implementation decrements the counter.
  * 
  * For TX, there is no need to count, its merely a flag. SENDPLUS means you may send something.
- * PLUS occurs when enough data was delivered to peer so netconn_send() can be called again.
+ * SENDPLUS occurs when enough data was delivered to peer so netconn_send() can be called again.
  * A SENDMINUS event occurs when the next call to a netconn_send() would be blocking.
  */
 enum netconn_evt {
