@@ -491,7 +491,7 @@ etharp_update_arp_entry(struct netif *netif, const ip4_addr_t *ipaddr, struct et
  *
  * @param ipaddr IP address for the new static entry
  * @param ethaddr ethernet address for the new static entry
- * @return @see return values of etharp_add_static_entry
+ * @return See return values of etharp_add_static_entry
  */
 err_t
 etharp_add_static_entry(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr)
