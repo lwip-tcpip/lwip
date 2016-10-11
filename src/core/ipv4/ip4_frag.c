@@ -690,11 +690,10 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 #endif
   struct ip_hdr *original_iphdr;
   struct ip_hdr *iphdr;
-  u16_t nfb;
-  u16_t left, cop;
-  u16_t mtu = netif->mtu;
-  u16_t ofo, omf;
-  u16_t last;
+  const u16_t nfb = (netif->mtu - IP_HLEN) / 8;
+  u16_t left, fragsize;
+  u16_t ofo;
+  int last;
   u16_t poff = IP_HLEN;
   u16_t tmp;
 #if !LWIP_NETIF_TX_SINGLE_PBUF
@@ -704,36 +703,27 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 
   original_iphdr = (struct ip_hdr *)p->payload;
   iphdr = original_iphdr;
+  LWIP_ERROR("ip4_frag() does not support IP options", IPH_HL(iphdr) * 4 == IP_HLEN, return ERR_VAL);
 
   /* Save original offset */
-  tmp = lwip_ntohs(IPH_OFFSET(iphdr));
+  tmp = ntohs(IPH_OFFSET(iphdr));
   ofo = tmp & IP_OFFMASK;
-  omf = tmp & IP_MF;
+  LWIP_ERROR("ip_frag(): MF already set", (tmp & IP_MF) == 0, return ERR_VAL);
 
   left = p->tot_len - IP_HLEN;
 
-  nfb = (mtu - IP_HLEN) / 8;
-
   while (left) {
-    last = (left <= mtu - IP_HLEN);
-
-    /* Set new offset and MF flag */
-    tmp = omf | (IP_OFFMASK & (ofo));
-    if (!last) {
-      tmp = tmp | IP_MF;
-    }
-
     /* Fill this fragment */
-    cop = last ? left : nfb * 8;
+    fragsize = (left < nfb * 8) ? left : nfb * 8;
 
 #if LWIP_NETIF_TX_SINGLE_PBUF
-    rambuf = pbuf_alloc(PBUF_IP, cop, PBUF_RAM);
+    rambuf = pbuf_alloc(PBUF_IP, fragsize, PBUF_RAM);
     if (rambuf == NULL) {
       goto memerr;
     }
     LWIP_ASSERT("this needs a pbuf in one piece!",
       (rambuf->len == rambuf->tot_len) && (rambuf->next == NULL));
-    poff += pbuf_copy_partial(p, rambuf->payload, cop, poff);
+    poff += pbuf_copy_partial(p, rambuf->payload, fragsize, poff);
     /* make room for the IP header */
     if (pbuf_header(rambuf, IP_HLEN)) {
       pbuf_free(rambuf);
@@ -757,16 +747,14 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
     SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
     iphdr = (struct ip_hdr *)rambuf->payload;
 
-    /* Can just adjust p directly for needed offset. */
-    p->payload = (u8_t *)p->payload + poff;
-    p->len -= poff;
-
-    left_to_copy = cop;
+    left_to_copy = fragsize;
     while (left_to_copy) {
       struct pbuf_custom_ref *pcr;
-      newpbuflen = (left_to_copy < p->len) ? left_to_copy : p->len;
+      u16_t plen = p->len - poff;
+      newpbuflen = (left_to_copy < plen) ? left_to_copy : plen;
       /* Is this pbuf already empty? */
       if (!newpbuflen) {
+        poff = 0;
         p = p->next;
         continue;
       }
@@ -776,7 +764,8 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
         goto memerr;
       }
       /* Mirror this pbuf, although we might not need all of it. */
-      newpbuf = pbuf_alloced_custom(PBUF_RAW, newpbuflen, PBUF_REF, &pcr->pc, p->payload, newpbuflen);
+      newpbuf = pbuf_alloced_custom(PBUF_RAW, newpbuflen, PBUF_REF, &pcr->pc,
+        (u8_t*)p->payload + poff, newpbuflen);
       if (newpbuf == NULL) {
         ip_frag_free_pbuf_custom_ref(pcr);
         pbuf_free(rambuf);
@@ -792,6 +781,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
       pbuf_cat(rambuf, newpbuf);
       left_to_copy -= newpbuflen;
       if (left_to_copy) {
+        poff = 0;
         p = p->next;
       }
     }
@@ -799,8 +789,15 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
     /* Correct header */
+    last = (left <= netif->mtu - IP_HLEN);
+
+    /* Set new offset and MF flag */
+    tmp = (IP_OFFMASK & (ofo));
+    if (!last) {
+      tmp = tmp | IP_MF;
+    }
     IPH_OFFSET_SET(iphdr, lwip_htons(tmp));
-    IPH_LEN_SET(iphdr, lwip_htons(cop + IP_HLEN));
+    IPH_LEN_SET(iphdr, lwip_htons(fragsize + IP_HLEN));
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_IP) {
@@ -822,7 +819,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
      */
 
     pbuf_free(rambuf);
-    left -= cop;
+    left -= fragsize;
     ofo += nfb;
   }
   MIB2_STATS_INC(mib2.ipfragoks);
