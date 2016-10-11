@@ -107,7 +107,7 @@ static const ip_addr_t v6group = IPADDR6_INIT(PP_HTONL(0xFF020000UL), PP_HTONL(0
 static u8_t mdns_netif_client_id;
 static struct udp_pcb *mdns_pcb;
 
-#define NETIF_TO_HOST(netif) (struct mdns_host*)((netif)->client_data[mdns_netif_client_id])
+#define NETIF_TO_HOST(netif) (struct mdns_host*)(netif_get_client_data(netif, mdns_netif_client_id))
 
 #define TOPDOMAIN_LOCAL "local"
 
@@ -1756,7 +1756,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Received IPv%d MDNS packet, len %d\n", IP_IS_V6(addr)? 6 : 4, p->tot_len));
 
-  if (recv_netif->client_data[mdns_netif_client_id] == NULL) {
+  if (NETIF_TO_HOST(recv_netif) == NULL) {
     /* From netif not configured for MDNS */
     goto dealloc;
   }
@@ -1843,7 +1843,7 @@ mdns_resp_netif_settings_changed(struct netif *netif)
 {
   LWIP_ERROR("mdns_resp_netif_ip_changed: netif != NULL", (netif != NULL), return);
 
-  if (netif->client_data[mdns_netif_client_id] == NULL) {
+  if (NETIF_TO_HOST(netif) == NULL) {
     return;
   }
 
@@ -1875,11 +1875,11 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   LWIP_ERROR("mdns_resp_add_netif: netif != NULL", (netif != NULL), return ERR_VAL);
   LWIP_ERROR("mdns_resp_add_netif: Hostname too long", (strlen(hostname) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
 
-  LWIP_ASSERT("mdns_resp_add_netif: Double add", netif->client_data[mdns_netif_client_id] == NULL);
+  LWIP_ASSERT("mdns_resp_add_netif: Double add", NETIF_TO_HOST(netif) == NULL);
   mdns = (struct mdns_host *) mem_malloc(sizeof(struct mdns_host));
   LWIP_ERROR("mdns_resp_add_netif: Alloc failed", (mdns != NULL), return ERR_MEM);
 
-  netif->client_data[mdns_netif_client_id] = mdns;
+  netif_set_client_data(netif, mdns_netif_client_id, mdns);
 
   memset(mdns, 0, sizeof(struct mdns_host));
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
@@ -1904,7 +1904,7 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
 
 cleanup:
   mem_free(mdns);
-  netif->client_data[mdns_netif_client_id] = NULL;
+  netif_set_client_data(netif, mdns_netif_client_id, NULL);
   return res;
 }
 
@@ -1941,7 +1941,7 @@ mdns_resp_remove_netif(struct netif *netif)
 #endif
 
   mem_free(mdns);
-  netif->client_data[mdns_netif_client_id] = NULL;
+  netif_set_client_data(netif, mdns_netif_client_id, NULL);
   return ERR_OK;
 }
 
