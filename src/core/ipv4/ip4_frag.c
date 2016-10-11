@@ -706,7 +706,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
   LWIP_ERROR("ip4_frag() does not support IP options", IPH_HL(iphdr) * 4 == IP_HLEN, return ERR_VAL);
 
   /* Save original offset */
-  tmp = ntohs(IPH_OFFSET(iphdr));
+  tmp = lwip_ntohs(IPH_OFFSET(iphdr));
   ofo = tmp & IP_OFFMASK;
   LWIP_ERROR("ip_frag(): MF already set", (tmp & IP_MF) == 0, return ERR_VAL);
 
