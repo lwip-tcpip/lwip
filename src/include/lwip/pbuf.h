@@ -231,12 +231,12 @@ u8_t pbuf_header(struct pbuf *p, s16_t header_size);
 u8_t pbuf_header_force(struct pbuf *p, s16_t header_size);
 void pbuf_ref(struct pbuf *p);
 u8_t pbuf_free(struct pbuf *p);
-u16_t pbuf_clen(struct pbuf *p);
+u16_t pbuf_clen(const struct pbuf *p);
 void pbuf_cat(struct pbuf *head, struct pbuf *tail);
 void pbuf_chain(struct pbuf *head, struct pbuf *tail);
 struct pbuf *pbuf_dechain(struct pbuf *p);
-err_t pbuf_copy(struct pbuf *p_to, struct pbuf *p_from);
-u16_t pbuf_copy_partial(struct pbuf *p, void *dataptr, u16_t len, u16_t offset);
+err_t pbuf_copy(struct pbuf *p_to, const struct pbuf *p_from);
+u16_t pbuf_copy_partial(const struct pbuf *p, void *dataptr, u16_t len, u16_t offset);
 err_t pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len);
 err_t pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset);
 struct pbuf *pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset);
@@ -249,12 +249,12 @@ err_t pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
 void pbuf_split_64k(struct pbuf *p, struct pbuf **rest);
 #endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
 
-u8_t pbuf_get_at(struct pbuf* p, u16_t offset);
-int pbuf_try_get_at(struct pbuf* p, u16_t offset);
+u8_t pbuf_get_at(const struct pbuf* p, u16_t offset);
+int pbuf_try_get_at(const struct pbuf* p, u16_t offset);
 void pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data);
-u16_t pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n);
-u16_t pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset);
-u16_t pbuf_strstr(struct pbuf* p, const char* substr);
+u16_t pbuf_memcmp(const struct pbuf* p, u16_t offset, const void* s2, u16_t n);
+u16_t pbuf_memfind(const struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset);
+u16_t pbuf_strstr(const struct pbuf* p, const char* substr);
 
 #ifdef __cplusplus
 }
