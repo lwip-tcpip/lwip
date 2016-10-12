@@ -39,6 +39,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef LWIP_PROVIDE_ERRNO
 
 #define  EPERM         1  /* Operation not permitted */
