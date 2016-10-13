@@ -564,7 +564,7 @@ mld6_send(struct netif *netif, struct mld_group *group, u8_t type)
   ip6_addr_set(&(mld_hdr->multicast_address), &(group->group_address));
 
 #if CHECKSUM_GEN_ICMP6
-  IF__NETIF_CHECKSUM_ENABLED(group->netif, NETIF_CHECKSUM_GEN_ICMP6) {
+  IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
     mld_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len,
       src_addr, &(group->group_address));
   }
