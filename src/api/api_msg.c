@@ -1511,9 +1511,8 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   LWIP_ASSERT("conn->write_offset < conn->current_msg->msg.w.len",
     conn->write_offset < conn->current_msg->msg.w.len);
 
-  dontblock = netconn_is_nonblocking(conn) ||
-       (conn->current_msg->msg.w.apiflags & NETCONN_DONTBLOCK);
   apiflags = conn->current_msg->msg.w.apiflags;
+  dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
 
 #if LWIP_SO_SNDTIMEO
   if ((conn->send_timeout != 0) &&
@@ -1603,7 +1602,6 @@ err_mem:
         err = out_err;
         write_finished = 1;
         conn->current_msg->msg.w.len = 0;
-      } else {
       }
     } else {
       /* On errors != ERR_MEM, we don't try writing any more but return
