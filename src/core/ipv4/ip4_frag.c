@@ -785,7 +785,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
         p = p->next;
       }
     }
-    poff = newpbuflen;
+    poff += newpbuflen;
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
     /* Correct header */
