@@ -714,7 +714,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 
   while (left) {
     /* Fill this fragment */
-    fragsize = (left < nfb * 8) ? left : nfb * 8;
+    fragsize = LWIP_MIN(left, nfb * 8);
 
 #if LWIP_NETIF_TX_SINGLE_PBUF
     rambuf = pbuf_alloc(PBUF_IP, fragsize, PBUF_RAM);
@@ -751,7 +751,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
     while (left_to_copy) {
       struct pbuf_custom_ref *pcr;
       u16_t plen = p->len - poff;
-      newpbuflen = (left_to_copy < plen) ? left_to_copy : plen;
+      newpbuflen = LWIP_MIN(left_to_copy, plen);
       /* Is this pbuf already empty? */
       if (!newpbuflen) {
         poff = 0;
