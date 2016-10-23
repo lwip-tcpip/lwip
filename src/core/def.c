@@ -15,6 +15,11 @@
  * If you \#define them to htons() and htonl(), you should
  * \#define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS to prevent lwIP from
  * defining htonx/ntohx compatibility macros.
+
+ * @defgroup sys_nonstandard Non-standard functions
+ * @ingroup sys_layer
+ * lwIP provides default implementations for non-standard functions.
+ * These can be mapped to OS functions to reduce code footprint if desired.
  */
 
 /*
@@ -87,7 +92,11 @@ lwip_htonl(u32_t n)
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */
 
 #ifndef lwip_strnstr
-/** Like strstr but does not need 'buffer' to be NULL-terminated */
+/**
+ * @ingroup sys_nonstandard
+ * lwIP default implementation for strnstr() non-standard function.
+ * This can be \#defined to strnstr() depending on your platform port.
+ */
 char*
 lwip_strnstr(const char* buffer, const char* token, size_t n)
 {
@@ -106,6 +115,11 @@ lwip_strnstr(const char* buffer, const char* token, size_t n)
 #endif
 
 #ifndef lwip_stricmp
+/**
+ * @ingroup sys_nonstandard
+ * lwIP default implementation for stricmp() non-standard function.
+ * This can be \#defined to stricmp() depending on your platform port.
+ */
 int
 lwip_stricmp(const char* str1, const char* str2)
 {
@@ -136,6 +150,11 @@ lwip_stricmp(const char* str1, const char* str2)
 #endif
 
 #ifndef lwip_strnicmp
+/**
+ * @ingroup sys_nonstandard
+ * lwIP default implementation for strnicmp() non-standard function.
+ * This can be \#defined to strnicmp() depending on your platform port.
+ */
 int
 lwip_strnicmp(const char* str1, const char* str2, size_t len)
 {
@@ -166,6 +185,11 @@ lwip_strnicmp(const char* str1, const char* str2, size_t len)
 #endif
 
 #ifndef lwip_itoa
+/**
+ * @ingroup sys_nonstandard
+ * lwIP default implementation for itoa() non-standard function.
+ * This can be \#defined to itoa() or snprintf(result, bufsize, "%d", number) depending on your platform port.
+ */
 void
 lwip_itoa(char* result, size_t bufsize, int number)
 {
