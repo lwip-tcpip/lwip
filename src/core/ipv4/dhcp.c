@@ -1225,7 +1225,7 @@ dhcp_reboot(struct netif *netif)
   result = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
   if (result == ERR_OK) {
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
-    dhcp_option_short(dhcp, 576);
+    dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN_MIN_REQUIRED);
 
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, lwip_ntohl(ip4_addr_get_u32(&dhcp->offered_ip_addr)));
