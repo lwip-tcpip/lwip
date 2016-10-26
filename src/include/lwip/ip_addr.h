@@ -66,7 +66,7 @@ enum lwip_ip_addr_type {
  * A union struct for both IP version's addresses.
  * ATTENTION: watch out for its size when adding IPv6 address scope!
  */
-typedef struct _ip_addr {
+typedef struct ip_addr {
   union {
     ip6_addr_t ip6;
     ip4_addr_t ip4;

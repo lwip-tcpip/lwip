@@ -880,10 +880,11 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
 #endif /* SO_REUSE */
   }
 
-  iss = tcp_next_iss();
+  iss = tcp_next_iss(pcb);
   pcb->rcv_nxt = 0;
   pcb->snd_nxt = iss;
   pcb->lastack = iss - 1;
+  pcb->snd_wl2 = iss - 1;
   pcb->snd_lbb = iss - 1;
   /* Start with a window that does not need scaling. When window scaling is
      enabled and used, the window is enlarged when both sides agree on scaling. */
@@ -1491,7 +1492,6 @@ struct tcp_pcb *
 tcp_alloc(u8_t prio)
 {
   struct tcp_pcb *pcb;
-  u32_t iss;
 
   pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
   if (pcb == NULL) {
@@ -1554,11 +1554,6 @@ tcp_alloc(u8_t prio)
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
     pcb->rtime = -1;
     pcb->cwnd = 1;
-    iss = tcp_next_iss();
-    pcb->snd_wl2 = iss;
-    pcb->snd_nxt = iss;
-    pcb->lastack = iss;
-    pcb->snd_lbb = iss;
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
@@ -1826,12 +1821,18 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
  * @return u32_t pseudo random sequence number
  */
 u32_t
-tcp_next_iss(void)
+tcp_next_iss(struct tcp_pcb *pcb)
 {
+#ifdef LWIP_HOOK_TCP_ISN
+  return LWIP_HOOK_TCP_ISN(&pcb->local_ip, pcb->local_port, &pcb->remote_ip, pcb->remote_port);
+#else /* LWIP_HOOK_TCP_ISN */
   static u32_t iss = 6510;
+
+  LWIP_UNUSED_ARG(pcb);
 
   iss += tcp_ticks;       /* XXX */
   return iss;
+#endif /* LWIP_HOOK_TCP_ISN */
 }
 
 #if TCP_CALCULATE_EFF_SEND_MSS

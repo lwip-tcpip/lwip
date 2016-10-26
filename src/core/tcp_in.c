@@ -542,6 +542,7 @@ static void
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
+  u32_t iss;
   err_t rc;
 
   if (flags & TCP_RST) {
@@ -589,6 +590,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->state = SYN_RCVD;
     npcb->rcv_nxt = seqno + 1;
     npcb->rcv_ann_right_edge = npcb->rcv_nxt;
+    iss = tcp_next_iss(npcb);
+    npcb->snd_wl2 = iss;
+    npcb->snd_nxt = iss;
+    npcb->lastack = iss;
+    npcb->snd_lbb = iss;
     npcb->snd_wl1 = seqno - 1;/* initialise to seqno-1 to force window update */
     npcb->callback_arg = pcb->callback_arg;
 #if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG

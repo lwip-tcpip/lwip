@@ -2411,6 +2411,29 @@
  */
 
 /**
+ * LWIP_HOOK_TCP_ISN:
+ * Hook for generation of the Initial Sequence Number (ISN) for a new TCP
+ * connection. The default lwIP ISN generation algorithm is very basic and may
+ * allow for TCP spoofing attacks. This hook provides the means to implement
+ * the standardized ISN generation algorithm from RFC 6528, or any other
+ * desired algorithm (e.g., it can be set to LWIP_RAND()), as a replacement.
+ * Called from tcp_connect() and tcp_listen_input() when an ISN is needed for
+ * a new TCP connection, if TCP support (@ref LWIP_TCP) is enabled.\n
+ * Signature: u32_t my_hook_tcp_isn(const ip_addr_t* local_ip, u16_t local_port, const ip_addr_t* remote_ip, u16_t remote_port);
+ * - it may be necessary to use "struct ip_addr" (ip4_addr, ip6_addr) instead of "ip_addr_t" in function declarations\n
+ * Arguments:
+ * - local_ip: pointer to the local IP address of the connection
+ * - local_port: local port number of the connection (host-byte order)
+ * - remote_ip: pointer to the remote IP address of the connection
+ * - remote_port: remote port number of the connection (host-byte order)\n
+ * Return value:
+ * - the 32-bit Initial Sequence Number to use for the new TCP connection.
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_TCP_ISN(local_ip, local_port, remote_ip, remote_port)
+#endif
+
+/**
  * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
  * - called from ip_input() (IPv4)
  * - pbuf: received struct pbuf passed to ip_input()
