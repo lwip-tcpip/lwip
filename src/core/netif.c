@@ -259,7 +259,7 @@ netif_add(struct netif *netif,
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     ip_addr_set_zero_ip6(&netif->ip6_addr[i]);
-    netif->ip6_addr_state[0] = IP6_ADDR_INVALID;
+    netif->ip6_addr_state[i] = IP6_ADDR_INVALID;
   }
   netif->output_ip6 = netif_null_output_ip6;
 #endif /* LWIP_IPV6 */
