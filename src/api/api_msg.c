@@ -43,6 +43,7 @@
 #include "lwip/priv/api_msg.h"
 
 #include "lwip/ip.h"
+#include "lwip/ip_addr.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 #include "lwip/raw.h"
@@ -1397,10 +1398,18 @@ lwip_netconn_do_send(void *m)
   } else {
     msg->err = ERR_CONN;
     if (msg->conn->pcb.tcp != NULL) {
+      
+#if LWIP_IPV4 && LWIP_IPV6
+    /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
+    if(NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && IP_IS_V4_VAL(msg->msg.b->addr)) {
+      unmap_ipv6_mapped_ipv4(&msg->msg.b->addr, &msg->msg.b->addr);
+    }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+      
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        if (ip_addr_isany(&msg->msg.b->addr)) {
+        if (ip_addr_isany(&msg->msg.b->addr) || IP_IS_ANY_TYPE_VAL(msg->msg.b->addr)) {
           msg->err = raw_send(msg->conn->pcb.raw, msg->msg.b->p);
         } else {
           msg->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, &msg->msg.b->addr);
@@ -1710,6 +1719,18 @@ lwip_netconn_do_getaddr(void *m)
       ip_addr_copy(API_EXPR_DEREF(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->remote_ip);
     }
+    
+#if LWIP_IPV4 && LWIP_IPV6
+    /* Dual-stack: Map IPv4 addresses to IPv6 */
+    if(NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && IP_IS_V4_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr))) {
+      ip4_addr_t ip4;
+      
+      ip4_addr_copy(ip4, *ip_2_ip4(&API_EXPR_DEREF(msg->msg.ad.ipaddr)));
+      ip4_2_ipv6_mapped_ipv4(ip_2_ip6(&API_EXPR_DEREF(msg->msg.ad.ipaddr)), &ip4);
+      IP_SET_TYPE_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr), IPADDR_TYPE_V6);
+    }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
     msg->err = ERR_OK;
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
