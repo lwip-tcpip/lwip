@@ -428,6 +428,8 @@ typedef struct fd_set
 
 #elif LWIP_SOCKET_OFFSET
 #error LWIP_SOCKET_OFFSET does not work with external FD_SET!
+#elif FD_SETSIZE < MEMP_NUM_NETCONN
+#error "external FD_SETSIZE too small for number of sockets"
 #endif /* FD_SET */
 
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
