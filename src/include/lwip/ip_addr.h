@@ -215,15 +215,16 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 /** @ingroup ipaddr */
 #define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
 
+/** @ingroup ipaddr */
 #define ip4_2_ipv6_mapped_ipv4(ip6addr, ip4addr) do { \
-  (ip6addr)->addr[0] = 0; \
-  (ip6addr)->addr[1] = 0; \
+  (ip6addr)->addr[3] = (ip4addr)->addr; \
   (ip6addr)->addr[2] = PP_HTONL(0x0000FFFFUL); \
-  (ip6addr)->addr[3] = (ip4addr)->addr; } while(0);
+  (ip6addr)->addr[1] = 0; \
+  (ip6addr)->addr[0] = 0; } while(0);
 
-#define unmap_ipv6_mapped_ipv4(target, source) do { \
-  (target)->u_addr.ip4.addr = (source)->u_addr.ip6.addr[3]; \
-  (target)->type = IPADDR_TYPE_V4; } while(0);
+/** @ingroup ipaddr */
+#define unmap_ipv6_mapped_ipv4(target, source) \
+  (target)->addr = (source)->addr[3];
 
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 

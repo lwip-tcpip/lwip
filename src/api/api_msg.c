@@ -1401,8 +1401,9 @@ lwip_netconn_do_send(void *m)
       
 #if LWIP_IPV4 && LWIP_IPV6
     /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-    if(NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && IP_IS_V4_VAL(msg->msg.b->addr)) {
-      unmap_ipv6_mapped_ipv4(&msg->msg.b->addr, &msg->msg.b->addr);
+    if (NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && ip6_addr_isipv6mappedipv4(ip_2_ip6(&msg->msg.b->addr))) {
+      unmap_ipv6_mapped_ipv4(ip_2_ip4(&msg->msg.b->addr), ip_2_ip6(&msg->msg.b->addr));
+      IP_SET_TYPE(&msg->msg.b->addr, IPADDR_TYPE_V4);
     }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
       
@@ -1722,11 +1723,8 @@ lwip_netconn_do_getaddr(void *m)
     
 #if LWIP_IPV4 && LWIP_IPV6
     /* Dual-stack: Map IPv4 addresses to IPv6 */
-    if(NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && IP_IS_V4_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr))) {
-      ip4_addr_t ip4;
-      
-      ip4_addr_copy(ip4, *ip_2_ip4(&API_EXPR_DEREF(msg->msg.ad.ipaddr)));
-      ip4_2_ipv6_mapped_ipv4(ip_2_ip6(&API_EXPR_DEREF(msg->msg.ad.ipaddr)), &ip4);
+    if (NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && IP_IS_V4_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr))) {
+      ip4_2_ipv6_mapped_ipv4(ip_2_ip6(&API_EXPR_DEREF(msg->msg.ad.ipaddr)), ip_2_ip4(&API_EXPR_DEREF(msg->msg.ad.ipaddr)));
       IP_SET_TYPE_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr), IPADDR_TYPE_V6);
     }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
