@@ -223,8 +223,8 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
   (ip6addr)->addr[0] = 0; } while(0);
 
 /** @ingroup ipaddr */
-#define unmap_ipv6_mapped_ipv4(target, source) \
-  (target)->addr = (source)->addr[3];
+#define unmap_ipv6_mapped_ipv4(ip4addr, ip6addr) \
+  (ip4addr)->addr = (ip6addr)->addr[3];
 
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 
