@@ -471,6 +471,10 @@ memp_free(memp_t type, void *mem)
 
   LWIP_ERROR("memp_free: type < MEMP_MAX", (type < MEMP_MAX), return;);
 
+  if (mem == NULL) {
+    return;
+  }
+
 #if MEMP_OVERFLOW_CHECK >= 2
   memp_overflow_check_all();
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
