@@ -69,7 +69,7 @@ struct netif;
                                         } while(0)
 #define API_VAR_FREE(pool, name)        memp_free(pool, name)
 #define API_VAR_FREE_POOL(pool, name)   LWIP_MEMPOOL_FREE(pool, name)
-#define API_EXPR_REF(expr)              &(expr)
+#define API_EXPR_REF(expr)              (&(expr))
 #if LWIP_NETCONN_SEM_PER_THREAD
 #define API_EXPR_REF_SEM(expr)          (expr)
 #else
@@ -87,7 +87,7 @@ struct netif;
 #define API_VAR_FREE_POOL(pool, name)
 #define API_EXPR_REF(expr)              expr
 #define API_EXPR_REF_SEM(expr)          API_EXPR_REF(expr)
-#define API_EXPR_DEREF(expr)            *(expr)
+#define API_EXPR_DEREF(expr)            (*(expr))
 #define API_MSG_M_DEF(m)                *m
 #define API_MSG_M_DEF_C(t, m)           const t * m
 #endif /* LWIP_MPU_COMPATIBLE */
