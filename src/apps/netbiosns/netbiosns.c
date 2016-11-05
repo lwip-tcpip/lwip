@@ -328,7 +328,7 @@ netbiosns_init(void)
   netbiosns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   if (netbiosns_pcb != NULL) {
     /* we have to be allowed to send broadcast packets! */
-    netbiosns_pcb->so_options |= SOF_BROADCAST;
+    ip_set_option(netbiosns_pcb, SOF_BROADCAST);
     udp_bind(netbiosns_pcb, IP_ANY_TYPE, NETBIOS_PORT);
     udp_recv(netbiosns_pcb, netbiosns_recv, netbiosns_pcb);
   }
