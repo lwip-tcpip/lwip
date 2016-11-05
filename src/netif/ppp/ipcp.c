@@ -728,13 +728,8 @@ static void ipcp_resetci(fsm *f) {
     wo->req_dns1 = wo->req_dns2 = pcb->settings.usepeerdns;	/* Request DNS addresses from the peer */
 #endif /* LWIP_DNS */
     *go = *wo;
-#if 0 /* UNUSED */
-    /* We don't need ask_for_local, this is only useful for setup which
-     * can determine the local IP address from the system hostname.
-     */
-    if (!ask_for_local)
+    if (!pcb->ask_for_local)
 	go->ouraddr = 0;
-#endif /* UNUSED */
 #if 0 /* UNUSED */
     if (ip_choose_hook) {
 	ip_choose_hook(&wo->hisaddr);
