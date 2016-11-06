@@ -1447,7 +1447,7 @@ int get_loop_output(void) {
 struct protocol_list {
   u_short proto;
   const char *name;
-} protocol_list[] = {
+} const protocol_list[] = {
   { 0x21, "IP" },
   { 0x23, "OSI Network Layer" },
   { 0x25, "Xerox NS IDP" },
@@ -1582,7 +1582,7 @@ struct protocol_list {
  * protocol_name - find a name for a PPP protocol.
  */
 const char * protocol_name(int proto) {
-  struct protocol_list *lp;
+  const struct protocol_list *lp;
 
   for (lp = protocol_list; lp->proto != 0; ++lp) {
     if (proto == lp->proto) {
