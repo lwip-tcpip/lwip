@@ -350,11 +350,8 @@ setvjslots(argv)
 {
     int value;
 
-/* FIXME: found what int_option() did */
-#if PPP_OPTIONS
     if (!int_option(*argv, &value))
 	return 0;
-#endif /* PPP_OPTIONS */
 
     if (value < 2 || value > 16) {
 	option_error("vj-max-slots value must be between 2 and 16");
