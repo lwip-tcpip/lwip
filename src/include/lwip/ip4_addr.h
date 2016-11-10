@@ -141,7 +141,7 @@ struct netif;
                           (u32_t)((d) & 0xff)
 #else
 /** Set an IP address given by the four byte-parts.
-    Little-endian version that prevents the use of htonl. */
+    Little-endian version that prevents the use of lwip_htonl. */
 #define IP4_ADDR(ipaddr, a,b,c,d) \
         (ipaddr)->addr = ((u32_t)((d) & 0xff) << 24) | \
                          ((u32_t)((c) & 0xff) << 16) | \
@@ -164,7 +164,7 @@ struct netif;
                                     (src)->addr))
 /** Set complete address to zero */
 #define ip4_addr_set_zero(ipaddr)     ((ipaddr)->addr = 0)
-/** Set address to IPADDR_ANY (no need for htonl()) */
+/** Set address to IPADDR_ANY (no need for lwip_htonl()) */
 #define ip4_addr_set_any(ipaddr)      ((ipaddr)->addr = IPADDR_ANY)
 /** Set address to loopback address */
 #define ip4_addr_set_loopback(ipaddr) ((ipaddr)->addr = PP_HTONL(IPADDR_LOOPBACK))
@@ -174,7 +174,7 @@ struct netif;
  * from host- to network-order. */
 #define ip4_addr_set_hton(dest, src) ((dest)->addr = \
                                ((src) == NULL ? 0:\
-                               htonl((src)->addr)))
+                               lwip_htonl((src)->addr)))
 /** IPv4 only: set the IP address given as an u32_t */
 #define ip4_addr_set_u32(dest_ipaddr, src_u32) ((dest_ipaddr)->addr = (src_u32))
 /** IPv4 only: get the IP address as an u32_t */

@@ -2,6 +2,15 @@
  * @file 
  * Transmission Control Protocol for IP
  * See also @ref tcp_raw
+ *
+ * @defgroup tcp_raw TCP
+ * @ingroup callbackstyle_api
+ * Transmission Control Protocol for IP\n
+ * @see @ref raw_api and @ref netconn
+ *
+ * Common functions for the TCP implementation, such as functinos
+ * for manipulating the data structures and the TCP timer functions. TCP functions
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 /*
@@ -34,17 +43,6 @@
  *
  * Author: Adam Dunkels <adam@sics.se>
  *
- */
-
-/**
- * @defgroup tcp_raw TCP
- * @ingroup raw_api
- * Transmission Control Protocol for IP\n
- * @see @ref raw_api and @ref netconn
- *
- * Common functions for the TCP implementation, such as functinos
- * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
  */
 
 #include "lwip/opt.h"
@@ -87,7 +85,7 @@
 #define INITIAL_MSS TCP_MSS
 #endif
 
-const char * const tcp_state_str[] = {
+static const char * const tcp_state_str[] = {
   "CLOSED",
   "LISTEN",
   "SYN_SENT",
@@ -106,10 +104,10 @@ static u16_t tcp_port = TCP_LOCAL_PORT_RANGE_START;
 
 /* Incremented every coarse grained timer shot (typically every 500 ms). */
 u32_t tcp_ticks;
-const u8_t tcp_backoff[13] =
+static const u8_t tcp_backoff[13] =
     { 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7};
  /* Times per slowtmr hits */
-const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
+static const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
 
 /* The TCP PCB lists. */
 
@@ -531,7 +529,7 @@ tcp_abort(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb to bind (no check is done whether this pcb is
  *        already bound!)
- * @param ipaddr the local ip address to bind to (use IP_ADDR_ANY to bind
+ * @param ipaddr the local ip address to bind to (use IP4_ADDR_ANY to bind
  *        to any local address
  * @param port the local port to bind to
  * @return ERR_USE if the port is already in use
@@ -548,7 +546,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
-    ipaddr = IP_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY;
   }
 #endif /* LWIP_IPV4 */
 
@@ -690,7 +688,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 #endif /* LWIP_CALLBACK_API */
 #if TCP_LISTEN_BACKLOG
   lpcb->accepts_pending = 0;
-  lpcb->backlog = backlog;
+  tcp_backlog_set(lpcb, backlog);
 #endif /* TCP_LISTEN_BACKLOG */
   TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
   return (struct tcp_pcb *)lpcb;
@@ -1096,7 +1094,9 @@ tcp_slowtmr_start:
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
       struct tcp_pcb *pcb2;
-      tcp_err_fn err_fn;
+#if LWIP_CALLBACK_API
+      tcp_err_fn err_fn = pcb->errf;
+#endif /* LWIP_CALLBACK_API */
       void *err_arg;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_active_pcbs list. */
@@ -1114,7 +1114,6 @@ tcp_slowtmr_start:
                  pcb->local_port, pcb->remote_port);
       }
 
-      err_fn = pcb->errf;
       err_arg = pcb->callback_arg;
       pcb2 = pcb;
       pcb = pcb->next;
@@ -1603,7 +1602,9 @@ tcp_new(void)
  * place it on any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
  *
- * @param type IP address type, see IPADDR_TYPE_XX definitions.
+ * @param type IP address type, see @ref lwip_ip_addr_type definitions.
+ * If you want to listen to IPv4 and IPv6 (dual-stack) connections,
+ * supply @ref IPADDR_TYPE_ANY as argument and bind to @ref IP_ANY_TYPE.
  * @return a new tcp_pcb that initially is in state CLOSED
  */
 struct tcp_pcb *
@@ -1680,6 +1681,8 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
  *
+ * @note The corresponding pcb is already freed when this callback is called!
+ * 
  * @param pcb tcp_pcb to set the err callback
  * @param err callback function to call for this pcb when a fatal error
  *        has occurred on the connection
@@ -1897,19 +1900,18 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
 }
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-#if LWIP_IPV4
-/** Helper function for tcp_netif_ipv4_addr_changed() that iterates a pcb list */
+/** Helper function for tcp_netif_ip_addr_changed() that iterates a pcb list */
 static void
-tcp_netif_ipv4_addr_changed_pcblist(const ip4_addr_t* old_addr, struct tcp_pcb* pcb_list)
+tcp_netif_ip_addr_changed_pcblist(const ip_addr_t* old_addr, struct tcp_pcb* pcb_list)
 {
   struct tcp_pcb *pcb;
   pcb = pcb_list;
   while (pcb != NULL) {
     /* PCB bound to current local interface address? */
-    if (IP_IS_V4_VAL(pcb->local_ip) && ip4_addr_cmp(ip_2_ip4(&pcb->local_ip), old_addr)
+    if (ip_addr_cmp(&pcb->local_ip, old_addr)
 #if LWIP_AUTOIP
       /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-      && !ip4_addr_islinklocal(ip_2_ip4(&pcb->local_ip))
+      && (!IP_IS_V4_VAL(pcb->local_ip) || !ip4_addr_islinklocal(ip_2_ip4(&pcb->local_ip)))
 #endif /* LWIP_AUTOIP */
       ) {
       /* this connection must be aborted */
@@ -1925,35 +1927,32 @@ tcp_netif_ipv4_addr_changed_pcblist(const ip4_addr_t* old_addr, struct tcp_pcb* 
 
 /** This function is called from netif.c when address is changed or netif is removed
  *
- * @param old_addr IPv4 address of the netif before change
- * @param new_addr IPv4 address of the netif after change or NULL if netif has been removed
+ * @param old_addr IP address of the netif before change
+ * @param new_addr IP address of the netif after change or NULL if netif has been removed
  */
 void
-tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr)
+tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr)
 {
   struct tcp_pcb_listen *lpcb, *next;
 
-  tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_active_pcbs);
-  tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
+  if (!ip_addr_isany(old_addr)) {
+    tcp_netif_ip_addr_changed_pcblist(old_addr, tcp_active_pcbs);
+    tcp_netif_ip_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
 
-  if (!ip4_addr_isany(new_addr)) {
-    /* PCB bound to current local interface address? */
-    for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
-      next = lpcb->next;
-      /* Is this an IPv4 pcb? */
-      if (IP_IS_V4_VAL(lpcb->local_ip)) {
+    if (!ip_addr_isany(new_addr)) {
+      /* PCB bound to current local interface address? */
+      for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
+        next = lpcb->next;
         /* PCB bound to current local interface address? */
-        if ((!(ip4_addr_isany(ip_2_ip4(&lpcb->local_ip)))) &&
-            (ip4_addr_cmp(ip_2_ip4(&lpcb->local_ip), old_addr))) {
+        if (ip_addr_cmp(&lpcb->local_ip, old_addr)) {
           /* The PCB is listening to the old ipaddr and
-           * is set to listen to the new one instead */
-          ip_addr_copy_from_ip4(lpcb->local_ip, *new_addr);
+            * is set to listen to the new one instead */
+          ip_addr_copy(lpcb->local_ip, *new_addr);
         }
       }
     }
   }
 }
-#endif /* LWIP_IPV4 */
 
 const char*
 tcp_debug_state_str(enum tcp_state s)
@@ -1973,13 +1972,13 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   LWIP_DEBUGF(TCP_DEBUG, ("TCP header:\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("|    %5"U16_F"      |    %5"U16_F"      | (src port, dest port)\n",
-         ntohs(tcphdr->src), ntohs(tcphdr->dest)));
+         lwip_ntohs(tcphdr->src), lwip_ntohs(tcphdr->dest)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("|           %010"U32_F"          | (seq no)\n",
-          ntohl(tcphdr->seqno)));
+          lwip_ntohl(tcphdr->seqno)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("|           %010"U32_F"          | (ack no)\n",
-         ntohl(tcphdr->ackno)));
+         lwip_ntohl(tcphdr->ackno)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("| %2"U16_F" |   |%"U16_F"%"U16_F"%"U16_F"%"U16_F"%"U16_F"%"U16_F"|     %5"U16_F"     | (hdrlen, flags (",
        TCPH_HDRLEN(tcphdr),
@@ -1989,12 +1988,12 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
          (u16_t)(TCPH_FLAGS(tcphdr) >> 2 & 1),
          (u16_t)(TCPH_FLAGS(tcphdr) >> 1 & 1),
          (u16_t)(TCPH_FLAGS(tcphdr)      & 1),
-         ntohs(tcphdr->wnd)));
+         lwip_ntohs(tcphdr->wnd)));
   tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
   LWIP_DEBUGF(TCP_DEBUG, ("), win)\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("|    0x%04"X16_F"     |     %5"U16_F"     | (chksum, urgp)\n",
-         ntohs(tcphdr->chksum), ntohs(tcphdr->urgp)));
+         lwip_ntohs(tcphdr->chksum), lwip_ntohs(tcphdr->urgp)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 }
 

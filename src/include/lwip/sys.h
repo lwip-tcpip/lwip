@@ -60,10 +60,10 @@
  * @defgroup sys_prot Critical sections
  * @ingroup sys_layer
  * Used to protect short regions of code against concurrent access.
- * - Your system is a bare-metal system (probably with an RTOS) 
+ * - Your system is a bare-metal system (probably with an RTOS)
  *   and interrupts are under your control:
  *   Implement this as LockInterrupts() / UnlockInterrupts()
- * - Your system uses an RTOS with deferred interrupt handling from a 
+ * - Your system uses an RTOS with deferred interrupt handling from a
  *   worker thread: Implement as a global mutex or lock/unlock scheduler
  * - Your system uses a high-level OS with e.g. POSIX signals:
  *   Implement as a global mutex
@@ -160,9 +160,11 @@ typedef void (*lwip_thread_fn)(void *arg);
 
 /**
  * @ingroup sys_mutex
- * Create a new mutex
+ * Create a new mutex.
+ * Note that mutexes are expected to not be taken recursively by the lwIP code,
+ * so both implementation types (recursive or non-recursive) should work.
  * @param mutex pointer to the mutex to create
- * @return a new mutex
+ * @return ERR_OK if successful, another err_t otherwise
  */
 err_t sys_mutex_new(sys_mutex_t *mutex);
 /**

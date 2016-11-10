@@ -540,7 +540,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
  * Called from lwip_netconn_do_newconn().
  *
  * @param msg the api_msg_msg describing the connection type
- * @return msg->conn->err, but the return value is currently ignored
  */
 static void
 pcb_new(struct api_msg *msg)
@@ -781,16 +780,18 @@ netconn_drain(struct netconn *conn)
 #if LWIP_TCP
   if (sys_mbox_valid(&conn->acceptmbox)) {
     while (sys_mbox_tryfetch(&conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
-      struct netconn *newconn = (struct netconn *)mem;
-      /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
-      /* pcb might be set to NULL already by err_tcp() */
-      /* drain recvmbox */
-      netconn_drain(newconn);
-      if (newconn->pcb.tcp != NULL) {
-        tcp_abort(newconn->pcb.tcp);
-        newconn->pcb.tcp = NULL;
+      if (mem != &netconn_aborted) {
+        struct netconn *newconn = (struct netconn *)mem;
+        /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
+        /* pcb might be set to NULL already by err_tcp() */
+        /* drain recvmbox */
+        netconn_drain(newconn);
+        if (newconn->pcb.tcp != NULL) {
+          tcp_abort(newconn->pcb.tcp);
+          newconn->pcb.tcp = NULL;
+        }
+        netconn_free(newconn);
       }
-      netconn_free(newconn);
     }
     sys_mbox_free(&conn->acceptmbox);
     sys_mbox_set_invalid(&conn->acceptmbox);
@@ -805,7 +806,6 @@ netconn_drain(struct netconn *conn)
  * places.
  *
  * @param conn the TCP netconn to close
- * [@param delay 1 if called from sent/poll (wake up calling thread on end)]
  */
 static err_t
 lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
@@ -1490,7 +1490,6 @@ lwip_netconn_do_accepted(void *m)
  * blocking application thread (waiting in netconn_write) is released.
  *
  * @param conn netconn (that is currently in state NETCONN_WRITE) to process
- * [@param delay 1 if called from sent/poll (wake up calling thread on end)]
  * @return ERR_OK
  *         ERR_MEM if LWIP_TCPIP_CORE_LOCKING=1 and sending hasn't yet finished
  */
@@ -1512,9 +1511,8 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   LWIP_ASSERT("conn->write_offset < conn->current_msg->msg.w.len",
     conn->write_offset < conn->current_msg->msg.w.len);
 
-  dontblock = netconn_is_nonblocking(conn) ||
-       (conn->current_msg->msg.w.apiflags & NETCONN_DONTBLOCK);
   apiflags = conn->current_msg->msg.w.apiflags;
+  dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
 
 #if LWIP_SO_SNDTIMEO
   if ((conn->send_timeout != 0) &&
@@ -1604,7 +1602,6 @@ err_mem:
         err = out_err;
         write_finished = 1;
         conn->current_msg->msg.w.len = 0;
-      } else {
       }
     } else {
       /* On errors != ERR_MEM, we don't try writing any more but return

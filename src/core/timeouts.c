@@ -360,7 +360,6 @@ sys_check_timeouts(void)
   }
 }
 
-#if NO_SYS
 /** Set back the timestamp of the last call to sys_check_timeouts()
  * This is necessary if sys_check_timeouts() hasn't been called for a long
  * time (e.g. while saving energy) to prevent all timer functions of that
@@ -371,7 +370,6 @@ sys_restart_timeouts(void)
 {
   timeouts_last_time = sys_now();
 }
-#endif /* NO_SYS */
 
 /** Return the time left before the next timeout is due. If no timeouts are
  * enqueued, returns 0xffffffff

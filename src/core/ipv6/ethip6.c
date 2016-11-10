@@ -51,34 +51,10 @@
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp6.h"
+#include "lwip/prot/ethernet.h"
 #include "netif/ethernet.h"
 
 #include <string.h>
-
-/**
- * Send an IPv6 packet on the network using netif->linkoutput
- * The ethernet header is filled in before sending.
- *
- * @params netif the lwIP network interface on which to send the packet
- * @params p the packet to send, p->payload pointing to the (uninitialized) ethernet header
- * @params src the source MAC address to be copied into the ethernet header
- * @params dst the destination MAC address to be copied into the ethernet header
- * @return ERR_OK if the packet was sent, any other err_t on failure
- */
-static err_t
-ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
-{
-  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
-
-  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethip6!",
-              (netif->hwaddr_len == 6));
-  SMEMCPY(&ethhdr->dest, dst, 6);
-  SMEMCPY(&ethhdr->src, src, 6);
-  ethhdr->type = PP_HTONS(ETHTYPE_IPV6);
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethip6_send: sending packet %p\n", (void *)p));
-  /* send the packet */
-  return netif->linkoutput(netif, p);
-}
 
 /**
  * Resolve and fill-in Ethernet address header for outgoing IPv6 packet.
@@ -96,21 +72,13 @@ ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct et
  *
  * @return
  * - ERR_RTE No route to destination (no gateway to external networks),
- * or the return type of either etharp_query() or etharp_send_ip().
+ * or the return type of either nd6_queue_packet() or ethernet_output().
  */
 err_t
 ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 {
   struct eth_addr dest;
   s8_t i;
-
-  /* make room for Ethernet header - should not fail */
-  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
-    /* bail out */
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-      ("etharp_output: could not allocate room for header.\n"));
-    return ERR_BUF;
-  }
 
   /* multicast destination IP address? */
   if (ip6_addr_ismulticast(ip6addr)) {
@@ -123,7 +91,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     dest.addr[5] = ((const u8_t *)(&(ip6addr->addr[3])))[3];
 
     /* Send out. */
-    return ethip6_send(netif, q, (struct eth_addr*)(netif->hwaddr), &dest);
+    return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
   }
 
   /* We have a unicast destination IP address */
@@ -139,7 +107,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   if (neighbor_cache[i].state == ND6_STALE) {
     /* Switch to delay state. */
     neighbor_cache[i].state = ND6_DELAY;
-    neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
+    neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
   }
   /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
   if ((neighbor_cache[i].state == ND6_REACHABLE) ||
@@ -148,11 +116,10 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 
     /* Send out. */
     SMEMCPY(dest.addr, neighbor_cache[i].lladdr, 6);
-    return ethip6_send(netif, q, (struct eth_addr*)(netif->hwaddr), &dest);
+    return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
   }
 
   /* We should queue packet on this interface. */
-  pbuf_header(q, -(s16_t)SIZEOF_ETH_HDR);
   return nd6_queue_packet(i, q);
 }
 

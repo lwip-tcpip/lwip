@@ -61,7 +61,7 @@ extern "C" {
 /** Struct for tables. */
 struct nd6_neighbor_cache_entry {
   ip6_addr_t next_hop_address;
-  struct netif * netif;
+  struct netif *netif;
   u8_t lladdr[NETIF_MAX_HWADDR_LEN];
   /*u32_t pmtu;*/
 #if LWIP_ND6_QUEUEING
@@ -74,10 +74,10 @@ struct nd6_neighbor_cache_entry {
   u8_t state;
   u8_t isrouter;
   union {
-    u32_t reachable_time;
-    u32_t delay_time;
+    u32_t reachable_time; /* in ms since value may originate from network packet */
+    u32_t delay_time;     /* ticks (ND6_TMR_INTERVAL) */
     u32_t probes_sent;
-    u32_t stale_time;
+    u32_t stale_time;     /* ticks (ND6_TMR_INTERVAL) */
   } counter;
 };
 
@@ -90,8 +90,8 @@ struct nd6_destination_cache_entry {
 
 struct nd6_prefix_list_entry {
   ip6_addr_t prefix;
-  struct netif * netif;
-  u32_t invalidation_timer;
+  struct netif *netif;
+  u32_t invalidation_timer; /* in ms since value may originate from network packet */
 #if LWIP_IPV6_AUTOCONFIG
   u8_t flags;
 #define ND6_PREFIX_AUTOCONFIG_AUTONOMOUS 0x01
@@ -101,11 +101,10 @@ struct nd6_prefix_list_entry {
 };
 
 struct nd6_router_list_entry {
-  struct nd6_neighbor_cache_entry * neighbor_entry;
-  u32_t invalidation_timer;
+  struct nd6_neighbor_cache_entry *neighbor_entry;
+  u32_t invalidation_timer; /* in ms since value may originate from network packet */
   u8_t flags;
 };
-
 
 enum nd6_neighbor_cache_entry_state {
   ND6_NO_ENTRY = 0,
@@ -126,208 +125,6 @@ struct nd6_q_entry {
 };
 #endif /* LWIP_ND6_QUEUEING */
 
-/** Neighbor solicitation message header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ns_header {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u32_t reserved);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t target_address);
-  /* Options follow. */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Neighbor advertisement message header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct na_header {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FLD_8(u8_t flags);
-  PACK_STRUCT_FLD_8(u8_t reserved[3]);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t target_address);
-  /* Options follow. */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-#define ND6_FLAG_ROUTER      (0x80)
-#define ND6_FLAG_SOLICITED   (0x40)
-#define ND6_FLAG_OVERRIDE    (0x20)
-
-/** Router solicitation message header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct rs_header {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u32_t reserved);
-  /* Options follow. */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Router advertisement message header. */
-#define ND6_RA_FLAG_MANAGED_ADDR_CONFIG (0x80)
-#define ND6_RA_FLAG_OTHER_CONFIG (0x40)
-#define ND6_RA_FLAG_HOME_AGENT (0x20)
-#define ND6_RA_PREFERENCE_MASK (0x18)
-#define ND6_RA_PREFERENCE_HIGH (0x08)
-#define ND6_RA_PREFERENCE_MEDIUM (0x00)
-#define ND6_RA_PREFERENCE_LOW (0x18)
-#define ND6_RA_PREFERENCE_DISABLED (0x10)
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ra_header {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FLD_8(u8_t current_hop_limit);
-  PACK_STRUCT_FLD_8(u8_t flags);
-  PACK_STRUCT_FIELD(u16_t router_lifetime);
-  PACK_STRUCT_FIELD(u32_t reachable_time);
-  PACK_STRUCT_FIELD(u32_t retrans_timer);
-  /* Options follow. */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Redirect message header. */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct redirect_header {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t code);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u32_t reserved);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t target_address);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t destination_address);
-  /* Options follow. */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Link-layer address option. */
-#define ND6_OPTION_TYPE_SOURCE_LLADDR (0x01)
-#define ND6_OPTION_TYPE_TARGET_LLADDR (0x02)
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct lladdr_option {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t length);
-  PACK_STRUCT_FLD_8(u8_t addr[NETIF_MAX_HWADDR_LEN]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Prefix information option. */
-#define ND6_OPTION_TYPE_PREFIX_INFO (0x03)
-#define ND6_PREFIX_FLAG_ON_LINK (0x80)
-#define ND6_PREFIX_FLAG_AUTONOMOUS (0x40)
-#define ND6_PREFIX_FLAG_ROUTER_ADDRESS (0x20)
-#define ND6_PREFIX_FLAG_SITE_PREFIX (0x10)
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct prefix_option {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t length);
-  PACK_STRUCT_FLD_8(u8_t prefix_length);
-  PACK_STRUCT_FLD_8(u8_t flags);
-  PACK_STRUCT_FIELD(u32_t valid_lifetime);
-  PACK_STRUCT_FIELD(u32_t preferred_lifetime);
-  PACK_STRUCT_FLD_8(u8_t reserved2[3]);
-  PACK_STRUCT_FLD_8(u8_t site_prefix_length);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t prefix);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Redirected header option. */
-#define ND6_OPTION_TYPE_REDIR_HDR (0x04)
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct redirected_header_option {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t length);
-  PACK_STRUCT_FLD_8(u8_t reserved[6]);
-  /* Portion of redirected packet follows. */
-  /* PACK_STRUCT_FLD_8(u8_t redirected[8]); */
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** MTU option. */
-#define ND6_OPTION_TYPE_MTU (0x05)
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct mtu_option {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t length);
-  PACK_STRUCT_FIELD(u16_t reserved);
-  PACK_STRUCT_FIELD(u32_t mtu);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/** Route information option. */
-#define ND6_OPTION_TYPE_ROUTE_INFO (24)
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct route_option {
-  PACK_STRUCT_FLD_8(u8_t type);
-  PACK_STRUCT_FLD_8(u8_t length);
-  PACK_STRUCT_FLD_8(u8_t prefix_length);
-  PACK_STRUCT_FLD_8(u8_t preference);
-  PACK_STRUCT_FIELD(u32_t route_lifetime);
-  PACK_STRUCT_FLD_S(ip6_addr_p_t prefix);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
 /** 1 second period */
 #define ND6_TMR_INTERVAL 1000
 
@@ -344,14 +141,14 @@ extern u32_t retrans_timer;
 
 void nd6_tmr(void);
 void nd6_input(struct pbuf *p, struct netif *inp);
-s8_t nd6_get_next_hop_entry(const ip6_addr_t * ip6addr, struct netif * netif);
-s8_t nd6_select_router(const ip6_addr_t * ip6addr, struct netif * netif);
-u16_t nd6_get_destination_mtu(const ip6_addr_t * ip6addr, struct netif * netif);
-err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf * p);
+s8_t nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif);
+s8_t nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif);
+u16_t nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif);
+err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf *p);
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
-void nd6_reachability_hint(const ip6_addr_t * ip6addr);
+void nd6_reachability_hint(const ip6_addr_t *ip6addr);
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
-void nd6_cleanup_netif(struct netif * netif);
+void nd6_cleanup_netif(struct netif *netif);
 
 #ifdef __cplusplus
 }

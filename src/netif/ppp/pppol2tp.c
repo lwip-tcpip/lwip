@@ -81,7 +81,6 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, struct pbuf *p, u16_t ns, u16_t nr);
 static void pppol2tp_timeout(void *arg);
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp);
-static void pppol2tp_clear(pppol2tp_pcb *l2tp);
 static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp);
 static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns);
@@ -262,13 +261,15 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   ipcp_options *ipcp_ao;
 #endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
-  if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
-    return ERR_VAL;
-  }
-
-  pppol2tp_clear(l2tp);
-
-  ppp_link_start(ppp);
+  l2tp->tunnel_port = l2tp->remote_port;
+  l2tp->our_ns = 0;
+  l2tp->peer_nr = 0;
+  l2tp->peer_ns = 0;
+  l2tp->source_tunnel_id = 0;
+  l2tp->remote_tunnel_id = 0;
+  l2tp->source_session_id = 0;
+  l2tp->remote_session_id = 0;
+  /* l2tp->*_retried are cleared when used */
 
   lcp_wo = &ppp->lcp_wantoptions;
   lcp_wo->mru = PPPOL2TP_DEFMRU;
@@ -302,7 +303,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
     udp_bind(l2tp->udp, IP6_ADDR_ANY, 0);
   } else
 #endif /* LWIP_IPV6 */
-  udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
+  udp_bind(l2tp->udp, IP4_ADDR_ANY, 0);
 
 #if PPPOL2TP_AUTH_SUPPORT
   /* Generate random vector */
@@ -328,14 +329,12 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
 
-  if (l2tp->phase < PPPOL2TP_STATE_DATA) {
-    return;
-  }
-
   l2tp->our_ns++;
   pppol2tp_send_stopccn(l2tp, l2tp->our_ns);
 
-  pppol2tp_clear(l2tp);
+  /* stop any timer, disconnect can be called while initiating is in progress */
+  sys_untimeout(pppol2tp_timeout, l2tp);
+  l2tp->phase = PPPOL2TP_STATE_INITIAL;
   ppp_link_end(ppp); /* notify upper layers */
 }
 
@@ -346,6 +345,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
   u8_t *inp;
   LWIP_UNUSED_ARG(pcb);
 
+  /* we can't unbound a UDP pcb, thus we can still receive UDP frames after the link is closed */
   if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
     goto free_and_return;
   }
@@ -772,24 +772,8 @@ static void pppol2tp_timeout(void *arg) {
 /* Connection attempt aborted */
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp) {
   PPPDEBUG(LOG_DEBUG, ("pppol2tp: could not establish connection\n"));
-  pppol2tp_clear(l2tp);
-  ppp_link_failed(l2tp->ppp); /* notify upper layers */
-}
-
-/* Reset L2TP control block to its initial state */
-static void pppol2tp_clear(pppol2tp_pcb *l2tp) {
-  /* stop any timer */
-  sys_untimeout(pppol2tp_timeout, l2tp);
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
-  l2tp->tunnel_port = l2tp->remote_port;
-  l2tp->our_ns = 0;
-  l2tp->peer_nr = 0;
-  l2tp->peer_ns = 0;
-  l2tp->source_tunnel_id = 0;
-  l2tp->remote_tunnel_id = 0;
-  l2tp->source_session_id = 0;
-  l2tp->remote_session_id = 0;
-  /* l2tp->*_retried are cleared when used */
+  ppp_link_failed(l2tp->ppp); /* notify upper layers */
 }
 
 /* Initiate a new tunnel */
@@ -1112,12 +1096,6 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns) {
 
 static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   u8_t *p;
-
-  /* are we ready to process data yet? */
-  if (l2tp->phase < PPPOL2TP_STATE_DATA) {
-    pbuf_free(pb);
-    return ERR_CONN;
-  }
 
   /* make room for L2TP header - should not fail */
   if (pbuf_header(pb, (s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {

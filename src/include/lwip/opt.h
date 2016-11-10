@@ -36,8 +36,8 @@
  *
  */
 
-/* 
- * NOTE: || defined __DOXYGEN__ is a workaround for doxygen bug - 
+/*
+ * NOTE: || defined __DOXYGEN__ is a workaround for doxygen bug -
  * without this, doxygen does not see the actual #define
  */
 
@@ -51,7 +51,7 @@
 #include "lwipopts.h"
 #include "lwip/debug.h"
 
-/** 
+/**
  * @defgroup lwip_opts Options (lwipopts.h)
  * @ingroup lwip
  *
@@ -401,9 +401,9 @@
 /**
  * MEMP_NUM_FRAG_PBUF: the number of IP fragments simultaneously sent
  * (fragments, not whole packets!).
- * This is only used with IP_FRAG_USES_STATIC_BUF==0 and
- * LWIP_NETIF_TX_SINGLE_PBUF==0 and only has to be > 1 with DMA-enabled MACs
- * where the packet is not yet sent when netif->output returns.
+ * This is only used with LWIP_NETIF_TX_SINGLE_PBUF==0 and only has to be > 1
+ * with DMA-enabled MACs where the packet is not yet sent when netif->output
+ * returns.
  */
 #if !defined MEMP_NUM_FRAG_PBUF || defined __DOXYGEN__
 #define MEMP_NUM_FRAG_PBUF              15
@@ -577,20 +577,6 @@
 #endif
 
 /**
- * ETHARP_TRUST_IP_MAC==1: Incoming IP packets cause the ARP table to be
- * updated with the source MAC and IP addresses supplied in the packet.
- * You may want to disable this if you do not trust LAN peers to have the
- * correct addresses, or as a limited approach to attempt to handle
- * spoofing. If disabled, lwIP will need to make a new ARP request if
- * the peer is not already in the ARP table, adding a little latency.
- * The peer *is* in the ARP table if it requested our address before.
- * Also notice that this slows down input processing of every IP packet!
- */
-#if !defined ETHARP_TRUST_IP_MAC || defined __DOXYGEN__
-#define ETHARP_TRUST_IP_MAC             0
-#endif
-
-/**
  * ETHARP_SUPPORT_VLAN==1: support receiving and sending ethernet packets with
  * VLAN header. See the description of LWIP_HOOK_VLAN_CHECK and
  * LWIP_HOOK_VLAN_SET hooks to check/set VLAN headers.
@@ -717,25 +703,6 @@
  */
 #if !defined IP_REASS_MAX_PBUFS || defined __DOXYGEN__
 #define IP_REASS_MAX_PBUFS              10
-#endif
-
-/**
- * IP_FRAG_USES_STATIC_BUF==1: Use a static MTU-sized buffer for IP
- * fragmentation. Otherwise pbufs are allocated and reference the original
- * packet data to be fragmented (or with LWIP_NETIF_TX_SINGLE_PBUF==1,
- * new PBUF_RAM pbufs are used for fragments).
- * ATTENTION: IP_FRAG_USES_STATIC_BUF==1 may not be used for DMA-enabled MACs!
- */
-#if !defined IP_FRAG_USES_STATIC_BUF || defined __DOXYGEN__
-#define IP_FRAG_USES_STATIC_BUF         0
-#endif
-
-/**
- * IP_FRAG_MAX_MTU: Assumed max MTU on any interface for IP frag buffer
- * (requires IP_FRAG_USES_STATIC_BUF==1)
- */
-#if IP_FRAG_USES_STATIC_BUF && !defined(IP_FRAG_MAX_MTU) || defined __DOXYGEN__
-#define IP_FRAG_MAX_MTU                 1500
 #endif
 
 /**
@@ -1011,7 +978,7 @@
  * IP_MULTICAST_TTL/IP_MULTICAST_IF/IP_MULTICAST_LOOP
  */
 #if !defined LWIP_MULTICAST_TX_OPTIONS || defined __DOXYGEN__
-#define LWIP_MULTICAST_TX_OPTIONS       LWIP_IGMP
+#define LWIP_MULTICAST_TX_OPTIONS       (LWIP_IGMP && LWIP_UDP)
 #endif
 /**
  * @}
@@ -1249,7 +1216,7 @@
 
 /**
  * TCP_OOSEQ_MAX_BYTES: The maximum number of bytes queued on ooseq per pcb.
- * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==0.
+ * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==1.
  */
 #if !defined TCP_OOSEQ_MAX_BYTES || defined __DOXYGEN__
 #define TCP_OOSEQ_MAX_BYTES             0
@@ -1257,7 +1224,7 @@
 
 /**
  * TCP_OOSEQ_MAX_PBUFS: The maximum number of pbufs queued on ooseq per pcb.
- * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==0.
+ * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==1.
  */
 #if !defined TCP_OOSEQ_MAX_PBUFS || defined __DOXYGEN__
 #define TCP_OOSEQ_MAX_PBUFS             0
@@ -1325,6 +1292,13 @@
 #if !defined(LWIP_EVENT_API) && !defined(LWIP_CALLBACK_API) || defined __DOXYGEN__
 #define LWIP_EVENT_API                  0
 #define LWIP_CALLBACK_API               1
+#else
+#ifndef LWIP_EVENT_API
+#define LWIP_EVENT_API                  0
+#endif
+#ifndef LWIP_CALLBACK_API
+#define LWIP_CALLBACK_API               0
+#endif
 #endif
 
 /**
@@ -1359,7 +1333,7 @@
  * Ethernet.
  */
 #if !defined PBUF_LINK_HLEN || defined __DOXYGEN__
-#if defined LWIP_HOOK_VLAN_SET || defined __DOXYGEN__
+#if defined LWIP_HOOK_VLAN_SET && !defined __DOXYGEN__
 #define PBUF_LINK_HLEN                  (18 + ETH_PAD_SIZE)
 #else /* LWIP_HOOK_VLAN_SET */
 #define PBUF_LINK_HLEN                  (14 + ETH_PAD_SIZE)
@@ -1458,6 +1432,14 @@
 #if !defined LWIP_NETIF_TX_SINGLE_PBUF || defined __DOXYGEN__
 #define LWIP_NETIF_TX_SINGLE_PBUF             0
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+
+/**
+ * LWIP_NUM_NETIF_CLIENT_DATA: Number of clients that may store
+ * data in client_data member array of struct netif.
+ */
+#if !defined LWIP_NUM_NETIF_CLIENT_DATA || defined __DOXYGEN__
+#define LWIP_NUM_NETIF_CLIENT_DATA            0
+#endif
 /**
  * @}
  */
@@ -2199,7 +2181,7 @@
 #endif
 
 /**
- * LWIP_IPV6_DUP_DETECT_ATTEMPTS: Number of duplicate address detection attempts.
+ * LWIP_IPV6_DUP_DETECT_ATTEMPTS=[0..7]: Number of duplicate address detection attempts.
  */
 #if !defined LWIP_IPV6_DUP_DETECT_ATTEMPTS || defined __DOXYGEN__
 #define LWIP_IPV6_DUP_DETECT_ATTEMPTS   1
@@ -2493,18 +2475,25 @@
 #endif
 
 /**
- * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
- * - called from etharp_raw() and etharp_send_ip() if VLAN support is enabled
+ * LWIP_HOOK_VLAN_SET:
+ * Hook can be used to set prio_vid field of vlan_hdr. If you need to store data
+ * on per-netif basis to implement this callback, see @ref netif_cd.
+ * Called from ethernet_output() if VLAN support (@ref ETHARP_SUPPORT_VLAN) is enabled.\n
+ * Signature: s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct eth_addr* src, const struct eth_addr* dst, u16_t eth_type);\n
+ * Arguments:
  * - netif: struct netif that the packet will be sent through
- * - eth_hdr: struct eth_hdr of the packet
- * - vlan_hdr: struct eth_vlan_hdr of the packet
+ * - p: struct pbuf packet to be sent
+ * - src: source eth address
+ * - dst: destination eth address
+ * - eth_type: ethernet type to packet to be sent\n
+ * 
+ * 
  * Return values:
- * - 0: Packet shall not contain VLAN header.
- * - != 0: Packet shall contain VLAN header.
- * Hook can be used to set prio_vid field of vlan_hdr.
+ * - &lt;0: Packet shall not contain VLAN header.
+ * - 0 &lt;= return value &lt;= 0xFFFF: Packet shall contain VLAN header. Return value is prio_vid in host byte order.
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr)
+#define LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type)
 #endif
 
 /**
@@ -2513,6 +2502,16 @@
  */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_MEMP_AVAILABLE(memp_t_type)
+#endif
+
+/**
+ * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif):
+ * Called from ethernet_input() when an unknown eth type is encountered.
+ * Return ERR_OK if packet is accepted, any error code otherwise.
+ * Payload points to ethernet header!
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif)
 #endif
 /**
  * @}
