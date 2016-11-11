@@ -141,7 +141,7 @@ PACK_STRUCT_END
 #if (LWIP_TCP && (TCP_WND > 0xffffffff))
   #error "If you want to use TCP, TCP_WND must fit in an u32_t, so, you have to reduce it in your lwipopts.h"
 #endif
-#if (LWIP_TCP && LWIP_WND_SCALE && (TCP_RCV_SCALE > 14))
+#if (LWIP_TCP && (TCP_RCV_SCALE > 14))
   #error "The maximum valid window scale value is 14!"
 #endif
 #if (LWIP_TCP && (TCP_WND > (0xFFFFU << TCP_RCV_SCALE)))

@@ -1128,7 +1128,10 @@
 
 /**
  * TCP_WND: The size of a TCP window.  This must be at least
- * (2 * TCP_MSS) for things to work well
+ * (2 * TCP_MSS) for things to work well.
+ * ATTENTION: when using TCP_RCV_SCALE, TCP_WND is the total size
+ * with scaling applied. Maximum window value in the TCP header
+ * will be TCP_WND >> TCP_RCV_SCALE
  */
 #if !defined TCP_WND || defined __DOXYGEN__
 #define TCP_WND                         (4 * TCP_MSS)
