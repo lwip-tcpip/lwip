@@ -2770,7 +2770,7 @@ lwip_socket_drop_registered_memberships(int s)
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
 
-      netconn_join_leave_group(sockets[s].conn, &multi_addr, &if_addr, NETCONN_LEAVE);
+      netconn_join_leave_group(sock->conn, &multi_addr, &if_addr, NETCONN_LEAVE);
     }
   }
 }
