@@ -662,7 +662,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
      * this could be an old address if netif->ip_addr has changed */
     if (!ip4_addr_cmp(ip_2_ip4(&(pcb->local_ip)), netif_ip4_addr(netif))) {
       /* local_ip doesn't match, drop the packet */
-      return ERR_VAL;
+      return ERR_RTE;
     }
     /* use UDP PCB local IP address as source address */
     src_ip = &pcb->local_ip;
