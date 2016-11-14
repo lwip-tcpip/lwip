@@ -1033,6 +1033,24 @@ tcp_output(struct tcp_pcb *pcb)
                  lwip_ntohl(seg->tcphdr->seqno), pcb->lastack));
   }
 #endif /* TCP_CWND_DEBUG */
+  /* Check if we need to start the persistent timer when the next unsent segment
+   * does not fit within the remaining send window and RTO timer is not running (we
+   * have no in-flight data). A traditional approach would fill the remaining window
+   * with part of the unsent segment (which will engage zero-window probing upon
+   * reception of the zero window update from the receiver). This ensures the
+   * subsequent window update is reliably received. With the goal of being lightweight,
+   * we avoid splitting the unsent segment and treat the window as already zero.
+   */
+  if (seg != NULL &&
+      lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd &&
+      wnd > 0 && wnd == pcb->snd_wnd && pcb->unacked == NULL) {
+    /* Start the persist timer */
+    if (pcb->persist_backoff == 0) {
+      pcb->persist_cnt = 0;
+      pcb->persist_backoff = 1;
+    }
+    goto output_done;
+  }
   /* data available and window allows it to be sent? */
   while (seg != NULL &&
          lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
@@ -1112,6 +1130,7 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
+output_done:
 #if TCP_OVERSIZE
   if (pcb->unsent == NULL) {
     /* last unsent has been removed, reset unsent_oversize */
