@@ -545,13 +545,18 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 static void
 pcb_new(struct api_msg *msg)
 {
-  LWIP_ASSERT("pcb_new: pcb already allocated", msg->conn->pcb.tcp == NULL);
+  enum lwip_ip_addr_type iptype;
 
+  LWIP_ASSERT("pcb_new: pcb already allocated", msg->conn->pcb.tcp == NULL);
+ 
+  /* IPv6: Dual-stack by default, unless netconn_set_ipv6only() is called */
+  iptype = NETCONNTYPE_ISIPV6(netconn_type(msg->conn))? IPADDR_TYPE_ANY : IPADDR_TYPE_V4;
+  
   /* Allocate a PCB for this connection */
   switch(NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
   case NETCONN_RAW:
-    msg->conn->pcb.raw = raw_new(msg->msg.n.proto);
+    msg->conn->pcb.raw = raw_new_ip_type(iptype, msg->msg.n.proto);
     if (msg->conn->pcb.raw != NULL) {
       raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
     }
@@ -559,7 +564,7 @@ pcb_new(struct api_msg *msg)
 #endif /* LWIP_RAW */
 #if LWIP_UDP
   case NETCONN_UDP:
-    msg->conn->pcb.udp = udp_new();
+    msg->conn->pcb.udp = udp_new_ip_type(iptype);
     if (msg->conn->pcb.udp != NULL) {
 #if LWIP_UDPLITE
       if (NETCONNTYPE_ISUDPLITE(msg->conn->type)) {
@@ -575,7 +580,7 @@ pcb_new(struct api_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
   case NETCONN_TCP:
-    msg->conn->pcb.tcp = tcp_new();
+    msg->conn->pcb.tcp = tcp_new_ip_type(iptype);
     if (msg->conn->pcb.tcp != NULL) {
       setup_tcp(msg->conn);
     }
@@ -589,15 +594,6 @@ pcb_new(struct api_msg *msg)
   if (msg->conn->pcb.ip == NULL) {
     msg->err = ERR_MEM;
   }
-#if LWIP_IPV4 && LWIP_IPV6
-  else {
-    if (NETCONNTYPE_ISIPV6(msg->conn->type)) {
-      /* Convert IPv4 PCB manually to an IPv6 PCB */
-      IP_SET_TYPE_VAL(msg->conn->pcb.ip->local_ip,  IPADDR_TYPE_V6);
-      IP_SET_TYPE_VAL(msg->conn->pcb.ip->remote_ip, IPADDR_TYPE_V6);
-    }
-  }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 }
 
 /**
@@ -1114,37 +1110,20 @@ lwip_netconn_do_bind(void *m)
   } else {
     msg->err = ERR_VAL;
     if (msg->conn->pcb.tcp != NULL) {
-      const ip_addr_t *ipaddr = API_EXPR_REF(msg->msg.bc.ipaddr);
-
-#if LWIP_IPV4 && LWIP_IPV6
-      /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
-       * and NETCONN_FLAG_IPV6_V6ONLY is NOT set, use IP_ANY_TYPE to bind
-       */
-      if (ip_addr_cmp(ipaddr, IP6_ADDR_ANY) &&
-          (netconn_get_ipv6only(msg->conn) == 0)) {
-        /* change PCB type to IPADDR_TYPE_ANY */
-        IP_SET_TYPE_VAL(msg->conn->pcb.ip->local_ip,  IPADDR_TYPE_ANY);
-        IP_SET_TYPE_VAL(msg->conn->pcb.ip->remote_ip, IPADDR_TYPE_ANY);
-        
-        /* bind to IPADDR_TYPE_ANY */
-        ipaddr = IP_ANY_TYPE;
-      }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        msg->err = raw_bind(msg->conn->pcb.raw, ipaddr);
+        msg->err = raw_bind(msg->conn->pcb.raw, API_EXPR_REF(msg->msg.bc.ipaddr));
         break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
       case NETCONN_UDP:
-        msg->err = udp_bind(msg->conn->pcb.udp, ipaddr, msg->msg.bc.port);
+        msg->err = udp_bind(msg->conn->pcb.udp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
         break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
       case NETCONN_TCP:
-        msg->err = tcp_bind(msg->conn->pcb.tcp, ipaddr, msg->msg.bc.port);
+        msg->err = tcp_bind(msg->conn->pcb.tcp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
         break;
 #endif /* LWIP_TCP */
       default:
@@ -1398,15 +1377,6 @@ lwip_netconn_do_send(void *m)
   } else {
     msg->err = ERR_CONN;
     if (msg->conn->pcb.tcp != NULL) {
-      
-#if LWIP_IPV4 && LWIP_IPV6
-    /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-    if (NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && ip6_addr_isipv6mappedipv4(ip_2_ip6(&msg->msg.b->addr))) {
-      unmap_ipv6_mapped_ipv4(ip_2_ip4(&msg->msg.b->addr), ip_2_ip6(&msg->msg.b->addr));
-      IP_SET_TYPE(&msg->msg.b->addr, IPADDR_TYPE_V4);
-    }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-      
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
@@ -1720,14 +1690,6 @@ lwip_netconn_do_getaddr(void *m)
       ip_addr_copy(API_EXPR_DEREF(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->remote_ip);
     }
-    
-#if LWIP_IPV4 && LWIP_IPV6
-    /* Dual-stack: Map IPv4 addresses to IPv6 */
-    if (NETCONNTYPE_ISIPV6(netconn_type(msg->conn)) && IP_IS_V4_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr))) {
-      ip4_2_ipv6_mapped_ipv4(ip_2_ip6(&API_EXPR_DEREF(msg->msg.ad.ipaddr)), ip_2_ip4(&API_EXPR_DEREF(msg->msg.ad.ipaddr)));
-      IP_SET_TYPE_VAL(API_EXPR_DEREF(msg->msg.ad.ipaddr), IPADDR_TYPE_V6);
-    }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
     msg->err = ERR_OK;
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
