@@ -482,7 +482,8 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
       * ip.dst == llipaddr && hw.src != own hwaddr
       */
       if ((ip4_addr_cmp(&sipaddr, &autoip->llipaddr)) ||
-          (ip4_addr_cmp(&dipaddr, &autoip->llipaddr) &&
+          (ip4_addr_isany_val(sipaddr) &&
+           ip4_addr_cmp(&dipaddr, &autoip->llipaddr) &&
            !eth_addr_cmp(&netifaddr, &hdr->shwaddr))) {
         LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
           ("autoip_arp_reply(): Probe Conflict detected\n"));
