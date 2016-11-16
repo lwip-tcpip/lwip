@@ -301,15 +301,15 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char* file, const int
   SYS_ARCH_PROTECT(old_level);
 
   memp = *desc->tab;
-
-#if MEMP_OVERFLOW_CHECK == 1
-  memp_overflow_check_element_overflow(memp, desc);
-  memp_overflow_check_element_underflow(memp, desc);
-#endif /* MEMP_OVERFLOW_CHECK */
 #endif /* MEMP_MEM_MALLOC */
 
   if (memp != NULL) {
 #if !MEMP_MEM_MALLOC
+#if MEMP_OVERFLOW_CHECK == 1
+    memp_overflow_check_element_overflow(memp, desc);
+    memp_overflow_check_element_underflow(memp, desc);
+#endif /* MEMP_OVERFLOW_CHECK */
+
     *desc->tab = memp->next;
 #if MEMP_OVERFLOW_CHECK
     memp->next = NULL;
