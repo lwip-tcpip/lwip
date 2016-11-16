@@ -551,7 +551,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* LWIP_IPV4 */
 
   /* still need to check for ipaddr == NULL in IPv6 only case */
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 

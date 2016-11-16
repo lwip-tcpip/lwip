@@ -226,6 +226,8 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 #define unmap_ipv6_mapped_ipv4(ip4addr, ip6addr) \
   (ip4addr)->addr = (ip6addr)->addr[3];
 
+#define IP46_ADDR_ANY(type) (((type) == IPADDR_TYPE_V6)? IP6_ADDR_ANY : IP4_ADDR_ANY)
+
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 
 #define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)         1
@@ -274,6 +276,8 @@ typedef ip4_addr_t ip_addr_t;
 
 #define IPADDR_STRLEN_MAX   IP4ADDR_STRLEN_MAX
 
+#define IP46_ADDR_ANY(type) (IP4_ADDR_ANY)
+
 #else /* LWIP_IPV4 */
 
 typedef ip6_addr_t ip_addr_t;
@@ -314,6 +318,8 @@ typedef ip6_addr_t ip_addr_t;
 #define ipaddr_aton(cp, addr)                   ip6addr_aton(cp, addr)
 
 #define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
+
+#define IP46_ADDR_ANY(type) (IP6_ADDR_ANY)
 
 #endif /* LWIP_IPV4 */
 #endif /* LWIP_IPV4 && LWIP_IPV6 */

@@ -571,7 +571,12 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #endif /* LWIP_IPV6 || (LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS) */
 
   /* find the outgoing network interface for this packet */
-  netif = ip_route(&pcb->local_ip, dst_ip_route);
+  if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+    /* Don't call ip_route() with IP_ANY_TYPE */
+    netif = ip_route(IP46_ADDR_ANY(IP_GET_TYPE(dst_ip_route)), dst_ip_route);
+  } else {
+    netif = ip_route(&pcb->local_ip, dst_ip_route);
+  }
 
   /* no outgoing network interface could be found? */
   if (netif == NULL) {
@@ -912,7 +917,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* LWIP_IPV4 */
 
   /* still need to check for ipaddr == NULL in IPv6 only case */
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -1002,7 +1007,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
