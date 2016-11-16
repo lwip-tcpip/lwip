@@ -570,7 +570,7 @@ mdns_build_dnssd_domain(struct mdns_domain *domain)
   LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
   res = mdns_domain_add_label(domain, "_dns-sd", (u8_t)(sizeof("_dns-sd")-1));
   LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, dnssd_protos[DNSSD_PROTO_UDP], (u8_t)(sizeof(dnssd_protos[DNSSD_PROTO_UDP])-1));
+  res = mdns_domain_add_label(domain, dnssd_protos[DNSSD_PROTO_UDP], (u8_t)strlen(dnssd_protos[DNSSD_PROTO_UDP]));
   LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
   return mdns_add_dotlocal(domain);
 }
@@ -595,7 +595,7 @@ mdns_build_service_domain(struct mdns_domain *domain, struct mdns_service *servi
   }
   res = mdns_domain_add_label(domain, service->service, (u8_t)strlen(service->service));
   LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, dnssd_protos[service->proto], (u8_t)(sizeof(dnssd_protos[DNSSD_PROTO_UDP])-1));
+  res = mdns_domain_add_label(domain, dnssd_protos[service->proto], (u8_t)strlen(dnssd_protos[service->proto]));
   LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
   return mdns_add_dotlocal(domain);
 }
