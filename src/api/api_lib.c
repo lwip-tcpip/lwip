@@ -259,33 +259,22 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
     addr = IP4_ADDR_ANY;
   }
   
-  {
 #if LWIP_IPV4 && LWIP_IPV6
-    ip_addr_t ipaddr;
-
-    /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
-    * and NETCONN_FLAG_IPV6_V6ONLY is 0, use IP_ANY_TYPE to bind
-    */
-    if ((netconn_get_ipv6only(conn) == 0) &&
-       ip_addr_cmp(addr, IP6_ADDR_ANY)) {
-      addr = IP_ANY_TYPE;
-    }
-
-    /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-    if (IP_IS_V6(addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(addr))) {
-      unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
-      IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
-      addr = &ipaddr;
-    }
+  /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
+   * and NETCONN_FLAG_IPV6_V6ONLY is 0, use IP_ANY_TYPE to bind
+   */
+  if ((netconn_get_ipv6only(conn) == 0) &&
+     ip_addr_cmp(addr, IP6_ADDR_ANY)) {
+    addr = IP_ANY_TYPE;
+  }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
-    API_MSG_VAR_ALLOC(msg);
-    API_MSG_VAR_REF(msg).conn = conn;
-    API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
-    API_MSG_VAR_REF(msg).msg.bc.port = port;
-    err = netconn_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
-    API_MSG_VAR_FREE(msg);
-  }
+  API_MSG_VAR_ALLOC(msg);
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
+  API_MSG_VAR_REF(msg).msg.bc.port = port;
+  err = netconn_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
+  API_MSG_VAR_FREE(msg);
 
   return err;
 }
@@ -312,25 +301,12 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
     addr = IP4_ADDR_ANY;
   }
 
-  {
-#if LWIP_IPV4 && LWIP_IPV6
-    ip_addr_t ipaddr;
-
-    /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-    if (IP_IS_V6(addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(addr))) {
-      unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
-      IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
-      addr = &ipaddr;
-    }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-
-    API_MSG_VAR_ALLOC(msg);
-    API_MSG_VAR_REF(msg).conn = conn;
-    API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
-    API_MSG_VAR_REF(msg).msg.bc.port = port;
-    err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
-    API_MSG_VAR_FREE(msg);
-  }
+  API_MSG_VAR_ALLOC(msg);
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
+  API_MSG_VAR_REF(msg).msg.bc.port = port;
+  err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
+  API_MSG_VAR_FREE(msg);
 
   return err;
 }
@@ -731,14 +707,6 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   LWIP_ERROR("netconn_send: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %"U16_F" bytes\n", buf->p->tot_len));
-        
-#if LWIP_IPV4 && LWIP_IPV6
-  /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-  if (IP_IS_V6_VAL(buf->addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(&buf->addr))) {
-    unmap_ipv6_mapped_ipv4(ip_2_ip4(&buf->addr), ip_2_ip6(&buf->addr));
-    IP_SET_TYPE_VAL(buf->addr, IPADDR_TYPE_V4);
-  }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
   API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).conn = conn;
