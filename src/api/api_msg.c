@@ -549,10 +549,12 @@ pcb_new(struct api_msg *msg)
 
   LWIP_ASSERT("pcb_new: pcb already allocated", msg->conn->pcb.tcp == NULL);
  
+#if LWIP_IPV6 && LWIP_IPV4
   /* IPv6: Dual-stack by default, unless netconn_set_ipv6only() is called */
   if(NETCONNTYPE_ISIPV6(netconn_type(msg->conn))) {
     iptype = IPADDR_TYPE_ANY;
   }
+#endif
   
   /* Allocate a PCB for this connection */
   switch(NETCONNTYPE_GROUP(msg->conn->type)) {
