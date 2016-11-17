@@ -273,9 +273,9 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 
     /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
     if (IP_IS_V6(addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(addr))) {
-       unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
-       IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
-       addr = &ipaddr;
+      unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
+      IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
+      addr = &ipaddr;
     }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
@@ -318,9 +318,9 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 
     /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
     if (IP_IS_V6(addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(addr))) {
-       unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
-       IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
-       addr = &ipaddr;
+      unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
+      IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
+      addr = &ipaddr;
     }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
