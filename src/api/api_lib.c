@@ -250,7 +250,6 @@ err_t
 netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 {
   API_MSG_VAR_DECLARE(msg);
-  ip_addr_t ipaddr;
   err_t err;
   
   LWIP_ERROR("netconn_bind: invalid conn", (conn != NULL), return ERR_ARG;);
@@ -260,30 +259,33 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
     addr = IP4_ADDR_ANY;
   }
   
-  ip_addr_copy(ipaddr, *addr);
+  {
+#if LWIP_IPV4 && LWIP_IPV6
+    ip_addr_t ipaddr;
 
-  #if LWIP_IPV4 && LWIP_IPV6
-  /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
-   * and NETCONN_FLAG_IPV6_V6ONLY is 0, use IP_ANY_TYPE to bind
-   */
-  if ((netconn_get_ipv6only(conn) == 0) &&
-      ip_addr_cmp(&ipaddr, IP6_ADDR_ANY)) {
-    ip_addr_copy(ipaddr, *IP_ANY_TYPE);
-  }
+    /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
+    * and NETCONN_FLAG_IPV6_V6ONLY is 0, use IP_ANY_TYPE to bind
+    */
+    if ((netconn_get_ipv6only(conn) == 0) &&
+       ip_addr_cmp(addr, IP6_ADDR_ANY)) {
+      addr = IP_ANY_TYPE;
+    }
 
-  /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-  if (IP_IS_V6_VAL(ipaddr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(&ipaddr))) {
-    unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(&ipaddr));
-    IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
-  }
+    /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
+    if (IP_IS_V6(addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(addr))) {
+       unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
+       IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
+       addr = &ipaddr;
+    }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
-  API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).conn = conn;
-  API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(&ipaddr);
-  API_MSG_VAR_REF(msg).msg.bc.port = port;
-  err = netconn_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
-  API_MSG_VAR_FREE(msg);
+    API_MSG_VAR_ALLOC(msg);
+    API_MSG_VAR_REF(msg).conn = conn;
+    API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
+    API_MSG_VAR_REF(msg).msg.bc.port = port;
+    err = netconn_apimsg(lwip_netconn_do_bind, &API_MSG_VAR_REF(msg));
+    API_MSG_VAR_FREE(msg);
+  }
 
   return err;
 }
@@ -301,7 +303,6 @@ err_t
 netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 {
   API_MSG_VAR_DECLARE(msg);
-  ip_addr_t ipaddr;
   err_t err;
 
   LWIP_ERROR("netconn_connect: invalid conn", (conn != NULL), return ERR_ARG;);
@@ -311,30 +312,25 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
     addr = IP4_ADDR_ANY;
   }
 
-  ip_addr_copy(ipaddr, *addr);
+  {
+#if LWIP_IPV4 && LWIP_IPV6
+    ip_addr_t ipaddr;
 
-  #if LWIP_IPV4 && LWIP_IPV6
-  /* "Socket API like" dual-stack support: If IP to bind to is IP6_ADDR_ANY,
-   * and NETCONN_FLAG_IPV6_V6ONLY is 0, use IP_ANY_TYPE to bind
-   */
-  if ((netconn_get_ipv6only(conn) == 0) &&
-      ip_addr_cmp(&ipaddr, IP6_ADDR_ANY)) {
-    ip_addr_copy(ipaddr, *IP_ANY_TYPE);
-  }
-
-  /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
-  if (IP_IS_V6_VAL(ipaddr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(&ipaddr))) {
-    unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(&ipaddr));
-    IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
-  }
+    /* Dual-stack: Unmap IPv6 mapped IPv4 addresses */
+    if (IP_IS_V6(addr) && ip6_addr_isipv6mappedipv4(ip_2_ip6(addr))) {
+       unmap_ipv6_mapped_ipv4(ip_2_ip4(&ipaddr), ip_2_ip6(addr));
+       IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4);
+       addr = &ipaddr;
+    }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
-  API_MSG_VAR_ALLOC(msg);
-  API_MSG_VAR_REF(msg).conn = conn;
-  API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(&ipaddr);
-  API_MSG_VAR_REF(msg).msg.bc.port = port;
-  err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
-  API_MSG_VAR_FREE(msg);
+    API_MSG_VAR_ALLOC(msg);
+    API_MSG_VAR_REF(msg).conn = conn;
+    API_MSG_VAR_REF(msg).msg.bc.ipaddr = API_MSG_VAR_REF(addr);
+    API_MSG_VAR_REF(msg).msg.bc.port = port;
+    err = netconn_apimsg(lwip_netconn_do_connect, &API_MSG_VAR_REF(msg));
+    API_MSG_VAR_FREE(msg);
+  }
 
   return err;
 }
