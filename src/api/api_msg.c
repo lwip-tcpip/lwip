@@ -545,12 +545,14 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 static void
 pcb_new(struct api_msg *msg)
 {
-  enum lwip_ip_addr_type iptype;
+  enum lwip_ip_addr_type iptype = IPADDR_TYPE_V4;
 
   LWIP_ASSERT("pcb_new: pcb already allocated", msg->conn->pcb.tcp == NULL);
  
   /* IPv6: Dual-stack by default, unless netconn_set_ipv6only() is called */
-  iptype = NETCONNTYPE_ISIPV6(netconn_type(msg->conn))? IPADDR_TYPE_ANY : IPADDR_TYPE_V4;
+  if(NETCONNTYPE_ISIPV6(netconn_type(msg->conn))) {
+    iptype = IPADDR_TYPE_ANY;
+  }
   
   /* Allocate a PCB for this connection */
   switch(NETCONNTYPE_GROUP(msg->conn->type)) {
