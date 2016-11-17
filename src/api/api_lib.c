@@ -231,14 +231,6 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
   err = netconn_apimsg(lwip_netconn_do_getaddr, &msg);
 #endif /* LWIP_MPU_COMPATIBLE */
   API_MSG_VAR_FREE(msg);
-    
-#if LWIP_IPV4 && LWIP_IPV6
-  /* Dual-stack: Map IPv4 addresses to IPv6 mapped IPv4 */
-  if (NETCONNTYPE_ISIPV6(netconn_type(conn)) && IP_IS_V4(addr)) {
-    ip4_2_ipv6_mapped_ipv4(ip_2_ip6(addr), ip_2_ip4(addr));
-    IP_SET_TYPE(addr, IPADDR_TYPE_V6);
-  }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
   return err;
 }
@@ -607,18 +599,8 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 #endif /* LWIP_TCP && (LWIP_UDP || LWIP_RAW) */
 #if (LWIP_UDP || LWIP_RAW)
   {
-    struct netbuf* nbuf = (struct netbuf*)buf;
-    
     LWIP_ASSERT("buf != NULL", buf != NULL);
-    len = netbuf_len(nbuf);
-
-#if LWIP_IPV4 && LWIP_IPV6
-    /* Dual-stack: Map IPv4 addresses to IPv6 mapped IPv4 */
-    if (NETCONNTYPE_ISIPV6(netconn_type(conn)) && IP_IS_V4_VAL(nbuf->addr)) {
-      ip4_2_ipv6_mapped_ipv4(ip_2_ip6(&nbuf->addr), ip_2_ip4(&nbuf->addr));
-      IP_SET_TYPE_VAL(nbuf->addr, IPADDR_TYPE_V6);
-    }
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
+    len = netbuf_len((struct netbuf*)buf);
   }
 #endif /* (LWIP_UDP || LWIP_RAW) */
 

@@ -847,6 +847,15 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
           port = netbuf_fromport((struct netbuf *)buf);
           fromaddr = netbuf_fromaddr((struct netbuf *)buf);
         }
+
+#if LWIP_IPV4 && LWIP_IPV6
+        /* Dual-stack: Map IPv4 addresses to IPv6 mapped IPv4 */
+        if (NETCONNTYPE_ISIPV6(netconn_type(sock->conn)) && IP_IS_V4(fromaddr)) {
+          ip4_2_ipv6_mapped_ipv4(ip_2_ip6(fromaddr), ip_2_ip4(fromaddr));
+          IP_SET_TYPE(fromaddr, IPADDR_TYPE_V6);
+        }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
         IPADDR_PORT_TO_SOCKADDR(&saddr, fromaddr, port);
         ip_addr_debug_print(SOCKETS_DEBUG, fromaddr);
         LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
@@ -1710,6 +1719,15 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
     sock_set_errno(sock, err_to_errno(err));
     return -1;
   }
+
+#if LWIP_IPV4 && LWIP_IPV6
+  /* Dual-stack: Map IPv4 addresses to IPv6 mapped IPv4 */
+  if (NETCONNTYPE_ISIPV6(netconn_type(sock->conn)) && IP_IS_V4_VAL(naddr)) {
+    ip4_2_ipv6_mapped_ipv4(ip_2_ip6(&naddr), ip_2_ip4(&naddr));
+    IP_SET_TYPE_VAL(naddr, IPADDR_TYPE_V6);
+  }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
   IPADDR_PORT_TO_SOCKADDR(&saddr, &naddr, port);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getaddrname(%d, addr=", s));
