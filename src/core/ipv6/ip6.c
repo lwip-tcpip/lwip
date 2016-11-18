@@ -94,7 +94,8 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   if (ip6_addr_islinklocal(dest)) {
     if (ip6_addr_isany(src)) {
       /* Use default netif, if Up. */
-      if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+      if (netif_default == NULL || !netif_is_up(netif_default) ||
+          !netif_is_link_up(netif_default)) {
         return NULL;
       }
       return netif_default;
@@ -114,7 +115,8 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
     }
 
     /* netif not found, use default netif, if up */
-    if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+    if (netif_default == NULL || !netif_is_up(netif_default) ||
+        !netif_is_link_up(netif_default)) {
       return NULL;
     }
     return netif_default;
@@ -172,7 +174,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   /* loopif is disabled, loopback traffic is passed through any netif */
   if (ip6_addr_isloopback(dest)) {
     /* don't check for link on loopback traffic */
-    if (netif_is_up(netif_default)) {
+    if (netif_default != NULL && netif_is_up(netif_default)) {
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
