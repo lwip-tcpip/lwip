@@ -113,6 +113,10 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
+#if !PPPOL2TP_AUTH_SUPPORT
+  LWIP_UNUSED_ARG(secret);
+  LWIP_UNUSED_ARG(secret_len);
+#endif /* !PPPOL2TP_AUTH_SUPPORT */
 
   if (ipaddr == NULL) {
     goto ipaddr_check_failed;
