@@ -283,12 +283,8 @@ udp_input(struct pbuf *p, struct netif *inp)
         uncon_pcb = pcb;
       }
 
-      /* Compare PCB remote addr+port to UDP source addr+port.
-       * Allow pcb->remote_port 0 for matching any port 
-       * from a specified pcb->remote_ip.
-       * See patch #9165
-       */
-      if (((pcb->remote_port == src) || (pcb->remote_port == 0)) &&
+      /* compare PCB remote addr+port to UDP source addr+port */
+      if ((pcb->remote_port == src) &&
           (ip_addr_isany_val(pcb->remote_ip) ||
           ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
         /* the first fully matching PCB */
