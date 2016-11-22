@@ -292,8 +292,9 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 {
   struct netif *netif;
 
-  /* do not forward link-local addresses */
-  if (ip6_addr_islinklocal(ip6_current_dest_addr())) {
+  /* do not forward link-local or loopback addresses */
+  if (ip6_addr_islinklocal(ip6_current_dest_addr()) ||
+      ip6_addr_isloopback(ip6_current_dest_addr())) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_forward: not forwarding link-local address.\n"));
     IP6_STATS_INC(ip6.rterr);
     IP6_STATS_INC(ip6.drop);
@@ -511,12 +512,21 @@ ip6_input(struct pbuf *p, struct netif *inp)
           }
         }
       }
-      if (ip6_addr_islinklocal(ip6_current_dest_addr())) {
-        /* Do not match link-local addresses to other netifs. */
-        netif = NULL;
-        break;
-      }
       if (first) {
+        if (ip6_addr_islinklocal(ip6_current_dest_addr())
+#if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
+            || ip6_addr_isloopback(ip6_current_dest_addr())
+#endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
+        ) {
+          /* Do not match link-local addresses to other netifs. The loopback
+           * address is to be considered link-local and packets to it should be
+           * dropped on other interfaces, as per RFC 4291 Sec. 2.5.3. This
+           * requirement cannot be implemented in the case that loopback
+           * traffic is sent across a non-loopback interface, however.
+           */
+          netif = NULL;
+          break;
+        }
         first = 0;
         netif = netif_list;
       } else {

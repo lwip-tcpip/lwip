@@ -518,6 +518,15 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_AUTOIP */
       }
       if (first) {
+#if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
+        /* Packets sent to the loopback address must not be accepted on an
+         * interface that does not have the loopback address assigned to it,
+         * unless a non-loopback interface is used for loopback traffic. */
+        if (ip4_addr_isloopback(ip4_current_dest_addr())) {
+          netif = NULL;
+          break;
+        }
+#endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
         first = 0;
         netif = netif_list;
       } else {
