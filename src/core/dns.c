@@ -1244,8 +1244,9 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
     }
     /* check if this is the oldest completed entry */
     if (entry->state == DNS_STATE_DONE) {
-      if ((u8_t)(dns_seqno - entry->seqno) > lseq) {
-        lseq = dns_seqno - entry->seqno;
+      u8_t age = dns_seqno - entry->seqno;
+      if (age > lseq) {
+        lseq = age;
         lseqi = i;
       }
     }
