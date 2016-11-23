@@ -1572,10 +1572,11 @@ err_mem:
         write_finished = 1;
         conn->current_msg->msg.w.len = 0;
       }
-    } else if ((err == ERR_MEM) && !dontblock) {
-      /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
-         we do NOT return to the application thread, since ERR_MEM is
-         only a temporary error! */
+    } else if (err == ERR_MEM) {
+      /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called.
+         For blocking sockets, we do NOT return to the application
+         thread, since ERR_MEM is only a temporary error! Non-blocking
+         will remain non-writable until sent_tcp/poll_tcp is called */
 
       /* tcp_write returned ERR_MEM, try tcp_output anyway */
       err_t out_err = tcp_output(conn->pcb.tcp);
@@ -1584,6 +1585,11 @@ err_mem:
            don't try writing any more but return the error
            to the application thread. */
         err = out_err;
+        write_finished = 1;
+        conn->current_msg->msg.w.len = 0;
+      } else if (dontblock) {
+        /* non-blocking write is done on ERR_MEM */
+        err = ERR_WOULDBLOCK;
         write_finished = 1;
         conn->current_msg->msg.w.len = 0;
       }
