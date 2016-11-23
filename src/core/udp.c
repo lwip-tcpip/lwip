@@ -178,15 +178,8 @@ udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
       }
     } else
 #endif /* LWIP_IPV4 */
-    /* Handle IPv4 and IPv6: all, multicast or exact match */
-    if (ip_addr_isany(&pcb->local_ip) ||
-#if LWIP_IPV6_MLD
-       (ip_current_is_v6() && ip6_addr_ismulticast(ip6_current_dest_addr())) ||
-#endif /* LWIP_IPV6_MLD */
-#if LWIP_IGMP
-       (!ip_current_is_v6() && ip4_addr_ismulticast(ip4_current_dest_addr())) ||
-#endif /* LWIP_IGMP */
-       ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
+    /* Handle IPv4 and IPv6: all or exact match */
+    if (ip_addr_isany(&pcb->local_ip) || ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
       return 1;
     }
   }
