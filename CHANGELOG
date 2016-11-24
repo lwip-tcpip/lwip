@@ -6,8 +6,28 @@ HISTORY
 
   ++ New features:
 
+  2016-11-16: Dirk Ziegelmeier
+  * sockets.c: added support for IPv6 mapped IPv4 addresses
+
   ++ Bugfixes:
 
+  2016-11-23: Dirk Ziegelmeier
+  * udp.c: fixed bug #49662: ulticast traffic is now only received on a UDP PCB
+   (and therefore on a UDP socket/netconn) when the PCB is bound to IP_ADDR_ANY
+
+  2016-11-16: Dirk Ziegelmeier
+  * *: Fixed dual-stack behaviour
+
+  2016-11-14: Joel Cunningham
+  * tcp_out.c: fixed bug #49533 (start persist timer when unsent seg can't fit
+    in window) 
+
+  2016-11-16: Roberto Barbieri Carrera
+  * autoip.c: fixed bug #49610 (sometimes AutoIP fails to reuse the same address)
+
+  2016-11-11: Dirk Ziegelmeier
+  * sockets.c: fixed bug #49578 (dropping multicast membership does not work
+    with LWIP_SOCKET_OFFSET)
   
 (STABLE-2.0.0)
 
