@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2016-11-24: Ambroz Bizjak, David van Moolenbroek
+  * tcp_out.c: Optimize passing contiguous nocopy buffers to tcp_write (bug #46290)
+
   2016-11-16: Dirk Ziegelmeier
   * sockets.c: added support for IPv6 mapped IPv4 addresses
 
