@@ -15,7 +15,7 @@ HISTORY
   ++ Bugfixes:
 
   2016-11-23: Dirk Ziegelmeier
-  * udp.c: fixed bug #49662: ulticast traffic is now only received on a UDP PCB
+  * udp.c: fixed bug #49662: multicast traffic is now only received on a UDP PCB
    (and therefore on a UDP socket/netconn) when the PCB is bound to IP_ADDR_ANY
 
   2016-11-16: Dirk Ziegelmeier
