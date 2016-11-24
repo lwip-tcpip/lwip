@@ -6,6 +6,13 @@ HISTORY
 
   ++ New features:
 
+  ++ Bugfixes:
+
+  
+(STABLE-2.0.0)
+
+  ++ New features:
+
   2016-07-27: Simon Goldschmidt
   * opt.h, timeouts.h/.c: added LWIP_TIMERS_CUSTOM to override the default
     implementation of timeouts
