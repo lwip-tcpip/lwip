@@ -904,7 +904,6 @@ netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* ad
 void
 netif_poll(struct netif *netif)
 {
-  struct pbuf *in;
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
 #if MIB2_STATS
@@ -916,56 +915,52 @@ netif_poll(struct netif *netif)
 #endif /* MIB2_STATS */
   SYS_ARCH_DECL_PROTECT(lev);
 
-  do {
-    /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
-    SYS_ARCH_PROTECT(lev);
-    in = netif->loop_first;
-    if (in != NULL) {
-      struct pbuf *in_end = in;
+  /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
+  SYS_ARCH_PROTECT(lev);
+  while (netif->loop_first != NULL) {
+    struct pbuf *in, *in_end;
 #if LWIP_LOOPBACK_MAX_PBUFS
-      u8_t clen = 1;
-#endif /* LWIP_LOOPBACK_MAX_PBUFS */
-      while (in_end->len != in_end->tot_len) {
-        LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
-        in_end = in_end->next;
-#if LWIP_LOOPBACK_MAX_PBUFS
-        clen++;
-#endif /* LWIP_LOOPBACK_MAX_PBUFS */
-      }
-#if LWIP_LOOPBACK_MAX_PBUFS
-      /* adjust the number of pbufs on queue */
-      LWIP_ASSERT("netif->loop_cnt_current underflow",
-        ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
-      netif->loop_cnt_current -= clen;
+    u8_t clen = 1;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
-      /* 'in_end' now points to the last pbuf from 'in' */
-      if (in_end == netif->loop_last) {
-        /* this was the last pbuf in the list */
-        netif->loop_first = netif->loop_last = NULL;
-      } else {
-        /* pop the pbuf off the list */
-        netif->loop_first = in_end->next;
-        LWIP_ASSERT("should not be null since first != last!", netif->loop_first != NULL);
-      }
-      /* De-queue the pbuf from its successors on the 'loop_' list. */
-      in_end->next = NULL;
+    in = in_end = netif->loop_first;
+    while (in_end->len != in_end->tot_len) {
+      LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
+      in_end = in_end->next;
+#if LWIP_LOOPBACK_MAX_PBUFS
+      clen++;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
     }
+#if LWIP_LOOPBACK_MAX_PBUFS
+    /* adjust the number of pbufs on queue */
+    LWIP_ASSERT("netif->loop_cnt_current underflow",
+      ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
+    netif->loop_cnt_current -= clen;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
+
+    /* 'in_end' now points to the last pbuf from 'in' */
+    if (in_end == netif->loop_last) {
+      /* this was the last pbuf in the list */
+      netif->loop_first = netif->loop_last = NULL;
+    } else {
+      /* pop the pbuf off the list */
+      netif->loop_first = in_end->next;
+      LWIP_ASSERT("should not be null since first != last!", netif->loop_first != NULL);
+    }
+    /* De-queue the pbuf from its successors on the 'loop_' list. */
+    in_end->next = NULL;
     SYS_ARCH_UNPROTECT(lev);
 
-    if (in != NULL) {
-      LINK_STATS_INC(link.recv);
-      MIB2_STATS_NETIF_ADD(stats_if, ifinoctets, in->tot_len);
-      MIB2_STATS_NETIF_INC(stats_if, ifinucastpkts);
-      /* loopback packets are always IP packets! */
-      if (ip_input(in, netif) != ERR_OK) {
-        pbuf_free(in);
-      }
-      /* Don't reference the packet any more! */
-      in = NULL;
+    LINK_STATS_INC(link.recv);
+    MIB2_STATS_NETIF_ADD(stats_if, ifinoctets, in->tot_len);
+    MIB2_STATS_NETIF_INC(stats_if, ifinucastpkts);
+    /* loopback packets are always IP packets! */
+    if (ip_input(in, netif) != ERR_OK) {
+      pbuf_free(in);
     }
-  /* go on while there is a packet on the list */
-  } while (netif->loop_first != NULL);
+    SYS_ARCH_PROTECT(lev);
+  }
+  SYS_ARCH_UNPROTECT(lev);
 }
 
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING
