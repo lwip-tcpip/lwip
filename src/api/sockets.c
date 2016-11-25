@@ -82,10 +82,10 @@
       (sin)->sin_len = sizeof(struct sockaddr_in); \
       (sin)->sin_family = AF_INET; \
       (sin)->sin_port = lwip_htons((port)); \
-      inet4_addr_from_ip4addr(&(sin)->sin_addr, ipaddr); \
+      inet_addr_from_ip4addr(&(sin)->sin_addr, ipaddr); \
       memset((sin)->sin_zero, 0, SIN_ZERO_LEN); }while(0)
 #define SOCKADDR4_TO_IP4ADDR_PORT(sin, ipaddr, port) do { \
-    inet4_addr_to_ip4addr(ip_2_ip4(ipaddr), &((sin)->sin_addr)); \
+    inet_addr_to_ip4addr(ip_2_ip4(ipaddr), &((sin)->sin_addr)); \
     (port) = lwip_ntohs((sin)->sin_port); }while(0)
 #endif /* LWIP_IPV4 */
 
@@ -2046,7 +2046,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
         return ENOPROTOOPT;
       }
-      inet4_addr_from_ip4addr((struct in_addr*)optval, udp_get_multicast_netif_addr(sock->conn->pcb.udp));
+      inet_addr_from_ip4addr((struct in_addr*)optval, udp_get_multicast_netif_addr(sock->conn->pcb.udp));
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_IF) = 0x%"X32_F"\n",
                   s, *(u32_t *)optval));
       break;
@@ -2410,7 +2410,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       {
         ip4_addr_t if_addr;
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct in_addr, NETCONN_UDP);
-        inet4_addr_to_ip4addr(&if_addr, (const struct in_addr*)optval);
+        inet_addr_to_ip4addr(&if_addr, (const struct in_addr*)optval);
         udp_set_multicast_netif_addr(sock->conn->pcb.udp, &if_addr);
       }
       break;
@@ -2434,8 +2434,8 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         ip4_addr_t if_addr;
         ip4_addr_t multi_addr;
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct ip_mreq, NETCONN_UDP);
-        inet4_addr_to_ip4addr(&if_addr, &imr->imr_interface);
-        inet4_addr_to_ip4addr(&multi_addr, &imr->imr_multiaddr);
+        inet_addr_to_ip4addr(&if_addr, &imr->imr_interface);
+        inet_addr_to_ip4addr(&multi_addr, &imr->imr_multiaddr);
         if (optname == IP_ADD_MEMBERSHIP) {
           if (!lwip_socket_register_membership(s, &if_addr, &multi_addr)) {
             /* cannot track membership (out of memory) */
