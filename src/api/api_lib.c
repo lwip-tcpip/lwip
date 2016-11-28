@@ -745,6 +745,11 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
     return ERR_OK;
   }
   dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
+#if LWIP_SO_SNDTIMEO
+  if (conn->send_timeout != 0) {
+     dontblock = 1;
+  }
+#endif /* LWIP_SO_SNDTIMEO */
   if (dontblock && !bytes_written) {
     /* This implies netconn_write() cannot be used for non-blocking send, since
        it has no way to return the number of bytes written. */
@@ -772,11 +777,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
      non-blocking version here. */
   err = netconn_apimsg(lwip_netconn_do_write, &API_MSG_VAR_REF(msg));
   if ((err == ERR_OK) && (bytes_written != NULL)) {
-    if (dontblock
-#if LWIP_SO_SNDTIMEO
-        || (conn->send_timeout != 0)
-#endif /* LWIP_SO_SNDTIMEO */
-       ) {
+    if (dontblock) {
       /* nonblocking write: maybe the data has been sent partly */
       *bytes_written = API_MSG_VAR_REF(msg).msg.w.len;
     } else {
