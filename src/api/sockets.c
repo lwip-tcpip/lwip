@@ -1745,7 +1745,6 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   }
 
   /* get the IP address and port */
-  /* @todo: this does not work for IPv6, yet */
   err = netconn_getaddr(sock->conn, &naddr, &port, local);
   if (err != ERR_OK) {
     sock_set_errno(sock, err_to_errno(err));
@@ -2121,10 +2120,6 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     switch (optname) {
     case IPV6_V6ONLY:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, *optlen, int);
-      /* @todo: this does not work for datagram sockets, yet */
-      if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
-        return ENOPROTOOPT;
-      }
       *(int*)optval = (netconn_get_ipv6only(sock->conn) ? 1 : 0);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY) = %d\n",
                   s, *(int *)optval));
@@ -2520,7 +2515,6 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
   case IPPROTO_IPV6:
     switch (optname) {
     case IPV6_V6ONLY:
-      /* @todo: this does not work for datagram sockets, yet */
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_TCP);
       if (*(const int*)optval) {
         netconn_set_ipv6only(sock->conn, 1);
