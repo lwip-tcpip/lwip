@@ -747,7 +747,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
 #if LWIP_SO_SNDTIMEO
   if (conn->send_timeout != 0) {
-     dontblock = 1;
+    dontblock = 1;
   }
 #endif /* LWIP_SO_SNDTIMEO */
   if (dontblock && !bytes_written) {
