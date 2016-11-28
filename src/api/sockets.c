@@ -2074,6 +2074,9 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
   case IPPROTO_TCP:
     /* Special case: all IPPROTO_TCP option take an int */
     LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, int, NETCONN_TCP);
+    if (sock->conn->pcb.tcp->state == LISTEN) {
+      return EINVAL;
+    }
     switch (optname) {
     case TCP_NODELAY:
       *(int*)optval = tcp_nagle_disabled(sock->conn->pcb.tcp);
@@ -2467,6 +2470,9 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
   case IPPROTO_TCP:
     /* Special case: all IPPROTO_TCP option take an int */
     LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_TCP);
+    if (sock->conn->pcb.tcp->state == LISTEN) {
+      return EINVAL;
+    }
     switch (optname) {
     case TCP_NODELAY:
       if (*(const int*)optval) {
