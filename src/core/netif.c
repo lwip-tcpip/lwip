@@ -415,7 +415,7 @@ netif_remove(struct netif *netif)
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
+      raw_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
 #endif /* LWIP_RAW */
     }
   }
@@ -1053,7 +1053,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
+      raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_RAW */
     }
     /* @todo: remove/readd mib2 ip6 entries? */
@@ -1105,7 +1105,7 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
+      raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
 #endif /* LWIP_RAW */
       /* @todo: remove mib2 ip6 entries? */
     }
