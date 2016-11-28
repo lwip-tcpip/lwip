@@ -14,6 +14,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-11-28: Ambroz Bizjak
+  * tcpi_in.c: fixed bug #49717 (window size in received SYN and SYN-ACK
+    assumed scaled)
+
   2016-11-25: Simon Goldschmidt
   * dhcp.c: fixed bug #49676 (Possible endless loop when parsing dhcp options)
 
