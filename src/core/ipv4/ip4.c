@@ -598,6 +598,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     } else
 #endif /* IP_FORWARD */
     {
+      IP_STATS_INC(ip.drop);
       MIB2_STATS_INC(mib2.ipinaddrerrors);
       MIB2_STATS_INC(mib2.ipindiscards);
     }
