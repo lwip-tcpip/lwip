@@ -47,6 +47,8 @@
 
 #include "arch/cc.h"
 
+#include <stddef.h> /* for size_t */
+
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
  * the stdint.h header. This cannot be \#defined in lwipopts.h since
  * this is not an option of lwIP itself, but an option of the lwIP port
