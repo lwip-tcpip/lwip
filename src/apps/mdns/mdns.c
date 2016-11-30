@@ -2019,7 +2019,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 err_t
 mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_t txt_len)
 {
-  LWIP_ASSERT("mdns_resp_add_service: service != NULL", service);
+  LWIP_ASSERT("mdns_resp_add_service_txtitem: service != NULL", service);
 
   /* Use a mdns_domain struct to store txt chunks since it is the same encoding */
   return mdns_domain_add_label(&service->txtdata, txt, txt_len);
