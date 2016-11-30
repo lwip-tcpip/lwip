@@ -29,7 +29,7 @@ in a mailbox is just a pointer, nothing more.
 
 Semaphores are represented by the type "sys_sem_t" which is typedef'd
 in the sys_arch.h file. Mailboxes are equivalently represented by the
-type "sys_mbox_t". Mutexes are represented ny the type "sys_mutex_t".
+type "sys_mbox_t". Mutexes are represented by the type "sys_mutex_t".
 lwIP does not place any restrictions on how these types are represented
 internally.
 
