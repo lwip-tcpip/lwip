@@ -247,7 +247,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (type == ICMP_DUR) {
       MIB2_STATS_INC(mib2.icmpindestunreachs);
     } else if (type == ICMP_TE) {
-      MIB2_STATS_INC(mib2.icmpindestunreachs);
+      MIB2_STATS_INC(mib2.icmpintimeexcds);
     } else if (type == ICMP_PP) {
       MIB2_STATS_INC(mib2.icmpinparmprobs);
     } else if (type == ICMP_SQ) {
