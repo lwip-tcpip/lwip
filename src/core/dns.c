@@ -329,7 +329,7 @@ dns_setserver(u8_t numdns, const ip_addr_t *dnsserver)
     if (dnsserver != NULL) {
       dns_servers[numdns] = (*dnsserver);
     } else {
-      dns_servers[numdns] = *IP4_ADDR_ANY;
+      dns_servers[numdns] = *IP_ADDR_ANY;
     }
   }
 }
@@ -348,7 +348,7 @@ dns_getserver(u8_t numdns)
   if (numdns < DNS_MAX_SERVERS) {
     return &dns_servers[numdns];
   } else {
-    return IP4_ADDR_ANY;
+    return IP_ADDR_ANY;
   }
 }
 
