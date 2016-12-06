@@ -58,23 +58,8 @@ struct ip6_addr {
   u32_t addr[4];
 };
 
-/** This is the packed version of ip6_addr_t,
-    used in network headers that are itself packed */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ip6_addr_packed {
-  PACK_STRUCT_FIELD(u32_t addr[4]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
 /** IPv6 address */
 typedef struct ip6_addr ip6_addr_t;
-typedef struct ip6_addr_packed ip6_addr_p_t;
 
 
 #if BYTE_ORDER == BIG_ENDIAN
