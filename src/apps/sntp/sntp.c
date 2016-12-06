@@ -573,6 +573,7 @@ sntp_stop(void)
 {
   if (sntp_pcb != NULL) {
     sys_untimeout(sntp_request, NULL);
+    sys_untimeout(sntp_try_next_server, NULL);
     udp_remove(sntp_pcb);
     sntp_pcb = NULL;
   }
