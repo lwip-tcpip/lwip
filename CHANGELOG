@@ -14,8 +14,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-12-05: Dirk Ziegelmeier
+  * fixed compiling with IPv4 disabled (IPv6 only case)
+  
   2016-11-28: Simon Goldschmidt
-  * api_lib.c: fixed bug #49725 (send-timeout: netwonn_write() can return
+  * api_lib.c: fixed bug #49725 (send-timeout: netconn_write() can return
     ERR_OK without all bytes being written)
 
   2016-11-28: Ambroz Bizjak
@@ -30,7 +33,7 @@ HISTORY
    (and therefore on a UDP socket/netconn) when the PCB is bound to IP_ADDR_ANY
 
   2016-11-16: Dirk Ziegelmeier
-  * *: Fixed dual-stack behaviour
+  * *: Fixed dual-stack behaviour, IPv6 mapped IPv4 support in socket API
 
   2016-11-14: Joel Cunningham
   * tcp_out.c: fixed bug #49533 (start persist timer when unsent seg can't fit
