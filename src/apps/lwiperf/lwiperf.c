@@ -494,10 +494,8 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
         return ERR_VAL;
       }
     }
-    packet_idx += i;
-#else
-    packet_idx += q->len;
 #endif
+    packet_idx += q->len;
   }
   LWIP_ASSERT("count mismatch", packet_idx == p->tot_len);
   conn->bytes_transferred += packet_idx;
