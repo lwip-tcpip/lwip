@@ -118,21 +118,22 @@ struct netif;
 
 
 #if BYTE_ORDER == BIG_ENDIAN
-/** Set an IP address given by the four byte-parts */
-#define IP4_ADDR(ipaddr, a,b,c,d) \
-        (ipaddr)->addr = ((u32_t)((a) & 0xff) << 24) | \
-                         ((u32_t)((b) & 0xff) << 16) | \
-                         ((u32_t)((c) & 0xff) << 8)  | \
-                          (u32_t)((d) & 0xff)
+/** Convert IP address given by the four byte-parts to an u32_t. */
+#define IP4_ADDR_MAKEU32(a,b,c,d) (((u32_t)((a) & 0xff) << 24) | \
+                                   ((u32_t)((b) & 0xff) << 16) | \
+                                   ((u32_t)((c) & 0xff) << 8)  | \
+                                    (u32_t)((d) & 0xff))
 #else
-/** Set an IP address given by the four byte-parts.
+/** Convert IP address given by the four byte-parts to an u32_t.
     Little-endian version that prevents the use of lwip_htonl. */
-#define IP4_ADDR(ipaddr, a,b,c,d) \
-        (ipaddr)->addr = ((u32_t)((d) & 0xff) << 24) | \
-                         ((u32_t)((c) & 0xff) << 16) | \
-                         ((u32_t)((b) & 0xff) << 8)  | \
-                          (u32_t)((a) & 0xff)
+#define IP4_ADDR_MAKEU32(a,b,c,d) (((u32_t)((d) & 0xff) << 24) | \
+                                   ((u32_t)((c) & 0xff) << 16) | \
+                                   ((u32_t)((b) & 0xff) << 8)  | \
+                                    (u32_t)((a) & 0xff))
 #endif
+
+/** Set an IP address given by the four byte-parts */
+#define IP4_ADDR(ipaddr, a,b,c,d)  (ipaddr)->addr = IP4_ADDR_MAKEU32(a,b,c,d)
 
 /** MEMCPY-like copying of IP addresses where addresses are known to be
  * 16-bit-aligned if the port is correctly configured (so a port could define
