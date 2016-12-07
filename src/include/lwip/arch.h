@@ -47,7 +47,20 @@
 
 #include "arch/cc.h"
 
+/** Define this to 1 in arch/cc.h of your port if you do not want to
+ * include stddef.h header to get size_t. This cannot be \#defined in
+ * lwipopts.h since this is not an option of lwIP itself, but an option
+ * of the lwIP port to your system.
+ * Additionally, this header is meant to be \#included in lwipopts.h
+ * (you may need to declare function prototypes in there).
+ */
+#ifndef LWIP_NO_STDDEF_H
+#define LWIP_NO_STDDEF_H 0
+#endif
+
+#if !LWIP_NO_STDDEF_H
 #include <stddef.h> /* for size_t */
+#endif
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
  * the stdint.h header. This cannot be \#defined in lwipopts.h since
