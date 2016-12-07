@@ -65,13 +65,6 @@ extern "C" {
 #endif
 #endif
 
-/* Endianess-optimized shifting of two u8_t to create one u16_t */
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define LWIP_MAKE_U16(a, b) ((a << 8) | b)
-#else
-#define LWIP_MAKE_U16(a, b) ((b << 8) | a)
-#endif
-
 #if BYTE_ORDER == BIG_ENDIAN
 #define lwip_htons(x) (x)
 #define lwip_ntohs(x) (x)

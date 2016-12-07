@@ -863,7 +863,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += LWIP_MAKE_U16(proto, ttl);
+    chk_sum += PP_NTOHS(proto | (ttl << 8));
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
     /* dest cannot be NULL here */
@@ -876,7 +876,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     IPH_VHL_SET(iphdr, 4, ip_hlen / 4);
     IPH_TOS_SET(iphdr, tos);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += LWIP_MAKE_U16(tos, iphdr->_v_hl);
+    chk_sum += PP_NTOHS(tos | (iphdr->_v_hl << 8));
 #endif /* CHECKSUM_GEN_IP_INLINE */
     IPH_LEN_SET(iphdr, lwip_htons(p->tot_len));
 #if CHECKSUM_GEN_IP_INLINE
