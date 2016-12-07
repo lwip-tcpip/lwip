@@ -180,7 +180,7 @@ netif_init(void)
 #endif /* NO_SYS */
 
 #if LWIP_IPV6
-  IP_ADDR6(loop_netif.ip6_addr, 0, 0, 0, PP_HTONL(0x00000001UL));
+  IP_ADDR6_HOST(loop_netif.ip6_addr, 0, 0, 0, 0x00000001UL);
   loop_netif.ip6_addr_state[0] = IP6_ADDR_VALID;
 #endif /* LWIP_IPV6 */
 
