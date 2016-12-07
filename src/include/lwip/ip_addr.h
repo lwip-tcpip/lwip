@@ -80,7 +80,7 @@ extern const ip_addr_t ip_addr_any_type;
 /** @ingroup ip4addr */
 #define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } } }, IPADDR_TYPE_V4 }
 /** @ingroup ip4addr */
-#define IPADDR4_INIT_BYTES(a,b,c,d)   IPADDR4_INIT(IP4_ADDR_MAKEU32(a,b,c,d))
+#define IPADDR4_INIT_BYTES(a,b,c,d)   IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
 /** @ingroup ip6addr */
 #define IPADDR6_INIT(a, b, c, d)      { { { { a, b, c, d } } }, IPADDR_TYPE_V6 }
 /** @ingroup ip6addr */
@@ -241,7 +241,7 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 typedef ip4_addr_t ip_addr_t;
 #define IPADDR4_INIT(u32val)                    { u32val }
-#define IPADDR4_INIT_BYTES(a,b,c,d)             IPADDR4_INIT(IP4_ADDR_MAKEU32(a,b,c,d))
+#define IPADDR4_INIT_BYTES(a,b,c,d)             IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
 #define IP_IS_V4_VAL(ipaddr)                    1
 #define IP_IS_V6_VAL(ipaddr)                    0
 #define IP_IS_V4(ipaddr)                        1

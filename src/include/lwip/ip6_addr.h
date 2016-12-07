@@ -43,6 +43,7 @@
 #define LWIP_HDR_IP6_ADDR_H
 
 #include "lwip/opt.h"
+#include "def.h"
 
 #if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
@@ -61,23 +62,9 @@ struct ip6_addr {
 /** IPv6 address */
 typedef struct ip6_addr ip6_addr_t;
 
-
-#if BYTE_ORDER == BIG_ENDIAN
-/** Set an IPv6 partial address given by byte-parts. */
+/** Set an IPv6 partial address given by byte-parts */
 #define IP6_ADDR_PART(ip6addr, index, a,b,c,d) \
-  (ip6addr)->addr[index] = ((u32_t)((a) & 0xff) << 24) | \
-                           ((u32_t)((b) & 0xff) << 16) | \
-                           ((u32_t)((c) & 0xff) << 8)  | \
-                            (u32_t)((d) & 0xff)
-#else
-/** Set an IPv6 partial address given by byte-parts.
-Little-endian version, stored in network order (no lwip_htonl). */
-#define IP6_ADDR_PART(ip6addr, index, a,b,c,d) \
-  (ip6addr)->addr[index] = ((u32_t)((d) & 0xff) << 24) | \
-                           ((u32_t)((c) & 0xff) << 16) | \
-                           ((u32_t)((b) & 0xff) << 8)  | \
-                            (u32_t)((a) & 0xff)
-#endif
+  (ip6addr)->addr[index] = PP_HTONL(LWIP_MAKEU32(a,b,c,d))
 
 /** Set a full IPv6 address by passing the 4 u32_t indices in network byte order
     (use PP_HTONL() for constants) */
