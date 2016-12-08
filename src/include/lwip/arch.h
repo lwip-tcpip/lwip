@@ -166,18 +166,22 @@ typedef uintptr_t mem_ptr_t;
 extern "C" {
 #endif
 
+/* GCC/clang: Nothing to do */
 #ifndef PACK_STRUCT_BEGIN
 #define PACK_STRUCT_BEGIN
 #endif /* PACK_STRUCT_BEGIN */
 
+/* GCC/clang: Nothing to do */
 #ifndef PACK_STRUCT_END
 #define PACK_STRUCT_END
 #endif /* PACK_STRUCT_END */
 
+/* GCC/clang: #define PACK_STRUCT_STRUCT __attribute__((packed)) */
 #ifndef PACK_STRUCT_STRUCT
 #define PACK_STRUCT_STRUCT
 #endif /* PACK_STRUCT_STRUCT */
 
+/* GCC/clang: Nothing to do */
 #ifndef PACK_STRUCT_FIELD
 #define PACK_STRUCT_FIELD(x) x
 #endif /* PACK_STRUCT_FIELD */
@@ -198,7 +202,6 @@ extern "C" {
 #ifndef LWIP_UNUSED_ARG
 #define LWIP_UNUSED_ARG(x) (void)x
 #endif /* LWIP_UNUSED_ARG */
-
 
 #ifdef __cplusplus
 }
