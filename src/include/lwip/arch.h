@@ -50,6 +50,8 @@
 /**
  * @defgroup compiler_abstraction Compiler/platform abstraction
  * @ingroup sys_layer
+ * All defines related to this section must not be places in lwipopts.h,
+ * but in arch/cc.h!
  * @{
  */
 
@@ -137,7 +139,7 @@ typedef uintptr_t mem_ptr_t;
  * trailing padding bytes (see LWIP_MEM_ALIGN_BUFFER) or your own section placement
  * requirements.
  * e.g. if you use gcc and need 32 bit alignment:
- * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] __attribute__((aligned(4)))
+ * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] \_\_attribute\_\_((aligned(4)))
  * or more portable:
  * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u32_t variable_name[(size + sizeof(u32_t) - 1) / sizeof(u32_t)]
  */
