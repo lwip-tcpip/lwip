@@ -116,24 +116,6 @@ again:
     }
   }
   return udp_port;
-#if 0
-  struct udp_pcb *ipcb = udp_pcbs;
-  while ((ipcb != NULL) && (udp_port != UDP_LOCAL_PORT_RANGE_END)) {
-    if (ipcb->local_port == udp_port) {
-      /* port is already used by another udp_pcb */
-      udp_port++;
-      /* restart scanning all udp pcbs */
-      ipcb = udp_pcbs;
-    } else {
-      /* go on with next udp pcb */
-      ipcb = ipcb->next;
-    }
-  }
-  if (ipcb != NULL) {
-    return 0;
-  }
-  return udp_port;
-#endif
 }
 
 /** Common code to see if the current input packet matches the pcb
