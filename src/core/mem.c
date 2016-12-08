@@ -61,9 +61,13 @@
 #include "lwip/err.h"
 
 #include <string.h>
-#include <stdlib.h>
+
+#if MEM_LIBC_MALLOC
+#include <stdlib.h> /* for malloc()/free() */
+#endif
 
 #if MEM_LIBC_MALLOC || MEM_USE_POOLS
+
 /** mem_init is not used when using pools instead of a heap or using
  * C library malloc().
  */

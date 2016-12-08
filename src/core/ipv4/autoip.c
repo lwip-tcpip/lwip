@@ -68,7 +68,6 @@
 #include "lwip/etharp.h"
 #include "lwip/prot/autoip.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 /** Pseudo random macro based on netif informations.

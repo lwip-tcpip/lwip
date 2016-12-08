@@ -99,7 +99,6 @@
 #include "lwip/tcp.h"
 
 #include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 #if LWIP_TCP
