@@ -340,7 +340,13 @@ extern const ip_addr_t ip_addr_broadcast;
 
 /**
  * @ingroup ip4addr
- * Provided for compatibility. Use IP4_ADDR_ANY for better readability.
+ * Can be used as a fixed/const ip_addr_t
+ * for the IP wildcard.
+ * Defined to @ref IP4_ADDR_ANY when IPv4 is enabled.
+ * Defined to @ref IP6_ADDR_ANY in IPv6 only systems.
+ * Use this if you can handle IPv4 _AND_ IPv6 addresses.
+ * Use @ref IP4_ADDR_ANY or @ref IP6_ADDR_ANY when the IP
+ * type matters.
  */
 #define IP_ADDR_ANY         IP4_ADDR_ANY
 /**
@@ -381,7 +387,7 @@ extern const ip_addr_t ip6_addr_any;
 #define IP6_ADDR_ANY6  (ip_2_ip6(&ip6_addr_any))
 
 #if !LWIP_IPV4
-/** Just a little upgrade-helper for IPv6-only configurations: */
+/** IPv6-only configurations */
 #define IP_ADDR_ANY IP6_ADDR_ANY
 #endif /* !LWIP_IPV4 */
 
