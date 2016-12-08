@@ -47,6 +47,12 @@
 
 #include "arch/cc.h"
 
+/**
+ * @defgroup compiler_abstraction Compiler/platform abstraction
+ * @ingroup sys_layer
+ * @{
+ */
+
 /** Define this to 1 in arch/cc.h of your port if you do not want to
  * include stddef.h header to get size_t. This cannot be \#defined in
  * lwipopts.h since this is not an option of lwIP itself, but an option
@@ -166,42 +172,69 @@ typedef uintptr_t mem_ptr_t;
 extern "C" {
 #endif
 
-/* GCC/clang: Nothing to do */
+/** Packed structs support.
+  * Placed BEFORE declaration of a packed struct. \n
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
+  * Porting to GCC/clang: Nothing to do.
+  */
 #ifndef PACK_STRUCT_BEGIN
 #define PACK_STRUCT_BEGIN
 #endif /* PACK_STRUCT_BEGIN */
 
-/* GCC/clang: Nothing to do */
+/** Packed structs support.
+  * Placed AFTER declaration of a packed struct. \n
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
+  * Porting to GCC/clang: Nothing to do.
+  */
 #ifndef PACK_STRUCT_END
 #define PACK_STRUCT_END
 #endif /* PACK_STRUCT_END */
 
-/* GCC/clang: #define PACK_STRUCT_STRUCT __attribute__((packed)) */
+/** Packed structs support.
+  * Placed between end of declaration of a packed struct and trailing semicolon. \n
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
+  * Porting to GCC/clang: \#define PACK_STRUCT_STRUCT __attribute__((packed))
+  */
 #ifndef PACK_STRUCT_STRUCT
 #define PACK_STRUCT_STRUCT
 #endif /* PACK_STRUCT_STRUCT */
 
-/* GCC/clang: Nothing to do */
+/** Packed structs support.
+  * Wraps u32_t and u16_t members. \n
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
+  * Porting to GCC/clang: Nothing to do.
+  */
 #ifndef PACK_STRUCT_FIELD
 #define PACK_STRUCT_FIELD(x) x
 #endif /* PACK_STRUCT_FIELD */
 
-/* Used for struct fields of u8_t,
- * where some compilers warn that packing is not necessary */
+/** Packed structs support.
+  * Wraps u8_t members, where some compilers warn that packing is not necessary. \n
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
+  * Porting to GCC/clang: Nothing to do.
+  */
 #ifndef PACK_STRUCT_FLD_8
 #define PACK_STRUCT_FLD_8(x) PACK_STRUCT_FIELD(x)
 #endif /* PACK_STRUCT_FLD_8 */
 
-/* Used for struct fields of that are packed structs themself,
- * where some compilers warn that packing is not necessary */
+/** Packed structs support.
+  * Wraps members that are packed structs themselves, where some compilers warn that packing is not necessary. \n
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
+  * Porting to GCC/clang: Nothing to do.
+  */
 #ifndef PACK_STRUCT_FLD_S
 #define PACK_STRUCT_FLD_S(x) PACK_STRUCT_FIELD(x)
 #endif /* PACK_STRUCT_FLD_S */
 
 
+/** Eliminates compiler warning about unused arguments. */
 #ifndef LWIP_UNUSED_ARG
 #define LWIP_UNUSED_ARG(x) (void)x
 #endif /* LWIP_UNUSED_ARG */
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }
