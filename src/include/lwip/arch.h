@@ -193,7 +193,7 @@ extern "C" {
 /** Packed structs support.
   * Placed between end of declaration of a packed struct and trailing semicolon. \n
   * For examples of packed struct declarations, see include/lwip/prot/ subfolder. \n
-  * Porting to GCC/clang: \#define PACK_STRUCT_STRUCT __attribute__((packed))
+  * Porting to GCC/clang: \#define PACK_STRUCT_STRUCT \_\_attribute\_\_((packed))
   */
 #ifndef PACK_STRUCT_STRUCT
 #define PACK_STRUCT_STRUCT
