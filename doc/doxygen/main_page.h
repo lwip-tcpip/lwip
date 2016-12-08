@@ -103,7 +103,8 @@
  * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
  * context and put them into a queue which is processed from mainloop.\n
  * Call sys_check_timeouts() periodically in the mainloop.\n
- * Porting: implement all functions in @ref sys_time and @ref sys_prot.\n
+ * Porting: implement all functions in @ref sys_time, @ref sys_prot and 
+ * @ref compiler_abstraction.\n
  * You can only use @ref callbackstyle_api in this mode.\n
  * Sample code:\n
  * @include NO_SYS_SampleCode.c
