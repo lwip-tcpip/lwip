@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2016-12-09: Simon Goldschmidt
+  * dns.c: added one-shot multicast DNS queries
+
   2016-11-24: Ambroz Bizjak, David van Moolenbroek
   * tcp_out.c: Optimize passing contiguous nocopy buffers to tcp_write (bug #46290)
 
