@@ -3,8 +3,11 @@ HISTORY
 (git master)
 
   * [Enter new changes just after this line - do not remove this line]
-
+ 
   ++ New features:
+
+  2016-12-09: Dirk Ziegelmeier
+  * ip6_frag.c: Implemented support for LWIP_NETIF_TX_SINGLE_PBUF
 
   2016-12-09: Simon Goldschmidt
   * dns.c: added one-shot multicast DNS queries
