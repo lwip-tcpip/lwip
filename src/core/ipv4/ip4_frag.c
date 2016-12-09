@@ -687,6 +687,8 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
   struct pbuf *rambuf;
 #if !LWIP_NETIF_TX_SINGLE_PBUF
   struct pbuf *newpbuf;
+  u16_t newpbuflen = 0;
+  u16_t left_to_copy;
 #endif
   struct ip_hdr *original_iphdr;
   struct ip_hdr *iphdr;
@@ -696,10 +698,6 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
   int last;
   u16_t poff = IP_HLEN;
   u16_t tmp;
-#if !LWIP_NETIF_TX_SINGLE_PBUF
-  u16_t newpbuflen = 0;
-  u16_t left_to_copy;
-#endif
 
   original_iphdr = (struct ip_hdr *)p->payload;
   iphdr = original_iphdr;
