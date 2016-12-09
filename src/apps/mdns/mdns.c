@@ -63,6 +63,9 @@
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
 #include "lwip/prot/dns.h"
+#include "lwip/dns.h"
+#include "lwip/mld6.h"
+#include "lwip/igmp.h"
 
 #include <string.h>
 
@@ -78,19 +81,8 @@
   #error "If you want to use MDNS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 
-#if LWIP_IPV4
-#include "lwip/igmp.h"
-/* IPv4 multicast group 224.0.0.251 */
-static const ip_addr_t v4group = IPADDR4_INIT(PP_HTONL(0xE00000FBUL));
-#endif
 
-#if LWIP_IPV6
-#include "lwip/mld6.h"
-/* IPv6 multicast group FF02::FB */
-static const ip_addr_t v6group = IPADDR6_INIT(PP_HTONL(0xFF020000UL), PP_HTONL(0x00000000UL), PP_HTONL(0x00000000UL), PP_HTONL(0x000000FBUL));
-#endif
-
-#define MDNS_PORT 5353
+#define MDNS_PORT DNS_MQUERY_PORT
 #define MDNS_TTL  255
 
 /* Stored offsets to beginning of domain names
@@ -1420,11 +1412,11 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
 
     if (IP_IS_V6_VAL(outpkt->dest_addr)) {
 #if LWIP_IPV6
-      mcast_destaddr = &v6group;
+      mcast_destaddr = &dns_mquery_v6group;
 #endif
     } else {
 #if LWIP_IPV4
-      mcast_destaddr = &v4group;
+      mcast_destaddr = &dns_mquery_v4group;
 #endif
     }
     /* Send created packet */
@@ -1780,14 +1772,14 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 
 #if LWIP_IPV6
   if (IP_IS_V6(ip_current_dest_addr())) {
-    if (!ip_addr_cmp(ip_current_dest_addr(), &v6group)) {
+    if (!ip_addr_cmp(ip_current_dest_addr(), &dns_mquery_v6group)) {
       packet.recv_unicast = 1;
     }
   }
 #endif
 #if LWIP_IPV4
   if (!IP_IS_V6(ip_current_dest_addr())) {
-    if (!ip_addr_cmp(ip_current_dest_addr(), &v4group)) {
+    if (!ip_addr_cmp(ip_current_dest_addr(), &dns_mquery_v4group)) {
       packet.recv_unicast = 1;
     }
   }
@@ -1883,13 +1875,13 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
 
   /* Join multicast groups */
 #if LWIP_IPV4
-  res = igmp_joingroup_netif(netif, ip_2_ip4(&v4group));
+  res = igmp_joingroup_netif(netif, ip_2_ip4(&dns_mquery_v4group));
   if (res != ERR_OK) {
     goto cleanup;
   }
 #endif
 #if LWIP_IPV6
-  res = mld6_joingroup_netif(netif, ip_2_ip6(&v6group));
+  res = mld6_joingroup_netif(netif, ip_2_ip6(&dns_mquery_v6group));
   if (res != ERR_OK) {
     goto cleanup;
   }
@@ -1930,10 +1922,10 @@ mdns_resp_remove_netif(struct netif *netif)
 
   /* Leave multicast groups */
 #if LWIP_IPV4
-  igmp_leavegroup_netif(netif, ip_2_ip4(&v4group));
+  igmp_leavegroup_netif(netif, ip_2_ip4(&dns_mquery_v4group));
 #endif
 #if LWIP_IPV6
-  mld6_leavegroup_netif(netif, ip_2_ip6(&v6group));
+  mld6_leavegroup_netif(netif, ip_2_ip6(&dns_mquery_v6group));
 #endif
 
   mem_free(mdns);
