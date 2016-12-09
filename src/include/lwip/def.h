@@ -102,11 +102,11 @@ u32_t lwip_htonl(u32_t x);
 /* These macros should be calculated by the preprocessor and are used
    with compile-time constants only (so that there is no little-endian
    overhead at runtime). */
-#define PP_HTONS(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
+#define PP_HTONS(x) ((((x) & 0x00ffUL) << 8) | (((x) & 0xff00UL) >> 8))
 #define PP_NTOHS(x) PP_HTONS(x)
-#define PP_HTONL(x) ((((x) & 0xff) << 24) | \
-                     (((x) & 0xff00) << 8) | \
-                     (((x) & 0xff0000UL) >> 8) | \
+#define PP_HTONL(x) ((((x) & 0x000000ffUL) << 24) | \
+                     (((x) & 0x0000ff00UL) <<  8) | \
+                     (((x) & 0x00ff0000UL) >>  8) | \
                      (((x) & 0xff000000UL) >> 24))
 #define PP_NTOHL(x) PP_HTONL(x)
 
