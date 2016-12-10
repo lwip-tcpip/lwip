@@ -358,6 +358,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
         ((pcb->refused_data != NULL) && (tcplen > 0))) {
         /* pcb has been aborted or refused data is still refused and the new
            segment contains data */
+        if (pcb->rcv_ann_wnd == 0) {
+          /* this is a zero-window probe, we respond to it with current RCV.NXT
+          and drop the data segment */
+          tcp_send_empty_ack(pcb);
+        }
         TCP_STATS_INC(tcp.drop);
         MIB2_STATS_INC(mib2.tcpinerrs);
         goto aborted;
