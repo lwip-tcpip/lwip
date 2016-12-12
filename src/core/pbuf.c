@@ -1119,7 +1119,7 @@ pbuf_skip_const(const struct pbuf* in, u16_t in_offset, u16_t* out_offset)
 struct pbuf*
 pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset)
 {
-  return (struct pbuf*)(size_t)pbuf_skip_const(in, in_offset, out_offset);
+  return LWIP_CONST_CAST(struct pbuf*, pbuf_skip_const(in, in_offset, out_offset));
 }
 
 /**

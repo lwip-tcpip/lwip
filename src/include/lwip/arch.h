@@ -133,6 +133,11 @@ typedef uintptr_t mem_ptr_t;
 #endif
 #endif
 
+/** C++ const_cast<target_type>(val) equivalent to remove constness from a value */
+#ifndef LWIP_CONST_CAST
+#define LWIP_CONST_CAST(target_type, val) ((target_type)((ptrdiff_t)val))
+#endif
+
 /** Allocates a memory buffer of specified size that is of sufficient size to align
  * its start address using LWIP_MEM_ALIGN.
  * You can declare your own version here e.g. to enforce alignment without adding

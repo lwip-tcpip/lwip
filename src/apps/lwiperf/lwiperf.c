@@ -294,7 +294,7 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
     } else {
       /* transmit data */
       /* @todo: every x bytes, transmit the settings again */
-      txptr = (void*)(size_t)&lwiperf_txbuf_const[conn->bytes_transferred % 10];
+      txptr = LWIP_CONST_CAST(void*, &lwiperf_txbuf_const[conn->bytes_transferred % 10]);
       txlen_max = TCP_MSS;
       if (conn->bytes_transferred == 48) { /* @todo: fix this for intermediate settings, too */
         txlen_max = TCP_MSS - 24;
