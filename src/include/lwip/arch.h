@@ -138,6 +138,18 @@ typedef uintptr_t mem_ptr_t;
 #define LWIP_CONST_CAST(target_type, val) ((target_type)((ptrdiff_t)val))
 #endif
 
+/** Get rid of alignment cast warnings (GCC -Wcast-align) */
+#ifndef LWIP_ALIGNMENT_CAST
+#define LWIP_ALIGNMENT_CAST(target_type, val) LWIP_CONST_CAST(target_type, val)
+#endif
+
+/** Get rid of warnings related to pointer-to-numeric and vice-versa casts,
+ * e.g. "conversion from 'u8_t' to 'void *' of greater size"
+ */
+#ifndef LWIP_PTR_NUMERIC_CAST
+#define LWIP_PTR_NUMERIC_CAST(target_type, val) LWIP_CONST_CAST(target_type, val)
+#endif
+
 /** Allocates a memory buffer of specified size that is of sufficient size to align
  * its start address using LWIP_MEM_ALIGN.
  * You can declare your own version here e.g. to enforce alignment without adding

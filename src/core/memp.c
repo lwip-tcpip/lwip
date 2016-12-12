@@ -209,7 +209,7 @@ memp_overflow_check_all(void)
     for (j = 0; j < memp_pools[i]->num; ++j) {
       memp_overflow_check_element_overflow(p, memp_pools[i]);
       memp_overflow_check_element_underflow(p, memp_pools[i]);
-      p = (struct memp*)(size_t)((u8_t*)p + MEMP_SIZE + memp_pools[i]->size + MEMP_SANITY_REGION_AFTER_ALIGNED);
+      p = LWIP_ALIGNMENT_CAST(struct memp*, ((u8_t*)p + MEMP_SIZE + memp_pools[i]->size + MEMP_SANITY_REGION_AFTER_ALIGNED));
     }
   }
   SYS_ARCH_UNPROTECT(old_level);

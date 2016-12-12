@@ -581,7 +581,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
       snmp_ip4_to_oid(ip, &test_oid[1]);
 
       /* check generated OID: is it a candidate for the next one? */
-      snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges), (void*)(size_t)i);
+      snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_NetToMediaTable_oid_ranges), LWIP_PTR_NUMERIC_CAST(void*, i));
     }
   }
 
@@ -589,7 +589,7 @@ ip_NetToMediaTable_get_next_cell_instance_and_value(const u32_t* column, struct 
   if (state.status == SNMP_NEXT_OID_STATUS_SUCCESS) {
     snmp_oid_assign(row_oid, state.next_oid, state.next_oid_len);
     /* fill in object properties */
-    return ip_NetToMediaTable_get_cell_value_core((u8_t)(size_t)state.reference, column, value, value_len);
+    return ip_NetToMediaTable_get_cell_value_core(LWIP_PTR_NUMERIC_CAST(u8_t, state.reference), column, value, value_len);
   }
 
   /* not found */
