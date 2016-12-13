@@ -1524,6 +1524,9 @@ nd6_new_onlink_prefix(ip6_addr_t *prefix, struct netif *netif)
 s8_t
 nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 {
+#ifdef LWIP_HOOK_ND6_GET_GW
+  const ip6_addr_t *next_hop_addr;
+#endif /* LWIP_HOOK_ND6_GET_GW */
   s8_t i;
 
 #if LWIP_NETIF_HWADDRHINT
@@ -1567,6 +1570,12 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
         /* Destination in local link. */
         destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
         ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, destination_cache[nd6_cached_destination_index].destination_addr);
+#ifdef LWIP_HOOK_ND6_GET_GW
+      } else if ((next_hop_addr = LWIP_HOOK_ND6_GET_GW(netif, ip6addr)) != NULL) {
+        /* Next hop for destination provided by hook function. */
+        destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
+        ip6_addr_set(&destination_cache[nd6_cached_destination_index].next_hop_addr, next_hop_addr);
+#endif /* LWIP_HOOK_ND6_GET_GW */
       } else {
         /* We need to select a router. */
         i = nd6_select_router(ip6addr, netif);

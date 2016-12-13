@@ -2470,6 +2470,22 @@
 #endif
 
 /**
+ * LWIP_HOOK_ND6_GET_GW(netif, dest):
+ * - called from nd6_get_next_hop_entry() (IPv6)
+ * - netif: the netif used for sending
+ * - dest: the destination IPv6 address
+ * Returns the IPv6 address of the next hop to handle the specified destination
+ * IPv6 address. If NULL is returned, a NDP-discovered router is used instead.
+ * The returned address MUST be reachable on the specified netif!
+ * This function is meant to implement advanced IPv6 routing together with
+ * LWIP_HOOK_IP6_ROUTE(). The actual routing/gateway table implementation is
+ * not part of lwIP but can e.g. be hidden in the netif's state argument.
+*/
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_ND6_GET_GW(netif, dest)
+#endif
+
+/**
  * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
  * - called from ethernet_input() if VLAN support is enabled
  * - netif: struct netif on which the packet has been received
