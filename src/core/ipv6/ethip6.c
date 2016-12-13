@@ -113,7 +113,7 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   i = nd6_get_next_hop_entry(ip6addr, netif);
   if (i < 0) {
     /* failed to get a next hop neighbor record. */
-    return ERR_MEM;
+    return i;
   }
 
   /* Now that we have a destination record, send or queue the packet. */
