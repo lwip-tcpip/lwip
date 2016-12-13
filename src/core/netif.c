@@ -1195,10 +1195,10 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
   /* Set address state. */
 #if LWIP_IPV6_DUP_DETECT_ATTEMPTS
   /* Will perform duplicate address detection (DAD). */
-  netif->ip6_addr_state[0] = IP6_ADDR_TENTATIVE;
+  netif_ip6_addr_set_state(netif, 0, IP6_ADDR_TENTATIVE);
 #else
   /* Consider address valid. */
-  netif->ip6_addr_state[0] = IP6_ADDR_PREFERRED;
+  netif_ip6_addr_set_state(netif, 0, IP6_ADDR_PREFERRED);
 #endif /* LWIP_IPV6_AUTOCONFIG */
 }
 
@@ -1228,7 +1228,7 @@ netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chos
 
   /* Find a free slot -- musn't be the first one (reserved for link local) */
   for (i = 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-    if (!ip6_addr_isvalid(netif->ip6_addr_state[i])) {
+    if (ip6_addr_isinvalid(netif_ip6_addr_state(netif, i))) {
       ip_addr_copy_from_ip6(netif->ip6_addr[i], *ip6addr);
       netif_ip6_addr_set_state(netif, i, IP6_ADDR_TENTATIVE);
       if (chosen_idx != NULL) {
