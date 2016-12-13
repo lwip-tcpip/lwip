@@ -2433,7 +2433,7 @@
  * - dest: the destination IPv4 address
  * Returns the IPv4 address of the gateway to handle the specified destination
  * IPv4 address. If NULL is returned, the netif's default gateway is used.
- * The returned address MUST be reachable on the specified netif!
+ * The returned address MUST be directly reachable on the specified netif!
  * This function is meant to implement advanced IPv4 routing together with
  * LWIP_HOOK_IP4_ROUTE(). The actual routing/gateway table implementation is
  * not part of lwIP but can e.g. be hidden in the netif's state argument.
@@ -2467,6 +2467,19 @@
  */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_IP6_ROUTE(src, dest)
+#endif
+
+/**
+* LWIP_HOOK_ETHIP6_GET_GW(netif, dest):
+* - called from ethip6_output() (IPv6)
+* - netif: the netif used for sending
+* - dest: the destination IPv6 address
+* Returns the IPv6 address of the gateway to handle the specified destination
+* IPv6 address. If NULL is returned, the default nexthop is used.
+* The returned address MUST be directly reachable on the specified netif!
+*/
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_ETHIP6_GET_GW(netif, dest)
 #endif
 
 /**

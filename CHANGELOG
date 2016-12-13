@@ -6,6 +6,9 @@ HISTORY
  
   ++ New features:
 
+  2016-12-13: Pradip De
+  * opt.h, ethip6.c: Added LWIP_HOOK_ETHIP6_GET_GW()
+
   2016-12-09: Dirk Ziegelmeier
   * ip6_frag.c: Implemented support for LWIP_NETIF_TX_SINGLE_PBUF
 

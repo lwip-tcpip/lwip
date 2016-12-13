@@ -96,6 +96,19 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 
   /* We have a unicast destination IP address */
   /* @todo anycast? */
+
+#ifdef LWIP_HOOK_ETHIP6_GET_GW
+  {
+    /* See if a gateway is present for the destination address in a routing table */
+    const ip6_addr_t *gateway = LWIP_HOOK_ETHIP6_GET_GW(netif, ip6addr);
+    if (gateway != NULL) {
+      /* Replace the destination with the gateway. The gateway is
+         assumed to be on-link. */
+      ip6addr = gateway;
+    }
+  }
+#endif /* LWIP_HOOK_ETHIP6_GET_GW */
+
   /* Get next hop record. */
   i = nd6_get_next_hop_entry(ip6addr, netif);
   if (i < 0) {
