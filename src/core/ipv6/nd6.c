@@ -1305,7 +1305,7 @@ nd6_new_destination_cache_entry(void)
 void
 nd6_clear_destination_cache(void)
 {
-  s8_t i;
+  int i;
 
   for (i = 0; i < LWIP_ND6_NUM_DESTINATIONS; i++) {
     ip6_addr_set_any(&destination_cache[i].destination_addr);
@@ -1879,13 +1879,14 @@ nd6_send_q(s8_t i)
  * @param netif The lwIP network interface on which the IP packet will be sent.
  * @param q The pbuf(s) containing the IP packet to be sent.
  * @param ip6addr The destination IPv6 address of the packet.
- * @param hwaddrp On success, filled with a pointer to a HW address or NULL.
+ * @param hwaddrp On success, filled with a pointer to a HW address or NULL (meaning
+ *        the packet has been queued).
  * @return
  * - ERR_OK on success, ERR_RTE if no route was found for the packet,
  * or ERR_MEM if low memory conditions prohibit sending the packet at all.
  */
 err_t
-nd6_packet_send_check(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr, const u8_t **hwaddrp)
+nd6_get_next_hop_addr_or_queue(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr, const u8_t **hwaddrp)
 {
   s8_t i;
 

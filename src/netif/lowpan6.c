@@ -665,7 +665,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
   /* Ask ND6 what to do with the packet. */
-  result = nd6_packet_send_check(netif, q, ip6addr, &hwaddr);
+  result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
   if (result != ERR_OK) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return result;
