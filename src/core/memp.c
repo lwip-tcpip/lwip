@@ -71,7 +71,7 @@
 #include "netif/ppp/ppp_opts.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
-#include "lwip/nd6.h"
+#include "lwip/priv/nd6_priv.h"
 #include "lwip/ip6_frag.h"
 #include "lwip/mld6.h"
 

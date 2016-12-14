@@ -39,6 +39,7 @@
 
 #include "lwip/arch.h"
 #include "lwip/ip6_addr.h"
+#include "lwip/prot/ip6.h"
 
 #ifdef __cplusplus
 extern "C" {
