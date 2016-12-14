@@ -34,8 +34,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCP_IMPL_H
-#define LWIP_HDR_TCP_IMPL_H
+#ifndef LWIP_HDR_TCP_PRIV_H
+#define LWIP_HDR_TCP_PRIV_H
 
 #include "lwip/opt.h"
 
@@ -501,4 +501,4 @@ void tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_a
 
 #endif /* LWIP_TCP */
 
-#endif /* LWIP_HDR_TCP_H */
+#endif /* LWIP_HDR_TCP_PRIV_H */
