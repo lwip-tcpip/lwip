@@ -2170,7 +2170,7 @@
 /**
  * LWIP_IPV6_REASS==1: reassemble incoming IPv6 packets that fragmented
  */
-#if !defined LWIP_IPV6_REASS || defined __DOXYGEN__ || defined __DOXYGEN__
+#if !defined LWIP_IPV6_REASS || defined __DOXYGEN__
 #define LWIP_IPV6_REASS                 (LWIP_IPV6)
 #endif
 
@@ -2348,7 +2348,7 @@
  * LWIP_ND6_DELAY_FIRST_PROBE_TIME: Delay before first unicast neighbor solicitation
  * message is sent, during neighbor reachability detection.
  */
-#if !defined LWIP_ND6_DELAY_FIRST_PROBE_TIME || defined __DOXYGEN__s
+#if !defined LWIP_ND6_DELAY_FIRST_PROBE_TIME || defined __DOXYGEN__
 #define LWIP_ND6_DELAY_FIRST_PROBE_TIME 5000
 #endif
 
@@ -2365,9 +2365,10 @@
  * with reachability hints for connected destinations. This helps avoid sending
  * unicast neighbor solicitation messages.
  */
-#if !defined LWIP_ND6_TCP_REACHABILITY_HINTS || defined __DOXYGEN__ || defined __DOXYGEN__
+#if !defined LWIP_ND6_TCP_REACHABILITY_HINTS || defined __DOXYGEN__
 #define LWIP_ND6_TCP_REACHABILITY_HINTS 1
 #endif
+
 /**
  * @}
  */
@@ -2557,7 +2558,7 @@
  * compared against this value. If it is smaller, then debugging
  * messages are written.
  */
-#if !defined LWIP_DBG_MIN_LEVEL || defined __DOXYGEN__ || defined __DOXYGEN__
+#if !defined LWIP_DBG_MIN_LEVEL || defined __DOXYGEN__
 #define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
 #endif
 
