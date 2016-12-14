@@ -144,15 +144,9 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   }
 
   /* Get the netif for a suitable router. */
-  i = nd6_select_router(dest, NULL);
-  if (i >= 0) {
-    if (default_router_list[i].neighbor_entry != NULL) {
-      if (default_router_list[i].neighbor_entry->netif != NULL) {
-        if (netif_is_up(default_router_list[i].neighbor_entry->netif) && netif_is_link_up(default_router_list[i].neighbor_entry->netif)) {
-          return default_router_list[i].neighbor_entry->netif;
-        }
-      }
-    }
+  netif = nd6_find_route(dest);
+  if (netif != NULL && netif_is_up(netif) && netif_is_link_up(netif)) {
+    return netif;
   }
 
   /* try with the netif that matches the source address. */

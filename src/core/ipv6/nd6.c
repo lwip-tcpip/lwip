@@ -93,6 +93,7 @@ static void nd6_free_neighbor_cache_entry(s8_t i);
 static s8_t nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr);
 static s8_t nd6_new_destination_cache_entry(void);
 static s8_t nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif);
+static s8_t nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif);
 static s8_t nd6_get_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_get_onlink_prefix(ip6_addr_t *prefix, struct netif *netif);
@@ -1394,6 +1395,30 @@ nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 
   /* no suitable router found. */
   return -1;
+}
+
+/**
+ * Find a router-announced route to the given destination.
+ *
+ * The caller is responsible for checking whether the returned netif, if any,
+ * is in a suitable state (up, link up) to be used for packet transmission.
+ *
+ * @param ip6addr the destination IPv6 address
+ * @return the netif to use for the destination, or NULL if none found
+ */
+struct netif *
+nd6_find_route(const ip6_addr_t *ip6addr)
+{
+  s8_t i;
+
+  i = nd6_select_router(ip6addr, NULL);
+  if (i >= 0) {
+    if (default_router_list[i].neighbor_entry != NULL) {
+      return default_router_list[i].neighbor_entry->netif; /* may be NULL */
+    }
+  }
+
+  return NULL;
 }
 
 /**
