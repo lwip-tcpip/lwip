@@ -1294,6 +1294,22 @@ nd6_new_destination_cache_entry(void)
 }
 
 /**
+ * Clear the destination cache.
+ *
+ * This operation may be necessary for consistency in the light of changing
+ * local addresses and/or use of the gateway hook.
+ */
+void
+nd6_clear_destination_cache(void)
+{
+  s8_t i;
+
+  for (i = 0; i < LWIP_ND6_NUM_DESTINATIONS; i++) {
+    ip6_addr_set_any(&destination_cache[i].destination_addr);
+  }
+}
+
+/**
  * Determine whether an address matches an on-link prefix.
  *
  * @param ip6addr the IPv6 address to match

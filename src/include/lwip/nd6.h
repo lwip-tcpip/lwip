@@ -141,6 +141,7 @@ extern u32_t retrans_timer;
 
 void nd6_tmr(void);
 void nd6_input(struct pbuf *p, struct netif *inp);
+void nd6_clear_destination_cache(void);
 s8_t nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif);
 s8_t nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif);
 u16_t nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif);
