@@ -155,25 +155,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
        * link-layer changed?
        * part of DAD mechanism? */
 
-      /* Check that link-layer address option also fits in packet. */
-      if (p->len < (sizeof(struct na_header) + 2)) {
-        /* @todo debug message */
-        pbuf_free(p);
-        ND6_STATS_INC(nd6.lenerr);
-        ND6_STATS_INC(nd6.drop);
-        return;
-      }
-
-      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
-
-      if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
-        /* @todo debug message */
-        pbuf_free(p);
-        ND6_STATS_INC(nd6.lenerr);
-        ND6_STATS_INC(nd6.drop);
-        return;
-      }
-
       /* Create an aligned copy. */
       ip6_addr_set(&target_address, &(na_hdr->target_address));
 
@@ -208,6 +189,25 @@ nd6_input(struct pbuf *p, struct netif *inp)
         }
       }
 #endif /* LWIP_IPV6_DUP_DETECT_ATTEMPTS */
+
+      /* Check that link-layer address option also fits in packet. */
+      if (p->len < (sizeof(struct na_header) + 2)) {
+        /* @todo debug message */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
+
+      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
+
+      if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
+        /* @todo debug message */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
 
       /* This is an unsolicited NA, most likely there was a LLADDR change. */
       i = nd6_find_neighbor_cache_entry(&target_address);
