@@ -1348,7 +1348,7 @@ nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
  * @return the default router entry index, or -1 if no suitable
  *         router is found
  */
-s8_t
+static s8_t
 nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 {
   s8_t i;
