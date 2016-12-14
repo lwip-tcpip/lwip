@@ -98,6 +98,8 @@ static s8_t nd6_get_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_get_onlink_prefix(ip6_addr_t *prefix, struct netif *netif);
 static s8_t nd6_new_onlink_prefix(ip6_addr_t *prefix, struct netif *netif);
+static s8_t nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif);
+static err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf *q);
 
 #define ND6_SEND_FLAG_MULTICAST_DEST 0x01
 #define ND6_SEND_FLAG_ALLNODES_DEST 0x02
@@ -1562,7 +1564,7 @@ nd6_new_onlink_prefix(ip6_addr_t *prefix, struct netif *netif)
  *         suitable next hop was found, ERR_MEM if no cache entry
  *         could be created
  */
-s8_t
+static s8_t
 nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 {
 #ifdef LWIP_HOOK_ND6_GET_GW
@@ -1684,7 +1686,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
  * @param q packet to be queued
  * @return ERR_OK if succeeded, ERR_MEM if out of memory
  */
-err_t
+static err_t
 nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
 {
   err_t result = ERR_MEM;
@@ -1859,6 +1861,60 @@ nd6_send_q(s8_t i)
     neighbor_cache[i].q = NULL;
   }
 #endif /* LWIP_ND6_QUEUEING */
+}
+
+/**
+ * A packet is to be transmitted to a specific IPv6 destination on a specific
+ * interface. Check if we can find the hardware address of the next hop to use
+ * for the packet. If so, give the hardware address to the caller, which should
+ * use it to send the packet right away. Otherwise, enqueue the packet for
+ * later transmission while looking up the hardware address, if possible.
+ *
+ * As such, this function returns one of three different possible results:
+ *
+ * - ERR_OK with a non-NULL 'hwaddrp': the caller should send the packet now.
+ * - ERR_OK with a NULL 'hwaddrp': the packet has been enqueued for later.
+ * - not ERR_OK: something went wrong; forward the error upward in the stack.
+ *
+ * @param netif The lwIP network interface on which the IP packet will be sent.
+ * @param q The pbuf(s) containing the IP packet to be sent.
+ * @param ip6addr The destination IPv6 address of the packet.
+ * @param hwaddrp On success, filled with a pointer to a HW address or NULL.
+ * @return
+ * - ERR_OK on success, ERR_RTE if no route was found for the packet,
+ * or ERR_MEM if low memory conditions prohibit sending the packet at all.
+ */
+err_t
+nd6_packet_send_check(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr, const u8_t **hwaddrp)
+{
+  s8_t i;
+
+  /* Get next hop record. */
+  i = nd6_get_next_hop_entry(ip6addr, netif);
+  if (i < 0) {
+    /* failed to get a next hop neighbor record. */
+    return i;
+  }
+
+  /* Now that we have a destination record, send or queue the packet. */
+  if (neighbor_cache[i].state == ND6_STALE) {
+    /* Switch to delay state. */
+    neighbor_cache[i].state = ND6_DELAY;
+    neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
+  }
+  /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
+  if ((neighbor_cache[i].state == ND6_REACHABLE) ||
+      (neighbor_cache[i].state == ND6_DELAY) ||
+      (neighbor_cache[i].state == ND6_PROBE)) {
+
+    /* Tell the caller to send out the packet now. */
+    *hwaddrp = neighbor_cache[i].lladdr;
+    return ERR_OK;
+  }
+
+  /* We should queue packet on this interface. */
+  *hwaddrp = NULL;
+  return nd6_queue_packet(i, q);
 }
 
 
