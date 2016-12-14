@@ -60,6 +60,7 @@
 #include "lwip/mld6.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
+#include "lwip/dns.h"
 
 #include <string.h>
 
@@ -394,6 +395,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
     struct ra_header *ra_hdr;
     u8_t *buffer; /* Used to copy options. */
     u16_t offset;
+#ifdef LWIP_ND6_RDNSS_MAX_DNS_SERVERS
+    /* There can by multiple RDNSS options per RA */
+    u8_t rdnss_server_idx = 0;
+#endif /* LWIP_ND6_RDNSS_MAX_DNS_SERVERS */
 
     /* Check that RA header fits in packet. */
     if (p->len < sizeof(struct ra_header)) {
@@ -538,6 +543,34 @@ nd6_input(struct pbuf *p, struct netif *inp)
         route_opt = (struct route_option *)buffer;*/
 
         break;
+#if LWIP_ND6_RDNSS_MAX_DNS_SERVERS
+      case ND6_OPTION_TYPE_RDNSS:
+      {
+        u8_t num, n;
+        struct rdnss_option * rdnss_opt;
+        rdnss_opt = (struct rdnss_option *)buffer;
+        num = (rdnss_opt->length - 1) / 2;
+        for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
+          /* Get a memory-aligned copy of the prefix. */
+          ip6_addr_set(ip6_current_dest_addr(), &(rdnss_opt->rdnss_address[n]));
+
+          if (htonl(rdnss_opt->lifetime) > 0) {
+            /* TODO implement Lifetime > 0 */
+            dns_setserver(rdnss_server_idx++, ip_current_dest_addr());
+          } else {
+            /* TODO implement DNS removal in dns.c */
+            u8_t s;
+            for (s = 0; s < DNS_MAX_SERVERS; s++) {
+              const ip_addr_t *addr = dns_getserver(s);
+              if(ip_addr_cmp(addr, ip_current_dest_addr())) {
+                dns_setserver(s, NULL);
+              }
+            }
+          }
+        }
+        break;
+      }
+#endif /* LWIP_ND6_RDNSS_MAX_DNS_SERVERS */
       default:
         /* Unrecognized option, abort. */
         ND6_STATS_INC(nd6.proterr);

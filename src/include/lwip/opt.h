@@ -2379,6 +2379,14 @@
 #endif
 
 /**
+ * LWIP_ND6_RDNSS_MAX_DNS_SERVERS > 0: Use IPv6 Router Advertisement Recursive
+ * DNS Server Option (as per RFC 6106) to copy a defined maximum number of DNS
+ * servers to the DNS module.
+ */
+#if !defined LWIP_ND6_RDNSS_MAX_DNS_SERVERS || defined __DOXYGEN__
+#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS  0
+#endif
+/**
  * @}
  */
 
