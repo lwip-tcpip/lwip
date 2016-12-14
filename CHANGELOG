@@ -6,6 +6,9 @@ HISTORY
  
   ++ New features:
 
+  2016-12-14: David van Moolenbroek
+  * opt.h, nd6.c: Added LWIP_HOOK_ND6_GET_GW()
+
   2016-12-09: Dirk Ziegelmeier
   * ip6_frag.c: Implemented support for LWIP_NETIF_TX_SINGLE_PBUF
 
