@@ -882,6 +882,15 @@
 #if !defined LWIP_DHCP_MAX_NTP_SERVERS || defined __DOXYGEN__
 #define LWIP_DHCP_MAX_NTP_SERVERS       1
 #endif
+
+/**
+ * LWIP_DHCP_MAX_DNS_SERVERS > 0: Request DNS servers with discover/select.
+ * DHCP servers received in the response are passed to DNS via @ref dns_setserver()
+ * (up to the maximum limit defined here).
+ */
+#if !defined LWIP_DHCP_MAX_DNS_SERVERS || defined __DOXYGEN__
+#define LWIP_DHCP_MAX_DNS_SERVERS       DNS_MAX_SERVERS
+#endif
 /**
  * @}
  */

@@ -103,6 +103,16 @@
 
 #define REBOOT_TRIES                2
 
+#if LWIP_DNS && LWIP_DHCP_MAX_DNS_SERVERS
+#if DNS_MAX_SERVERS > LWIP_DHCP_MAX_DNS_SERVERS
+#define LWIP_DHCP_PROVIDE_DNS_SERVERS LWIP_DHCP_MAX_DNS_SERVERS
+#else
+#define LWIP_DHCP_PROVIDE_DNS_SERVERS DNS_MAX_SERVERS
+#endif
+#else
+#define LWIP_DHCP_PROVIDE_DNS_SERVERS 0
+#endif
+
 /** Option handling: options are parsed in dhcp_parse_reply
  * and saved in an array where other functions can load them from.
  * This might be moved into the struct dhcp (not necessarily since
@@ -117,8 +127,10 @@ enum dhcp_option_idx {
   DHCP_OPTION_IDX_T2,
   DHCP_OPTION_IDX_SUBNET_MASK,
   DHCP_OPTION_IDX_ROUTER,
+#if LWIP_DHCP_PROVIDE_DNS_SERVERS
   DHCP_OPTION_IDX_DNS_SERVER,
-  DHCP_OPTION_IDX_DNS_SERVER_LAST = DHCP_OPTION_IDX_DNS_SERVER + DNS_MAX_SERVERS - 1,
+  DHCP_OPTION_IDX_DNS_SERVER_LAST = DHCP_OPTION_IDX_DNS_SERVER + LWIP_DHCP_PROVIDE_DNS_SERVERS - 1,
+#endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
 #if LWIP_DHCP_GET_NTP_SRV
   DHCP_OPTION_IDX_NTP_SERVER,
   DHCP_OPTION_IDX_NTP_SERVER_LAST = DHCP_OPTION_IDX_NTP_SERVER + LWIP_DHCP_MAX_NTP_SERVERS - 1,
@@ -137,8 +149,10 @@ u8_t  dhcp_rx_options_given[DHCP_OPTION_IDX_MAX];
 static u8_t dhcp_discover_request_options[] = {
   DHCP_OPTION_SUBNET_MASK,
   DHCP_OPTION_ROUTER,
-  DHCP_OPTION_BROADCAST,
-  DHCP_OPTION_DNS_SERVER
+  DHCP_OPTION_BROADCAST
+#if LWIP_DHCP_PROVIDE_DNS_SERVERS
+  , DHCP_OPTION_DNS_SERVER
+#endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
 #if LWIP_DHCP_GET_NTP_SRV
   , DHCP_OPTION_NTP
 #endif /* LWIP_DHCP_GET_NTP_SRV */
@@ -574,9 +588,9 @@ dhcp_handle_ack(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
-#if LWIP_DNS || LWIP_DHCP_GET_NTP_SRV
+#if LWIP_DHCP_PROVIDE_DNS_SERVERS || LWIP_DHCP_GET_NTP_SRV
   u8_t n;
-#endif /* LWIP_DNS || LWIP_DHCP_GET_NTP_SRV */
+#endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS || LWIP_DHCP_GET_NTP_SRV */
 #if LWIP_DHCP_GET_NTP_SRV
   ip4_addr_t ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
 #endif
@@ -642,14 +656,14 @@ dhcp_handle_ack(struct netif *netif)
   dhcp_set_ntp_servers(n, ntp_server_addrs);
 #endif /* LWIP_DHCP_GET_NTP_SRV */
 
-#if LWIP_DNS
+#if LWIP_DHCP_PROVIDE_DNS_SERVERS
   /* DNS servers */
-  for (n = 0; (n < DNS_MAX_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n); n++) {
+  for (n = 0; (n < LWIP_DHCP_PROVIDE_DNS_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n); n++) {
     ip_addr_t dns_addr;
     ip_addr_set_ip4_u32(&dns_addr, lwip_htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n)));
     dns_setserver(n, &dns_addr);
   }
-#endif /* LWIP_DNS */
+#endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
 }
 
 /**
@@ -1519,6 +1533,7 @@ again:
         LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_ROUTER;
         break;
+#if LWIP_DHCP_PROVIDE_DNS_SERVERS
       case(DHCP_OPTION_DNS_SERVER):
         /* special case: there might be more than one server */
         LWIP_ERROR("len %% 4 == 0", len % 4 == 0, return ERR_VAL;);
@@ -1527,6 +1542,7 @@ again:
         LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_DNS_SERVER;
         break;
+#endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
       case(DHCP_OPTION_LEASE_TIME):
         LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_LEASE_TIME;
