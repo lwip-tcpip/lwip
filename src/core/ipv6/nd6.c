@@ -1493,6 +1493,7 @@ static s8_t
 nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif)
 {
   s8_t router_index;
+  s8_t free_router_index;
   s8_t neighbor_index;
 
   /* Do we have a neighbor entry for this router? */
@@ -1516,11 +1517,21 @@ nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif)
   neighbor_cache[neighbor_index].isrouter = 1;
 
   /* Look for empty entry. */
-  for (router_index = 0; router_index < LWIP_ND6_NUM_ROUTERS; router_index++) {
+  free_router_index = LWIP_ND6_NUM_ROUTERS;
+  for (router_index = LWIP_ND6_NUM_ROUTERS - 1; router_index >= 0; router_index--) {
+    /* check if router already exists (this is a special case for 2 netifs on the same subnet
+       - e.g. wifi and cable) */
+    if(default_router_list[router_index].neighbor_entry == &(neighbor_cache[neighbor_index])){ 
+      return router_index; 
+    } 
     if (default_router_list[router_index].neighbor_entry == NULL) {
-      default_router_list[router_index].neighbor_entry = &(neighbor_cache[neighbor_index]);
-      return router_index;
+      /* remember lowest free index to create a new entry */
+      free_router_index = router_index;
     }
+  }
+  if (free_router_index < LWIP_ND6_NUM_ROUTERS) {
+    default_router_list[free_router_index].neighbor_entry = &(neighbor_cache[neighbor_index]);
+    return free_router_index;
   }
 
   /* Could not create a router entry. */
