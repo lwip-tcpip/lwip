@@ -2415,8 +2415,8 @@
  * Hook for generation of the Initial Sequence Number (ISN) for a new TCP
  * connection. The default lwIP ISN generation algorithm is very basic and may
  * allow for TCP spoofing attacks. This hook provides the means to implement
- * the standardized ISN generation algorithm from RFC 6528, or any other
- * desired algorithm (e.g., it can be set to LWIP_RAND()), as a replacement.
+ * the standardized ISN generation algorithm from RFC 6528 (see contrib/adons/tcp_isn),
+ * or any other desired algorithm as a replacement.
  * Called from tcp_connect() and tcp_listen_input() when an ISN is needed for
  * a new TCP connection, if TCP support (@ref LWIP_TCP) is enabled.\n
  * Signature: u32_t my_hook_tcp_isn(const ip_addr_t* local_ip, u16_t local_port, const ip_addr_t* remote_ip, u16_t remote_port);

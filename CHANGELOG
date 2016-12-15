@@ -26,6 +26,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2016-12-15: David van Moolenbroek
+  * opt.h, tcp: added LWIP_HOOK_TCP_ISN() to implement less predictable initial
+    sequence numbers (see contrib/addons/tcp_isn for an example implementation)
+
   2016-12-05: Dirk Ziegelmeier
   * fixed compiling with IPv4 disabled (IPv6 only case)
   
