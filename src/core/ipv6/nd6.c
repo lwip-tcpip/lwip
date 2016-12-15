@@ -395,7 +395,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     struct ra_header *ra_hdr;
     u8_t *buffer; /* Used to copy options. */
     u16_t offset;
-#ifdef LWIP_ND6_RDNSS_MAX_DNS_SERVERS
+#if LWIP_ND6_RDNSS_MAX_DNS_SERVERS
     /* There can by multiple RDNSS options per RA */
     u8_t rdnss_server_idx = 0;
 #endif /* LWIP_ND6_RDNSS_MAX_DNS_SERVERS */
