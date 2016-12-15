@@ -1,5 +1,5 @@
 
-Fuzzing the lwIP stack
+Fuzzing the lwIP stack (afl-fuzz requires linux/unix or similar)
 
 This directory contains a small app that reads Ethernet frames from stdin and
 processes them. It is used together with the 'american fuzzy lop' tool (found
