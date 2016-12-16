@@ -2245,13 +2245,18 @@
  */
 /**
  * LWIP_IPV6_MLD==1: Enable multicast listener discovery protocol.
+ * If LWIP_IPV6 is enabled but this setting is disabled, the MAC layer must
+ * indiscriminately pass all inbound IPv6 multicast traffic to lwIP.
  */
 #if !defined LWIP_IPV6_MLD || defined __DOXYGEN__
 #define LWIP_IPV6_MLD                   (LWIP_IPV6)
 #endif
 
 /**
- * MEMP_NUM_MLD6_GROUP: Max number of IPv6 multicast that can be joined.
+ * MEMP_NUM_MLD6_GROUP: Max number of IPv6 multicast groups that can be joined.
+ * There must be enough groups so that each netif can join the solicited-node
+ * multicast group for each of its local addresses, plus one for MDNS if
+ * applicable, plus any number of groups to be joined on UDP sockets.
  */
 #if !defined MEMP_NUM_MLD6_GROUP || defined __DOXYGEN__
 #define MEMP_NUM_MLD6_GROUP             4
