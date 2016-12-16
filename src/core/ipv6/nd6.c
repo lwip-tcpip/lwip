@@ -171,12 +171,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
           /* We are using a duplicate address. */
           netif_ip6_addr_set_state(inp, i, IP6_ADDR_INVALID);
 
-#if LWIP_IPV6_MLD
-          /* Leave solicited node multicast group. */
-          ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(inp, i)->addr[3]);
-          mld6_leavegroup_netif(inp, &multicast_address);
-#endif /* LWIP_IPV6_MLD */
-
 #if LWIP_IPV6_AUTOCONFIG
           /* Check to see if this address was autoconfigured. */
           if (!ip6_addr_islinklocal(&target_address)) {
@@ -871,13 +865,6 @@ nd6_tmr(void)
           netif_ip6_addr_set_state(netif, i, IP6_ADDR_PREFERRED);
           /* @todo implement preferred and valid lifetimes. */
         } else if (netif->flags & NETIF_FLAG_UP) {
-#if LWIP_IPV6_MLD
-          if ((addr_state & IP6_ADDR_TENTATIVE_COUNT_MASK) == 0) {
-            /* Join solicited node multicast group. */
-            ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, i)->addr[3]);
-            mld6_joingroup_netif(netif, &multicast_address);
-          }
-#endif /* LWIP_IPV6_MLD */
           /* Send a NS for this address. */
           nd6_send_ns(netif, netif_ip6_addr(netif, i), ND6_SEND_FLAG_MULTICAST_DEST);
           /* tentative: set next state by increasing by one */
@@ -2073,5 +2060,39 @@ nd6_cleanup_netif(struct netif *netif)
     }
   }
 }
+
+#if LWIP_IPV6_MLD
+/**
+ * The state of a local IPv6 address entry is about to change. If needed, join
+ * or leave the solicited-node multicast group for the address.
+ *
+ * @param netif The netif that owns the address.
+ * @param addr_idx The index of the address.
+ * @param new_state The new (IP6_ADDR_) state for the address.
+ */
+void
+nd6_adjust_mld_membership(struct netif *netif, s8_t addr_idx, u8_t new_state)
+{
+  u8_t old_state, old_member, new_member;
+
+  old_state = netif_ip6_addr_state(netif, addr_idx);
+
+  /* Determine whether we were, and should be, a member of the solicited-node
+   * multicast group for this address. For tentative addresses, the group is
+   * not joined until the address enters the TENTATIVE_1 (or VALID) state. */
+  old_member = (old_state != IP6_ADDR_INVALID && old_state != IP6_ADDR_TENTATIVE);
+  new_member = (new_state != IP6_ADDR_INVALID && new_state != IP6_ADDR_TENTATIVE);
+
+  if (old_member != new_member) {
+    ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, addr_idx)->addr[3]);
+
+    if (new_member) {
+      mld6_joingroup_netif(netif, &multicast_address);
+    } else {
+      mld6_leavegroup_netif(netif, &multicast_address);
+    }
+  }
+}
+#endif /* LWIP_IPV6_MLD */
 
 #endif /* LWIP_IPV6 */
