@@ -932,6 +932,7 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   sys_sem_t sem;
 #endif /* LWIP_MPU_COMPATIBLE */
   err_t err;
+  err_t cberr;
 
   LWIP_ERROR("netconn_gethostbyname: invalid name", (name != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_gethostbyname: invalid addr", (addr != NULL), return ERR_ARG;);
@@ -964,13 +965,13 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-  err = tcpip_callback(lwip_netconn_do_gethostbyname, &API_VAR_REF(msg));
-  if (err != ERR_OK) {
+  cberr = tcpip_callback(lwip_netconn_do_gethostbyname, &API_VAR_REF(msg));
+  if (cberr != ERR_OK) {
 #if !LWIP_NETCONN_SEM_PER_THREAD
     sys_sem_free(API_EXPR_REF(API_VAR_REF(msg).sem));
 #endif /* !LWIP_NETCONN_SEM_PER_THREAD */
     API_VAR_FREE(MEMP_DNS_API_MSG, msg);
-    return err;
+    return cberr;
   }
   sys_sem_wait(API_EXPR_REF_SEM(API_VAR_REF(msg).sem));
 #if !LWIP_NETCONN_SEM_PER_THREAD
