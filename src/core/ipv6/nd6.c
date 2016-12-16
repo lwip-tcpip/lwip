@@ -548,21 +548,24 @@ nd6_input(struct pbuf *p, struct netif *inp)
       {
         u8_t num, n;
         struct rdnss_option * rdnss_opt;
+
         rdnss_opt = (struct rdnss_option *)buffer;
         num = (rdnss_opt->length - 1) / 2;
         for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
+          ip6_addr_t rdnss_address;
+
           /* Get a memory-aligned copy of the prefix. */
-          ip6_addr_set(ip6_current_dest_addr(), &(rdnss_opt->rdnss_address[n]));
+          ip6_addr_set(&rdnss_address, &(rdnss_opt->rdnss_address[n]));
 
           if (htonl(rdnss_opt->lifetime) > 0) {
             /* TODO implement Lifetime > 0 */
-            dns_setserver(rdnss_server_idx++, ip_current_dest_addr());
+            dns_setserver(rdnss_server_idx++, &rdnss_address);
           } else {
             /* TODO implement DNS removal in dns.c */
             u8_t s;
             for (s = 0; s < DNS_MAX_SERVERS; s++) {
               const ip_addr_t *addr = dns_getserver(s);
-              if(ip_addr_cmp(addr, ip_current_dest_addr())) {
+              if(ip_addr_cmp(addr, &rdnss_address)) {
                 dns_setserver(s, NULL);
               }
             }
@@ -586,6 +589,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct redirect_header *redir_hdr;
     struct lladdr_option *lladdr_opt;
+    ip6_addr_t tmp;
 
     /* Check that Redir header fits in packet. */
     if (p->len < sizeof(struct redirect_header)) {
@@ -608,10 +612,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Copy original destination address to current source address, to have an aligned copy. */
-    ip6_addr_set(ip6_current_src_addr(), &(redir_hdr->destination_address));
+    ip6_addr_set(&tmp, &(redir_hdr->destination_address));
 
     /* Find dest address in cache */
-    i = nd6_find_destination_cache_entry(ip6_current_src_addr());
+    i = nd6_find_destination_cache_entry(&tmp);
     if (i < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
@@ -625,15 +629,15 @@ nd6_input(struct pbuf *p, struct netif *inp)
     if (lladdr_opt != NULL) {
       if (lladdr_opt->type == ND6_OPTION_TYPE_TARGET_LLADDR) {
         /* Copy target address to current source address, to have an aligned copy. */
-        ip6_addr_set(ip6_current_src_addr(), &(redir_hdr->target_address));
+        ip6_addr_set(&tmp, &(redir_hdr->target_address));
 
-        i = nd6_find_neighbor_cache_entry(ip6_current_src_addr());
+        i = nd6_find_neighbor_cache_entry(&tmp);
         if (i < 0) {
           i = nd6_new_neighbor_cache_entry();
           if (i >= 0) {
             neighbor_cache[i].netif = inp;
             MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
-            ip6_addr_set(&(neighbor_cache[i].next_hop_address), ip6_current_src_addr());
+            ip6_addr_set(&(neighbor_cache[i].next_hop_address), &tmp);
 
             /* Receiving a message does not prove reachability: only in one direction.
              * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
@@ -659,6 +663,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     struct icmp6_hdr *icmp6hdr; /* Packet too big message */
     struct ip6_hdr *ip6hdr; /* IPv6 header of the packet which caused the error */
     u32_t pmtu;
+    ip6_addr_t tmp;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
     if (p->len < (sizeof(struct icmp6_hdr) + IP6_HLEN)) {
@@ -673,10 +678,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
     ip6hdr = (struct ip6_hdr *)((u8_t*)p->payload + sizeof(struct icmp6_hdr));
 
     /* Copy original destination address to current source address, to have an aligned copy. */
-    ip6_addr_set(ip6_current_src_addr(), &(ip6hdr->dest));
+    ip6_addr_set(&tmp, &(ip6hdr->dest));
 
     /* Look for entry in destination cache. */
-    i = nd6_find_destination_cache_entry(ip6_current_src_addr());
+    i = nd6_find_destination_cache_entry(&tmp);
     if (i < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
