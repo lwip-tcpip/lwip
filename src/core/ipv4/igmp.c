@@ -295,15 +295,10 @@ static err_t
 igmp_remove_group(struct netif* netif, struct igmp_group *group)
 {
   err_t err = ERR_OK;
-  struct igmp_group *tmp_group = netif_igmp_data(netif);
+  struct igmp_group *tmp_group;
 
   /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
-  if(tmp_group != NULL) {
-    tmp_group = tmp_group->next;
-  }
-
-  /* look for group further down the list */
-  for (; tmp_group != NULL; tmp_group = tmp_group->next) {
+  for (tmp_group = netif_igmp_data(netif); tmp_group != NULL; tmp_group = tmp_group->next) {
     if (tmp_group->next == group) {
       tmp_group->next = group->next;
       break;
