@@ -295,23 +295,23 @@ static err_t
 igmp_remove_group(struct netif* netif, struct igmp_group *group)
 {
   err_t err = ERR_OK;
+  struct igmp_group *tmp_group = netif_igmp_data(netif);
 
-  /* Is it the first group? */
-  if (netif_igmp_data(netif) == group) {
-    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_IGMP, group->next);
-  } else {
-    /* look for group further down the list */
-    struct igmp_group *tmpGroup;
-    for (tmpGroup = netif_igmp_data(netif); tmpGroup != NULL; tmpGroup = tmpGroup->next) {
-      if (tmpGroup->next == group) {
-        tmpGroup->next = group->next;
-        break;
-      }
+  /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
+  if(tmp_group != NULL) {
+    tmp_group = tmp_group->next;
+  }
+
+  /* look for group further down the list */
+  for (; tmp_group != NULL; tmp_group = tmp_group->next) {
+    if (tmp_group->next == group) {
+      tmp_group->next = group->next;
+      break;
     }
-    /* Group not found in the global igmp_group_list */
-    if (tmpGroup == NULL) {
-      err = ERR_ARG;
-    }
+  }
+  /* Group not found in the global igmp_group_list */
+  if (tmp_group == NULL) {
+    err = ERR_ARG;
   }
 
   return err;
