@@ -32,13 +32,12 @@
 all compile: lwip_fuzz
 .PHONY: all clean
 
-CONTRIBDIR=../../../lwip-contrib
-
-include $(CONTRIBDIR)/ports/unix/Common.mk
-
 CC=afl-gcc
-LDFLAGS:=$(LDFLAGS) -lm
-CFLAGS:=$(CFLAGS) -O0
+LDFLAGS=-lm
+CFLAGS=-O0
+
+CONTRIBDIR=../../../lwip-contrib
+include $(CONTRIBDIR)/ports/unix/Common.mk
 
 clean:
 	rm -f *.o $(LWIPLIBCOMMON) lwip_fuzz *.s .depend* *.core core
