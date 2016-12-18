@@ -390,7 +390,6 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 #if LWIP_TCP
   void *accept_ptr;
   struct netconn *newconn;
-  err_t err;
 #if TCP_LISTEN_BACKLOG
   API_MSG_VAR_DECLARE(msg);
 #endif /* TCP_LISTEN_BACKLOG */
@@ -399,11 +398,10 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   *new_conn = NULL;
   LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return ERR_ARG;);
 
-  err = conn->last_err;
-  if (ERR_IS_FATAL(err)) {
+  if (ERR_IS_FATAL(conn->last_err)) {
     /* don't recv on fatal errors: this might block the application task
        waiting on acceptmbox forever! */
-    return err;
+    return conn->last_err;
   }
   if (!sys_mbox_valid(&conn->acceptmbox)) {
     return ERR_CLSD;
@@ -479,7 +477,6 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 {
   void *buf = NULL;
   u16_t len;
-  err_t err;
 #if LWIP_TCP
   API_MSG_VAR_DECLARE(msg);
 #if LWIP_MPU_COMPATIBLE
@@ -503,13 +500,12 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 #endif /* LWIP_TCP */
   LWIP_ERROR("netconn_recv: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
 
-  err = conn->last_err;
-  if (ERR_IS_FATAL(err)) {
+  if (ERR_IS_FATAL(conn->last_err)) {
     /* don't recv on fatal errors: this might block the application task
        waiting on recvmbox forever! */
     /* @todo: this does not allow us to fetch data that has been put into recvmbox
        before the fatal error occurred - is that a problem? */
-    return err;
+    return conn->last_err;
   }
 #if LWIP_TCP
 #if (LWIP_UDP || LWIP_RAW)
