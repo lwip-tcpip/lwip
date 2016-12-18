@@ -35,8 +35,8 @@ tcp_setup(void)
 {
   /* reset iss to default (6510) */
   tcp_ticks = 0;
-  tcp_ticks = 0 - (tcp_next_iss() - 6510);
-  tcp_next_iss();
+  tcp_ticks = 0 - (tcp_next_iss(NULL) - 6510);
+  tcp_next_iss(NULL);
   tcp_ticks = 0;
 
   test_tcp_timer = 0;
@@ -513,8 +513,8 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
 
   /* create and initialize the pcb */
   tcp_ticks = 0;
-  tcp_ticks = 0 - tcp_next_iss();
-  tcp_ticks = SEQNO1 - tcp_next_iss();
+  tcp_ticks = 0 - tcp_next_iss(NULL);
+  tcp_ticks = SEQNO1 - tcp_next_iss(NULL);
   pcb = test_tcp_new_counters_pcb(&counters);
   EXPECT_RET(pcb != NULL);
   EXPECT(pcb->lastack == SEQNO1);
