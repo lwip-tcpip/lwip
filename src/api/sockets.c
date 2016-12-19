@@ -1214,9 +1214,7 @@ lwip_socket(int domain, int type, int protocol)
   struct netconn *conn;
   int i;
 
-#if !LWIP_IPV6
   LWIP_UNUSED_ARG(domain); /* @todo: check this */
-#endif /* LWIP_IPV6 */
 
   /* create a netconn */
   switch (type) {
