@@ -1820,6 +1820,7 @@ mdns_resp_init(void)
   mdns_pcb->ttl = MDNS_TTL;
 #endif
   res = udp_bind(mdns_pcb, IP_ANY_TYPE, MDNS_PORT);
+  LWIP_UNUSED_ARG(res); /* in case of LWIP_NOASSERT */
   LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
   udp_recv(mdns_pcb, mdns_recv, NULL);
 
