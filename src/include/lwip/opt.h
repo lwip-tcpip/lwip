@@ -1363,7 +1363,7 @@
  * for an additional encapsulation header before ethernet headers (e.g. 802.11)
  */
 #if !defined PBUF_LINK_ENCAPSULATION_HLEN || defined __DOXYGEN__
-#define PBUF_LINK_ENCAPSULATION_HLEN    0
+#define PBUF_LINK_ENCAPSULATION_HLEN    0u
 #endif
 
 /**

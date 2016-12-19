@@ -715,7 +715,7 @@ netif_found:
 options_done:
 
   /* p points to IPv6 header again. */
-  pbuf_header_force(p, ip_data.current_ip_header_tot_len);
+  pbuf_header_force(p, (s16_t)ip_data.current_ip_header_tot_len);
 
   /* send to upper layers */
   LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: \n"));

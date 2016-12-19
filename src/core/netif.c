@@ -478,7 +478,7 @@ netif_find(const char *name)
     return NULL;
   }
 
-  num = name[2] - '0';
+  num = (u8_t)(name[2] - '0');
 
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     if (num == netif->num &&
