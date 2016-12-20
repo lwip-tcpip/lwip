@@ -169,7 +169,7 @@ static const char * const mqtt_message_type_str[15] =
 static const char *
 mqtt_msg_type_to_str(u8_t msg_type)
 {
-  if(msg_type > 14) {
+  if(msg_type >= LWIP_ARRAYSIZE(mqtt_message_type_str)) {
     msg_type = 0;
   }
   return mqtt_message_type_str[msg_type];
