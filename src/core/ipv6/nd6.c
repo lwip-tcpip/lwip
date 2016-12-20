@@ -1004,7 +1004,7 @@ nd6_tmr(void)
           }
 #endif /* LWIP_IPV6_ADDRESS_LIFETIMES */
           netif_ip6_addr_set_state(netif, i, addr_state);
-        } else if (netif->flags & NETIF_FLAG_UP) {
+        } else if (netif_is_up(netif) && netif_is_link_up(netif)) {
           /* Send a NS for this address. */
           nd6_send_ns(netif, netif_ip6_addr(netif, i), ND6_SEND_FLAG_MULTICAST_DEST);
           /* tentative: set next state by increasing by one */
@@ -1017,7 +1017,8 @@ nd6_tmr(void)
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
   /* Send router solicitation messages, if necessary. */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
-    if ((netif->rs_count > 0) && (netif->flags & NETIF_FLAG_UP) &&
+    if ((netif->rs_count > 0) && netif_is_up(netif) &&
+        netif_is_link_up(netif) &&
         !ip6_addr_isinvalid(netif_ip6_addr_state(netif, 0)) &&
         !ip6_addr_isduplicated(netif_ip6_addr_state(netif, 0))) {
       if (nd6_send_rs(netif) == ERR_OK) {
