@@ -44,6 +44,10 @@
 extern "C" {
 #endif
 
+/** @ingroup mqtt
+ * @{
+ */
+
 /**
  * Output ring-buffer size, must be able to fit largest outgoing publish message topic+payloads
  */
@@ -173,39 +177,42 @@ struct mqtt_request_t
   u16_t timeout_diff;
 };
 
+/** Ring buffer */
+struct mqtt_ringbuf_t {
+  u16_t put;
+  u16_t get;
+  u8_t buf[MQTT_OUTPUT_RINGBUF_SIZE];
+};
+
 /** MQTT client */
 struct mqtt_client_t
 {
-	/** Timers and timeouts */
-	u16_t cyclic_tick;
+  /** Timers and timeouts */
+  u16_t cyclic_tick;
   u16_t keep_alive;
   u16_t server_watchdog;
-	/** Packet identifier generator*/
-	u16_t pkt_id_seq;
+  /** Packet identifier generator*/
+  u16_t pkt_id_seq;
   /** Packet identifier of pending incoming publish */
   u16_t inpub_pkt_id;
   /** Connection state */
   u8_t conn_state;
   struct tcp_pcb *conn;
-	/** Connection callback */
-	void *connect_arg;
-	mqtt_connection_cb_t connect_cb;
+  /** Connection callback */
+  void *connect_arg;
+  mqtt_connection_cb_t connect_cb;
   /** Pending requests to server */
   struct mqtt_request_t *pend_req_queue;
   struct mqtt_request_t req_list[MQTT_REQ_MAX_IN_FLIGHT];
-	void *inpub_arg;
-	/** Incoming data callback */
-	mqtt_incoming_data_cb_t data_cb;
+  void *inpub_arg;
+  /** Incoming data callback */
+  mqtt_incoming_data_cb_t data_cb;
   mqtt_incoming_publish_cb_t pub_cb;
   /** Input */
   u32_t msg_idx;
   u8_t rx_buffer[MQTT_VAR_HEADER_BUFFER_LEN];
-	/** Output ring-buffer */
-	struct mqtt_ringbuf_t {
-    u16_t put;
-    u16_t get;
-    u8_t buf[MQTT_OUTPUT_RINGBUF_SIZE];
-  } output;
+  /** Output ring-buffer */
+  struct mqtt_ringbuf_t output;
 };
 
 
@@ -238,6 +245,10 @@ err_t mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_re
 /** Publish data to topic */
 err_t mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_t payload_length, u8_t qos, u8_t retain,
                                     mqtt_request_cb_t cb, void *arg);
+
+/**
+ * @}
+ */
 
 #ifdef	__cplusplus
 }
