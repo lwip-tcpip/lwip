@@ -2,7 +2,7 @@
  * @file
  * MQTT client
  *
- * @defgroup mqtt MQTT Client
+ * @defgroup mqtt MQTT client
  * @ingroup apps
  */
 
