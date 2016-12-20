@@ -1027,6 +1027,7 @@ mqtt_tcp_connect_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
 
 
 /**
+ * @ingroup mqtt
  * MQTT publish function.
  * @param client MQTT client
  * @param topic Publish topic string
