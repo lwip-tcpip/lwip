@@ -384,7 +384,7 @@ mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
   LWIP_ASSERT("mqtt_request_time_elapsed: tail != NULL", tail != NULL);
   while(t > 0 && r != NULL) {
     if(t >= r->timeout_diff) {
-      t -= r->timeout_diff;
+      t -= (u8_t)r->timeout_diff;
       /* Unchain */
       *tail = r->next;
       /* Notify upper layer about timeout */
@@ -528,10 +528,11 @@ mqtt_close(mqtt_client_t *client, mqtt_connection_status_t reason)
 
   /* Bring down TCP connection if not already done */
   if(client->conn != NULL) {
+    err_t res;
     tcp_recv(client->conn, NULL);
     tcp_err(client->conn,  NULL);
     tcp_sent(client->conn, NULL);
-    err_t res = tcp_close(client->conn);
+    res = tcp_close(client->conn);
     if(res != ERR_OK) {
       tcp_abort(client->conn);
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_close: Close err=%s\n", lwip_strerr(res)));
@@ -694,11 +695,14 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
 
     if(client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) {
       /* Should have topic and pkt id*/
+      uint8_t *topic;
+      uint16_t after_topic;
+      u8_t bkp;
       u16_t topic_len = var_hdr_payload[0];
       topic_len = (topic_len << 8) + (u16_t)(var_hdr_payload[1]);
 
-      uint8_t *topic = var_hdr_payload + 2;
-      uint16_t after_topic = 2 + topic_len;
+      topic = var_hdr_payload + 2;
+      after_topic = 2 + topic_len;
       /* Check length, add one byte even for QoS 0 so that zero termination will fit */
       if((after_topic + qos ? 2 : 1) > length) {
         LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_message_received: Receive buffer can not fit topic + pkt_id\n"));
@@ -713,7 +717,7 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
         client->inpub_pkt_id = 0;
       }
       /* Take backup of byte after topic */
-      u8_t bkp = topic[topic_len];
+      bkp = topic[topic_len];
       /* Zero terminate string */
       topic[topic_len] = 0;
       /* Payload data remaining in receive buffer */
@@ -831,7 +835,7 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
       cpy_start = (client->msg_idx - fixed_hdr_idx) % (MQTT_VAR_HEADER_BUFFER_LEN - fixed_hdr_idx) + fixed_hdr_idx;
 
       /* Allow to copy the lesser one of available length in input data or bytes remaining in message */
-      cpy_len = LWIP_MIN((u16_t)(p->tot_len - in_offset), msg_rem_len);
+      cpy_len = (u16_t)LWIP_MIN((u16_t)(p->tot_len - in_offset), msg_rem_len);
 
       /* Limit to available space in buffer */
       buffer_space = MQTT_VAR_HEADER_BUFFER_LEN - cpy_start;
@@ -883,6 +887,7 @@ mqtt_tcp_recv_cb(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_tcp_recv_cb: Recv pbuf=NULL, remote has closed connection\n"));
     mqtt_close(client, MQTT_CONNECT_DISCONNECTED);
   } else {
+    mqtt_connection_status_t res;
     if(err != ERR_OK) {
       LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_tcp_recv_cb: Recv err=%d\n", err));
       pbuf_free(p);
@@ -891,7 +896,7 @@ mqtt_tcp_recv_cb(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 
     /* Tell remote that data has been received */
     tcp_recved(pcb, p->tot_len);
-    mqtt_connection_status_t res = mqtt_parse_incoming(client, p);
+    res = mqtt_parse_incoming(client, p);
     pbuf_free(p);
 
     if(res != MQTT_CONNECT_ACCEPTED) {
@@ -924,12 +929,12 @@ mqtt_tcp_sent_cb(void *arg, struct tcp_pcb *tpcb, u16_t len)
   LWIP_UNUSED_ARG(len);
 
   if(client->conn_state == MQTT_CONNECTED) {
+    struct mqtt_request_t *r;
 
     /* Reset keep-alive send timer and server watchdog */
     client->cyclic_tick = 0;
     client->server_watchdog = 0;
     /* QoS 0 publish has no response from server, so call its callbacks here */
-    struct mqtt_request_t *r;
     while((r = mqtt_take_request(&client->pend_req_queue, 0)) != NULL) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_tcp_sent_cb: Calling QoS 0 publish complete callback\n"));
       if(r->cb != NULL) {
@@ -951,14 +956,15 @@ mqtt_tcp_sent_cb(void *arg, struct tcp_pcb *tpcb, u16_t len)
 static void
 mqtt_tcp_err_cb(void *arg, err_t err)
 {
-  LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_tcp_err_cb: TCP error callback: error %d, arg: %p\n", err, arg));
   mqtt_client_t *client = (mqtt_client_t *)arg;
+  LWIP_UNUSED_ARG(err); /* only used for debug output */
+  LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_tcp_err_cb: TCP error callback: error %d, arg: %p\n", err, arg));
   LWIP_ASSERT("mqtt_tcp_err_cb: client != NULL", client != NULL);
   /* Set conn to null before calling close as pcb is already deallocated*/
   client->conn = 0;
   mqtt_close(client, MQTT_CONNECT_DISCONNECTED);
-
 }
+
 /**
  * TCP poll callback function. @see tcp_poll_fn
  * @param arg MQTT client
@@ -1021,7 +1027,6 @@ mqtt_tcp_connect_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
 
 
 /**
- * @ingroup mqtt
  * MQTT publish function.
  * @param client MQTT client
  * @param topic Publish topic string
@@ -1041,12 +1046,21 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
 {
   struct mqtt_request_t *r;
   u16_t pkt_id;
-  u16_t topic_len = strlen(topic);
-  u16_t remaining_length = 2 + topic_len + payload_length;
+  size_t topic_strlen;
+  size_t total_len;
+  u16_t topic_len;
+  u16_t remaining_length;
 
   LWIP_ASSERT("mqtt_publish: client != NULL", client);
   LWIP_ASSERT("mqtt_publish: topic != NULL", topic);
   LWIP_ERROR("mqtt_publish: TCP disconnected", (client->conn_state != TCP_DISCONNECTED), return ERR_CONN);
+
+  topic_strlen = strlen(topic);
+  LWIP_ERROR("mqtt_publish: topic length overflow", (topic_strlen <= (0xFFFF - 2)), return ERR_ARG);
+  topic_len = (u16_t)topic_strlen;
+  total_len = 2 + topic_len + payload_length;
+  LWIP_ERROR("mqtt_publish: total length overflow", (total_len <= 0xFFFF), return ERR_ARG);
+  remaining_length = (u16_t)total_len;
 
   LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_publish: Publish with payload length %d to topic \"%s\"\n", payload_length, topic));
 
@@ -1104,15 +1118,27 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
 err_t
 mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_cb_t cb, void *arg, u8_t sub)
 {
-  u16_t topic_len = strlen(topic);
-  /* Topic string, pkt_id, qos for subscribe */
-  u16_t remaining_length =  topic_len + 2 + 2 + (sub != 0);
-
-  u16_t pkt_id = msg_generate_packet_id(client);
-  struct mqtt_request_t *r = mqtt_create_request(client->req_list, pkt_id, cb, arg);
+  size_t topic_strlen;
+  size_t total_len;
+  u16_t topic_len;
+  u16_t remaining_length;
+  u16_t pkt_id;
+  struct mqtt_request_t *r;
 
   LWIP_ASSERT("mqtt_sub_unsub: client != NULL", client);
   LWIP_ASSERT("mqtt_sub_unsub: topic != NULL", topic);
+
+  topic_strlen = strlen(topic);
+  LWIP_ERROR("mqtt_sub_unsub: topic length overflow", (topic_strlen <= (0xFFFF - 2)), return ERR_ARG);
+  topic_len = (u16_t)topic_strlen;
+  /* Topic string, pkt_id, qos for subscribe */
+  total_len =  topic_len + 2 + 2 + (sub != 0);
+  LWIP_ERROR("mqtt_publish: total length overflow", (total_len <= 0xFFFF), return ERR_ARG);
+  remaining_length = (u16_t)total_len;
+
+  pkt_id = msg_generate_packet_id(client);
+  r = mqtt_create_request(client->req_list, pkt_id, cb, arg);
+
   LWIP_ASSERT("mqtt_sub_unsub: qos < 3", qos < 3);
   if(client->conn_state == TCP_DISCONNECTED) {
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_sub_unsub: Can not (un)subscribe in disconnected state\n"));
@@ -1196,6 +1222,8 @@ mqtt_client_connect(mqtt_client_t *client, const char *host, mqtt_connection_cb_
 {
   err_t err;
   ip_addr_t ip_addr;
+  size_t len;
+  u16_t client_id_length;
   u16_t port = 1883;
   /* Length is the sum of 2+"MQTT", protocol level, flags and keep alive */
   u16_t remaining_length = 2 + 4 + 1 + 1 + 2;
@@ -1226,18 +1254,29 @@ mqtt_client_connect(mqtt_client_t *client, const char *host, mqtt_connection_cb_
   if(client_info->will_topic != NULL && client_info->will_msg != NULL) {
     flags |= MQTT_CONNECT_FLAG_WILL;
     flags |= (client_info->will_qos & 3) << 3;
-    if(client_info->will_retain)
+    if(client_info->will_retain) {
       flags |= MQTT_CONNECT_FLAG_WILL_RETAIN;
-    will_topic_len = strlen(client_info->will_topic);
-    will_msg_len = strlen(client_info->will_msg);
-    remaining_length += 2 + will_topic_len + 2 + will_msg_len;
+    }
+    len = strlen(client_info->will_topic);
+    LWIP_ERROR("mqtt_client_connect: client_info->will_topic length overflow", len <= 0xFF, return ERR_VAL);
+    will_topic_len = (u8_t)len;
+    len = strlen(client_info->will_msg);
+    LWIP_ERROR("mqtt_client_connect: client_info->will_msg length overflow", len <= 0xFF, return ERR_VAL);
+    will_msg_len = (u8_t)len;
+    len = remaining_length + 2 + will_topic_len + 2 + will_msg_len;
+    LWIP_ERROR("mqtt_client_connect: remaining_length overflow", len <= 0xFFFF, return ERR_VAL);
+    remaining_length = (u16_t)len;
   }
 
   /* Don't complicate things, always connect using clean session */
   flags |= MQTT_CONNECT_FLAG_CLEAN_SESSION;
 
-  u16_t client_id_length = strlen(client_info->client_id);
-  remaining_length += 2 + client_id_length;
+  len = strlen(client_info->client_id);
+  LWIP_ERROR("mqtt_client_connect: client_info->client_id length overflow", len <= 0xFFFF, return ERR_VAL);
+  client_id_length = (u16_t)len;
+  len = remaining_length + 2 + client_id_length;
+  LWIP_ERROR("mqtt_client_connect: remaining_length overflow", len <= 0xFFFF, return ERR_VAL);
+  remaining_length = (u16_t)len;
 
   if(mqtt_output_check_space(&client->output, remaining_length) == 0) {
     return ERR_MEM;
