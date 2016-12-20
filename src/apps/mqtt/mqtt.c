@@ -1021,6 +1021,7 @@ mqtt_tcp_connect_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
 
 
 /**
+ * @ingroup mqtt
  * MQTT publish function.
  * @param client MQTT client
  * @param topic Publish topic string
@@ -1090,7 +1091,8 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
 
 
 /**
- * @brief MQTT subscribe/unsubscribe function.
+ * @ingroup mqtt
+ * MQTT subscribe/unsubscribe function.
  * @param client MQTT client
  * @param topic topic to subscribe to
  * @param qos Quality of service, 0 1 or 2 (only used for subscribe)
@@ -1145,6 +1147,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
 
 
 /**
+ * @ingroup mqtt
  * Set callback to handle incoming publish requests from server
  * @param client MQTT client
  * @param pub_cb Callback invoked when publish starts, contain topic and total length of payload
@@ -1162,6 +1165,7 @@ mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb
 }
 
 /**
+ * @ingroup mqtt
  * Create a new MQTT client instance
  * @return Pointer to instance on success, NULL otherwise
  */
@@ -1177,6 +1181,7 @@ mqtt_client_new(void)
 
 
 /**
+ * @ingroup mqtt
  * Connect to MQTT server
  * @param client MQTT client
  * @param host String containing server IP
@@ -1290,6 +1295,7 @@ tcp_fail:
 
 
 /**
+ * @ingroup mqtt
  * Disconnect from MQTT server
  * @param client MQTT client
  */
@@ -1306,6 +1312,7 @@ mqtt_disconnect(mqtt_client_t *client)
 }
 
 /**
+ * @ingroup mqtt
  * Check connection with server
  * @param client MQTT client
  * @return 1 if connected to server, 0 otherwise

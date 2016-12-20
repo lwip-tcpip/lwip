@@ -34,49 +34,24 @@
  * Author: Erik Andersson
  *
  */
-#ifndef LWIP_HDR_MQTT_CLIENT_H
-#define LWIP_HDR_MQTT_CLIENT_H
+#ifndef LWIP_HDR_APPS_MQTT_CLIENT_H
+#define LWIP_HDR_APPS_MQTT_CLIENT_H
 
+#include "lwip/apps/mqtt_opts.h"
 #include "lwip/err.h"
-#include "lwip/opt.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-/** @ingroup mqtt
- * @{
- */
-
-/**
- * Output ring-buffer size, must be able to fit largest outgoing publish message topic+payloads
- */
-#ifndef MQTT_OUTPUT_RINGBUF_SIZE
-#define MQTT_OUTPUT_RINGBUF_SIZE 256
-#endif
-
-/**
- * Number of bytes in receive buffer, must be at least the size of the longest incoming topic + 8
- * If one wants to avoid fragmented incoming publish, set length to max incoming topic length + max payload length + 8
- */
-#ifndef MQTT_VAR_HEADER_BUFFER_LEN
-#define MQTT_VAR_HEADER_BUFFER_LEN 128
-#endif
-
-/**
- * Maximum number of pending subscribe, unsubscribe and publish requests to server .
- */
-#ifndef MQTT_REQ_MAX_IN_FLIGHT
-#define MQTT_REQ_MAX_IN_FLIGHT 4
-#endif
-
 typedef struct mqtt_client_t mqtt_client_t;
-
 
 /*---------------------------------------------------------------------------------------------- */
 /* Connection with server */
 
-/** Client information and connection parameters */
+/**
+ * @ingroup mqtt
+ * Client information and connection parameters */
 struct mqtt_connect_client_info_t {
   /** Client identifier, must be set by caller */
   const char *client_id;
@@ -93,7 +68,9 @@ struct mqtt_connect_client_info_t {
   u8_t will_retain;
 };
 
-/** Connection status codes */
+/**
+ * @ingroup mqtt
+ * Connection status codes */
 typedef enum
 {
   MQTT_CONNECT_ACCEPTED                 = 0,
@@ -106,7 +83,9 @@ typedef enum
   MQTT_CONNECT_TIMEOUT                  = 257
 } mqtt_connection_status_t;
 
-/** Function prototype for mqtt connection status callback. Called when
+/**
+ * @ingroup mqtt
+ * Function prototype for mqtt connection status callback. Called when
  * client has connected to the server after initiating a mqtt connection attempt by
  * calling mqtt_connect() or when connection is closed by server or an error
  *
@@ -118,13 +97,17 @@ typedef enum
 typedef void (*mqtt_connection_cb_t)(mqtt_client_t *client, void *arg, mqtt_connection_status_t status);
 
 
-/** Data callback flags */
+/**
+ * @ingroup mqtt
+ * Data callback flags */
 enum {
   /** Flag set when last fragment of data arrives in data callback */
   MQTT_DATA_FLAG_LAST = 1,
 };
 
-/** Function prototype for MQTT incoming publish data callback function. Called when data
+/** 
+ * @ingroup mqtt
+ * Function prototype for MQTT incoming publish data callback function. Called when data
  * arrives to a subscribed topic @see mqtt_subscribe
  *
  * @param client MQTT client itself
@@ -138,7 +121,9 @@ enum {
 typedef void (*mqtt_incoming_data_cb_t)(void *arg, const u8_t *data, u16_t len, u8_t flags);
 
 
-/** Function prototype for MQTT incoming publish function. Called when an incoming publish
+/** 
+ * @ingroup mqtt
+ * Function prototype for MQTT incoming publish function. Called when an incoming publish
  * arrives to a subscribed topic @see mqtt_subscribe
  *
  * @param client MQTT client itself
@@ -150,7 +135,9 @@ typedef void (*mqtt_incoming_data_cb_t)(void *arg, const u8_t *data, u16_t len, 
 typedef void (*mqtt_incoming_publish_cb_t)(void *arg, const char *topic, u32_t tot_len);
 
 
-/** Function prototype for mqtt request callback. Called when a subscribe, unsubscribe
+/**
+ * @ingroup mqtt
+ * Function prototype for mqtt request callback. Called when a subscribe, unsubscribe
  * or publish request has completed
  * @param arg Pointer to user data supplied when invoking request
  * @param err ERR_OK on success
@@ -236,9 +223,11 @@ void mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t,
 /** Common function for subscribe and unsubscribe */
 err_t mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_cb_t cb, void *arg, u8_t sub);
 
-/** Subscribe to topic */
+/** @ingroup mqtt
+ *Subscribe to topic */
 #define mqtt_subscribe(client, topic, qos, cb, arg) mqtt_sub_unsub(client, topic, qos, cb, arg, 1)
-/** Unsubscribe to topic */
+/** @ingroup mqtt
+ *  Unsubscribe to topic */
 #define mqtt_unsubscribe(client, topic, cb, arg) mqtt_sub_unsub(client, topic, 0, cb, arg, 0)
 
 
@@ -246,12 +235,8 @@ err_t mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_re
 err_t mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_t payload_length, u8_t qos, u8_t retain,
                                     mqtt_request_cb_t cb, void *arg);
 
-/**
- * @}
- */
-
 #ifdef	__cplusplus
 }
 #endif
 
-#endif /* LWIP_HDR_MQTT_CLIENT_H */
+#endif /* LWIP_HDR_APPS_MQTT_CLIENT_H */
