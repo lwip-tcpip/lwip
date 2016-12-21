@@ -72,6 +72,34 @@ extern "C" {
 #endif
 
 /**
+ * MQTT server port to connect to
+ */
+#ifndef MQTT_PORT
+#define MQTT_PORT 1883
+#endif
+
+/**
+ * Seconds between each cyclic timer call.
+ */
+#ifndef MQTT_CYCLIC_TIMER_INTERVAL
+#define MQTT_CYCLIC_TIMER_INTERVAL 5
+#endif
+
+/**
+ * Publish, subscribe and unsubscribe request timeout in seconds.
+ */
+#ifndef MQTT_REQ_TIMEOUT
+#define MQTT_REQ_TIMEOUT 30
+#endif
+
+/**
+ * Seconds for MQTT connect response timeout after sending connect request
+ */
+#ifndef MQTT_CONNECT_TIMOUT
+#define MQTT_CONNECT_TIMOUT 100
+#endif
+
+/**
  * @}
  */
 
