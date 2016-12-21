@@ -1134,7 +1134,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
   topic_len = (u16_t)topic_strlen;
   /* Topic string, pkt_id, qos for subscribe */
   total_len =  topic_len + 2 + 2 + (sub != 0);
-  LWIP_ERROR("mqtt_publish: total length overflow", (total_len <= 0xFFFF), return ERR_ARG);
+  LWIP_ERROR("mqtt_sub_unsub: total length overflow", (total_len <= 0xFFFF), return ERR_ARG);
   remaining_length = (u16_t)total_len;
 
   LWIP_ASSERT("mqtt_sub_unsub: qos < 3", qos < 3);
