@@ -1218,11 +1218,10 @@ mqtt_client_new(void)
  * @return ERR_OK if successful, @see err_t enum for other results
  */
 err_t
-mqtt_client_connect(mqtt_client_t *client, const char *host, mqtt_connection_cb_t cb, void *arg,
+mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, mqtt_connection_cb_t cb, void *arg,
                     const struct mqtt_connect_client_info_t *client_info)
 {
   err_t err;
-  ip_addr_t ip_addr;
   size_t len;
   u16_t client_id_length;
   u16_t port = 1883;
@@ -1231,7 +1230,7 @@ mqtt_client_connect(mqtt_client_t *client, const char *host, mqtt_connection_cb_
   u8_t flags = 0, will_topic_len = 0, will_msg_len = 0;
 
   LWIP_ASSERT("mqtt_client_connect: client != NULL", client != NULL);
-  LWIP_ASSERT("mqtt_client_connect: host != NULL", host != NULL);
+  LWIP_ASSERT("mqtt_client_connect: ip_addr != NULL", ip_addr != NULL);
   LWIP_ASSERT("mqtt_client_connect: client_info != NULL", client_info != NULL);
   LWIP_ASSERT("mqtt_client_connect: client_info->client_id != NULL", client_info->client_id != NULL);
 
@@ -1240,10 +1239,6 @@ mqtt_client_connect(mqtt_client_t *client, const char *host, mqtt_connection_cb_
     return ERR_ISCONN;
   }
 
-  if(ipaddr_aton(host, &ip_addr) == 0) {
-    LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_client_connect: Illegal hostname: %s\n", host));
-    return ERR_ARG;
-  }
   /* Wipe clean */
   memset(client, 0, sizeof(mqtt_client_t));
   client->connect_arg = arg;
@@ -1296,10 +1291,10 @@ mqtt_client_connect(mqtt_client_t *client, const char *host, mqtt_connection_cb_
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_client_connect: Error binding to local ip/port, %d\n", err));
     goto tcp_fail;
   }
-  LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_client_connect: Connecting to host: %s at port:%d\n", host, port));
+  LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_client_connect: Connecting to host: %s at port:%d\n", ipaddr_ntoa(ip_addr), port));
 
   /* Connect to server */
-  err = tcp_connect(client->conn, &ip_addr, port, mqtt_tcp_connect_cb);
+  err = tcp_connect(client->conn, ip_addr, port, mqtt_tcp_connect_cb);
   if(err != ERR_OK) {
     LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_client_connect: Error connecting to remote ip/port, %d\n", err));
     goto tcp_fail;

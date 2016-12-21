@@ -38,7 +38,7 @@ void example_do_connect(mqtt_client_t *client)
      to establish a connection with the server. 
      For now port number 1883 and MQTT version 3.1.1 is always used */
   
-  err = mqtt_client_connect(client, "192.168.0.55", mqtt_connection_cb, 0, &ci); 
+  err = mqtt_client_connect(client, ip_addr, mqtt_connection_cb, 0, &ci); 
   
   /* For now just print the result code if something goes wrong
   if(err != ERR_OK) {
