@@ -181,7 +181,7 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #else
 #define LWIP_SO_SNDRCVTIMEO_OPTTYPE struct timeval
 #define LWIP_SO_SNDRCVTIMEO_SET(optval, val)  do { \
-  s32_t loc = (val); \
+  u32_t loc = (u32_t)(val); \
   ((struct timeval *)(optval))->tv_sec = (loc) / 1000U; \
   ((struct timeval *)(optval))->tv_usec = ((loc) % 1000U) * 1000U; }while(0)
 #define LWIP_SO_SNDRCVTIMEO_GET_MS(optval) ((((const struct timeval *)(optval))->tv_sec * 1000U) + (((const struct timeval *)(optval))->tv_usec / 1000U))
@@ -1068,14 +1068,15 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     /* create a chained netbuf from the IO vectors. NOTE: we assemble a pbuf chain
        manually to avoid having to allocate, chain, and delete a netbuf for each iov */
     for (i = 0; i < msg->msg_iovlen; i++) {
-      struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
+      struct pbuf *p;
+     
+      LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
+      p = pbuf_alloc(PBUF_TRANSPORT, msg->msg_iov[i].iov_len, PBUF_RAM);
       if (p == NULL) {
         err = ERR_MEM; /* let netbuf_delete() cleanup chain_buf */
         break;
       }
-      p->payload = msg->msg_iov[i].iov_base;
-      LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
-      p->len = p->tot_len = (u16_t)msg->msg_iov[i].iov_len;
+      pbuf_take(p, msg->msg_iov[i].iov_base, (u16_t)msg->msg_iov[i].iov_len);
       /* netbuf empty, add new pbuf */
       if (chain_buf->p == NULL) {
         chain_buf->p = chain_buf->ptr = p;
@@ -1467,7 +1468,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           /* Wait forever */
           msectimeout = 0;
         } else {
-          msectimeout =  ((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
+          msectimeout = (u32_t)((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
           if (msectimeout == 0) {
             /* Wait 1ms at least (0 means wait forever) */
             msectimeout = 1;
