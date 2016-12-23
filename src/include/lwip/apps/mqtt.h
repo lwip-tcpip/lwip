@@ -204,7 +204,7 @@ struct mqtt_client_t
 
 
 /** Connect to server */
-err_t mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ipaddr, mqtt_connection_cb_t cb, void *arg,
+err_t mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ipaddr, u16_t port, mqtt_connection_cb_t cb, void *arg,
                    const struct mqtt_connect_client_info_t *client_info);
 
 /** Disconnect from server */

@@ -72,13 +72,6 @@ extern "C" {
 #endif
 
 /**
- * MQTT server port to connect to
- */
-#ifndef MQTT_PORT
-#define MQTT_PORT 1883
-#endif
-
-/**
  * Seconds between each cyclic timer call.
  */
 #ifndef MQTT_CYCLIC_TIMER_INTERVAL
