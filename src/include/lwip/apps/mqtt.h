@@ -46,6 +46,8 @@ extern "C" {
 
 typedef struct mqtt_client_t mqtt_client_t;
 
+/** @ingroup mqtt
+ * Default MQTT port */
 #define MQTT_PORT 1883
 
 /*---------------------------------------------------------------------------------------------- */
