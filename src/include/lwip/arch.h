@@ -50,7 +50,7 @@
 /**
  * @defgroup compiler_abstraction Compiler/platform abstraction
  * @ingroup sys_layer
- * All defines related to this section must not be places in lwipopts.h,
+ * All defines related to this section must not be placed in lwipopts.h,
  * but in arch/cc.h!
  * @{
  */
