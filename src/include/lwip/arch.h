@@ -59,6 +59,7 @@
 
 /** Define the byte order of the system.
  * Needed for conversion of network data to host byte order.
+ * Allowed values: LITTLE_ENDIAN and BIG_ENDIAN
  */
 #ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN
