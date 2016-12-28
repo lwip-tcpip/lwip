@@ -52,16 +52,37 @@
  * @ingroup sys_layer
  * All defines related to this section must not be placed in lwipopts.h,
  * but in arch/cc.h!
+ * These options cannot be \#defined in lwipopts.h since they are not options
+ * of lwIP itself, but options of the lwIP port to your system.
  * @{
  */
+
+/** Define the byte order of the system.
+ * Needed for conversion of network data to host byte order.
+ */
+#ifndef BYTE_ORDER
+#define BYTE_ORDER LITTLE_ENDIAN
+#endif
+
+/** Define random number generator function of your system */
+#ifndef LWIP_RAND()
+#define LWIP_RAND() ((u32_t)rand())
+#endif
+
+/** Platform specific diagnostic output */
+#ifndef LWIP_PLATFORM_DIAG
+#define LWIP_PLATFORM_DIAG(x)	do {printf x;} while(0)
+#endif
+
+/** Platform specific assertion handling */
+#ifndef LWIP_PLATFORM_ASSERT
+#define LWIP_PLATFORM_ASSERT(x) do {printf("Assertion \"%s\" failed at line %d in %s\n", \
+                                     x, __LINE__, __FILE__); fflush(NULL); abort();} while(0)
+#endif
 
 /** Define this to 1 in arch/cc.h of your port if you do not want to
  * include stddef.h header to get size_t. You need to typedef size_t
  * by yourself in this case.
- * This cannot be \#defined in lwipopts.h since this is not an option
- * of lwIP itself, but an option of the lwIP port to your system.
- * Additionally, this header is meant to be \#included in lwipopts.h
- * (you may need to declare function prototypes in there).
  */
 #ifndef LWIP_NO_STDDEF_H
 #define LWIP_NO_STDDEF_H 0
@@ -74,10 +95,6 @@
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
  * the stdint.h header. You need to typedef the generic types listed in
  * lwip/arch.h yourself in this case (u8_t, u16_t...).
- * This cannot be \#defined in lwipopts.h since this is not an option of lwIP
- * itself, but an option of the lwIP port to your system.
- * Additionally, this header is meant to be \#included in lwipopts.h
- * (you may need to declare function prototypes in there).
  */
 #ifndef LWIP_NO_STDINT_H
 #define LWIP_NO_STDINT_H 0
@@ -98,10 +115,6 @@ typedef uintptr_t mem_ptr_t;
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
  * the inttypes.h header. You need to define the format strings listed in
  * lwip/arch.h yourself in this case (X8_F, U16_F...).
- * This cannot be \#defined in lwipopts.h since this is not an option of lwIP
- * itself, but an option of the lwIP port to your system.
- * Additionally, this header is meant to be \#included in lwipopts.h
- * (you may need to declare function prototypes in there).
  */
 #ifndef LWIP_NO_INTTYPES_H
 #define LWIP_NO_INTTYPES_H 0
@@ -249,7 +262,7 @@ extern "C" {
 #endif /* PACK_STRUCT_FLD_S */
 
 
-/** Eliminates compiler warning about unused arguments. */
+/** Eliminates compiler warning about unused arguments (GCC -Wextra -Wunused). */
 #ifndef LWIP_UNUSED_ARG
 #define LWIP_UNUSED_ARG(x) (void)x
 #endif /* LWIP_UNUSED_ARG */
