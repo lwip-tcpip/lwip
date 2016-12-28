@@ -56,9 +56,10 @@
  */
 
 /** Define this to 1 in arch/cc.h of your port if you do not want to
- * include stddef.h header to get size_t. This cannot be \#defined in
- * lwipopts.h since this is not an option of lwIP itself, but an option
- * of the lwIP port to your system.
+ * include stddef.h header to get size_t. You need to typedef size_t
+ * by yourself in this case.
+ * This cannot be \#defined in lwipopts.h since this is not an option
+ * of lwIP itself, but an option of the lwIP port to your system.
  * Additionally, this header is meant to be \#included in lwipopts.h
  * (you may need to declare function prototypes in there).
  */
@@ -71,9 +72,10 @@
 #endif
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the stdint.h header. This cannot be \#defined in lwipopts.h since
- * this is not an option of lwIP itself, but an option of the lwIP port
- * to your system.
+ * the stdint.h header. You need to typedef the generic types listed in
+ * lwip/arch.h yourself in this case (u8_t, u16_t...).
+ * This cannot be \#defined in lwipopts.h since this is not an option of lwIP
+ * itself, but an option of the lwIP port to your system.
  * Additionally, this header is meant to be \#included in lwipopts.h
  * (you may need to declare function prototypes in there).
  */
@@ -94,9 +96,10 @@ typedef uintptr_t mem_ptr_t;
 #endif
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the inttypes.h header. This cannot be \#defined in lwipopts.h since
- * this is not an option of lwIP itself, but an option of the lwIP port
- * to your system.
+ * the inttypes.h header. You need to define the format strings listed in
+ * lwip/arch.h yourself in this case (X8_F, U16_F...).
+ * This cannot be \#defined in lwipopts.h since this is not an option of lwIP
+ * itself, but an option of the lwIP port to your system.
  * Additionally, this header is meant to be \#included in lwipopts.h
  * (you may need to declare function prototypes in there).
  */
@@ -133,7 +136,7 @@ typedef uintptr_t mem_ptr_t;
 #endif
 #endif
 
-/** C++ const_cast<target_type>(val) equivalent to remove constness from a value */
+/** C++ const_cast<target_type>(val) equivalent to remove constness from a value (GCC -Wcast-qual) */
 #ifndef LWIP_CONST_CAST
 #define LWIP_CONST_CAST(target_type, val) ((target_type)((ptrdiff_t)val))
 #endif
@@ -154,10 +157,10 @@ typedef uintptr_t mem_ptr_t;
  * its start address using LWIP_MEM_ALIGN.
  * You can declare your own version here e.g. to enforce alignment without adding
  * trailing padding bytes (see LWIP_MEM_ALIGN_BUFFER) or your own section placement
- * requirements.
- * e.g. if you use gcc and need 32 bit alignment:
- * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] \_\_attribute\_\_((aligned(4)))
- * or more portable:
+ * requirements.\n
+ * e.g. if you use gcc and need 32 bit alignment:\n
+ * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] \_\_attribute\_\_((aligned(4)))\n
+ * or more portable:\n
  * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u32_t variable_name[(size + sizeof(u32_t) - 1) / sizeof(u32_t)]
  */
 #ifndef LWIP_DECLARE_MEMORY_ALIGNED
