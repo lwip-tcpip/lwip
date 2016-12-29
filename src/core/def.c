@@ -20,6 +20,10 @@
  * @ingroup sys_layer
  * lwIP provides default implementations for non-standard functions.
  * These can be mapped to OS functions to reduce code footprint if desired.
+ * All defines related to this section must not be placed in lwipopts.h,
+ * but in arch/cc.h!
+ * These options cannot be \#defined in lwipopts.h since they are not options
+ * of lwIP itself, but options of the lwIP port to your system.
  */
 
 /*
