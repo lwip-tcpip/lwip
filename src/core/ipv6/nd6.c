@@ -105,6 +105,7 @@ static err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf *q);
 
 #define ND6_SEND_FLAG_MULTICAST_DEST 0x01
 #define ND6_SEND_FLAG_ALLNODES_DEST 0x02
+#define ND6_SEND_FLAG_ANY_SRC 0x04
 static void nd6_send_ns(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags);
 static void nd6_send_na(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags);
 static void nd6_send_neighbor_cache_probe(struct nd6_neighbor_cache_entry *entry, u8_t flags);
@@ -1005,10 +1006,13 @@ nd6_tmr(void)
 #endif /* LWIP_IPV6_ADDRESS_LIFETIMES */
           netif_ip6_addr_set_state(netif, i, addr_state);
         } else if (netif_is_up(netif) && netif_is_link_up(netif)) {
-          /* Send a NS for this address. */
-          nd6_send_ns(netif, netif_ip6_addr(netif, i), ND6_SEND_FLAG_MULTICAST_DEST);
           /* tentative: set next state by increasing by one */
           netif_ip6_addr_set_state(netif, i, addr_state + 1);
+          /* Send a NS for this address. Use the unspecified address as source
+           * address in all cases (RFC 4862 Sec. 5.4.2), not in the least
+           * because as it is, we only consider multicast replies for DAD. */
+          nd6_send_ns(netif, netif_ip6_addr(netif, i),
+            ND6_SEND_FLAG_MULTICAST_DEST | ND6_SEND_FLAG_ANY_SRC);
         }
       }
     }
@@ -1056,7 +1060,8 @@ nd6_send_ns(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
   const ip6_addr_t *src_addr;
   u16_t lladdr_opt_len;
 
-  if (ip6_addr_isvalid(netif_ip6_addr_state(netif,0))) {
+  if (!(flags & ND6_SEND_FLAG_ANY_SRC) &&
+      ip6_addr_isvalid(netif_ip6_addr_state(netif,0))) {
     /* Use link-local address as source address. */
     src_addr = netif_ip6_addr(netif, 0);
     /* calculate option length (in 8-byte-blocks) */
