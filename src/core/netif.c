@@ -1127,9 +1127,9 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
       /* @todo: add mib2 ip6 entries? */
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV6);
     }
-    if ((old_state & IP6_ADDR_PREFERRED) != (state & IP6_ADDR_PREFERRED)) {
-      /* address state has changed (valid flag changed or switched between
-         preferred and deprecated) -> call the callback function */
+    if ((old_state & ~IP6_ADDR_TENTATIVE_COUNT_MASK) !=
+        (state     & ~IP6_ADDR_TENTATIVE_COUNT_MASK)) {
+      /* address state has changed -> call the callback function */
       NETIF_STATUS_CALLBACK(netif);
     }
   }
