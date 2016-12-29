@@ -66,7 +66,7 @@
 #endif
 
 /** Define random number generator function of your system */
-#ifndef LWIP_RAND()
+#ifndef LWIP_RAND
 #define LWIP_RAND() ((u32_t)rand())
 #endif
 
