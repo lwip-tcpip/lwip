@@ -139,7 +139,8 @@ static const char * const mqtt_message_type_str[15] =
 
 /**
  * Message type value to string
- * @param msg_type @see mqtt_message_type
+ * @param msg_type see enum mqtt_message_type
+ * 
  * @return Control message type text string
  */
 static const char *
@@ -447,7 +448,7 @@ mqtt_output_append_string(struct mqtt_ringbuf_t *rb, const char *str, u16_t leng
 /**
  * Append fixed header
  * @param rb Output ring buffer
- * @param msg_type @see mqtt_message_type
+ * @param msg_type see enum mqtt_message_type
  * @param dup MQTT DUP flag
  * @param qos MQTT QoS field
  * @param retain MQTT retain flag
@@ -613,7 +614,6 @@ pub_ack_rec_rel_response(mqtt_client_t *client, u8_t msg, u16_t pkt_id, u8_t qos
 
 /**
  * Subscribe response from server
- * @param client MQTT client
  * @param r Matching request
  * @param result Result code from server
  */
@@ -629,7 +629,7 @@ mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
 /**
  * Complete MQTT message received or buffer full
  * @param client MQTT client
- * @param var_hdr_payload Pointer to beginning of variable headers and optional payload
+ * @param fixed_hdr_idx header index
  * @param length length received part
  * @param remaining_length Remaining length of complete message
  */
