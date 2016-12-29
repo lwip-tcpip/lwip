@@ -34,44 +34,6 @@
  * Author: Adam Dunkels <adam@sics.se>
  */
 
-/**
- * @defgroup sys_layer System abstraction layer
- * @ingroup infrastructure
- * @verbinclude "sys_arch.txt"
- *
- * @defgroup sys_os OS abstraction layer
- * @ingroup sys_layer
- * No need to implement functions in this section in NO_SYS mode.
- *
- * @defgroup sys_sem Semaphores
- * @ingroup sys_os
- *
- * @defgroup sys_mutex Mutexes
- * @ingroup sys_os
- * Mutexes are recommended to correctly handle priority inversion,
- * especially if you use LWIP_CORE_LOCKING .
- *
- * @defgroup sys_mbox Mailboxes
- * @ingroup sys_os
- *
- * @defgroup sys_time Time
- * @ingroup sys_layer
- *
- * @defgroup sys_prot Critical sections
- * @ingroup sys_layer
- * Used to protect short regions of code against concurrent access.
- * - Your system is a bare-metal system (probably with an RTOS)
- *   and interrupts are under your control:
- *   Implement this as LockInterrupts() / UnlockInterrupts()
- * - Your system uses an RTOS with deferred interrupt handling from a
- *   worker thread: Implement as a global mutex or lock/unlock scheduler
- * - Your system uses a high-level OS with e.g. POSIX signals:
- *   Implement as a global mutex
- *
- * @defgroup sys_misc Misc
- * @ingroup sys_os
- */
-
 #ifndef LWIP_HDR_SYS_H
 #define LWIP_HDR_SYS_H
 
