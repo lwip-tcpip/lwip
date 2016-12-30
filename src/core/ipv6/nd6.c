@@ -281,6 +281,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct na_header *na_hdr;
     struct lladdr_option *lladdr_opt;
+    ip6_addr_t target_address;
 
     /* Check that na header fits in packet. */
     if (p->len < (sizeof(struct na_header))) {
@@ -293,16 +294,26 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     na_hdr = (struct na_header *)p->payload;
 
+    /* Create an aligned copy of the target address. */
+    ip6_addr_set(&target_address, &(na_hdr->target_address));
+
+    /* Check a subset of the other RFC 4861 Sec. 7.1.2 requirements. */
+    if (IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM || na_hdr->code != 0 ||
+        ip6_addr_ismulticast(&target_address)) {
+      pbuf_free(p);
+      ND6_STATS_INC(nd6.proterr);
+      ND6_STATS_INC(nd6.drop);
+      return;
+    }
+
+    /* @todo RFC MUST: if IP destination is multicast, Solicited flag is zero */
+    /* @todo RFC MUST: all included options have a length greater than zero */
+
     /* Unsolicited NA?*/
     if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
-      ip6_addr_t target_address;
-      
       /* This is an unsolicited NA.
        * link-layer changed?
        * part of DAD mechanism? */
-
-      /* Create an aligned copy. */
-      ip6_addr_set(&target_address, &(na_hdr->target_address));
 
 #if LWIP_IPV6_DUP_DETECT_ATTEMPTS
       /* If the target address matches this netif, it is a DAD response. */
@@ -346,14 +357,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
         }
       }
     } else {
-      ip6_addr_t target_address;
-
       /* This is a solicited NA.
        * neighbor address resolution response?
        * neighbor unreachability detection response? */
-
-      /* Create an aligned copy. */
-      ip6_addr_set(&target_address, &(na_hdr->target_address));
 
       /* Find the cache entry corresponding to this na. */
       i = nd6_find_neighbor_cache_entry(&target_address);
@@ -404,6 +410,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct ns_header *ns_hdr;
     struct lladdr_option *lladdr_opt;
+    ip6_addr_t target_address;
     u8_t accepted;
 
     /* Check that ns header fits in packet. */
@@ -416,6 +423,22 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     ns_hdr = (struct ns_header *)p->payload;
+
+    /* Create an aligned copy of the target address. */
+    ip6_addr_set(&target_address, &(ns_hdr->target_address));
+
+    /* Check a subset of the other RFC 4861 Sec. 7.1.1 requirements. */
+    if (IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM || ns_hdr->code != 0 ||
+       ip6_addr_ismulticast(&target_address)) {
+      pbuf_free(p);
+      ND6_STATS_INC(nd6.proterr);
+      ND6_STATS_INC(nd6.drop);
+      return;
+    }
+
+    /* @todo RFC MUST: all included options have a length greater than zero */
+    /* @todo RFC MUST: if IP source is 'any', destination is solicited-node multicast address */
+    /* @todo RFC MUST: if IP source is 'any', there is no source LL address option */
 
     /* Check if there is a link-layer address provided. Only point to it if in this buffer. */
     if (p->len >= (sizeof(struct ns_header) + 2)) {
@@ -433,7 +456,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       if ((ip6_addr_isvalid(netif_ip6_addr_state(inp, i)) ||
            (ip6_addr_istentative(netif_ip6_addr_state(inp, i)) &&
             ip6_addr_isany(ip6_current_src_addr()))) &&
-          ip6_addr_cmp(&(ns_hdr->target_address), netif_ip6_addr(inp, i))) {
+          ip6_addr_cmp(&target_address, netif_ip6_addr(inp, i))) {
         accepted = 1;
         break;
       }
@@ -450,7 +473,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       /* Sender is validating this address. */
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
         if (!ip6_addr_isinvalid(netif_ip6_addr_state(inp, i)) &&
-            ip6_addr_cmp(&(ns_hdr->target_address), netif_ip6_addr(inp, i))) {
+            ip6_addr_cmp(&target_address, netif_ip6_addr(inp, i))) {
           /* Send a NA back so that the sender does not use this address. */
           nd6_send_na(inp, netif_ip6_addr(inp, i), ND6_FLAG_OVERRIDE | ND6_SEND_FLAG_ALLNODES_DEST);
           if (ip6_addr_istentative(netif_ip6_addr_state(inp, i))) {
@@ -460,8 +483,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
         }
       }
     } else {
-      ip6_addr_t target_address;
-      
       /* Sender is trying to resolve our address. */
       /* Verify that they included their own link-layer address. */
       if (lladdr_opt == NULL) {
@@ -505,9 +526,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
         neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
       }
 
-      /* Create an aligned copy. */
-      ip6_addr_set(&target_address, &(ns_hdr->target_address));
-
       /* Send back a NA for us. Allocate the reply pbuf. */
       nd6_send_na(inp, &target_address, ND6_FLAG_SOLICITED | ND6_FLAG_OVERRIDE);
     }
@@ -534,6 +552,17 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     ra_hdr = (struct ra_header *)p->payload;
+
+    /* Check a subset of the other RFC 4861 Sec. 6.1.2 requirements. */
+    if (!ip6_addr_islinklocal(ip6_current_src_addr()) ||
+        IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM || ra_hdr->code != 0) {
+      pbuf_free(p);
+      ND6_STATS_INC(nd6.proterr);
+      ND6_STATS_INC(nd6.drop);
+      return;
+    }
+
+    /* @todo RFC MUST: all included options have a length greater than zero */
 
     /* If we are sending RS messages, stop. */
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
@@ -716,7 +745,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct redirect_header *redir_hdr;
     struct lladdr_option *lladdr_opt;
-    ip6_addr_t tmp;
+    ip6_addr_t destination_address, target_address;
 
     /* Check that Redir header fits in packet. */
     if (p->len < sizeof(struct redirect_header)) {
@@ -729,6 +758,23 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     redir_hdr = (struct redirect_header *)p->payload;
 
+    /* Copy original destination address, to have an aligned copy. */
+    ip6_addr_set(&destination_address, &(redir_hdr->destination_address));
+
+    /* Check a subset of the other RFC 4861 Sec. 8.1 requirements. */
+    if (!ip6_addr_islinklocal(ip6_current_src_addr()) ||
+        IP6H_HOPLIM(ip6_current_header()) != ND6_HOPLIM ||
+        redir_hdr->code != 0 || ip6_addr_ismulticast(&destination_address)) {
+      pbuf_free(p);
+      ND6_STATS_INC(nd6.proterr);
+      ND6_STATS_INC(nd6.drop);
+      return;
+    }
+
+    /* @todo RFC MUST: IP source address equals first-hop router for destination_address */
+    /* @todo RFC MUST: ICMP target address is either link-local address or same as destination_address */
+    /* @todo RFC MUST: all included options have a length greater than zero */
+
     if (p->len >= (sizeof(struct redirect_header) + 2)) {
       lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct redirect_header));
       if (p->len < (sizeof(struct redirect_header) + (lladdr_opt->length << 3))) {
@@ -738,11 +784,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
       lladdr_opt = NULL;
     }
 
-    /* Copy original destination address to current source address, to have an aligned copy. */
-    ip6_addr_set(&tmp, &(redir_hdr->destination_address));
-
     /* Find dest address in cache */
-    i = nd6_find_destination_cache_entry(&tmp);
+    i = nd6_find_destination_cache_entry(&destination_address);
     if (i < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
@@ -756,15 +799,15 @@ nd6_input(struct pbuf *p, struct netif *inp)
     if (lladdr_opt != NULL) {
       if (lladdr_opt->type == ND6_OPTION_TYPE_TARGET_LLADDR) {
         /* Copy target address to current source address, to have an aligned copy. */
-        ip6_addr_set(&tmp, &(redir_hdr->target_address));
+        ip6_addr_set(&target_address, &(redir_hdr->target_address));
 
-        i = nd6_find_neighbor_cache_entry(&tmp);
+        i = nd6_find_neighbor_cache_entry(&target_address);
         if (i < 0) {
           i = nd6_new_neighbor_cache_entry();
           if (i >= 0) {
             neighbor_cache[i].netif = inp;
             MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
-            ip6_addr_set(&(neighbor_cache[i].next_hop_address), &tmp);
+            ip6_addr_set(&(neighbor_cache[i].next_hop_address), &target_address);
 
             /* Receiving a message does not prove reachability: only in one direction.
              * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
@@ -1111,7 +1154,7 @@ nd6_send_ns(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
   ip6_output_if(p, (src_addr == IP6_ADDR_ANY6) ? NULL : src_addr, target_addr,
-      LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
+      ND6_HOPLIM, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(p);
 }
 
@@ -1183,7 +1226,7 @@ nd6_send_na(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
   ip6_output_if(p, src_addr, dest_addr,
-      LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
+      ND6_HOPLIM, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(p);
 }
 
@@ -1250,7 +1293,7 @@ nd6_send_rs(struct netif *netif)
   ND6_STATS_INC(nd6.xmit);
 
   err = ip6_output_if(p, (src_addr == IP6_ADDR_ANY6) ? NULL : src_addr, &multicast_address,
-      LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
+      ND6_HOPLIM, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(p);
 
   return err;

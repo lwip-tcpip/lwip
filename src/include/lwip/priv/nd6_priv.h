@@ -118,6 +118,8 @@ enum nd6_neighbor_cache_entry_state {
   ND6_PROBE
 };
 
+#define ND6_HOPLIM 255 /* maximum hop limit, required in all ND packets */
+
 #define ND6_2HRS 7200 /* two hours, expressed in number of seconds */
 
 /* Router tables. */
