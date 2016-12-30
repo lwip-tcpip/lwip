@@ -1513,6 +1513,11 @@ nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
 /**
  * Select a default router for a destination.
  *
+ * This function is used both for routing and for finding a next-hop target for
+ * a packet. In the former case, the given netif is NULL, and the returned
+ * router entry must be for a netif suitable for sending packets (up, link up).
+ * In the latter case, the given netif is not NULL and restricts router choice.
+ *
  * @param ip6addr the destination address
  * @param netif the netif for the outgoing packet, if known
  * @return the default router entry index, or -1 if no suitable
@@ -1521,48 +1526,58 @@ nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
 static s8_t
 nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 {
-  s8_t i;
-  /* last_router is used for round-robin router selection (as recommended
-   * in RFC). This is more robust in case one router is not reachable,
-   * we are not stuck trying to resolve it. */
+  struct netif *router_netif;
+  s8_t i, j, valid_router;
   static s8_t last_router;
-  (void)ip6addr; /* @todo match preferred routes!! (must implement ND6_OPTION_TYPE_ROUTE_INFO) */
+
+  LWIP_UNUSED_ARG(ip6addr); /* @todo match preferred routes!! (must implement ND6_OPTION_TYPE_ROUTE_INFO) */
 
   /* @todo: implement default router preference */
 
-  /* Look for reachable routers. */
+  /* Look for valid routers. A reachable router is preferred. */
+  valid_router = -1;
   for (i = 0; i < LWIP_ND6_NUM_ROUTERS; i++) {
-    if (++last_router >= LWIP_ND6_NUM_ROUTERS) {
-      last_router = 0;
-    }
-    if ((default_router_list[i].neighbor_entry != NULL) &&
-        (netif != NULL ? netif == default_router_list[i].neighbor_entry->netif : 1) &&
-        (default_router_list[i].invalidation_timer > 0) &&
-        (default_router_list[i].neighbor_entry->state == ND6_REACHABLE)) {
-      return i;
+    /* Is the router netif both set and apppropriate? */
+    if (default_router_list[i].neighbor_entry != NULL) {
+      router_netif = default_router_list[i].neighbor_entry->netif;
+      if ((router_netif != NULL) && (netif != NULL ? netif == router_netif :
+          (netif_is_up(router_netif) && netif_is_link_up(router_netif)))) {
+        /* Is the router valid, i.e., reachable or probably reachable as per
+         * RFC 4861 Sec. 6.3.6? Note that we will never return a router that
+         * has no neighbor cache entry, due to the netif association tests. */
+        if (default_router_list[i].neighbor_entry->state != ND6_INCOMPLETE) {
+          /* Is the router known to be reachable? */
+          if (default_router_list[i].neighbor_entry->state == ND6_REACHABLE) {
+            return i; /* valid and reachable - done! */
+          } else if (valid_router < 0) {
+            valid_router = i; /* valid but not known to be reachable */
+          }
+        }
+      }
     }
   }
-
-  /* Look for router in other reachability states, but still valid according to timer. */
-  for (i = 0; i < LWIP_ND6_NUM_ROUTERS; i++) {
-    if (++last_router >= LWIP_ND6_NUM_ROUTERS) {
-      last_router = 0;
-    }
-    if ((default_router_list[i].neighbor_entry != NULL) &&
-        (netif != NULL ? netif == default_router_list[i].neighbor_entry->netif : 1) &&
-        (default_router_list[i].invalidation_timer > 0)) {
-      return i;
-    }
+  if (valid_router >= 0) {
+    return valid_router;
   }
 
   /* Look for any router for which we have any information at all. */
-  for (i = 0; i < LWIP_ND6_NUM_ROUTERS; i++) {
-    if (++last_router >= LWIP_ND6_NUM_ROUTERS) {
-      last_router = 0;
+  /* last_router is used for round-robin selection of incomplete routers, as
+   * recommended in RFC 4861 Sec. 6.3.6 point (2). Advance only when picking a
+   * route, to select the same router as next-hop target in the common case. */
+  if ((netif == NULL) && (++last_router >= LWIP_ND6_NUM_ROUTERS)) {
+    last_router = 0;
+  }
+  i = last_router;
+  for (j = 0; j < LWIP_ND6_NUM_ROUTERS; j++) {
+    if (default_router_list[i].neighbor_entry != NULL) {
+      router_netif = default_router_list[i].neighbor_entry->netif;
+      if ((router_netif != NULL) && (netif != NULL ? netif == router_netif :
+          (netif_is_up(router_netif) && netif_is_link_up(router_netif)))) {
+        return i;
+      }
     }
-    if (default_router_list[i].neighbor_entry != NULL &&
-        (netif != NULL ? netif == default_router_list[i].neighbor_entry->netif : 1)) {
-      return i;
+    if (++i >= LWIP_ND6_NUM_ROUTERS) {
+      i = 0;
     }
   }
 
@@ -1573,8 +1588,8 @@ nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 /**
  * Find a router-announced route to the given destination.
  *
- * The caller is responsible for checking whether the returned netif, if any,
- * is in a suitable state (up, link up) to be used for packet transmission.
+ * If a suitable route is found, the returned netif is guaranteed to be in a
+ * suitable state (up, link up) to be used for packet transmission.
  *
  * @param ip6addr the destination IPv6 address
  * @return the netif to use for the destination, or NULL if none found
@@ -1586,9 +1601,9 @@ nd6_find_route(const ip6_addr_t *ip6addr)
 
   i = nd6_select_router(ip6addr, NULL);
   if (i >= 0) {
-    if (default_router_list[i].neighbor_entry != NULL) {
-      return default_router_list[i].neighbor_entry->netif; /* may be NULL */
-    }
+    LWIP_ASSERT("selected router must have a neighbor entry",
+      default_router_list[i].neighbor_entry != NULL);
+    return default_router_list[i].neighbor_entry->netif;
   }
 
   return NULL;
