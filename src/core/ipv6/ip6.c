@@ -68,7 +68,7 @@
  *    this is a tricky case because with multiple netifs, link-local addresses only have
  *    meaning within a particular subnet/link.
  * 3) tries to match the destination subnet to a configured address
- * 4) tries to find a router
+ * 4) tries to find a router-announced route
  * 5) tries to match the source address to the netif
  * 6) returns the default netif, if configured
  *
@@ -130,20 +130,27 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   }
 #endif
 
-  /* See if the destination subnet matches a configured address. */
+  /* See if the destination subnet matches a configured address. In accordance
+   * with RFC 5942, dynamically configured addresses do not have an implied
+   * local subnet, and thus should be considered /128 assignments. However, as
+   * such, the destination address may still match a local address, and so we
+   * still need to check for exact matches here. By (lwIP) policy, statically
+   * configured addresses do always have an implied local /64 subnet. */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
       continue;
     }
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
-          ip6_addr_netcmp(dest, netif_ip6_addr(netif, i))) {
+          ip6_addr_netcmp(dest, netif_ip6_addr(netif, i)) &&
+          (netif_ip6_addr_isstatic(netif, i) ||
+          ip6_addr_nethostcmp(dest, netif_ip6_addr(netif, i)))) {
         return netif;
       }
     }
   }
 
-  /* Get the netif for a suitable router. */
+  /* Get the netif for a suitable router-announced route. */
   netif = nd6_find_route(dest);
   if (netif != NULL) {
     return netif;

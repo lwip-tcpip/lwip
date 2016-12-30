@@ -133,6 +133,10 @@ typedef struct ip6_addr ip6_addr_t;
 #define ip6_addr_netcmp(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
                                        ((addr1)->addr[1] == (addr2)->addr[1]))
 
+/* Exact-host comparison *after* ip6_addr_netcmp() succeeded, for efficiency. */
+#define ip6_addr_nethostcmp(addr1, addr2) (((addr1)->addr[2] == (addr2)->addr[2]) && \
+                                           ((addr1)->addr[3] == (addr2)->addr[3]))
+
 #define ip6_addr_cmp(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
                                     ((addr1)->addr[1] == (addr2)->addr[1]) && \
                                     ((addr1)->addr[2] == (addr2)->addr[2]) && \

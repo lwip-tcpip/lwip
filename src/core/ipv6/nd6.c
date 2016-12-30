@@ -1484,7 +1484,8 @@ nd6_clear_destination_cache(void)
 }
 
 /**
- * Determine whether an address matches an on-link prefix.
+ * Determine whether an address matches an on-link prefix or the subnet of a
+ * statically assigned address.
  *
  * @param ip6addr the IPv6 address to match
  * @return 1 if the address is on-link, 0 otherwise
@@ -1493,6 +1494,8 @@ static s8_t
 nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
 {
   s8_t i;
+
+  /* Check to see if the address matches an on-link prefix. */
   for (i = 0; i < LWIP_ND6_NUM_PREFIXES; i++) {
     if ((prefix_list[i].netif == netif) &&
         (prefix_list[i].invalidation_timer > 0) &&
@@ -1500,9 +1503,13 @@ nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
       return 1;
     }
   }
-  /* Check to see if address prefix matches a (manually?) configured address. */
+  /* Check to see if address prefix matches a manually configured (= static)
+   * address. Static addresses have an implied /64 subnet assignment. Dynamic
+   * addresses (from autoconfiguration) have no implied subnet assignment, and
+   * are thus effectively /128 assignments. See RFC 5942 for more on this. */
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
+        netif_ip6_addr_isstatic(netif, i) &&
         ip6_addr_netcmp(ip6addr, netif_ip6_addr(netif, i))) {
       return 1;
     }
@@ -1586,7 +1593,8 @@ nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 }
 
 /**
- * Find a router-announced route to the given destination.
+ * Find a router-announced route to the given destination. This route may be
+ * based on an on-link prefix or a default router.
  *
  * If a suitable route is found, the returned netif is guaranteed to be in a
  * suitable state (up, link up) to be used for packet transmission.
@@ -1597,8 +1605,22 @@ nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 struct netif *
 nd6_find_route(const ip6_addr_t *ip6addr)
 {
+  struct netif *netif;
   s8_t i;
 
+  /* @todo decide if it makes sense to check the destination cache first */
+
+  /* Check if there is a matching on-link prefix. There may be multiple
+   * matches. Pick the first one that is associated with a suitable netif. */
+  for (i = 0; i < LWIP_ND6_NUM_PREFIXES; ++i) {
+    netif = prefix_list[i].netif;
+    if ((netif != NULL) && ip6_addr_netcmp(&prefix_list[i].prefix, ip6addr) &&
+        netif_is_up(netif) && netif_is_link_up(netif)) {
+      return netif;
+    }
+  }
+
+  /* No on-link prefix match. Find a router that can forward the packet. */
   i = nd6_select_router(ip6addr, NULL);
   if (i >= 0) {
     LWIP_ASSERT("selected router must have a neighbor entry",
