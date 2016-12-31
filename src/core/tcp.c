@@ -636,19 +636,44 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  *
  * @note The original tcp_pcb is freed. This function therefore has to be
  *       called like this:
- *             tpcb = tcp_listen(tpcb);
+ *             tpcb = tcp_listen_with_backlog(tpcb, backlog);
  */
 struct tcp_pcb *
 tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
-  struct tcp_pcb_listen *lpcb;
+  return tcp_listen_with_backlog_and_err(pcb, backlog, NULL);
+}
+
+/**
+ * @ingroup tcp_raw
+ * Set the state of the connection to be LISTEN, which means that it
+ * is able to accept incoming connections. The protocol control block
+ * is reallocated in order to consume less memory. Setting the
+ * connection to LISTEN is an irreversible process.
+ *
+ * @param pcb the original tcp_pcb
+ * @param backlog the incoming connections queue limit
+ * @param err when NULL is returned, this contains the error reason
+ * @return tcp_pcb used for listening, consumes less memory.
+ *
+ * @note The original tcp_pcb is freed. This function therefore has to be
+ *       called like this:
+ *             tpcb = tcp_listen_with_backlog_and_err(tpcb, backlog, &err);
+ */
+struct tcp_pcb *
+tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err)
+{
+  struct tcp_pcb_listen *lpcb = NULL;
+  err_t res;
 
   LWIP_UNUSED_ARG(backlog);
-  LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, return NULL);
+  LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, res = ERR_CLSD; goto done);
 
   /* already listening? */
   if (pcb->state == LISTEN) {
-    return pcb;
+    lpcb = (struct tcp_pcb_listen*)pcb;
+    res = ERR_ALREADY;
+    goto done;
   }
 #if SO_REUSE
   if (ip_get_option(pcb, SOF_REUSEADDR)) {
@@ -659,14 +684,16 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
       if ((lpcb->local_port == pcb->local_port) &&
           ip_addr_cmp(&lpcb->local_ip, &pcb->local_ip)) {
         /* this address/port is already used */
-        return NULL;
+        res = ERR_USE;
+        goto done;
       }
     }
   }
 #endif /* SO_REUSE */
   lpcb = (struct tcp_pcb_listen *)memp_malloc(MEMP_TCP_PCB_LISTEN);
   if (lpcb == NULL) {
-    return NULL;
+    res = ERR_MEM;
+    goto done;
   }
   lpcb->callback_arg = pcb->callback_arg;
   lpcb->local_port = pcb->local_port;
@@ -691,6 +718,11 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   tcp_backlog_set(lpcb, backlog);
 #endif /* TCP_LISTEN_BACKLOG */
   TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
+  res = ERR_OK;
+done:
+  if (err != NULL) {
+    *err = res;
+  }
   return (struct tcp_pcb *)lpcb;
 }
 
