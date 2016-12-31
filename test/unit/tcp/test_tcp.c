@@ -418,7 +418,6 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   tcp_ticks = SEQNO1 - ISS;
   pcb = test_tcp_new_counters_pcb(&counters);
   EXPECT_RET(pcb != NULL);
-  EXPECT(pcb->lastack == SEQNO1);
   tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
   pcb->mss = TCP_MSS;
   /* disable initial congestion window (we don't send a SYN here...) */
@@ -517,7 +516,6 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   tcp_ticks = SEQNO1 - tcp_next_iss(NULL);
   pcb = test_tcp_new_counters_pcb(&counters);
   EXPECT_RET(pcb != NULL);
-  EXPECT(pcb->lastack == SEQNO1);
   tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
   pcb->mss = TCP_MSS;
   /* disable initial congestion window (we don't send a SYN here...) */
