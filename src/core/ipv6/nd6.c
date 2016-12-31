@@ -546,10 +546,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
         rdnss_opt = (struct rdnss_option *)buffer;
         num = (rdnss_opt->length - 1) / 2;
         for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
-          ip6_addr_t rdnss_address;
+          ip_addr_t rdnss_address;
 
           /* Get a memory-aligned copy of the prefix. */
-          ip6_addr_set(&rdnss_address, &(rdnss_opt->rdnss_address[n]));
+          ip_addr_copy_from_ip6(rdnss_address, rdnss_opt->rdnss_address[n]);
 
           if (htonl(rdnss_opt->lifetime) > 0) {
             /* TODO implement Lifetime > 0 */
