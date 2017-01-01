@@ -146,7 +146,7 @@ static const char * const mqtt_message_type_str[15] =
 static const char *
 mqtt_msg_type_to_str(u8_t msg_type)
 {
-  if(msg_type >= LWIP_ARRAYSIZE(mqtt_message_type_str)) {
+  if (msg_type >= LWIP_ARRAYSIZE(mqtt_message_type_str)) {
     msg_type = 0;
   }
   return mqtt_message_type_str[msg_type];
@@ -164,7 +164,7 @@ static u16_t
 msg_generate_packet_id(mqtt_client_t *client)
 {
   client->pkt_id_seq++;
-  if(client->pkt_id_seq == 0) {
+  if (client->pkt_id_seq == 0) {
     client->pkt_id_seq++;
   }
   return client->pkt_id_seq;
@@ -208,28 +208,28 @@ mqtt_output_send(struct mqtt_ringbuf_t *rb, struct tcp_pcb *tpcb)
   u16_t send_len = tcp_sndbuf(tpcb);
   LWIP_ASSERT("mqtt_output_send: tpcb != NULL", tpcb != NULL);
 
-  if(send_len == 0 || ringbuf_lin_len == 0) {
+  if (send_len == 0 || ringbuf_lin_len == 0) {
     return;
   }
 
   LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_output_send: tcp_sndbuf: %d bytes, ringbuf_linear_available: %d, get %d, put %d\n",
                                 send_len, ringbuf_lin_len, ((rb)->get & MQTT_RINGBUF_IDX_MASK), ((rb)->put & MQTT_RINGBUF_IDX_MASK)));
 
-  if(send_len > ringbuf_lin_len) {
+  if (send_len > ringbuf_lin_len) {
     /* Space in TCP output buffer is larger than available in ring buffer linear portion */
     send_len = ringbuf_lin_len;
     /* Wrap around if more data in ring buffer after linear portion */
     wrap = (mqtt_ringbuf_len(rb) > ringbuf_lin_len);
   }
   err = tcp_write(tpcb, mqtt_ringbuf_get_ptr(rb), send_len, TCP_WRITE_FLAG_COPY | (wrap ? TCP_WRITE_FLAG_MORE : 0));
-  if((err == ERR_OK) && wrap) {
+  if ((err == ERR_OK) && wrap) {
     mqtt_ringbuf_advance_get_idx(rb, send_len);
     /* Use the lesser one of ring buffer linear length and TCP send buffer size */
     send_len = LWIP_MIN(tcp_sndbuf(tpcb), mqtt_ringbuf_linear_read_length(rb));
     err = tcp_write(tpcb, mqtt_ringbuf_get_ptr(rb), send_len, TCP_WRITE_FLAG_COPY);
   }
 
-  if(err == ERR_OK) {
+  if (err == ERR_OK) {
     mqtt_ringbuf_advance_get_idx(rb, send_len);
     /* Flush */
     tcp_output(tpcb);
@@ -257,9 +257,9 @@ mqtt_create_request(struct mqtt_request_t *r_objs, u16_t pkt_id, mqtt_request_cb
   struct mqtt_request_t *r = NULL;
   u8_t n;
   LWIP_ASSERT("mqtt_create_request: r_objs != NULL", r_objs != NULL);
-  for(n = 0; n < MQTT_REQ_MAX_IN_FLIGHT && r == NULL; n++) {
+  for (n = 0; n < MQTT_REQ_MAX_IN_FLIGHT && r == NULL; n++) {
     /* Item point to itself if not in use */
-    if(r_objs[n].next == &r_objs[n]) {
+    if (r_objs[n].next == &r_objs[n]) {
       r = &r_objs[n];
       r->next = NULL;
       r->cb = cb;
@@ -286,14 +286,14 @@ mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
   LWIP_ASSERT("mqtt_append_request: tail != NULL", tail != NULL);
 
   /* Iterate trough queue to find head, and count total timeout time */
-  for(iter = *tail; iter != NULL; iter = iter->next) {
+  for (iter = *tail; iter != NULL; iter = iter->next) {
     time_before += iter->timeout_diff;
     head = iter;
   }
 
   LWIP_ASSERT("mqtt_append_request: time_before <= MQTT_REQ_TIMEOUT", time_before <= MQTT_REQ_TIMEOUT);
   r->timeout_diff = MQTT_REQ_TIMEOUT - time_before;
-  if(head == NULL) {
+  if (head == NULL) {
     *tail = r;
   } else {
     head->next = r;
@@ -308,7 +308,7 @@ mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
 static void
 mqtt_delete_request(struct mqtt_request_t *r)
 {
-  if(r != NULL) {
+  if (r != NULL) {
     r->next = r;
   }
 }
@@ -325,23 +325,23 @@ mqtt_take_request(struct mqtt_request_t **tail, u16_t pkt_id)
   struct mqtt_request_t *iter = NULL, *prev = NULL;
   LWIP_ASSERT("mqtt_take_request: tail != NULL", tail != NULL);
   /* Search all request for pkt_id */
-  for(iter = *tail; iter != NULL; iter = iter->next) {
-    if(iter->pkt_id == pkt_id) {
+  for (iter = *tail; iter != NULL; iter = iter->next) {
+    if (iter->pkt_id == pkt_id) {
       break;
     }
     prev = iter;
   }
 
   /* If request was found */
-  if(iter != NULL) {
+  if (iter != NULL) {
     /* unchain */
-    if(prev == NULL) {
+    if (prev == NULL) {
       *tail= iter->next;
     } else {
       prev->next = iter->next;
     }
     /* If exists, add remaining timeout time for the request to next */
-    if(iter->next != NULL) {
+    if (iter->next != NULL) {
       iter->next->timeout_diff += iter->timeout_diff;
     }
     iter->next = NULL;
@@ -359,13 +359,13 @@ mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
 {
   struct mqtt_request_t *r = *tail;
   LWIP_ASSERT("mqtt_request_time_elapsed: tail != NULL", tail != NULL);
-  while(t > 0 && r != NULL) {
-    if(t >= r->timeout_diff) {
+  while (t > 0 && r != NULL) {
+    if (t >= r->timeout_diff) {
       t -= (u8_t)r->timeout_diff;
       /* Unchain */
       *tail = r->next;
       /* Notify upper layer about timeout */
-      if(r->cb != NULL) {
+      if (r->cb != NULL) {
         r->cb(r->arg, ERR_TIMEOUT);
       }
       mqtt_delete_request(r);
@@ -387,7 +387,7 @@ mqtt_clear_requests(struct mqtt_request_t **tail)
 {
   struct mqtt_request_t *iter, *next;
   LWIP_ASSERT("mqtt_clear_requests: tail != NULL", tail != NULL);
-  for(iter = *tail; iter != NULL; iter = next) {
+  for (iter = *tail; iter != NULL; iter = next) {
     next = iter->next;
     mqtt_delete_request(iter);
   }
@@ -402,7 +402,7 @@ mqtt_init_requests(struct mqtt_request_t *r_objs)
 {
   u8_t n;
   LWIP_ASSERT("mqtt_init_requests: r_objs != NULL", r_objs != NULL);
-  for(n = 0; n < MQTT_REQ_MAX_IN_FLIGHT; n++) {
+  for (n = 0; n < MQTT_REQ_MAX_IN_FLIGHT; n++) {
     /* Item pointing to itself indicates unused */
     r_objs[n].next = &r_objs[n];
   }
@@ -429,7 +429,7 @@ static void
 mqtt_output_append_buf(struct mqtt_ringbuf_t *rb, const void *data, u16_t length)
 {
   u16_t n;
-  for(n=0; n < length; n++) {
+  for (n = 0; n < length; n++) {
     mqtt_ringbuf_put(rb, ((const u8_t *)data)[n]);
   }
 }
@@ -440,7 +440,7 @@ mqtt_output_append_string(struct mqtt_ringbuf_t *rb, const char *str, u16_t leng
   u16_t n;
   mqtt_ringbuf_put(rb, length >> 8);
   mqtt_ringbuf_put(rb, length & 0xff);
-  for(n=0; n < length; n++) {
+  for (n = 0; n < length; n++) {
     mqtt_ringbuf_put(rb, str[n]);
   }
 }
@@ -465,7 +465,7 @@ mqtt_output_append_fixed_header(struct mqtt_ringbuf_t *rb, u8_t msg_type, u8_t d
   do {
     mqtt_output_append_u8(rb, (r_length & 0x7f) | (r_length >= 128 ? 0x80 : 0));
     r_length >>= 7;
-  } while(r_length > 0);
+  } while (r_length > 0);
 }
 
 
@@ -487,7 +487,7 @@ mqtt_output_check_space(struct mqtt_ringbuf_t *rb, u16_t r_length)
   do {
     total_len++;
     r_length >>= 7;
-  } while(r_length > 0);
+  } while (r_length > 0);
 
   return (total_len <= mqtt_ringbuf_free(rb));
 }
@@ -504,13 +504,13 @@ mqtt_close(mqtt_client_t *client, mqtt_connection_status_t reason)
   LWIP_ASSERT("mqtt_close: client != NULL", client != NULL);
 
   /* Bring down TCP connection if not already done */
-  if(client->conn != NULL) {
+  if (client->conn != NULL) {
     err_t res;
     tcp_recv(client->conn, NULL);
     tcp_err(client->conn,  NULL);
     tcp_sent(client->conn, NULL);
     res = tcp_close(client->conn);
-    if(res != ERR_OK) {
+    if (res != ERR_OK) {
       tcp_abort(client->conn);
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_close: Close err=%s\n", lwip_strerr(res)));
     }
@@ -523,10 +523,10 @@ mqtt_close(mqtt_client_t *client, mqtt_connection_status_t reason)
   sys_untimeout(mqtt_cyclic_timer, client);
 
   /* Notify upper layer of disconnection if changed state */
-  if(client->conn_state != TCP_DISCONNECTED) {
+  if (client->conn_state != TCP_DISCONNECTED) {
 
     client->conn_state = TCP_DISCONNECTED;
-    if(client->connect_cb != NULL) {
+    if (client->connect_cb != NULL) {
       client->connect_cb(client, client->connect_arg, reason);
     }
   }
@@ -544,33 +544,33 @@ mqtt_cyclic_timer(void *arg)
   mqtt_client_t *client = (mqtt_client_t *)arg;
   LWIP_ASSERT("mqtt_cyclic_timer: client != NULL", client != NULL);
 
-  if(client->conn_state == MQTT_CONNECTING) {
+  if (client->conn_state == MQTT_CONNECTING) {
     client->cyclic_tick++;
-    if((client->cyclic_tick * MQTT_CYCLIC_TIMER_INTERVAL) >= MQTT_CONNECT_TIMOUT) {
+    if ((client->cyclic_tick * MQTT_CYCLIC_TIMER_INTERVAL) >= MQTT_CONNECT_TIMOUT) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_cyclic_timer: CONNECT attempt to server timed out\n"));
       /* Disconnect TCP */
       mqtt_close(client, MQTT_CONNECT_TIMEOUT);
       restart_timer = 0;
     }
-  } else if(client->conn_state == MQTT_CONNECTED) {
+  } else if (client->conn_state == MQTT_CONNECTED) {
     /* Handle timeout for pending requests */
     mqtt_request_time_elapsed(&client->pend_req_queue, MQTT_CYCLIC_TIMER_INTERVAL);
 
     /* keep_alive > 0 means keep alive functionality shall be used */
-    if(client->keep_alive > 0) {
+    if (client->keep_alive > 0) {
 
       client->server_watchdog++;
       /* If reception from server has been idle for 1.5*keep_alive time, server is considered unresponsive */
-      if((client->server_watchdog * MQTT_CYCLIC_TIMER_INTERVAL) > (client->keep_alive + client->keep_alive/2)) {
+      if ((client->server_watchdog * MQTT_CYCLIC_TIMER_INTERVAL) > (client->keep_alive + client->keep_alive/2)) {
         LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_cyclic_timer: Server incoming keep-alive timeout\n"));
         mqtt_close(client, MQTT_CONNECT_TIMEOUT);
         restart_timer = 0;
       }
 
       /* If time for a keep alive message to be sent, transmission has been idle for keep_alive time */
-      if((client->cyclic_tick * MQTT_CYCLIC_TIMER_INTERVAL) >= client->keep_alive) {
+      if ((client->cyclic_tick * MQTT_CYCLIC_TIMER_INTERVAL) >= client->keep_alive) {
         LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_cyclic_timer: Sending keep-alive message to server\n"));
-        if(mqtt_output_check_space(&client->output, 0) != 0) {
+        if (mqtt_output_check_space(&client->output, 0) != 0) {
           mqtt_output_append_fixed_header(&client->output, MQTT_MSG_TYPE_PINGREQ, 0, 0, 0, 0);
           client->cyclic_tick = 0;
         }
@@ -582,7 +582,7 @@ mqtt_cyclic_timer(void *arg)
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_cyclic_timer: Timer should not be running in state %d\n", client->conn_state));
     restart_timer = 0;
   }
-  if(restart_timer) {
+  if (restart_timer) {
     sys_timeout(MQTT_CYCLIC_TIMER_INTERVAL*1000, mqtt_cyclic_timer, arg);
   }
 }
@@ -600,7 +600,7 @@ static err_t
 pub_ack_rec_rel_response(mqtt_client_t *client, u8_t msg, u16_t pkt_id, u8_t qos)
 {
   err_t err = ERR_OK;
-  if(mqtt_output_check_space(&client->output, 2)) {
+  if (mqtt_output_check_space(&client->output, 2)) {
     mqtt_output_append_fixed_header(&client->output, msg, 0, qos, 0, 2);
     mqtt_output_append_u16(&client->output, pkt_id);
     mqtt_output_send(&client->output, client->conn);
@@ -620,7 +620,7 @@ pub_ack_rec_rel_response(mqtt_client_t *client, u8_t msg, u16_t pkt_id, u8_t qos
 static void
 mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
 {
-  if(r->cb != NULL) {
+  if (r->cb != NULL) {
     r->cb(r->arg, result < 3 ? ERR_OK : ERR_ABRT);
   }
 }
@@ -644,32 +644,32 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
   u8_t pkt_type = MQTT_CTL_PACKET_TYPE(client->rx_buffer[0]);
   u16_t pkt_id = 0;
 
-  if(pkt_type == MQTT_MSG_TYPE_CONNACK) {
-    if(client->conn_state == MQTT_CONNECTING) {
+  if (pkt_type == MQTT_MSG_TYPE_CONNACK) {
+    if (client->conn_state == MQTT_CONNECTING) {
       /* Get result code from CONNACK */
       res = (mqtt_connection_status_t)var_hdr_payload[1];
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_message_received: Connect response code %d\n", res));
-      if(res == MQTT_CONNECT_ACCEPTED) {
+      if (res == MQTT_CONNECT_ACCEPTED) {
         /* Reset cyclic_tick when changing to connected state */
         client->cyclic_tick = 0;
         client->conn_state = MQTT_CONNECTED;
         /* Notify upper layer */
-        if(client->connect_cb != 0) {
+        if (client->connect_cb != 0) {
           client->connect_cb(client, client->connect_arg, res);
         }
       }
     } else {
       LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_message_received: Received CONNACK in connected state\n"));
     }
-  } else if(pkt_type == MQTT_MSG_TYPE_PINGRESP) {
+  } else if (pkt_type == MQTT_MSG_TYPE_PINGRESP) {
     LWIP_DEBUGF(MQTT_DEBUG_TRACE,( "mqtt_message_received: Received PINGRESP from server\n"));
 
-  } else if(pkt_type == MQTT_MSG_TYPE_PUBLISH) {
+  } else if (pkt_type == MQTT_MSG_TYPE_PUBLISH) {
     u16_t payload_offset = 0;
     u16_t payload_length = length;
     u8_t qos = MQTT_CTL_PACKET_QOS(client->rx_buffer[0]);
 
-    if(client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) {
+    if (client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) {
       /* Should have topic and pkt id*/
       uint8_t *topic;
       uint16_t after_topic;
@@ -680,13 +680,13 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
       topic = var_hdr_payload + 2;
       after_topic = 2 + topic_len;
       /* Check length, add one byte even for QoS 0 so that zero termination will fit */
-      if((after_topic + qos ? 2 : 1) > length) {
+      if ((after_topic + qos ? 2 : 1) > length) {
         LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_message_received: Receive buffer can not fit topic + pkt_id\n"));
         goto out_disconnect;
       }
 
       /* id for QoS 1 and 2 */
-      if(qos > 0) {
+      if (qos > 0) {
         client->inpub_pkt_id = ((u16_t)var_hdr_payload[after_topic] << 8) + (u16_t)var_hdr_payload[after_topic + 1];
         after_topic += 2;
       } else {
@@ -702,16 +702,16 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
 
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_incomming_publish: Received message with QoS %d at topic: %s, payload length %d\n",
                                     qos, topic, remaining_length + payload_length));
-      if(client->pub_cb != NULL) {
+      if (client->pub_cb != NULL) {
         client->pub_cb(client->inpub_arg, (const char *)topic, remaining_length + payload_length);
       }
       /* Restore byte after topic */
       topic[topic_len] = bkp;
     }
-    if(payload_length > 0 || remaining_length == 0) {
+    if (payload_length > 0 || remaining_length == 0) {
       client->data_cb(client->inpub_arg, var_hdr_payload + payload_offset, payload_length, remaining_length == 0 ? MQTT_DATA_FLAG_LAST : 0);
       /* Reply if QoS > 0 */
-      if(remaining_length == 0 && qos > 0) {
+      if (remaining_length == 0 && qos > 0) {
         /* Send PUBACK for QoS 1 or PUBREC for QoS 2 */
         u8_t resp_msg = (qos == 1) ? MQTT_MSG_TYPE_PUBACK : MQTT_MSG_TYPE_PUBREC;
         LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_incomming_publish: Sending publish response: %s with pkt_id: %d\n",
@@ -723,31 +723,31 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
     /* Get packet identifier */
     pkt_id = (u16_t)var_hdr_payload[0] << 8;
     pkt_id |= (u16_t)var_hdr_payload[1];
-    if(pkt_id == 0) {
+    if (pkt_id == 0) {
       LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_message_received: Got message with illegal packet identifier: 0\n"));
       goto out_disconnect;
     }
-    if(pkt_type == MQTT_MSG_TYPE_PUBREC) {
+    if (pkt_type == MQTT_MSG_TYPE_PUBREC) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_message_received: PUBREC, sending PUBREL with pkt_id: %d\n",pkt_id));
       pub_ack_rec_rel_response(client, MQTT_MSG_TYPE_PUBREL, pkt_id, 1);
 
-    } else if(pkt_type == MQTT_MSG_TYPE_PUBREL) {
+    } else if (pkt_type == MQTT_MSG_TYPE_PUBREL) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_message_received: PUBREL, sending PUBCOMP response with pkt_id: %d\n",pkt_id));
       pub_ack_rec_rel_response(client, MQTT_MSG_TYPE_PUBCOMP, pkt_id, 0);
 
-    } else if(pkt_type == MQTT_MSG_TYPE_SUBACK || pkt_type == MQTT_MSG_TYPE_UNSUBACK ||
+    } else if (pkt_type == MQTT_MSG_TYPE_SUBACK || pkt_type == MQTT_MSG_TYPE_UNSUBACK ||
               pkt_type == MQTT_MSG_TYPE_PUBCOMP || pkt_type == MQTT_MSG_TYPE_PUBACK) {
       struct mqtt_request_t *r = mqtt_take_request(&client->pend_req_queue, pkt_id);
-      if(r != NULL) {
+      if (r != NULL) {
         LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_message_received: %s response with id %d\n", mqtt_msg_type_to_str(pkt_type), pkt_id));
-        if(pkt_type == MQTT_MSG_TYPE_SUBACK) {
-          if(length < 3) {
+        if (pkt_type == MQTT_MSG_TYPE_SUBACK) {
+          if (length < 3) {
             LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_message_received: To small SUBACK packet\n"));
             goto out_disconnect;
           } else {
             mqtt_incomming_suback(r, var_hdr_payload[2]);
           }
-        } else if(r->cb != NULL) {
+        } else if (r->cb != NULL) {
           r->cb(r->arg, ERR_OK);
         }
         mqtt_delete_request(r);
@@ -779,10 +779,10 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
   u8_t fixed_hdr_idx = 0;
   u8_t b = 0;
 
-  while(p->tot_len > in_offset) {
-    if((fixed_hdr_idx < 2) || ((b & 0x80) != 0)) {
+  while (p->tot_len > in_offset) {
+    if ((fixed_hdr_idx < 2) || ((b & 0x80) != 0)) {
 
-      if(fixed_hdr_idx < client->msg_idx) {
+      if (fixed_hdr_idx < client->msg_idx) {
         b = client->rx_buffer[fixed_hdr_idx];
       } else {
         b = pbuf_get_at(p, in_offset++);
@@ -790,11 +790,11 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
       }
       fixed_hdr_idx++;
 
-      if(fixed_hdr_idx >= 2) {
+      if (fixed_hdr_idx >= 2) {
         msg_rem_len |= (u32_t)(b & 0x7f) << ((fixed_hdr_idx - 2) * 7);
-        if((b & 0x80) == 0) {
+        if ((b & 0x80) == 0) {
           LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_parse_incoming: Remaining length after fixed header: %d\n", msg_rem_len));
-          if(msg_rem_len == 0) {
+          if (msg_rem_len == 0) {
             /* Complete message with no extra headers of payload received */
             mqtt_message_received(client, fixed_hdr_idx, 0, 0);
             client->msg_idx = 0;
@@ -815,7 +815,7 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
 
       /* Limit to available space in buffer */
       buffer_space = MQTT_VAR_HEADER_BUFFER_LEN - cpy_start;
-      if(cpy_len > buffer_space) {
+      if (cpy_len > buffer_space) {
         cpy_len = buffer_space;
       }
       pbuf_copy_partial(p, client->rx_buffer+cpy_start, cpy_len, in_offset);
@@ -826,13 +826,13 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
       msg_rem_len -= cpy_len;
 
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_parse_incoming: msg_idx: %d, cpy_len: %d, remaining %d\n", client->msg_idx, cpy_len, msg_rem_len));
-      if(msg_rem_len == 0 || cpy_len == buffer_space) {
+      if (msg_rem_len == 0 || cpy_len == buffer_space) {
         /* Whole message received or buffer is full */
         mqtt_connection_status_t res = mqtt_message_received(client, fixed_hdr_idx, (cpy_start + cpy_len) - fixed_hdr_idx, msg_rem_len);
-        if(res != MQTT_CONNECT_ACCEPTED) {
+        if (res != MQTT_CONNECT_ACCEPTED) {
           return res;
         }
-        if(msg_rem_len == 0) {
+        if (msg_rem_len == 0) {
           /* Reset parser state */
           client->msg_idx = 0;
           //msg_tot_len = 0;
@@ -859,12 +859,12 @@ mqtt_tcp_recv_cb(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   LWIP_ASSERT("mqtt_tcp_recv_cb: client != NULL", client != NULL);
   LWIP_ASSERT("mqtt_tcp_recv_cb: client->conn == pcb", client->conn == pcb);
 
-  if(p == NULL) {
+  if (p == NULL) {
     LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_tcp_recv_cb: Recv pbuf=NULL, remote has closed connection\n"));
     mqtt_close(client, MQTT_CONNECT_DISCONNECTED);
   } else {
     mqtt_connection_status_t res;
-    if(err != ERR_OK) {
+    if (err != ERR_OK) {
       LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_tcp_recv_cb: Recv err=%d\n", err));
       pbuf_free(p);
       return err;
@@ -875,11 +875,11 @@ mqtt_tcp_recv_cb(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     res = mqtt_parse_incoming(client, p);
     pbuf_free(p);
 
-    if(res != MQTT_CONNECT_ACCEPTED) {
+    if (res != MQTT_CONNECT_ACCEPTED) {
       mqtt_close(client, res);
     }
     /* If keep alive functionality is used */
-    if(client->keep_alive != 0) {
+    if (client->keep_alive != 0) {
       /* Reset server alive watchdog */
       client->server_watchdog = 0;
     }
@@ -904,16 +904,16 @@ mqtt_tcp_sent_cb(void *arg, struct tcp_pcb *tpcb, u16_t len)
   LWIP_UNUSED_ARG(tpcb);
   LWIP_UNUSED_ARG(len);
 
-  if(client->conn_state == MQTT_CONNECTED) {
+  if (client->conn_state == MQTT_CONNECTED) {
     struct mqtt_request_t *r;
 
     /* Reset keep-alive send timer and server watchdog */
     client->cyclic_tick = 0;
     client->server_watchdog = 0;
     /* QoS 0 publish has no response from server, so call its callbacks here */
-    while((r = mqtt_take_request(&client->pend_req_queue, 0)) != NULL) {
+    while ((r = mqtt_take_request(&client->pend_req_queue, 0)) != NULL) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_tcp_sent_cb: Calling QoS 0 publish complete callback\n"));
-      if(r->cb != NULL) {
+      if (r->cb != NULL) {
         r->cb(r->arg, ERR_OK);
       }
       mqtt_delete_request(r);
@@ -951,7 +951,7 @@ static err_t
 mqtt_tcp_poll_cb(void *arg, struct tcp_pcb *tpcb)
 {
   mqtt_client_t *client = (mqtt_client_t *)arg;
-  if(client->conn_state == MQTT_CONNECTED) {
+  if (client->conn_state == MQTT_CONNECTED) {
     /* Try send any remaining buffers from output queue */
     mqtt_output_send(&client->output, tpcb);
   }
@@ -969,7 +969,7 @@ mqtt_tcp_connect_cb(void *arg, struct tcp_pcb *tpcb, err_t err)
 {
   mqtt_client_t* client = (mqtt_client_t *)arg;
 
-  if(err != ERR_OK) {
+  if (err != ERR_OK) {
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_tcp_connect_cb: TCP connect error %d\n", err));
     return err;
   }
@@ -1041,7 +1041,7 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
 
   LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_publish: Publish with payload length %d to topic \"%s\"\n", payload_length, topic));
 
-  if(qos > 0) {
+  if (qos > 0) {
     remaining_length += 2;
     /* Generate pkt_id id for QoS1 and 2 */
     pkt_id = msg_generate_packet_id(client);
@@ -1051,11 +1051,11 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
   }
 
   r = mqtt_create_request(client->req_list, pkt_id, cb, arg);
-  if(r == NULL) {
+  if (r == NULL) {
     return ERR_MEM;
   }
 
-  if(mqtt_output_check_space(&client->output, remaining_length) == 0) {
+  if (mqtt_output_check_space(&client->output, remaining_length) == 0) {
     mqtt_delete_request(r);
     return ERR_MEM;
   }
@@ -1066,12 +1066,12 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
   mqtt_output_append_string(&client->output, topic, topic_len);
 
   /* Append packet if for QoS 1 and 2*/
-  if(qos > 0) {
+  if (qos > 0) {
     mqtt_output_append_u16(&client->output, pkt_id);
   }
 
   /* Append optional publish payload */
-  if((payload != NULL) && (payload_length > 0)) {
+  if ((payload != NULL) && (payload_length > 0)) {
     mqtt_output_append_buf(&client->output, payload, payload_length);
   }
 
@@ -1114,18 +1114,18 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
   remaining_length = (u16_t)total_len;
 
   LWIP_ASSERT("mqtt_sub_unsub: qos < 3", qos < 3);
-  if(client->conn_state == TCP_DISCONNECTED) {
+  if (client->conn_state == TCP_DISCONNECTED) {
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_sub_unsub: Can not (un)subscribe in disconnected state\n"));
     return ERR_CONN;
   }
 
   pkt_id = msg_generate_packet_id(client);
   r = mqtt_create_request(client->req_list, pkt_id, cb, arg);
-  if(r == NULL) {
+  if (r == NULL) {
     return ERR_MEM;
   }
 
-  if(mqtt_output_check_space(&client->output, remaining_length) == 0) {
+  if (mqtt_output_check_space(&client->output, remaining_length) == 0) {
     mqtt_delete_request(r);
     return ERR_MEM;
   }
@@ -1138,7 +1138,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
   /* Topic */
   mqtt_output_append_string(&client->output, topic, topic_len);
   /* QoS */
-  if(sub != 0) {
+  if (sub != 0) {
     mqtt_output_append_u8(&client->output, LWIP_MIN(qos, 2));
   }
 
@@ -1175,7 +1175,7 @@ mqtt_client_t *
 mqtt_client_new(void)
 {
   mqtt_client_t *client = (mqtt_client_t *)mem_malloc(sizeof(mqtt_client_t));
-  if(client != NULL) {
+  if (client != NULL) {
     memset(client, 0, sizeof(mqtt_client_t));
   }
   return client;
@@ -1209,7 +1209,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   LWIP_ASSERT("mqtt_client_connect: client_info != NULL", client_info != NULL);
   LWIP_ASSERT("mqtt_client_connect: client_info->client_id != NULL", client_info->client_id != NULL);
 
-  if(client->conn_state != TCP_DISCONNECTED) {
+  if (client->conn_state != TCP_DISCONNECTED) {
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_client_connect: Already connected\n"));
     return ERR_ISCONN;
   }
@@ -1222,10 +1222,10 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   mqtt_init_requests(client->req_list);
 
   /* Build connect message */
-  if(client_info->will_topic != NULL && client_info->will_msg != NULL) {
+  if (client_info->will_topic != NULL && client_info->will_msg != NULL) {
     flags |= MQTT_CONNECT_FLAG_WILL;
     flags |= (client_info->will_qos & 3) << 3;
-    if(client_info->will_retain) {
+    if (client_info->will_retain) {
       flags |= MQTT_CONNECT_FLAG_WILL_RETAIN;
     }
     len = strlen(client_info->will_topic);
@@ -1249,12 +1249,12 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   LWIP_ERROR("mqtt_client_connect: remaining_length overflow", len <= 0xFFFF, return ERR_VAL);
   remaining_length = (u16_t)len;
 
-  if(mqtt_output_check_space(&client->output, remaining_length) == 0) {
+  if (mqtt_output_check_space(&client->output, remaining_length) == 0) {
     return ERR_MEM;
   }
 
   client->conn = tcp_new();
-  if(client->conn == NULL) {
+  if (client->conn == NULL) {
     return ERR_MEM;
   }
 
@@ -1262,7 +1262,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   tcp_arg(client->conn, client);
   /* Any local address, pick random local port number */
   err = tcp_bind(client->conn, IP_ADDR_ANY, 0);
-  if(err != ERR_OK) {
+  if (err != ERR_OK) {
     LWIP_DEBUGF(MQTT_DEBUG_WARN,("mqtt_client_connect: Error binding to local ip/port, %d\n", err));
     goto tcp_fail;
   }
@@ -1270,7 +1270,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
 
   /* Connect to server */
   err = tcp_connect(client->conn, ip_addr, port, mqtt_tcp_connect_cb);
-  if(err != ERR_OK) {
+  if (err != ERR_OK) {
     LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_client_connect: Error connecting to remote ip/port, %d\n", err));
     goto tcp_fail;
   }
@@ -1291,7 +1291,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   /* Append client id */
   mqtt_output_append_string(&client->output, client_info->client_id, client_id_length);
   /* Append will message if used */
-  if(will_topic_len > 0) {
+  if (will_topic_len > 0) {
     mqtt_output_append_string(&client->output, client_info->will_topic, will_topic_len);
     mqtt_output_append_string(&client->output, client_info->will_msg, will_msg_len);
   }
@@ -1314,7 +1314,7 @@ mqtt_disconnect(mqtt_client_t *client)
 {
   LWIP_ASSERT("mqtt_disconnect: client != NULL", client);
   /* If connection in not already closed */
-  if(client->conn_state != TCP_DISCONNECTED) {
+  if (client->conn_state != TCP_DISCONNECTED) {
     /* Set conn_state before calling mqtt_close to prevent callback from being called */
     client->conn_state = TCP_DISCONNECTED;
     mqtt_close(client, (mqtt_connection_status_t)0);
