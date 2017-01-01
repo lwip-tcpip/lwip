@@ -835,7 +835,7 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
         if (msg_rem_len == 0) {
           /* Reset parser state */
           client->msg_idx = 0;
-          //msg_tot_len = 0;
+          /* msg_tot_len = 0; */
           fixed_hdr_idx = 0;
         }
       }
