@@ -36,6 +36,7 @@
 
 #if LWIP_SNMP && SNMP_USE_NETCONN
 
+#include <string.h>
 #include "lwip/api.h"
 #include "lwip/ip.h"
 #include "lwip/udp.h"
