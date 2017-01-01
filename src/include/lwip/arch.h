@@ -266,6 +266,17 @@ extern "C" {
 #define PACK_STRUCT_FLD_S(x) PACK_STRUCT_FIELD(x)
 #endif /* PACK_STRUCT_FLD_S */
 
+/** Packed structs support using \#include files before and after struct to be packed.\n
+ * The file included BEFORE the struct is "arch/bpstruct.h".\n
+ * The file included AFTER the struct is "arch/epstruct.h".\n
+ * This can be used to implement struct packing on MS Visual C compilers, see
+ * the Win32 port in the lwIP contrib repository for reference.
+ * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+ * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
+ */
+#ifdef __DOXYGEN__
+#define PACK_STRUCT_USE_INCLUDES
+#endif
 
 /** Eliminates compiler warning about unused arguments (GCC -Wextra -Wunused). */
 #ifndef LWIP_UNUSED_ARG
