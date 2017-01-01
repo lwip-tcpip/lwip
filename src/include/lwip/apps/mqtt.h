@@ -106,7 +106,7 @@ typedef void (*mqtt_connection_cb_t)(mqtt_client_t *client, void *arg, mqtt_conn
  * Data callback flags */
 enum {
   /** Flag set when last fragment of data arrives in data callback */
-  MQTT_DATA_FLAG_LAST = 1,
+  MQTT_DATA_FLAG_LAST = 1
 };
 
 /** 
