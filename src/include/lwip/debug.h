@@ -41,12 +41,12 @@
 #include "lwip/opt.h"
 
 /**
- * @defgroup debugging Debugging
- * @ingroup lwip
+ * @defgroup debugging_levels LWIP_DBG_MIN_LEVEL and LWIP_DBG_TYPES_ON values
+ * @ingroup lwip_opts_debugmsg
  * @{
  */
 
-/** @name Debug level
+/** @name Debug level (LWIP_DBG_MIN_LEVEL)
  * @{
  */
 /** Debug level: ALL messages*/
@@ -65,7 +65,7 @@
 /* compatibility define only */
 #define LWIP_DBG_LEVEL_OFF     LWIP_DBG_LEVEL_ALL
 
-/** @name Enable/disable debug messages completely
+/** @name Enable/disable debug messages completely (LWIP_DBG_TYPES_ON)
  * @{
  */
 /** flag for LWIP_DEBUGF to enable that debug message */
@@ -76,7 +76,7 @@
  * @}
  */
 
-/** @name Debug message types
+/** @name Debug message types (LWIP_DBG_TYPES_ON)
  * @{
  */
 /** flag for LWIP_DEBUGF indicating a tracing message (to follow program flow) */
@@ -92,6 +92,15 @@
  */
 
 /**
+ * @}
+ */
+
+/**
+ * @defgroup lwip_assertions Assertion handling
+ * @ingroup lwip_opts_debug
+ * @{
+ */
+/**
  * LWIP_NOASSERT: Disable LWIP_ASSERT checks:
  * To disable assertions define LWIP_NOASSERT in arch/cc.h.
  */
@@ -99,6 +108,9 @@
 #define LWIP_NOASSERT
 #undef LWIP_NOASSERT
 #endif
+/**
+ * @}
+ */
 
 #ifndef LWIP_NOASSERT
 #define LWIP_ASSERT(message, assertion) do { if (!(assertion)) { \
@@ -126,7 +138,6 @@
 
 /** Enable debug message printing, but only if debug message type is enabled
  *  AND is of correct type AND is at least LWIP_DBG_LEVEL.
- * e.g. \#define LWIP_DEBUG (LWIP_DBG_ON | LWIP_DBG_LEVEL_ALL | LWIP_DBG_TRACE)
  */
 #ifdef __DOXYGEN__
 #define LWIP_DEBUG
@@ -152,9 +163,5 @@
 #else  /* LWIP_DEBUG */
 #define LWIP_DEBUGF(debug, message)
 #endif /* LWIP_DEBUG */
-
-/**
- * @}
- */
 
 #endif /* LWIP_HDR_DEBUG_H */

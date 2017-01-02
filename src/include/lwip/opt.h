@@ -2594,7 +2594,7 @@
    ---------------------------------------
 */
 /**
- * @defgroup lwip_opts_debugmsg Debugging
+ * @defgroup lwip_opts_debugmsg Debug messages
  * @ingroup lwip_opts_debug
  * @{
  */
@@ -2602,6 +2602,7 @@
  * LWIP_DBG_MIN_LEVEL: After masking, the value of the debug is
  * compared against this value. If it is smaller, then debugging
  * messages are written.
+ * @see debugging_levels
  */
 #if !defined LWIP_DBG_MIN_LEVEL || defined __DOXYGEN__
 #define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
@@ -2610,6 +2611,7 @@
 /**
  * LWIP_DBG_TYPES_ON: A mask that can be used to globally enable/disable
  * debug messages of certain types.
+ * @see debugging_levels
  */
 #if !defined LWIP_DBG_TYPES_ON || defined __DOXYGEN__
 #define LWIP_DBG_TYPES_ON               LWIP_DBG_ON
