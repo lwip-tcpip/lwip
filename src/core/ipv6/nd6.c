@@ -957,15 +957,22 @@ nd6_tmr(void)
   for (i = 0; i < LWIP_ND6_NUM_ROUTERS; i++) {
     if (default_router_list[i].neighbor_entry != NULL) {
       /* Active entry. */
-      if (default_router_list[i].invalidation_timer > 0) {
-        default_router_list[i].invalidation_timer -= ND6_TMR_INTERVAL / 1000;
-      }
-      if (default_router_list[i].invalidation_timer < ND6_TMR_INTERVAL / 1000) {
-        /* Less than 1 second remaining. Clear this entry. */
+      if (default_router_list[i].invalidation_timer <= ND6_TMR_INTERVAL / 1000) {
+        /* No more than 1 second remaining. Clear this entry. Also clear any of
+         * its destination cache entries, as per RFC 4861 Sec. 5.3 and 6.3.5. */
+        s8_t j;
+        for (j = 0; j < LWIP_ND6_NUM_DESTINATIONS; j++) {
+          if (ip6_addr_cmp(&destination_cache[j].next_hop_addr,
+               &default_router_list[i].neighbor_entry->next_hop_address)) {
+             ip6_addr_set_any(&destination_cache[j].destination_addr);
+          }
+        }
         default_router_list[i].neighbor_entry->isrouter = 0;
         default_router_list[i].neighbor_entry = NULL;
         default_router_list[i].invalidation_timer = 0;
         default_router_list[i].flags = 0;
+      } else {
+        default_router_list[i].invalidation_timer -= ND6_TMR_INTERVAL / 1000;
       }
     }
   }
@@ -2280,6 +2287,10 @@ nd6_cleanup_netif(struct netif *netif)
       nd6_free_neighbor_cache_entry(i);
     }
   }
+  /* Clear the destination cache, since many entries may now have become
+   * invalid for one of several reasons. As destination cache entries have no
+   * netif association, use a sledgehammer approach (this can be improved). */
+  nd6_clear_destination_cache();
 }
 
 #if LWIP_IPV6_MLD
