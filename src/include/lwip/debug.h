@@ -46,6 +46,9 @@
  * @{
  */
 
+/** @name Debug level
+ * @{
+ */
 /** Debug level: ALL messages*/
 #define LWIP_DBG_LEVEL_ALL     0x00
 /** Debug level: Warnings. bad checksums, dropped packets, ... */
@@ -54,16 +57,28 @@
 #define LWIP_DBG_LEVEL_SERIOUS 0x02
 /** Debug level: Severe */
 #define LWIP_DBG_LEVEL_SEVERE  0x03
+/**
+ * @}
+ */
 
 #define LWIP_DBG_MASK_LEVEL    0x03
 /* compatibility define only */
 #define LWIP_DBG_LEVEL_OFF     LWIP_DBG_LEVEL_ALL
 
+/** @name Enable/disable debug messages completely
+ * @{
+ */
 /** flag for LWIP_DEBUGF to enable that debug message */
 #define LWIP_DBG_ON            0x80U
 /** flag for LWIP_DEBUGF to disable that debug message */
 #define LWIP_DBG_OFF           0x00U
+/**
+ * @}
+ */
 
+/** @name Debug message types
+ * @{
+ */
 /** flag for LWIP_DEBUGF indicating a tracing message (to follow program flow) */
 #define LWIP_DBG_TRACE         0x40U
 /** flag for LWIP_DEBUGF indicating a state debug message (to follow module states) */
@@ -72,6 +87,9 @@
 #define LWIP_DBG_FRESH         0x10U
 /** flag for LWIP_DEBUGF to halt after printing this debug message */
 #define LWIP_DBG_HALT          0x08U
+/**
+ * @}
+ */
 
 /**
  * LWIP_NOASSERT: Disable LWIP_ASSERT checks:
