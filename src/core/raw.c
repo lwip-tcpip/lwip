@@ -65,7 +65,7 @@
 static struct raw_pcb *raw_pcbs;
 
 static u8_t
-raw_input_match(struct raw_pcb *pcb, u8_t broadcast)
+raw_input_local_match(struct raw_pcb *pcb, u8_t broadcast)
 {
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
@@ -157,7 +157,9 @@ raw_input(struct pbuf *p, struct netif *inp)
   /* loop through all raw pcbs until the packet is eaten by one */
   /* this allows multiple pcbs to match against the packet by design */
   while ((eaten == 0) && (pcb != NULL)) {
-    if ((pcb->protocol == proto) && raw_input_match(pcb, broadcast)) {
+    if ((pcb->protocol == proto) && raw_input_local_match(pcb, broadcast) &&
+        (((pcb->flags & RAW_FLAGS_CONNECTED) == 0) ||
+        ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
       /* receive callback function available? */
       if (pcb->recv != NULL) {
 #ifndef LWIP_NOASSERT
@@ -237,7 +239,31 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
+  pcb->flags |= RAW_FLAGS_CONNECTED;
   return ERR_OK;
+}
+
+/**
+ * @ingroup raw_raw
+ * Disconnect a RAW PCB.
+ *
+ * @param pcb the raw pcb to disconnect.
+ */
+void
+raw_disconnect(struct raw_pcb *pcb)
+{
+  /* reset remote address association */
+#if LWIP_IPV4 && LWIP_IPV6
+  if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+    ip_addr_copy(pcb->remote_ip, *IP_ANY_TYPE);
+  } else {
+#endif
+    ip_addr_set_any(IP_IS_V6_VAL(pcb->remote_ip), &pcb->remote_ip);
+#if LWIP_IPV4 && LWIP_IPV6
+  }
+#endif
+  /* mark PCB as unconnected */
+  pcb->flags &= ~RAW_FLAGS_CONNECTED;
 }
 
 /**

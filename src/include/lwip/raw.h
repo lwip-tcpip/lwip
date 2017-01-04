@@ -52,6 +52,8 @@
 extern "C" {
 #endif
 
+#define RAW_FLAGS_CONNECTED 0x01U
+
 struct raw_pcb;
 
 /** Function prototype for raw pcb receive callback functions.
@@ -75,6 +77,7 @@ struct raw_pcb {
   struct raw_pcb *next;
 
   u8_t protocol;
+  u8_t flags;
 
   /** receive callback function */
   raw_recv_fn recv;
@@ -94,11 +97,14 @@ struct raw_pcb * raw_new_ip_type(u8_t type, u8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
 err_t            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+void             raw_disconnect (struct raw_pcb *pcb);
 
 err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr);
 err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
+
+#define          raw_flags(pcb) ((pcb)->flags)
 
 /* The following functions are the lower layer interface to RAW. */
 u8_t             raw_input      (struct pbuf *p, struct netif *inp);
