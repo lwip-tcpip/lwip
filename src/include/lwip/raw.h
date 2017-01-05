@@ -100,6 +100,7 @@ err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 void             raw_disconnect (struct raw_pcb *pcb);
 
 err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr);
+err_t            raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip, struct netif *netif, const ip_addr_t *src_ip);
 err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);

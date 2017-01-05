@@ -301,11 +301,8 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 err_t
 raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 {
-  err_t err;
   struct netif *netif;
   const ip_addr_t *src_ip;
-  struct pbuf *q; /* q will be sent down the stack */
-  s16_t header_size;
 
   if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
@@ -313,9 +310,62 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
 
+  if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+    /* Don't call ip_route() with IP_ANY_TYPE */
+    netif = ip_route(IP46_ADDR_ANY(IP_GET_TYPE(ipaddr)), ipaddr);
+  } else {
+    netif = ip_route(&pcb->local_ip, ipaddr);
+  }
+
+  if (netif == NULL) {
+    LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
+    ip_addr_debug_print(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ipaddr);
+    return ERR_RTE;
+  }
+
+  if (ip_addr_isany(&pcb->local_ip)) {
+    /* use outgoing network interface IP address as source address */
+    src_ip = ip_netif_get_local_ip(netif, ipaddr);
+#if LWIP_IPV6
+    if (src_ip == NULL) {
+      return ERR_RTE;
+    }
+#endif /* LWIP_IPV6 */
+  } else {
+    /* use RAW PCB local IP address as source address */
+    src_ip = &pcb->local_ip;
+  }
+
+  return raw_sendto_if_src(pcb, p, ipaddr, netif, src_ip);
+}
+
+/**
+ * @ingroup raw_raw
+ * Send the raw IP packet to the given address, using a particular outgoing
+ * netif and source IP address. An IP header will be prepended to the packet.
+ *
+ * @param pcb RAW PCB used to send the data
+ * @param p chain of pbufs to be sent
+ * @param dst_ip destination IP address
+ * @param netif the netif used for sending
+ * @param src_ip source IP address
+ */
+err_t
+raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
+    struct netif *netif, const ip_addr_t *src_ip)
+{
+  err_t err;
+  struct pbuf *q; /* q will be sent down the stack */
+  s16_t header_size;
+
+  if ((pcb == NULL) || (dst_ip == NULL) || (netif == NULL) || (src_ip == NULL) ||
+      !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
+    return ERR_VAL;
+  }
+
   header_size = (
 #if LWIP_IPV4 && LWIP_IPV6
-    IP_IS_V6(ipaddr) ? IP6_HLEN : IP_HLEN);
+    IP_IS_V6(dst_ip) ? IP6_HLEN : IP_HLEN);
 #elif LWIP_IPV4
     IP_HLEN);
 #else
@@ -346,28 +396,11 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
     }
   }
 
-  if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
-    /* Don't call ip_route() with IP_ANY_TYPE */
-    netif = ip_route(IP46_ADDR_ANY(IP_GET_TYPE(ipaddr)), ipaddr);
-  } else {
-    netif = ip_route(&pcb->local_ip, ipaddr);
-  }
-
-  if (netif == NULL) {
-    LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
-    ip_addr_debug_print(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ipaddr);
-    /* free any temporary header pbuf allocated by pbuf_header() */
-    if (q != p) {
-      pbuf_free(q);
-    }
-    return ERR_RTE;
-  }
-
 #if IP_SOF_BROADCAST
-  if (IP_IS_V4(ipaddr))
+  if (IP_IS_V4(dst_ip))
   {
     /* broadcast filter? */
-    if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(ipaddr, netif)) {
+    if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
       LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
       /* free any temporary header pbuf allocated by pbuf_header() */
       if (q != p) {
@@ -378,34 +411,18 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
   }
 #endif /* IP_SOF_BROADCAST */
 
-  if (ip_addr_isany(&pcb->local_ip)) {
-    /* use outgoing network interface IP address as source address */
-    src_ip = ip_netif_get_local_ip(netif, ipaddr);
-#if LWIP_IPV6
-    if (src_ip == NULL) {
-      if (q != p) {
-        pbuf_free(q);
-      }
-      return ERR_RTE;
-    }
-#endif /* LWIP_IPV6 */
-  } else {
-    /* use RAW PCB local IP address as source address */
-    src_ip = &pcb->local_ip;
-  }
-
 #if LWIP_IPV6
   /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
-  if (IP_IS_V6(ipaddr) && pcb->chksum_reqd) {
-    u16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(ipaddr));
+  if (IP_IS_V6(dst_ip) && pcb->chksum_reqd) {
+    u16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ip_2_ip6(src_ip), ip_2_ip6(dst_ip));
     LWIP_ASSERT("Checksum must fit into first pbuf", p->len >= (pcb->chksum_offset + 2));
     SMEMCPY(((u8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(u16_t));
   }
 #endif
 
   NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
-  err = ip_output_if(q, src_ip, ipaddr, pcb->ttl, pcb->tos, pcb->protocol, netif);
+  err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, pcb->protocol, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* did we chain a header earlier? */
