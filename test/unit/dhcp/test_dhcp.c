@@ -127,8 +127,6 @@ static enum tcase {
 static int debug = 0;
 static void setdebug(int a) {debug = a;}
 
-#define netif_dhcp_data(netif) ((struct dhcp*)(netif)->client_data[LWIP_NETIF_CLIENT_DATA_INDEX_DHCP])
-
 static int tick = 0;
 static void tick_lwip(void)
 {
