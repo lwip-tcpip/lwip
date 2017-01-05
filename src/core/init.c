@@ -141,7 +141,7 @@ PACK_STRUCT_END
 #if (LWIP_TCP && (TCP_WND > 0xffffffff))
   #error "If you want to use TCP, TCP_WND must fit in an u32_t, so, you have to reduce it in your lwipopts.h"
 #endif
-#if (LWIP_TCP && LWIP_WND_SCALE && (TCP_RCV_SCALE > 14))
+#if (LWIP_TCP && (TCP_RCV_SCALE > 14))
   #error "The maximum valid window scale value is 14!"
 #endif
 #if (LWIP_TCP && (TCP_WND > (0xFFFFU << TCP_RCV_SCALE)))
@@ -339,6 +339,11 @@ PACK_STRUCT_END
 void
 lwip_init(void)
 {
+#ifndef LWIP_SKIP_CONST_CHECK
+  int a;
+  LWIP_UNUSED_ARG(a);
+  LWIP_ASSERT("LWIP_CONST_CAST not implemented correctly. Check your lwIP port.", LWIP_CONST_CAST(void*, &a) == &a);
+#endif
 #ifndef LWIP_SKIP_PACKING_CHECK
   LWIP_ASSERT("Struct packing not implemented correctly. Check your lwIP port.", sizeof(struct packed_struct_test) == PACKED_STRUCT_TEST_EXPECTED_SIZE);
 #endif

@@ -43,8 +43,7 @@
 /* Note: Netconn API is always available when sockets are enabled -
  * sockets are implemented on top of them */
 
-#include <stddef.h> /* for size_t */
-
+#include "lwip/arch.h"
 #include "lwip/netbuf.h"
 #include "lwip/sys.h"
 #include "lwip/ip_addr.h"
@@ -90,6 +89,7 @@ extern "C" {
 #define NETCONNTYPE_ISUDPLITE(t)     (((t)&0xF3) == NETCONN_UDPLITE)
 #define NETCONNTYPE_ISUDPNOCHKSUM(t) (((t)&0xF3) == NETCONN_UDPNOCHKSUM)
 #else /* LWIP_IPV6 */
+#define NETCONNTYPE_ISIPV6(t)        (0)
 #define NETCONNTYPE_ISUDPLITE(t)     ((t) == NETCONN_UDPLITE)
 #define NETCONNTYPE_ISUDPNOCHKSUM(t) ((t) == NETCONN_UDPNOCHKSUM)
 #endif /* LWIP_IPV6 */

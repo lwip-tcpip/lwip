@@ -616,7 +616,8 @@ lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 err_t
 lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 {
-  s8_t i;
+  err_t result;
+  const u8_t *hwaddr;
   struct ieee_802154_addr src, dest;
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   ip6_addr_t ip6_src;
@@ -663,35 +664,23 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   }
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
-
-  /* Get next hop record. */
-  i = nd6_get_next_hop_entry(ip6addr, netif);
-  if (i < 0) {
+  /* Ask ND6 what to do with the packet. */
+  result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
+  if (result != ERR_OK) {
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
-    /* failed to get a next hop neighbor record. */
-    return ERR_MEM;
+    return result;
   }
 
-  /* Now that we have a destination record, send or queue the packet. */
-  if (neighbor_cache[i].state == ND6_STALE) {
-    /* Switch to delay state. */
-    neighbor_cache[i].state = ND6_DELAY;
-    neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME;
-  }
-  /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
-  if ((neighbor_cache[i].state == ND6_REACHABLE) ||
-      (neighbor_cache[i].state == ND6_DELAY) ||
-      (neighbor_cache[i].state == ND6_PROBE)) {
-
-    /* Send out. */
-    dest.addr_len = netif->hwaddr_len;
-    SMEMCPY(dest.addr, neighbor_cache[i].lladdr, netif->hwaddr_len);
-    MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
-    return lowpan6_frag(netif, q, &src, &dest);
+  /* If no hardware address is returned, nd6 has queued the packet for later. */
+  if (hwaddr == NULL) {
+    return ERR_OK;
   }
 
-  /* We should queue packet on this interface. */
-  return nd6_queue_packet(i, q);
+  /* Send out the packet using the returned hardware address. */
+  dest.addr_len = netif->hwaddr_len;
+  SMEMCPY(dest.addr, hwaddr, netif->hwaddr_len);
+  MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
+  return lowpan6_frag(netif, q, &src, &dest);
 }
 
 static struct pbuf *

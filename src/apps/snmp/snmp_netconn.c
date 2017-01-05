@@ -36,6 +36,7 @@
 
 #if LWIP_SNMP && SNMP_USE_NETCONN
 
+#include <string.h>
 #include "lwip/api.h"
 #include "lwip/ip.h"
 #include "lwip/udp.h"
@@ -52,7 +53,7 @@ snmp_netconn_thread(void *arg)
   LWIP_UNUSED_ARG(arg);
   
   /* Bind to SNMP port with default IP address */
- #if LWIP_IPV6
+#if LWIP_IPV6
   conn = netconn_new(NETCONN_UDP_IPV6);
   netconn_bind(conn, IP6_ADDR_ANY, SNMP_IN_PORT);
 #else /* LWIP_IPV6 */

@@ -113,6 +113,10 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
+#if !PPPOL2TP_AUTH_SUPPORT
+  LWIP_UNUSED_ARG(secret);
+  LWIP_UNUSED_ARG(secret_len);
+#endif /* !PPPOL2TP_AUTH_SUPPORT */
 
   if (ipaddr == NULL) {
     goto ipaddr_check_failed;
@@ -303,7 +307,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
     udp_bind(l2tp->udp, IP6_ADDR_ANY, 0);
   } else
 #endif /* LWIP_IPV6 */
-  udp_bind(l2tp->udp, IP4_ADDR_ANY, 0);
+  udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
 
 #if PPPOL2TP_AUTH_SUPPORT
   /* Generate random vector */

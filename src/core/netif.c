@@ -180,7 +180,7 @@ netif_init(void)
 #endif /* NO_SYS */
 
 #if LWIP_IPV6
-  IP_ADDR6(loop_netif.ip6_addr, 0, 0, 0, PP_HTONL(0x00000001UL));
+  IP_ADDR6_HOST(loop_netif.ip6_addr, 0, 0, 0, 0x00000001UL);
   loop_netif.ip6_addr_state[0] = IP6_ADDR_VALID;
 #endif /* LWIP_IPV6 */
 
@@ -415,7 +415,7 @@ netif_remove(struct netif *netif)
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
+      raw_netif_ip_addr_changed(netif_ip_addr6(netif, i), NULL);
 #endif /* LWIP_RAW */
     }
   }
@@ -478,7 +478,7 @@ netif_find(const char *name)
     return NULL;
   }
 
-  num = name[2] - '0';
+  num = (u8_t)(name[2] - '0');
 
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     if (num == netif->num &&
@@ -904,7 +904,6 @@ netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* ad
 void
 netif_poll(struct netif *netif)
 {
-  struct pbuf *in;
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
 #if MIB2_STATS
@@ -916,56 +915,52 @@ netif_poll(struct netif *netif)
 #endif /* MIB2_STATS */
   SYS_ARCH_DECL_PROTECT(lev);
 
-  do {
-    /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
-    SYS_ARCH_PROTECT(lev);
-    in = netif->loop_first;
-    if (in != NULL) {
-      struct pbuf *in_end = in;
+  /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
+  SYS_ARCH_PROTECT(lev);
+  while (netif->loop_first != NULL) {
+    struct pbuf *in, *in_end;
 #if LWIP_LOOPBACK_MAX_PBUFS
-      u8_t clen = 1;
-#endif /* LWIP_LOOPBACK_MAX_PBUFS */
-      while (in_end->len != in_end->tot_len) {
-        LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
-        in_end = in_end->next;
-#if LWIP_LOOPBACK_MAX_PBUFS
-        clen++;
-#endif /* LWIP_LOOPBACK_MAX_PBUFS */
-      }
-#if LWIP_LOOPBACK_MAX_PBUFS
-      /* adjust the number of pbufs on queue */
-      LWIP_ASSERT("netif->loop_cnt_current underflow",
-        ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
-      netif->loop_cnt_current -= clen;
+    u8_t clen = 1;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
-      /* 'in_end' now points to the last pbuf from 'in' */
-      if (in_end == netif->loop_last) {
-        /* this was the last pbuf in the list */
-        netif->loop_first = netif->loop_last = NULL;
-      } else {
-        /* pop the pbuf off the list */
-        netif->loop_first = in_end->next;
-        LWIP_ASSERT("should not be null since first != last!", netif->loop_first != NULL);
-      }
-      /* De-queue the pbuf from its successors on the 'loop_' list. */
-      in_end->next = NULL;
+    in = in_end = netif->loop_first;
+    while (in_end->len != in_end->tot_len) {
+      LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
+      in_end = in_end->next;
+#if LWIP_LOOPBACK_MAX_PBUFS
+      clen++;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
     }
+#if LWIP_LOOPBACK_MAX_PBUFS
+    /* adjust the number of pbufs on queue */
+    LWIP_ASSERT("netif->loop_cnt_current underflow",
+      ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
+    netif->loop_cnt_current -= clen;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
+
+    /* 'in_end' now points to the last pbuf from 'in' */
+    if (in_end == netif->loop_last) {
+      /* this was the last pbuf in the list */
+      netif->loop_first = netif->loop_last = NULL;
+    } else {
+      /* pop the pbuf off the list */
+      netif->loop_first = in_end->next;
+      LWIP_ASSERT("should not be null since first != last!", netif->loop_first != NULL);
+    }
+    /* De-queue the pbuf from its successors on the 'loop_' list. */
+    in_end->next = NULL;
     SYS_ARCH_UNPROTECT(lev);
 
-    if (in != NULL) {
-      LINK_STATS_INC(link.recv);
-      MIB2_STATS_NETIF_ADD(stats_if, ifinoctets, in->tot_len);
-      MIB2_STATS_NETIF_INC(stats_if, ifinucastpkts);
-      /* loopback packets are always IP packets! */
-      if (ip_input(in, netif) != ERR_OK) {
-        pbuf_free(in);
-      }
-      /* Don't reference the packet any more! */
-      in = NULL;
+    LINK_STATS_INC(link.recv);
+    MIB2_STATS_NETIF_ADD(stats_if, ifinoctets, in->tot_len);
+    MIB2_STATS_NETIF_INC(stats_if, ifinucastpkts);
+    /* loopback packets are always IP packets! */
+    if (ip_input(in, netif) != ERR_OK) {
+      pbuf_free(in);
     }
-  /* go on while there is a packet on the list */
-  } while (netif->loop_first != NULL);
+    SYS_ARCH_PROTECT(lev);
+  }
+  SYS_ARCH_UNPROTECT(lev);
 }
 
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING
@@ -1058,7 +1053,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
+      raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_RAW */
     }
     /* @todo: remove/readd mib2 ip6 entries? */
@@ -1101,6 +1096,13 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
     u8_t new_valid = state & IP6_ADDR_VALID;
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set_state: netif address state being changed\n"));
 
+#if LWIP_IPV6_MLD
+    /* Reevaluate solicited-node multicast group membership. */
+    if (netif->flags & NETIF_FLAG_MLD6) {
+      nd6_adjust_mld_membership(netif, addr_idx, state);
+    }
+#endif /* LWIP_IPV6_MLD */
+
     if (old_valid && !new_valid) {
       /* address about to be removed by setting invalid */
 #if LWIP_TCP
@@ -1110,7 +1112,7 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
       udp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
+      raw_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), NULL);
 #endif /* LWIP_RAW */
       /* @todo: remove mib2 ip6 entries? */
     }
@@ -1200,10 +1202,10 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
   /* Set address state. */
 #if LWIP_IPV6_DUP_DETECT_ATTEMPTS
   /* Will perform duplicate address detection (DAD). */
-  netif->ip6_addr_state[0] = IP6_ADDR_TENTATIVE;
+  netif_ip6_addr_set_state(netif, 0, IP6_ADDR_TENTATIVE);
 #else
   /* Consider address valid. */
-  netif->ip6_addr_state[0] = IP6_ADDR_PREFERRED;
+  netif_ip6_addr_set_state(netif, 0, IP6_ADDR_PREFERRED);
 #endif /* LWIP_IPV6_AUTOCONFIG */
 }
 
@@ -1233,7 +1235,7 @@ netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chos
 
   /* Find a free slot -- musn't be the first one (reserved for link local) */
   for (i = 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-    if (!ip6_addr_isvalid(netif->ip6_addr_state[i])) {
+    if (ip6_addr_isinvalid(netif_ip6_addr_state(netif, i))) {
       ip_addr_copy_from_ip6(netif->ip6_addr[i], *ip6addr);
       netif_ip6_addr_set_state(netif, i, IP6_ADDR_TENTATIVE);
       if (chosen_idx != NULL) {

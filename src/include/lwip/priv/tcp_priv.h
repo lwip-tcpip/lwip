@@ -34,8 +34,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCP_IMPL_H
-#define LWIP_HDR_TCP_IMPL_H
+#ifndef LWIP_HDR_TCP_PRIV_H
+#define LWIP_HDR_TCP_PRIV_H
 
 #include "lwip/opt.h"
 
@@ -452,7 +452,7 @@ void tcp_rst(u32_t seqno, u32_t ackno,
        const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
        u16_t local_port, u16_t remote_port);
 
-u32_t tcp_next_iss(void);
+u32_t tcp_next_iss(struct tcp_pcb *pcb);
 
 err_t tcp_keepalive(struct tcp_pcb *pcb);
 err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
@@ -501,4 +501,4 @@ void tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_a
 
 #endif /* LWIP_TCP */
 
-#endif /* LWIP_HDR_TCP_H */
+#endif /* LWIP_HDR_TCP_PRIV_H */

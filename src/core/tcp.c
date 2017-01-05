@@ -551,7 +551,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 #endif /* LWIP_IPV4 */
 
   /* still need to check for ipaddr == NULL in IPv6 only case */
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -636,19 +636,44 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  *
  * @note The original tcp_pcb is freed. This function therefore has to be
  *       called like this:
- *             tpcb = tcp_listen(tpcb);
+ *             tpcb = tcp_listen_with_backlog(tpcb, backlog);
  */
 struct tcp_pcb *
 tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
-  struct tcp_pcb_listen *lpcb;
+  return tcp_listen_with_backlog_and_err(pcb, backlog, NULL);
+}
+
+/**
+ * @ingroup tcp_raw
+ * Set the state of the connection to be LISTEN, which means that it
+ * is able to accept incoming connections. The protocol control block
+ * is reallocated in order to consume less memory. Setting the
+ * connection to LISTEN is an irreversible process.
+ *
+ * @param pcb the original tcp_pcb
+ * @param backlog the incoming connections queue limit
+ * @param err when NULL is returned, this contains the error reason
+ * @return tcp_pcb used for listening, consumes less memory.
+ *
+ * @note The original tcp_pcb is freed. This function therefore has to be
+ *       called like this:
+ *             tpcb = tcp_listen_with_backlog_and_err(tpcb, backlog, &err);
+ */
+struct tcp_pcb *
+tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err)
+{
+  struct tcp_pcb_listen *lpcb = NULL;
+  err_t res;
 
   LWIP_UNUSED_ARG(backlog);
-  LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, return NULL);
+  LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, res = ERR_CLSD; goto done);
 
   /* already listening? */
   if (pcb->state == LISTEN) {
-    return pcb;
+    lpcb = (struct tcp_pcb_listen*)pcb;
+    res = ERR_ALREADY;
+    goto done;
   }
 #if SO_REUSE
   if (ip_get_option(pcb, SOF_REUSEADDR)) {
@@ -659,14 +684,17 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
       if ((lpcb->local_port == pcb->local_port) &&
           ip_addr_cmp(&lpcb->local_ip, &pcb->local_ip)) {
         /* this address/port is already used */
-        return NULL;
+        lpcb = NULL;
+        res = ERR_USE;
+        goto done;
       }
     }
   }
 #endif /* SO_REUSE */
   lpcb = (struct tcp_pcb_listen *)memp_malloc(MEMP_TCP_PCB_LISTEN);
   if (lpcb == NULL) {
-    return NULL;
+    res = ERR_MEM;
+    goto done;
   }
   lpcb->callback_arg = pcb->callback_arg;
   lpcb->local_port = pcb->local_port;
@@ -691,6 +719,11 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   tcp_backlog_set(lpcb, backlog);
 #endif /* TCP_LISTEN_BACKLOG */
   TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
+  res = ERR_OK;
+done:
+  if (err != NULL) {
+    *err = res;
+  }
   return (struct tcp_pcb *)lpcb;
 }
 
@@ -826,7 +859,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   u32_t iss;
   u16_t old_local_port;
 
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
 
@@ -880,10 +913,11 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
 #endif /* SO_REUSE */
   }
 
-  iss = tcp_next_iss();
+  iss = tcp_next_iss(pcb);
   pcb->rcv_nxt = 0;
   pcb->snd_nxt = iss;
   pcb->lastack = iss - 1;
+  pcb->snd_wl2 = iss - 1;
   pcb->snd_lbb = iss - 1;
   /* Start with a window that does not need scaling. When window scaling is
      enabled and used, the window is enlarged when both sides agree on scaling. */
@@ -1491,7 +1525,6 @@ struct tcp_pcb *
 tcp_alloc(u8_t prio)
 {
   struct tcp_pcb *pcb;
-  u32_t iss;
 
   pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
   if (pcb == NULL) {
@@ -1554,11 +1587,6 @@ tcp_alloc(u8_t prio)
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
     pcb->rtime = -1;
     pcb->cwnd = 1;
-    iss = tcp_next_iss();
-    pcb->snd_wl2 = iss;
-    pcb->snd_nxt = iss;
-    pcb->lastack = iss;
-    pcb->snd_lbb = iss;
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
@@ -1826,12 +1854,18 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
  * @return u32_t pseudo random sequence number
  */
 u32_t
-tcp_next_iss(void)
+tcp_next_iss(struct tcp_pcb *pcb)
 {
+#ifdef LWIP_HOOK_TCP_ISN
+  return LWIP_HOOK_TCP_ISN(&pcb->local_ip, pcb->local_port, &pcb->remote_ip, pcb->remote_port);
+#else /* LWIP_HOOK_TCP_ISN */
   static u32_t iss = 6510;
+
+  LWIP_UNUSED_ARG(pcb);
 
   iss += tcp_ticks;       /* XXX */
   return iss;
+#endif /* LWIP_HOOK_TCP_ISN */
 }
 
 #if TCP_CALCULATE_EFF_SEND_MSS

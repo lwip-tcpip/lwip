@@ -358,6 +358,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
         ((pcb->refused_data != NULL) && (tcplen > 0))) {
         /* pcb has been aborted or refused data is still refused and the new
            segment contains data */
+        if (pcb->rcv_ann_wnd == 0) {
+          /* this is a zero-window probe, we respond to it with current RCV.NXT
+          and drop the data segment */
+          tcp_send_empty_ack(pcb);
+        }
         TCP_STATS_INC(tcp.drop);
         MIB2_STATS_INC(mib2.tcpinerrs);
         goto aborted;
@@ -542,6 +547,7 @@ static void
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
+  u32_t iss;
   err_t rc;
 
   if (flags & TCP_RST) {
@@ -589,6 +595,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->state = SYN_RCVD;
     npcb->rcv_nxt = seqno + 1;
     npcb->rcv_ann_right_edge = npcb->rcv_nxt;
+    iss = tcp_next_iss(npcb);
+    npcb->snd_wl2 = iss;
+    npcb->snd_nxt = iss;
+    npcb->lastack = iss;
+    npcb->snd_lbb = iss;
     npcb->snd_wl1 = seqno - 1;/* initialise to seqno-1 to force window update */
     npcb->callback_arg = pcb->callback_arg;
 #if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
@@ -602,7 +613,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
     /* Parse any options in the SYN. */
     tcp_parseopt(npcb);
-    npcb->snd_wnd = SND_WND_SCALE(npcb, tcphdr->wnd);
+    npcb->snd_wnd = tcphdr->wnd;
     npcb->snd_wnd_max = npcb->snd_wnd;
     npcb->ssthresh = LWIP_TCP_INITIAL_SSTHRESH(npcb);
 
@@ -751,7 +762,7 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->rcv_nxt = seqno + 1;
       pcb->rcv_ann_right_edge = pcb->rcv_nxt;
       pcb->lastack = ackno;
-      pcb->snd_wnd = SND_WND_SCALE(pcb, tcphdr->wnd);
+      pcb->snd_wnd = tcphdr->wnd;
       pcb->snd_wnd_max = pcb->snd_wnd;
       pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
       pcb->state = ESTABLISHED;

@@ -377,6 +377,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
   u16_t oversize = 0;
   u16_t oversize_used = 0;
 #endif /* TCP_OVERSIZE */
+  u16_t extendlen = 0;
 #if TCP_CHECKSUM_ON_COPY
   u16_t concat_chksum = 0;
   u8_t concat_chksum_swapped = 0;
@@ -480,6 +481,10 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
     /*
      * Phase 2: Chain a new pbuf to the end of pcb->unsent.
      *
+     * As an exception when NOT copying the data, if the given data buffer
+     * directly follows the last unsent data buffer in memory, extend the last
+     * ROM pbuf reference to the buffer, thus saving a ROM pbuf allocation.
+     *
      * We don't extend segments containing SYN/FIN flags or options
      * (len==0). The new pbuf is kept in concat_p and pbuf_cat'ed at
      * the end.
@@ -506,12 +511,24 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 #if TCP_CHECKSUM_ON_COPY
         concat_chksummed += seglen;
 #endif /* TCP_CHECKSUM_ON_COPY */
+        queuelen += pbuf_clen(concat_p);
       } else {
         /* Data is not copied */
-        if ((concat_p = pbuf_alloc(PBUF_RAW, seglen, PBUF_ROM)) == NULL) {
-          LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-                      ("tcp_write: could not allocate memory for zero-copy pbuf\n"));
-          goto memerr;
+        /* If the last unsent pbuf is of type PBUF_ROM, try to extend it. */
+        struct pbuf *p;
+        for (p = last_unsent->p; p->next != NULL; p = p->next);
+        if (p->type == PBUF_ROM && (const u8_t *)p->payload + p->len == (const u8_t *)arg) {
+          LWIP_ASSERT("tcp_write: ROM pbufs cannot be oversized", pos == 0);
+          extendlen = seglen;
+        } else {
+          if ((concat_p = pbuf_alloc(PBUF_RAW, seglen, PBUF_ROM)) == NULL) {
+            LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
+                        ("tcp_write: could not allocate memory for zero-copy pbuf\n"));
+            goto memerr;
+          }
+          /* reference the non-volatile payload data */
+          ((struct pbuf_rom*)concat_p)->payload = (const u8_t*)arg + pos;
+          queuelen += pbuf_clen(concat_p);
         }
 #if TCP_CHECKSUM_ON_COPY
         /* calculate the checksum of nocopy-data */
@@ -519,12 +536,9 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
           &concat_chksum, &concat_chksum_swapped);
         concat_chksummed += seglen;
 #endif /* TCP_CHECKSUM_ON_COPY */
-        /* reference the non-volatile payload data */
-        ((struct pbuf_rom*)concat_p)->payload = (const u8_t*)arg + pos;
       }
 
       pos += seglen;
-      queuelen += pbuf_clen(concat_p);
     }
   } else {
 #if TCP_OVERSIZE
@@ -669,25 +683,39 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 #endif /* TCP_OVERSIZE */
 
   /*
-   * Phase 2: concat_p can be concatenated onto last_unsent->p
+   * Phase 2: concat_p can be concatenated onto last_unsent->p, unless we
+   * determined that the last ROM pbuf can be extended to include the new data.
    */
   if (concat_p != NULL) {
     LWIP_ASSERT("tcp_write: cannot concatenate when pcb->unsent is empty",
       (last_unsent != NULL));
     pbuf_cat(last_unsent->p, concat_p);
     last_unsent->len += concat_p->tot_len;
-#if TCP_CHECKSUM_ON_COPY
-    if (concat_chksummed) {
-      /*if concat checksumm swapped - swap it back */
-      if (concat_chksum_swapped) {
-        concat_chksum = SWAP_BYTES_IN_WORD(concat_chksum);
-      }
-      tcp_seg_add_chksum(concat_chksum, concat_chksummed, &last_unsent->chksum,
-        &last_unsent->chksum_swapped);
-      last_unsent->flags |= TF_SEG_DATA_CHECKSUMMED;
+  } else if (extendlen > 0) {
+    struct pbuf *p;
+    LWIP_ASSERT("tcp_write: extension of reference requires reference",
+      last_unsent != NULL && last_unsent->p != NULL);
+    for (p = last_unsent->p; p->next != NULL; p = p->next) {
+      p->tot_len += extendlen;
     }
-#endif /* TCP_CHECKSUM_ON_COPY */
+    p->tot_len += extendlen;
+    p->len += extendlen;
+    last_unsent->len += extendlen;
   }
+
+#if TCP_CHECKSUM_ON_COPY
+  if (concat_chksummed) {
+    LWIP_ASSERT("tcp_write: concat checksum needs concatenated data",
+        concat_p != NULL || extendlen > 0);
+    /*if concat checksumm swapped - swap it back */
+    if (concat_chksum_swapped) {
+      concat_chksum = SWAP_BYTES_IN_WORD(concat_chksum);
+    }
+    tcp_seg_add_chksum(concat_chksum, concat_chksummed, &last_unsent->chksum,
+      &last_unsent->chksum_swapped);
+    last_unsent->flags |= TF_SEG_DATA_CHECKSUMMED;
+  }
+#endif /* TCP_CHECKSUM_ON_COPY */
 
   /*
    * Phase 3: Append queue to pcb->unsent. Queue may be NULL, but that
@@ -1033,6 +1061,24 @@ tcp_output(struct tcp_pcb *pcb)
                  lwip_ntohl(seg->tcphdr->seqno), pcb->lastack));
   }
 #endif /* TCP_CWND_DEBUG */
+  /* Check if we need to start the persistent timer when the next unsent segment
+   * does not fit within the remaining send window and RTO timer is not running (we
+   * have no in-flight data). A traditional approach would fill the remaining window
+   * with part of the unsent segment (which will engage zero-window probing upon
+   * reception of the zero window update from the receiver). This ensures the
+   * subsequent window update is reliably received. With the goal of being lightweight,
+   * we avoid splitting the unsent segment and treat the window as already zero.
+   */
+  if (seg != NULL &&
+      lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd &&
+      wnd > 0 && wnd == pcb->snd_wnd && pcb->unacked == NULL) {
+    /* Start the persist timer */
+    if (pcb->persist_backoff == 0) {
+      pcb->persist_cnt = 0;
+      pcb->persist_backoff = 1;
+    }
+    goto output_done;
+  }
   /* data available and window allows it to be sent? */
   while (seg != NULL &&
          lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
@@ -1112,6 +1158,7 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
+output_done:
 #if TCP_OVERSIZE
   if (pcb->unsent == NULL) {
     /* last unsent has been removed, reset unsent_oversize */

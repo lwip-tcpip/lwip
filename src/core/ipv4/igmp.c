@@ -244,6 +244,7 @@ struct igmp_group *
 igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
 {
   struct igmp_group *group;
+  struct igmp_group *list_head = netif_igmp_data(ifp);
 
   /* Search if the group already exists */
   group = igmp_lookfor_group(ifp, addr);
@@ -251,7 +252,7 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
     /* Group already exists. */
     return group;
   }
-
+  
   /* Group doesn't exist yet, create a new one */
   group = (struct igmp_group *)memp_malloc(MEMP_IGMP_GROUP);
   if (group != NULL) {
@@ -260,9 +261,21 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
     group->group_state        = IGMP_GROUP_NON_MEMBER;
     group->last_reporter_flag = 0;
     group->use                = 0;
-    group->next               = netif_igmp_data(ifp);
 
-    netif_set_client_data(ifp, LWIP_NETIF_CLIENT_DATA_INDEX_IGMP, group);
+    /* Ensure allsystems group is always first in list */    
+    if (list_head == NULL) {
+      /* this is the first entry in linked list */
+      LWIP_ASSERT("igmp_lookup_group: first group must be allsystems",
+        (ip4_addr_cmp(addr, &allsystems) != 0));
+      group->next = NULL;
+      netif_set_client_data(ifp, LWIP_NETIF_CLIENT_DATA_INDEX_IGMP, group);
+    } else {
+      /* append _after_ first entry */
+      LWIP_ASSERT("igmp_lookup_group: all except first group must not be allsystems",
+        (ip4_addr_cmp(addr, &allsystems) == 0));
+      group->next = list_head->next;
+      list_head->next = group;
+    }
   }
 
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_lookup_group: %sallocated a new group with address ", (group?"":"impossible to ")));
@@ -282,23 +295,18 @@ static err_t
 igmp_remove_group(struct netif* netif, struct igmp_group *group)
 {
   err_t err = ERR_OK;
+  struct igmp_group *tmp_group;
 
-  /* Is it the first group? */
-  if (netif_igmp_data(netif) == group) {
-    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_IGMP, group->next);
-  } else {
-    /* look for group further down the list */
-    struct igmp_group *tmpGroup;
-    for (tmpGroup = netif_igmp_data(netif); tmpGroup != NULL; tmpGroup = tmpGroup->next) {
-      if (tmpGroup->next == group) {
-        tmpGroup->next = group->next;
-        break;
-      }
+  /* Skip the first group in the list, it is always the allsystems group added in igmp_start() */
+  for (tmp_group = netif_igmp_data(netif); tmp_group != NULL; tmp_group = tmp_group->next) {
+    if (tmp_group->next == group) {
+      tmp_group->next = group->next;
+      break;
     }
-    /* Group not found in the global igmp_group_list */
-    if (tmpGroup == NULL) {
-      err = ERR_ARG;
-    }
+  }
+  /* Group not found in the global igmp_group_list */
+  if (tmp_group == NULL) {
+    err = ERR_ARG;
   }
 
   return err;

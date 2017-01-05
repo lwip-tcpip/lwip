@@ -882,6 +882,15 @@
 #if !defined LWIP_DHCP_MAX_NTP_SERVERS || defined __DOXYGEN__
 #define LWIP_DHCP_MAX_NTP_SERVERS       1
 #endif
+
+/**
+ * LWIP_DHCP_MAX_DNS_SERVERS > 0: Request DNS servers with discover/select.
+ * DHCP servers received in the response are passed to DNS via @ref dns_setserver()
+ * (up to the maximum limit defined here).
+ */
+#if !defined LWIP_DHCP_MAX_DNS_SERVERS || defined __DOXYGEN__
+#define LWIP_DHCP_MAX_DNS_SERVERS       DNS_MAX_SERVERS
+#endif
 /**
  * @}
  */
@@ -1057,6 +1066,12 @@
 #if !defined DNS_LOCAL_HOSTLIST_IS_DYNAMIC || defined __DOXYGEN__
 #define DNS_LOCAL_HOSTLIST_IS_DYNAMIC   0
 #endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+
+/** Set this to 1 to enable querying ".local" names via mDNS
+ *  using a One-Shot Multicast DNS Query */
+#if !defined LWIP_DNS_SUPPORT_MDNS_QUERIES || defined __DOXYGEN__
+#define LWIP_DNS_SUPPORT_MDNS_QUERIES  0
+#endif
 /**
  * @}
  */
@@ -1128,7 +1143,10 @@
 
 /**
  * TCP_WND: The size of a TCP window.  This must be at least
- * (2 * TCP_MSS) for things to work well
+ * (2 * TCP_MSS) for things to work well.
+ * ATTENTION: when using TCP_RCV_SCALE, TCP_WND is the total size
+ * with scaling applied. Maximum window value in the TCP header
+ * will be TCP_WND >> TCP_RCV_SCALE
  */
 #if !defined TCP_WND || defined __DOXYGEN__
 #define TCP_WND                         (4 * TCP_MSS)
@@ -1345,7 +1363,7 @@
  * for an additional encapsulation header before ethernet headers (e.g. 802.11)
  */
 #if !defined PBUF_LINK_ENCAPSULATION_HLEN || defined __DOXYGEN__
-#define PBUF_LINK_ENCAPSULATION_HLEN    0
+#define PBUF_LINK_ENCAPSULATION_HLEN    0u
 #endif
 
 /**
@@ -2161,7 +2179,7 @@
 /**
  * LWIP_IPV6_REASS==1: reassemble incoming IPv6 packets that fragmented
  */
-#if !defined LWIP_IPV6_REASS || defined __DOXYGEN__ || defined __DOXYGEN__
+#if !defined LWIP_IPV6_REASS || defined __DOXYGEN__
 #define LWIP_IPV6_REASS                 (LWIP_IPV6)
 #endif
 
@@ -2227,13 +2245,18 @@
  */
 /**
  * LWIP_IPV6_MLD==1: Enable multicast listener discovery protocol.
+ * If LWIP_IPV6 is enabled but this setting is disabled, the MAC layer must
+ * indiscriminately pass all inbound IPv6 multicast traffic to lwIP.
  */
 #if !defined LWIP_IPV6_MLD || defined __DOXYGEN__
 #define LWIP_IPV6_MLD                   (LWIP_IPV6)
 #endif
 
 /**
- * MEMP_NUM_MLD6_GROUP: Max number of IPv6 multicast that can be joined.
+ * MEMP_NUM_MLD6_GROUP: Max number of IPv6 multicast groups that can be joined.
+ * There must be enough groups so that each netif can join the solicited-node
+ * multicast group for each of its local addresses, plus one for MDNS if
+ * applicable, plus any number of groups to be joined on UDP sockets.
  */
 #if !defined MEMP_NUM_MLD6_GROUP || defined __DOXYGEN__
 #define MEMP_NUM_MLD6_GROUP             4
@@ -2339,7 +2362,7 @@
  * LWIP_ND6_DELAY_FIRST_PROBE_TIME: Delay before first unicast neighbor solicitation
  * message is sent, during neighbor reachability detection.
  */
-#if !defined LWIP_ND6_DELAY_FIRST_PROBE_TIME || defined __DOXYGEN__s
+#if !defined LWIP_ND6_DELAY_FIRST_PROBE_TIME || defined __DOXYGEN__
 #define LWIP_ND6_DELAY_FIRST_PROBE_TIME 5000
 #endif
 
@@ -2356,8 +2379,17 @@
  * with reachability hints for connected destinations. This helps avoid sending
  * unicast neighbor solicitation messages.
  */
-#if !defined LWIP_ND6_TCP_REACHABILITY_HINTS || defined __DOXYGEN__ || defined __DOXYGEN__
+#if !defined LWIP_ND6_TCP_REACHABILITY_HINTS || defined __DOXYGEN__
 #define LWIP_ND6_TCP_REACHABILITY_HINTS 1
+#endif
+
+/**
+ * LWIP_ND6_RDNSS_MAX_DNS_SERVERS > 0: Use IPv6 Router Advertisement Recursive
+ * DNS Server Option (as per RFC 6106) to copy a defined maximum number of DNS
+ * servers to the DNS module.
+ */
+#if !defined LWIP_ND6_RDNSS_MAX_DNS_SERVERS || defined __DOXYGEN__
+#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS  0
 #endif
 /**
  * @}
@@ -2382,6 +2414,29 @@
  * Hooks are undefined by default, define them to a function if you need them.
  * @{
  */
+
+/**
+ * LWIP_HOOK_TCP_ISN:
+ * Hook for generation of the Initial Sequence Number (ISN) for a new TCP
+ * connection. The default lwIP ISN generation algorithm is very basic and may
+ * allow for TCP spoofing attacks. This hook provides the means to implement
+ * the standardized ISN generation algorithm from RFC 6528 (see contrib/adons/tcp_isn),
+ * or any other desired algorithm as a replacement.
+ * Called from tcp_connect() and tcp_listen_input() when an ISN is needed for
+ * a new TCP connection, if TCP support (@ref LWIP_TCP) is enabled.\n
+ * Signature: u32_t my_hook_tcp_isn(const ip_addr_t* local_ip, u16_t local_port, const ip_addr_t* remote_ip, u16_t remote_port);
+ * - it may be necessary to use "struct ip_addr" (ip4_addr, ip6_addr) instead of "ip_addr_t" in function declarations\n
+ * Arguments:
+ * - local_ip: pointer to the local IP address of the connection
+ * - local_port: local port number of the connection (host-byte order)
+ * - remote_ip: pointer to the remote IP address of the connection
+ * - remote_port: remote port number of the connection (host-byte order)\n
+ * Return value:
+ * - the 32-bit Initial Sequence Number to use for the new TCP connection.
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_TCP_ISN(local_ip, local_port, remote_ip, remote_port)
+#endif
 
 /**
  * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
@@ -2424,7 +2479,7 @@
  * - dest: the destination IPv4 address
  * Returns the IPv4 address of the gateway to handle the specified destination
  * IPv4 address. If NULL is returned, the netif's default gateway is used.
- * The returned address MUST be reachable on the specified netif!
+ * The returned address MUST be directly reachable on the specified netif!
  * This function is meant to implement advanced IPv4 routing together with
  * LWIP_HOOK_IP4_ROUTE(). The actual routing/gateway table implementation is
  * not part of lwIP but can e.g. be hidden in the netif's state argument.
@@ -2458,6 +2513,22 @@
  */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_IP6_ROUTE(src, dest)
+#endif
+
+/**
+ * LWIP_HOOK_ND6_GET_GW(netif, dest):
+ * - called from nd6_get_next_hop_entry() (IPv6)
+ * - netif: the netif used for sending
+ * - dest: the destination IPv6 address
+ * Returns the IPv6 address of the next hop to handle the specified destination
+ * IPv6 address. If NULL is returned, a NDP-discovered router is used instead.
+ * The returned address MUST be directly reachable on the specified netif!
+ * This function is meant to implement advanced IPv6 routing together with
+ * LWIP_HOOK_IP6_ROUTE(). The actual routing/gateway table implementation is
+ * not part of lwIP but can e.g. be hidden in the netif's state argument.
+*/
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_ND6_GET_GW(netif, dest)
 #endif
 
 /**
@@ -2523,7 +2594,7 @@
    ---------------------------------------
 */
 /**
- * @defgroup lwip_opts_debugmsg Debugging
+ * @defgroup lwip_opts_debugmsg Debug messages
  * @ingroup lwip_opts_debug
  * @{
  */
@@ -2531,14 +2602,16 @@
  * LWIP_DBG_MIN_LEVEL: After masking, the value of the debug is
  * compared against this value. If it is smaller, then debugging
  * messages are written.
+ * @see debugging_levels
  */
-#if !defined LWIP_DBG_MIN_LEVEL || defined __DOXYGEN__ || defined __DOXYGEN__
+#if !defined LWIP_DBG_MIN_LEVEL || defined __DOXYGEN__
 #define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_ALL
 #endif
 
 /**
  * LWIP_DBG_TYPES_ON: A mask that can be used to globally enable/disable
  * debug messages of certain types.
+ * @see debugging_levels
  */
 #if !defined LWIP_DBG_TYPES_ON || defined __DOXYGEN__
 #define LWIP_DBG_TYPES_ON               LWIP_DBG_ON

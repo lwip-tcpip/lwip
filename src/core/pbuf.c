@@ -568,11 +568,11 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
   }
 
   if (header_size_increment < 0) {
-    increment_magnitude = -header_size_increment;
+    increment_magnitude = (u16_t)-header_size_increment;
     /* Check that we aren't going to move off the end of the pbuf */
     LWIP_ERROR("increment_magnitude <= p->len", (increment_magnitude <= p->len), return 1;);
   } else {
-    increment_magnitude = header_size_increment;
+    increment_magnitude = (u16_t)header_size_increment;
 #if 0
     /* Can't assert these as some callers speculatively call
          pbuf_header() to see if it's OK.  Will return 1 below instead. */
@@ -1119,7 +1119,8 @@ pbuf_skip_const(const struct pbuf* in, u16_t in_offset, u16_t* out_offset)
 struct pbuf*
 pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset)
 {
-  return (struct pbuf*)(size_t)pbuf_skip_const(in, in_offset, out_offset);
+  const struct pbuf* out = pbuf_skip_const(in, in_offset, out_offset);
+  return LWIP_CONST_CAST(struct pbuf*, out);
 }
 
 /**
@@ -1227,6 +1228,7 @@ pbuf_coalesce(struct pbuf *p, pbuf_layer layer)
     return p;
   }
   err = pbuf_copy(q, p);
+  LWIP_UNUSED_ARG(err); /* in case of LWIP_NOASSERT */
   LWIP_ASSERT("pbuf_copy failed", err == ERR_OK);
   pbuf_free(p);
   return q;

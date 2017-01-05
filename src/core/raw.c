@@ -209,7 +209,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 err_t
 raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
@@ -233,7 +233,7 @@ raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 err_t
 raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
-  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)) {
+  if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
@@ -320,7 +320,13 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
     }
   }
 
-  netif = ip_route(&pcb->local_ip, ipaddr);
+  if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
+    /* Don't call ip_route() with IP_ANY_TYPE */
+    netif = ip_route(IP46_ADDR_ANY(IP_GET_TYPE(ipaddr)), ipaddr);
+  } else {
+    netif = ip_route(&pcb->local_ip, ipaddr);
+  }
+
   if (netif == NULL) {
     LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
     ip_addr_debug_print(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ipaddr);

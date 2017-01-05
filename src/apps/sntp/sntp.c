@@ -573,6 +573,7 @@ sntp_stop(void)
 {
   if (sntp_pcb != NULL) {
     sys_untimeout(sntp_request, NULL);
+    sys_untimeout(sntp_try_next_server, NULL);
     udp_remove(sntp_pcb);
     sntp_pcb = NULL;
   }
@@ -688,7 +689,7 @@ sntp_getserver(u8_t idx)
   if (idx < SNTP_MAX_SERVERS) {
     return &sntp_servers[idx].addr;
   }
-  return IP4_ADDR_ANY;
+  return IP_ADDR_ANY;
 }
 
 #if SNTP_SERVER_DNS

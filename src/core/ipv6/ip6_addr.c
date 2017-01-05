@@ -132,8 +132,8 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
     } else if (isxdigit(*s)) {
       /* add current digit */
       current_block_value = (current_block_value << 4) +
-          (isdigit(*s) ? *s - '0' :
-          10 + (islower(*s) ? *s - 'a' : *s - 'A'));
+          (isdigit(*s) ? (u32_t)(*s - '0') :
+          (u32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
       break;

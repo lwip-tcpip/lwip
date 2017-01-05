@@ -71,7 +71,7 @@
 #include "netif/ppp/ppp_opts.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
-#include "lwip/nd6.h"
+#include "lwip/priv/nd6_priv.h"
 #include "lwip/ip6_frag.h"
 #include "lwip/mld6.h"
 
@@ -209,7 +209,7 @@ memp_overflow_check_all(void)
     for (j = 0; j < memp_pools[i]->num; ++j) {
       memp_overflow_check_element_overflow(p, memp_pools[i]);
       memp_overflow_check_element_underflow(p, memp_pools[i]);
-      p = (struct memp*)(size_t)((u8_t*)p + MEMP_SIZE + memp_pools[i]->size + MEMP_SANITY_REGION_AFTER_ALIGNED);
+      p = LWIP_ALIGNMENT_CAST(struct memp*, ((u8_t*)p + MEMP_SIZE + memp_pools[i]->size + MEMP_SANITY_REGION_AFTER_ALIGNED));
     }
   }
   SYS_ARCH_UNPROTECT(old_level);
@@ -301,15 +301,15 @@ do_memp_malloc_pool_fn(const struct memp_desc *desc, const char* file, const int
   SYS_ARCH_PROTECT(old_level);
 
   memp = *desc->tab;
-
-#if MEMP_OVERFLOW_CHECK == 1
-  memp_overflow_check_element_overflow(memp, desc);
-  memp_overflow_check_element_underflow(memp, desc);
-#endif /* MEMP_OVERFLOW_CHECK */
 #endif /* MEMP_MEM_MALLOC */
 
   if (memp != NULL) {
 #if !MEMP_MEM_MALLOC
+#if MEMP_OVERFLOW_CHECK == 1
+    memp_overflow_check_element_overflow(memp, desc);
+    memp_overflow_check_element_underflow(memp, desc);
+#endif /* MEMP_OVERFLOW_CHECK */
+
     *desc->tab = memp->next;
 #if MEMP_OVERFLOW_CHECK
     memp->next = NULL;

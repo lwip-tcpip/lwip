@@ -46,6 +46,7 @@
 #if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/nd6.h"
+#include "lwip/priv/nd6_priv.h"
 #include "lwip/prot/nd6.h"
 #include "lwip/prot/icmp6.h"
 #include "lwip/pbuf.h"
@@ -59,6 +60,7 @@
 #include "lwip/mld6.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
+#include "lwip/dns.h"
 
 #include <string.h>
 
@@ -93,10 +95,13 @@ static void nd6_free_neighbor_cache_entry(s8_t i);
 static s8_t nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr);
 static s8_t nd6_new_destination_cache_entry(void);
 static s8_t nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif);
+static s8_t nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif);
 static s8_t nd6_get_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_get_onlink_prefix(ip6_addr_t *prefix, struct netif *netif);
 static s8_t nd6_new_onlink_prefix(ip6_addr_t *prefix, struct netif *netif);
+static s8_t nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif);
+static err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf *q);
 
 #define ND6_SEND_FLAG_MULTICAST_DEST 0x01
 #define ND6_SEND_FLAG_ALLNODES_DEST 0x02
@@ -155,25 +160,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
        * link-layer changed?
        * part of DAD mechanism? */
 
-      /* Check that link-layer address option also fits in packet. */
-      if (p->len < (sizeof(struct na_header) + 2)) {
-        /* @todo debug message */
-        pbuf_free(p);
-        ND6_STATS_INC(nd6.lenerr);
-        ND6_STATS_INC(nd6.drop);
-        return;
-      }
-
-      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
-
-      if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
-        /* @todo debug message */
-        pbuf_free(p);
-        ND6_STATS_INC(nd6.lenerr);
-        ND6_STATS_INC(nd6.drop);
-        return;
-      }
-
       /* Create an aligned copy. */
       ip6_addr_set(&target_address, &(na_hdr->target_address));
 
@@ -184,12 +170,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
             ip6_addr_cmp(&target_address, netif_ip6_addr(inp, i))) {
           /* We are using a duplicate address. */
           netif_ip6_addr_set_state(inp, i, IP6_ADDR_INVALID);
-
-#if LWIP_IPV6_MLD
-          /* Leave solicited node multicast group. */
-          ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(inp, i)->addr[3]);
-          mld6_leavegroup_netif(inp, &multicast_address);
-#endif /* LWIP_IPV6_MLD */
 
 #if LWIP_IPV6_AUTOCONFIG
           /* Check to see if this address was autoconfigured. */
@@ -208,6 +188,25 @@ nd6_input(struct pbuf *p, struct netif *inp)
         }
       }
 #endif /* LWIP_IPV6_DUP_DETECT_ATTEMPTS */
+
+      /* Check that link-layer address option also fits in packet. */
+      if (p->len < (sizeof(struct na_header) + 2)) {
+        /* @todo debug message */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
+
+      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
+
+      if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
+        /* @todo debug message */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
 
       /* This is an unsolicited NA, most likely there was a LLADDR change. */
       i = nd6_find_neighbor_cache_entry(&target_address);
@@ -390,6 +389,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
     struct ra_header *ra_hdr;
     u8_t *buffer; /* Used to copy options. */
     u16_t offset;
+#if LWIP_ND6_RDNSS_MAX_DNS_SERVERS
+    /* There can by multiple RDNSS options per RA */
+    u8_t rdnss_server_idx = 0;
+#endif /* LWIP_ND6_RDNSS_MAX_DNS_SERVERS */
 
     /* Check that RA header fits in packet. */
     if (p->len < sizeof(struct ra_header)) {
@@ -534,6 +537,37 @@ nd6_input(struct pbuf *p, struct netif *inp)
         route_opt = (struct route_option *)buffer;*/
 
         break;
+#if LWIP_ND6_RDNSS_MAX_DNS_SERVERS
+      case ND6_OPTION_TYPE_RDNSS:
+      {
+        u8_t num, n;
+        struct rdnss_option * rdnss_opt;
+
+        rdnss_opt = (struct rdnss_option *)buffer;
+        num = (rdnss_opt->length - 1) / 2;
+        for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
+          ip_addr_t rdnss_address;
+
+          /* Get a memory-aligned copy of the prefix. */
+          ip_addr_copy_from_ip6(rdnss_address, rdnss_opt->rdnss_address[n]);
+
+          if (htonl(rdnss_opt->lifetime) > 0) {
+            /* TODO implement Lifetime > 0 */
+            dns_setserver(rdnss_server_idx++, &rdnss_address);
+          } else {
+            /* TODO implement DNS removal in dns.c */
+            u8_t s;
+            for (s = 0; s < DNS_MAX_SERVERS; s++) {
+              const ip_addr_t *addr = dns_getserver(s);
+              if(ip_addr_cmp(addr, &rdnss_address)) {
+                dns_setserver(s, NULL);
+              }
+            }
+          }
+        }
+        break;
+      }
+#endif /* LWIP_ND6_RDNSS_MAX_DNS_SERVERS */
       default:
         /* Unrecognized option, abort. */
         ND6_STATS_INC(nd6.proterr);
@@ -549,6 +583,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct redirect_header *redir_hdr;
     struct lladdr_option *lladdr_opt;
+    ip6_addr_t tmp;
 
     /* Check that Redir header fits in packet. */
     if (p->len < sizeof(struct redirect_header)) {
@@ -571,10 +606,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Copy original destination address to current source address, to have an aligned copy. */
-    ip6_addr_set(ip6_current_src_addr(), &(redir_hdr->destination_address));
+    ip6_addr_set(&tmp, &(redir_hdr->destination_address));
 
     /* Find dest address in cache */
-    i = nd6_find_destination_cache_entry(ip6_current_src_addr());
+    i = nd6_find_destination_cache_entry(&tmp);
     if (i < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
@@ -588,15 +623,15 @@ nd6_input(struct pbuf *p, struct netif *inp)
     if (lladdr_opt != NULL) {
       if (lladdr_opt->type == ND6_OPTION_TYPE_TARGET_LLADDR) {
         /* Copy target address to current source address, to have an aligned copy. */
-        ip6_addr_set(ip6_current_src_addr(), &(redir_hdr->target_address));
+        ip6_addr_set(&tmp, &(redir_hdr->target_address));
 
-        i = nd6_find_neighbor_cache_entry(ip6_current_src_addr());
+        i = nd6_find_neighbor_cache_entry(&tmp);
         if (i < 0) {
           i = nd6_new_neighbor_cache_entry();
           if (i >= 0) {
             neighbor_cache[i].netif = inp;
             MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
-            ip6_addr_set(&(neighbor_cache[i].next_hop_address), ip6_current_src_addr());
+            ip6_addr_set(&(neighbor_cache[i].next_hop_address), &tmp);
 
             /* Receiving a message does not prove reachability: only in one direction.
              * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
@@ -622,6 +657,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     struct icmp6_hdr *icmp6hdr; /* Packet too big message */
     struct ip6_hdr *ip6hdr; /* IPv6 header of the packet which caused the error */
     u32_t pmtu;
+    ip6_addr_t tmp;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
     if (p->len < (sizeof(struct icmp6_hdr) + IP6_HLEN)) {
@@ -636,10 +672,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
     ip6hdr = (struct ip6_hdr *)((u8_t*)p->payload + sizeof(struct icmp6_hdr));
 
     /* Copy original destination address to current source address, to have an aligned copy. */
-    ip6_addr_set(ip6_current_src_addr(), &(ip6hdr->dest));
+    ip6_addr_set(&tmp, &(ip6hdr->dest));
 
     /* Look for entry in destination cache. */
-    i = nd6_find_destination_cache_entry(ip6_current_src_addr());
+    i = nd6_find_destination_cache_entry(&tmp);
     if (i < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
@@ -829,13 +865,6 @@ nd6_tmr(void)
           netif_ip6_addr_set_state(netif, i, IP6_ADDR_PREFERRED);
           /* @todo implement preferred and valid lifetimes. */
         } else if (netif->flags & NETIF_FLAG_UP) {
-#if LWIP_IPV6_MLD
-          if ((addr_state & IP6_ADDR_TENTATIVE_COUNT_MASK) == 0) {
-            /* Join solicited node multicast group. */
-            ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, i)->addr[3]);
-            mld6_joingroup_netif(netif, &multicast_address);
-          }
-#endif /* LWIP_IPV6_MLD */
           /* Send a NS for this address. */
           nd6_send_ns(netif, netif_ip6_addr(netif, i), ND6_SEND_FLAG_MULTICAST_DEST);
           /* tentative: set next state by increasing by one */
@@ -1294,6 +1323,22 @@ nd6_new_destination_cache_entry(void)
 }
 
 /**
+ * Clear the destination cache.
+ *
+ * This operation may be necessary for consistency in the light of changing
+ * local addresses and/or use of the gateway hook.
+ */
+void
+nd6_clear_destination_cache(void)
+{
+  int i;
+
+  for (i = 0; i < LWIP_ND6_NUM_DESTINATIONS; i++) {
+    ip6_addr_set_any(&destination_cache[i].destination_addr);
+  }
+}
+
+/**
  * Determine whether an address matches an on-link prefix.
  *
  * @param ip6addr the IPv6 address to match
@@ -1328,7 +1373,7 @@ nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
  * @return the default router entry index, or -1 if no suitable
  *         router is found
  */
-s8_t
+static s8_t
 nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 {
   s8_t i;
@@ -1381,6 +1426,30 @@ nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif)
 }
 
 /**
+ * Find a router-announced route to the given destination.
+ *
+ * The caller is responsible for checking whether the returned netif, if any,
+ * is in a suitable state (up, link up) to be used for packet transmission.
+ *
+ * @param ip6addr the destination IPv6 address
+ * @return the netif to use for the destination, or NULL if none found
+ */
+struct netif *
+nd6_find_route(const ip6_addr_t *ip6addr)
+{
+  s8_t i;
+
+  i = nd6_select_router(ip6addr, NULL);
+  if (i >= 0) {
+    if (default_router_list[i].neighbor_entry != NULL) {
+      return default_router_list[i].neighbor_entry->netif; /* may be NULL */
+    }
+  }
+
+  return NULL;
+}
+
+/**
  * Find an entry for a default router.
  *
  * @param router_addr the IPv6 address of the router
@@ -1416,6 +1485,7 @@ static s8_t
 nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif)
 {
   s8_t router_index;
+  s8_t free_router_index;
   s8_t neighbor_index;
 
   /* Do we have a neighbor entry for this router? */
@@ -1439,11 +1509,21 @@ nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif)
   neighbor_cache[neighbor_index].isrouter = 1;
 
   /* Look for empty entry. */
-  for (router_index = 0; router_index < LWIP_ND6_NUM_ROUTERS; router_index++) {
+  free_router_index = LWIP_ND6_NUM_ROUTERS;
+  for (router_index = LWIP_ND6_NUM_ROUTERS - 1; router_index >= 0; router_index--) {
+    /* check if router already exists (this is a special case for 2 netifs on the same subnet
+       - e.g. wifi and cable) */
+    if(default_router_list[router_index].neighbor_entry == &(neighbor_cache[neighbor_index])){ 
+      return router_index; 
+    } 
     if (default_router_list[router_index].neighbor_entry == NULL) {
-      default_router_list[router_index].neighbor_entry = &(neighbor_cache[neighbor_index]);
-      return router_index;
+      /* remember lowest free index to create a new entry */
+      free_router_index = router_index;
     }
+  }
+  if (free_router_index < LWIP_ND6_NUM_ROUTERS) {
+    default_router_list[free_router_index].neighbor_entry = &(neighbor_cache[neighbor_index]);
+    return free_router_index;
   }
 
   /* Could not create a router entry. */
@@ -1521,9 +1601,12 @@ nd6_new_onlink_prefix(ip6_addr_t *prefix, struct netif *netif)
  *         suitable next hop was found, ERR_MEM if no cache entry
  *         could be created
  */
-s8_t
+static s8_t
 nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 {
+#ifdef LWIP_HOOK_ND6_GET_GW
+  const ip6_addr_t *next_hop_addr;
+#endif /* LWIP_HOOK_ND6_GET_GW */
   s8_t i;
 
 #if LWIP_NETIF_HWADDRHINT
@@ -1567,6 +1650,12 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
         /* Destination in local link. */
         destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
         ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, destination_cache[nd6_cached_destination_index].destination_addr);
+#ifdef LWIP_HOOK_ND6_GET_GW
+      } else if ((next_hop_addr = LWIP_HOOK_ND6_GET_GW(netif, ip6addr)) != NULL) {
+        /* Next hop for destination provided by hook function. */
+        destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
+        ip6_addr_set(&destination_cache[nd6_cached_destination_index].next_hop_addr, next_hop_addr);
+#endif /* LWIP_HOOK_ND6_GET_GW */
       } else {
         /* We need to select a router. */
         i = nd6_select_router(ip6addr, netif);
@@ -1634,7 +1723,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
  * @param q packet to be queued
  * @return ERR_OK if succeeded, ERR_MEM if out of memory
  */
-err_t
+static err_t
 nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
 {
   err_t result = ERR_MEM;
@@ -1811,6 +1900,61 @@ nd6_send_q(s8_t i)
 #endif /* LWIP_ND6_QUEUEING */
 }
 
+/**
+ * A packet is to be transmitted to a specific IPv6 destination on a specific
+ * interface. Check if we can find the hardware address of the next hop to use
+ * for the packet. If so, give the hardware address to the caller, which should
+ * use it to send the packet right away. Otherwise, enqueue the packet for
+ * later transmission while looking up the hardware address, if possible.
+ *
+ * As such, this function returns one of three different possible results:
+ *
+ * - ERR_OK with a non-NULL 'hwaddrp': the caller should send the packet now.
+ * - ERR_OK with a NULL 'hwaddrp': the packet has been enqueued for later.
+ * - not ERR_OK: something went wrong; forward the error upward in the stack.
+ *
+ * @param netif The lwIP network interface on which the IP packet will be sent.
+ * @param q The pbuf(s) containing the IP packet to be sent.
+ * @param ip6addr The destination IPv6 address of the packet.
+ * @param hwaddrp On success, filled with a pointer to a HW address or NULL (meaning
+ *        the packet has been queued).
+ * @return
+ * - ERR_OK on success, ERR_RTE if no route was found for the packet,
+ * or ERR_MEM if low memory conditions prohibit sending the packet at all.
+ */
+err_t
+nd6_get_next_hop_addr_or_queue(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr, const u8_t **hwaddrp)
+{
+  s8_t i;
+
+  /* Get next hop record. */
+  i = nd6_get_next_hop_entry(ip6addr, netif);
+  if (i < 0) {
+    /* failed to get a next hop neighbor record. */
+    return i;
+  }
+
+  /* Now that we have a destination record, send or queue the packet. */
+  if (neighbor_cache[i].state == ND6_STALE) {
+    /* Switch to delay state. */
+    neighbor_cache[i].state = ND6_DELAY;
+    neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
+  }
+  /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
+  if ((neighbor_cache[i].state == ND6_REACHABLE) ||
+      (neighbor_cache[i].state == ND6_DELAY) ||
+      (neighbor_cache[i].state == ND6_PROBE)) {
+
+    /* Tell the caller to send out the packet now. */
+    *hwaddrp = neighbor_cache[i].lladdr;
+    return ERR_OK;
+  }
+
+  /* We should queue packet on this interface. */
+  *hwaddrp = NULL;
+  return nd6_queue_packet(i, q);
+}
+
 
 /**
  * Get the Path MTU for a destination.
@@ -1916,5 +2060,39 @@ nd6_cleanup_netif(struct netif *netif)
     }
   }
 }
+
+#if LWIP_IPV6_MLD
+/**
+ * The state of a local IPv6 address entry is about to change. If needed, join
+ * or leave the solicited-node multicast group for the address.
+ *
+ * @param netif The netif that owns the address.
+ * @param addr_idx The index of the address.
+ * @param new_state The new (IP6_ADDR_) state for the address.
+ */
+void
+nd6_adjust_mld_membership(struct netif *netif, s8_t addr_idx, u8_t new_state)
+{
+  u8_t old_state, old_member, new_member;
+
+  old_state = netif_ip6_addr_state(netif, addr_idx);
+
+  /* Determine whether we were, and should be, a member of the solicited-node
+   * multicast group for this address. For tentative addresses, the group is
+   * not joined until the address enters the TENTATIVE_1 (or VALID) state. */
+  old_member = (old_state != IP6_ADDR_INVALID && old_state != IP6_ADDR_TENTATIVE);
+  new_member = (new_state != IP6_ADDR_INVALID && new_state != IP6_ADDR_TENTATIVE);
+
+  if (old_member != new_member) {
+    ip6_addr_set_solicitednode(&multicast_address, netif_ip6_addr(netif, addr_idx)->addr[3]);
+
+    if (new_member) {
+      mld6_joingroup_netif(netif, &multicast_address);
+    } else {
+      mld6_leavegroup_netif(netif, &multicast_address);
+    }
+  }
+}
+#endif /* LWIP_IPV6_MLD */
 
 #endif /* LWIP_IPV6 */

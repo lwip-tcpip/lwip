@@ -66,7 +66,7 @@ enum lwip_ip_addr_type {
  * A union struct for both IP version's addresses.
  * ATTENTION: watch out for its size when adding IPv6 address scope!
  */
-typedef struct _ip_addr {
+typedef struct ip_addr {
   union {
     ip6_addr_t ip6;
     ip4_addr_t ip4;
@@ -79,8 +79,12 @@ extern const ip_addr_t ip_addr_any_type;
 
 /** @ingroup ip4addr */
 #define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } } }, IPADDR_TYPE_V4 }
+/** @ingroup ip4addr */
+#define IPADDR4_INIT_BYTES(a,b,c,d)   IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
 /** @ingroup ip6addr */
 #define IPADDR6_INIT(a, b, c, d)      { { { { a, b, c, d } } }, IPADDR_TYPE_V6 }
+/** @ingroup ip6addr */
+#define IPADDR6_INIT_HOST(a, b, c, d) { { { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } } }, IPADDR_TYPE_V6 }
 
 /** @ingroup ipaddr */
 #define IP_IS_ANY_TYPE_VAL(ipaddr)    (IP_GET_TYPE(&ipaddr) == IPADDR_TYPE_ANY)
@@ -118,6 +122,8 @@ extern const ip_addr_t ip_addr_any_type;
 /** @ingroup ip6addr */
 #define IP_ADDR6(ipaddr,i0,i1,i2,i3)  do { IP6_ADDR(ip_2_ip6(ipaddr),i0,i1,i2,i3); \
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
+/** @ingroup ip6addr */
+#define IP_ADDR6_HOST(ipaddr,i0,i1,i2,i3)  IP_ADDR6(ipaddr,PP_HTONL(i0),PP_HTONL(i1),PP_HTONL(i2),PP_HTONL(i3))
 
 /** @ingroup ipaddr */
 #define ip_addr_copy(dest, src)      do{ IP_SET_TYPE_VAL(dest, IP_GET_TYPE(&src)); if(IP_IS_V6_VAL(src)){ \
@@ -215,6 +221,19 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 /** @ingroup ipaddr */
 #define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
 
+/** @ingroup ipaddr */
+#define ip4_2_ipv6_mapped_ipv4(ip6addr, ip4addr) do { \
+  (ip6addr)->addr[3] = (ip4addr)->addr; \
+  (ip6addr)->addr[2] = PP_HTONL(0x0000FFFFUL); \
+  (ip6addr)->addr[1] = 0; \
+  (ip6addr)->addr[0] = 0; } while(0);
+
+/** @ingroup ipaddr */
+#define unmap_ipv6_mapped_ipv4(ip4addr, ip6addr) \
+  (ip4addr)->addr = (ip6addr)->addr[3];
+
+#define IP46_ADDR_ANY(type) (((type) == IPADDR_TYPE_V6)? IP6_ADDR_ANY : IP4_ADDR_ANY)
+
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 
 #define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)         1
@@ -224,6 +243,7 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 typedef ip4_addr_t ip_addr_t;
 #define IPADDR4_INIT(u32val)                    { u32val }
+#define IPADDR4_INIT_BYTES(a,b,c,d)             IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
 #define IP_IS_V4_VAL(ipaddr)                    1
 #define IP_IS_V6_VAL(ipaddr)                    0
 #define IP_IS_V4(ipaddr)                        1
@@ -263,10 +283,13 @@ typedef ip4_addr_t ip_addr_t;
 
 #define IPADDR_STRLEN_MAX   IP4ADDR_STRLEN_MAX
 
+#define IP46_ADDR_ANY(type) (IP4_ADDR_ANY)
+
 #else /* LWIP_IPV4 */
 
 typedef ip6_addr_t ip_addr_t;
 #define IPADDR6_INIT(a, b, c, d)                { { a, b, c, d } }
+#define IPADDR6_INIT_HOST(a, b, c, d)           { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } }
 #define IP_IS_V4_VAL(ipaddr)                    0
 #define IP_IS_V6_VAL(ipaddr)                    1
 #define IP_IS_V4(ipaddr)                        0
@@ -277,6 +300,7 @@ typedef ip6_addr_t ip_addr_t;
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V6
 #define ip_2_ip6(ipaddr)                        (ipaddr)
 #define IP_ADDR6(ipaddr,i0,i1,i2,i3)            IP6_ADDR(ipaddr,i0,i1,i2,i3)
+#define IP_ADDR6_HOST(ipaddr,i0,i1,i2,i3)       IP_ADDR6(ipaddr,PP_HTONL(i0),PP_HTONL(i1),PP_HTONL(i2),PP_HTONL(i3))
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
 #define ip_addr_copy_from_ip6(dest, src)        ip6_addr_copy(dest, src)
@@ -304,6 +328,8 @@ typedef ip6_addr_t ip_addr_t;
 
 #define IPADDR_STRLEN_MAX   IP6ADDR_STRLEN_MAX
 
+#define IP46_ADDR_ANY(type) (IP6_ADDR_ANY)
+
 #endif /* LWIP_IPV4 */
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
@@ -314,7 +340,13 @@ extern const ip_addr_t ip_addr_broadcast;
 
 /**
  * @ingroup ip4addr
- * Provided for compatibility. Use IP4_ADDR_ANY for better readability.
+ * Can be used as a fixed/const ip_addr_t
+ * for the IP wildcard.
+ * Defined to @ref IP4_ADDR_ANY when IPv4 is enabled.
+ * Defined to @ref IP6_ADDR_ANY in IPv6 only systems.
+ * Use this if you can handle IPv4 _AND_ IPv6 addresses.
+ * Use @ref IP4_ADDR_ANY or @ref IP6_ADDR_ANY when the IP
+ * type matters.
  */
 #define IP_ADDR_ANY         IP4_ADDR_ANY
 /**
@@ -355,7 +387,7 @@ extern const ip_addr_t ip6_addr_any;
 #define IP6_ADDR_ANY6  (ip_2_ip6(&ip6_addr_any))
 
 #if !LWIP_IPV4
-/** Just a little upgrade-helper for IPv6-only configurations: */
+/** IPv6-only configurations */
 #define IP_ADDR_ANY IP6_ADDR_ANY
 #endif /* !LWIP_IPV4 */
 

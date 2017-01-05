@@ -247,11 +247,13 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 	    val = va_arg(args, unsigned int);
 	    base = 16;
 	    break;
+#if 0 /* unused (and wrong on LLP64 systems) */
 	case 'p':
 	    val = (unsigned long) va_arg(args, void *);
 	    base = 16;
 	    neg = 2;
 	    break;
+#endif /* unused (and wrong on LLP64 systems) */
 	case 's':
 	    str = va_arg(args, char *);
 	    break;

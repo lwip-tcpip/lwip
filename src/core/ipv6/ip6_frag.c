@@ -379,6 +379,7 @@ ip6_reass(struct pbuf *p)
     /* Make room for struct ip6_reass_helper (only required if sizeof(void*) > 4).
        This cannot fail since we already checked when receiving this fragment. */
     u8_t hdrerr = pbuf_header_force(p, IPV6_FRAG_REQROOM);
+    LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
     LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
   }
 #else /* IPV6_FRAG_COPYHEADER */
@@ -530,6 +531,7 @@ ip6_reass(struct pbuf *p)
         if (IPV6_FRAG_REQROOM > 0) {
           /* hide the extra bytes borrowed from ip6_hdr for struct ip6_reass_helper */
           u8_t hdrerr = pbuf_header(next_pbuf, -(s16_t)(IPV6_FRAG_REQROOM));
+          LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
           LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
         }
 #endif
@@ -546,6 +548,7 @@ ip6_reass(struct pbuf *p)
     if (IPV6_FRAG_REQROOM > 0) {
       /* get back room for struct ip6_reass_helper (only required if sizeof(void*) > 4) */
       u8_t hdrerr = pbuf_header(ipr->p, -(s16_t)(IPV6_FRAG_REQROOM));
+      LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
       LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
     }
     iphdr_ptr = (struct ip6_hdr*)((u8_t*)ipr->p->payload - IP6_HLEN);
@@ -610,6 +613,7 @@ nullreturn:
 
 #if LWIP_IPV6 && LWIP_IPV6_FRAG
 
+#if !LWIP_NETIF_TX_SINGLE_PBUF
 /** Allocate a new struct pbuf_custom_ref */
 static struct pbuf_custom_ref*
 ip6_frag_alloc_pbuf_custom_ref(void)
@@ -638,6 +642,7 @@ ip6_frag_free_pbuf_custom(struct pbuf *p)
   }
   ip6_frag_free_pbuf_custom_ref(pcr);
 }
+#endif /* !LWIP_NETIF_TX_SINGLE_PBUF */
 
 /**
  * Fragment an IPv6 datagram if too large for the netif or path MTU.
@@ -658,7 +663,11 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
   struct ip6_hdr *ip6hdr;
   struct ip6_frag_hdr *frag_hdr;
   struct pbuf *rambuf;
+#if !LWIP_NETIF_TX_SINGLE_PBUF
   struct pbuf *newpbuf;
+  u16_t newpbuflen = 0;
+  u16_t left_to_copy;
+#endif
   static u32_t identification;
   u16_t nfb;
   u16_t left, cop;
@@ -666,8 +675,6 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
   u16_t fragment_offset = 0;
   u16_t last;
   u16_t poff = IP6_HLEN;
-  u16_t newpbuflen = 0;
-  u16_t left_to_copy;
 
   identification++;
 
@@ -686,6 +693,26 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
     /* Fill this fragment */
     cop = last ? left : nfb;
 
+#if LWIP_NETIF_TX_SINGLE_PBUF
+    rambuf = pbuf_alloc(PBUF_IP, cop + IP6_FRAG_HLEN, PBUF_RAM);
+    if (rambuf == NULL) {
+      IP6_FRAG_STATS_INC(ip6_frag.memerr);
+      return ERR_MEM;
+    }
+    LWIP_ASSERT("this needs a pbuf in one piece!",
+      (rambuf->len == rambuf->tot_len) && (rambuf->next == NULL));
+    poff += pbuf_copy_partial(p, (u8_t*)rambuf->payload + IP6_FRAG_HLEN, cop, poff);
+    /* make room for the IP header */
+    if (pbuf_header(rambuf, IP6_HLEN)) {
+      pbuf_free(rambuf);
+      IP6_FRAG_STATS_INC(ip6_frag.memerr);
+      return ERR_MEM;
+    }
+    /* fill in the IP header */
+    SMEMCPY(rambuf->payload, original_ip6hdr, IP6_HLEN);
+    ip6hdr = (struct ip6_hdr *)rambuf->payload;
+    frag_hdr = (struct ip6_frag_hdr *)((u8_t*)rambuf->payload + IP6_HLEN);
+#else
     /* When not using a static buffer, create a chain of pbufs.
      * The first will be a PBUF_RAM holding the link, IPv6, and Fragment header.
      * The rest will be PBUF_REFs mirroring the pbuf chain to be fragged,
@@ -744,6 +771,7 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
       }
     }
     poff = newpbuflen;
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
     /* Set headers */
     frag_hdr->_nexth = original_ip6hdr->_nexth;

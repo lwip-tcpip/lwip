@@ -68,7 +68,6 @@
 #include "lwip/etharp.h"
 #include "lwip/prot/autoip.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 /** Pseudo random macro based on netif informations.
@@ -94,8 +93,6 @@
 /* static functions */
 static err_t autoip_arp_announce(struct netif *netif);
 static void autoip_start_probing(struct netif *netif);
-
-#define netif_autoip_data(netif) ((struct autoip*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP))
 
 /**
  * @ingroup autoip 
@@ -482,7 +479,8 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
       * ip.dst == llipaddr && hw.src != own hwaddr
       */
       if ((ip4_addr_cmp(&sipaddr, &autoip->llipaddr)) ||
-          (ip4_addr_cmp(&dipaddr, &autoip->llipaddr) &&
+          (ip4_addr_isany_val(sipaddr) &&
+           ip4_addr_cmp(&dipaddr, &autoip->llipaddr) &&
            !eth_addr_cmp(&netifaddr, &hdr->shwaddr))) {
         LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
           ("autoip_arp_reply(): Probe Conflict detected\n"));

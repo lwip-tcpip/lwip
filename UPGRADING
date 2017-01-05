@@ -8,7 +8,12 @@ with newer versions.
 
   * [Enter new changes just after this line - do not remove this line]
 
-  * TODO
+  ++ Application changes:
+
+  * UDP does NOT receive multicast traffic from ALL netifs on an UDP PCB bound to a specific
+    netif any more. Users need to bind to IP_ADDR_ANY to receive multicast traffic and compare 
+    ip_current_netif() to the desired netif for every packet.
+    See bug #49662 for an explanation.
 
 (2.0.0)
 

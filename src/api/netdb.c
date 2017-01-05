@@ -46,8 +46,8 @@
 #include "lwip/api.h"
 #include "lwip/dns.h"
 
-#include <string.h>
-#include <stdlib.h>
+#include <string.h> /* memset */
+#include <stdlib.h> /* atoi */
 
 /** helper struct for gethostbyname_r to access the char* buffer */
 struct gethostbyname_r_helper {
@@ -382,7 +382,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
 #if LWIP_IPV4
     struct sockaddr_in *sa4 = (struct sockaddr_in*)sa;
     /* set up sockaddr */
-    inet_addr_from_ipaddr(&sa4->sin_addr, ip_2_ip4(&addr));
+    inet_addr_from_ip4addr(&sa4->sin_addr, ip_2_ip4(&addr));
     sa4->sin_family = AF_INET;
     sa4->sin_len = sizeof(struct sockaddr_in);
     sa4->sin_port = lwip_htons((u16_t)port_nr);

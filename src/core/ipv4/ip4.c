@@ -177,7 +177,7 @@ ip4_route(const ip4_addr_t *dest)
   /* loopif is disabled, looopback traffic is passed through any netif */
   if (ip4_addr_isloopback(dest)) {
     /* don't check for link on loopback traffic */
-    if (netif_is_up(netif_default)) {
+    if (netif_default != NULL && netif_is_up(netif_default)) {
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
@@ -518,6 +518,15 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_AUTOIP */
       }
       if (first) {
+#if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
+        /* Packets sent to the loopback address must not be accepted on an
+         * interface that does not have the loopback address assigned to it,
+         * unless a non-loopback interface is used for loopback traffic. */
+        if (ip4_addr_isloopback(ip4_current_dest_addr())) {
+          netif = NULL;
+          break;
+        }
+#endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
         first = 0;
         netif = netif_list;
       } else {
@@ -589,6 +598,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     } else
 #endif /* IP_FORWARD */
     {
+      IP_STATS_INC(ip.drop);
       MIB2_STATS_INC(mib2.ipinaddrerrors);
       MIB2_STATS_INC(mib2.ipindiscards);
     }
@@ -853,7 +863,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += LWIP_MAKE_U16(proto, ttl);
+    chk_sum += PP_NTOHS(proto | (ttl << 8));
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
     /* dest cannot be NULL here */
@@ -866,7 +876,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     IPH_VHL_SET(iphdr, 4, ip_hlen / 4);
     IPH_TOS_SET(iphdr, tos);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += LWIP_MAKE_U16(tos, iphdr->_v_hl);
+    chk_sum += PP_NTOHS(tos | (iphdr->_v_hl << 8));
 #endif /* CHECKSUM_GEN_IP_INLINE */
     IPH_LEN_SET(iphdr, lwip_htons(p->tot_len));
 #if CHECKSUM_GEN_IP_INLINE

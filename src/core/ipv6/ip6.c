@@ -94,7 +94,8 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   if (ip6_addr_islinklocal(dest)) {
     if (ip6_addr_isany(src)) {
       /* Use default netif, if Up. */
-      if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+      if (netif_default == NULL || !netif_is_up(netif_default) ||
+          !netif_is_link_up(netif_default)) {
         return NULL;
       }
       return netif_default;
@@ -114,7 +115,8 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
     }
 
     /* netif not found, use default netif, if up */
-    if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+    if (netif_default == NULL || !netif_is_up(netif_default) ||
+        !netif_is_link_up(netif_default)) {
       return NULL;
     }
     return netif_default;
@@ -142,15 +144,9 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   }
 
   /* Get the netif for a suitable router. */
-  i = nd6_select_router(dest, NULL);
-  if (i >= 0) {
-    if (default_router_list[i].neighbor_entry != NULL) {
-      if (default_router_list[i].neighbor_entry->netif != NULL) {
-        if (netif_is_up(default_router_list[i].neighbor_entry->netif) && netif_is_link_up(default_router_list[i].neighbor_entry->netif)) {
-          return default_router_list[i].neighbor_entry->netif;
-        }
-      }
-    }
+  netif = nd6_find_route(dest);
+  if ((netif != NULL) && netif_is_up(netif) && netif_is_link_up(netif)) {
+    return netif;
   }
 
   /* try with the netif that matches the source address. */
@@ -172,7 +168,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   /* loopif is disabled, loopback traffic is passed through any netif */
   if (ip6_addr_isloopback(dest)) {
     /* don't check for link on loopback traffic */
-    if (netif_is_up(netif_default)) {
+    if (netif_default != NULL && netif_is_up(netif_default)) {
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
@@ -290,8 +286,9 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 {
   struct netif *netif;
 
-  /* do not forward link-local addresses */
-  if (ip6_addr_islinklocal(ip6_current_dest_addr())) {
+  /* do not forward link-local or loopback addresses */
+  if (ip6_addr_islinklocal(ip6_current_dest_addr()) ||
+      ip6_addr_isloopback(ip6_current_dest_addr())) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_forward: not forwarding link-local address.\n"));
     IP6_STATS_INC(ip6.rterr);
     IP6_STATS_INC(ip6.drop);
@@ -509,12 +506,21 @@ ip6_input(struct pbuf *p, struct netif *inp)
           }
         }
       }
-      if (ip6_addr_islinklocal(ip6_current_dest_addr())) {
-        /* Do not match link-local addresses to other netifs. */
-        netif = NULL;
-        break;
-      }
       if (first) {
+        if (ip6_addr_islinklocal(ip6_current_dest_addr())
+#if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
+            || ip6_addr_isloopback(ip6_current_dest_addr())
+#endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
+        ) {
+          /* Do not match link-local addresses to other netifs. The loopback
+           * address is to be considered link-local and packets to it should be
+           * dropped on other interfaces, as per RFC 4291 Sec. 2.5.3. This
+           * requirement cannot be implemented in the case that loopback
+           * traffic is sent across a non-loopback interface, however.
+           */
+          netif = NULL;
+          break;
+        }
         first = 0;
         netif = netif_list;
       } else {
@@ -709,7 +715,7 @@ netif_found:
 options_done:
 
   /* p points to IPv6 header again. */
-  pbuf_header_force(p, ip_data.current_ip_header_tot_len);
+  pbuf_header_force(p, (s16_t)ip_data.current_ip_header_tot_len);
 
   /* send to upper layers */
   LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: \n"));

@@ -64,6 +64,15 @@ static const int err_to_errno_table[] = {
   ENOTCONN,      /* ERR_CLSD       -15     Connection closed.       */
   EIO            /* ERR_ARG        -16     Illegal argument.        */
 };
+
+int
+err_to_errno(err_t err)
+{
+  if ((err > 0) || (-err >= (err_t)LWIP_ARRAYSIZE(err_to_errno_table))) {
+    return EIO;
+  }
+  return err_to_errno_table[-err];
+}
 #endif /* !NO_SYS */
 
 #ifdef LWIP_DEBUG
@@ -104,14 +113,3 @@ lwip_strerr(err_t err)
 }
 
 #endif /* LWIP_DEBUG */
-
-#if !NO_SYS
-int
-err_to_errno(err_t err)
-{
-  if ((err > 0) || (-err >= (err_t)LWIP_ARRAYSIZE(err_to_errno_table))) {
-    return EIO;
-  }
-  return err_to_errno_table[-err];
-}
-#endif /* !NO_SYS */

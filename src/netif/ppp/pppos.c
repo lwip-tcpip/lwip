@@ -35,8 +35,8 @@
 #if PPP_SUPPORT && PPPOS_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include <string.h>
-#include <stddef.h>
 
+#include "lwip/arch.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
@@ -471,18 +471,20 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
   u8_t escaped;
   PPPOS_DECL_PROTECT(lev);
 
-  PPPOS_PROTECT(lev);
-  if (!pppos->open) {
-    PPPOS_UNPROTECT(lev);
-    return;
-  }
-  PPPOS_UNPROTECT(lev);
-
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
     cur_char = *s++;
 
     PPPOS_PROTECT(lev);
+    /* ppp_input can disconnect the interface, we need to abort to prevent a memory
+     * leak if there are remaining bytes because pppos_connect and pppos_listen
+     * functions expect input buffer to be free. Furthermore there are no real
+     * reason to continue reading bytes if we are disconnected.
+     */
+    if (!pppos->open) {
+      PPPOS_UNPROTECT(lev);
+      return;
+    }
     escaped = ESCAPE_P(pppos->in_accm, cur_char);
     PPPOS_UNPROTECT(lev);
     /* Handle special characters. */

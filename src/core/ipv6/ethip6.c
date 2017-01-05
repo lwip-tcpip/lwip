@@ -62,7 +62,9 @@
  * For IPv6 multicast, corresponding Ethernet addresses
  * are selected and the packet is transmitted on the link.
  *
- * For unicast addresses, ...
+ * For unicast addresses, ask the ND6 module what to do. It will either let us
+ * send the the packet right away, or queue the packet for later itself, unless
+ * an error occurs.
  *
  * @todo anycast addresses
  *
@@ -71,14 +73,14 @@
  * @param ip6addr The IP address of the packet destination.
  *
  * @return
- * - ERR_RTE No route to destination (no gateway to external networks),
- * or the return type of either nd6_queue_packet() or ethernet_output().
+ * - ERR_OK or the return value of @ref nd6_get_next_hop_addr_or_queue.
  */
 err_t
 ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 {
   struct eth_addr dest;
-  s8_t i;
+  const u8_t *hwaddr;
+  err_t result;
 
   /* multicast destination IP address? */
   if (ip6_addr_ismulticast(ip6addr)) {
@@ -91,36 +93,26 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     dest.addr[5] = ((const u8_t *)(&(ip6addr->addr[3])))[3];
 
     /* Send out. */
-    return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
+    return ethernet_output(netif, q, (const struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
   }
 
   /* We have a unicast destination IP address */
   /* @todo anycast? */
-  /* Get next hop record. */
-  i = nd6_get_next_hop_entry(ip6addr, netif);
-  if (i < 0) {
-    /* failed to get a next hop neighbor record. */
-    return ERR_MEM;
+
+  /* Ask ND6 what to do with the packet. */
+  result = nd6_get_next_hop_addr_or_queue(netif, q, ip6addr, &hwaddr);
+  if (result != ERR_OK) {
+    return result;
   }
 
-  /* Now that we have a destination record, send or queue the packet. */
-  if (neighbor_cache[i].state == ND6_STALE) {
-    /* Switch to delay state. */
-    neighbor_cache[i].state = ND6_DELAY;
-    neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
-  }
-  /* @todo should we send or queue if PROBE? send for now, to let unicast NS pass. */
-  if ((neighbor_cache[i].state == ND6_REACHABLE) ||
-      (neighbor_cache[i].state == ND6_DELAY) ||
-      (neighbor_cache[i].state == ND6_PROBE)) {
-
-    /* Send out. */
-    SMEMCPY(dest.addr, neighbor_cache[i].lladdr, 6);
-    return ethernet_output(netif, q, (struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
+  /* If no hardware address is returned, nd6 has queued the packet for later. */
+  if (hwaddr == NULL) {
+    return ERR_OK;
   }
 
-  /* We should queue packet on this interface. */
-  return nd6_queue_packet(i, q);
+  /* Send out the packet using the returned hardware address. */
+  SMEMCPY(dest.addr, hwaddr, 6);
+  return ethernet_output(netif, q, (const struct eth_addr*)(netif->hwaddr), &dest, ETHTYPE_IPV6);
 }
 
 #endif /* LWIP_IPV6 && LWIP_ETHERNET */
