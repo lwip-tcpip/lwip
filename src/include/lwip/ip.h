@@ -243,6 +243,11 @@ extern struct ip_globals ip_data;
         (IP_IS_V6(dest) ? \
         ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
         ip4_output_if_src(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
+/** Output IP packet that already includes an IP header. */
+#define ip_output_if_hdrincl(p, src, dest, netif) \
+        (IP_IS_V6(dest) ? \
+        ip6_output_if(p, ip_2_ip6(src), LWIP_IP_HDRINCL, 0, 0, 0, netif) : \
+        ip4_output_if(p, ip_2_ip4(src), LWIP_IP_HDRINCL, 0, 0, 0, netif))
 /** Output IP packet with addr_hint */
 #define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
         (IP_IS_V6(dest) ? \
@@ -277,6 +282,8 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
         ip4_output_if_src(p, src, dest, ttl, tos, proto, netif)
 #define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
         ip4_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
+#define ip_output_if_hdrincl(p, src, dest, netif) \
+        ip4_output_if(p, src, LWIP_IP_HDRINCL, 0, 0, 0, netif)
 #define ip_route(src, dest) \
         ip4_route_src(dest, src)
 #define ip_netif_get_local_ip(netif, dest) \
@@ -295,6 +302,8 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
         ip6_output_if_src(p, src, dest, ttl, tos, proto, netif)
 #define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
         ip6_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
+#define ip_output_if_hdrincl(p, src, dest, netif) \
+        ip6_output_if(p, src, LWIP_IP_HDRINCL, 0, 0, 0, netif)
 #define ip_route(src, dest) \
         ip6_route(src, dest)
 #define ip_netif_get_local_ip(netif, dest) \

@@ -287,11 +287,9 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 
 /**
  * @ingroup raw_raw
- * Send the raw IP packet to the given address. Note that actually you cannot
- * modify the IP headers (this is inconsistent with the receive callback where
- * you actually get the IP headers), you can only specify the IP payload here.
- * It requires some more changes in lwIP. (there will be a raw_send() function
- * then.)
+ * Send the raw IP packet to the given address. An IP header will be prepended
+ * to the packet, unless the RAW_FLAGS_HDRINCL flag is set on the PCB. In that
+ * case, the packet must include an IP header, which will then be sent as is.
  *
  * @param pcb the raw pcb which to send
  * @param p the IP payload to send
@@ -342,7 +340,9 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 /**
  * @ingroup raw_raw
  * Send the raw IP packet to the given address, using a particular outgoing
- * netif and source IP address. An IP header will be prepended to the packet.
+ * netif and source IP address. An IP header will be prepended to the packet,
+ * unless the RAW_FLAGS_HDRINCL flag is set on the PCB. In that case, the
+ * packet must include an IP header, which will then be sent as is.
  *
  * @param pcb RAW PCB used to send the data
  * @param p chain of pbufs to be sent
@@ -371,6 +371,20 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #else
     IP6_HLEN);
 #endif
+
+  /* Handle the HDRINCL option as an exception: none of the code below applies
+   * to this case, and sending the packet needs to be done differently too. */
+  if (pcb->flags & RAW_FLAGS_HDRINCL) {
+    /* A full header *must* be present in the first pbuf of the chain, as the
+     * output routines may access its fields directly. */
+    if (p->len < header_size) {
+      return ERR_VAL;
+    }
+    NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
+    err = ip_output_if_hdrincl(p, src_ip, dst_ip, netif);
+    NETIF_SET_HWADDRHINT(netif, NULL);
+    return err;
+  }
 
   /* not enough space to add an IP header to first pbuf in given p chain? */
   if (pbuf_header(p, header_size)) {

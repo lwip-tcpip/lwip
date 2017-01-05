@@ -53,6 +53,7 @@ extern "C" {
 #endif
 
 #define RAW_FLAGS_CONNECTED 0x01U
+#define RAW_FLAGS_HDRINCL   0x02U
 
 struct raw_pcb;
 
@@ -106,6 +107,7 @@ err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
 
 #define          raw_flags(pcb) ((pcb)->flags)
+#define          raw_setflags(pcb,f)  ((pcb)->flags = (f))
 
 /* The following functions are the lower layer interface to RAW. */
 u8_t             raw_input      (struct pbuf *p, struct netif *inp);
