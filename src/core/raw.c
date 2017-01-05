@@ -403,6 +403,10 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
     return err;
   }
 
+  /* packet too large to add an IP header without causing an overflow? */
+  if ((u16_t)(p->tot_len + header_size) < p->tot_len) {
+    return ERR_MEM;
+  }
   /* not enough space to add an IP header to first pbuf in given p chain? */
   if (pbuf_header(p, header_size)) {
     /* allocate header in new pbuf */

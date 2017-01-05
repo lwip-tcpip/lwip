@@ -701,6 +701,10 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
     }
   }
 
+  /* packet too large to add a UDP header without causing an overflow? */
+  if ((u16_t)(p->tot_len + UDP_HLEN) < p->tot_len) {
+    return ERR_MEM;
+  }
   /* not enough space to add an UDP header to first pbuf in given p chain? */
   if (pbuf_header(p, UDP_HLEN)) {
     /* allocate header in a separate new pbuf */

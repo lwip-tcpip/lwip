@@ -583,6 +583,10 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
     LWIP_ERROR("increment_magnitude <= p->len", (increment_magnitude <= p->len), return 1;);
   } else {
     increment_magnitude = (u16_t)header_size_increment;
+    /* Do not allow tot_len to wrap as a result. */
+    if ((u16_t)(increment_magnitude + p->tot_len) < increment_magnitude) {
+      return 1;
+    }
 #if 0
     /* Can't assert these as some callers speculatively call
          pbuf_header() to see if it's OK.  Will return 1 below instead. */
