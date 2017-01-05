@@ -98,7 +98,8 @@
 #include "lwip/ip.h"
 #include "lwip/tcp.h"
 
-#include <string.h>
+#include <string.h> /* memset */
+#include <stdlib.h> /* atoi */
 #include <stdio.h>
 
 #if LWIP_TCP
