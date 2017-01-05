@@ -94,8 +94,6 @@
 static err_t autoip_arp_announce(struct netif *netif);
 static void autoip_start_probing(struct netif *netif);
 
-#define netif_autoip_data(netif) ((struct autoip*)netif_get_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP))
-
 /**
  * @ingroup autoip 
  * Set a statically allocated struct autoip to work with.
