@@ -281,7 +281,7 @@ mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
 {
   struct mqtt_request_t *head = NULL;
   s16_t time_before = 0;
-  struct mqtt_request_t *iter = *tail;
+  struct mqtt_request_t *iter;
 
   LWIP_ASSERT("mqtt_append_request: tail != NULL", tail != NULL);
 
