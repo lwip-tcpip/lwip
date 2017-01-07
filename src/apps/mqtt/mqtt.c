@@ -257,7 +257,7 @@ mqtt_create_request(struct mqtt_request_t *r_objs, u16_t pkt_id, mqtt_request_cb
   struct mqtt_request_t *r = NULL;
   u8_t n;
   LWIP_ASSERT("mqtt_create_request: r_objs != NULL", r_objs != NULL);
-  for (n = 0; n < MQTT_REQ_MAX_IN_FLIGHT && r == NULL; n++) {
+  for (n = 0; n < MQTT_REQ_MAX_IN_FLIGHT; n++) {
     /* Item point to itself if not in use */
     if (r_objs[n].next == &r_objs[n]) {
       r = &r_objs[n];
@@ -265,6 +265,7 @@ mqtt_create_request(struct mqtt_request_t *r_objs, u16_t pkt_id, mqtt_request_cb
       r->cb = cb;
       r->arg = arg;
       r->pkt_id = pkt_id;
+      break;
     }
   }
   return r;
