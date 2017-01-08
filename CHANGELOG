@@ -20,6 +20,9 @@ HISTORY
   * tcp.h/.c: added function tcp_listen_with_backlog_and_err() to get the error
     reason when listening fails (bug #49861)
 
+  2016-12-20: Erik Andersen
+  * Add MQTT client
+
   2016-12-14: Jan Breuer:
   * opt.h, ndc.h/.c: add support for RDNSS option (as per RFC 6106)
 
