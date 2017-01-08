@@ -8,6 +8,8 @@ with newer versions.
 
   * [Enter new changes just after this line - do not remove this line]
 
+(2.0.1)
+
   ++ Application changes:
 
   * UDP does NOT receive multicast traffic from ALL netifs on an UDP PCB bound to a specific
