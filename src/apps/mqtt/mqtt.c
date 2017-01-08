@@ -1292,7 +1292,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   /* Append client id */
   mqtt_output_append_string(&client->output, client_info->client_id, client_id_length);
   /* Append will message if used */
-  if (will_topic_len > 0) {
+  if ((flags & MQTT_CONNECT_FLAG_WILL) != 0) {
     mqtt_output_append_string(&client->output, client_info->will_topic, will_topic_len);
     mqtt_output_append_string(&client->output, client_info->will_msg, will_msg_len);
   }
