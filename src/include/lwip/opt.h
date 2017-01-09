@@ -144,6 +144,15 @@
 #if !defined SMEMCPY || defined __DOXYGEN__
 #define SMEMCPY(dst,src,len)            memcpy(dst,src,len)
 #endif
+
+/**
+ * MEMMOVE: override this if you have a faster implementation at hand than the
+ * one included in your C library.  lwIP currently uses MEMMOVE only when IPv6
+ * fragmentation support is enabled.
+ */
+#if !defined MEMMOVE || defined __DOXYGEN__
+#define MEMMOVE(dst,src,len)            memmove(dst,src,len)
+#endif
 /**
  * @}
  */
