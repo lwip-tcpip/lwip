@@ -598,15 +598,9 @@ netif_found:
     switch (nexth) {
     case IP6_NEXTH_HOPBYHOP:
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Hop-by-Hop options header\n"));
-      /* Get next header type. */
-      nexth = *((u8_t *)p->payload);
-
-      /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
-      ip_data.current_ip_header_tot_len += hlen;
-
-      /* Skip over this header. */
-      if (hlen > p->len) {
+      /* Get and check the header length, while staying in packet bounds. */
+      if ((p->len < 8) ||
+          ((hlen = 8 * (1 + *((u8_t *)p->payload + 1))) > p->len)) {
         LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
           ("IPv6 options header (hlen %"U16_F") does not fit in first pbuf (len %"U16_F"), IPv6 packet dropped.\n",
               hlen, p->len));
@@ -617,19 +611,20 @@ netif_found:
         goto ip6_input_cleanup;
       }
 
+      ip_data.current_ip_header_tot_len += hlen;
+
+      /* Get next header type. */
+      nexth = *((u8_t *)p->payload);
+
+      /* Skip over this header. */
       pbuf_header(p, -(s16_t)hlen);
       break;
     case IP6_NEXTH_DESTOPTS:
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Destination options header\n"));
-      /* Get next header type. */
-      nexth = *((u8_t *)p->payload);
 
-      /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
-      ip_data.current_ip_header_tot_len += hlen;
-
-      /* Skip over this header. */
-      if (hlen > p->len) {
+      /* Get and check the header length, while staying in packet bounds. */
+      if ((p->len < 8) ||
+          (hlen = 8 * (1 + *((u8_t *)p->payload + 1))) > p->len) {
         LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
           ("IPv6 options header (hlen %"U16_F") does not fit in first pbuf (len %"U16_F"), IPv6 packet dropped.\n",
               hlen, p->len));
@@ -640,19 +635,20 @@ netif_found:
         goto ip6_input_cleanup;
       }
 
+      ip_data.current_ip_header_tot_len += hlen;
+
+      /* Get next header type. */
+      nexth = *((u8_t *)p->payload);
+
+      /* Skip over this header. */
       pbuf_header(p, -(s16_t)hlen);
       break;
     case IP6_NEXTH_ROUTING:
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Routing header\n"));
-      /* Get next header type. */
-      nexth = *((u8_t *)p->payload);
 
-      /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
-      ip_data.current_ip_header_tot_len += hlen;
-
-      /* Skip over this header. */
-      if (hlen > p->len) {
+      /* Get and check the header length, while staying in packet bounds. */
+      if ((p->len < 8) ||
+          (hlen = 8 * (1 + *((u8_t *)p->payload + 1))) > p->len) {
         LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
           ("IPv6 options header (hlen %"U16_F") does not fit in first pbuf (len %"U16_F"), IPv6 packet dropped.\n",
               hlen, p->len));
@@ -662,6 +658,12 @@ netif_found:
         IP6_STATS_INC(ip6.drop);
         goto ip6_input_cleanup;
       }
+
+      /* Get next header type. */
+      nexth = *((u8_t *)p->payload);
+
+      /* Skip over this header. */
+      ip_data.current_ip_header_tot_len += hlen;
 
       pbuf_header(p, -(s16_t)hlen);
       break;
@@ -671,14 +673,8 @@ netif_found:
       struct ip6_frag_hdr *frag_hdr;
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Fragment header\n"));
 
-      frag_hdr = (struct ip6_frag_hdr *)p->payload;
-
-      /* Get next header type. */
-      nexth = frag_hdr->_nexth;
-
       /* Fragment Header length. */
       hlen = 8;
-      ip_data.current_ip_header_tot_len += hlen;
 
       /* Make sure this header fits in current pbuf. */
       if (hlen > p->len) {
@@ -691,6 +687,13 @@ netif_found:
         IP6_FRAG_STATS_INC(ip6_frag.drop);
         goto ip6_input_cleanup;
       }
+
+      ip_data.current_ip_header_tot_len += hlen;
+
+      frag_hdr = (struct ip6_frag_hdr *)p->payload;
+
+      /* Get next header type. */
+      nexth = frag_hdr->_nexth;
 
       /* Offset == 0 and more_fragments == 0? */
       if ((frag_hdr->_fragment_offset &
