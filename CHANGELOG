@@ -5,12 +5,17 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
-
+  
   2017-01-08: David van Moolenbroek
   * Extensions to RAW API (patch #9208)
     - Connected RAW PCBs
     - Add raw_sendto_if_src()
     - Support IP_HDRINCL socket option
+
+  ++ Bugfixes:
+
+  2017-01-11: David van Moolenbroek
+  * Lots of IPv6 related fixes and improvements
 
 (STABLE-2.0.1)
  
