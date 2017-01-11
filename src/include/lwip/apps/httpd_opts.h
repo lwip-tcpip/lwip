@@ -313,7 +313,7 @@
 /** Filename (including path) to use as FS data file */
 #if !defined HTTPD_FSDATA_FILE || defined __DOXYGEN__
 /* HTTPD_USE_CUSTOM_FSDATA: Compatibility with deprecated lwIP option */
-#if HTTPD_USE_CUSTOM_FSDATA
+#if defined(HTTPD_USE_CUSTOM_FSDATA) && (HTTPD_USE_CUSTOM_FSDATA != 0)
 #define HTTPD_FSDATA_FILE "fsdata_custom.c"
 #else
 #define HTTPD_FSDATA_FILE "fsdata.c"
