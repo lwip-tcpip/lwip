@@ -33,15 +33,10 @@
 #include "lwip/apps/httpd_opts.h"
 #include "lwip/def.h"
 #include "lwip/apps/fs.h"
-#include "fsdata.h"
 #include <string.h>
 
 
-#if HTTPD_USE_CUSTOM_FSDATA
-#include "fsdata_custom.c"
-#else /* HTTPD_USE_CUSTOM_FSDATA */
-#include "fsdata.c"
-#endif /* HTTPD_USE_CUSTOM_FSDATA */
+#include HTTPD_FSDATA_FILE
 
 /*-----------------------------------------------------------------------------------*/
 

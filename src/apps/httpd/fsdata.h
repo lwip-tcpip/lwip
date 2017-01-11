@@ -35,16 +35,7 @@
 #include "lwip/apps/httpd_opts.h"
 #include "lwip/apps/fs.h"
 
-struct fsdata_file {
-  const struct fsdata_file *next;
-  const unsigned char *name;
-  const unsigned char *data;
-  int len;
-  u8_t flags;
-#if HTTPD_PRECALCULATED_CHECKSUM
-  u16_t chksum_count;
-  const struct fsdata_chksum *chksum;
-#endif /* HTTPD_PRECALCULATED_CHECKSUM */
-};
+/* THIS FILE IS DEPRECATED AND WILL BE REMOVED IN THE FUTURE */
+/* content was moved to fs.h to simplify #include structure */
 
 #endif /* LWIP_FSDATA_H */

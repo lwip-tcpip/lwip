@@ -310,10 +310,14 @@
 #define LWIP_HTTPD_FS_ASYNC_READ      0
 #endif
 
-/** Set this to 1 to include "fsdata_custom.c" instead of "fsdata.c" for the
- * file system (to prevent changing the file included in CVS) */
-#if !defined HTTPD_USE_CUSTOM_FSDATA || defined __DOXYGEN__
-#define HTTPD_USE_CUSTOM_FSDATA 0
+/** Filename (including path) to use as FS data file */
+#if !defined HTTPD_FSDATA_FILE || defined __DOXYGEN__
+/* HTTPD_USE_CUSTOM_FSDATA: Compatibility with deprecated lwIP option */
+#if HTTPD_USE_CUSTOM_FSDATA
+#define HTTPD_FSDATA_FILE "fsdata_custom.c"
+#else
+#define HTTPD_FSDATA_FILE "fsdata.c"
+#endif
 #endif
 
 /**

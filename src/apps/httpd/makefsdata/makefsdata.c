@@ -306,8 +306,7 @@ int main(int argc, char *argv[])
   CHDIR(path);
 
   fprintf(data_file, "#include \"lwip/apps/fs.h\"" NEWLINE);
-  fprintf(data_file, "#include \"lwip/def.h\"" NEWLINE);
-  fprintf(data_file, "#include \"fsdata.h\"" NEWLINE NEWLINE NEWLINE);
+  fprintf(data_file, "#include \"lwip/def.h\"" NEWLINE NEWLINE NEWLINE);
 
   fprintf(data_file, "#define file_NULL (struct fsdata_file *) NULL" NEWLINE NEWLINE NEWLINE);
   /* define FS_FILE_FLAGS_HEADER_INCLUDED to 1 if not defined (compatibility with older httpd/fs) */

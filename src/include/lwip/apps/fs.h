@@ -96,6 +96,18 @@ void *fs_state_init(struct fs_file *file, const char *name);
 void fs_state_free(struct fs_file *file, void *state);
 #endif /* #if LWIP_HTTPD_FILE_STATE */
 
+struct fsdata_file {
+  const struct fsdata_file *next;
+  const unsigned char *name;
+  const unsigned char *data;
+  int len;
+  u8_t flags;
+#if HTTPD_PRECALCULATED_CHECKSUM
+  u16_t chksum_count;
+  const struct fsdata_chksum *chksum;
+#endif /* HTTPD_PRECALCULATED_CHECKSUM */
+};
+
 #ifdef __cplusplus
 }
 #endif
