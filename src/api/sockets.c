@@ -2574,6 +2574,12 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     switch (optname) {
 #if LWIP_IPV6 && LWIP_RAW
     case IPV6_CHECKSUM:
+      /* It should not be possible to disable the checksum generation with ICMPv6
+       * as per RFC 3542 chapter 3.1 */
+      if(sock->conn->pcb.raw->protocol == IPPROTO_ICMPV6) {
+        return EINVAL;
+      }
+
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_RAW);
       if (*(const int *)optval < 0) {
         sock->conn->pcb.raw->chksum_reqd = 0;

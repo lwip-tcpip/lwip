@@ -53,6 +53,7 @@
 #include "lwip/dns.h"
 #include "lwip/mld6.h"
 #include "lwip/priv/tcpip_priv.h"
+#include "lwip/sockets.h"
 
 #include <string.h>
 
@@ -562,6 +563,13 @@ pcb_new(struct api_msg *msg)
   case NETCONN_RAW:
     msg->conn->pcb.raw = raw_new_ip_type(iptype, msg->msg.n.proto);
     if (msg->conn->pcb.raw != NULL) {
+#if LWIP_IPV6
+      /* ICMPv6 packets should always have checksum calculated by the stack as per RFC 3542 chapter 3.1 */
+      if (NETCONNTYPE_ISIPV6(msg->conn->type) && msg->conn->pcb.raw->protocol == IPPROTO_ICMPV6) {
+        msg->conn->pcb.raw->chksum_reqd = 1;
+        msg->conn->pcb.raw->chksum_offset = 2;
+      }
+#endif /* LWIP_IPV6 */
       raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
     }
     break;
