@@ -530,7 +530,7 @@ ip6_reass(struct pbuf *p)
     /* chain together the pbufs contained within the ip6_reassdata list. */
     iprh = (struct ip6_reass_helper*) ipr->p->payload;
     while (iprh != NULL) {
-      struct pbuf* next_pbuf = iprh->next_pbuf;
+      next_pbuf = iprh->next_pbuf;
       if (next_pbuf != NULL) {
         /* Save next helper struct (will be hidden in next step). */
         iprh_tmp = (struct ip6_reass_helper*)next_pbuf->payload;
