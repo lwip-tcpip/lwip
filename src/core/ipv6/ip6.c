@@ -224,8 +224,11 @@ ip6_select_source_address(struct netif *netif, const ip6_addr_t *dest)
 {
   const ip_addr_t *best_addr;
   const ip6_addr_t *cand_addr;
-  s8_t dest_scope, cand_scope, best_scope;
-  u8_t i, cand_pref, best_pref, cand_bits, best_bits;
+  s8_t dest_scope, cand_scope;
+  s8_t best_scope = IP6_MULTICAST_SCOPE_RESERVED;
+  u8_t i, cand_pref, cand_bits;
+  u8_t best_pref = 0;
+  u8_t best_bits = 0;
 
   /* Start by determining the scope of the given destination address. These
    * tests are hopefully (roughly) in order of likeliness to match. */
