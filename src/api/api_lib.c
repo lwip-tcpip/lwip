@@ -408,6 +408,8 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   }
 
 #if TCP_LISTEN_BACKLOG
+  /* need to allocate API message here so empty message pool does not result in event loss
+   * see bug #47512: MPU_COMPATIBLE may fail on empty pool */
   API_MSG_VAR_ALLOC(msg);
 #endif /* TCP_LISTEN_BACKLOG */
 
@@ -512,6 +514,8 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
   if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   {
+    /* need to allocate API message here so empty message pool does not result in event loss
+     * see bug #47512: MPU_COMPATIBLE may fail on empty pool */
     API_MSG_VAR_ALLOC(msg);
   }
 #endif /* LWIP_TCP */
