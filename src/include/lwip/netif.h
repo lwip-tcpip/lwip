@@ -287,14 +287,6 @@ struct netif {
 #ifdef netif_get_client_data
   void* client_data[LWIP_NETIF_CLIENT_DATA_INDEX_MAX + LWIP_NUM_NETIF_CLIENT_DATA];
 #endif
-#if LWIP_IPV6_AUTOCONFIG
-  /** is this netif enabled for IPv6 autoconfiguration */
-  u8_t ip6_autoconfig_enabled;
-#endif /* LWIP_IPV6_AUTOCONFIG */
-#if LWIP_IPV6_SEND_ROUTER_SOLICIT
-  /** Number of Router Solicitation messages that remain to be sent. */
-  u8_t rs_count;
-#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 #if LWIP_NETIF_HOSTNAME
   /* the hostname for this netif, NULL is a valid value */
   const char*  hostname;
@@ -304,16 +296,26 @@ struct netif {
 #endif /* LWIP_CHECKSUM_CTRL_PER_NETIF*/
   /** maximum transfer unit (in bytes) */
   u16_t mtu;
+  /** link level hardware address of this interface */
+  /* Ensure hwaddr is 16-bit aligned by placing it behind u16_t value
+   * because it is accessed via ETHADDR16_COPY() macro in etharp.c and autoip.c */
+  u8_t hwaddr[NETIF_MAX_HWADDR_LEN];
   /** number of bytes used in hwaddr */
   u8_t hwaddr_len;
-  /** link level hardware address of this interface */
-  u8_t hwaddr[NETIF_MAX_HWADDR_LEN];
   /** flags (@see @ref netif_flags) */
   u8_t flags;
   /** descriptive abbreviation */
   char name[2];
   /** number of this interface */
   u8_t num;
+#if LWIP_IPV6_AUTOCONFIG
+  /** is this netif enabled for IPv6 autoconfiguration */
+  u8_t ip6_autoconfig_enabled;
+#endif /* LWIP_IPV6_AUTOCONFIG */
+#if LWIP_IPV6_SEND_ROUTER_SOLICIT
+  /** Number of Router Solicitation messages that remain to be sent. */
+  u8_t rs_count;
+#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 #if MIB2_STATS
   /** link type (from "snmp_ifType" enum from snmp_mib2.h) */
   u8_t link_type;
