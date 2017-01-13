@@ -289,7 +289,7 @@ ethernet_output(struct netif* netif, struct pbuf* p,
 
   ethhdr = (struct eth_hdr*)p->payload;
   ethhdr->type = eth_type_be;
-  ETHADDR32_COPY(&ethhdr->dest, dst);
+  ETHADDR16_COPY(&ethhdr->dest, dst);
   ETHADDR16_COPY(&ethhdr->src,  src);
 
   LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",

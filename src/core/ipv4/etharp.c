@@ -456,7 +456,7 @@ etharp_update_arp_entry(struct netif *netif, const ip4_addr_t *ipaddr, struct et
 
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */
-  ETHADDR32_COPY(&arp_table[i].ethaddr, ethaddr);
+  ETHADDR16_COPY(&arp_table[i].ethaddr, ethaddr);
   /* reset time stamp */
   arp_table[i].ctime = 0;
   /* this is where we will send out queued packets! */
