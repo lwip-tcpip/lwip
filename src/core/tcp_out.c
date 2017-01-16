@@ -490,7 +490,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
      * the end.
      */
     if ((pos < len) && (space > 0) && (last_unsent->len > 0)) {
-      u16_t seglen = space < len - pos ? space : len - pos;
+      u16_t seglen = LWIP_MIN(space, len - pos);
       seg = last_unsent;
 
       /* Create a pbuf with a copy or reference to seglen bytes. We
@@ -557,7 +557,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
     struct pbuf *p;
     u16_t left = len - pos;
     u16_t max_len = mss_local - optlen;
-    u16_t seglen = left > max_len ? max_len : left;
+    u16_t seglen = LWIP_MIN(left, max_len);
 #if TCP_CHECKSUM_ON_COPY
     u16_t chksum = 0;
     u8_t chksum_swapped = 0;
@@ -1488,11 +1488,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
 
     /* Set ssthresh to half of the minimum of the current
      * cwnd and the advertised window */
-    if (pcb->cwnd > pcb->snd_wnd) {
-      pcb->ssthresh = pcb->snd_wnd / 2;
-    } else {
-      pcb->ssthresh = pcb->cwnd / 2;
-    }
+    pcb->ssthresh = LWIP_MIN(pcb->cwnd, pcb->snd_wnd) / 2;
 
     /* The minimum value for ssthresh should be 2 MSS */
     if (pcb->ssthresh < (2U * pcb->mss)) {
