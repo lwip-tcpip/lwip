@@ -249,7 +249,7 @@ struct tcp_seg {
 #if TCP_OVERSIZE_DBGCHECK
   u16_t oversize_left;     /* Extra bytes available at the end of the last
                               pbuf in unsent (used for asserting vs.
-                              tcp_pcb.unsent_oversized only) */
+                              tcp_pcb.unsent_oversize only) */
 #endif /* TCP_OVERSIZE_DBGCHECK */
 #if TCP_CHECKSUM_ON_COPY
   u16_t chksum;
