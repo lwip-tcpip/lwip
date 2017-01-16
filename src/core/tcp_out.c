@@ -461,7 +461,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
      */
 #if TCP_OVERSIZE
 #if TCP_OVERSIZE_DBGCHECK
-    /* check that pcb->unsent_oversize matches last_unsent->unsent_oversize */
+    /* check that pcb->unsent_oversize matches last_unsent->oversize_left */
     LWIP_ASSERT("unsent_oversize mismatch (pcb vs. last_unsent)",
                 pcb->unsent_oversize == last_unsent->oversize_left);
 #endif /* TCP_OVERSIZE_DBGCHECK */
