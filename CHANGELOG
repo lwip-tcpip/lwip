@@ -14,6 +14,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-01-18: Dirk Ziegelmeier
+  * Fix zero-copy RX, see bug bug #50064. PBUF_REFs were not supported as ARP requests.
+
   2017-01-11: David van Moolenbroek
   * Lots of IPv6 related fixes and improvements
 
