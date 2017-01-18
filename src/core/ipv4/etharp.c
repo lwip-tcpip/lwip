@@ -699,11 +699,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
     LWIP_DEBUGF (ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: incoming ARP request\n"));
     /* ARP request for our address? */
     if (for_us) {
-      ip4_addr_t sipaddr;
-
-      /* Need an aligned copy of source IP */
-      IPADDR2_COPY(&sipaddr.addr, &hdr->sipaddr);
-
+      /* send ARP response */
       etharp_raw(netif,
                  (struct eth_addr *)netif->hwaddr, &hdr->dhwaddr,
                  (struct eth_addr *)netif->hwaddr, netif_ip4_addr(netif),
