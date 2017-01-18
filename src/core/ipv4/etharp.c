@@ -699,47 +699,16 @@ etharp_input(struct pbuf *p, struct netif *netif)
     LWIP_DEBUGF (ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: incoming ARP request\n"));
     /* ARP request for our address? */
     if (for_us) {
-      if (p->type == PBUF_REF) {
-        ip4_addr_t sipaddr;
-        IPADDR2_COPY(&sipaddr.addr, &hdr->sipaddr);
+      ip4_addr_t sipaddr;
 
-        etharp_raw(netif,
-                   (struct eth_addr *)netif->hwaddr, &hdr->dhwaddr,
-                   (struct eth_addr *)netif->hwaddr, netif_ip4_addr(netif),
-                   &hdr->shwaddr, &sipaddr,
-                   ARP_REPLY);
-      } else {
-        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_input: replying to ARP request for our IP address\n"));
-        /* Re-use pbuf to send ARP reply.
-           Since we are re-using an existing pbuf, we can't call etharp_raw since
-           that would allocate a new pbuf. */
-        hdr->opcode = lwip_htons(ARP_REPLY);
+      /* Need an aligned copy of source IP */
+      IPADDR2_COPY(&sipaddr.addr, &hdr->sipaddr);
 
-        IPADDR2_COPY(&hdr->dipaddr, &hdr->sipaddr);
-        IPADDR2_COPY(&hdr->sipaddr, netif_ip4_addr(netif));
-
-        LWIP_ASSERT("netif->hwaddr_len must be the same as ETH_HWADDR_LEN for etharp!",
-                    (netif->hwaddr_len == ETH_HWADDR_LEN));
-
-        /* hwtype, hwaddr_len, proto, protolen and the type in the ethernet header
-           are already correct, we tested that before */
-
-        ETHADDR16_COPY(&hdr->dhwaddr, &hdr->shwaddr);
-        ETHADDR16_COPY(&hdr->shwaddr, netif->hwaddr);
-
-        /* return ARP reply */
-#if LWIP_AUTOIP
-        /* If we are using Link-Local, all ARP packets that contain a Link-Local
-         * 'sender IP address' MUST be sent using link-layer broadcast instead of
-         * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
-        if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
-          ethernet_output(netif, p, &hdr->shwaddr, &ethbroadcast, ETHTYPE_ARP);
-        } else
-#endif /* LWIP_AUTOIP */
-        {
-          ethernet_output(netif, p, &hdr->shwaddr, &hdr->dhwaddr, ETHTYPE_ARP);
-        }
-      }
+      etharp_raw(netif,
+                 (struct eth_addr *)netif->hwaddr, &hdr->dhwaddr,
+                 (struct eth_addr *)netif->hwaddr, netif_ip4_addr(netif),
+                 &hdr->shwaddr, &sipaddr,
+                 ARP_REPLY);
     /* we are not configured? */
     } else if (ip4_addr_isany_val(*netif_ip4_addr(netif))) {
       /* { for_us == 0 and netif->ip_addr.addr == 0 } */
