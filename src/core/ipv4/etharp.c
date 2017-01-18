@@ -701,7 +701,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
     if (for_us) {
       /* send ARP response */
       etharp_raw(netif,
-                 (struct eth_addr *)netif->hwaddr, &hdr->dhwaddr,
+                 (struct eth_addr *)netif->hwaddr, &hdr->shwaddr,
                  (struct eth_addr *)netif->hwaddr, netif_ip4_addr(netif),
                  &hdr->shwaddr, &sipaddr,
                  ARP_REPLY);
