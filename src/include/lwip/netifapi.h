@@ -40,6 +40,7 @@
 #include "lwip/netif.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
+#include "lwip/if.h"
 #include "lwip/priv/tcpip_priv.h"
 
 #ifdef __cplusplus
@@ -73,6 +74,14 @@ struct netifapi_msg {
       netifapi_void_fn voidfunc;
       netifapi_errt_fn errtfunc;
     } common;
+    struct {
+#if LWIP_MPU_COMPATIBLE
+      char name[IF_NAMESIZE];
+#else /* LWIP_MPU_COMPATIBLE */
+      char *name;
+#endif /* LWIP_MPU_COMPATIBLE */
+      u8_t index;
+    } ifs;
   } msg;
 };
 
@@ -91,6 +100,11 @@ err_t netifapi_netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr,
 
 err_t netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
                             netifapi_errt_fn errtfunc);
+
+/** @ingroup netifapi_netif */
+err_t netifapi_netif_name_to_index(const char *name, u8_t *index);
+/** @ingroup netifapi_netif */
+err_t netifapi_netif_index_to_name(u8_t index, char *name);
 
 /** @ingroup netifapi_netif */
 #define netifapi_netif_remove(n)        netifapi_netif_common(n, netif_remove, NULL)

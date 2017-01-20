@@ -65,6 +65,7 @@
 #include "lwip/stats.h"
 #include "lwip/sys.h"
 #include "lwip/ip.h"
+#include "lwip/if.h"
 #if ENABLE_LOOPBACK
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
 #include "lwip/tcpip.h"
@@ -1269,3 +1270,52 @@ netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipa
   return ERR_IF;
 }
 #endif /* LWIP_IPV6 */
+
+/**
+* @ingroup netif_if
+* Return the interface index for the netif with name
+* or 0 (invalid interface) if not found/on error
+*
+* @param name the name of the netif
+*/
+u8_t
+netif_name_to_index(const char *name)
+{
+  struct netif *netif = netif_find(name);
+  if (netif != NULL) {
+    return netif_num_to_index(netif);
+  }
+  /* No name found, return invalid index */
+  return 0;
+}
+
+/**
+* @ingroup netif_if
+* Return the interface name for the netif matching index
+* or NULL if not found/on error
+*
+* @param index the interface index of the netif
+* @param name char buffer of at least IF_NAMESIZE bytes
+*/
+char *
+netif_index_to_name(u8_t index, char *name)
+{
+  struct netif *curif = netif_list;
+  u8_t num;
+  if (index == 0) {
+    return NULL; /* indexes start at 1 */
+  }
+  num = netif_index_to_num(index);
+
+  /* find netif from num */
+  while (curif != NULL) {
+    if (curif->num == num) {
+      name[0] = curif->name[0];
+      name[1] = curif->name[1];
+      lwip_itoa(&name[2], IF_NAMESIZE - 2, num);
+      return name;
+    }
+    curif = curif->next;
+  }
+  return NULL;
+}

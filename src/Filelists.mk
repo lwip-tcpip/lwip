@@ -71,6 +71,7 @@ CORE6FILES=$(LWIPDIR)/core/ipv6/dhcp6.c \
 APIFILES=$(LWIPDIR)/api/api_lib.c \
 	$(LWIPDIR)/api/api_msg.c \
 	$(LWIPDIR)/api/err.c \
+	$(LWIPDIR)/api/if.c \
 	$(LWIPDIR)/api/netbuf.c \
 	$(LWIPDIR)/api/netdb.c \
 	$(LWIPDIR)/api/netifapi.c \
