@@ -300,7 +300,6 @@ netif_add(struct netif *netif,
   /* remember netif specific state information data */
   netif->state = state;
   netif->num = netif_num++;
-  LWIP_ASSERT("Netif num overflow, too many netifs or adds/removes", netif->num < 255);
   netif->input = input;
 
   NETIF_SET_HWADDRHINT(netif, NULL);
@@ -316,6 +315,11 @@ netif_add(struct netif *netif,
   if (init(netif) != ERR_OK) {
     return NULL;
   }
+
+  /* check that netif_num has not overflowed or that init callback
+  provided a valid number (we don't support 255 since that can't be
+  converted to an index) */
+  LWIP_ASSERT("Netif num overflow/invalid num", netif->num < 255);
 
   /* add this netif to the list */
   netif->next = netif_list;
