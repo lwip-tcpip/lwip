@@ -299,6 +299,7 @@ netif_add(struct netif *netif,
   /* remember netif specific state information data */
   netif->state = state;
   netif->num = netif_num++;
+  LWIP_ASSERT("Netif num overflow, too many netifs or adds/removes", netif->num < 255);
   netif->input = input;
 
   NETIF_SET_HWADDRHINT(netif, NULL);
