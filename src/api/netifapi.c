@@ -272,7 +272,7 @@ netifapi_netif_name_to_index(const char *name, u8_t *index)
   strncpy(NETIFAPI_VAR_REF(msg).msg.ifs.name, name, IF_NAMESIZE - 1);
   NETIFAPI_VAR_REF(msg).msg.ifs.name[IF_NAMESIZE - 1] = '\0';
 #else
-  NETIFAPI_VAR_REF(msg).msg.ifs.name = (char *)name;
+  NETIFAPI_VAR_REF(msg).msg.ifs.name = LWIP_CONST_CAST(char*, name);
 #endif /* LWIP_MPU_COMPATIBLE */
   err = tcpip_api_call(netifapi_do_name_to_index, &API_VAR_REF(msg).call);
   if (!err) {
