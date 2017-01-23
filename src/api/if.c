@@ -45,6 +45,7 @@
 char *
 lwip_if_indextoname(unsigned ifindex, char *ifname)
 {
+#if LWIP_NETIF_API
   err_t err;
   if (ifindex > 0xff) {
     return NULL;
@@ -54,12 +55,17 @@ lwip_if_indextoname(unsigned ifindex, char *ifname)
   if (!err && ifname[0] != '\0') {
     return ifname;
   }
+#else /* LWIP_NETIF_API */
+  LWIP_UNUSED_ARG(ifindex);
+  LWIP_UNUSED_ARG(ifname);
+#endif /* LWIP_NETIF_API */
   return NULL;
 }
 
 unsigned int
 lwip_if_nametoindex(const char *ifname)
 {
+#if LWIP_NETIF_API
   err_t err;
   u8_t index;
   
@@ -67,6 +73,9 @@ lwip_if_nametoindex(const char *ifname)
   if (!err) {
     return index;
   }
+#else /* LWIP_NETIF_API */
+  LWIP_UNUSED_ARG(ifname);
+#endif /* LWIP_NETIF_API */
   return 0; /* invalid index */
 }
 
