@@ -40,6 +40,7 @@
 
 #if LWIP_SOCKET
 
+#include "lwip/if.h"
 #include "lwip/netifapi.h"
 
 char *
