@@ -1273,8 +1273,8 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
   LWIP_UNUSED_ARG(our_eui64);
   LWIP_UNUSED_ARG(his_eui64);
 
-  netif_ip6_addr_set(pcb->netif, 0, IP6_ADDR_ANY6);
   netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_INVALID);
+  netif_ip6_addr_set(pcb->netif, 0, IP6_ADDR_ANY6);
   return 1;
 }
 
