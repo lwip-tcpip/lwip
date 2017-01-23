@@ -257,16 +257,16 @@ netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
 * tcpip_thread context.
 *
 * @param name the interface name of the netif
-* @param index output index of the found netif
+* @param idx output index of the found netif
 */
 err_t
-netifapi_netif_name_to_index(const char *name, u8_t *index)
+netifapi_netif_name_to_index(const char *name, u8_t *idx)
 {
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
 
-  *index = 0;
+  *idx = 0;
 
 #if LWIP_MPU_COMPATIBLE
   strncpy(NETIFAPI_VAR_REF(msg).msg.ifs.name, name, IF_NAMESIZE - 1);
@@ -276,7 +276,7 @@ netifapi_netif_name_to_index(const char *name, u8_t *index)
 #endif /* LWIP_MPU_COMPATIBLE */
   err = tcpip_api_call(netifapi_do_name_to_index, &API_VAR_REF(msg).call);
   if (!err) {
-    *index = NETIFAPI_VAR_REF(msg).msg.ifs.index;
+    *idx = NETIFAPI_VAR_REF(msg).msg.ifs.index;
   }
   NETIFAPI_VAR_FREE(msg);
   return err;
@@ -287,18 +287,18 @@ netifapi_netif_name_to_index(const char *name, u8_t *index)
 * Call netif_index_to_name() in a thread-safe way by running that function inside the
 * tcpip_thread context.
 *
-* @param index the interface index of the netif
+* @param idx the interface index of the netif
 * @param name output name of the found netif, empty '\0' string if netif not found.
 *             name should be of at least IF_NAMESIZE bytes
 */
 err_t
-netifapi_netif_index_to_name(u8_t index, char *name)
+netifapi_netif_index_to_name(u8_t idx, char *name)
 {
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
 
-  NETIFAPI_VAR_REF(msg).msg.ifs.index = index;
+  NETIFAPI_VAR_REF(msg).msg.ifs.index = idx;
 #if !LWIP_MPU_COMPATIBLE
   NETIFAPI_VAR_REF(msg).msg.ifs.name = name;
 #endif /* LWIP_MPU_COMPATIBLE */
