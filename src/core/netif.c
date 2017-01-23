@@ -1302,14 +1302,14 @@ netif_name_to_index(const char *name)
 * @param name char buffer of at least IF_NAMESIZE bytes
 */
 char *
-netif_index_to_name(u8_t index, char *name)
+netif_index_to_name(u8_t idx, char *name)
 {
   struct netif *curif = netif_list;
   u8_t num;
-  if (index == 0) {
+  if (idx == 0) {
     return NULL; /* indexes start at 1 */
   }
-  num = netif_index_to_num(index);
+  num = netif_index_to_num(idx);
 
   /* find netif from num */
   while (curif != NULL) {
