@@ -113,9 +113,9 @@ stats_display_mem(struct stats_mem *mem, const char *name)
 
 #if MEMP_STATS
 void
-stats_display_memp(struct stats_mem *mem, int index)
+stats_display_memp(struct stats_mem *mem, int idx)
 {
-  if (index < MEMP_MAX) {
+  if (idx < MEMP_MAX) {
     stats_display_mem(mem, mem->name);
   }
 }
