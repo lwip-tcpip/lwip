@@ -160,6 +160,8 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
     return 0;
   }
 
+  ip6_addr_clear_zone(addr);
+
   return 1;
 }
 

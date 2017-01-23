@@ -169,7 +169,15 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
       LWIP_ASSERT("ip6_reass_free: moving p->payload to ip6 header failed\n", 0);
     }
     else {
-      icmp6_time_exceeded(p, ICMP6_TE_FRAG);
+      /* Reconstruct the zoned source and destination addresses, so that we do
+       * not end up sending the ICMP response over the wrong link. */
+      ip6_addr_t src_addr, dest_addr;
+      ip6_addr_copy_from_packed(src_addr, IPV6_FRAG_SRC(ipr));
+      ip6_addr_set_zone(&src_addr, ipr->src_zone);
+      ip6_addr_copy_from_packed(dest_addr, IPV6_FRAG_DEST(ipr));
+      ip6_addr_set_zone(&dest_addr, ipr->dest_zone);
+      /* Send the actual ICMP response. */
+      icmp6_time_exceeded_with_addrs(p, ICMP6_TE_FRAG, &src_addr, &dest_addr);
     }
     clen = pbuf_clen(p);
     LWIP_ASSERT("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
@@ -297,8 +305,8 @@ ip6_reass(struct pbuf *p)
        in the reassembly buffer. If so, we proceed with copying the
        fragment into the buffer. */
     if ((frag_hdr->_identification == ipr->identification) &&
-        ip6_addr_cmp(ip6_current_src_addr(), &(IPV6_FRAG_SRC(ipr))) &&
-        ip6_addr_cmp(ip6_current_dest_addr(), &(IPV6_FRAG_DEST(ipr)))) {
+        ip6_addr_cmp_packed(ip6_current_src_addr(), &(IPV6_FRAG_SRC(ipr)), ipr->src_zone) &&
+        ip6_addr_cmp_packed(ip6_current_dest_addr(), &(IPV6_FRAG_DEST(ipr)), ipr->dest_zone)) {
       IP6_FRAG_STATS_INC(ip6_frag.cachehit);
       break;
     }
@@ -345,7 +353,16 @@ ip6_reass(struct pbuf *p)
     MEMCPY(&ipr->src, &ip6_current_header()->src, sizeof(ipr->src));
     MEMCPY(&ipr->dest, &ip6_current_header()->dest, sizeof(ipr->dest));
 #endif /* IPV6_FRAG_COPYHEADER */
-
+#if LWIP_IPV6_SCOPES
+    /* Also store the address zone information.
+     * @todo It is possible that due to netif destruction and recreation, the
+     * stored zones end up resolving to a different interface. In that case, we
+     * risk sending a "time exceeded" ICMP response over the wrong link.
+     * Ideally, netif destruction would clean up matching pending reassembly
+     * structures, but custom zone mappings would make that non-trivial. */
+    ipr->src_zone = ip6_addr_zone(ip6_current_src_addr());
+    ipr->dest_zone = ip6_addr_zone(ip6_current_dest_addr());
+#endif /* LWIP_IPV6_SCOPES */
     /* copy the fragmented packet id. */
     ipr->identification = frag_hdr->_identification;
 
@@ -489,7 +506,8 @@ ip6_reass(struct pbuf *p)
      * overwrite, so that we can restore the original later. */
     MEMCPY(ipr->orig_hdr, p->payload, sizeof(*iprh));
     /* For IPV6_FRAG_COPYHEADER there is no need to copy src/dst again, as they
-     * will be the same as they were. */
+     * will be the same as they were. With LWIP_IPV6_SCOPES, the same applies
+     * to the source/destination zones. */
   }
   /* Only after the backup do we get to fill in the actual helper structure. */
   iprh->next_pbuf = next_pbuf;

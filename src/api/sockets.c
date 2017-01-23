@@ -96,9 +96,12 @@
       (sin6)->sin6_port = lwip_htons((port)); \
       (sin6)->sin6_flowinfo = 0; \
       inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipaddr); \
-      (sin6)->sin6_scope_id = 0; }while(0)
+      (sin6)->sin6_scope_id = ip6_addr_zone(ipaddr); }while(0)
 #define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipaddr, port) do { \
     inet6_addr_to_ip6addr(ip_2_ip6(ipaddr), &((sin6)->sin6_addr)); \
+    if (ip6_addr_has_scope(ip_2_ip6(ipaddr), IP6_UNKNOWN)) { \
+      ip6_addr_set_zone(ip_2_ip6(ipaddr), (sin6)->sin6_scope_id); \
+    } \
     (port) = lwip_ntohs((sin6)->sin6_port); }while(0)
 #endif /* LWIP_IPV6 */
 

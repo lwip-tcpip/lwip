@@ -105,6 +105,10 @@ struct ip6_reassdata {
   u16_t datagram_len;
   u8_t nexth;
   u8_t timer;
+#if LWIP_IPV6_SCOPES
+  u8_t src_zone; /* zone of original packet's source address */
+  u8_t dest_zone; /* zone of original packet's destination address */
+#endif /* LWIP_IPV6_SCOPES */
 };
 
 #define ip6_reass_init() /* Compatibility define */

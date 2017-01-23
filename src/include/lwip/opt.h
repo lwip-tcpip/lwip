@@ -2165,6 +2165,25 @@
 #endif
 
 /**
+ * LWIP_IPV6_SCOPES==1: Enable support for IPv6 address scopes, ensuring that
+ * e.g. link-local addresses are really treated as link-local. Disable this
+ * setting only for single-interface configurations.
+ */
+#if !defined LWIP_IPV6_SCOPES || defined __DOXYGEN__
+#define LWIP_IPV6_SCOPES                (LWIP_IPV6)
+#endif
+
+/**
+ * LWIP_IPV6_SCOPES_DEBUG==1: Perform run-time checks to verify that addresses
+ * are properly zoned (see ip6_zone.h on what that means) where it matters.
+ * Enabling this setting is highly recommended when upgrading from an existing
+ * installation that is not yet scope-aware; otherwise it may be too expensive.
+ */
+#if !defined LWIP_IPV6_SCOPES_DEBUG || defined __DOXYGEN__
+#define LWIP_IPV6_SCOPES_DEBUG          0
+#endif
+
+/**
  * LWIP_IPV6_NUM_ADDRESSES: Number of IPv6 addresses per netif.
  */
 #if !defined LWIP_IPV6_NUM_ADDRESSES || defined __DOXYGEN__

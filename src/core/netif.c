@@ -1042,6 +1042,7 @@ void
 netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3)
 {
   const ip6_addr_t *old_addr;
+  ip_addr_t new_ipaddr;
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
@@ -1051,11 +1052,10 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
       (old_addr->addr[2] != i2) || (old_addr->addr[3] != i3)) {
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_ip6_addr_set: netif address being changed\n"));
 
+    IP_ADDR6(&new_ipaddr, i0, i1, i2, i3);
+    ip6_addr_assign_zone(ip_2_ip6(&new_ipaddr), IP6_UNICAST, netif);
+
     if (netif_ip6_addr_state(netif, addr_idx) & IP6_ADDR_VALID) {
-#if LWIP_TCP || LWIP_UDP
-      ip_addr_t new_ipaddr;
-      IP_ADDR6(&new_ipaddr, i0, i1, i2, i3);
-#endif /* LWIP_TCP || LWIP_UDP */
 #if LWIP_TCP
       tcp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_TCP */
@@ -1068,8 +1068,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
     }
     /* @todo: remove/readd mib2 ip6 entries? */
 
-    IP6_ADDR(ip_2_ip6(&(netif->ip6_addr[addr_idx])), i0, i1, i2, i3);
-    IP_SET_TYPE_VAL(netif->ip6_addr[addr_idx], IPADDR_TYPE_V6);
+    ip_addr_copy(netif->ip6_addr[addr_idx], new_ipaddr);
 
     if (netif_ip6_addr_state(netif, addr_idx) & IP6_ADDR_VALID) {
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV6);
@@ -1130,6 +1129,8 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
 
     if (!old_valid && new_valid) {
       /* address added by setting valid */
+      /* This is a good moment to check that the address is properly zoned. */
+      IP6_ADDR_ZONECHECK_NETIF(netif_ip6_addr(netif, addr_idx), netif);
       /* @todo: add mib2 ip6 entries? */
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV6);
     }
@@ -1150,6 +1151,10 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
  * index. Depending on its state, it may or may not be assigned to the
  * interface (as per RFC terminology).
  *
+ * The given address may or may not be zoned (i.e., have a zone index other
+ * than IP6_NO_ZONE). If the address is zoned, it must have the correct zone
+ * for the given netif, or no match will be found.
+ *
  * @param netif the netif to check
  * @param ip6addr the IPv6 address to find
  * @return >= 0: address found, this is its index
@@ -1159,9 +1164,16 @@ s8_t
 netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
 {
   s8_t i;
+
+#if LWIP_IPV6_SCOPES
+  if (ip6_addr_has_zone(ip6addr) && !ip6_addr_test_zone(ip6addr, netif)) {
+    return -1; /* wrong zone, no match */
+  }
+#endif /* LWIP_IPV6_SCOPES */
+
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
-        ip6_addr_cmp(netif_ip6_addr(netif, i), ip6addr)) {
+        ip6_addr_cmp_zoneless(netif_ip6_addr(netif, i), ip6addr)) {
       return i;
     }
   }
@@ -1210,6 +1222,16 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
     }
   }
 
+  /* Set a link-local zone. Even though the zone is implied by the owning
+   * netif, setting the zone anyway has two important conceptual advantages:
+   * 1) it avoids the need for a ton of exceptions in internal code, allowing
+   *    e.g. ip6_addr_cmp() to be used on local addresses;
+   * 2) the properly zoned address is visible externally, e.g. when any outside
+   *    code enumerates available addresses or uses one to bind a socket.
+   * Any external code unaware of address scoping is likely to just ignore the
+   * zone field, so this should not create any compatibility problems. */
+  ip6_addr_assign_zone(ip_2_ip6(&netif->ip6_addr[0]), IP6_UNICAST, netif);
+
   /* Set address state. */
 #if LWIP_IPV6_DUP_DETECT_ATTEMPTS
   /* Will perform duplicate address detection (DAD). */
@@ -1244,10 +1266,11 @@ netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chos
     return ERR_OK;
   }
 
-  /* Find a free slot -- musn't be the first one (reserved for link local) */
-  for (i = 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+  /* Find a free slot. The first one is reserved for link-local addresses. */
+  for (i = ip6_addr_islinklocal(ip6addr) ? 0 : 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (ip6_addr_isinvalid(netif_ip6_addr_state(netif, i))) {
       ip_addr_copy_from_ip6(netif->ip6_addr[i], *ip6addr);
+      ip6_addr_assign_zone(ip_2_ip6(&netif->ip6_addr[i]), IP6_UNICAST, netif);
       netif_ip6_addr_set_state(netif, i, IP6_ADDR_TENTATIVE);
       if (chosen_idx != NULL) {
         *chosen_idx = i;

@@ -542,6 +542,9 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   int i;
   int max_pcb_list = NUM_TCP_PCB_LISTS;
   struct tcp_pcb *cpcb;
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  ip_addr_t zoned_ipaddr;
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
@@ -567,6 +570,18 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
     max_pcb_list = NUM_TCP_PCB_LISTS_NO_TIME_WAIT;
   }
 #endif /* SO_REUSE */
+
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  /* If the given IP address should have a zone but doesn't, assign one now.
+   * This is legacy support: scope-aware callers should always provide properly
+   * zoned source addresses. Do the zone selection before the address-in-use
+   * check below; as such we have to make a temporary copy of the address. */
+  if (IP_IS_V6(ipaddr) && ip6_addr_lacks_zone(ip_2_ip6(ipaddr), IP6_UNICAST)) {
+    ip_addr_copy(zoned_ipaddr, *ipaddr);
+    ip6_addr_select_zone(ip_2_ip6(&zoned_ipaddr), ip_2_ip6(&zoned_ipaddr));
+    ipaddr = &zoned_ipaddr;
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
   if (port == 0) {
     port = tcp_new_port();
@@ -855,6 +870,7 @@ err_t
 tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
       tcp_connected_fn connected)
 {
+  struct netif *netif = NULL;
   err_t ret;
   u32_t iss;
   u16_t old_local_port;
@@ -872,7 +888,6 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   /* check if we have a route to the remote host */
   if (ip_addr_isany(&pcb->local_ip)) {
     /* no local IP address set, yet. */
-    struct netif *netif;
     const ip_addr_t *local_ip;
     ip_route_get_local_ip(&pcb->local_ip, &pcb->remote_ip, netif, local_ip);
     if ((netif == NULL) || (local_ip == NULL)) {
@@ -882,7 +897,24 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
     }
     /* Use the address as local address of the pcb. */
     ip_addr_copy(pcb->local_ip, *local_ip);
+  } else {
+    netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+    if (netif == NULL) {
+      /* Don't even try to send a SYN packet if we have no route
+         since that will fail. */
+      return ERR_RTE;
+    }
   }
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  /* If the given IP address should have a zone but doesn't, assign one now.
+   * Given that we already have the target netif, this is easy and cheap. */
+  if (IP_IS_V6(&pcb->remote_ip) &&
+      ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNICAST)) {
+    ip6_addr_assign_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNICAST, netif);
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
   old_local_port = pcb->local_port;
   if (pcb->local_port == 0) {

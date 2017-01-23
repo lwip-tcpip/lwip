@@ -262,8 +262,10 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 
     /* Point to ip6 header and align copies of src/dest addresses. */
     ip6hdr = (struct ip6_hdr *)p->payload;
-    ip_addr_copy_from_ip6(ip_data.current_iphdr_dest, ip6hdr->dest);
-    ip_addr_copy_from_ip6(ip_data.current_iphdr_src, ip6hdr->src);
+    ip_addr_copy_from_ip6_packed(ip_data.current_iphdr_dest, ip6hdr->dest);
+    ip6_addr_assign_zone(ip_2_ip6(&ip_data.current_iphdr_dest), IP6_UNKNOWN, netif);
+    ip_addr_copy_from_ip6_packed(ip_data.current_iphdr_src, ip6hdr->src);
+    ip6_addr_assign_zone(ip_2_ip6(&ip_data.current_iphdr_src), IP6_UNKNOWN, netif);
 
     /* Basic length of 6LowPAN header, set dispatch and clear fields. */
     lowpan6_header_len = 2;
@@ -574,6 +576,8 @@ lowpan6_set_context(u8_t idx, const ip6_addr_t * context)
     return ERR_ARG;
   }
 
+  IP6_ADDR_ZONECHECK(context);
+
   ip6_addr_set(&lowpan6_context[idx], context);
 
   return ERR_OK;
@@ -627,7 +631,8 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
   /* Check if we can compress source address (use aligned copy) */
   ip6_hdr = (struct ip6_hdr *)q->payload;
-  ip6_addr_set(&ip6_src, &ip6_hdr->src);
+  ip6_addr_copy_from_packed(ip6_src, ip6_hdr->src);
+  ip6_addr_assign_zone(&ip6_src, IP6_UNICAST, netif);
   if (lowpan6_get_address_mode(&ip6_src, &short_mac_addr) == 3) {
     src.addr_len = 2;
     src.addr[0] = short_mac_addr.addr[0];
@@ -656,7 +661,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     dest.addr_len = 2;
     dest.addr[0] = ((u8_t *)q->payload)[38];
     dest.addr[1] = ((u8_t *)q->payload)[39];
-    if ((src.addr_len == 2) && (ip6_addr_netcmp(&ip6_hdr->src, &ip6_hdr->dest)) &&
+    if ((src.addr_len == 2) && (ip6_addr_netcmp_zoneless(&ip6_hdr->src, &ip6_hdr->dest)) &&
         (lowpan6_get_address_mode(ip6addr, &dest) == 3)) {
       MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
       return lowpan6_frag(netif, q, &src, &dest);

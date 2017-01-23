@@ -522,16 +522,12 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_send\n"));
 
-#if LWIP_IPV6 || (LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS)
+#if LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS
   if (ip_addr_ismulticast(dst_ip_route)) {
 #if LWIP_IPV6
-    if (IP_IS_V6(dst_ip)) {
-      /* For multicast, find a netif based on source address. */
-      dst_ip_route = &pcb->local_ip;
-    } else
+    if (IP_IS_V4(dst_ip))
 #endif /* LWIP_IPV6 */
     {
-#if LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS
       /* IPv4 does not use source-based routing by default, so we use an
          administratively selected interface for multicast by default.
          However, this can be overridden by setting an interface address
@@ -540,10 +536,9 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
           !ip4_addr_cmp(ip_2_ip4(&pcb->multicast_ip), IP4_ADDR_BROADCAST)) {
         dst_ip_route = &pcb->multicast_ip;
       }
-#endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
     }
   }
-#endif /* LWIP_IPV6 || (LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS) */
+#endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
 
   /* find the outgoing network interface for this packet */
   if(IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
@@ -883,6 +878,9 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind;
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  ip_addr_t zoned_ipaddr;
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
@@ -909,6 +907,18 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
       break;
     }
   }
+
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  /* If the given IP address should have a zone but doesn't, assign one now.
+   * This is legacy support: scope-aware callers should always provide properly
+   * zoned source addresses. Do the zone selection before the address-in-use
+   * check below; as such we have to make a temporary copy of the address. */
+  if (IP_IS_V6(ipaddr) && ip6_addr_lacks_zone(ip_2_ip6(ipaddr), IP6_UNICAST)) {
+    ip_addr_copy(zoned_ipaddr, *ipaddr);
+    ip6_addr_select_zone(ip_2_ip6(&zoned_ipaddr), ip_2_ip6(&zoned_ipaddr));
+    ipaddr = &zoned_ipaddr;
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
   /* no port specified? */
   if (port == 0) {
@@ -994,6 +1004,15 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   }
 
   ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  /* If the given IP address should have a zone but doesn't, assign one now,
+   * using the bound address to make a more informed decision when possible. */
+  if (IP_IS_V6(&pcb->remote_ip) &&
+      ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
+    ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ip_2_ip6(&pcb->local_ip));
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
+
   pcb->remote_port = port;
   pcb->flags |= UDP_FLAGS_CONNECTED;
 

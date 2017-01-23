@@ -8,6 +8,19 @@ with newer versions.
 
   * [Enter new changes just after this line - do not remove this line]
 
+  ++ Application changes:
+
+  * The IPv6 implementation now supports address scopes. All addresses that have a scope according
+    to the default policy (link-local unicast addresses, interface-local and link-local multicast
+    addresses) should now have a zone set on them before being passed to the core API, although
+    lwIP will currently attempt to select a zone on the caller's behalf when necessary.
+    Applications that directly assign IPv6 addresses to interfaces (which is NOT recommended)
+    must now ensure that link-local addresses carry the netif's zone. See the new ip6_zone.h header
+    file for more information and relevant macros. For now it is still possible to turn off scopes
+    support through the new LWIP_IPV6_SCOPES option. When upgrading an implementation that uses the
+    core API directly, it is highly recommended to enable LWIP_IPV6_SCOPES_DEBUG at least for
+    a while, to ensure e.g. proper address initialization.
+
 (2.0.1)
 
   ++ Application changes:

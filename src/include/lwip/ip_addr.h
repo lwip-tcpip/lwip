@@ -78,18 +78,19 @@ typedef struct ip_addr {
 extern const ip_addr_t ip_addr_any_type;
 
 /** @ingroup ip4addr */
-#define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } } }, IPADDR_TYPE_V4 }
+#define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } IPADDR6_ZONE_INIT } }, IPADDR_TYPE_V4 }
 /** @ingroup ip4addr */
 #define IPADDR4_INIT_BYTES(a,b,c,d)   IPADDR4_INIT(PP_HTONL(LWIP_MAKEU32(a,b,c,d)))
+
 /** @ingroup ip6addr */
-#define IPADDR6_INIT(a, b, c, d)      { { { { a, b, c, d } } }, IPADDR_TYPE_V6 }
+#define IPADDR6_INIT(a, b, c, d)      { { { { a, b, c, d } IPADDR6_ZONE_INIT } }, IPADDR_TYPE_V6 }
 /** @ingroup ip6addr */
-#define IPADDR6_INIT_HOST(a, b, c, d) { { { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } } }, IPADDR_TYPE_V6 }
+#define IPADDR6_INIT_HOST(a, b, c, d) { { { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } IPADDR6_ZONE_INIT } }, IPADDR_TYPE_V6 }
 
 /** @ingroup ipaddr */
 #define IP_IS_ANY_TYPE_VAL(ipaddr)    (IP_GET_TYPE(&ipaddr) == IPADDR_TYPE_ANY)
 /** @ingroup ipaddr */
-#define IPADDR_ANY_TYPE_INIT          { { { { 0ul, 0ul, 0ul, 0ul } } }, IPADDR_TYPE_ANY }
+#define IPADDR_ANY_TYPE_INIT          { { { { 0ul, 0ul, 0ul, 0ul } IPADDR6_ZONE_INIT } }, IPADDR_TYPE_ANY }
 
 /** @ingroup ip4addr */
 #define IP_IS_V4_VAL(ipaddr)          (IP_GET_TYPE(&ipaddr) == IPADDR_TYPE_V4)
@@ -132,6 +133,9 @@ extern const ip_addr_t ip_addr_any_type;
 /** @ingroup ip6addr */
 #define ip_addr_copy_from_ip6(dest, src)      do{ \
   ip6_addr_copy(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }while(0)
+/** @ingroup ip6addr */
+#define ip_addr_copy_from_ip6_packed(dest, src)      do{ \
+  ip6_addr_copy_from_packed(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }while(0)
 /** @ingroup ip4addr */
 #define ip_addr_copy_from_ip4(dest, src)      do{ \
   ip4_addr_copy(*ip_2_ip4(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }while(0)
@@ -226,7 +230,8 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
   (ip6addr)->addr[3] = (ip4addr)->addr; \
   (ip6addr)->addr[2] = PP_HTONL(0x0000FFFFUL); \
   (ip6addr)->addr[1] = 0; \
-  (ip6addr)->addr[0] = 0; } while(0);
+  (ip6addr)->addr[0] = 0; \
+  ip6_addr_clear_zone(ip6addr); } while(0);
 
 /** @ingroup ipaddr */
 #define unmap_ipv6_mapped_ipv4(ip4addr, ip6addr) \
@@ -288,8 +293,8 @@ typedef ip4_addr_t ip_addr_t;
 #else /* LWIP_IPV4 */
 
 typedef ip6_addr_t ip_addr_t;
-#define IPADDR6_INIT(a, b, c, d)                { { a, b, c, d } }
-#define IPADDR6_INIT_HOST(a, b, c, d)           { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } }
+#define IPADDR6_INIT(a, b, c, d)                { { a, b, c, d } IPADDR6_ZONE_INIT }
+#define IPADDR6_INIT_HOST(a, b, c, d)           { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } IP6ADDR_ZONE_INIT }
 #define IP_IS_V4_VAL(ipaddr)                    0
 #define IP_IS_V6_VAL(ipaddr)                    1
 #define IP_IS_V4(ipaddr)                        0
@@ -304,6 +309,7 @@ typedef ip6_addr_t ip_addr_t;
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
 #define ip_addr_copy_from_ip6(dest, src)        ip6_addr_copy(dest, src)
+#define ip_addr_copy_from_ip6_packed(dest, src) ip6_addr_copy_from_packed(dest, src)
 #define ip_addr_set(dest, src)                  ip6_addr_set(dest, src)
 #define ip_addr_set_ipaddr(dest, src)           ip6_addr_set(dest, src)
 #define ip_addr_set_zero(ipaddr)                ip6_addr_set_zero(ipaddr)

@@ -215,6 +215,15 @@ raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->local_ip, ipaddr);
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  /* If the given IP address should have a zone but doesn't, assign one now.
+   * This is legacy support: scope-aware callers should always provide properly
+   * zoned source addresses. */
+  if (IP_IS_V6(&pcb->local_ip) &&
+      ip6_addr_lacks_zone(ip_2_ip6(&pcb->local_ip), IP6_UNICAST)) {
+    ip6_addr_select_zone(ip_2_ip6(&pcb->local_ip), ip_2_ip6(&pcb->local_ip));
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
   return ERR_OK;
 }
 
@@ -239,6 +248,14 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
     return ERR_VAL;
   }
   ip_addr_set_ipaddr(&pcb->remote_ip, ipaddr);
+#if LWIP_IPV6 && LWIP_IPV6_SCOPES
+  /* If the given IP address should have a zone but doesn't, assign one now,
+   * using the bound address to make a more informed decision when possible. */
+  if (IP_IS_V6(&pcb->remote_ip) &&
+      ip6_addr_lacks_zone(ip_2_ip6(&pcb->remote_ip), IP6_UNKNOWN)) {
+    ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ip_2_ip6(&pcb->local_ip));
+  }
+#endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
   pcb->flags |= RAW_FLAGS_CONNECTED;
   return ERR_OK;
 }

@@ -376,6 +376,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     sa6->sin6_family = AF_INET6;
     sa6->sin6_len = sizeof(struct sockaddr_in6);
     sa6->sin6_port = lwip_htons((u16_t)port_nr);
+    sa6->sin6_scope_id = ip6_addr_zone(&addr);
     ai->ai_family = AF_INET6;
 #endif /* LWIP_IPV6 */
   } else {
