@@ -43,7 +43,7 @@
 
 #define IF_NAMESIZE 6 /* 2 chars, 3 nums, 1 \0 */
 
-char * lwip_if_indextoname(unsigned ifindex, char *ifname);
+char * lwip_if_indextoname(unsigned int ifindex, char *ifname);
 unsigned int lwip_if_nametoindex(const char *ifname);
 
 #if LWIP_COMPAT_SOCKETS

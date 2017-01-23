@@ -43,7 +43,7 @@
 #include "lwip/netifapi.h"
 
 char *
-lwip_if_indextoname(unsigned ifindex, char *ifname)
+lwip_if_indextoname(unsigned int ifindex, char *ifname)
 {
 #if LWIP_NETIF_API
   err_t err;
@@ -67,11 +67,11 @@ lwip_if_nametoindex(const char *ifname)
 {
 #if LWIP_NETIF_API
   err_t err;
-  u8_t index;
+  u8_t idx;
   
-  err = netifapi_netif_name_to_index(ifname, &index);
+  err = netifapi_netif_name_to_index(ifname, &idx);
   if (!err) {
-    return index;
+    return idx;
   }
 #else /* LWIP_NETIF_API */
   LWIP_UNUSED_ARG(ifname);
