@@ -1298,7 +1298,7 @@ netif_name_to_index(const char *name)
 * Return the interface name for the netif matching index
 * or NULL if not found/on error
 *
-* @param index the interface index of the netif
+* @param idx the interface index of the netif
 * @param name char buffer of at least IF_NAMESIZE bytes
 */
 char *
