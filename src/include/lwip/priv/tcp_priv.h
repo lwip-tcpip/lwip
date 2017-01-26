@@ -459,16 +459,10 @@ err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-u16_t tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
-#if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
-                           , const ip_addr_t *src
-#endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
-                           );
-#if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
-#define tcp_eff_send_mss(sendmss, src, dest) tcp_eff_send_mss_impl(sendmss, dest, src)
-#else /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
-#define tcp_eff_send_mss(sendmss, src, dest) tcp_eff_send_mss_impl(sendmss, dest)
-#endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
+u16_t tcp_eff_send_mss_netif(u16_t sendmss, struct netif *outif,
+                             const ip_addr_t *dest);
+#define tcp_eff_send_mss(sendmss, src, dest) \
+    tcp_eff_send_mss_netif(sendmss, ip_route(src, dest), dest)
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API

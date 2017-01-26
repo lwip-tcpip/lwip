@@ -960,7 +960,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
      The send MSS is updated when an MSS option is received. */
   pcb->mss = INITIAL_MSS;
 #if TCP_CALCULATE_EFF_SEND_MSS
-  pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip);
+  pcb->mss = tcp_eff_send_mss_netif(pcb->mss, netif, &pcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
   pcb->ssthresh = TCP_WND;
@@ -1903,21 +1903,15 @@ tcp_next_iss(struct tcp_pcb *pcb)
 #if TCP_CALCULATE_EFF_SEND_MSS
 /**
  * Calculates the effective send mss that can be used for a specific IP address
- * by using ip_route to determine the netif used to send to the address and
- * calculating the minimum of TCP_MSS and that netif's mtu (if set).
+ * by calculating the minimum of TCP_MSS and the mtu (if set) of the target
+ * netif (if not NULL).
  */
 u16_t
-tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
-#if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
-                     , const ip_addr_t *src
-#endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
-                     )
+tcp_eff_send_mss_netif(u16_t sendmss, struct netif *outif, const ip_addr_t *dest)
 {
   u16_t mss_s;
-  struct netif *outif;
   s16_t mtu;
 
-  outif = ip_route(src, dest);
 #if LWIP_IPV6
 #if LWIP_IPV4
   if (IP_IS_V6(dest))
