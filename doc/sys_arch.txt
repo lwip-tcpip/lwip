@@ -282,8 +282,9 @@ cc.h       - Architecture environment, some compiler specific, some
   definition of it, or include a file which defines it.
 
   This file must either include a system-local <errno.h> which defines
-  the standard *nix error codes, or it should #define LWIP_PROVIDE_ERRNO
-  to make lwip/arch.h define the codes which are used throughout.
+  the standard *nix error codes (or define LWIP_ERRNO_INCLUDE to that file name),
+  or it should #define LWIP_PROVIDE_ERRNO to make lwip/arch.h define the codes
+  which are used throughout.
 
 
 perf.h     - Architecture specific performance measurement.
