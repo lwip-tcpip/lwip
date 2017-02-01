@@ -1684,8 +1684,7 @@ again:
 }
 
 /**
- * Unimplemented: Close one end of a full-duplex connection.
- * Currently, the full connection is closed.
+ * Close one end of a full-duplex connection.
  */
 int
 lwip_shutdown(int s, int how)
