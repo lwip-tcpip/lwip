@@ -1014,9 +1014,9 @@ tcp_output(struct tcp_pcb *pcb)
    *
    * If data is to be sent, we will just piggyback the ACK (see below).
    */
-  if (pcb->flags & TF_ACK_NOW &&
-     (seg == NULL ||
-      lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
+  if ((pcb->flags & TF_ACK_NOW) &&
+      (seg == NULL ||
+       lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
      return tcp_send_empty_ack(pcb);
   }
 

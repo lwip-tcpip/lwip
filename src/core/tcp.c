@@ -1301,7 +1301,7 @@ tcp_process_refused_data(struct tcp_pcb *pcb)
     TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
     if (err == ERR_OK) {
       /* did refused_data include a FIN? */
-      if (refused_flags & PBUF_FLAG_TCP_FIN
+      if ((refused_flags & PBUF_FLAG_TCP_FIN)
 #if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
           && (rest == NULL)
 #endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
@@ -1826,9 +1826,9 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   tcp_pcb_purge(pcb);
 
   /* if there is an outstanding delayed ACKs, send it */
-  if (pcb->state != TIME_WAIT &&
-     pcb->state != LISTEN &&
-     pcb->flags & TF_ACK_DELAY) {
+  if ((pcb->state != TIME_WAIT) &&
+      (pcb->state != LISTEN) &&
+      (pcb->flags & TF_ACK_DELAY)) {
     pcb->flags |= TF_ACK_NOW;
     tcp_output(pcb);
   }
