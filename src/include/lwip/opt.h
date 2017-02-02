@@ -1751,14 +1751,6 @@
 #define LWIP_SOCKET_SET_ERRNO           1
 #endif
 
-/** LWIP_PROVIDE_ERRNO==1: Let lwIP provide ERRNO values and the 'errno' variable.
- * If this is disabled, cc.h must either define 'errno', include <errno.h> or
- * define LWIP_ERRNO_INCLUDE to <errno.h> or equivalent.
- */
-#if !defined LWIP_PROVIDE_ERRNO || defined __DOXYGEN__
-#define LWIP_PROVIDE_ERRNO              0
-#endif
-
 /**
  * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names through defines.
  * LWIP_COMPAT_SOCKETS==2: Same as ==1 but correctly named functions are created.
