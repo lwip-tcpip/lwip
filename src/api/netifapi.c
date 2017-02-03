@@ -269,8 +269,8 @@ netifapi_netif_name_to_index(const char *name, u8_t *idx)
   *idx = 0;
 
 #if LWIP_MPU_COMPATIBLE
-  strncpy(NETIFAPI_VAR_REF(msg).msg.ifs.name, name, IF_NAMESIZE - 1);
-  NETIFAPI_VAR_REF(msg).msg.ifs.name[IF_NAMESIZE - 1] = '\0';
+  strncpy(NETIFAPI_VAR_REF(msg).msg.ifs.name, name, NETIF_NAMESIZE - 1);
+  NETIFAPI_VAR_REF(msg).msg.ifs.name[NETIF_NAMESIZE - 1] = '\0';
 #else
   NETIFAPI_VAR_REF(msg).msg.ifs.name = LWIP_CONST_CAST(char*, name);
 #endif /* LWIP_MPU_COMPATIBLE */
@@ -289,7 +289,7 @@ netifapi_netif_name_to_index(const char *name, u8_t *idx)
 *
 * @param idx the interface index of the netif
 * @param name output name of the found netif, empty '\0' string if netif not found.
-*             name should be of at least IF_NAMESIZE bytes
+*             name should be of at least NETIF_NAMESIZE bytes
 */
 err_t
 netifapi_netif_index_to_name(u8_t idx, char *name)
@@ -305,8 +305,8 @@ netifapi_netif_index_to_name(u8_t idx, char *name)
   err = tcpip_api_call(netifapi_do_index_to_name, &API_VAR_REF(msg).call);
 #if LWIP_MPU_COMPATIBLE
   if (!err) {
-    strncpy(name, NETIFAPI_VAR_REF(msg).msg.ifs.name, IF_NAMESIZE - 1);
-    name[IF_NAMESIZE - 1] = '\0';
+    strncpy(name, NETIFAPI_VAR_REF(msg).msg.ifs.name, NETIF_NAMESIZE - 1);
+    name[NETIF_NAMESIZE - 1] = '\0';
   }
 #endif /* LWIP_MPU_COMPATIBLE */
   NETIFAPI_VAR_FREE(msg);

@@ -40,8 +40,9 @@
 #define LWIP_HDR_IF_H
 
 #include "lwip/opt.h"
+#include "lwip/netif.h"
 
-#define IF_NAMESIZE 6 /* 2 chars, 3 nums, 1 \0 */
+#define IF_NAMESIZE NETIF_NAMESIZE
 
 char * lwip_if_indextoname(unsigned int ifindex, char *ifname);
 unsigned int lwip_if_nametoindex(const char *ifname);

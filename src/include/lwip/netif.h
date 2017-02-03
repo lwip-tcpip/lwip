@@ -63,6 +63,12 @@ extern "C" {
 #define NETIF_MAX_HWADDR_LEN 6U
 #endif
 
+/** The size of a fully constructed netif name which the
+ * netif can be identified by in APIs. Composed of
+ * 2 chars, 3 (max) digits, and 1 \0
+ */
+#define NETIF_NAMESIZE 6
+
 /**
  * @defgroup netif_flags Flags
  * @ingroup netif

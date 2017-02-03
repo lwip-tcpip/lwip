@@ -65,7 +65,6 @@
 #include "lwip/stats.h"
 #include "lwip/sys.h"
 #include "lwip/ip.h"
-#include "lwip/if.h"
 #if ENABLE_LOOPBACK
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
 #include "lwip/tcpip.h"
@@ -1322,7 +1321,7 @@ netif_name_to_index(const char *name)
 * or NULL if not found/on error
 *
 * @param idx the interface index of the netif
-* @param name char buffer of at least IF_NAMESIZE bytes
+* @param name char buffer of at least NETIF_NAMESIZE bytes
 */
 char *
 netif_index_to_name(u8_t idx, char *name)
@@ -1339,7 +1338,7 @@ netif_index_to_name(u8_t idx, char *name)
     if (curif->num == num) {
       name[0] = curif->name[0];
       name[1] = curif->name[1];
-      lwip_itoa(&name[2], IF_NAMESIZE - 2, num);
+      lwip_itoa(&name[2], NETIF_NAMESIZE - 2, num);
       return name;
     }
     curif = curif->next;

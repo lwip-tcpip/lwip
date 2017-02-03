@@ -40,7 +40,6 @@
 #include "lwip/netif.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
-#include "lwip/if.h"
 #include "lwip/priv/tcpip_priv.h"
 
 #ifdef __cplusplus
@@ -76,7 +75,7 @@ struct netifapi_msg {
     } common;
     struct {
 #if LWIP_MPU_COMPATIBLE
-      char name[IF_NAMESIZE];
+      char name[NETIF_NAMESIZE];
 #else /* LWIP_MPU_COMPATIBLE */
       char *name;
 #endif /* LWIP_MPU_COMPATIBLE */
