@@ -187,7 +187,7 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
   }
 
   namelen = strlen(name);
-  if (buflen < (sizeof(struct gethostbyname_r_helper) + namelen + 1 + (MEM_ALIGNMENT - 1))) {
+  if (buflen < (sizeof(struct gethostbyname_r_helper) + LWIP_MEM_ALIGN_BUFFER(namelen + 1))) {
     /* buf can't hold the data needed + a copy of name */
     *h_errnop = ERANGE;
     return -1;
