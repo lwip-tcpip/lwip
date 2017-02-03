@@ -800,28 +800,28 @@ static struct udp_pcb*
 dns_alloc_random_port(void)
 {
   err_t err;
-  struct udp_pcb* ret;
+  struct udp_pcb* pcb;
 
-  ret = udp_new_ip_type(IPADDR_TYPE_ANY);
-  if (ret == NULL) {
+  pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
+  if (pcb == NULL) {
     /* out of memory, have to reuse an existing pcb */
     return NULL;
   }
   do {
     u16_t port = (u16_t)DNS_RAND_TXID();
-    if (!DNS_PORT_ALLOWED(port)) {
+    if (DNS_PORT_ALLOWED(port)) {
+      err = udp_bind(pcb, IP_ANY_TYPE, port);
+    } else {
       /* this port is not allowed, try again */
       err = ERR_USE;
-      continue;
     }
-    err = udp_bind(ret, IP_ANY_TYPE, port);
   } while (err == ERR_USE);
   if (err != ERR_OK) {
-    udp_remove(ret);
+    udp_remove(pcb);
     return NULL;
   }
-  udp_recv(ret, dns_recv, NULL);
-  return ret;
+  udp_recv(pcb, dns_recv, NULL);
+  return pcb;
 }
 
 /**
