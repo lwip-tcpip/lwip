@@ -845,8 +845,9 @@ dhcp_network_changed(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
 
-  if (!dhcp)
+  if (!dhcp) {
     return;
+  }
   switch (dhcp->state) {
   case DHCP_STATE_REBINDING:
   case DHCP_STATE_RENEWING:
@@ -859,6 +860,7 @@ dhcp_network_changed(struct netif *netif)
     /* stay off */
     break;
   default:
+    LWIP_ASSERT("invalid dhcp->state", dhcp->state <= DHCP_STATE_BACKING_OFF);
     /* INIT/REQUESTING/CHECKING/BACKING_OFF restart with new 'rid' because the
        state changes, SELECTING: continue with current 'rid' as we stay in the
        same state */
