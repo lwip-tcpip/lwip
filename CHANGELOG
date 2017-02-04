@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
   
+  2017-02-04: David van Moolenbroek
+    - IPv6 scopes support
+  
   2017-01-08: David van Moolenbroek
   * Extensions to RAW API (patch #9208)
     - Connected RAW PCBs
