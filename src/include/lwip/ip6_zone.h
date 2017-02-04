@@ -157,8 +157,8 @@
  * @return 1 if the address has a constrained scope, 0 if it does not.
  */
 #define ip6_addr_has_scope(ip6addr, type) \
-  (ip6_addr_islinklocal(ip6addr) || (((type) != IP6_UNICAST) && \
-   ip6_addr_ismulticast_iflocal(ip6addr) || \
+  (ip6_addr_islinklocal(ip6addr) || ((((type) != IP6_UNICAST) && \
+   ip6_addr_ismulticast_iflocal(ip6addr)) || \
    ip6_addr_ismulticast_linklocal(ip6addr)))
 
 /**
