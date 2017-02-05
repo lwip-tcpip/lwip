@@ -137,6 +137,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
       ip6_addr_ismulticast_linklocal(dest) || ip6_addr_islinklocal(src) ||
 #endif /* LWIP_IPV6_SCOPES */
       ip6_addr_isloopback(src)) {
+#if LWIP_IPV6_SCOPES
     if (ip6_addr_has_zone(src)) {
       /* Find a netif matching the source zone (relatively cheap). */
       for (netif = netif_list; netif != NULL; netif = netif->next) {
@@ -145,7 +146,9 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
           return netif;
         }
       }
-    } else {
+    } else
+#endif /* LWIP_IPV6_SCOPES */
+    {
       /* Find a netif matching the source address (relatively expensive). */
       for (netif = netif_list; netif != NULL; netif = netif->next) {
         if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
