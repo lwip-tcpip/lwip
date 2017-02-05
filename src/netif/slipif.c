@@ -124,7 +124,7 @@ slipif_output(struct netif *netif, struct pbuf *p)
   LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
   LWIP_ASSERT("p != NULL", (p != NULL));
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output(%"U16_F"): sending %"U16_F" bytes\n", (u16_t)netif->num, p->tot_len));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_output: sending %"U16_F" bytes\n", p->tot_len));
   priv = (struct slipif_priv *)netif->state;
 
   /* Send pbuf out on the serial I/O device. */
@@ -352,9 +352,7 @@ slipif_loop_thread(void *nf)
  *         ERR_MEM if no memory could be allocated,
  *         ERR_IF is serial line couldn't be opened
  *
- * @note netif->num must contain the number of the serial port to open
- *       (0 by default). If netif->state is != NULL, it is interpreted as an
- *       u8_t pointer pointing to the serial port number instead of netif->num.
+ * @note If netif->state is interpreted as an u8_t serial port number.
  *
  */
 err_t
@@ -363,7 +361,10 @@ slipif_init(struct netif *netif)
   struct slipif_priv *priv;
   u8_t sio_num;
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)netif->num));
+  /* netif->state contains serial port number */
+  sio_num = (u8_t)netif->state;
+
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)sio_num));
 
   /* Allocate private data */
   priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));
@@ -381,12 +382,6 @@ slipif_init(struct netif *netif)
 #endif /* LWIP_IPV6 */
   netif->mtu = SLIP_MAX_SIZE;
 
-  /* netif->state or netif->num contain the port number */
-  if (netif->state != NULL) {
-    sio_num = *(u8_t*)netif->state;
-  } else {
-    sio_num = netif->num;
-  }
   /* Try to open the serial port. */
   priv->sd = sio_open(sio_num);
   if (!priv->sd) {
