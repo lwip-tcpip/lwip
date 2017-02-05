@@ -294,7 +294,7 @@ typedef ip4_addr_t ip_addr_t;
 
 typedef ip6_addr_t ip_addr_t;
 #define IPADDR6_INIT(a, b, c, d)                { { a, b, c, d } IPADDR6_ZONE_INIT }
-#define IPADDR6_INIT_HOST(a, b, c, d)           { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } IP6ADDR_ZONE_INIT }
+#define IPADDR6_INIT_HOST(a, b, c, d)           { { PP_HTONL(a), PP_HTONL(b), PP_HTONL(c), PP_HTONL(d) } IPADDR6_ZONE_INIT }
 #define IP_IS_V4_VAL(ipaddr)                    0
 #define IP_IS_V6_VAL(ipaddr)                    1
 #define IP_IS_V4(ipaddr)                        0
