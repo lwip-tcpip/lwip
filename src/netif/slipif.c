@@ -362,7 +362,7 @@ slipif_init(struct netif *netif)
   u8_t sio_num;
 
   /* netif->state contains serial port number */
-  sio_num = (u8_t)netif->state;
+  sio_num = LWIP_PTR_NUMERIC_CAST(u8_t, netif->state);
 
   LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)sio_num));
 
