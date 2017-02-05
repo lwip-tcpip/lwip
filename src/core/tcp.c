@@ -1912,6 +1912,8 @@ tcp_eff_send_mss_netif(u16_t sendmss, struct netif *outif, const ip_addr_t *dest
   u16_t mss_s;
   s16_t mtu;
 
+  LWIP_UNUSED_ARG(dest); /* in case IPv6 is disabled */
+  
 #if LWIP_IPV6
 #if LWIP_IPV4
   if (IP_IS_V6(dest))
