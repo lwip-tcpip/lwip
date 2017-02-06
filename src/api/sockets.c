@@ -2020,7 +2020,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_TOS) = %d\n",
                   s, *(int *)optval));
       break;
-#if LWIP_MULTICAST_TX_OPTIONS
+#if LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS
     case IP_MULTICAST_TTL:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, u8_t);
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
@@ -2049,7 +2049,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_LOOP) = %d\n",
                   s, *(int *)optval));
       break;
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
+#endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n",
                   s, optname));
@@ -2389,7 +2389,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, IP_TOS, ..)-> %d\n",
                   s, sock->conn->pcb.ip->tos));
       break;
-#if LWIP_MULTICAST_TX_OPTIONS
+#if LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS
     case IP_MULTICAST_TTL:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, u8_t, NETCONN_UDP);
       udp_set_multicast_ttl(sock->conn->pcb.udp, (u8_t)(*(const u8_t*)optval));
@@ -2410,7 +2410,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) & ~UDP_FLAGS_MULTICAST_LOOP);
       }
       break;
-#endif /* LWIP_MULTICAST_TX_OPTIONS */
+#endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
 #if LWIP_IGMP
     case IP_ADD_MEMBERSHIP:
     case IP_DROP_MEMBERSHIP:

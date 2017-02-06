@@ -504,6 +504,7 @@ char * netif_index_to_name(u8_t idx, char *name);
 /* Interface indexes always start at 1 per RFC 3493, section 4, num starts at 0 */
 #define netif_num_to_index(netif)   ((netif)->num + 1)
 #define netif_index_to_num(index)   ((index) - 1)
+#define NETIF_NO_INDEX              (0)
 
 #ifdef __cplusplus
 }

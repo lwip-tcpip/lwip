@@ -972,7 +972,29 @@
 
 /*
    ----------------------------------
-   ----- Multicast/IGMP options -----
+   -------- Multicast options -------
+   ----------------------------------
+*/
+/**
+ * @defgroup lwip_opts_multicast Multicast
+ * @ingroup lwip_opts_infrastructure
+ * @{
+ */
+/**
+ * LWIP_MULTICAST_TX_OPTIONS==1: Enable multicast TX support like the socket options
+ * IP_MULTICAST_TTL/IP_MULTICAST_IF/IP_MULTICAST_LOOP, as well as (currently only)
+ * core support for the corresponding IPv6 options.
+ */
+#if !defined LWIP_MULTICAST_TX_OPTIONS || defined __DOXYGEN__
+#define LWIP_MULTICAST_TX_OPTIONS       ((LWIP_IGMP || LWIP_IPV6_MLD) && LWIP_UDP)
+#endif
+/**
+ * @}
+ */
+
+/*
+   ----------------------------------
+   ---------- IGMP options ----------
    ----------------------------------
 */
 /**
@@ -989,14 +1011,6 @@
 #if !LWIP_IPV4
 #undef LWIP_IGMP
 #define LWIP_IGMP                       0
-#endif
-
-/**
- * LWIP_MULTICAST_TX_OPTIONS==1: Enable multicast TX support like the socket options
- * IP_MULTICAST_TTL/IP_MULTICAST_IF/IP_MULTICAST_LOOP
- */
-#if !defined LWIP_MULTICAST_TX_OPTIONS || defined __DOXYGEN__
-#define LWIP_MULTICAST_TX_OPTIONS       (LWIP_IGMP && LWIP_UDP)
 #endif
 /**
  * @}

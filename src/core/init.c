@@ -96,7 +96,7 @@ PACK_STRUCT_END
   #error "If you want to use DHCP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP && LWIP_MULTICAST_TX_OPTIONS)
-  #error "If you want to use IGMP/LWIP_MULTICAST_TX_OPTIONS, you have to define LWIP_UDP=1 in your lwipopts.h"
+  #error "If you want to use LWIP_MULTICAST_TX_OPTIONS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP && LWIP_DNS)
   #error "If you want to use DNS, you have to define LWIP_UDP=1 in your lwipopts.h"
@@ -122,9 +122,6 @@ PACK_STRUCT_END
 #endif
 #if (LWIP_IGMP && !LWIP_IPV4)
   #error "IGMP needs LWIP_IPV4 enabled in your lwipopts.h"
-#endif
-#if (LWIP_MULTICAST_TX_OPTIONS && !LWIP_IPV4)
-  #error "LWIP_MULTICAST_TX_OPTIONS needs LWIP_IPV4 enabled in your lwipopts.h"
 #endif
 #if ((LWIP_NETCONN || LWIP_SOCKET) && (MEMP_NUM_TCPIP_MSG_API<=0))
   #error "If you want to use Sequential API, you have to define MEMP_NUM_TCPIP_MSG_API>=1 in your lwipopts.h"

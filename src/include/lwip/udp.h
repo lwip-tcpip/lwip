@@ -91,8 +91,12 @@ struct udp_pcb {
   u16_t local_port, remote_port;
 
 #if LWIP_MULTICAST_TX_OPTIONS
-  /** outgoing network interface for multicast packets */
-  ip_addr_t multicast_ip;
+#if LWIP_IPV4
+  /** outgoing network interface for multicast packets, by IPv4 address (if not 'any') */
+  ip4_addr_t mcast_ip4;
+#endif /* LWIP_IPV4 */
+  /** outgoing network interface for multicast packets, by interface index (if nonzero) */
+  u8_t mcast_ifindex;
   /** TTL for outgoing multicast packets */
   u8_t mcast_ttl;
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
@@ -159,9 +163,13 @@ void             udp_init       (void);
 #define udp_new_ip6() udp_new_ip_type(IPADDR_TYPE_V6)
 
 #if LWIP_MULTICAST_TX_OPTIONS
-#define udp_set_multicast_netif_addr(pcb, ip4addr) ip_addr_copy_from_ip4((pcb)->multicast_ip, *(ip4addr))
-#define udp_get_multicast_netif_addr(pcb)          ip_2_ip4(&(pcb)->multicast_ip)
-#define udp_set_multicast_ttl(pcb, value)      do { (pcb)->mcast_ttl = value; } while(0)
+#if LWIP_IPV4
+#define udp_set_multicast_netif_addr(pcb, ip4addr) ip4_addr_copy((pcb)->mcast_ip4, *(ip4addr))
+#define udp_get_multicast_netif_addr(pcb)          (&(pcb)->mcast_ip4)
+#endif /* LWIP_IPV4 */
+#define udp_set_multicast_netif_index(pcb, idx)    ((pcb)->mcast_ifindex = (idx))
+#define udp_get_multicast_netif_index(pcb)         ((pcb)->mcast_ifindex)
+#define udp_set_multicast_ttl(pcb, value)          ((pcb)->mcast_ttl = (value))
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
