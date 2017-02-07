@@ -100,7 +100,7 @@
 #define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipaddr, port) do { \
     inet6_addr_to_ip6addr(ip_2_ip6(ipaddr), &((sin6)->sin6_addr)); \
     if (ip6_addr_has_scope(ip_2_ip6(ipaddr), IP6_UNKNOWN)) { \
-      ip6_addr_set_zone(ip_2_ip6(ipaddr), (u8_t)(sin6)->sin6_scope_id); \
+      ip6_addr_set_zone(ip_2_ip6(ipaddr), (u8_t)((sin6)->sin6_scope_id)); \
     } \
     (port) = lwip_ntohs((sin6)->sin6_port); }while(0)
 #endif /* LWIP_IPV6 */
