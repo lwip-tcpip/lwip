@@ -376,6 +376,9 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 #if TCP_OVERSIZE
   u16_t oversize = 0;
   u16_t oversize_used = 0;
+#if TCP_OVERSIZE_DBGCHECK
+  u16_t oversize_add = 0;
+#endif /* TCP_OVERSIZE_DBGCHECK*/
 #endif /* TCP_OVERSIZE */
   u16_t extendlen = 0;
 #if TCP_CHECKSUM_ON_COPY
@@ -505,7 +508,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
           goto memerr;
         }
 #if TCP_OVERSIZE_DBGCHECK
-        last_unsent->oversize_left += oversize;
+        oversize_add = oversize;
 #endif /* TCP_OVERSIZE_DBGCHECK */
         TCP_DATA_COPY2(concat_p->payload, (const u8_t*)arg + pos, seglen, &concat_chksum, &concat_chksum_swapped);
 #if TCP_CHECKSUM_ON_COPY
@@ -656,6 +659,11 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
    * All three segmentation phases were successful. We can commit the
    * transaction.
    */
+#if TCP_OVERSIZE_DBGCHECK
+  if ((last_unsent != NULL) && (oversize_add != 0)) {
+    last_unsent->oversize_left += oversize_add;
+  }
+#endif /* TCP_OVERSIZE_DBGCHECK */
 
   /*
    * Phase 1: If data has been added to the preallocated tail of
