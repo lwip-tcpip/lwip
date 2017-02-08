@@ -926,8 +926,8 @@ ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
   const ip6_addr_t *src_used = src;
   if (dest != LWIP_IP_HDRINCL) {
     if (src != NULL && ip6_addr_isany(src)) {
-      src = ip_2_ip6(ip6_select_source_address(netif, dest));
-      if ((src == NULL) || ip6_addr_isany(src)) {
+      src_used = ip_2_ip6(ip6_select_source_address(netif, dest));
+      if ((src_used == NULL) || ip6_addr_isany(src_used)) {
         /* No appropriate source address was found for this packet. */
         LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: No suitable source address for packet.\n"));
         IP6_STATS_INC(ip6.rterr);
