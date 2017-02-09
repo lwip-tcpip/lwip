@@ -86,7 +86,7 @@
 #define LWIP_HDR_IP6_ZONE_H
 
 /**
- * @defgroup ip6_zones IPv6 zones (scope)
+ * @defgroup ip6_zones IPv6 Zones
  * @ingroup ip6
  * @{
  */
