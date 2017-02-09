@@ -85,6 +85,12 @@
 #ifndef LWIP_HDR_IP6_ZONE_H
 #define LWIP_HDR_IP6_ZONE_H
 
+/**
+ * @defgroup ip6_zones IPv6 zones (scope)
+ * @ingroup ip6
+ * @{
+ */
+
 #if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
 /** Identifier for "no zone". */
@@ -117,13 +123,21 @@
  * This macro must only be used on IPv6 addresses of the same scope. */
 #define ip6_addr_cmp_zone(ip6addr1, ip6addr2) ((ip6addr1)->zone == (ip6addr2)->zone)
 
-/** Symbolic constants for the 'type' parameters in some of the macros below.
+/** Symbolic constants for the 'type' parameters in some of the macros.
  * These exist for efficiency only, allowing the macros to avoid certain tests
  * when the address is known not to be of a certain type. Dead code elimination
- * will do the rest. IP6_MULTICAST is supported but currently not optimized. */
-#define IP6_UNKNOWN     0
-#define IP6_UNICAST     1
-#define IP6_MULTICAST   2
+ * will do the rest. IP6_MULTICAST is supported but currently not optimized.
+ * @see ip6_addr_has_scope, ip6_addr_assign_zone, ip6_addr_lacks_zone.
+ */
+enum lwip_ipv6_scope_type
+{
+  /** Unknown */
+  IP6_UNKNOWN   = 0,
+  /** Unicast */
+  IP6_UNICAST   = 1,
+  /** Multicast */
+  IP6_MULTICAST = 2
+};
 
 /** IPV6_CUSTOM_SCOPES: together, the following three macro definitions,
  * @ref ip6_addr_has_scope, @ref ip6_addr_assign_zone, and
@@ -153,7 +167,7 @@
  * index. As such it should not be tested for in this macro.
  *
  * @param ip6addr the IPv6 address (const); only its address part is examined.
- * @param type address type; one of IP6_UNICAST, IP6_MULTICAST, IP6_UNKNOWN.
+ * @param type address type; see @ref lwip_ipv6_scope_type.
  * @return 1 if the address has a constrained scope, 0 if it does not.
  */
 #define ip6_addr_has_scope(ip6addr, type) \
@@ -174,7 +188,7 @@
  *
  * @param ip6addr the IPv6 address; its address part is examined, and its zone
  *                index is assigned.
- * @param type address type; one of IP6_UNICAST, IP6_MULTICAST, IP6_UNKNOWN.
+ * @param type address type; see @ref lwip_ipv6_scope_type.
  * @param netif the network interface (const).
  */
 #define ip6_addr_assign_zone(ip6addr, type, netif) \
@@ -233,6 +247,10 @@
   if (selected_netif != NULL) { \
     ip6_addr_assign_zone((dest), IP6_UNKNOWN, selected_netif); \
   } } while (0)
+
+/**
+ * @}
+ */
 
 #else /* LWIP_IPV6_SCOPES */
 

@@ -2081,6 +2081,7 @@ PREDEFINED             = __DOXYGEN__=1 \
                          LWIP_UDP=1 \
                          LWIP_IGMP=1 \
                          LWIP_TCP=1 \
+						 LWIP_IPV6_SCOPES=1 \
                          TCP_LISTEN_BACKLOG=1 \
                          LWIP_SNMP=1 \
                          SNMP_USE_NETCONN=1 \
