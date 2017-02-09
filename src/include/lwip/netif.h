@@ -312,7 +312,8 @@ struct netif {
   u8_t flags;
   /** descriptive abbreviation */
   char name[2];
-  /** number of this interface */
+  /** number of this interface. Used for @ref if_api and @ref netifapi_netif, 
+   * as well as for IPv6 zones */
   u8_t num;
 #if LWIP_IPV6_AUTOCONFIG
   /** is this netif enabled for IPv6 autoconfiguration */

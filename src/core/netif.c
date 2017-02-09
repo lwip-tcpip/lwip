@@ -1298,7 +1298,7 @@ netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipa
 #endif /* LWIP_IPV6 */
 
 /**
-* @ingroup netif_if
+* @ingroup netif
 * Return the interface index for the netif with name
 * or 0 (invalid interface) if not found/on error
 *
@@ -1316,7 +1316,7 @@ netif_name_to_index(const char *name)
 }
 
 /**
-* @ingroup netif_if
+* @ingroup netif
 * Return the interface name for the netif matching index
 * or NULL if not found/on error
 *

@@ -3,6 +3,9 @@
  * Interface Identification APIs from:
  *              RFC 3493: Basic Socket Interface Extensions for IPv6
  *                  Section 4: Interface Identification
+ * 
+ * @defgroup if_api Interface Identification API
+ * @ingroup socket
  */
 
 /*
@@ -43,6 +46,15 @@
 #include "lwip/if_api.h"
 #include "lwip/netifapi.h"
 
+/**
+ * @ingroup if_api
+ * Maps an interface index to its corresponding name.
+ * @param ifindex interface index 
+ * @param ifname shall point to a buffer of at least {IF_NAMESIZE} bytes
+ * @return If ifindex is an interface index, then the function shall return the
+ * value supplied in ifname, which points to a buffer now containing the interface name.
+ * Otherwise, the function shall return a NULL pointer.
+ */
 char *
 lwip_if_indextoname(unsigned int ifindex, char *ifname)
 {
@@ -63,6 +75,13 @@ lwip_if_indextoname(unsigned int ifindex, char *ifname)
   return NULL;
 }
 
+/**
+ * @ingroup if_api
+ * Returs the interface index corresponding to name ifname.
+ * @param ifname Interface name
+ * @return The corresponding index if ifname is the name of an interface;
+ * otherwise, zero.
+ */
 unsigned int
 lwip_if_nametoindex(const char *ifname)
 {
