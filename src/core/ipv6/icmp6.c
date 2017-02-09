@@ -65,8 +65,11 @@
 #endif
 
 /* Forward declarations */
-static void icmp6_send_response(struct pbuf *p, u8_t code, u32_t data,
+static void icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type);
+static void icmp6_send_response_with_addrs(struct pbuf *p, u8_t code, u32_t data,
     u8_t type, const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr);
+static void icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data,
+    u8_t type, const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr, struct netif *netif);
 
 
 /**
@@ -220,7 +223,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
 void
 icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
 {
-  icmp6_send_response(p, c, 0, ICMP6_TYPE_DUR, NULL, NULL);
+  icmp6_send_response(p, c, 0, ICMP6_TYPE_DUR);
 }
 
 /**
@@ -236,7 +239,7 @@ icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
 void
 icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
 {
-  icmp6_send_response(p, 0, mtu, ICMP6_TYPE_PTB, NULL, NULL);
+  icmp6_send_response(p, 0, mtu, ICMP6_TYPE_PTB);
 }
 
 /**
@@ -252,7 +255,7 @@ icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
 void
 icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
 {
-  icmp6_send_response(p, c, 0, ICMP6_TYPE_TE, NULL, NULL);
+  icmp6_send_response(p, c, 0, ICMP6_TYPE_TE);
 }
 
 /**
@@ -274,7 +277,7 @@ void
 icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
     const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr)
 {
-  icmp6_send_response(p, c, 0, ICMP6_TYPE_TE, src_addr, dest_addr);
+  icmp6_send_response_with_addrs(p, c, 0, ICMP6_TYPE_TE, src_addr, dest_addr);
 }
 
 /**
@@ -291,18 +294,43 @@ icmp6_time_exceeded_with_addrs(struct pbuf *p, enum icmp6_te_code c,
 void
 icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
 {
-  icmp6_send_response(p, c, pointer, ICMP6_TYPE_PP, NULL, NULL);
+  icmp6_send_response(p, c, pointer, ICMP6_TYPE_PP);
+}
+
+/**
+ * Send an ICMPv6 packet in response to an incoming packet.
+ * The packet is sent *to* ip_current_src_addr() on ip_current_netif().
+ *
+ * @param p the input packet for which the response should be sent,
+ *          p->payload pointing to the IPv6 header
+ * @param code Code of the ICMPv6 header
+ * @param data Additional 32-bit parameter in the ICMPv6 header
+ * @param type Type of the ICMPv6 header
+ */
+static void
+icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
+{
+  const struct ip6_addr *reply_src, *reply_dest;
+  struct netif *netif = ip_current_netif();
+
+  LWIP_ASSERT("icmpv6 packet not a direct response", netif != NULL);
+  reply_dest = ip6_current_src_addr();
+
+  /* Select an address to use as source. */
+  reply_src = ip_2_ip6(ip6_select_source_address(netif, reply_dest));
+  if (reply_src == NULL) {
+    ICMP6_STATS_INC(icmp6.rterr);
+    return;
+  }
+  icmp6_send_response_with_addrs_and_netif(p, code, data, type, reply_src, reply_dest, netif);
 }
 
 /**
  * Send an ICMPv6 packet in response to an incoming packet.
  *
- * If this packet is sent as a direct response of an incoming packet being
- * processed right now, the information of that incoming packet will be used to
- * determine where to reply. In that case, the src_addr and dest_addr parameters
- * must be set to NULL. If this packet is NOT sent as a direct response to an
+ * Call this function if the packet is NOT sent as a direct response to an
  * incoming packet, but rather sometime later (e.g. for a fragment reassembly
- * timeout), the caller must provide the zoned source and destination addresses
+ * timeout). The caller must provide the zoned source and destination addresses
  * from the original packet with the src_addr and dest_addr parameters. The
  * reason for this approach is that while the addresses themselves are part of
  * the original packet, their zone information is not, thus possibly resulting
@@ -313,17 +341,54 @@ icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
  * @param code Code of the ICMPv6 header
  * @param data Additional 32-bit parameter in the ICMPv6 header
  * @param type Type of the ICMPv6 header
- * @param src_addr original source address or NULL (see description)
- * @param dest_addr original destination address or NULL (see description)
+ * @param src_addr original source address
+ * @param dest_addr original destination address
  */
 static void
-icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type,
+icmp6_send_response_with_addrs(struct pbuf *p, u8_t code, u32_t data, u8_t type,
     const ip6_addr_t *src_addr, const ip6_addr_t *dest_addr)
+{
+  const struct ip6_addr *reply_src, *reply_dest;
+  struct netif *netif;
+
+  /* Get the destination address and netif for this ICMP message. */
+  LWIP_ASSERT("must provide both source and destination", src_addr != NULL);
+  LWIP_ASSERT("must provide both source and destination", dest_addr != NULL);
+
+  /* Special case, as ip6_current_xxx is either NULL, or points
+     to a different packet than the one that expired. */
+  IP6_ADDR_ZONECHECK(src_addr);
+  IP6_ADDR_ZONECHECK(dest_addr);
+  /* Swap source and destination for the reply. */
+  reply_dest = src_addr;
+  reply_src = dest_addr;
+  netif = ip6_route(reply_src, reply_dest);
+  if (netif == NULL) {
+    ICMP6_STATS_INC(icmp6.rterr);
+    return;
+  }
+  icmp6_send_response_with_addrs_and_netif(p, code, data, type, reply_src,
+    reply_dest, netif);
+}
+
+/**
+ * Send an ICMPv6 packet (with srd/dst address and netif given).
+ *
+ * @param p the input packet for which the response should be sent,
+ *          p->payload pointing to the IPv6 header
+ * @param code Code of the ICMPv6 header
+ * @param data Additional 32-bit parameter in the ICMPv6 header
+ * @param type Type of the ICMPv6 header
+ * @param reply_src source address of the packet to send
+ * @param reply_dest destination address of the packet to send
+ * @param netif netif to send the packet
+ */
+static void
+icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, u8_t type,
+    const ip6_addr_t *reply_src, const ip6_addr_t *reply_dest, struct netif *netif)
 {
   struct pbuf *q;
   struct icmp6_hdr *icmp6hdr;
-  const ip6_addr_t *reply_src, *reply_dest;
-  struct netif *netif;
 
   /* ICMPv6 header + IPv6 header + data */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE,
@@ -344,39 +409,6 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type,
   /* copy fields from original packet */
   SMEMCPY((u8_t *)q->payload + sizeof(struct icmp6_hdr), (u8_t *)p->payload,
           IP6_HLEN + LWIP_ICMP6_DATASIZE);
-
-  /* Get the destination address and netif for this ICMP message. */
-  if (src_addr != NULL) {
-    LWIP_ASSERT("must provide both source and destination", dest_addr != NULL);
-    /* Special case, as ip6_current_xxx is either NULL, or points
-     * to a different packet than the one that expired. */
-    IP6_ADDR_ZONECHECK(src_addr);
-    IP6_ADDR_ZONECHECK(dest_addr);
-    /* Swap source and destination for the reply. */
-    reply_dest = src_addr;
-    reply_src = dest_addr;
-    netif = ip6_route(reply_src, reply_dest);
-    if (netif == NULL) {
-      /* drop */
-      pbuf_free(q);
-      ICMP6_STATS_INC(icmp6.rterr);
-      return;
-    }
-  }
-  else {
-    netif = ip_current_netif();
-    LWIP_ASSERT("icmpv6 packet not a direct response", netif != NULL);
-    reply_dest = ip6_current_src_addr();
-
-    /* Select an address to use as source. */
-    reply_src = ip_2_ip6(ip6_select_source_address(netif, reply_dest));
-    if (reply_src == NULL) {
-      /* drop */
-      pbuf_free(q);
-      ICMP6_STATS_INC(icmp6.rterr);
-      return;
-    }
-  }
 
   /* calculate checksum */
   icmp6hdr->chksum = 0;
