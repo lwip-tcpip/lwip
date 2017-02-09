@@ -340,14 +340,8 @@ static void
 http_add_connection(struct http_state *hs)
 {
   /* add the connection to the list */
-  if (http_connections == NULL) {
-    http_connections = hs;
-  } else {
-    struct http_state *last;
-    for(last = http_connections; last->next != NULL; last = last->next);
-    LWIP_ASSERT("last != NULL", last != NULL);
-    last->next = hs;
-  }
+  hs->next = http_connections;
+  http_connections = hs;
 }
 
 static void
