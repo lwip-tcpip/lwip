@@ -335,9 +335,40 @@ char *http_cgi_param_vals[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Values for each ext
 /** global list of active HTTP connections, use to kill the oldest when
     running out of memory */
 static struct http_state *http_connections;
-#endif /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
 
-#if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
+static void
+http_add_connection(struct http_state *hs)
+{
+  /* add the connection to the list */
+  if (http_connections == NULL) {
+    http_connections = hs;
+  } else {
+    struct http_state *last;
+    for(last = http_connections; last->next != NULL; last = last->next);
+    LWIP_ASSERT("last != NULL", last != NULL);
+    last->next = hs;
+  }
+}
+
+static void
+http_remove_connection(struct http_state *hs)
+{
+  /* take the connection off the list */
+  if (http_connections) {
+    if (http_connections == hs) {
+      http_connections = hs->next;
+    } else {
+      struct http_state *last;
+      for(last = http_connections; last->next != NULL; last = last->next) {
+        if (last->next == hs) {
+          last->next = hs->next;
+          break;
+        }
+      }
+    }
+  }
+}
+
 static void
 http_kill_oldest_connection(u8_t ssi_required)
 {
@@ -366,6 +397,11 @@ http_kill_oldest_connection(u8_t ssi_required)
     http_close_or_abort_conn(hs_free_next->next->pcb, hs_free_next->next, 1); /* this also unlinks the http_state from the list */
   }
 }
+#else /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
+
+#define http_add_connection(hs)
+#define http_remove_connection(hs)
+
 #endif /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
 
 #if LWIP_HTTPD_SSI
@@ -422,17 +458,7 @@ http_state_alloc(void)
 #endif /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
   if (ret != NULL) {
     http_state_init(ret);
-#if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
-    /* add the connection to the list */
-    if (http_connections == NULL) {
-      http_connections = ret;
-    } else {
-      struct http_state *last;
-      for(last = http_connections; last->next != NULL; last = last->next);
-      LWIP_ASSERT("last != NULL", last != NULL);
-      last->next = ret;
-    }
-#endif /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
+    http_add_connection(ret);
   }
   return ret;
 }
@@ -481,22 +507,7 @@ http_state_free(struct http_state *hs)
 {
   if (hs != NULL) {
     http_state_eof(hs);
-#if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
-    /* take the connection off the list */
-    if (http_connections) {
-      if (http_connections == hs) {
-        http_connections = hs->next;
-      } else {
-        struct http_state *last;
-        for(last = http_connections; last->next != NULL; last = last->next) {
-          if (last->next == hs) {
-            last->next = hs->next;
-            break;
-          }
-        }
-      }
-    }
-#endif /* LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED */
+    http_remove_connection(hs);
     HTTP_FREE_HTTP_STATE(hs);
   }
 }
@@ -638,17 +649,14 @@ http_eof(struct tcp_pcb *pcb, struct http_state *hs)
   /* HTTP/1.1 persistent connection? (Not supported for SSI) */
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
   if (hs->keepalive) {
-#if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
-    struct http_state* next = hs->next;
-#endif
+    http_remove_connection(hs);
+
     http_state_eof(hs);
     http_state_init(hs);
     /* restore state: */
-#if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
-    hs->next = next;
-#endif
     hs->pcb = pcb;
     hs->keepalive = 1;
+    http_add_connection(hs);
     /* ensure nagle doesn't interfere with sending all data as fast as possible: */
     tcp_nagle_disable(pcb);
   } else
