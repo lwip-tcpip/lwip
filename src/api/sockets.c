@@ -775,7 +775,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
         err = netconn_recv_tcp_pbuf(sock->conn, (struct pbuf **)&buf);
       } else {
-        err = netconn_recv(sock->conn, (struct netbuf **)&buf);
+        err = netconn_recv_udp_raw_netbuf(sock->conn, (struct netbuf **)&buf);
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv err=%d, netbuf=%p\n",
         err, buf));
@@ -2636,7 +2636,7 @@ lwip_ioctl(int s, long cmd, void *argp)
         if (sock->rcvevent <= 0) {
           *((int*)argp) = 0;
         } else {
-          err = netconn_recv(sock->conn, &rxbuf);
+          err = netconn_recv_udp_raw_netbuf(sock->conn, &rxbuf);
           if (err != ERR_OK) {
             *((int*)argp) = 0;
           } else {
