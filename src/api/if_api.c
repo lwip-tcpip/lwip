@@ -43,8 +43,10 @@
 
 #if LWIP_SOCKET
 
+#include "lwip/errno.h"
 #include "lwip/if_api.h"
 #include "lwip/netifapi.h"
+#include "lwip/priv/sockets_priv.h"
 
 /**
  * @ingroup if_api
@@ -59,19 +61,17 @@ char *
 lwip_if_indextoname(unsigned int ifindex, char *ifname)
 {
 #if LWIP_NETIF_API
-  err_t err;
-  if (ifindex > 0xff) {
-    return NULL;
-  }
-  
-  err = netifapi_netif_index_to_name((u8_t)ifindex, ifname);
-  if (!err && ifname[0] != '\0') {
-    return ifname;
+  if (ifindex <= 0xff) {
+    err_t err = netifapi_netif_index_to_name((u8_t)ifindex, ifname);
+    if (!err && ifname[0] != '\0') {
+      return ifname;
+    }
   }
 #else /* LWIP_NETIF_API */
   LWIP_UNUSED_ARG(ifindex);
   LWIP_UNUSED_ARG(ifname);
 #endif /* LWIP_NETIF_API */
+  set_errno(ENXIO);
   return NULL;
 }
 

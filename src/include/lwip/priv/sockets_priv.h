@@ -48,6 +48,14 @@
 extern "C" {
 #endif
 
+#if LWIP_SOCKET_SET_ERRNO
+#ifndef set_errno
+#define set_errno(err) do { if (err) { errno = (err); } } while(0)
+#endif
+#else /* LWIP_SOCKET_SET_ERRNO */
+#define set_errno(err)
+#endif /* LWIP_SOCKET_SET_ERRNO */
+
 #if !LWIP_TCPIP_CORE_LOCKING
 /** Maximum optlen used by setsockopt/getsockopt */
 #define LWIP_SETGETSOCKOPT_MAXOPTLEN 16

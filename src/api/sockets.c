@@ -293,14 +293,6 @@ static struct lwip_select_cb *select_cb_list;
     and checked in event_callback to see if it has changed. */
 static volatile int select_cb_ctr;
 
-#if LWIP_SOCKET_SET_ERRNO
-#ifndef set_errno
-#define set_errno(err) do { if (err) { errno = (err); } } while(0)
-#endif
-#else /* LWIP_SOCKET_SET_ERRNO */
-#define set_errno(err)
-#endif /* LWIP_SOCKET_SET_ERRNO */
-
 #define sock_set_errno(sk, e) do { \
   const int sockerr = (e); \
   sk->err = (u8_t)sockerr; \
