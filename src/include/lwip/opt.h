@@ -2455,6 +2455,15 @@
  */
 
 /**
+ * LWIP_HOOK_FILENAME: Custom filename to #include in files that provide hooks.
+ * Declare your hook function prototypes in there, you may also #include all headers
+ * providing data types that are need in this file.
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_FILENAME "path/to/my/lwip_hooks.h"
+#endif
+
+/**
  * LWIP_HOOK_TCP_ISN:
  * Hook for generation of the Initial Sequence Number (ISN) for a new TCP
  * connection. The default lwIP ISN generation algorithm is very basic and may
