@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2017-02-10: David van Moolenbroek
+  * Implement UDP and RAW multicast support for IPv6 (core API, not netconn/sockets)
+
   2017-02-10: Simon Goldschmidt
   * tcp_close does not fail on memory error (instead, FIN is sent from tcp_tmr)
 
