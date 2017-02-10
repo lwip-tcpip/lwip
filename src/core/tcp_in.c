@@ -828,16 +828,15 @@ tcp_process(struct tcp_pcb *pcb)
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG
-#if LWIP_CALLBACK_API
-        LWIP_ASSERT("pcb->listener->accept != NULL",
-          (pcb->listener == NULL) || (pcb->listener->accept != NULL));
-#endif
         if (pcb->listener == NULL) {
           /* listen pcb might be closed by now */
           err = ERR_VAL;
         } else
 #endif /* LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG */
         {
+#if LWIP_CALLBACK_API
+          LWIP_ASSERT("pcb->listener->accept != NULL", pcb->listener->accept != NULL);
+#endif
           tcp_backlog_accepted(pcb);
           /* Call the accept function. */
           TCP_EVENT_ACCEPT(pcb->listener, pcb, pcb->callback_arg, ERR_OK, err);
