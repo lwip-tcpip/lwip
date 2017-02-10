@@ -5,7 +5,10 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
-  
+
+  2017-02-10: Simon Goldschmidt
+  * tcp_close does not fail on memory error (instead, FIN is sent from tcp_tmr)
+
   2017-02-04: David van Moolenbroek
     - IPv6 scopes support
   
