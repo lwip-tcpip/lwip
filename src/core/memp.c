@@ -63,6 +63,7 @@
 #include "lwip/priv/tcpip_priv.h"
 #include "lwip/priv/api_msg.h"
 #include "lwip/sockets.h"
+#include "lwip/priv/sockets_priv.h"
 #include "lwip/netifapi.h"
 #include "lwip/etharp.h"
 #include "lwip/igmp.h"
