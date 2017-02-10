@@ -296,7 +296,8 @@ extern "C" {
 #endif /* LWIP_UNUSED_ARG */
 
 /** LWIP_PROVIDE_ERRNO==1: Let lwIP provide ERRNO values and the 'errno' variable.
- * If this is disabled, cc.h must either define 'errno', include <errno.h> or
+ * If this is disabled, cc.h must either define 'errno', include <errno.h>,
+ * define LWIP_ERRNO_STDINCLUDE to get <errno.h> included or
  * define LWIP_ERRNO_INCLUDE to <errno.h> or equivalent.
  */
 #if defined __DOXYGEN__
