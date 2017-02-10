@@ -179,7 +179,7 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 
 #define TCP_EVENT_ACCEPT(lpcb,pcb,arg,err,ret)                 \
   do {                                                         \
-    if((lpcb != NULL) && ((lpcb)->accept != NULL))             \
+    if((lpcb)->accept != NULL)                                 \
       (ret) = (lpcb)->accept((arg),(pcb),(err));               \
     else (ret) = ERR_ARG;                                      \
   } while (0)
