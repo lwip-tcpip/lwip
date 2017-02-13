@@ -295,7 +295,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
   }
 
   /* - states which free the pcb are handled here,
-     - states which send FIN and change state are handled in  tcp_close_shutdown_impl() */
+     - states which send FIN and change state are handled in tcp_close_shutdown_fin() */
   switch (pcb->state) {
   case CLOSED:
     /* Closing a pcb in the CLOSED state might seem erroneous,
