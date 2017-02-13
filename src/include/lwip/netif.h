@@ -499,7 +499,7 @@ err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t
 
 u8_t netif_name_to_index(const char *name);
 char * netif_index_to_name(u8_t idx, char *name);
-struct netif* netif_get_by_index(u8_t index);
+struct netif* netif_get_by_index(u8_t idx);
 
 /* Interface indexes always start at 1 per RFC 3493, section 4, num starts at 0 */
 #define netif_get_index(netif)      ((netif)->num + 1)

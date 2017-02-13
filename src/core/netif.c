@@ -1327,22 +1327,13 @@ netif_name_to_index(const char *name)
 char *
 netif_index_to_name(u8_t idx, char *name)
 {
-  struct netif *curif = netif_list;
-  u8_t num;
-  if (idx == 0) {
-    return NULL; /* indexes start at 1 */
-  }
-  num = netif_index_to_num(idx);
+  struct netif *netif = netif_get_by_index(idx);
 
-  /* find netif from num */
-  while (curif != NULL) {
-    if (curif->num == num) {
-      name[0] = curif->name[0];
-      name[1] = curif->name[1];
-      lwip_itoa(&name[2], NETIF_NAMESIZE - 2, num);
-      return name;
-    }
-    curif = curif->next;
+  if (netif != NULL) {
+    name[0] = netif->name[0];
+    name[1] = netif->name[1];
+    lwip_itoa(&name[2], NETIF_NAMESIZE - 2, netif_index_to_num(idx));
+    return name;
   }
   return NULL;
 }
@@ -1351,16 +1342,16 @@ netif_index_to_name(u8_t idx, char *name)
 * @ingroup netif
 * Return the interface for the netif index
 *
-* @param index index of netif to find
+* @param idx index of netif to find
 */
 struct netif*
-netif_get_by_index(u8_t index)
+netif_get_by_index(u8_t idx)
 {
   struct netif* netif;
 
-  if (index != NETIF_NO_INDEX) {
+  if (idx != NETIF_NO_INDEX) {
     for (netif = netif_list; netif != NULL; netif = netif->next) {
-      if (index == netif_get_index(netif)) {
+      if (idx == netif_get_index(netif)) {
         return netif; /* found! */
       }
     }
