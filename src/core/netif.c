@@ -551,9 +551,11 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
   ip_addr_t old_addr, new_addr;
   ip_addr_copy_from_ip4(old_addr, *netif_ip4_gw(netif));
   ip_addr_copy_from_ip4(new_addr, *gw);
+#endif
 
   ip4_addr_set(ip_2_ip4(&netif->gw), gw);
   IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
@@ -580,10 +582,12 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
   ip_addr_t old_addr, new_addr;
   ip_addr_copy_from_ip4(old_addr, *netif_ip4_netmask(netif));
   ip_addr_copy_from_ip4(new_addr, *netmask);
-
+#endif
+  
   mib2_remove_route_ip4(0, netif);
   /* set new netmask to netif */
   ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
