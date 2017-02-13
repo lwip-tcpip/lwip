@@ -515,8 +515,6 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   struct netif *netif;
   const ip_addr_t *src_ip_route;
-  
-  LWIP_UNUSED_ARG(src_ip_route); /* IPv4 only and no source based routing */
 
   if ((pcb == NULL) || (dst_ip == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
@@ -530,6 +528,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   } else {
     src_ip_route = &pcb->local_ip;
   }
+  LWIP_UNUSED_ARG(src_ip_route); /* IPv4 only and no source based routing */
 
 #if LWIP_MULTICAST_TX_OPTIONS
   netif = NULL;
