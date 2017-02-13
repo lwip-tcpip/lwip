@@ -108,8 +108,6 @@ struct sockaddr_storage {
 typedef u32_t socklen_t;
 #endif
 
-struct lwip_sock;
-
 #if !defined(iovec)
 struct iovec {
   void  *iov_base;
