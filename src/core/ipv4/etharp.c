@@ -671,10 +671,10 @@ etharp_input(struct pbuf *p, struct netif *netif)
   autoip_arp_reply(netif, hdr);
 #endif /* LWIP_AUTOIP */
 
-  /* Copy struct ip4_addr2 to aligned ip4_addr, to support compilers without
+  /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
    * structure packing (not using structure copy which breaks strict-aliasing rules). */
-  IPADDR2_COPY(&sipaddr, &hdr->sipaddr);
-  IPADDR2_COPY(&dipaddr, &hdr->dipaddr);
+  IPADDR_WORDALIGNED_COPY_TO_IP4_ADDR_T(&sipaddr, &hdr->sipaddr);
+  IPADDR_WORDALIGNED_COPY_TO_IP4_ADDR_T(&dipaddr, &hdr->dipaddr);
 
   /* this interface is not configured? */
   if (ip4_addr_isany_val(*netif_ip4_addr(netif))) {
@@ -1133,10 +1133,10 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   /* Write the ARP MAC-Addresses */
   ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);
   ETHADDR16_COPY(&hdr->dhwaddr, hwdst_addr);
-  /* Copy struct ip4_addr2 to aligned ip4_addr, to support compilers without
+  /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
    * structure packing. */
-  IPADDR2_COPY(&hdr->sipaddr, ipsrc_addr);
-  IPADDR2_COPY(&hdr->dipaddr, ipdst_addr);
+  IPADDR_WORDALIGNED_COPY_FROM_IP4_ADDR_T(&hdr->sipaddr, ipsrc_addr);
+  IPADDR_WORDALIGNED_COPY_FROM_IP4_ADDR_T(&hdr->dipaddr, ipdst_addr);
 
   hdr->hwtype = PP_HTONS(HWTYPE_ETHERNET);
   hdr->proto = PP_HTONS(ETHTYPE_IP);

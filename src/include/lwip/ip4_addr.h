@@ -56,22 +56,6 @@ struct ip4_addr {
  * operate both on ip4_addr_t as well as on ip4_addr_p_t. */
 typedef struct ip4_addr ip4_addr_t;
 
-/**
- * struct ipaddr2 is used in the definition of the ARP packet format in
- * order to support compilers that don't have structure packing.
- */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ip4_addr2 {
-  PACK_STRUCT_FIELD(u16_t addrw[2]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
 /* Forward declaration to not include netif.h */
 struct netif;
 
@@ -118,13 +102,6 @@ struct netif;
 
 /** Set an IP address given by the four byte-parts */
 #define IP4_ADDR(ipaddr, a,b,c,d)  (ipaddr)->addr = PP_HTONL(LWIP_MAKEU32(a,b,c,d))
-
-/** MEMCPY-like copying of IP addresses where addresses are known to be
- * 16-bit-aligned if the port is correctly configured (so a port could define
- * this to copying 2 u16_t's) - no NULL-pointer-checking needed. */
-#ifndef IPADDR2_COPY
-#define IPADDR2_COPY(dest, src) SMEMCPY(dest, src, sizeof(ip4_addr_t))
-#endif
 
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
 #define ip4_addr_copy(dest, src) ((dest).addr = (src).addr)
