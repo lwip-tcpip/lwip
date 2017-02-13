@@ -66,7 +66,7 @@
 #endif
 
 /** Define random number generator function of your system */
-#ifndef LWIP_RAND
+#ifdef __DOXYGEN__
 #define LWIP_RAND() ((u32_t)rand())
 #endif
 
@@ -76,7 +76,7 @@
  * systems, this should be defined to something less resource-consuming.
  */
 #ifndef LWIP_PLATFORM_DIAG
-#define LWIP_PLATFORM_DIAG(x)	do {printf x;} while(0)
+#define LWIP_PLATFORM_DIAG(x) do {printf x;} while(0)
 #include <stdio.h>
 #include <stdlib.h>
 #endif
