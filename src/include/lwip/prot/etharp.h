@@ -49,7 +49,7 @@ extern "C" {
 #endif
 
 /**
- * struct ipaddr2 is used in the definition of the ARP packet format in
+ * struct ip4_addr_wordaligned is used in the definition of the ARP packet format in
  * order to support compilers that don't have structure packing.
  */
 #ifdef PACK_STRUCT_USE_INCLUDES
