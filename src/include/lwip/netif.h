@@ -514,21 +514,21 @@ typedef enum
   /** link changed. arg: 1 up, 0 down */
   LWIP_NSC_LINK_CHANGED,
   /** netif status changed. arg: 1 up, 0 down */
-  LWIP_NSC_NETIF_STATUS_CHANGED,
+  LWIP_NSC_STATUS_CHANGED,
   /** IPv4 address has changed. arg is NULL */
-  LWIP_NSC_NETIF_IPV4_ADDRESS_CHANGED,
+  LWIP_NSC_IPV4_ADDRESS_CHANGED,
   /** IPv4 gateway has changed. arg is NULL */
-  LWIP_NSC_NETIF_IPV4_GATEWAY_CHANGED,
+  LWIP_NSC_IPV4_GATEWAY_CHANGED,
   /** IPv4 netmask has changed. arg is NULL */
-  LWIP_NSC_NETIF_IPV4_NETMASK_CHANGED,
+  LWIP_NSC_IPV4_NETMASK_CHANGED,
   /** called AFTER IPv4 address/gateway/netmask changes have been applied */
-  LWIP_NSC_NETIF_IPV4_SETTINGS_CHANGED,
+  LWIP_NSC_IPV4_SETTINGS_CHANGED,
   /** IPv6 address was added. arg is index of address */
-  LWIP_NSC_NETIF_IPV6_ADDED,
+  LWIP_NSC_IPV6_ADDED,
   /** IPv6 address was removed. arg is index of address */
-  LWIP_NSC_NETIF_IPV6_REMOVED,
+  LWIP_NSC_IPV6_REMOVED,
   /** IPv6 address state has changed. arg is index of address */
-  LWIP_NSC_NETIF_IPV6_ADDR_STATE_CHANGED
+  LWIP_NSC_IPV6_ADDR_STATE_CHANGED
 } netif_status_callback_reason_t;
 
 typedef void (*netif_ext_status_callback)(struct netif* netif, netif_status_callback_reason_t reason, void* arg, const ip_addr_t* oldaddr, const ip_addr_t* newaddr);
