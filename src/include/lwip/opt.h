@@ -1435,6 +1435,15 @@
 #endif
 
 /**
+ * LWIP_NETIF_EXT_STATUS_CALLBACK==1: Support an extended callback function 
+ * for several netif related event that supports multiple subscribers.
+ * @see netif_ext_status_callback
+ */
+#if !defined LWIP_NETIF_EXT_STATUS_CALLBACK || defined __DOXYGEN__
+#define LWIP_NETIF_EXT_STATUS_CALLBACK  0
+#endif
+
+/**
  * LWIP_NETIF_LINK_CALLBACK==1: Support a callback function from an interface
  * whenever the link changes (i.e., link down)
  */

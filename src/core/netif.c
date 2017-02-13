@@ -102,6 +102,10 @@
 #define NETIF_LINK_CALLBACK(n)
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+static netif_ext_callback_t* ext_callback;
+#endif
+
 struct netif *netif_list;
 struct netif *netif_default;
 
@@ -345,6 +349,9 @@ netif_add(struct netif *netif,
   ip4_addr_debug_print(NETIF_DEBUG, gw);
 #endif /* LWIP_IPV4 */
   LWIP_DEBUGF(NETIF_DEBUG, ("\n"));
+  
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_ADDED, NULL, NULL, NULL);
+  
   return netif;
 }
 
@@ -375,6 +382,8 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
     /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
     netif_set_ipaddr(netif, ipaddr);
   }
+
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_IPV4_SETTINGS_CHANGED, NULL, NULL, NULL);
 }
 #endif /* LWIP_IPV4*/
 
@@ -394,6 +403,8 @@ netif_remove(struct netif *netif)
   if (netif == NULL) {
     return;
   }
+
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_REMOVED, NULL, NULL, NULL);
 
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
@@ -492,15 +503,18 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 
   /* address is actually being changed? */
   if (ip4_addr_cmp(ip_2_ip4(&new_addr), netif_ip4_addr(netif)) == 0) {
+    ip_addr_t old_addr;
+    ip_addr_copy_from_ip4(old_addr, *netif_ip4_addr(netif));
+
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
 #if LWIP_TCP
-    tcp_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
+    tcp_netif_ip_addr_changed(&old_addr, &new_addr);
 #endif /* LWIP_TCP */
 #if LWIP_UDP
-    udp_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
+    udp_netif_ip_addr_changed(&old_addr, &new_addr);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(netif_ip_addr4(netif), &new_addr);
+    raw_netif_ip_addr_changed(&old_addr, &new_addr);
 #endif /* LWIP_RAW */
 
     mib2_remove_ip4(netif);
@@ -514,6 +528,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4);
 
     NETIF_STATUS_CALLBACK(netif);
+    netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_IPV4_ADDRESS_CHANGED, NULL, &old_addr, &new_addr);
   }
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -536,6 +551,10 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
+  ip_addr_t old_addr, new_addr;
+  ip_addr_copy_from_ip4(old_addr, *netif_ip4_gw(netif));
+  ip_addr_copy_from_ip4(new_addr, *gw);
+
   ip4_addr_set(ip_2_ip4(&netif->gw), gw);
   IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -544,6 +563,8 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
     ip4_addr2_16(netif_ip4_gw(netif)),
     ip4_addr3_16(netif_ip4_gw(netif)),
     ip4_addr4_16(netif_ip4_gw(netif))));
+
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_IPV4_GATEWAY_CHANGED, NULL, &old_addr, &new_addr);
 }
 
 /**
@@ -559,6 +580,10 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
+  ip_addr_t old_addr, new_addr;
+  ip_addr_copy_from_ip4(old_addr, *netif_ip4_netmask(netif));
+  ip_addr_copy_from_ip4(new_addr, *netmask);
+
   mib2_remove_route_ip4(0, netif);
   /* set new netmask to netif */
   ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
@@ -570,6 +595,8 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
     ip4_addr2_16(netif_ip4_netmask(netif)),
     ip4_addr3_16(netif_ip4_netmask(netif)),
     ip4_addr4_16(netif_ip4_netmask(netif))));
+
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_IPV4_NETMASK_CHANGED, NULL, &old_addr, &new_addr);
 }
 #endif /* LWIP_IPV4 */
 
@@ -609,6 +636,7 @@ netif_set_up(struct netif *netif)
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
     NETIF_STATUS_CALLBACK(netif);
+    netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_STATUS_CHANGED, (void*)1, NULL, NULL);
 
     if (netif->flags & NETIF_FLAG_LINK_UP) {
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4|NETIF_REPORT_TYPE_IPV6);
@@ -676,6 +704,7 @@ netif_set_down(struct netif *netif)
 #endif /* LWIP_IPV6 */
 
     NETIF_STATUS_CALLBACK(netif);
+    netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_STATUS_CHANGED, (void*)0, NULL, NULL);
   }
 }
 
@@ -729,6 +758,7 @@ netif_set_link_up(struct netif *netif)
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4|NETIF_REPORT_TYPE_IPV6);
     }
     NETIF_LINK_CALLBACK(netif);
+    netif_invoke_ext_callback(netif, LWIP_NSC_LINK_CHANGED, (void*)1, NULL, NULL);
   }
 }
 
@@ -742,6 +772,7 @@ netif_set_link_down(struct netif *netif )
   if (netif->flags & NETIF_FLAG_LINK_UP) {
     netif->flags &= ~NETIF_FLAG_LINK_UP;
     NETIF_LINK_CALLBACK(netif);
+    netif_invoke_ext_callback(netif, LWIP_NSC_LINK_CHANGED, (void*)0, NULL, NULL);
   }
 }
 
@@ -1360,3 +1391,41 @@ netif_find(const char *name)
   LWIP_DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
   return NULL;
 }
+
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+/**
+ * @ingroup netif
+ * Add extended netif events listener
+ * @param callback pointer to listener structure
+ */
+void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_status_callback fn)
+{
+  if (callback->callback_fn != NULL) {
+    return; /* already registered */
+  }
+  
+  callback->callback_fn = fn;
+  callback->next = ext_callback;
+  ext_callback = callback;
+}
+
+/**
+ * @ingroup netif
+ * Invoke extended netif status event
+ * @param netif netif that is affected by change
+ * @param reason change reason
+ * @param arg argument depends on reason
+ * @param oldaddr depends on reason, see reason description
+ * @param newaddr depends on reason, see reason description
+ */
+void netif_invoke_ext_callback(struct netif* netif, netif_status_callback_reason_t reason, void* arg, const ip_addr_t* oldaddr, const ip_addr_t* newaddr)
+{
+  netif_ext_callback_t* callback = ext_callback;
+  
+  while (callback != NULL)
+  {
+    callback->callback_fn(netif, reason, arg, oldaddr, newaddr);
+    callback = callback->next;
+  }
+}
+#endif /* LWIP_NETIF_EXT_STATUS_CALLBACK */

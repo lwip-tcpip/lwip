@@ -223,7 +223,7 @@ u8_t netif_alloc_client_data_id(void);
  * Get client data. Obtain ID from netif_alloc_client_data_id().
  */
 #define netif_get_client_data(netif, id)       (netif)->client_data[(id)]
-#endif /* LWIP_DHCP || LWIP_AUTOIP || (LWIP_NUM_NETIF_CLIENT_DATA > 0) */
+#endif
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
@@ -504,6 +504,51 @@ struct netif* netif_get_by_index(u8_t idx);
 /* Interface indexes always start at 1 per RFC 3493, section 4, num starts at 0 */
 #define netif_get_index(netif)      ((netif)->num + 1)
 #define NETIF_NO_INDEX              (0)
+
+typedef enum
+{
+  /** netif was added. arg is NULL */
+  LWIP_NSC_NETIF_ADDED,
+  /** netif was removed. arg is NULL */
+  LWIP_NSC_NETIF_REMOVED,
+  /** link changed. arg: 1 up, 0 down */
+  LWIP_NSC_LINK_CHANGED,
+  /** netif status changed. arg: 1 up, 0 down */
+  LWIP_NSC_NETIF_STATUS_CHANGED,
+  /** IPv4 address has changed. arg is NULL */
+  LWIP_NSC_NETIF_IPV4_ADDRESS_CHANGED,
+  /** IPv4 gateway has changed. arg is NULL */
+  LWIP_NSC_NETIF_IPV4_GATEWAY_CHANGED,
+  /** IPv4 netmask has changed. arg is NULL */
+  LWIP_NSC_NETIF_IPV4_NETMASK_CHANGED,
+  /** called AFTER IPv4 address/gateway/netmask changes have been applied */
+  LWIP_NSC_NETIF_IPV4_SETTINGS_CHANGED,
+  /** IPv6 address was added. arg is index of address */
+  LWIP_NSC_NETIF_IPV6_ADDED,
+  /** IPv6 address was removed. arg is index of address */
+  LWIP_NSC_NETIF_IPV6_REMOVED,
+  /** IPv6 address state has changed. arg is index of address */
+  LWIP_NSC_NETIF_IPV6_ADDR_STATE_CHANGED
+} netif_status_callback_reason_t;
+
+typedef void (*netif_ext_status_callback)(struct netif* netif, netif_status_callback_reason_t reason, void* arg, const ip_addr_t* oldaddr, const ip_addr_t* newaddr);
+
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+struct netif_ext_callback;
+typedef struct netif_ext_callback
+{
+  netif_ext_status_callback callback_fn;
+  struct netif_ext_callback* next;
+} netif_ext_callback_t;
+
+#define NETIF_DECLARE_EXT_CALLBACK(name) static netif_ext_callback_t name;
+void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_status_callback fn);
+void netif_invoke_ext_callback(struct netif* netif, netif_status_callback_reason_t reason, void* arg, const ip_addr_t* oldaddr, const ip_addr_t* newaddr);
+#else
+#define NETIF_DECLARE_EXT_CALLBACK(name)
+#define netif_add_ext_callback(callback, fn)
+#define netif_invoke_ext_callback(netif, reason, arg, oldaddr, newaddr)
+#endif
 
 #ifdef __cplusplus
 }
