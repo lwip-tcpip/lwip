@@ -193,7 +193,7 @@ enum lwip_ipv6_scope_type
  */
 #define ip6_addr_assign_zone(ip6addr, type, netif) \
     (ip6_addr_set_zone((ip6addr), \
-      ip6_addr_has_scope((ip6addr), (type)) ? netif_num_to_index(netif) : 0))
+      ip6_addr_has_scope((ip6addr), (type)) ? netif_get_index(netif) : 0))
 
 /**
  * Test whether an IPv6 address is "zone-compatible" with a network interface.
@@ -215,7 +215,7 @@ enum lwip_ipv6_scope_type
  * @return 1 if the address is scope-compatible with the netif, 0 if not.
  */
 #define ip6_addr_test_zone(ip6addr, netif) \
-    (ip6_addr_equals_zone((ip6addr), netif_num_to_index(netif)))
+    (ip6_addr_equals_zone((ip6addr), netif_get_index(netif)))
 
 #endif /* !IPV6_CUSTOM_SCOPES */
 

@@ -104,6 +104,7 @@
 struct netif *netif_list;
 struct netif *netif_default;
 
+#define netif_index_to_num(index)   ((index) - 1)
 static u8_t netif_num;
 
 #if LWIP_NUM_NETIF_CLIENT_DATA > 0
@@ -1309,7 +1310,7 @@ netif_name_to_index(const char *name)
 {
   struct netif *netif = netif_find(name);
   if (netif != NULL) {
-    return netif_num_to_index(netif);
+    return netif_get_index(netif);
   }
   /* No name found, return invalid index */
   return 0;
@@ -1344,4 +1345,26 @@ netif_index_to_name(u8_t idx, char *name)
     curif = curif->next;
   }
   return NULL;
+}
+
+/**
+* @ingroup netif
+* Return the interface for the netif index
+*
+* @param index index of netif to find
+*/
+struct netif*
+netif_get_by_index(u8_t index)
+{
+  struct netif* netif;
+
+  if (index != NETIF_NO_INDEX) {
+    for (netif = netif_list; netif != NULL; netif = netif->next) {
+      if (index == netif_get_index(netif)) {
+        return netif; /* found! */
+      }
+    }
+  }
+
+  return NULL;   
 }

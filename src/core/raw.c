@@ -327,15 +327,11 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
 #if LWIP_MULTICAST_TX_OPTIONS
   netif = NULL;
-  if (ip_addr_ismulticast(ipaddr) && (pcb->mcast_ifindex != NETIF_NO_INDEX)) {
+  if (ip_addr_ismulticast(ipaddr)) {
     /* For multicast-destined packets, use the user-provided interface index to
      * determine the outgoing interface, if an interface index is set and a
      * matching netif can be found. Otherwise, fall back to regular routing. */
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
-      if (pcb->mcast_ifindex == netif_num_to_index(netif)) {
-        break; /* found! */
-      }
-    }
+    netif = netif_get_by_index(pcb->mcast_ifindex);
   }
 
   if (netif == NULL)

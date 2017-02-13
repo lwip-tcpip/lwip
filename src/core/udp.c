@@ -540,11 +540,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
      * list, but by doing so we skip a route lookup. If the interface index has
      * gone stale, we fall through and do the regular route lookup after all. */
     if (pcb->mcast_ifindex != NETIF_NO_INDEX) {
-      for (netif = netif_list; netif != NULL; netif = netif->next) {
-        if (pcb->mcast_ifindex == netif_num_to_index(netif)) {
-          break; /* found! */
-        }
-      }
+      netif = netif_get_by_index(pcb->mcast_ifindex);
     }
 #if LWIP_IPV4
     else
