@@ -554,7 +554,7 @@ void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u
 #else
 #define NETIF_DECLARE_EXT_CALLBACK(name)
 #define netif_add_ext_callback(callback, fn)
-#define netif_invoke_ext_callback(netif, reason, arg, oldaddr, newaddr)
+#define netif_invoke_ext_callback(netif, reason, num, arg)
 #endif
 
 #ifdef __cplusplus
