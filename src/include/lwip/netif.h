@@ -507,7 +507,7 @@ struct netif* netif_get_by_index(u8_t idx);
 
 /**
  * @ingroup netif
- * Extended netif callback reasons enumeration.
+ * Extended netif status callback (NSC) reasons enumeration.
  * May be extended in the future!
  */
 typedef enum

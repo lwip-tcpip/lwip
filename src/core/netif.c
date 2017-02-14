@@ -1409,6 +1409,9 @@ netif_find(const char *name)
  */
 void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn)
 {
+  LWIP_ASSERT("callback must be != NULL", callback != NULL);
+  LWIP_ASSERT("fn must be != NULL", fn != NULL);
+
   if (callback->callback_fn != NULL) {
     return; /* already registered */
   }
@@ -1428,6 +1431,8 @@ void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_f
  */
 void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg)
 {
+  LWIP_ASSERT("netif must be != NULL", netif != NULL);
+  
   netif_ext_callback_t* callback = ext_callback;
   
   while (callback != NULL)
