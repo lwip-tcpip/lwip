@@ -1405,6 +1405,7 @@ netif_find(const char *name)
  * @ingroup netif
  * Add extended netif events listener
  * @param callback pointer to listener structure
+ * @param fn callback function
  */
 void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn)
 {

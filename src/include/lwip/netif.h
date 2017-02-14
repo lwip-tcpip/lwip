@@ -505,6 +505,11 @@ struct netif* netif_get_by_index(u8_t idx);
 #define netif_get_index(netif)      ((netif)->num + 1)
 #define NETIF_NO_INDEX              (0)
 
+/**
+ * @ingroup netif
+ * Extended netif callback reasons enumeration.
+ * May be extended in the future!
+ */
 typedef enum
 {
   /** netif was added. num: 0; arg: NULL */
