@@ -507,43 +507,50 @@ struct netif* netif_get_by_index(u8_t idx);
 
 typedef enum
 {
-  /** netif was added. arg is NULL */
+  /** netif was added. num: 0; arg: NULL */
   LWIP_NSC_NETIF_ADDED,
-  /** netif was removed. arg is NULL */
+  /** netif was removed. num: 0; arg: NULL */
   LWIP_NSC_NETIF_REMOVED,
-  /** link changed. arg: 1 up, 0 down */
+  /** link changed. num: 1 up, 0 down; arg: NULL */
   LWIP_NSC_LINK_CHANGED,
-  /** netif status changed. arg: 1 up, 0 down */
+  /** netif administrative status changed. num: 1 up, 0 down; arg: NULL */
   LWIP_NSC_STATUS_CHANGED,
-  /** IPv4 address has changed. arg is NULL */
+  /** IPv4 address has changed. num: 0; arg is ip_addr_t* old address */
   LWIP_NSC_IPV4_ADDRESS_CHANGED,
-  /** IPv4 gateway has changed. arg is NULL */
+  /** IPv4 gateway has changed. num: 0; arg is ip_addr_t* old address */
   LWIP_NSC_IPV4_GATEWAY_CHANGED,
-  /** IPv4 netmask has changed. arg is NULL */
+  /** IPv4 netmask has changed. num: 0; arg is ip_addr_t* old address */
   LWIP_NSC_IPV4_NETMASK_CHANGED,
-  /** called AFTER IPv4 address/gateway/netmask changes have been applied */
+  /** called AFTER IPv4 address/gateway/netmask changes have been applied. num: 0; arg: NULL */
   LWIP_NSC_IPV4_SETTINGS_CHANGED,
-  /** IPv6 address was added. arg is index of address */
-  LWIP_NSC_IPV6_ADDED,
-  /** IPv6 address was removed. arg is index of address */
-  LWIP_NSC_IPV6_REMOVED,
-  /** IPv6 address state has changed. arg is index of address */
+  /** IPv6 address was added. num is index of address; arg: ip_addr_t* address that was previously at index */
+  LWIP_NSC_IPV6_SET,
+  /** IPv6 address state has changed. num is index of address; arg: ip_addr_t* of address that whose state has changed */
   LWIP_NSC_IPV6_ADDR_STATE_CHANGED
-} netif_status_callback_reason_t;
+} netif_nsc_reason_t;
 
-typedef void (*netif_ext_status_callback)(struct netif* netif, netif_status_callback_reason_t reason, void* arg, const ip_addr_t* oldaddr, const ip_addr_t* newaddr);
+/**
+ * @ingroup netif
+ * Function used for extended netif status callbacks
+ * Note: When parsing reason argument, keep in mind that more reasons may be added in the future!
+ * @param netif netif that is affected by change
+ * @param reason change reason
+ * @param num depends on reason, see reason description
+ * @param arg depends on reason, see reason description
+ */
+typedef void (*netif_ext_callback)(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 struct netif_ext_callback;
 typedef struct netif_ext_callback
 {
-  netif_ext_status_callback callback_fn;
+  netif_ext_callback callback_fn;
   struct netif_ext_callback* next;
 } netif_ext_callback_t;
 
 #define NETIF_DECLARE_EXT_CALLBACK(name) static netif_ext_callback_t name;
-void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_status_callback fn);
-void netif_invoke_ext_callback(struct netif* netif, netif_status_callback_reason_t reason, void* arg, const ip_addr_t* oldaddr, const ip_addr_t* newaddr);
+void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback fn);
+void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
 #else
 #define NETIF_DECLARE_EXT_CALLBACK(name)
 #define netif_add_ext_callback(callback, fn)
