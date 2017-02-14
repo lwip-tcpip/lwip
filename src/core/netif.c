@@ -1049,8 +1049,9 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
-  memset(&old_addr, 0, sizeof(old_addr));
-  ip_addr_copy(old_addr, *netif_ip_addr6(netif, addr_idx));
+  ip6_addr_copy(*ip_2_ip6(&old_addr), *netif_ip6_addr(netif, addr_idx));
+  IP_SET_TYPE_VAL(old_addr, IPADDR_TYPE_V6);
+
   /* address is actually being changed? */
   if ((ip_2_ip6(&old_addr)->addr[0] != i0) || (ip_2_ip6(&old_addr)->addr[1] != i1) ||
       (ip_2_ip6(&old_addr)->addr[2] != i2) || (ip_2_ip6(&old_addr)->addr[3] != i3)) {
