@@ -1406,7 +1406,7 @@ netif_find(const char *name)
  * Add extended netif events listener
  * @param callback pointer to listener structure
  */
-void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback fn)
+void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn)
 {
   if (callback->callback_fn != NULL) {
     return; /* already registered */
@@ -1425,7 +1425,7 @@ void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback f
  * @param num depends on reason, see reason description
  * @param arg depends on reason, see reason description
  */
-void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, void* arg)
+void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg)
 {
   netif_ext_callback_t* callback = ext_callback;
   

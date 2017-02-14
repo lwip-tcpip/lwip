@@ -538,18 +538,18 @@ typedef enum
  * @param num depends on reason, see reason description
  * @param arg depends on reason, see reason description
  */
-typedef void (*netif_ext_callback)(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
+typedef void (*netif_ext_callback_fn)(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 struct netif_ext_callback;
 typedef struct netif_ext_callback
 {
-  netif_ext_callback callback_fn;
+  netif_ext_callback_fn callback_fn;
   struct netif_ext_callback* next;
 } netif_ext_callback_t;
 
 #define NETIF_DECLARE_EXT_CALLBACK(name) static netif_ext_callback_t name;
-void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback fn);
+void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn);
 void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
 #else
 #define NETIF_DECLARE_EXT_CALLBACK(name)
