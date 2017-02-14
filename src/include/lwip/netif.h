@@ -512,13 +512,17 @@ struct netif* netif_get_by_index(u8_t idx);
  */
 typedef enum
 {
-  /** netif was added. num: 0; arg: NULL */
+  /** netif was added. num: 0; arg: NULL\n
+   * Called AFTER netif was added. */
   LWIP_NSC_NETIF_ADDED,
-  /** netif was removed. num: 0; arg: NULL */
+  /** netif was removed. num: 0; arg: NULL\n
+   * Called BEFORE netif is removed. */
   LWIP_NSC_NETIF_REMOVED,
   /** link changed. num: 1 up, 0 down; arg: NULL */
   LWIP_NSC_LINK_CHANGED,
-  /** netif administrative status changed. num: 1 up, 0 down; arg: NULL */
+  /** netif administrative status changed. num: 1 up, 0 down; arg: NULL\n
+   * up is called AFTER netif is set up.\n
+   * down is called BEFORE the netif is actually set down. */
   LWIP_NSC_STATUS_CHANGED,
   /** IPv4 address has changed. num: 0; arg is ip_addr_t* old address */
   LWIP_NSC_IPV4_ADDRESS_CHANGED,

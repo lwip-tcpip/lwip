@@ -692,6 +692,8 @@ void
 netif_set_down(struct netif *netif)
 {
   if (netif->flags & NETIF_FLAG_UP) {
+    netif_invoke_ext_callback(netif, LWIP_NSC_STATUS_CHANGED, 0, NULL);
+
     netif->flags &= ~NETIF_FLAG_UP;
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
@@ -706,7 +708,6 @@ netif_set_down(struct netif *netif)
 #endif /* LWIP_IPV6 */
 
     NETIF_STATUS_CALLBACK(netif);
-    netif_invoke_ext_callback(netif, LWIP_NSC_STATUS_CHANGED, 0, NULL);
   }
 }
 
