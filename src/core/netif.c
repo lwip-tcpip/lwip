@@ -50,7 +50,7 @@
 
 #include "lwip/opt.h"
 
-#include <string.h>
+#include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
 
 #include "lwip/def.h"
@@ -1044,11 +1044,12 @@ netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
 void
 netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1, u32_t i2, u32_t i3)
 {
-  ip_addr_t old_addr = {0};
+  ip_addr_t old_addr;
   ip_addr_t new_ipaddr;
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("invalid index", addr_idx < LWIP_IPV6_NUM_ADDRESSES);
 
+  memset(&old_addr, 0, sizeof(old_addr));
   ip_addr_copy(old_addr, *netif_ip_addr6(netif, addr_idx));
   /* address is actually being changed? */
   if ((ip_2_ip6(&old_addr)->addr[0] != i0) || (ip_2_ip6(&old_addr)->addr[1] != i1) ||
