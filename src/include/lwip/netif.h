@@ -595,8 +595,7 @@ typedef union
  * Note: When parsing reason argument, keep in mind that more reasons may be added in the future!
  * @param netif netif that is affected by change
  * @param reason change reason
- * @param num depends on reason, see reason description
- * @param arg depends on reason, see reason description
+ * @param args depends on reason, see reason description
  */
 typedef void (*netif_ext_callback_fn)(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
 
