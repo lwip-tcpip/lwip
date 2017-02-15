@@ -512,31 +512,82 @@ struct netif* netif_get_by_index(u8_t idx);
  */
 typedef enum
 {
-  /** netif was added. num: 0; arg: NULL\n
-   * Called AFTER netif was added. */
+  /** netif was added. arg: NULL. Called AFTER netif was added. */
   LWIP_NSC_NETIF_ADDED,
-  /** netif was removed. num: 0; arg: NULL\n
-   * Called BEFORE netif is removed. */
+  /** netif was removed. arg: NULL. Called BEFORE netif is removed. */
   LWIP_NSC_NETIF_REMOVED,
-  /** link changed. num: 1 up, 0 down; arg: NULL */
+  /** link changed */
   LWIP_NSC_LINK_CHANGED,
-  /** netif administrative status changed. num: 1 up, 0 down; arg: NULL\n
+  /** netif administrative status changed.\n
    * up is called AFTER netif is set up.\n
    * down is called BEFORE the netif is actually set down. */
   LWIP_NSC_STATUS_CHANGED,
-  /** IPv4 address has changed. num: 0; arg is ip_addr_t* old address */
+  /** IPv4 address has changed */
   LWIP_NSC_IPV4_ADDRESS_CHANGED,
-  /** IPv4 gateway has changed. num: 0; arg is ip_addr_t* old address */
+  /** IPv4 gateway has changed */
   LWIP_NSC_IPV4_GATEWAY_CHANGED,
-  /** IPv4 netmask has changed. num: 0; arg is ip_addr_t* old address */
+  /** IPv4 netmask has changed */
   LWIP_NSC_IPV4_NETMASK_CHANGED,
-  /** called AFTER IPv4 address/gateway/netmask changes have been applied. num: 0; arg: NULL */
+  /** called AFTER IPv4 address/gateway/netmask changes have been applied. arg: NULL */
   LWIP_NSC_IPV4_SETTINGS_CHANGED,
-  /** IPv6 address was added. num is index of address; arg: ip_addr_t* address that was previously at index */
+  /** IPv6 address was added */
   LWIP_NSC_IPV6_SET,
-  /** IPv6 address state has changed. num is index of address; arg: ip_addr_t* of address that whose state has changed */
+  /** IPv6 address state has changed */
   LWIP_NSC_IPV6_ADDR_STATE_CHANGED
 } netif_nsc_reason_t;
+
+/** @ingroup netif
+ * Argument supplied to netif_ext_callback_fn.
+ */
+typedef union
+{
+  /** Args to LWIP_NSC_LINK_CHANGED callback */
+  struct link_changed_s
+  {
+    /** 1: up; 0: down */
+    u8_t state;
+  } link_changed;
+  /** Args to LWIP_NSC_STATUS_CHANGED callback */
+  struct status_changed_s
+  {
+    /** 1: up; 0: down */
+    u8_t state;
+  } status_changed;
+  /** Args to LWIP_NSC_IPV4_ADDRESS_CHANGED callback */
+  struct ipv4_changed_s
+  {
+    /** Old IPv4 address */
+    const ip_addr_t* old_address;
+  } ipv4_changed;
+  /** Args to LWIP_NSC_IPV4_GATEWAY_CHANGED callback */
+  struct ipv4_gw_changed_s
+  {
+    /** Old IPv4 gateway */
+    const ip_addr_t* old_address;
+  } ipv4_gw_changed;
+  /** Args to LWIP_NSC_IPV4_NETMASK_CHANGED callback */
+  struct ipv4_nm_changed_s
+  {
+    /** Old IPv4 netmask */
+    const ip_addr_t* old_address;
+  } ipv4_nm_changed;
+  /** Args to LWIP_NSC_IPV6_SET callback */
+  struct ipv6_set_s
+  {
+    /** Index of changed IPv6 address */
+    s8_t addr_index;
+    /** Old IPv6 address */
+    const ip_addr_t* old_address;
+  } ipv6_set;
+  /** Args to LWIP_NSC_IPV6_ADDR_STATE_CHANGED callback */
+  struct ipv6_addr_state_changed_s
+  {
+    /** Index of affected IPv6 address */
+    s8_t addr_index;
+    /** Affected IPv6 address */
+    const ip_addr_t* address;
+  } ipv6_addr_state_changed;
+} netif_ext_callback_args_t;
 
 /**
  * @ingroup netif
@@ -547,7 +598,7 @@ typedef enum
  * @param num depends on reason, see reason description
  * @param arg depends on reason, see reason description
  */
-typedef void (*netif_ext_callback_fn)(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
+typedef void (*netif_ext_callback_fn)(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 struct netif_ext_callback;
@@ -559,11 +610,11 @@ typedef struct netif_ext_callback
 
 #define NETIF_DECLARE_EXT_CALLBACK(name) static netif_ext_callback_t name;
 void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn);
-void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg);
+void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
 #else
 #define NETIF_DECLARE_EXT_CALLBACK(name)
 #define netif_add_ext_callback(callback, fn)
-#define netif_invoke_ext_callback(netif, reason, num, arg)
+#define netif_invoke_ext_callback(netif, reason, args)
 #endif
 
 #ifdef __cplusplus

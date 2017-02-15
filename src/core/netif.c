@@ -350,7 +350,7 @@ netif_add(struct netif *netif,
 #endif /* LWIP_IPV4 */
   LWIP_DEBUGF(NETIF_DEBUG, ("\n"));
   
-  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_ADDED, 0, NULL);
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_ADDED, NULL);
   
   return netif;
 }
@@ -383,7 +383,7 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
     netif_set_ipaddr(netif, ipaddr);
   }
 
-  netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_SETTINGS_CHANGED, 0, NULL);
+  netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_SETTINGS_CHANGED, NULL);
 }
 #endif /* LWIP_IPV4*/
 
@@ -404,7 +404,7 @@ netif_remove(struct netif *netif)
     return;
   }
 
-  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_REMOVED, 0, NULL);
+  netif_invoke_ext_callback(netif, LWIP_NSC_NETIF_REMOVED, NULL);
 
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
@@ -528,7 +528,13 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4);
 
     NETIF_STATUS_CALLBACK(netif);
-    netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_ADDRESS_CHANGED, 0, &old_addr);
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    {
+      netif_ext_callback_args_t args;
+      args.ipv4_changed.old_address = &old_addr;
+      netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_ADDRESS_CHANGED, &args);
+    }
+#endif
   }
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -552,8 +558,10 @@ void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
+  netif_ext_callback_args_t args;
   ip_addr_t old_addr;
   ip_addr_copy(old_addr, *netif_ip_gw4(netif));
+  args.ipv4_gw_changed.old_address = &old_addr;
 #endif
 
   ip4_addr_set(ip_2_ip4(&netif->gw), gw);
@@ -565,7 +573,7 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
     ip4_addr3_16(netif_ip4_gw(netif)),
     ip4_addr4_16(netif_ip4_gw(netif))));
 
-  netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_GATEWAY_CHANGED, 0, &old_addr);
+  netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_GATEWAY_CHANGED, &args);
 }
 
 /**
@@ -582,8 +590,10 @@ void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
+  netif_ext_callback_args_t args;
   ip_addr_t old_addr;
   ip_addr_copy(old_addr, *netif_ip_netmask4(netif));
+  args.ipv4_nm_changed.old_address = &old_addr;
 #endif
   
   mib2_remove_route_ip4(0, netif);
@@ -598,7 +608,7 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
     ip4_addr3_16(netif_ip4_netmask(netif)),
     ip4_addr4_16(netif_ip4_netmask(netif))));
 
-  netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_NETMASK_CHANGED, 0, &old_addr);
+  netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_NETMASK_CHANGED, &args);
 }
 #endif /* LWIP_IPV4 */
 
@@ -638,7 +648,14 @@ netif_set_up(struct netif *netif)
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
     NETIF_STATUS_CALLBACK(netif);
-    netif_invoke_ext_callback(netif, LWIP_NSC_STATUS_CHANGED, 1, NULL);
+
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    {
+      netif_ext_callback_args_t args;
+      args.status_changed.state = 1;
+      netif_invoke_ext_callback(netif, LWIP_NSC_STATUS_CHANGED, &args);
+    }
+#endif
 
     if (netif->flags & NETIF_FLAG_LINK_UP) {
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4|NETIF_REPORT_TYPE_IPV6);
@@ -692,7 +709,13 @@ void
 netif_set_down(struct netif *netif)
 {
   if (netif->flags & NETIF_FLAG_UP) {
-    netif_invoke_ext_callback(netif, LWIP_NSC_STATUS_CHANGED, 0, NULL);
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    {
+      netif_ext_callback_args_t args;
+      args.status_changed.state = 0;
+      netif_invoke_ext_callback(netif, LWIP_NSC_STATUS_CHANGED, &args);
+    }
+#endif
 
     netif->flags &= ~NETIF_FLAG_UP;
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
@@ -761,7 +784,13 @@ netif_set_link_up(struct netif *netif)
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4|NETIF_REPORT_TYPE_IPV6);
     }
     NETIF_LINK_CALLBACK(netif);
-    netif_invoke_ext_callback(netif, LWIP_NSC_LINK_CHANGED, 1, NULL);
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    {
+      netif_ext_callback_args_t args;
+      args.link_changed.state = 1;
+      netif_invoke_ext_callback(netif, LWIP_NSC_LINK_CHANGED, &args);
+    }
+#endif
   }
 }
 
@@ -775,7 +804,13 @@ netif_set_link_down(struct netif *netif )
   if (netif->flags & NETIF_FLAG_LINK_UP) {
     netif->flags &= ~NETIF_FLAG_LINK_UP;
     NETIF_LINK_CALLBACK(netif);
-    netif_invoke_ext_callback(netif, LWIP_NSC_LINK_CHANGED, 0, NULL);
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    {
+      netif_ext_callback_args_t args;
+      args.link_changed.state = 0;
+      netif_invoke_ext_callback(netif, LWIP_NSC_LINK_CHANGED, &args);
+    }
+#endif
   }
 }
 
@@ -1081,7 +1116,14 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
       NETIF_STATUS_CALLBACK(netif);
     }
 
-    netif_invoke_ext_callback(netif, LWIP_NSC_IPV6_SET, addr_idx, &old_addr);
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    {
+      netif_ext_callback_args_t args;
+      args.ipv6_set.addr_index  = addr_idx;
+      args.ipv6_set.old_address = &old_addr;
+      netif_invoke_ext_callback(netif, LWIP_NSC_IPV6_SET, &args);
+    }
+#endif
   }
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
@@ -1149,7 +1191,14 @@ netif_ip6_addr_set_state(struct netif* netif, s8_t addr_idx, u8_t state)
     }
   }
 
-  netif_invoke_ext_callback(netif, LWIP_NSC_IPV6_ADDR_STATE_CHANGED, addr_idx, netif_ip_addr6(netif, addr_idx));
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+  {
+    netif_ext_callback_args_t args;
+    args.ipv6_addr_state_changed.addr_index = addr_idx;
+    args.ipv6_addr_state_changed.address    = netif_ip_addr6(netif, addr_idx);
+    netif_invoke_ext_callback(netif, LWIP_NSC_IPV6_ADDR_STATE_CHANGED, &args);
+  }
+#endif
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
     addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
@@ -1413,13 +1462,9 @@ void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_f
   LWIP_ASSERT("callback must be != NULL", callback != NULL);
   LWIP_ASSERT("fn must be != NULL", fn != NULL);
 
-  if (callback->callback_fn != NULL) {
-    return; /* already registered */
-  }
-  
   callback->callback_fn = fn;
-  callback->next = ext_callback;
-  ext_callback = callback;
+  callback->next        = ext_callback;
+  ext_callback          = callback;
 }
 
 /**
@@ -1427,18 +1472,17 @@ void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_f
  * Invoke extended netif status event
  * @param netif netif that is affected by change
  * @param reason change reason
- * @param num depends on reason, see reason description
- * @param arg depends on reason, see reason description
+ * @param args depends on reason, see reason description
  */
-void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg)
+void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
 {
-  LWIP_ASSERT("netif must be != NULL", netif != NULL);
-  
   netif_ext_callback_t* callback = ext_callback;
+  
+  LWIP_ASSERT("netif must be != NULL", netif != NULL);
   
   while (callback != NULL)
   {
-    callback->callback_fn(netif, reason, num, arg);
+    callback->callback_fn(netif, reason, args);
     callback = callback->next;
   }
 }

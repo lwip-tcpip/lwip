@@ -1831,10 +1831,9 @@ mdns_resp_netif_settings_changed(struct netif *netif)
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 static void
-mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, u16_t num, const void* arg)
+mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
 {
-  LWIP_UNUSED_ARG(num);
-  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(args);
 
   /* MDNS enabled on netif? */
   if (NETIF_TO_HOST(netif) == NULL) {
@@ -1844,13 +1843,13 @@ mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, u
   switch (reason)
   {
   case LWIP_NSC_STATUS_CHANGED:
-    if (num != 0) {
+    if (args->status_changed.state != 0) {
       mdns_resp_netif_settings_changed(netif);
     }
     /* TODO: send goodbye message */
     break;
   case LWIP_NSC_LINK_CHANGED:
-    if (num != 0) {
+    if (args->status_changed.state != 0) {
       mdns_resp_netif_settings_changed(netif);
     }
     break;
