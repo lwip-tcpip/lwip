@@ -1849,7 +1849,7 @@ mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, c
     /* TODO: send goodbye message */
     break;
   case LWIP_NSC_LINK_CHANGED:
-    if (args->status_changed.state != 0) {
+    if (args->link_changed.state != 0) {
       mdns_resp_netif_settings_changed(netif);
     }
     break;
