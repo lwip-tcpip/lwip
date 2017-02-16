@@ -1784,25 +1784,28 @@ lwip_netconn_do_close(void *m)
 #if LWIP_NETCONN_FULLDUPLEX
       if (msg->msg.sd.shut & NETCONN_SHUT_WR) {
         /* close requested, abort running write */
-        sys_sem_t* op_completed_sem;
+        sys_sem_t* write_completed_sem;
         LWIP_ASSERT("msg->conn->current_msg != NULL", msg->conn->current_msg != NULL);
-        op_completed_sem = LWIP_API_MSG_SEM(msg->conn->current_msg);
+        write_completed_sem = LWIP_API_MSG_SEM(msg->conn->current_msg);
         msg->conn->current_msg->err = ERR_CLSD;
         msg->conn->current_msg = NULL;
         msg->conn->write_offset = 0;
         msg->conn->state = NETCONN_NONE;
+        state = NETCONN_NONE;
         NETCONN_SET_SAFE_ERR(msg->conn, ERR_CLSD);
-        sys_sem_signal(op_completed_sem);
+        sys_sem_signal(write_completed_sem);
       } else {
         LWIP_ASSERT("msg->msg.sd.shut == NETCONN_SHUT_RD", msg->msg.sd.shut == NETCONN_SHUT_RD);
         /* In this case, let the write continue and do not interfere with
            conn->current_msg or conn->state! */
         msg->err = tcp_shutdown(msg->conn->pcb.tcp, 1, 0);
       }
+    }
+    if (state == NETCONN_NONE) {
 #else /* LWIP_NETCONN_FULLDUPLEX */
       msg->err = ERR_INPROGRESS;
-#endif /* LWIP_NETCONN_FULLDUPLEX */
     } else {
+#endif /* LWIP_NETCONN_FULLDUPLEX */
       if (msg->msg.sd.shut & NETCONN_SHUT_RD) {
         /* Drain and delete mboxes */
         netconn_drain(msg->conn);

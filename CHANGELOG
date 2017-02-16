@@ -23,6 +23,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-02-16: Simon Goldschmidt
+  * LWIP_NETCONN_FULLDUPLEX: fixed shutdown during write (bug #50274)
+
   2017-01-18: Dirk Ziegelmeier
   * Fix zero-copy RX, see bug bug #50064. PBUF_REFs were not supported as ARP requests.
 
