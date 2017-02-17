@@ -76,6 +76,7 @@ struct local_hostlist_entry {
   ip_addr_t addr;
   struct local_hostlist_entry *next;
 };
+#define DNS_LOCAL_HOSTLIST_ELEM(name, addr_init) {name, addr_init, NULL}
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
 #ifndef DNS_LOCAL_HOSTLIST_MAX_NAMELEN
 #define DNS_LOCAL_HOSTLIST_MAX_NAMELEN  DNS_MAX_NAME_LENGTH

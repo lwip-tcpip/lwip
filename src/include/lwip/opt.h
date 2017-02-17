@@ -1070,11 +1070,9 @@
 #define LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING 2
 #define LWIP_DNS_SECURE_RAND_SRC_PORT           4
 
-/** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled,
- *  you have to define
- *  \#define DNS_LOCAL_HOSTLIST_INIT {{"host1", 0x123}, {"host2", 0x234}}
- *  (an array of structs name/address, where address is an u32_t in network
- *  byte order).
+/** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled, you have to define an initializer:
+ *  \#define DNS_LOCAL_HOSTLIST_INIT {DNS_LOCAL_HOSTLIST_ELEM("host_ip4", IPADDR4_INIT_BYTES(1,2,3,4)), \
+ *                                    DNS_LOCAL_HOSTLIST_ELEM("host_ip6", IPADDR6_INIT_HOST(123, 234, 345, 456)}
  *
  *  Instead, you can also use an external function:
  *  \#define DNS_LOOKUP_LOCAL_EXTERN(x) extern err_t my_lookup_function(const char *name, ip_addr_t *addr, u8_t dns_addrtype)
