@@ -696,7 +696,6 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->callback     = callback;
 #if LWIP_TCP
   conn->current_msg  = NULL;
-  conn->write_offset = 0;
 #endif /* LWIP_TCP */
 #if LWIP_SO_SNDTIMEO
   conn->send_timeout = 0;
@@ -1028,7 +1027,6 @@ lwip_netconn_do_delconn(void *m)
       op_completed_sem = LWIP_API_MSG_SEM(msg->conn->current_msg);
       msg->conn->current_msg->err = ERR_CLSD;
       msg->conn->current_msg = NULL;
-      msg->conn->write_offset = 0;
       msg->conn->state = NETCONN_NONE;
       NETCONN_SET_SAFE_ERR(msg->conn, ERR_CLSD);
       sys_sem_signal(op_completed_sem);
@@ -1067,8 +1065,7 @@ lwip_netconn_do_delconn(void *m)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
       case NETCONN_TCP:
-        LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL &&
-          msg->conn->write_offset == 0);
+        LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL);
         msg->conn->state = NETCONN_CLOSE;
         msg->msg.sd.shut = NETCONN_SHUT_RDWR;
         msg->conn->current_msg = msg;
@@ -1502,8 +1499,8 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
   LWIP_ASSERT("conn->current_msg != NULL", conn->current_msg != NULL);
   LWIP_ASSERT("conn->pcb.tcp != NULL", conn->pcb.tcp != NULL);
-  LWIP_ASSERT("conn->write_offset < conn->current_msg->msg.w.len",
-    conn->write_offset < conn->current_msg->msg.w.len);
+  LWIP_ASSERT("conn->current_msg->msg.w.offset < conn->current_msg->msg.w.len",
+    conn->current_msg->msg.w.offset < conn->current_msg->msg.w.len);
 
   apiflags = conn->current_msg->msg.w.apiflags;
   dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
@@ -1512,21 +1509,18 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   if ((conn->send_timeout != 0) &&
       ((s32_t)(sys_now() - conn->current_msg->msg.w.time_started) >= conn->send_timeout)) {
     write_finished = 1;
-    if (conn->write_offset == 0) {
+    if (conn->current_msg->msg.w.offset == 0) {
       /* nothing has been written */
       err = ERR_WOULDBLOCK;
-      conn->current_msg->msg.w.len = 0;
     } else {
       /* partial write */
       err = ERR_OK;
-      conn->current_msg->msg.w.len = conn->write_offset;
-      conn->write_offset = 0;
     }
   } else
 #endif /* LWIP_SO_SNDTIMEO */
   {
-    dataptr = (const u8_t*)conn->current_msg->msg.w.dataptr + conn->write_offset;
-    diff = conn->current_msg->msg.w.len - conn->write_offset;
+    dataptr = (const u8_t*)conn->current_msg->msg.w.dataptr + conn->current_msg->msg.w.offset;
+    diff = conn->current_msg->msg.w.len - conn->current_msg->msg.w.offset;
     if (diff > 0xffffUL) { /* max_u16_t */
       len = 0xffff;
       apiflags |= TCP_WRITE_FLAG_MORE;
@@ -1546,7 +1540,8 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
         apiflags |= TCP_WRITE_FLAG_MORE;
       }
     }
-    LWIP_ASSERT("lwip_netconn_do_writemore: invalid length!", ((conn->write_offset + len) <= conn->current_msg->msg.w.len));
+    LWIP_ASSERT("lwip_netconn_do_writemore: invalid length!",
+      ((conn->current_msg->msg.w.offset + len) <= conn->current_msg->msg.w.len));
     err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
     /* if OK or memory error, check available space */
     if ((err == ERR_OK) || (err == ERR_MEM)) {
@@ -1566,10 +1561,9 @@ err_mem:
 
     if (err == ERR_OK) {
       err_t out_err;
-      conn->write_offset += len;
-      if ((conn->write_offset == conn->current_msg->msg.w.len) || dontblock) {
-        /* return sent length */
-        conn->current_msg->msg.w.len = conn->write_offset;
+      conn->current_msg->msg.w.offset += len;
+      if ((conn->current_msg->msg.w.offset == conn->current_msg->msg.w.len) || dontblock) {
+        /* return sent length (caller reads length from msg.w.offset) */
         /* everything was written */
         write_finished = 1;
       }
@@ -1580,7 +1574,7 @@ err_mem:
            to the application thread. */
         err = out_err;
         write_finished = 1;
-        conn->current_msg->msg.w.len = 0;
+        conn->current_msg->msg.w.offset = 0;
       }
     } else if (err == ERR_MEM) {
       /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called.
@@ -1596,18 +1590,18 @@ err_mem:
            to the application thread. */
         err = out_err;
         write_finished = 1;
-        conn->current_msg->msg.w.len = 0;
+        conn->current_msg->msg.w.offset = 0;
       } else if (dontblock) {
         /* non-blocking write is done on ERR_MEM */
         err = ERR_WOULDBLOCK;
         write_finished = 1;
-        conn->current_msg->msg.w.len = 0;
+        conn->current_msg->msg.w.offset = 0;
       }
     } else {
       /* On errors != ERR_MEM, we don't try writing any more but return
          the error to the application thread. */
       write_finished = 1;
-      conn->current_msg->msg.w.len = 0;
+      conn->current_msg->msg.w.offset = 0;
     }
   }
   if (write_finished) {
@@ -1616,7 +1610,6 @@ err_mem:
     sys_sem_t* op_completed_sem = LWIP_API_MSG_SEM(conn->current_msg);
     conn->current_msg->err = err;
     conn->current_msg = NULL;
-    conn->write_offset = 0;
     conn->state = NETCONN_NONE;
     NETCONN_SET_SAFE_ERR(conn, err);
 #if LWIP_TCPIP_CORE_LOCKING
@@ -1657,11 +1650,9 @@ lwip_netconn_do_write(void *m)
       } else if (msg->conn->pcb.tcp != NULL) {
         msg->conn->state = NETCONN_WRITE;
         /* set all the variables used by lwip_netconn_do_writemore */
-        LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL &&
-          msg->conn->write_offset == 0);
+        LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL);
         LWIP_ASSERT("msg->msg.w.len != 0", msg->msg.w.len != 0);
         msg->conn->current_msg = msg;
-        msg->conn->write_offset = 0;
 #if LWIP_TCPIP_CORE_LOCKING
         if (lwip_netconn_do_writemore(msg->conn, 0) != ERR_OK) {
           LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
@@ -1789,7 +1780,6 @@ lwip_netconn_do_close(void *m)
         write_completed_sem = LWIP_API_MSG_SEM(msg->conn->current_msg);
         msg->conn->current_msg->err = ERR_CLSD;
         msg->conn->current_msg = NULL;
-        msg->conn->write_offset = 0;
         msg->conn->state = NETCONN_NONE;
         state = NETCONN_NONE;
         NETCONN_SET_SAFE_ERR(msg->conn, ERR_CLSD);
@@ -1810,8 +1800,7 @@ lwip_netconn_do_close(void *m)
         /* Drain and delete mboxes */
         netconn_drain(msg->conn);
       }
-      LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL &&
-        msg->conn->write_offset == 0);
+      LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL);
       msg->conn->state = NETCONN_CLOSE;
       msg->conn->current_msg = msg;
 #if LWIP_TCPIP_CORE_LOCKING

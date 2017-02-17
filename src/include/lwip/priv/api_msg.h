@@ -104,7 +104,10 @@ struct api_msg {
     /** used for lwip_netconn_do_write */
     struct {
       const void *dataptr;
+      /** total length of dataptr */
       size_t len;
+      /** offset into dataptr/output of bytes written */
+      size_t offset;
       u8_t apiflags;
 #if LWIP_SO_SNDTIMEO
       u32_t time_started;

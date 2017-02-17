@@ -784,6 +784,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   API_MSG_VAR_REF(msg).msg.w.dataptr = dataptr;
   API_MSG_VAR_REF(msg).msg.w.apiflags = apiflags;
   API_MSG_VAR_REF(msg).msg.w.len = size;
+  API_MSG_VAR_REF(msg).msg.w.offset = 0;
 #if LWIP_SO_SNDTIMEO
   if (conn->send_timeout != 0) {
     /* get the time we started, which is later compared to
@@ -801,7 +802,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   if ((err == ERR_OK) && (bytes_written != NULL)) {
     if (dontblock) {
       /* nonblocking write: maybe the data has been sent partly */
-      *bytes_written = API_MSG_VAR_REF(msg).msg.w.len;
+      *bytes_written = API_MSG_VAR_REF(msg).msg.w.offset;
     } else {
       /* blocking call succeeded: all data has been sent if it */
       *bytes_written = size;
