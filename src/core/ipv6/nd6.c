@@ -89,8 +89,16 @@ static u8_t nd6_cached_destination_index;
 /* Multicast address holder. */
 static ip6_addr_t multicast_address;
 
-/* Static buffer to parse RA packet options (size of a prefix option, biggest option) */
-static u8_t nd6_ra_buffer[sizeof(struct prefix_option)];
+/* Static buffer to parse RA packet options */
+union ra_options {
+  struct lladdr_option  lladdr;
+  struct mtu_option     mtu;
+  struct prefix_option  prefix;
+#if LWIP_ND6_RDNSS_MAX_DNS_SERVERS
+  struct rdnss_option   rdnss;
+#endif
+};
+static union ra_options nd6_ra_buffer;
 
 /* Forward declarations. */
 static s8_t nd6_find_neighbor_cache_entry(const ip6_addr_t *ip6addr);
@@ -617,30 +625,44 @@ nd6_input(struct pbuf *p, struct netif *inp)
     offset = sizeof(struct ra_header);
 
     /* Process each option. */
-    while ((p->tot_len - offset) > 0) {
+    while ((p->tot_len - offset) >= 2) {
+      u8_t option_type;
+      u16_t option_len;
+      int option_len8 = pbuf_try_get_at(p, offset + 1);
+      if (option_len8 <= 0) {
+        /* read beyond end or zero length */
+        goto lenerr_drop_free_return;
+      }
+      option_len = ((u8_t)option_len8) << 3;
+      if (option_len > p->tot_len - offset) {
+        /* short packet (option does not fit in) */
+        goto lenerr_drop_free_return;
+      }
       if (p->len == p->tot_len) {
         /* no need to copy from contiguous pbuf */
         buffer = &((u8_t*)p->payload)[offset];
       } else {
-        buffer = nd6_ra_buffer;
-        if (pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset) != sizeof(struct prefix_option)) {
-          pbuf_free(p);
-          ND6_STATS_INC(nd6.lenerr);
-          ND6_STATS_INC(nd6.drop);
-          return;
+        /* check if this option fits into our buffer */
+        if (option_len > sizeof(nd6_ra_buffer)) {
+          option_type = pbuf_get_at(p, offset);
+          /* invalid option length */
+          if (option_type != ND6_OPTION_TYPE_RDNSS) {
+            goto lenerr_drop_free_return;
+          }
+          /* we allow RDNSS option to be longer - we'll just drop some servers */
+          option_len = sizeof(nd6_ra_buffer);
         }
+        buffer = (u8_t*)&nd6_ra_buffer;
+        option_len = pbuf_copy_partial(p, &nd6_ra_buffer, option_len, offset);
       }
-      if (buffer[1] == 0) {
-        /* zero-length extension. drop packet */
-        pbuf_free(p);
-        ND6_STATS_INC(nd6.lenerr);
-        ND6_STATS_INC(nd6.drop);
-        return;
-      }
-      switch (buffer[0]) {
+      option_type = buffer[0];
+      switch (option_type) {
       case ND6_OPTION_TYPE_SOURCE_LLADDR:
       {
         struct lladdr_option *lladdr_opt;
+        if (option_len < sizeof(struct lladdr_option)) {
+          goto lenerr_drop_free_return;
+        }
         lladdr_opt = (struct lladdr_option *)buffer;
         if ((default_router_list[i].neighbor_entry != NULL) &&
             (default_router_list[i].neighbor_entry->state == ND6_INCOMPLETE)) {
@@ -653,6 +675,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
       case ND6_OPTION_TYPE_MTU:
       {
         struct mtu_option *mtu_opt;
+        if (option_len < sizeof(struct mtu_option)) {
+          goto lenerr_drop_free_return;
+        }
         mtu_opt = (struct mtu_option *)buffer;
         if (lwip_htonl(mtu_opt->mtu) >= 1280) {
 #if LWIP_ND6_ALLOW_RA_UPDATES
@@ -665,6 +690,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
       {
         struct prefix_option *prefix_opt;
         ip6_addr_t prefix_addr;
+        if (option_len < sizeof(struct prefix_option)) {
+          goto lenerr_drop_free_return;
+        }
 
         prefix_opt = (struct prefix_option *)buffer;
 
@@ -711,27 +739,33 @@ nd6_input(struct pbuf *p, struct netif *inp)
       case ND6_OPTION_TYPE_RDNSS:
       {
         u8_t num, n;
+        u16_t copy_offset = offset + SIZEOF_RDNSS_OPTION_BASE;
         struct rdnss_option * rdnss_opt;
+        if (option_len < SIZEOF_RDNSS_OPTION_BASE) {
+          goto lenerr_drop_free_return;
+        }
 
         rdnss_opt = (struct rdnss_option *)buffer;
         num = (rdnss_opt->length - 1) / 2;
         for (n = 0; (rdnss_server_idx < DNS_MAX_SERVERS) && (n < num); n++) {
           ip_addr_t rdnss_address;
 
-          /* Get a memory-aligned, zoned copy of the prefix. */
-          ip_addr_copy_from_ip6_packed(rdnss_address, rdnss_opt->rdnss_address[n]);
-          ip6_addr_assign_zone(ip_2_ip6(&rdnss_address), IP6_UNKNOWN, inp);
+          /* Copy directly from pbuf to get an aligned, zoned copy of the prefix. */
+          if (pbuf_copy_partial(p, &rdnss_address, sizeof(ip6_addr_p_t), copy_offset) == sizeof(ip6_addr_p_t)) {
+            IP_SET_TYPE_VAL(rdnss_address, IPADDR_TYPE_V6);
+            ip6_addr_assign_zone(ip_2_ip6(&rdnss_address), IP6_UNKNOWN, inp);
 
-          if (htonl(rdnss_opt->lifetime) > 0) {
-            /* TODO implement Lifetime > 0 */
-            dns_setserver(rdnss_server_idx++, &rdnss_address);
-          } else {
-            /* TODO implement DNS removal in dns.c */
-            u8_t s;
-            for (s = 0; s < DNS_MAX_SERVERS; s++) {
-              const ip_addr_t *addr = dns_getserver(s);
-              if(ip_addr_cmp(addr, &rdnss_address)) {
-                dns_setserver(s, NULL);
+            if (htonl(rdnss_opt->lifetime) > 0) {
+              /* TODO implement Lifetime > 0 */
+              dns_setserver(rdnss_server_idx++, &rdnss_address);
+            } else {
+              /* TODO implement DNS removal in dns.c */
+              u8_t s;
+              for (s = 0; s < DNS_MAX_SERVERS; s++) {
+                const ip_addr_t *addr = dns_getserver(s);
+                if(ip_addr_cmp(addr, &rdnss_address)) {
+                  dns_setserver(s, NULL);
+                }
               }
             }
           }
@@ -745,7 +779,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         break;
       }
       /* option length is checked earlier to be non-zero to make sure loop ends */
-      offset += 8 * ((u16_t)buffer[1]);
+      offset += 8 * (u8_t)option_len8;
     }
 
     break; /* ICMP6_TYPE_RA */
@@ -883,6 +917,11 @@ nd6_input(struct pbuf *p, struct netif *inp)
     break; /* default */
   }
 
+  pbuf_free(p);
+  return;
+lenerr_drop_free_return:
+  ND6_STATS_INC(nd6.lenerr);
+  ND6_STATS_INC(nd6.drop);
   pbuf_free(p);
 }
 
