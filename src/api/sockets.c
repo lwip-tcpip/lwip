@@ -217,7 +217,7 @@ struct lwip_sock {
   /** error happened for this socket, set by event_callback(), tested by select */
   u16_t errevent;
   /** last error that occurred on this socket */
-  lwip_sockerr_t err;
+  int err;
   /** counter of how many threads are waiting for this socket using select */
   SELWAIT_T select_waiting;
 };
@@ -295,7 +295,7 @@ static volatile int select_cb_ctr;
 
 #define sock_set_errno(sk, e) do { \
   const int sockerr = (e); \
-  sk->err = (lwip_sockerr_t)sockerr; \
+  sk->err = sockerr; \
   set_errno(sockerr); \
 } while (0)
 
@@ -305,8 +305,8 @@ static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len
 static void lwip_getsockopt_callback(void *arg);
 static void lwip_setsockopt_callback(void *arg);
 #endif
-static lwip_sockerr_t lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *optlen);
-static lwip_sockerr_t lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_t optlen);
+static int lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *optlen);
+static int lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_t optlen);
 
 #if LWIP_IPV4 && LWIP_IPV6
 static void
@@ -1780,7 +1780,7 @@ lwip_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
 int
 lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
-  lwip_sockerr_t err;
+  int err;
   struct lwip_sock *sock = get_socket(s);
 #if !LWIP_TCPIP_CORE_LOCKING
   err_t cberr;
@@ -1876,10 +1876,10 @@ lwip_getsockopt_callback(void *arg)
 /** lwip_getsockopt_impl: the actual implementation of getsockopt:
  * same argument as lwip_getsockopt, either called directly or through callback
  */
-static lwip_sockerr_t
+static int
 lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
-  lwip_sockerr_t err = 0;
+  int err = 0;
   struct lwip_sock *sock = tryget_socket(s);
   if (!sock) {
     return EBADF;
@@ -2187,7 +2187,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
 int
 lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
-  lwip_sockerr_t err = 0;
+  int err = 0;
   struct lwip_sock *sock = get_socket(s);
 #if !LWIP_TCPIP_CORE_LOCKING
   err_t cberr;
@@ -2278,10 +2278,10 @@ lwip_setsockopt_callback(void *arg)
 /** lwip_setsockopt_impl: the actual implementation of setsockopt:
  * same argument as lwip_setsockopt, either called directly or through callback
  */
-static lwip_sockerr_t
+static int
 lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
-  lwip_sockerr_t err = 0;
+  int err = 0;
   struct lwip_sock *sock = tryget_socket(s);
   if (!sock) {
     return EBADF;
