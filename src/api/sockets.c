@@ -1783,6 +1783,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   int err;
   struct lwip_sock *sock = get_socket(s);
 #if !LWIP_TCPIP_CORE_LOCKING
+  err_t cberr;
   LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(data);
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
@@ -1825,10 +1826,10 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 #else
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem = &sock->conn->op_completed;
 #endif
-  err = tcpip_callback(lwip_getsockopt_callback, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
-  if (err != ERR_OK) {
+  cberr = tcpip_callback(lwip_getsockopt_callback, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
+  if (cberr != ERR_OK) {
     LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
-    sock_set_errno(sock, err_to_errno(err));
+    sock_set_errno(sock, err_to_errno(cberr));
     return -1;
   }
   sys_arch_sem_wait((sys_sem_t*)(LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem), 0);
@@ -1944,7 +1945,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       if (((sock->err == 0) || (sock->err == EINPROGRESS)) && (sock->conn != NULL)) {
         sock_set_errno(sock, err_to_errno(sock->conn->last_err));
       }
-      *(int *)optval = (sock->err == 0xFF ? (int)-1 : (int)sock->err);
+      *(int *)optval = sock->err;
       sock->err = 0;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n",
                   s, *(int *)optval));
@@ -2189,6 +2190,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   int err = 0;
   struct lwip_sock *sock = get_socket(s);
 #if !LWIP_TCPIP_CORE_LOCKING
+  err_t cberr;
   LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(data);
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
@@ -2233,10 +2235,10 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 #else
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem = &sock->conn->op_completed;
 #endif
-  err = tcpip_callback(lwip_setsockopt_callback, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
-  if (err != ERR_OK) {
+  cberr = tcpip_callback(lwip_setsockopt_callback, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
+  if (cberr != ERR_OK) {
     LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
-    sock_set_errno(sock, err_to_errno(err));
+    sock_set_errno(sock, err_to_errno(cberr));
     return -1;
   }
   sys_arch_sem_wait((sys_sem_t*)(LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem), 0);
