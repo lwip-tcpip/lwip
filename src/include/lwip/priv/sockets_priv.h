@@ -48,6 +48,19 @@
 extern "C" {
 #endif
 
+/** Define LWIP_SOCKERR_T in cc.h if you want to use a different type for your
+ *  platform (must be signed and big enough to hold all error constants). */
+#ifdef LWIP_SOCKERR_T
+typedef LWIP_SOCKERR_T lwip_sockerr_t;
+#else /* LWIP_SOCKERR_T */
+#ifdef LWIP_PROVIDE_ERRNO
+/* we only use our own error constants, 8 bits are enough */
+typedef s8_t lwip_sockerr_t;
+#else
+typedef int lwip_sockerr_t;
+#endif
+#endif /* LWIP_SOCKERR_T*/
+
 #if LWIP_SOCKET_SET_ERRNO
 #ifndef set_errno
 #define set_errno(err) do { if (err) { errno = (err); } } while(0)
@@ -82,7 +95,7 @@ struct lwip_setgetsockopt_data {
   /** size of *optval */
   socklen_t optlen;
   /** if an error occurs, it is temporarily stored here */
-  int err;
+  lwip_sockerr_t err;
   /** semaphore to wake up the calling task */
   void* completed_sem;
 };
