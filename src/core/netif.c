@@ -250,6 +250,8 @@ netif_add(struct netif *netif,
 #endif /* LWIP_IPV4 */
           void *state, netif_init_fn init, netif_input_fn input)
 {
+  struct netif *netif2;
+  int num_netifs;
 #if LWIP_IPV6
   s8_t i;
 #endif
@@ -304,7 +306,7 @@ netif_add(struct netif *netif,
 
   /* remember netif specific state information data */
   netif->state = state;
-  netif->num = netif_num++;
+  netif->num = netif_num;
   netif->input = input;
 
   NETIF_SET_HWADDRHINT(netif, NULL);
@@ -321,10 +323,26 @@ netif_add(struct netif *netif,
     return NULL;
   }
 
-  /* check that netif_num has not overflowed or that init callback
-  provided a valid number (we don't support 255 since that can't be
-  converted to an index) */
-  LWIP_ASSERT("Netif num overflow/invalid num", netif->num < 255);
+  /* Assign a unique netif number in the range [0..254], so that (num+1) can
+     serve as an interface index that fits in a u8_t.
+     We assume that the new netif has not yet been added to the list here.
+     This algorithm is O(n^2), but that should be OK for lwIP.
+     */
+  do {
+    if (netif->num == 255) {
+      netif->num = 0;
+    }
+    num_netifs = 0;
+    for (netif2 = netif_list; netif2 != NULL; netif2 = netif2->next) {
+      num_netifs++;
+      LWIP_ASSERT("too many netifs, max. supported number is 255", num_netifs <= 255);
+      if (netif2->num == netif->num) {
+        netif->num++;
+        break;
+      }
+    }
+  } while (netif2 != NULL);
+  netif_num = netif->num + 1;
 
   /* add this netif to the list */
   netif->next = netif_list;
