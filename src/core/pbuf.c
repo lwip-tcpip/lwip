@@ -117,6 +117,7 @@ void eth_rx_irq()
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
+#include "lwip/netif.h"
 #if LWIP_TCP && TCP_QUEUE_OOSEQ
 #include "lwip/priv/tcp_priv.h"
 #endif
@@ -290,6 +291,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     }
     p->type = type;
     p->next = NULL;
+    p->if_idx = NETIF_NO_INDEX;
 
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
     p->payload = LWIP_MEM_ALIGN((void *)((u8_t *)p + (SIZEOF_STRUCT_PBUF + offset)));

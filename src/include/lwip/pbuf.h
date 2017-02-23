@@ -170,6 +170,9 @@ struct pbuf {
    * the stack itself, or pbuf->next pointers from a chain.
    */
   LWIP_PBUF_REF_T ref;
+
+  /** For incoming packets, this contains the input netif's index */
+  u8_t if_idx;
 };
 
 
