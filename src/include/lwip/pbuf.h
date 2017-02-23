@@ -169,7 +169,7 @@ struct pbuf {
    * that refer to this pbuf. This can be pointers from an application,
    * the stack itself, or pbuf->next pointers from a chain.
    */
-  u16_t ref;
+  LWIP_PBUF_REF_T ref;
 };
 
 

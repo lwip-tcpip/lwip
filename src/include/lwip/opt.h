@@ -1395,6 +1395,14 @@
 #if !defined PBUF_POOL_BUFSIZE || defined __DOXYGEN__
 #define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_ENCAPSULATION_HLEN+PBUF_LINK_HLEN)
 #endif
+
+/**
+ * LWIP_PBUF_REF_T: Refcount type in pbuf. Must be signed!
+ * Default width of s8_t can be increased if 127 refs are not enough for you.
+ */
+#ifndef LWIP_PBUF_REF_T
+#define LWIP_PBUF_REF_T s8_t
+#endif
 /**
  * @}
  */
