@@ -1397,11 +1397,11 @@
 #endif
 
 /**
- * LWIP_PBUF_REF_T: Refcount type in pbuf. Must be signed!
- * Default width of s8_t can be increased if 127 refs are not enough for you.
+ * LWIP_PBUF_REF_T: Refcount type in pbuf.
+ * Default width of u8_t can be increased if 255 refs are not enough for you.
  */
 #ifndef LWIP_PBUF_REF_T
-#define LWIP_PBUF_REF_T s8_t
+#define LWIP_PBUF_REF_T u8_t
 #endif
 /**
  * @}
