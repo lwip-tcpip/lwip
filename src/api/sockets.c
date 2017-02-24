@@ -326,14 +326,14 @@ sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* ipaddr, u16_
 void
 lwip_socket_thread_init(void)
 {
-   netconn_thread_init();
+  netconn_thread_init();
 }
 
 /** LWIP_NETCONN_SEM_PER_THREAD==1: destroy thread-local semaphore */
 void
 lwip_socket_thread_cleanup(void)
 {
-   netconn_thread_cleanup();
+  netconn_thread_cleanup();
 }
 
 /**
@@ -1593,6 +1593,8 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
       SYS_ARCH_PROTECT(lev);
       if (conn->socket < 0) {
         if (evt == NETCONN_EVT_RCVPLUS) {
+          /* conn->socket is -1 on initialization
+             lwip_accept adjusts sock->recvevent if conn->socket < -1 */
           conn->socket--;
         }
         SYS_ARCH_UNPROTECT(lev);
