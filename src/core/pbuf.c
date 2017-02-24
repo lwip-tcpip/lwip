@@ -1056,6 +1056,47 @@ pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset
   return copied_total;
 }
 
+/** Get part of a pbuf's payload as contiguous memory. The returned memory is
+ * either a pointer into the pbuf's payload or, if split over multiple pbufs,
+ * a copy into the user-supplied buffer.
+ *
+ * @param p the pbuf from which to copy data
+ * @param dataptr the application supplied buffer
+ * @param len length of data to copy (dataptr must be big enough). No more
+ * than buf->tot_len will be copied, irrespective of len
+ * @param offset offset into the packet buffer from where to begin copying len bytes
+ * @return the number of bytes copied, or 0 on failure
+ */
+void *
+pbuf_get_contiguous(const struct pbuf *p, void *buffer, size_t bufsize, u16_t len, u16_t offset)
+{
+  const struct pbuf *q;
+
+  LWIP_ERROR("pbuf_get_contiguous: invalid buf", (p != NULL), return NULL;);
+  LWIP_ERROR("pbuf_get_contiguous: invalid dataptr", (buffer != NULL), return NULL;);
+  LWIP_ERROR("pbuf_get_contiguous: invalid dataptr", (bufsize >= len), return NULL;);
+
+  for (q = p; q != NULL; q = q->next) {
+    if ((offset != 0) && (offset >= q->len)) {
+      /* don't copy from this buffer -> on to the next */
+     offset -= q->len;
+    } else {
+      if (q->len >= (offset + len)) {
+        /* all data in this pbuf, return zero-copy */
+        return (u8_t*)q->payload + offset;
+      }
+      /* need to copy */
+      if (pbuf_copy_partial(q, buffer, len, offset) != len) {
+        /* copying failed: pbuf is too short */
+        return NULL;
+      }
+      return buffer;
+    }
+  }
+  /* pbuf is too short (offset does not fit in) */
+  return NULL;
+}
+
 #if LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
 /**
  * This method modifies a 'pbuf chain', so that its total length is
