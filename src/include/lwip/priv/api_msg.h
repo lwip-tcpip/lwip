@@ -106,7 +106,7 @@ struct api_msg {
       const void *dataptr;
       /** total length of dataptr */
       size_t len;
-      /** offset into dataptr/output of bytes written */
+      /** offset into dataptr/output of bytes written when err == ERR_OK */
       size_t offset;
       u8_t apiflags;
 #if LWIP_SO_SNDTIMEO

@@ -1564,7 +1564,6 @@ err_mem:
       conn->current_msg->msg.w.offset += len;
       if ((conn->current_msg->msg.w.offset == conn->current_msg->msg.w.len) || dontblock) {
         /* return sent length (caller reads length from msg.w.offset) */
-        /* everything was written */
         write_finished = 1;
       }
       out_err = tcp_output(conn->pcb.tcp);
@@ -1574,7 +1573,6 @@ err_mem:
            to the application thread. */
         err = out_err;
         write_finished = 1;
-        conn->current_msg->msg.w.offset = 0;
       }
     } else if (err == ERR_MEM) {
       /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called.
@@ -1590,18 +1588,15 @@ err_mem:
            to the application thread. */
         err = out_err;
         write_finished = 1;
-        conn->current_msg->msg.w.offset = 0;
       } else if (dontblock) {
         /* non-blocking write is done on ERR_MEM */
         err = ERR_WOULDBLOCK;
         write_finished = 1;
-        conn->current_msg->msg.w.offset = 0;
       }
     } else {
       /* On errors != ERR_MEM, we don't try writing any more but return
          the error to the application thread. */
       write_finished = 1;
-      conn->current_msg->msg.w.offset = 0;
     }
   }
   if (write_finished) {
