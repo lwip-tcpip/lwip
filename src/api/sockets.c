@@ -424,7 +424,7 @@ tryget_socket(int fd)
 static struct lwip_sock *
 get_socket(int fd)
 {
-  struct lwip_sock *sock = tryget_socket_unconn(fd);
+  struct lwip_sock *sock = tryget_socket(fd);
   if (!sock) {
     if ((fd < LWIP_SOCKET_OFFSET) || (fd >= (LWIP_SOCKET_OFFSET + NUM_SOCKETS))) {
       LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", fd));
@@ -1353,7 +1353,7 @@ lwip_socket(int domain, int type, int protocol)
     return -1;
   }
   conn->socket = i;
-  done_socket(&sockets[i]);
+  done_socket(&sockets[i - LWIP_SOCKET_OFFSET]);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("%d\n", i));
   set_errno(0);
   return i;
