@@ -799,13 +799,14 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
      but if it is, this is done inside api_msg.c:do_write(), so we can use the
      non-blocking version here. */
   err = netconn_apimsg(lwip_netconn_do_write, &API_MSG_VAR_REF(msg));
-  if ((err == ERR_OK) && (bytes_written != NULL)) {
-    if (dontblock) {
-      /* nonblocking write: maybe the data has been sent partly */
+  if (err == ERR_OK) {
+    if (bytes_written != NULL) {
       *bytes_written = API_MSG_VAR_REF(msg).msg.w.offset;
-    } else {
-      /* blocking call succeeded: all data has been sent if it */
-      *bytes_written = size;
+    }
+    /* for blocking, check all requested bytes were written, NOTE: send_timeout is
+       treated as dontblock (see dontblock assignment above) */
+    if (!dontblock) {
+      LWIP_ASSERT("do_write failed to write all bytes", API_MSG_VAR_REF(msg).msg.w.offset == size);
     }
   }
   API_MSG_VAR_FREE(msg);
