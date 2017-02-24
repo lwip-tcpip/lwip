@@ -336,34 +336,16 @@ lwip_socket_thread_cleanup(void)
   netconn_thread_cleanup();
 }
 
-/**
- * Map a externally used socket index to the internal socket representation.
- *
- * @param s externally used socket index
- * @return struct lwip_sock for the socket or NULL if not found
- */
+/* Translate a socket 'int' into a pointer (only fails if the index is invalid) */
 static struct lwip_sock *
-get_socket(int s)
+tryget_socket_unconn(int fd)
 {
-  struct lwip_sock *sock;
-
-  s -= LWIP_SOCKET_OFFSET;
-
+  int s = fd - LWIP_SOCKET_OFFSET;
   if ((s < 0) || (s >= NUM_SOCKETS)) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s + LWIP_SOCKET_OFFSET));
-    set_errno(EBADF);
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("tryget_socket_unconn(%d): invalid\n", fd));
     return NULL;
   }
-
-  sock = &sockets[s];
-
-  if (!sock->conn) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): not active\n", s + LWIP_SOCKET_OFFSET));
-    set_errno(EBADF);
-    return NULL;
-  }
-
-  return sock;
+  return &sockets[s];
 }
 
 /**
@@ -373,16 +355,36 @@ get_socket(int s)
  * @return struct lwip_sock for the socket or NULL if not found
  */
 static struct lwip_sock *
-tryget_socket(int s)
+tryget_socket(int fd)
 {
-  s -= LWIP_SOCKET_OFFSET;
-  if ((s < 0) || (s >= NUM_SOCKETS)) {
+  struct lwip_sock *sock = tryget_socket_unconn(fd);
+  if (sock != NULL) {
+    if (sock->conn) {
+      return sock;
+    }
+    done_socket(sock);
+  }
+  return NULL;
+}
+
+/**
+ * Map a externally used socket index to the internal socket representation.
+ *
+ * @param s externally used socket index
+ * @return struct lwip_sock for the socket or NULL if not found
+ */
+static struct lwip_sock *
+get_socket(int fd)
+{
+  struct lwip_sock *sock = tryget_socket_unconn(fd);
+  if (!sock) {
+    if ((fd < LWIP_SOCKET_OFFSET) || (fd >= (LWIP_SOCKET_OFFSET + NUM_SOCKETS))) {
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", fd));
+    }
+    set_errno(EBADF);
     return NULL;
   }
-  if (!sockets[s].conn) {
-    return NULL;
-  }
-  return &sockets[s];
+  return sock;
 }
 
 /**
