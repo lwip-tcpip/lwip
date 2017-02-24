@@ -1447,6 +1447,7 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for exception\n", i));
         nready++;
       }
+      done_socket(sock);
     } else {
       SYS_ARCH_UNPROTECT(lev);
       /* no a valid open socket */
@@ -1554,6 +1555,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         if (sock != NULL) {
           sock->select_waiting++;
           LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
+          done_socket(sock);
         } else {
           /* Not a valid socket */
           nready = -1;
@@ -1603,6 +1605,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           if (sock->select_waiting > 0) {
             sock->select_waiting--;
           }
+          done_socket(sock);
         } else {
           /* Not a valid socket */
           nready = -1;
@@ -2022,6 +2025,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     case SO_ACCEPTCONN:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, int);
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_TCP) {
+        done_socket(sock);
         return ENOPROTOOPT;
       }
       if ((sock->conn->pcb.tcp != NULL) && (sock->conn->pcb.tcp->state == LISTEN)) {
@@ -2119,6 +2123,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
 #if LWIP_UDPLITE
       if ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0) {
         /* this flag is only available for UDP, not for UDP lite */
+        done_socket(sock);
         return EAFNOSUPPORT;
       }
 #endif /* LWIP_UDPLITE */
@@ -2152,6 +2157,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     case IP_MULTICAST_TTL:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, u8_t);
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
+        done_socket(sock);
         return ENOPROTOOPT;
       }
       *(u8_t*)optval = udp_get_multicast_ttl(sock->conn->pcb.udp);
@@ -2161,6 +2167,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     case IP_MULTICAST_IF:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, struct in_addr);
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
+        done_socket(sock);
         return ENOPROTOOPT;
       }
       inet_addr_from_ip4addr((struct in_addr*)optval, udp_get_multicast_netif_addr(sock->conn->pcb.udp));
@@ -2192,6 +2199,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     /* Special case: all IPPROTO_TCP option take an int */
     LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, int, NETCONN_TCP);
     if (sock->conn->pcb.tcp->state == LISTEN) {
+      done_socket(sock);
       return EINVAL;
     }
     switch (optname) {
@@ -2258,6 +2266,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, int);
     /* If this is no UDP lite socket, ignore any options. */
     if (!NETCONNTYPE_ISUDPLITE(netconn_type(sock->conn))) {
+      done_socket(sock);
       return ENOPROTOOPT;
     }
     switch (optname) {
@@ -2308,6 +2317,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     break;
   } /* switch (level) */
 
+  done_socket(sock);
   return err;
 }
 
@@ -2471,6 +2481,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         if (linger->l_onoff) {
           int lingersec = linger->l_linger;
           if (lingersec < 0) {
+            done_socket(sock);
             return EINVAL;
           }
           if (lingersec > 0xFFFF) {
@@ -2489,6 +2500,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
 #if LWIP_UDPLITE
       if ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0) {
         /* this flag is only available for UDP, not for UDP lite */
+        done_socket(sock);
         return EAFNOSUPPORT;
       }
 #endif /* LWIP_UDPLITE */
@@ -2589,6 +2601,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     /* Special case: all IPPROTO_TCP option take an int */
     LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_TCP);
     if (sock->conn->pcb.tcp->state == LISTEN) {
+      done_socket(sock);
       return EINVAL;
     }
     switch (optname) {
@@ -2663,6 +2676,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, int);
     /* If this is no UDP lite socket, ignore any options. */
     if (!NETCONNTYPE_ISUDPLITE(netconn_type(sock->conn))) {
+      done_socket(sock);
       return ENOPROTOOPT;
     }
     switch (optname) {
@@ -2702,6 +2716,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       /* It should not be possible to disable the checksum generation with ICMPv6
        * as per RFC 3542 chapter 3.1 */
       if(sock->conn->pcb.raw->protocol == IPPROTO_ICMPV6) {
+        done_socket(sock);
         return EINVAL;
       }
 
@@ -2710,6 +2725,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         sock->conn->pcb.raw->chksum_reqd = 0;
       } else if (*(const int *)optval & 1) {
         /* Per RFC3542, odd offsets are not allowed */
+        done_socket(sock);
         return EINVAL;
       } else {
         sock->conn->pcb.raw->chksum_reqd = 1;
@@ -2733,6 +2749,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     break;
   }  /* switch (level) */
 
+  done_socket(sock);
   return err;
 }
 
@@ -2924,8 +2941,7 @@ lwip_socket_unregister_membership(int s, const ip4_addr_t *if_addr, const ip4_ad
       socket_ipv4_multicast_memberships[i].sock = NULL;
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
-      done_socket(sock);
-      return;
+      break;
     }
   }
   done_socket(sock);
