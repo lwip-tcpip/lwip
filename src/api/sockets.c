@@ -453,7 +453,7 @@ alloc_socket(struct netconn *newconn, int accepted)
   for (i = 0; i < NUM_SOCKETS; ++i) {
     /* Protect socket array */
     SYS_ARCH_PROTECT(lev);
-    if (!sockets[i].conn && (sockets[i].select_waiting == 0)) {
+    if (!sockets[i].conn) {
 #if LWIP_NETCONN_FULLDUPLEX
       if (sockets[i].fd_used) {
         continue;
@@ -1420,7 +1420,7 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
     }
     /* First get the socket's status (protected)... */
     SYS_ARCH_PROTECT(lev);
-    sock = tryget_socket(i);
+    sock = tryget_socket_unconn(i);
     if (sock != NULL) {
       void* lastdata = sock->lastdata;
       s16_t rcvevent = sock->rcvevent;
@@ -1463,6 +1463,68 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
   return nready;
 }
 
+#if LWIP_NETCONN_FULLDUPLEX
+/* Mark all of the set sockets in one of the three fdsets passed to select as used.
+ * All sockets are marked (and later unmarked), whether they are open or not.
+ * This is OK as lwip_selscan aborts select when non-open sockets are found.
+ */
+static void
+lwip_select_inc_sockets_used_set(int maxfdp, fd_set *fdset, fd_set *used_sockets)
+{
+  SYS_ARCH_DECL_PROTECT(lev);
+  if (fdset) {
+    int i;
+    for (i = LWIP_SOCKET_OFFSET; i < maxfdp; i++) {
+      /* if this FD is in the set, lock it (unless already done) */
+      if (FD_ISSET(i, fdset) && !FD_ISSET(i, used_sockets)) {
+        struct lwip_sock *sock;
+        SYS_ARCH_PROTECT(lev);
+        sock = tryget_socket_unconn(i);
+        if (sock != NULL) {
+          sock_inc_used(sock);
+          FD_SET(i, used_sockets);
+        }
+        SYS_ARCH_UNPROTECT(lev);
+      }
+    }
+  }
+}
+
+/* Mark all sockets passed to select as used to prevent them from being freed
+ * from other threads while select is running.
+ * Marked sockets are added to 'used_sockets' to mark them only once an be able
+ * to unmark them correctly.
+ */
+static void
+lwip_select_inc_sockets_used(int maxfdp, fd_set *fdset1, fd_set *fdset2, fd_set *fdset3, fd_set *used_sockets)
+{
+  FD_ZERO(used_sockets);
+  lwip_select_inc_sockets_used_set(maxfdp, fdset1, used_sockets);
+  lwip_select_inc_sockets_used_set(maxfdp, fdset2, used_sockets);
+  lwip_select_inc_sockets_used_set(maxfdp, fdset3, used_sockets);
+}
+
+/* Let go all sockets that were marked as used when starting select */
+static void
+lwip_select_dec_sockets_used(int maxfdp, fd_set *used_sockets)
+{
+  int i;
+  for (i = LWIP_SOCKET_OFFSET; i < maxfdp; i++) {
+    /* if this FD is not in the set, continue */
+    if (FD_ISSET(i, used_sockets)) {
+      struct lwip_sock *sock = tryget_socket_unconn(i);
+      LWIP_ASSERT("socket gone at the end of select", sock != NULL);
+      if (sock != NULL) {
+        done_socket(sock);
+      }
+    }
+  }
+}
+#else /* LWIP_NETCONN_FULLDUPLEX */
+#define lwip_select_inc_sockets_used(maxfdp1, readset, writeset, exceptset, used_sockets)
+#define lwip_select_dec_sockets_used(maxfdp1, used_sockets)
+#endif /* LWIP_NETCONN_FULLDUPLEX */
+
 int
 lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             struct timeval *timeout)
@@ -1477,6 +1539,9 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 #if LWIP_NETCONN_SEM_PER_THREAD
   int waited = 0;
 #endif
+#if LWIP_NETCONN_FULLDUPLEX
+  fd_set used_sockets;
+#endif
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
@@ -1488,6 +1553,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     set_errno(EINVAL);
     return -1;
   }
+
+  lwip_select_inc_sockets_used(maxfdp1, readset, writeset, exceptset, &used_sockets);
 
   /* Go through each socket in each list to count number of sockets which
      currently match */
@@ -1524,6 +1591,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     if (sys_sem_new(&select_cb.sem, 0) != ERR_OK) {
       /* failed to create semaphore */
       set_errno(ENOMEM);
+      lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
       return -1;
     }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
@@ -1551,7 +1619,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           (exceptset && FD_ISSET(i, exceptset))) {
         struct lwip_sock *sock;
         SYS_ARCH_PROTECT(lev);
-        sock = tryget_socket(i);
+        sock = tryget_socket_unconn(i);
         if (sock != NULL) {
           sock->select_waiting++;
           LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
@@ -1598,7 +1666,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           (exceptset && FD_ISSET(i, exceptset))) {
         struct lwip_sock *sock;
         SYS_ARCH_PROTECT(lev);
-        sock = tryget_socket(i);
+        sock = tryget_socket_unconn(i);
         if (sock != NULL) {
           /* for now, handle select_waiting==0... */
           LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
@@ -1641,6 +1709,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     if (nready < 0) {
       /* This happens when a socket got closed while waiting */
       set_errno(EBADF);
+      lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
       return -1;
     }
 
@@ -1658,6 +1727,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: nready=%d\n", nready));
 return_copy_fdsets:
+  lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
   set_errno(0);
   if (readset) {
     *readset = lreadset;

@@ -27,6 +27,9 @@ HISTORY
   ++ Bugfixes:
 
   2017-02-24: Simon Goldschmidt
+  * sockets.c: fixed close race conditions in lwip_select (for LWIP_NETCONN_FULLDUPLEX)
+
+  2017-02-24: Simon Goldschmidt
   * sockets.c: fixed that select ignored invalid/not open sockets in the fd_sets (bug #50392)
 
   2017-02-16: Simon Goldschmidt
