@@ -1381,6 +1381,11 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                   timeout ? (s32_t)timeout->tv_sec : (s32_t)-1,
                   timeout ? (s32_t)timeout->tv_usec : (s32_t)-1));
 
+  if ((maxfdp1 < 0) || (maxfdp1 > (FD_SETSIZE + LWIP_SOCKET_OFFSET))) {
+    set_errno(EINVAL);
+    return -1;
+  }
+
   /* Go through each socket in each list to count number of sockets which
      currently match */
   nready = lwip_selscan(maxfdp1, readset, writeset, exceptset, &lreadset, &lwriteset, &lexceptset);
