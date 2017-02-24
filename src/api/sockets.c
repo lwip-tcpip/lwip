@@ -1347,7 +1347,8 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
       }
     } else {
       SYS_ARCH_UNPROTECT(lev);
-      /* continue on to next FD in list */
+      /* no a valid open socket */
+      return -1;
     }
   }
   /* copy local sets to the ones provided as arguments */
@@ -1383,6 +1384,11 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   /* Go through each socket in each list to count number of sockets which
      currently match */
   nready = lwip_selscan(maxfdp1, readset, writeset, exceptset, &lreadset, &lwriteset, &lexceptset);
+
+  if (nready < 0) {
+    set_errno(EBADF);
+    return -1;
+  }
 
   /* If we don't have any current events, then suspend if we are supposed to */
   if (!nready) {
