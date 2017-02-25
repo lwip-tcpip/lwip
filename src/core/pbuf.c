@@ -1061,7 +1061,8 @@ pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset
  * a copy into the user-supplied buffer.
  *
  * @param p the pbuf from which to copy data
- * @param dataptr the application supplied buffer
+ * @param buffer the application supplied buffer
+ * @param bufsize size of the application supplied buffer
  * @param len length of data to copy (dataptr must be big enough). No more
  * than buf->tot_len will be copied, irrespective of len
  * @param offset offset into the packet buffer from where to begin copying len bytes
