@@ -399,7 +399,7 @@ tryget_socket_unconn(int fd)
 /**
  * Same as get_socket but doesn't set errno
  *
- * @param s externally used socket index
+ * @param fd externally used socket index
  * @return struct lwip_sock for the socket or NULL if not found
  */
 static struct lwip_sock *
@@ -418,7 +418,7 @@ tryget_socket(int fd)
 /**
  * Map a externally used socket index to the internal socket representation.
  *
- * @param s externally used socket index
+ * @param fd externally used socket index
  * @return struct lwip_sock for the socket or NULL if not found
  */
 static struct lwip_sock *
