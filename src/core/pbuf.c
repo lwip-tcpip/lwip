@@ -1056,7 +1056,9 @@ pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset
   return copied_total;
 }
 
-/** Get part of a pbuf's payload as contiguous memory. The returned memory is
+/**
+ * @ingroup pbuf
+ * Get part of a pbuf's payload as contiguous memory. The returned memory is
  * either a pointer into the pbuf's payload or, if split over multiple pbufs,
  * a copy into the user-supplied buffer.
  *
