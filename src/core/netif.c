@@ -1486,7 +1486,6 @@ void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_f
 }
 
 /**
- * @ingroup netif
  * Invoke extended netif status event
  * @param netif netif that is affected by change
  * @param reason change reason
