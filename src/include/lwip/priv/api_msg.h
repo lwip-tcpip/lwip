@@ -103,10 +103,15 @@ struct api_msg {
     } ad;
     /** used for lwip_netconn_do_write */
     struct {
-      const void *dataptr;
-      /** total length of dataptr */
+      /** current vector to write */
+      const struct netvector *vector;
+      /** number of unwritten vectors */
+      u16_t vector_cnt;
+      /** offset into current vector */
+      size_t vector_off;
+      /** total length across vectors */
       size_t len;
-      /** offset into dataptr/output of bytes written when err == ERR_OK */
+      /** offset into total length/output of bytes written when err == ERR_OK */
       size_t offset;
       u8_t apiflags;
 #if LWIP_SO_SNDTIMEO

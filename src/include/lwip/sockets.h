@@ -108,6 +108,12 @@ struct sockaddr_storage {
 typedef u32_t socklen_t;
 #endif
 
+#if !defined IOV_MAX
+#define IOV_MAX 0xFFFF
+#elif IOV_MAX > 0xFFFF
+#error "IOV_MAX larger than supported by LwIP"
+#endif /* IOV_MAX */
+
 #if !defined(iovec)
 struct iovec {
   void  *iov_base;

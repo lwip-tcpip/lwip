@@ -1494,6 +1494,7 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   size_t diff;
   u8_t dontblock;
   u8_t apiflags;
+  u8_t write_more;
 
   LWIP_ASSERT("conn != NULL", conn != NULL);
   LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
@@ -1501,6 +1502,7 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   LWIP_ASSERT("conn->pcb.tcp != NULL", conn->pcb.tcp != NULL);
   LWIP_ASSERT("conn->current_msg->msg.w.offset < conn->current_msg->msg.w.len",
     conn->current_msg->msg.w.offset < conn->current_msg->msg.w.len);
+  LWIP_ASSERT("conn->current_msg->msg.w.vector_cnt > 0", conn->current_msg->msg.w.vector_cnt > 0);
 
   apiflags = conn->current_msg->msg.w.apiflags;
   dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
@@ -1519,49 +1521,78 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   } else
 #endif /* LWIP_SO_SNDTIMEO */
   {
-    dataptr = (const u8_t*)conn->current_msg->msg.w.dataptr + conn->current_msg->msg.w.offset;
-    diff = conn->current_msg->msg.w.len - conn->current_msg->msg.w.offset;
-    if (diff > 0xffffUL) { /* max_u16_t */
-      len = 0xffff;
-      apiflags |= TCP_WRITE_FLAG_MORE;
-    } else {
-      len = (u16_t)diff;
-    }
-    available = tcp_sndbuf(conn->pcb.tcp);
-    if (available < len) {
-      /* don't try to write more than sendbuf */
-      len = available;
-      if (dontblock) {
-        if (!len) {
-          err = ERR_WOULDBLOCK;
-          goto err_mem;
-        }
-      } else {
+    do {
+      dataptr = (const u8_t*)conn->current_msg->msg.w.vector->ptr + conn->current_msg->msg.w.vector_off;
+      diff = conn->current_msg->msg.w.vector->len - conn->current_msg->msg.w.vector_off;
+      if (diff > 0xffffUL) { /* max_u16_t */
+        len = 0xffff;
         apiflags |= TCP_WRITE_FLAG_MORE;
+      } else {
+        len = (u16_t)diff;
       }
-    }
-    LWIP_ASSERT("lwip_netconn_do_writemore: invalid length!",
-      ((conn->current_msg->msg.w.offset + len) <= conn->current_msg->msg.w.len));
-    err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
+      available = tcp_sndbuf(conn->pcb.tcp);
+      if (available < len) {
+        /* don't try to write more than sendbuf */
+        len = available;
+        if (dontblock) {
+          if (!len) {
+            /* set error according to partial write or not */
+            err = (conn->current_msg->msg.w.offset == 0) ? ERR_WOULDBLOCK : ERR_OK;
+            goto err_mem;
+          }
+        } else {
+          apiflags |= TCP_WRITE_FLAG_MORE;
+        }
+      }
+      LWIP_ASSERT("lwip_netconn_do_writemore: invalid length!",
+        ((conn->current_msg->msg.w.vector_off + len) <= conn->current_msg->msg.w.vector->len));
+      /* we should loop around for more sending in the following cases:
+           1) We couldn't finish the current vector because of 16-bit size limitations.
+              tcp_write() and tcp_sndbuf() both are limited to 16-bit sizes
+           2) We are sending the remainder of the current vector and have more */
+      if ((len == 0xffff && diff > 0xffffUL) ||
+          (len == (u16_t)diff && conn->current_msg->msg.w.vector_cnt > 1)) {
+        write_more = 1;
+        apiflags |= TCP_WRITE_FLAG_MORE;
+      } else {
+        write_more = 0;
+      }
+      err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
+      if (err == ERR_OK) {
+        conn->current_msg->msg.w.offset += len;
+        /* update write state if making another loop */
+        if (write_more) {
+          conn->current_msg->msg.w.vector_off += len;
+          /* check if current vector is finished */
+          if (conn->current_msg->msg.w.vector_off == conn->current_msg->msg.w.vector->len) {
+            conn->current_msg->msg.w.vector_cnt--;
+            /* if we have additional vectors, move on to them */
+            if (conn->current_msg->msg.w.vector_cnt > 0) {
+              conn->current_msg->msg.w.vector++;
+              conn->current_msg->msg.w.vector_off = 0;
+            }
+          }
+        }
+      }
+    } while (write_more && err == ERR_OK);
     /* if OK or memory error, check available space */
     if ((err == ERR_OK) || (err == ERR_MEM)) {
 err_mem:
-      if (dontblock && (len < conn->current_msg->msg.w.len)) {
+      if (dontblock && (conn->current_msg->msg.w.offset < conn->current_msg->msg.w.len)) {
         /* non-blocking write did not write everything: mark the pcb non-writable
            and let poll_tcp check writable space to mark the pcb writable again */
-        API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
+        API_EVENT(conn, NETCONN_EVT_SENDMINUS, 0);
         conn->flags |= NETCONN_FLAG_CHECK_WRITESPACE;
       } else if ((tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT) ||
                  (tcp_sndqueuelen(conn->pcb.tcp) >= TCP_SNDQUEUELOWAT)) {
         /* The queued byte- or pbuf-count exceeds the configured low-water limit,
            let select mark this pcb as non-writable. */
-        API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
+        API_EVENT(conn, NETCONN_EVT_SENDMINUS, 0);
       }
     }
 
     if (err == ERR_OK) {
       err_t out_err;
-      conn->current_msg->msg.w.offset += len;
       if ((conn->current_msg->msg.w.offset == conn->current_msg->msg.w.len) || dontblock) {
         /* return sent length (caller reads length from msg.w.offset) */
         write_finished = 1;
@@ -1589,8 +1620,9 @@ err_mem:
         err = out_err;
         write_finished = 1;
       } else if (dontblock) {
-        /* non-blocking write is done on ERR_MEM */
-        err = ERR_WOULDBLOCK;
+        /* non-blocking write is done on ERR_MEM, set error according
+           to partial write or not */
+        err = (conn->current_msg->msg.w.offset == 0) ? ERR_WOULDBLOCK : ERR_OK;
         write_finished = 1;
       }
     } else {

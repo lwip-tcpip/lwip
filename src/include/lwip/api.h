@@ -267,6 +267,11 @@ struct netconn {
   netconn_callback callback;
 };
 
+struct netvector {
+  const void *ptr;
+  size_t len;
+};
+
 /** Register an Network connection event */
 #define API_EVENT(c,e,l) if (c->callback) {         \
                            (*c->callback)(c, e, l); \
@@ -319,6 +324,8 @@ err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
 err_t   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
                              u8_t apiflags, size_t *bytes_written);
+err_t   netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u16_t vectorcnt,
+                                     u8_t apiflags, size_t *bytes_written);
 /** @ingroup netconn_tcp */
 #define netconn_write(conn, dataptr, size, apiflags) \
           netconn_write_partly(conn, dataptr, size, apiflags, NULL)

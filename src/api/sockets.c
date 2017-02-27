@@ -1061,6 +1061,8 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
 
   LWIP_ERROR("lwip_sendmsg: invalid msghdr", msg != NULL,
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  LWIP_ERROR("lwip_sendmsg: maximum iovs exceeded", (msg->msg_iovlen <= IOV_MAX),
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
   LWIP_UNUSED_ARG(msg->msg_control);
   LWIP_UNUSED_ARG(msg->msg_controllen);
@@ -1074,32 +1076,11 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     ((flags & MSG_MORE)     ? NETCONN_MORE      : 0) |
     ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
 
-    for (i = 0; i < msg->msg_iovlen; i++) {
-      u8_t apiflags = write_flags;
-      if (i + 1 < msg->msg_iovlen) {
-        apiflags |= NETCONN_MORE;
-      }
-      written = 0;
-      err = netconn_write_partly(sock->conn, msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len, write_flags, &written);
-      if (err == ERR_OK) {
-        size += written;
-        /* check that the entire IO vector was accepected, if not return a partial write */
-        if (written != msg->msg_iov[i].iov_len)
-          break;
-      }
-      /* none of this IO vector was accepted, but previous was, return partial write and conceal ERR_WOULDBLOCK */
-      else if (err == ERR_WOULDBLOCK && size > 0) {
-        err = ERR_OK;
-        /* let ERR_WOULDBLOCK persist on the netconn since we are returning ERR_OK */
-        break;
-      } else {
-        size = -1;
-        break;
-      }
-    }
+    written = 0;
+    err = netconn_write_vectors_partly(sock->conn, (struct netvector *)msg->msg_iov, (u16_t)msg->msg_iovlen, write_flags, &written);
     sock_set_errno(sock, err_to_errno(err));
     done_socket(sock);
-    return size;
+    return (err == ERR_OK ? (int)written : -1);
 #else /* LWIP_TCP */
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     done_socket(sock);

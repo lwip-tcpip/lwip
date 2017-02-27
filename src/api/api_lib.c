@@ -827,12 +827,41 @@ err_t
 netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
                      u8_t apiflags, size_t *bytes_written)
 {
+  struct netvector vector;
+  vector.ptr = dataptr;
+  vector.len = size;
+  return netconn_write_vectors_partly(conn, &vector, 1, apiflags, bytes_written);
+}
+
+/**
+ * Send vectorized data atomically over a TCP netconn.
+ *
+ * @param conn the TCP netconn over which to send data
+ * @param vectors array of vectors containing data to send
+ * @param vectorcnt number of vectors in the array
+ * @param apiflags combination of following flags :
+ * - NETCONN_COPY: data will be copied into memory belonging to the stack
+ * - NETCONN_MORE: for TCP connection, PSH flag will be set on last segment sent
+ * - NETCONN_DONTBLOCK: only write the data if all data can be written at once
+ * @param bytes_written pointer to a location that receives the number of written bytes
+ * @return ERR_OK if data was sent, any other err_t on error
+ */
+err_t
+netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u16_t vectorcnt,
+u8_t apiflags, size_t *bytes_written)
+{
   API_MSG_VAR_DECLARE(msg);
   err_t err;
   u8_t dontblock;
+  size_t size;
+  int i;
 
   LWIP_ERROR("netconn_write: invalid conn",  (conn != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_write: invalid conn->type",  (NETCONNTYPE_GROUP(conn->type)== NETCONN_TCP), return ERR_VAL;);
+  size = 0;
+  for (i = 0; i < vectorcnt; i++) {
+    size += vectors[i].len;
+  }
   if (size == 0) {
     return ERR_OK;
   }
@@ -851,7 +880,9 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   API_MSG_VAR_ALLOC(msg);
   /* non-blocking write sends as much  */
   API_MSG_VAR_REF(msg).conn = conn;
-  API_MSG_VAR_REF(msg).msg.w.dataptr = dataptr;
+  API_MSG_VAR_REF(msg).msg.w.vector = vectors;
+  API_MSG_VAR_REF(msg).msg.w.vector_cnt = vectorcnt;
+  API_MSG_VAR_REF(msg).msg.w.vector_off = 0;
   API_MSG_VAR_REF(msg).msg.w.apiflags = apiflags;
   API_MSG_VAR_REF(msg).msg.w.len = size;
   API_MSG_VAR_REF(msg).msg.w.offset = 0;
