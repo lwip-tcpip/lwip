@@ -2034,12 +2034,11 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
     return ERR_ARG;
   }
 
-  /* IF q includes a PBUF_REF, PBUF_POOL or PBUF_RAM, we have no choice but
-   * to copy the whole queue into a new PBUF_RAM (see bug #11400)
-   * PBUF_ROMs can be left as they are, since ROM must not get changed. */
+  /* IF q includes a pbuf that must be copied, we have to copy the whole chain
+   * into a new PBUF_RAM. See the definition of PBUF_NEEDS_COPY for details. */
   p = q;
   while (p) {
-    if (p->type != PBUF_ROM) {
+    if (PBUF_NEEDS_COPY(p)) {
       copy_needed = 1;
       break;
     }

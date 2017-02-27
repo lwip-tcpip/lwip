@@ -996,13 +996,12 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     /* entry is still pending, queue the given packet 'q' */
     struct pbuf *p;
     int copy_needed = 0;
-    /* IF q includes a PBUF_REF, PBUF_POOL or PBUF_RAM, we have no choice but
-     * to copy the whole queue into a new PBUF_RAM (see bug #11400)
-     * PBUF_ROMs can be left as they are, since ROM must not get changed. */
+    /* IF q includes a pbuf that must be copied, copy the whole chain into a
+     * new PBUF_RAM. See the definition of PBUF_NEEDS_COPY for details. */
     p = q;
     while (p) {
       LWIP_ASSERT("no packet queues allowed!", (p->len != p->tot_len) || (p->next == 0));
-      if (p->type != PBUF_ROM) {
+      if (PBUF_NEEDS_COPY(p)) {
         copy_needed = 1;
         break;
       }

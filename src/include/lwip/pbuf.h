@@ -55,6 +55,22 @@ extern "C" {
 #define LWIP_SUPPORT_CUSTOM_PBUF ((IP_FRAG && !LWIP_NETIF_TX_SINGLE_PBUF) || (LWIP_IPV6 && LWIP_IPV6_FRAG))
 #endif
 
+/** PBUF_NEEDS_COPY(p): return a boolean value indicating whether the given
+ * pbuf needs to be copied in order to be kept around beyond the current call
+ * stack without risking being corrupted. The default setting provides safety:
+ * it will make a copy iof any pbuf chain that does not consist entirely of
+ * PBUF_ROM type pbufs. For setups with zero-copy support, it may be redefined
+ * to evaluate to true in all cases, for example. However, doing so also has an
+ * effect on the application side: any buffers that are *not* copied must also
+ * *not* be reused by the application after passing them to lwIP. For example,
+ * when setting PBUF_NEEDS_COPY to (0), after using udp_send() with a PBUF_RAM
+ * pbuf, the application must free the pbuf immediately, rather than reusing it
+ * for other purposes. For more background information on this, see tasks #6735
+ * and #7896, and bugs #11400 and #49914. */
+#ifndef PBUF_NEEDS_COPY
+#define PBUF_NEEDS_COPY(p)  ((p)->type != PBUF_ROM)
+#endif /* PBUF_NEEDS_COPY */
+
 /* @todo: We need a mechanism to prevent wasting memory in every pbuf
    (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
 
