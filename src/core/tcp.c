@@ -482,6 +482,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
   } else {
     int send_rst = 0;
     u16_t local_port = 0;
+    enum tcp_state last_state;
     seqno = pcb->snd_nxt;
     ackno = pcb->rcv_nxt;
 #if LWIP_CALLBACK_API
@@ -514,8 +515,9 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
       tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, local_port, pcb->remote_port);
     }
+    last_state = pcb->state;
     memp_free(MEMP_TCP_PCB, pcb);
-    TCP_EVENT_ERR(errf, errf_arg, ERR_ABRT);
+    TCP_EVENT_ERR(last_state, errf, errf_arg, ERR_ABRT);
   }
 }
 
@@ -1179,6 +1181,7 @@ tcp_slowtmr_start:
       tcp_err_fn err_fn = pcb->errf;
 #endif /* LWIP_CALLBACK_API */
       void *err_arg;
+      enum tcp_state last_state;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_active_pcbs list. */
       if (prev != NULL) {
@@ -1196,12 +1199,13 @@ tcp_slowtmr_start:
       }
 
       err_arg = pcb->callback_arg;
+      last_state = pcb->state;
       pcb2 = pcb;
       pcb = pcb->next;
       memp_free(MEMP_TCP_PCB, pcb2);
 
       tcp_active_pcbs_changed = 0;
-      TCP_EVENT_ERR(err_fn, err_arg, ERR_ABRT);
+      TCP_EVENT_ERR(last_state, err_fn, err_arg, ERR_ABRT);
       if (tcp_active_pcbs_changed) {
         goto tcp_slowtmr_start;
       }

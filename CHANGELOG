@@ -26,6 +26,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-02-28: David van Moolenbroek/Simon Goldschmidt
+  tcp: fixed bug #50418: LWIP_EVENT_API: fix invalid calbacks for SYN_RCVD pcb
+
   2017-02-24: Simon Goldschmidt
   * sockets.c: fixed close race conditions in lwip_select (for LWIP_NETCONN_FULLDUPLEX)
 
