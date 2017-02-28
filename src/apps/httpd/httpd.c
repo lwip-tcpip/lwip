@@ -102,7 +102,7 @@
 #include <stdlib.h> /* atoi */
 #include <stdio.h>
 
-#if LWIP_TCP
+#if LWIP_TCP && LWIP_CALLBACK_API
 
 /** Minimum length for a valid HTTP/0.9 request: "GET /\r\n" -> 7 bytes */
 #define MIN_REQ_LEN   7
@@ -2619,4 +2619,4 @@ http_set_cgi_handlers(const tCGI *cgis, int num_handlers)
 }
 #endif /* LWIP_HTTPD_CGI */
 
-#endif /* LWIP_TCP */
+#endif /* LWIP_TCP && LWIP_CALLBACK_API */
