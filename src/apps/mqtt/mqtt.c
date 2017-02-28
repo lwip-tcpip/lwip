@@ -47,14 +47,16 @@
  * Erik Andersson <erian747@gmail.com>
  *
  */
-#include <string.h>
+#include "lwip/apps/mqtt.h"
 #include "lwip/timeouts.h"
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 #include "lwip/tcp.h"
-#include "lwip/apps/mqtt.h"
+#include <string.h>
+
+#if LWIP_TCP && LWIP_CALLBACK_API
 
 /**
  * MQTT_DEBUG: Default is off.
@@ -1335,3 +1337,5 @@ mqtt_client_is_connected(mqtt_client_t *client)
   LWIP_ASSERT("mqtt_client_is_connected: client != NULL", client);
   return client->conn_state == MQTT_CONNECTED;
 }
+
+#endif /* LWIP_TCP && LWIP_CALLBACK_API */
