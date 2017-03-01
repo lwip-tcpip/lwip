@@ -116,6 +116,9 @@ struct snmp_request
   /* max-repetitions (getBulkRequest (SNMPv2c)) */
   s32_t max_repetitions;
   
+  /* Usually response-pdu (2). When snmpv3 errors are detected report-pdu(8) */
+  u8_t request_out_type;
+
 #if LWIP_SNMP_V3
   s32_t msg_id;
   s32_t msg_max_size;
@@ -128,7 +131,9 @@ struct snmp_request
   u8_t  msg_user_name[SNMP_V3_MAX_USER_LENGTH];
   u8_t  msg_user_name_len;
   u8_t  msg_authentication_parameters[SNMP_V3_MAX_AUTH_PARAM_LENGTH];
+  u8_t  msg_authentication_parameters_len;
   u8_t  msg_privacy_parameters[SNMP_V3_MAX_PRIV_PARAM_LENGTH];
+  u8_t  msg_privacy_parameters_len;
   u8_t  context_engine_id[SNMP_V3_MAX_ENGINE_ID_LENGTH];
   u8_t  context_engine_id_len;
   u8_t  context_name[SNMP_V3_MAX_ENGINE_ID_LENGTH];

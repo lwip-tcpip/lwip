@@ -51,6 +51,11 @@
 #define SNMP_V3_AUTH_FLAG      0x01
 #define SNMP_V3_PRIV_FLAG      0x02
 
+/* Security levels */
+#define SNMP_V3_NOAUTHNOPRIV   0x00
+#define SNMP_V3_AUTHNOPRIV     SNMP_V3_AUTH_FLAG
+#define SNMP_V3_AUTHPRIV       (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)
+
 #define SNMP_V3_MD5_LEN        16
 #define SNMP_V3_SHA_LEN        20
 
