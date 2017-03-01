@@ -919,7 +919,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     inbound_msgAuthenticationParameters_offset = pbuf_stream.offset;
 	LWIP_UNUSED_ARG(inbound_msgAuthenticationParameters_offset);
     /* Read auth parameters */
-    //IF_PARSE_ASSERT(tlv.value_len <= SNMP_V3_MAX_AUTH_PARAM_LENGTH);
+    /* IF_PARSE_ASSERT(tlv.value_len <= SNMP_V3_MAX_AUTH_PARAM_LENGTH); */
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->msg_authentication_parameters,
         &u16_value, tlv.value_len));
     request->msg_authentication_parameters_len = (u8_t)u16_value;
@@ -935,11 +935,12 @@ snmp_parse_inbound_frame(struct snmp_request *request)
         &u16_value, SNMP_V3_MAX_PRIV_PARAM_LENGTH));
     request->msg_privacy_parameters_len = (u8_t)u16_value;
 
-    /* validate securityParameters here (do this after decoding because we don't want to increase other counters for wrong frames) */
-    // 1) securityParameters was correctly serialized if we reach here.
-    // 2) securityParameters are already cached.
-    // 3) if msgAuthoritativeEngineID is unknown, zero-length or too long:
-    //    b) https://tools.ietf.org/html/rfc3414#section-7
+    /* validate securityParameters here (do this after decoding because we don't want to increase other counters for wrong frames)
+     * 1) securityParameters was correctly serialized if we reach here.
+     * 2) securityParameters are already cached.
+     * 3) if msgAuthoritativeEngineID is unknown, zero-length or too long:
+         b) https://tools.ietf.org/html/rfc3414#section-7
+     */
     {
       const char *eid;
       u8_t eid_len;
@@ -950,27 +951,27 @@ snmp_parse_inbound_frame(struct snmp_request *request)
           (request->msg_authoritative_engine_id_len != eid_len) ||
           (memcmp(eid, request->msg_authoritative_engine_id, eid_len) != 0)) {
         snmp_stats.unknownengineids++;
-        request->msg_flags = 0; // noauthnopriv
+        request->msg_flags = 0; /* noauthnopriv */
         request->error_status = SNMP_ERR_UNKNOWN_ENGINEID;
         return ERR_OK;
       }
     }
 
-    // 4) verify username
+    /* 4) verify username */
     if(snmpv3_get_user((char*)request->msg_user_name, &auth, NULL, &priv, NULL)) {
       snmp_stats.unknownusernames++;
-      request->msg_flags = 0; // noauthnopriv
+      request->msg_flags = 0; /* noauthnopriv */
       request->error_status = SNMP_ERR_UNKNOWN_SECURITYNAME;
       return ERR_OK;
     }
 
-    // 5) verify security level
+    /* 5) verify security level */
     switch(request->msg_flags & (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)) {
     case SNMP_V3_NOAUTHNOPRIV:
       if ((auth != SNMP_V3_AUTH_ALGO_INVAL) || (priv != SNMP_V3_PRIV_ALGO_INVAL)) {
         /* Invalid security level for user */
         snmp_stats.unsupportedseclevels++;
-        request->msg_flags = 0; // noauthnopriv
+        request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
         request->error_status = SNMP_ERR_UNSUPPORTED_SECLEVEL;
         return ERR_OK;
       }
@@ -980,7 +981,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       if ((auth == SNMP_V3_AUTH_ALGO_INVAL) || (priv != SNMP_V3_PRIV_ALGO_INVAL)) {
         /* Invalid security level for user */
         snmp_stats.unsupportedseclevels++;
-        request->msg_flags = 0; // noauthnopriv
+        request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
         request->error_status = SNMP_ERR_UNSUPPORTED_SECLEVEL;
         return ERR_OK;
       }
@@ -989,7 +990,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       if ((auth == SNMP_V3_AUTH_ALGO_INVAL) || (priv == SNMP_V3_PRIV_ALGO_INVAL)) {
         /* Invalid security level for user */
         snmp_stats.unsupportedseclevels++;
-        request->msg_flags = 0; // noauthnopriv
+        request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
         request->error_status = SNMP_ERR_UNSUPPORTED_SECLEVEL;
         return ERR_OK;
       }
@@ -997,12 +998,12 @@ snmp_parse_inbound_frame(struct snmp_request *request)
 #endif
     default:
       snmp_stats.unsupportedseclevels++;
-      request->msg_flags = 0; // noauthnopriv
+      request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
       request->error_status = SNMP_ERR_UNSUPPORTED_SECLEVEL;
       return ERR_OK;
     }
 
-    // 6) if securitylevel specifies authentication, authenticate message.
+    /* 6) if securitylevel specifies authentication, authenticate message. */
 #if LWIP_SNMP_V3_CRYPTO
     if (request->msg_flags & SNMP_V3_AUTH_FLAG) {
       const u8_t zero_arr[SNMP_V3_MAX_AUTH_PARAM_LENGTH] = { 0 };
@@ -1013,7 +1014,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
 
       if (request->msg_authentication_parameters_len > SNMP_V3_MAX_AUTH_PARAM_LENGTH) {
         snmp_stats.wrongdigests++;
-        request->msg_flags = 0; // noauthnopriv
+        request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
         request->error_status = SNMP_ERR_AUTHORIZATIONERROR;
         return ERR_OK;
       }
@@ -1032,17 +1033,17 @@ snmp_parse_inbound_frame(struct snmp_request *request)
 
       if(memcmp(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH)) {
         snmp_stats.wrongdigests++;
-        request->msg_flags = 0; // noauthnopriv
+        request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
         request->error_status = SNMP_ERR_AUTHORIZATIONERROR;
         return ERR_OK;
       }
 
-      // 7) if securitylevel specifies authentication, verify engineboots, enginetime and lastenginetime
+      /* 7) if securitylevel specifies authentication, verify engineboots, enginetime and lastenginetime */
       {
         s32_t boots = snmpv3_get_engine_boots_internal();
         if ((request->msg_authoritative_engine_boots != boots) || (boots == 2147483647UL)) {
           snmp_stats.notintimewindows++;
-          request->msg_flags = SNMP_V3_AUTHNOPRIV; // authnopriv
+          request->msg_flags = SNMP_V3_AUTHNOPRIV;
           request->error_status = SNMP_ERR_NOTINTIMEWINDOW;
           return ERR_OK;
         }
@@ -1051,14 +1052,14 @@ snmp_parse_inbound_frame(struct snmp_request *request)
         s32_t time = snmpv3_get_engine_time_internal();
         if (request->msg_authoritative_engine_time > time) {
           snmp_stats.notintimewindows++;
-          request->msg_flags = SNMP_V3_AUTHNOPRIV; // authnopriv
+          request->msg_flags = SNMP_V3_AUTHNOPRIV;
           request->error_status = SNMP_ERR_NOTINTIMEWINDOW;
           return ERR_OK;
         }
         else if (time > 150) {
           if (request->msg_authoritative_engine_time < time - 150) {
             snmp_stats.notintimewindows++;
-            request->msg_flags = SNMP_V3_AUTHNOPRIV; // authnopriv
+            request->msg_flags = SNMP_V3_AUTHNOPRIV;
             request->error_status = SNMP_ERR_NOTINTIMEWINDOW;
             return ERR_OK;
           }
@@ -1067,7 +1068,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     }
 #endif
 
-    // 8) if securitylevel specifies privacy, decrypt message.
+    /* 8) if securitylevel specifies privacy, decrypt message. */
 #if LWIP_SNMP_V3_CRYPTO
     if (request->msg_flags & SNMP_V3_PRIV_FLAG) {
       /* Decrypt message */
@@ -1085,16 +1086,17 @@ snmp_parse_inbound_frame(struct snmp_request *request)
           request->msg_privacy_parameters, request->msg_authoritative_engine_boots,
           request->msg_authoritative_engine_time, algo, SNMP_V3_PRIV_MODE_DECRYPT) != ERR_OK) {
         snmp_stats.decryptionerrors++;
-        request->msg_flags = SNMP_V3_AUTHNOPRIV; // authnopriv
+        request->msg_flags = SNMP_V3_AUTHNOPRIV;
         request->error_status = SNMP_ERR_DECRYIPTION_ERROR;
         return ERR_OK;
       }
     }
 #endif
-    // 9) calculate max size of scoped pdu?
-    // 10) securityname for user is retrieved from usertable?
-    // 11) security data is cached?
-    // 12)
+    /* 9) calculate max size of scoped pdu?
+     * 10) securityname for user is retrieved from usertable?
+     * 11) security data is cached?
+     * 12)
+     */
 
     /* Scoped PDU
      * Encryption context
@@ -1113,7 +1115,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->context_engine_id,
         &u16_value, SNMP_V3_MAX_ENGINE_ID_LENGTH));
     request->context_engine_id_len = (u8_t)u16_value;
-    // TODO: do we need to verify this contextengineid too?
+    /* TODO: do we need to verify this contextengineid too? */
 
     /* contextName */
     IF_PARSE_EXEC(snmp_asn1_dec_tlv(&pbuf_stream, &tlv));
@@ -1124,7 +1126,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->context_name,
         &u16_value, SNMP_V3_MAX_ENGINE_ID_LENGTH));
     request->context_name_len = (u8_t)u16_value;
-    // TODO: do we need to verify this contextname too?
+    /* TODO: do we need to verify this contextname too? */
   } else
 #endif
   {
