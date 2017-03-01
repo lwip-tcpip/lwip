@@ -193,8 +193,13 @@ static const struct snmp_obj_id* snmp_device_enterprise_oid         = &snmp_devi
 const u32_t snmp_zero_dot_zero_values[] = { 0, 0 };
 const struct snmp_obj_id_const_ref snmp_zero_dot_zero = { LWIP_ARRAYSIZE(snmp_zero_dot_zero_values), snmp_zero_dot_zero_values };
 
-
-#if SNMP_LWIP_MIB2
+#if SNMP_LWIP_MIB2 && LWIP_SNMP_V3
+#include "lwip/apps/snmp_mib2.h"
+#include "lwip/apps/snmp_snmpv2_framework.h"
+#include "lwip/apps/snmp_snmpv2_usm.h"
+static const struct snmp_mib* const default_mibs[] = { &mib2, &snmpframeworkmib, &snmpusmmib };
+static u8_t snmp_num_mibs                          = 3;
+#elif SNMP_LWIP_MIB2
 #include "lwip/apps/snmp_mib2.h"
 static const struct snmp_mib* const default_mibs[] = { &mib2 };
 static u8_t snmp_num_mibs                          = 1;
