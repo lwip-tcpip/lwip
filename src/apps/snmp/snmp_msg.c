@@ -66,6 +66,94 @@ const char *snmp_community_trap = SNMP_COMMUNITY_TRAP;
 snmp_write_callback_fct snmp_write_callback     = NULL;
 void*                   snmp_write_callback_arg = NULL;
 
+#if LWIP_SNMP_CONFIGURE_VERSIONS
+
+static u8_t v1_enabled = 1;
+static u8_t v2c_enabled = 1;
+static u8_t v3_enabled = 1;
+
+static u8_t
+snmp_version_enabled(u8_t version)
+{
+  LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
+#if LWIP_SNMP_V3
+	  || (version == SNMP_VERSION_3)
+#endif
+	  );
+
+  if (version == SNMP_VERSION_1) {
+    return v1_enabled;
+  }
+  else if (version == SNMP_VERSION_2c) {
+    return v2c_enabled;
+  }
+#if LWIP_SNMP_V3
+  else { /* version == SNMP_VERSION_3 */
+    return v3_enabled;
+  }
+#endif
+}
+
+u8_t
+snmp_v1_enabled(void)
+{
+  return snmp_version_enabled(SNMP_VERSION_1);
+}
+
+u8_t
+snmp_v2c_enabled(void)
+{
+  return snmp_version_enabled(SNMP_VERSION_2c);
+}
+
+u8_t
+snmp_v3_enabled(void)
+{
+  return snmp_version_enabled(SNMP_VERSION_3);
+}
+
+static void
+snmp_version_enable(u8_t version, u8_t enable)
+{
+  LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
+#if LWIP_SNMP_V3
+	  || (version == SNMP_VERSION_3)
+#endif
+	  );
+
+  if (version == SNMP_VERSION_1) {
+	v1_enabled = enable;
+  }
+  else if (version == SNMP_VERSION_2c) {
+	v2c_enabled = enable;
+  }
+#if LWIP_SNMP_V3
+  else { /* version == SNMP_VERSION_3 */
+	v3_enabled = enable;
+  }
+#endif
+}
+
+void
+snmp_v1_enable(u8_t enable)
+{
+  snmp_version_enable(SNMP_VERSION_1, enable);
+}
+
+void
+snmp_v2c_enable(u8_t enable)
+{
+  snmp_version_enable(SNMP_VERSION_2c, enable);
+}
+
+void
+snmp_v3_enable(u8_t enable)
+{
+  snmp_version_enable(SNMP_VERSION_3, enable);
+}
+
+#endif
+
 /**
  * @ingroup snmp_core
  * Returns current SNMP community string.
@@ -630,10 +718,14 @@ snmp_parse_inbound_frame(struct snmp_request *request)
   IF_PARSE_ASSERT(parent_tlv_value_len > 0);
   
   IF_PARSE_EXEC(snmp_asn1_dec_s32t(&pbuf_stream, tlv.value_len, &s32_value));
-  if ((s32_value != SNMP_VERSION_1) &&
+
+  if (((s32_value != SNMP_VERSION_1) &&
       (s32_value != SNMP_VERSION_2c)
 #if LWIP_SNMP_V3
-      && (s32_value != SNMP_VERSION_3)
+      && (s32_value != SNMP_VERSION_3))
+#endif
+#if LWIP_SNMP_CONFIGURE_VERSIONS
+      || (!snmp_version_enabled(s32_value))
 #endif
      )
   {
