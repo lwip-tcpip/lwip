@@ -1753,8 +1753,8 @@ http_post_request(struct pbuf *inp, struct http_state *hs,
         if (content_len >= 0) {
           /* adjust length of HTTP header passed to application */
           const char *hdr_start_after_uri = uri_end + 1;
-          u16_t hdr_len = LWIP_MIN(data_len, crlfcrlf + 4 - data);
-          u16_t hdr_data_len = LWIP_MIN(data_len, crlfcrlf + 4 - hdr_start_after_uri);
+          u16_t hdr_len = (u16_t)LWIP_MIN(data_len, crlfcrlf + 4 - data);
+          u16_t hdr_data_len = (u16_t)LWIP_MIN(data_len, crlfcrlf + 4 - hdr_start_after_uri);
           u8_t post_auto_wnd = 1;
           http_uri_buf[0] = 0;
           /* trim http header */
