@@ -533,7 +533,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
       if (!ip4_addr_isloopback(ip4_current_dest_addr()))
 #endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
       {
-        NETIF_FOREACH(netif) {
+        for (netif = netif_list; netif != NULL; netif = netif->next) {
           if (netif == inp) {
             /* we checked that before already */
             continue;

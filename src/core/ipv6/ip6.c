@@ -635,7 +635,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
         goto netif_found;
       }
 #endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
-      NETIF_FOREACH(netif) {
+      for (netif = netif_list; netif != NULL; netif = netif->next) {
         if (netif == inp) {
           /* we checked that before already */
           continue;
