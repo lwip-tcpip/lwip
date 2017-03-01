@@ -529,6 +529,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     if (ip4_input_accept(inp)) {
       netif = inp;
     } else {
+      netif = NULL;
 #if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
       /* Packets sent to the loopback address must not be accepted on an
        * interface that does not have the loopback address assigned to it,
@@ -536,7 +537,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
       if (!ip4_addr_isloopback(ip4_current_dest_addr()))
 #endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
       {
-#if ! LWIP_SINGLE_NETIF
+#if !LWIP_SINGLE_NETIF
         NETIF_FOREACH(netif) {
           if (netif == inp) {
             /* we checked that before already */

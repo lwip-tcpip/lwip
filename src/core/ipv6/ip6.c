@@ -620,6 +620,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
     if (ip6_input_accept(inp)) {
       netif = inp;
     } else {
+      netif = NULL;
 #if !IPV6_CUSTOM_SCOPES
       /* Shortcut: stop looking for other interfaces if either the source or
         * the destination has a scope constrained to this interface. Custom
@@ -641,7 +642,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
         goto netif_found;
       }
 #endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
-#if ! LWIP_SINGLE_NETIF
+#if !LWIP_SINGLE_NETIF
       NETIF_FOREACH(netif) {
         if (netif == inp) {
           /* we checked that before already */
