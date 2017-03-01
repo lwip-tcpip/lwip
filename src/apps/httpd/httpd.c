@@ -1692,7 +1692,14 @@ http_post_rxpbuf(struct http_state *hs, struct pbuf *p)
       hs->post_content_len_left -= p->tot_len;
     }
   }
+#if LWIP_HTTPD_SUPPORT_POST && LWIP_HTTPD_POST_MANUAL_WND
+  /* prevent connection being closed if httpd_post_data_recved() is called nested */
+  hs->unrecved_bytes++;
+#endif
   err = httpd_post_receive_data(hs, p);
+#if LWIP_HTTPD_SUPPORT_POST && LWIP_HTTPD_POST_MANUAL_WND
+  hs->unrecved_bytes--;
+#endif
   if (err != ERR_OK) {
     /* Ignore remaining content in case of application error */
     hs->post_content_len_left = 0;
