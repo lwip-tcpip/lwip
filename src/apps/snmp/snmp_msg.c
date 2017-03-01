@@ -356,7 +356,9 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
         }
 
         request.request_out_type = (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_REPORT);
+#if LWIP_SNMP_V3
         request.request_id = request.msg_id;
+#endif
       }
 
       if (err == ERR_OK) {
@@ -789,8 +791,9 @@ snmp_parse_inbound_frame(struct snmp_request *request)
   if (((s32_value != SNMP_VERSION_1) &&
       (s32_value != SNMP_VERSION_2c)
 #if LWIP_SNMP_V3
-      && (s32_value != SNMP_VERSION_3))
+      && (s32_value != SNMP_VERSION_3)
 #endif
+      )
 #if LWIP_SNMP_CONFIGURE_VERSIONS
       || (!snmp_version_enabled(s32_value))
 #endif
