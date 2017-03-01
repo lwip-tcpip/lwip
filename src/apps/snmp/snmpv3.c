@@ -58,7 +58,7 @@ snmpv3_engine_id_changed(void)
  * (re-)initialized itself since snmpEngineID
  * was last configured.
  */
-u32_t
+s32_t
 snmpv3_get_engine_boots_internal(void)
 {
   if (snmpv3_get_engine_boots() == 0 ||
@@ -75,7 +75,7 @@ snmpv3_get_engine_boots_internal(void)
  * Once the timer reaches 2147483647 it gets reset to zero and the
  * engine boot ups get incremented.
  */
-u32_t
+s32_t
 snmpv3_get_engine_time_internal(void)
 {
   if (snmpv3_get_engine_time() >= SNMP_MAX_TIME_BOOT) {

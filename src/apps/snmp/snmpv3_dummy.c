@@ -56,8 +56,8 @@ static struct user_table_entry user_table[] = {
   { "test", SNMP_V3_AUTH_ALGO_INVAL, "" , SNMP_V3_PRIV_ALGO_INVAL, "" }
 };
 
-static char engineid[32];
-static u8_t engineid_len;
+static char snmpv3_engineid[32];
+static u8_t snmpv3_engineid_len;
 
 static u32_t enginetime = 0;
 
@@ -115,6 +115,8 @@ err_t snmpv3_get_username(char *username, u8_t index)
  */
 void tcpip_enginetime_timer(void *arg)
 {
+  LWIP_UNUSED_ARG(arg);
+  
   enginetime++;
 
   /* This handles the engine time reset */
@@ -124,7 +126,8 @@ void tcpip_enginetime_timer(void *arg)
   sys_timeout(1000, tcpip_enginetime_timer, NULL);
 }
 
-err_t snmpv3_set_user_auth_algo(const char *username, u8_t algo)
+err_t
+snmpv3_set_user_auth_algo(const char *username, u8_t algo)
 {
   struct user_table_entry *p = get_user(username);
 
@@ -149,7 +152,8 @@ err_t snmpv3_set_user_auth_algo(const char *username, u8_t algo)
   return ERR_VAL;
 }
 
-err_t snmpv3_set_user_priv_algo(const char *username, u8_t algo)
+err_t
+snmpv3_set_user_priv_algo(const char *username, u8_t algo)
 {
   struct user_table_entry *p = get_user(username);
 
@@ -174,7 +178,8 @@ err_t snmpv3_set_user_priv_algo(const char *username, u8_t algo)
   return ERR_VAL;
 }
 
-err_t snmpv3_set_user_auth_key(const char *username, const char *password)
+err_t
+snmpv3_set_user_auth_key(const char *username, const char *password)
 {
   struct user_table_entry *p = get_user(username);
   const char *engineid;
@@ -190,10 +195,10 @@ err_t snmpv3_set_user_auth_key(const char *username, const char *password)
         return ERR_OK;
 #if LWIP_SNMP_V3_CRYPTO
       case SNMP_V3_AUTH_ALGO_MD5:
-        snmpv3_password_to_key_md5((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->auth_key);
+        snmpv3_password_to_key_md5((const u8_t*)password, strlen(password), (const u8_t*)engineid, engineid_len, p->auth_key);
         return ERR_OK;
       case SNMP_V3_AUTH_ALGO_SHA:
-        snmpv3_password_to_key_sha((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->auth_key);
+        snmpv3_password_to_key_sha((const u8_t*)password, strlen(password), (const u8_t*)engineid, engineid_len, p->auth_key);
         return ERR_OK;
 #endif
       default:
@@ -205,7 +210,8 @@ err_t snmpv3_set_user_auth_key(const char *username, const char *password)
   return ERR_VAL;
 }
 
-err_t snmpv3_set_user_priv_key(const char *username, const char *password)
+err_t
+snmpv3_set_user_priv_key(const char *username, const char *password)
 {
   struct user_table_entry *p = get_user(username);
   const char *engineid;
@@ -221,10 +227,10 @@ err_t snmpv3_set_user_priv_key(const char *username, const char *password)
         return ERR_OK;
 #if LWIP_SNMP_V3_CRYPTO
       case SNMP_V3_AUTH_ALGO_MD5:
-        snmpv3_password_to_key_md5((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->priv_key);
+        snmpv3_password_to_key_md5((const u8_t*)password, strlen(password), (const u8_t*)engineid, engineid_len, p->priv_key);
         return ERR_OK;
       case SNMP_V3_AUTH_ALGO_SHA:
-        snmpv3_password_to_key_sha((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->priv_key);
+        snmpv3_password_to_key_sha((const u8_t*)password, strlen(password), (const u8_t*)engineid, engineid_len, p->priv_key);
         return ERR_OK;
 #endif
       default:
@@ -244,7 +250,8 @@ err_t snmpv3_set_user_priv_key(const char *username, const char *password)
  *
  * @return              ERR_OK if the user was found, ERR_VAL if not.
  */
-err_t snmpv3_get_user_storagetype(const char *username, u8_t *type)
+err_t
+snmpv3_get_user_storagetype(const char *username, u8_t *type)
 {
   if (get_user(username) != NULL) {
     /* Found user in user table
@@ -305,8 +312,8 @@ snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *pri
 void
 snmpv3_get_engine_id(const char **id, u8_t *len)
 {
-  *id = engineid;
-  *len = engineid_len;
+  *id = snmpv3_engineid;
+  *len = snmpv3_engineid_len;
 }
 
 /**
@@ -317,8 +324,8 @@ snmpv3_get_engine_id(const char **id, u8_t *len)
 err_t
 snmpv3_set_engine_id(const char *id, u8_t len)
 {
-  MEMCPY(engineid, id, len);
-  engineid_len = len;
+  MEMCPY(snmpv3_engineid, id, len);
+  snmpv3_engineid_len = len;
   return ERR_OK;
 }
 

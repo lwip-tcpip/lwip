@@ -76,6 +76,11 @@ u8_t snmpv3_get_amount_of_users(void);
 err_t snmpv3_get_user_storagetype(const char *username, u8_t *storagetype);
 err_t snmpv3_get_username(char *username, u8_t index);
 
+err_t snmpv3_set_user_auth_algo(const char *username, u8_t algo);
+err_t snmpv3_set_user_priv_algo(const char *username, u8_t algo);
+err_t snmpv3_set_user_auth_key(const char *username, const char *password);
+err_t snmpv3_set_user_priv_key(const char *username, const char *password);
+
 /* The following functions are provided by the SNMPv3 agent */
 
 void snmpv3_engine_id_changed(void);

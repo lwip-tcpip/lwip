@@ -1036,7 +1036,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
 
       // 7) if securitylevel specifies authentication, verify engineboots, enginetime and lastenginetime
       {
-        u32_t boots = snmpv3_get_engine_boots_internal();
+        s32_t boots = snmpv3_get_engine_boots_internal();
         if ((request->msg_authoritative_engine_boots != boots) || (boots == 2147483647UL)) {
           snmp_stats.notintimewindows++;
           request->msg_flags = SNMP_V3_AUTHNOPRIV; // authnopriv
@@ -1045,7 +1045,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
         }
       }
       {
-        u32_t time = snmpv3_get_engine_time_internal();
+        s32_t time = snmpv3_get_engine_time_internal();
         if (request->msg_authoritative_engine_time > time) {
           snmp_stats.notintimewindows++;
           request->msg_flags = SNMP_V3_AUTHNOPRIV; // authnopriv
