@@ -124,7 +124,7 @@ snmpv3_build_priv_param(u8_t* priv_param)
   }
 #else /* Based on RFC3414 */
   static u32_t ctr;
-  u32_t boots = LWIP_SNMPV3_GET_ENGINE_BOOTS();
+  u32_t boots = snmpv3_get_engine_boots_internal();
   SMEMCPY(&priv_param[0], &boots, 4);
   SMEMCPY(&priv_param[4], &ctr, 4);
   ctr++;
