@@ -51,6 +51,12 @@
 #define SNMP_V3_PRIV_MODE_DECRYPT  0
 #define SNMP_V3_PRIV_MODE_ENCRYPT  1
 
+#define SNMP_V3_USER_STORAGETYPE_OTHER        1
+#define SNMP_V3_USER_STORAGETYPE_VOLATILE     2
+#define SNMP_V3_USER_STORAGETYPE_NONVOLATILE  3
+#define SNMP_V3_USER_STORAGETYPE_PERMANENT    4
+#define SNMP_V3_USER_STORAGETYPE_READONLY     5
+
 /*
  * The following callback functions must be implemented by the application.
  * There is a dummy implementation in snmpv3_dummy.c.
@@ -66,6 +72,9 @@ u32_t snmpv3_get_engine_time(void);
 void snmpv3_reset_engine_time(void);
 
 err_t snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *priv_algo, u8_t *priv_key);
+u8_t snmpv3_get_amount_of_users(void);
+err_t snmpv3_get_user_storagetype(const char *username, u8_t *storagetype);
+err_t snmpv3_get_username(char *username, u8_t index);
 
 /* The following functions are provided by the SNMPv3 agent */
 
