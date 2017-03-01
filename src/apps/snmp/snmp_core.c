@@ -655,21 +655,7 @@ snmp_oid_equal(const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_le
 u8_t
 netif_to_num(const struct netif *netif)
 {
-  u8_t result = 0;
-  struct netif *netif_iterator = netif_list;
-
-  while (netif_iterator != NULL) {
-    result++;
-
-    if (netif_iterator == netif) {
-      return result;
-    }
-
-    netif_iterator = netif_iterator->next;
-  }
-
-  LWIP_ASSERT("netif not found in netif_list", 0);
-  return 0;
+  return netif_get_index(netif);
 }
 
 static const struct snmp_mib*
