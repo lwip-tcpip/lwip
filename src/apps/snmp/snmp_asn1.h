@@ -57,13 +57,16 @@ extern "C" {
 #define SNMP_ASN1_DATATYPE_MASK     0x1F
 #define SNMP_ASN1_DATATYPE_EXTENDED 0x1F /* DataType indicating that datatype is encoded in following bytes */
 
-/* context specific (SNMP) tags (from SNMP spec. RFC1157) */
+/* context specific (SNMP) tags (from SNMP spec. RFC1157 and RFC1905) */
 #define SNMP_ASN1_CONTEXT_PDU_GET_REQ      0
 #define SNMP_ASN1_CONTEXT_PDU_GET_NEXT_REQ 1
 #define SNMP_ASN1_CONTEXT_PDU_GET_RESP     2
 #define SNMP_ASN1_CONTEXT_PDU_SET_REQ      3
 #define SNMP_ASN1_CONTEXT_PDU_TRAP         4
 #define SNMP_ASN1_CONTEXT_PDU_GET_BULK_REQ 5
+#define SNMP_ASN1_CONTEXT_PDU_INFORM_REQ   6
+#define SNMP_ASN1_CONTEXT_PDU_V2_TRAP      7
+#define SNMP_ASN1_CONTEXT_PDU_REPORT       8
 
 #define SNMP_ASN1_CONTEXT_VARBIND_NO_SUCH_OBJECT      0
 #define SNMP_ASN1_CONTEXT_VARBIND_END_OF_MIB_VIEW     2
