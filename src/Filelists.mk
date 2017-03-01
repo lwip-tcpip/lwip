@@ -137,6 +137,8 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
 	$(LWIPDIR)/apps/snmp/snmp_mib2_system.c \
 	$(LWIPDIR)/apps/snmp/snmp_mib2_tcp.c \
 	$(LWIPDIR)/apps/snmp/snmp_mib2_udp.c \
+	$(LWIPDIR)/apps/snmp/snmp_snmpv2_framework.c \
+	$(LWIPDIR)/apps/snmp/snmp_snmpv2_usm.c \
 	$(LWIPDIR)/apps/snmp/snmp_msg.c \
 	$(LWIPDIR)/apps/snmp/snmpv3.c \
 	$(LWIPDIR)/apps/snmp/snmp_netconn.c \
