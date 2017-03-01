@@ -458,7 +458,7 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 #endif /* LWIP_IPV6_FORWARD */
 
 /** Return true if the current input packet should be accepted on this netif */
-static struct netif*
+static int
 ip6_input_accept(struct netif *netif)
 {
   /* interface is up? */
@@ -477,11 +477,11 @@ ip6_input_accept(struct netif *netif)
 #endif /* IPV6_CUSTOM_SCOPES */
       ) {
         /* accept on this netif */
-        return netif;
+        return 1;
       }
     }
   }
-  return NULL;
+  return 0;
 }
 
 /**
@@ -612,8 +612,9 @@ ip6_input(struct pbuf *p, struct netif *inp)
   } else {
     /* start trying with inp. if that's not acceptable, start walking the
        list of configured netifs. */
-    netif = ip6_input_accept(inp);
-    if (netif == NULL) {
+    if (ip6_input_accept(inp)) {
+      netif = inp;
+    } else {
 #if !IPV6_CUSTOM_SCOPES
       /* Shortcut: stop looking for other interfaces if either the source or
         * the destination has a scope constrained to this interface. Custom

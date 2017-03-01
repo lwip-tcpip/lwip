@@ -357,7 +357,7 @@ return_noroute:
 #endif /* IP_FORWARD */
 
 /** Return true if the current input packet should be accepted on this netif */
-static struct netif*
+static int
 ip4_input_accept(struct netif *netif)
 {
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
@@ -379,7 +379,7 @@ ip4_input_accept(struct netif *netif)
       LWIP_DEBUGF(IP_DEBUG, ("ip4_input: packet accepted on interface %c%c\n",
           netif->name[0], netif->name[1]));
       /* accept on this netif */
-      return netif;
+      return 1;
     }
 #if LWIP_AUTOIP
     /* connections to link-local addresses must persist after changing
@@ -388,11 +388,11 @@ ip4_input_accept(struct netif *netif)
       LWIP_DEBUGF(IP_DEBUG, ("ip4_input: LLA packet accepted on interface %c%c\n",
           netif->name[0], netif->name[1]));
       /* accept on this netif */
-      return netif;
+      return 1;
     }
 #endif /* LWIP_AUTOIP */
   }
-  return NULL;
+  return 0;
 }
 
 /**
@@ -524,8 +524,9 @@ ip4_input(struct pbuf *p, struct netif *inp)
   } else {
     /* start trying with inp. if that's not acceptable, start walking the
        list of configured netifs. */
-    netif = ip4_input_accept(inp);
-    if (netif == NULL) {
+    if (ip4_input_accept(inp)) {
+      netif = inp;
+    } else {
 #if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
       /* Packets sent to the loopback address must not be accepted on an
        * interface that does not have the loopback address assigned to it,
