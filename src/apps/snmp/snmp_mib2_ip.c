@@ -262,14 +262,11 @@ ip_AddrTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row_
   snmp_oid_to_ip4(&row_oid[0], &ip); /* we know it succeeds because of oid_in_range check above */
 
   /* find netif with requested ip */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     if (ip4_addr_cmp(&ip, netif_ip4_addr(netif))) {
       /* fill in object properties */
       return ip_AddrTable_get_cell_value_core(netif, column, value, value_len);
     }
-
-    netif = netif->next;
   }
 
   /* not found */
@@ -287,15 +284,12 @@ ip_AddrTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_o
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges));
 
   /* iterate over all possible OIDs to find the next one */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     u32_t test_oid[LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges)];
     snmp_ip4_to_oid(netif_ip4_addr(netif), &test_oid[0]);
 
     /* check generated OID: is it a candidate for the next one? */
     snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_AddrTable_oid_ranges), netif);
-
-    netif = netif->next;
   }
 
   /* did we find a next one? */
@@ -419,8 +413,7 @@ ip_RouteTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
   }
 
   /* find netif with requested route */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     ip4_addr_t dst;
     ip4_addr_get_network(&dst, netif_ip4_addr(netif), netif_ip4_netmask(netif));
 
@@ -428,8 +421,6 @@ ip_RouteTable_get_cell_value(const u32_t* column, const u32_t* row_oid, u8_t row
       /* fill in object properties */
       return ip_RouteTable_get_cell_value_core(netif, 0, column, value, value_len);
     }
-
-    netif = netif->next;
   }
 
   /* not found */
@@ -454,8 +445,7 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
   }
 
   /* iterate over all possible OIDs to find the next one */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     ip4_addr_t dst;
     ip4_addr_get_network(&dst, netif_ip4_addr(netif), netif_ip4_netmask(netif));
 
@@ -464,8 +454,6 @@ ip_RouteTable_get_next_cell_instance_and_value(const u32_t* column, struct snmp_
       snmp_ip4_to_oid(&dst, &test_oid[0]);
       snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(ip_RouteTable_oid_ranges), netif);
     }
-
-    netif = netif->next;
   }
 
   /* did we find a next one? */

@@ -313,8 +313,7 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
   struct netif *netif;
 
   /* loop through netif's */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     /* Should we join this interface ? */
     if (ip6_addr_isany(srcaddr) ||
         netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
@@ -323,9 +322,6 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
         return err;
       }
     }
-
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 
   return err;
@@ -402,8 +398,7 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
   struct netif *netif;
 
   /* loop through netif's */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     /* Should we leave this interface ? */
     if (ip6_addr_isany(srcaddr) ||
         netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
@@ -413,8 +408,6 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
         err = res;
       }
     }
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 
   return err;
@@ -489,9 +482,9 @@ mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
 void
 mld6_tmr(void)
 {
-  struct netif *netif = netif_list;
+  struct netif *netif;
 
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     struct mld_group *group = netif_mld6_data(netif);
 
     while (group != NULL) {
@@ -508,7 +501,6 @@ mld6_tmr(void)
       }
       group = group->next;
     }
-    netif = netif->next;
   }
 }
 

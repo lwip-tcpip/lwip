@@ -408,10 +408,10 @@ dhcp_select(struct netif *netif)
 void
 dhcp_coarse_tmr(void)
 {
-  struct netif *netif = netif_list;
+  struct netif *netif;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_coarse_tmr()\n"));
   /* iterate through all network interfaces */
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     /* only act on DHCP configured interfaces */
     struct dhcp *dhcp = netif_dhcp_data(netif);
     if ((dhcp != NULL) && (dhcp->state != DHCP_STATE_OFF)) {
@@ -433,8 +433,6 @@ dhcp_coarse_tmr(void)
         dhcp_t1_timeout(netif);
       }
     }
-    /* proceed to next netif */
-    netif = netif->next;
   }
 }
 
@@ -448,9 +446,9 @@ dhcp_coarse_tmr(void)
 void
 dhcp_fine_tmr(void)
 {
-  struct netif *netif = netif_list;
+  struct netif *netif;
   /* loop through netif's */
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     struct dhcp *dhcp = netif_dhcp_data(netif);
     /* only act on DHCP configured interfaces */
     if (dhcp != NULL) {
@@ -466,8 +464,6 @@ dhcp_fine_tmr(void)
         dhcp_timeout(netif);
       }
     }
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 }
 

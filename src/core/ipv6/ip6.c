@@ -85,6 +85,10 @@
 struct netif *
 ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
 {
+#if LWIP_SINGLE_NETIF
+  LWIP_UNUSED_ARG(src);
+  LWIP_UNUSED_ARG(dest);
+#else /* LWIP_SINGLE_NETIF */
   struct netif *netif;
   s8_t i;
 
@@ -239,6 +243,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
     return NULL;
   }
 #endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
+#endif /* !LWIP_SINGLE_NETIF */
 
   /* no matching netif found, use default netif, if up */
   if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
@@ -636,7 +641,8 @@ ip6_input(struct pbuf *p, struct netif *inp)
         goto netif_found;
       }
 #endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
-      for (netif = netif_list; netif != NULL; netif = netif->next) {
+#if ! LWIP_SINGLE_NETIF
+      NETIF_FOREACH(netif) {
         if (netif == inp) {
           /* we checked that before already */
           continue;
@@ -645,6 +651,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
           break;
         }
       }
+#endif /* !LWIP_SINGLE_NETIF */
     }
 netif_found:
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet accepted on interface %c%c\n",

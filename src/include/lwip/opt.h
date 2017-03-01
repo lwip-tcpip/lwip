@@ -626,7 +626,7 @@
  * (but this should only occur for AutoIP).
  */
 #if !defined ETHARP_TABLE_MATCH_NETIF || defined __DOXYGEN__
-#define ETHARP_TABLE_MATCH_NETIF        0
+#define ETHARP_TABLE_MATCH_NETIF        !LWIP_SINGLE_NETIF
 #endif
 /**
  * @}
@@ -1418,6 +1418,14 @@
  * @{
  */
 /**
+ * LWIP_SINGLE_NETIF==1: use a single netif only. This is the common case for
+ * small real-life targets. Some code like routing etc. can be left out.
+ */
+#if !defined LWIP_SINGLE_NETIF || defined __DOXYGEN__
+#define LWIP_SINGLE_NETIF               0
+#endif
+
+/**
  * LWIP_NETIF_HOSTNAME==1: use DHCP_OPTION_HOSTNAME with netif's hostname
  * field.
  */
@@ -1516,7 +1524,7 @@
  * netif is available, loopback traffic uses this netif.
  */
 #if !defined LWIP_HAVE_LOOPIF || defined __DOXYGEN__
-#define LWIP_HAVE_LOOPIF                LWIP_NETIF_LOOPBACK
+#define LWIP_HAVE_LOOPIF                (LWIP_NETIF_LOOPBACK && !LWIP_SINGLE_NETIF)
 #endif
 
 /**
@@ -2199,7 +2207,7 @@
  * setting only for single-interface configurations.
  */
 #if !defined LWIP_IPV6_SCOPES || defined __DOXYGEN__
-#define LWIP_IPV6_SCOPES                (LWIP_IPV6)
+#define LWIP_IPV6_SCOPES                (LWIP_IPV6 && !LWIP_SINGLE_NETIF)
 #endif
 
 /**

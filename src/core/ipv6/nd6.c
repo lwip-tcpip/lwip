@@ -1042,7 +1042,7 @@ nd6_tmr(void)
   }
 
   /* Process our own addresses, updating address lifetimes and/or DAD state. */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
+  NETIF_FOREACH(netif) {
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
       u8_t addr_state;
 #if LWIP_IPV6_ADDRESS_LIFETIMES
@@ -1121,7 +1121,7 @@ nd6_tmr(void)
 
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
   /* Send router solicitation messages, if necessary. */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
+  NETIF_FOREACH(netif) {
     if ((netif->rs_count > 0) && netif_is_up(netif) &&
         netif_is_link_up(netif) &&
         !ip6_addr_isinvalid(netif_ip6_addr_state(netif, 0)) &&

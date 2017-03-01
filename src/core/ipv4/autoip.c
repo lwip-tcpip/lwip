@@ -364,9 +364,9 @@ autoip_stop(struct netif *netif)
 void
 autoip_tmr(void)
 {
-  struct netif *netif = netif_list;
+  struct netif *netif;
   /* loop through netif's */
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     struct autoip* autoip = netif_autoip_data(netif);
     /* only act on AutoIP configured interfaces */
     if (autoip != NULL) {
@@ -438,8 +438,6 @@ autoip_tmr(void)
           break;
       }
     }
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 }
 

@@ -229,8 +229,10 @@ u8_t netif_alloc_client_data_id(void);
  *  The following fields should be filled in by the initialization
  *  function for the device driver: hwaddr_len, hwaddr[], mtu, flags */
 struct netif {
+#if !LWIP_SINGLE_NETIF
   /** pointer to next in linked list */
   struct netif *next;
+#endif
 
 #if LWIP_IPV4
   /** IP address configuration in network byte order */
@@ -365,8 +367,13 @@ struct netif {
 #define IF__NETIF_CHECKSUM_ENABLED(netif, chksumflag)
 #endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
 
+#if LWIP_SINGLE_NETIF
+#define NETIF_FOREACH(netif) if (((netif) = netif_default) != NULL)
+#else /* LWIP_SINGLE_NETIF */
 /** The list of network interfaces. */
 extern struct netif *netif_list;
+#define NETIF_FOREACH(netif) for (netif = netif_list; netif != NULL; netif = netif->next)
+#endif /* LWIP_SINGLE_NETIF */
 /** The default network interface. */
 extern struct netif *netif_default;
 

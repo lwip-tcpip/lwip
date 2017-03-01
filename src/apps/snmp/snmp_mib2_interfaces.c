@@ -65,10 +65,9 @@ interfaces_get_value(struct snmp_node_instance* instance, void* value)
     s32_t *sint_ptr = (s32_t*)value;
     s32_t num_netifs = 0;
 
-    struct netif *netif = netif_list;
-    while (netif != NULL) {
+    struct netif *netif;
+    NETIF_FOREACH(netif) {
       num_netifs++;
-      netif = netif->next;
     }
 
     *sint_ptr = num_netifs;
@@ -109,14 +108,12 @@ interfaces_Table_get_cell_instance(const u32_t* column, const u32_t* row_oid, u8
   ifIndex = row_oid[0];
 
   /* find netif with index */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     if (netif_to_num(netif) == ifIndex) {
       /* store netif pointer for subsequent operations (get/test/set) */
       cell_instance->reference.ptr = netif;
       return SNMP_ERR_NOERROR;
     }
-    netif = netif->next;
   }
 
   /* not found */
@@ -136,15 +133,12 @@ interfaces_Table_get_next_cell_instance(const u32_t* column, struct snmp_obj_id*
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(interfaces_Table_oid_ranges));
 
   /* iterate over all possible OIDs to find the next one */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     u32_t test_oid[LWIP_ARRAYSIZE(interfaces_Table_oid_ranges)];
     test_oid[0] = netif_to_num(netif);
 
     /* check generated OID: is it a candidate for the next one? */
     snmp_next_oid_check(&state, test_oid, LWIP_ARRAYSIZE(interfaces_Table_oid_ranges), netif);
-
-    netif = netif->next;
   }
 
   /* did we find a next one? */

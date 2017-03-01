@@ -106,7 +106,9 @@
 static netif_ext_callback_t* ext_callback;
 #endif
 
+#if !LWIP_SINGLE_NETIF
 struct netif *netif_list;
+#endif /* !LWIP_SINGLE_NETIF */
 struct netif *netif_default;
 
 #define netif_index_to_num(index)   ((index) - 1)
@@ -250,10 +252,15 @@ netif_add(struct netif *netif,
 #endif /* LWIP_IPV4 */
           void *state, netif_init_fn init, netif_input_fn input)
 {
-  struct netif *netif2;
-  int num_netifs;
 #if LWIP_IPV6
   s8_t i;
+#endif
+
+#if LWIP_SINGLE_NETIF
+  if (netif_default != NULL) {
+    LWIP_ASSERT("single netif already set", 0);
+    return NULL;
+  }
 #endif
 
   LWIP_ASSERT("No init function given", init != NULL);
@@ -323,30 +330,36 @@ netif_add(struct netif *netif,
     return NULL;
   }
 
+#if !LWIP_SINGLE_NETIF
   /* Assign a unique netif number in the range [0..254], so that (num+1) can
      serve as an interface index that fits in a u8_t.
      We assume that the new netif has not yet been added to the list here.
      This algorithm is O(n^2), but that should be OK for lwIP.
      */
-  do {
-    if (netif->num == 255) {
-      netif->num = 0;
-    }
-    num_netifs = 0;
-    for (netif2 = netif_list; netif2 != NULL; netif2 = netif2->next) {
-      num_netifs++;
-      LWIP_ASSERT("too many netifs, max. supported number is 255", num_netifs <= 255);
-      if (netif2->num == netif->num) {
-        netif->num++;
-        break;
+  {
+    struct netif *netif2;
+    int num_netifs;
+    do {
+      if (netif->num == 255) {
+        netif->num = 0;
       }
-    }
-  } while (netif2 != NULL);
+      num_netifs = 0;
+      for (netif2 = netif_list; netif2 != NULL; netif2 = netif2->next) {
+        num_netifs++;
+        LWIP_ASSERT("too many netifs, max. supported number is 255", num_netifs <= 255);
+        if (netif2->num == netif->num) {
+          netif->num++;
+          break;
+        }
+      }
+    } while (netif2 != NULL);
+  }
   netif_num = netif->num + 1;
 
   /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
+#endif /* "LWIP_SINGLE_NETIF */
   mib2_netif_added(netif);
 
 #if LWIP_IGMP
@@ -476,6 +489,7 @@ netif_remove(struct netif *netif)
     /* reset default netif */
     netif_set_default(NULL);
   }
+#if !LWIP_SINGLE_NETIF
   /*  is it the first netif? */
   if (netif_list == netif) {
     netif_list = netif->next;
@@ -492,6 +506,7 @@ netif_remove(struct netif *netif)
       return; /* netif is not on the list */
     }
   }
+#endif /* !LWIP_SINGLE_NETIF */
   mib2_netif_removed(netif);
 #if LWIP_NETIF_REMOVE_CALLBACK
   if (netif->remove_callback) {
@@ -1037,12 +1052,10 @@ netif_poll(struct netif *netif)
 void
 netif_poll_all(void)
 {
-  struct netif *netif = netif_list;
+  struct netif *netif;
   /* loop through netifs */
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     netif_poll(netif);
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 }
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
@@ -1427,7 +1440,7 @@ netif_get_by_index(u8_t idx)
   struct netif* netif;
 
   if (idx != NETIF_NO_INDEX) {
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
+    NETIF_FOREACH(netif) {
       if (idx == netif_get_index(netif)) {
         return netif; /* found! */
       }
@@ -1456,7 +1469,7 @@ netif_find(const char *name)
 
   num = (u8_t)atoi(&name[2]);
 
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
+  NETIF_FOREACH(netif) {
     if (num == netif->num &&
        name[0] == netif->name[0] &&
        name[1] == netif->name[1]) {

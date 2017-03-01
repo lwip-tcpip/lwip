@@ -456,8 +456,7 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   LWIP_ERROR("igmp_joingroup: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
 
   /* loop through netif's */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     /* Should we join this interface ? */
     if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
       err = igmp_joingroup_netif(netif, groupaddr);
@@ -467,8 +466,6 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
         return err;
       }
     }
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 
   return err;
@@ -552,8 +549,7 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   LWIP_ERROR("igmp_leavegroup: attempt to leave allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
 
   /* loop through netif's */
-  netif = netif_list;
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     /* Should we leave this interface ? */
     if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
       err_t res = igmp_leavegroup_netif(netif, groupaddr);
@@ -562,8 +558,6 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
         err = res;
       }
     }
-    /* proceed to next network interface */
-    netif = netif->next;
   }
 
   return err;
@@ -638,9 +632,9 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 void
 igmp_tmr(void)
 {
-  struct netif *netif = netif_list;
+  struct netif *netif;
 
-  while (netif != NULL) {
+  NETIF_FOREACH(netif) {
     struct igmp_group *group = netif_igmp_data(netif);
 
     while (group != NULL) {
@@ -652,7 +646,6 @@ igmp_tmr(void)
       }
       group = group->next;
     }
-    netif = netif->next;
   }
 }
 
