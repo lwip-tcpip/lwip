@@ -1271,31 +1271,30 @@ dhcp_reboot(struct netif *netif)
   return result;
 }
 
-
 /**
  * @ingroup dhcp4
- * Release a DHCP lease (usually called before @ref dhcp_stop).
+ * Release a DHCP lease and stop DHCP statemachine (and AUTOIP if LWIP_DHCP_AUTOIP_COOP).
  *
- * @param netif network interface which must release its lease
+ * @param netif network interface
  */
-err_t
-dhcp_release(struct netif *netif)
+void
+dhcp_release_and_stop(struct netif *netif)
 {
   struct dhcp *dhcp = netif_dhcp_data(netif);
-  err_t result;
   ip_addr_t server_ip_addr;
-  u8_t is_dhcp_supplied_address;
 
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release()\n"));
+  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release_and_stop()\n"));
   if (dhcp == NULL) {
-    return ERR_ARG;
+    return;
   }
+
+  /* already off? -> nothing to do */
+  if (dhcp->state == DHCP_STATE_OFF) {
+    return;
+  }
+
   ip_addr_copy(server_ip_addr, dhcp->server_ip_addr);
 
-  is_dhcp_supplied_address = dhcp_supplied_address(netif);
-
-  /* idle DHCP client */
-  dhcp_set_state(dhcp, DHCP_STATE_OFF);
   /* clean old DHCP offer */
   ip_addr_set_zero_ip4(&dhcp->server_ip_addr);
   ip4_addr_set_zero(&dhcp->offered_ip_addr);
@@ -1307,65 +1306,67 @@ dhcp_release(struct netif *netif)
   dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
   dhcp->t1_renew_time = dhcp->t2_rebind_time = dhcp->lease_used = dhcp->t0_timeout = 0;
 
-  if (!is_dhcp_supplied_address) {
-    /* don't issue release message when address is not dhcp-assigned */
-    return ERR_OK;
+  /* send release message when current IP was assigned via DHCP */
+  if (dhcp_supplied_address(netif)) {
+    /* create and initialize the DHCP message header */
+    err_t result = dhcp_create_msg(netif, dhcp, DHCP_RELEASE);
+    if (result == ERR_OK) {
+      dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
+      dhcp_option_long(dhcp, lwip_ntohl(ip4_addr_get_u32(ip_2_ip4(&server_ip_addr))));
+  
+      dhcp_option_trailer(dhcp);
+  
+      pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
+  
+      udp_sendto_if(dhcp_pcb, dhcp->p_out, &server_ip_addr, DHCP_SERVER_PORT, netif);
+      dhcp_delete_msg(dhcp);
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_STATE_OFF\n"));
+    } else {
+        /* sending release failed, but that's not a problem since the correct behaviour of dhcp does not rely on release */
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_release: could not allocate DHCP request\n"));
+    }
   }
 
-  /* create and initialize the DHCP message header */
-  result = dhcp_create_msg(netif, dhcp, DHCP_RELEASE);
-  if (result == ERR_OK) {
-    dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
-    dhcp_option_long(dhcp, lwip_ntohl(ip4_addr_get_u32(ip_2_ip4(&server_ip_addr))));
-
-    dhcp_option_trailer(dhcp);
-
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
-
-    udp_sendto_if(dhcp_pcb, dhcp->p_out, &server_ip_addr, DHCP_SERVER_PORT, netif);
-    dhcp_delete_msg(dhcp);
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_STATE_OFF\n"));
-  } else {
-    /* sending release failed, but that's not a problem since the correct behaviour of dhcp does not rely on release */
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_release: could not allocate DHCP request\n"));
-  }
   /* remove IP address from interface (prevents routing from selecting this interface) */
   netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
 
-  return result;
+#if LWIP_DHCP_AUTOIP_COOP
+  if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
+    autoip_stop(netif);
+    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+  }
+#endif /* LWIP_DHCP_AUTOIP_COOP */
+
+  LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL);
+  dhcp_set_state(dhcp, DHCP_STATE_OFF);
+
+  if (dhcp->pcb_allocated != 0) {
+    dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
+    dhcp->pcb_allocated = 0;
+  }
 }
 
 /**
  * @ingroup dhcp4
- * Remove the DHCP client from the interface.
- *
- * @param netif The network interface to stop DHCP on
+ * @deprecated Use dhcp_release_and_stop() instead.
+ * This function calls dhcp_release_and_stop() internally.
+ */
+err_t
+dhcp_release(struct netif *netif)
+{
+  dhcp_release_and_stop(netif);
+  return ERR_OK;
+}
+
+/**
+ * @ingroup dhcp4
+ * @deprecated Use dhcp_release_and_stop() instead.
+ * This function calls dhcp_release_and_stop() internally.
  */
 void
 dhcp_stop(struct netif *netif)
 {
-  struct dhcp *dhcp;
-  LWIP_ERROR("dhcp_stop: netif != NULL", (netif != NULL), return;);
-  dhcp = netif_dhcp_data(netif);
-
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_stop()\n"));
-  /* netif is DHCP configured? */
-  if (dhcp != NULL) {
-#if LWIP_DHCP_AUTOIP_COOP
-    if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
-      autoip_stop(netif);
-      dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
-    }
-#endif /* LWIP_DHCP_AUTOIP_COOP */
-
-    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL);
-    dhcp_set_state(dhcp, DHCP_STATE_OFF);
-
-    if (dhcp->pcb_allocated != 0) {
-      dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
-      dhcp->pcb_allocated = 0;
-    }
-  }
+  dhcp_release_and_stop(netif);
 }
 
 /*
