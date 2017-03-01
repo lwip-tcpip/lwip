@@ -356,6 +356,45 @@ return_noroute:
 }
 #endif /* IP_FORWARD */
 
+/** Return true if the current input packet should be accepted on this netif */
+static struct netif*
+ip4_input_accept(struct netif *netif)
+{
+  LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
+      ip4_addr_get_u32(ip4_current_dest_addr()), ip4_addr_get_u32(netif_ip4_addr(netif)),
+      ip4_addr_get_u32(ip4_current_dest_addr()) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
+      ip4_addr_get_u32(netif_ip4_addr(netif)) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
+      ip4_addr_get_u32(ip4_current_dest_addr()) & ~ip4_addr_get_u32(netif_ip4_netmask(netif))));
+
+  /* interface is up and configured? */
+  if ((netif_is_up(netif)) && (!ip4_addr_isany_val(*netif_ip4_addr(netif)))) {
+    /* unicast to this interface address? */
+    if (ip4_addr_cmp(ip4_current_dest_addr(), netif_ip4_addr(netif)) ||
+        /* or broadcast on this interface network address? */
+        ip4_addr_isbroadcast(ip4_current_dest_addr(), netif)
+#if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
+        || (ip4_addr_get_u32(ip4_current_dest_addr()) == PP_HTONL(IPADDR_LOOPBACK))
+#endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
+        ) {
+      LWIP_DEBUGF(IP_DEBUG, ("ip4_input: packet accepted on interface %c%c\n",
+          netif->name[0], netif->name[1]));
+      /* accept on this netif */
+      return netif;
+    }
+#if LWIP_AUTOIP
+    /* connections to link-local addresses must persist after changing
+        the netif's address (RFC3927 ch. 1.9) */
+    if (autoip_accept_packet(netif, ip4_current_dest_addr())) {
+      LWIP_DEBUGF(IP_DEBUG, ("ip4_input: LLA packet accepted on interface %c%c\n",
+          netif->name[0], netif->name[1]));
+      /* accept on this netif */
+      return netif;
+    }
+#endif /* LWIP_AUTOIP */
+  }
+  return NULL;
+}
+
 /**
  * This function is called by the network interface device driver when
  * an IP packet is received. The function does the basic checks of the
@@ -484,62 +523,27 @@ ip4_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_IGMP */
   } else {
     /* start trying with inp. if that's not acceptable, start walking the
-       list of configured netifs.
-       'first' is used as a boolean to mark whether we started walking the list */
-    int first = 1;
-    netif = inp;
-    do {
-      LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
-          ip4_addr_get_u32(&iphdr->dest), ip4_addr_get_u32(netif_ip4_addr(netif)),
-          ip4_addr_get_u32(&iphdr->dest) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
-          ip4_addr_get_u32(netif_ip4_addr(netif)) & ip4_addr_get_u32(netif_ip4_netmask(netif)),
-          ip4_addr_get_u32(&iphdr->dest) & ~ip4_addr_get_u32(netif_ip4_netmask(netif))));
-
-      /* interface is up and configured? */
-      if ((netif_is_up(netif)) && (!ip4_addr_isany_val(*netif_ip4_addr(netif)))) {
-        /* unicast to this interface address? */
-        if (ip4_addr_cmp(ip4_current_dest_addr(), netif_ip4_addr(netif)) ||
-            /* or broadcast on this interface network address? */
-            ip4_addr_isbroadcast(ip4_current_dest_addr(), netif)
-#if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
-            || (ip4_addr_get_u32(ip4_current_dest_addr()) == PP_HTONL(IPADDR_LOOPBACK))
-#endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
-            ) {
-          LWIP_DEBUGF(IP_DEBUG, ("ip4_input: packet accepted on interface %c%c\n",
-              netif->name[0], netif->name[1]));
-          /* break out of for loop */
-          break;
-        }
-#if LWIP_AUTOIP
-        /* connections to link-local addresses must persist after changing
-           the netif's address (RFC3927 ch. 1.9) */
-        if (autoip_accept_packet(netif, ip4_current_dest_addr())) {
-          LWIP_DEBUGF(IP_DEBUG, ("ip4_input: LLA packet accepted on interface %c%c\n",
-              netif->name[0], netif->name[1]));
-          /* break out of for loop */
-          break;
-        }
-#endif /* LWIP_AUTOIP */
-      }
-      if (first) {
+       list of configured netifs. */
+    netif = ip4_input_accept(inp);
+    if (netif == NULL) {
 #if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
-        /* Packets sent to the loopback address must not be accepted on an
-         * interface that does not have the loopback address assigned to it,
-         * unless a non-loopback interface is used for loopback traffic. */
-        if (ip4_addr_isloopback(ip4_current_dest_addr())) {
-          netif = NULL;
-          break;
-        }
+      /* Packets sent to the loopback address must not be accepted on an
+       * interface that does not have the loopback address assigned to it,
+       * unless a non-loopback interface is used for loopback traffic. */
+      if (!ip4_addr_isloopback(ip4_current_dest_addr()))
 #endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
-        first = 0;
-        netif = netif_list;
-      } else {
-        netif = netif->next;
+      {
+        NETIF_FOREACH(netif) {
+          if (netif == inp) {
+            /* we checked that before already */
+            continue;
+          }
+          if (ip4_input_accept(netif)) {
+            break;
+          }
+        }
       }
-      if (netif == inp) {
-        netif = netif->next;
-      }
-    } while (netif != NULL);
+    }
   }
 
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING

@@ -457,6 +457,33 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 }
 #endif /* LWIP_IPV6_FORWARD */
 
+/** Return true if the current input packet should be accepted on this netif */
+static struct netif*
+ip6_input_accept(struct netif *netif)
+{
+  /* interface is up? */
+  if (netif_is_up(netif)) {
+    u8_t i;
+    /* unicast to this interface address? address configured? */
+    /* If custom scopes are used, the destination zone will be tested as
+      * part of the local-address comparison, but we need to test the source
+      * scope as well (e.g., is this interface on the same link?). */
+    for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+      if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
+          ip6_addr_cmp(ip6_current_dest_addr(), netif_ip6_addr(netif, i))
+#if IPV6_CUSTOM_SCOPES
+          && (!ip6_addr_has_zone(ip6_current_src_addr()) ||
+              ip6_addr_test_zone(ip6_current_src_addr(), netif))
+#endif /* IPV6_CUSTOM_SCOPES */
+      ) {
+        /* accept on this netif */
+        return netif;
+      }
+    }
+  }
+  return NULL;
+}
+
 /**
  * This function is called by the network interface device driver when
  * an IPv6 packet is received. The function does the basic checks of the
@@ -478,7 +505,6 @@ ip6_input(struct pbuf *p, struct netif *inp)
   struct netif *netif;
   u8_t nexth;
   u16_t hlen; /* the current header length */
-  u8_t i;
 #if 0 /*IP_ACCEPT_LINK_LAYER_ADDRESSING*/
   @todo
   int check_ip_src=1;
@@ -565,6 +591,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
     }
 #else /* LWIP_IPV6_MLD */
     else if (ip6_addr_issolicitednode(ip6_current_dest_addr())) {
+      u8_t i;
       /* Filter solicited node packets when MLD is not enabled
        * (for Neighbor discovery). */
       netif = NULL;
@@ -584,63 +611,40 @@ ip6_input(struct pbuf *p, struct netif *inp)
     }
   } else {
     /* start trying with inp. if that's not acceptable, start walking the
-       list of configured netifs.
-       'first' is used as a boolean to mark whether we started walking the list */
-    int first = 1;
-    netif = inp;
-    do {
-      /* interface is up? */
-      if (netif_is_up(netif)) {
-        /* unicast to this interface address? address configured? */
-        /* If custom scopes are used, the destination zone will be tested as
-         * part of the local-address comparison, but we need to test the source
-         * scope as well (e.g., is this interface on the same link?). */
-        for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-          if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
-              ip6_addr_cmp(ip6_current_dest_addr(), netif_ip6_addr(netif, i))
-#if IPV6_CUSTOM_SCOPES
-              && (!ip6_addr_has_zone(ip6_current_src_addr()) ||
-                  ip6_addr_test_zone(ip6_current_src_addr(), netif))
-#endif /* IPV6_CUSTOM_SCOPES */
-          ) {
-            /* exit outer loop */
-            goto netif_found;
-          }
-        }
-      }
-      if (first) {
+       list of configured netifs. */
+    netif = ip6_input_accept(inp);
+    if (netif == NULL) {
 #if !IPV6_CUSTOM_SCOPES
-        /* Shortcut: stop looking for other interfaces if either the source or
-         * the destination has a scope constrained to this interface. Custom
-         * scopes may break the 1:1 link/interface mapping, however. */
-        if (ip6_addr_islinklocal(ip6_current_dest_addr()) ||
-            ip6_addr_islinklocal(ip6_current_src_addr())) {
-          netif = NULL;
-          break;
-        }
+      /* Shortcut: stop looking for other interfaces if either the source or
+        * the destination has a scope constrained to this interface. Custom
+        * scopes may break the 1:1 link/interface mapping, however. */
+      if (ip6_addr_islinklocal(ip6_current_dest_addr()) ||
+          ip6_addr_islinklocal(ip6_current_src_addr())) {
+        goto netif_found;
+      }
 #endif /* !IPV6_CUSTOM_SCOPES */
 #if !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF
-        /* The loopback address is to be considered link-local. Packets to it
-         * should be dropped on other interfaces, as per RFC 4291 Sec. 2.5.3.
-         * Its implied scope means packets *from* the loopback address should
-         * not be accepted on other interfaces, either. These requirements
-         * cannot be implemented in the case that loopback traffic is sent
-         * across a non-loopback interface, however. */
-        if (ip6_addr_isloopback(ip6_current_dest_addr()) ||
-            ip6_addr_isloopback(ip6_current_src_addr())) {
-          netif = NULL;
+      /* The loopback address is to be considered link-local. Packets to it
+        * should be dropped on other interfaces, as per RFC 4291 Sec. 2.5.3.
+        * Its implied scope means packets *from* the loopback address should
+        * not be accepted on other interfaces, either. These requirements
+        * cannot be implemented in the case that loopback traffic is sent
+        * across a non-loopback interface, however. */
+      if (ip6_addr_isloopback(ip6_current_dest_addr()) ||
+          ip6_addr_isloopback(ip6_current_src_addr())) {
+        goto netif_found;
+      }
+#endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
+      NETIF_FOREACH(netif) {
+        if (netif == inp) {
+          /* we checked that before already */
+          continue;
+        }
+        if (ip6_input_accept(netif)) {
           break;
         }
-#endif /* !LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF */
-        first = 0;
-        netif = netif_list;
-      } else {
-        netif = netif->next;
       }
-      if (netif == inp) {
-        netif = netif->next;
-      }
-    } while (netif != NULL);
+    }
 netif_found:
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet accepted on interface %c%c\n",
         netif ? netif->name[0] : 'X', netif? netif->name[1] : 'X'));
