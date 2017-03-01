@@ -944,8 +944,8 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       snmpv3_get_engine_id(&eid, &eid_len);
 
       if ((request->msg_authoritative_engine_id_len == 0) ||
-    	  (request->msg_authoritative_engine_id_len != eid_len) ||
-    	  (memcmp(eid, request->msg_authoritative_engine_id, eid_len) != 0)) {
+          (request->msg_authoritative_engine_id_len != eid_len) ||
+          (memcmp(eid, request->msg_authoritative_engine_id, eid_len) != 0)) {
         snmp_stats.unknownengineids++;
         request->msg_flags = 0; // noauthnopriv
         request->error_status = SNMP_ERR_UNKNOWN_ENGINEID;

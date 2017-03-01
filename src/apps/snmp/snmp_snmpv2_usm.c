@@ -233,7 +233,7 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
       if (row_oid->len < engineid_len + name_len + 2) {
         /* Partial name given according to oid.*/
         u8_t tmplen = row_oid->len - engineid_len - 2;
-    	if (!snmp_oid_in_range(&row_oid->id[name_start], tmplen, usmUserTable_oid_ranges, tmplen)) {
+        if (!snmp_oid_in_range(&row_oid->id[name_start], tmplen, usmUserTable_oid_ranges, tmplen)) {
           return SNMP_ERR_NOSUCHINSTANCE;
         }
       }

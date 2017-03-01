@@ -218,7 +218,7 @@ err_t snmpv3_set_user_priv_key(const char *username, const char *password)
       snmpv3_get_engine_id(&engineid, &engineid_len);
       switch (p->auth_algo) {
       case SNMP_V3_AUTH_ALGO_INVAL:
-    	return ERR_OK;
+        return ERR_OK;
 #if LWIP_SNMP_V3_CRYPTO
       case SNMP_V3_AUTH_ALGO_MD5:
         snmpv3_password_to_key_md5((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->priv_key);
