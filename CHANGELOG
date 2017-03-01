@@ -29,8 +29,12 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-03-01: Simon Goldschmidt
+  * httpd: LWIP_HTTPD_POST_MANUAL_WND: fixed double-free when httpd_post_data_recved
+    is called nested from httpd_post_receive_data() (bug #50424)
+
   2017-02-28: David van Moolenbroek/Simon Goldschmidt
-  tcp: fixed bug #50418: LWIP_EVENT_API: fix invalid calbacks for SYN_RCVD pcb
+  * tcp: fixed bug #50418: LWIP_EVENT_API: fix invalid calbacks for SYN_RCVD pcb
 
   2017-02-24: Simon Goldschmidt
   * sockets.c: fixed close race conditions in lwip_select (for LWIP_NETCONN_FULLDUPLEX)
