@@ -37,8 +37,225 @@
 #include "snmpv3_priv.h"
 #include <string.h>
 #include "lwip/err.h"
+#include "lwip/def.h"
+#include "lwip/timeouts.h"
 
 #if LWIP_SNMP && LWIP_SNMP_V3
+
+struct user_table_entry {
+  char username[32];
+  u8_t auth_algo;
+  u8_t auth_key[20];
+  u8_t priv_algo;
+  u8_t priv_key[20];
+};
+
+static struct user_table_entry user_table[] = {
+  { "lwip", SNMP_V3_AUTH_ALGO_INVAL, "" , SNMP_V3_PRIV_ALGO_INVAL, "" },
+  { "piwl", SNMP_V3_AUTH_ALGO_INVAL, "" , SNMP_V3_PRIV_ALGO_INVAL, "" },
+  { "test", SNMP_V3_AUTH_ALGO_INVAL, "" , SNMP_V3_PRIV_ALGO_INVAL, "" }
+};
+
+static char engineid[32];
+static u8_t engineid_len;
+
+static u32_t enginetime = 0;
+
+/* In this implementation engineboots is volatile. In a real world application this value should be stored in non-volatile memory.*/
+static u32_t engineboots = 0;
+
+/**
+ * @brief   Get the user table entry for the given username.
+ *
+ * @param[in] username  pointer to the username
+ *
+ * @return              pointer to the user table entry or NULL if not found.
+ */
+static struct user_table_entry *get_user(const char *username)
+{
+  size_t i;
+
+  for (i = 0; i < LWIP_ARRAYSIZE(user_table); i++) {
+    if (strnlen(username, 32) != strnlen(user_table[i].username, 32))
+      continue;
+
+	if (memcmp(username, user_table[i].username, strnlen(username, 32)) == 0) {
+      return &user_table[i];
+	}
+  }
+
+  return NULL;
+}
+
+u8_t snmpv3_get_amount_of_users(void)
+{
+  return LWIP_ARRAYSIZE(user_table);
+}
+
+/**
+ * @brief Get the username of a user number (index)
+ * @param username is a pointer to a string.
+ * @param index is the user index.
+ * @return ERR_OK if user is found, ERR_VAL is user is not found.
+ */
+err_t snmpv3_get_username(char *username, u8_t index)
+{
+  if (index < LWIP_ARRAYSIZE(user_table)) {
+    MEMCPY(username, user_table[index].username, sizeof(user_table[0].username));
+    return ERR_OK;
+  }
+
+  return ERR_VAL;
+}
+
+/**
+ * Timer callback function that increments enginetime and reschedules itself.
+ *
+ * @param arg unused argument
+ */
+void tcpip_enginetime_timer(void *arg)
+{
+  enginetime++;
+
+  /* This handles the engine time reset */
+  snmpv3_get_engine_time_internal();
+
+  /* restart timer */
+  sys_timeout(1000, tcpip_enginetime_timer, NULL);
+}
+
+err_t snmpv3_set_user_auth_algo(const char *username, u8_t algo)
+{
+  struct user_table_entry *p = get_user(username);
+
+  if (p) {
+    switch (algo) {
+    case SNMP_V3_AUTH_ALGO_INVAL:
+      if (p->priv_algo != SNMP_V3_PRIV_ALGO_INVAL) {
+        /* Privacy MUST be disabled before configuring authentication */
+        break;
+      }
+#if LWIP_SNMP_V3_CRYPTO
+    case SNMP_V3_AUTH_ALGO_MD5:
+    case SNMP_V3_AUTH_ALGO_SHA:
+#endif
+      p->auth_algo = algo;
+      return ERR_OK;
+    default:
+      break;
+    }
+  }
+
+  return ERR_VAL;
+}
+
+err_t snmpv3_set_user_priv_algo(const char *username, u8_t algo)
+{
+  struct user_table_entry *p = get_user(username);
+
+  if (p) {
+    switch (algo) {
+#if LWIP_SNMP_V3_CRYPTO
+    case SNMP_V3_PRIV_ALGO_AES:
+    case SNMP_V3_PRIV_ALGO_DES:
+      if (p->auth_algo == SNMP_V3_AUTH_ALGO_INVAL) {
+        /* Authentication MUST be enabled before configuring privacy */
+        break;
+      }
+#endif
+    case SNMP_V3_PRIV_ALGO_INVAL:
+      p->priv_algo = algo;
+      return ERR_OK;
+    default:
+      break;
+    }
+  }
+
+  return ERR_VAL;
+}
+
+err_t snmpv3_set_user_auth_key(const char *username, const char *password)
+{
+  struct user_table_entry *p = get_user(username);
+  const char *engineid;
+  u8_t engineid_len;
+
+  if (p) {
+    /* password should be at least 8 characters long */
+    if (strlen(password) >= 8) {
+      memset(p->auth_key, 0, sizeof(p->auth_key));
+      snmpv3_get_engine_id(&engineid, &engineid_len);
+      switch (p->auth_algo) {
+      case SNMP_V3_AUTH_ALGO_INVAL:
+        return ERR_OK;
+#if LWIP_SNMP_V3_CRYPTO
+      case SNMP_V3_AUTH_ALGO_MD5:
+        snmpv3_password_to_key_md5((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->auth_key);
+        return ERR_OK;
+      case SNMP_V3_AUTH_ALGO_SHA:
+        snmpv3_password_to_key_sha((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->auth_key);
+        return ERR_OK;
+#endif
+      default:
+        return ERR_VAL;
+      }
+    }
+  }
+
+  return ERR_VAL;
+}
+
+err_t snmpv3_set_user_priv_key(const char *username, const char *password)
+{
+  struct user_table_entry *p = get_user(username);
+  const char *engineid;
+  u8_t engineid_len;
+
+  if (p) {
+    /* password should be at least 8 characters long */
+    if (strlen(password) >= 8) {
+      memset(p->priv_key, 0, sizeof(p->priv_key));
+      snmpv3_get_engine_id(&engineid, &engineid_len);
+      switch (p->auth_algo) {
+      case SNMP_V3_AUTH_ALGO_INVAL:
+    	return ERR_OK;
+#if LWIP_SNMP_V3_CRYPTO
+      case SNMP_V3_AUTH_ALGO_MD5:
+        snmpv3_password_to_key_md5((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->priv_key);
+        return ERR_OK;
+      case SNMP_V3_AUTH_ALGO_SHA:
+        snmpv3_password_to_key_sha((u8_t*)password, strlen(password), (u8_t*)engineid, engineid_len, p->priv_key);
+        return ERR_OK;
+#endif
+      default:
+        return ERR_VAL;
+      }
+    }
+  }
+
+  return ERR_VAL;
+}
+
+/**
+ * @brief   Get the storage type of the given username.
+ *
+ * @param[in] username  pointer to the username
+ * @param[out] type     the storage type
+ *
+ * @return              ERR_OK if the user was found, ERR_VAL if not.
+ */
+err_t snmpv3_get_user_storagetype(const char *username, u8_t *type)
+{
+  if (get_user(username) != NULL) {
+    /* Found user in user table
+     * In this dummy implementation, storage is permanent because no user can be deleted.
+     * All changes to users are lost after a reboot.*/
+    *type = SNMP_V3_USER_STORAGETYPE_PERMANENT;
+    return ERR_OK;
+  }
+
+  return ERR_VAL;
+}
 
 /**
  *  @param username is a pointer to a string.
@@ -50,30 +267,32 @@
 err_t
 snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *priv_algo, u8_t *priv_key)
 {
-  const char* engine_id;
-  u8_t engine_id_len;
+  const struct user_table_entry *p;
   
+  /* The msgUserName specifies the user (principal) on whose behalf the
+     message is being exchanged. Note that a zero-length userName will
+     not match any user, but it can be used for snmpEngineID discovery. */
   if(strlen(username) == 0) {
     return ERR_OK;
   }
   
-  if(memcmp(username, "lwip", 4) != 0) {
+  p = get_user(username);
+
+  if (!p) {
     return ERR_VAL;
   }
   
-  snmpv3_get_engine_id(&engine_id, &engine_id_len);
-  
+  if (auth_algo != NULL) {
+    *auth_algo = p->auth_algo;
+  }
   if(auth_key != NULL) {
-    snmpv3_password_to_key_sha((const u8_t*)"maplesyrup", 10,
-      (const u8_t*)engine_id, engine_id_len,
-      auth_key);
-    *auth_algo = SNMP_V3_AUTH_ALGO_SHA;
+    MEMCPY(auth_key, p->auth_key, sizeof(p->auth_key));
+  }
+  if (priv_algo != NULL) {
+    *priv_algo = p->priv_algo;
   }
   if(priv_key != NULL) {
-    snmpv3_password_to_key_sha((const u8_t*)"maplesyrup", 10,
-      (const u8_t*)engine_id, engine_id_len,
-      priv_key);
-    *priv_algo = SNMP_V3_PRIV_ALGO_DES;
+    MEMCPY(priv_key, p->priv_key, sizeof(p->priv_key));
   }
   return ERR_OK;
 }
@@ -86,8 +305,8 @@ snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *pri
 void
 snmpv3_get_engine_id(const char **id, u8_t *len)
 {
-  *id = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02";
-  *len = 12;
+  *id = engineid;
+  *len = engineid_len;
 }
 
 /**
@@ -98,8 +317,8 @@ snmpv3_get_engine_id(const char **id, u8_t *len)
 err_t
 snmpv3_set_engine_id(const char *id, u8_t len)
 {
-  LWIP_UNUSED_ARG(id);
-  LWIP_UNUSED_ARG(len);
+  MEMCPY(engineid, id, len);
+  engineid_len = len;
   return ERR_OK;
 }
 
@@ -110,7 +329,7 @@ snmpv3_set_engine_id(const char *id, u8_t len)
 u32_t
 snmpv3_get_engine_boots(void)
 {
-  return 0;
+  return engineboots;
 }
 
 /**
@@ -120,7 +339,7 @@ snmpv3_get_engine_boots(void)
 void 
 snmpv3_set_engine_boots(u32_t boots)
 {
-  LWIP_UNUSED_ARG(boots);
+  engineboots = boots;
 }
 
 /**
@@ -131,7 +350,7 @@ snmpv3_set_engine_boots(u32_t boots)
 u32_t
 snmpv3_get_engine_time(void)
 {
-  return 0;
+  return enginetime;
 }
 
 /**
@@ -140,6 +359,7 @@ snmpv3_get_engine_time(void)
 void
 snmpv3_reset_engine_time(void)
 {
+  enginetime = 0;
 }
 
 #endif /* LWIP_SNMP && LWIP_SNMP_V3 */
