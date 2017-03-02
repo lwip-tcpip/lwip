@@ -77,9 +77,9 @@ snmp_version_enabled(u8_t version)
 {
   LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
 #if LWIP_SNMP_V3
-	  || (version == SNMP_VERSION_3)
+     || (version == SNMP_VERSION_3)
 #endif
-	  );
+  );
 
   if (version == SNMP_VERSION_1) {
     return v1_enabled;
@@ -117,19 +117,19 @@ snmp_version_enable(u8_t version, u8_t enable)
 {
   LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
 #if LWIP_SNMP_V3
-	  || (version == SNMP_VERSION_3)
+     || (version == SNMP_VERSION_3)
 #endif
-	  );
+    );
 
   if (version == SNMP_VERSION_1) {
-	v1_enabled = enable;
+    v1_enabled = enable;
   }
   else if (version == SNMP_VERSION_2c) {
-	v2c_enabled = enable;
+    v2c_enabled = enable;
   }
 #if LWIP_SNMP_V3
   else { /* version == SNMP_VERSION_3 */
-	v3_enabled = enable;
+    v3_enabled = enable;
   }
 #endif
 }
@@ -917,7 +917,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     IF_PARSE_ASSERT(parent_tlv_value_len > 0);
     /* Remember position */
     inbound_msgAuthenticationParameters_offset = pbuf_stream.offset;
-	LWIP_UNUSED_ARG(inbound_msgAuthenticationParameters_offset);
+    LWIP_UNUSED_ARG(inbound_msgAuthenticationParameters_offset);
     /* Read auth parameters */
     /* IF_PARSE_ASSERT(tlv.value_len <= SNMP_V3_MAX_AUTH_PARAM_LENGTH); */
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->msg_authentication_parameters,

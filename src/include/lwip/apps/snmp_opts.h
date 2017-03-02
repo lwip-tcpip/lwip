@@ -279,7 +279,7 @@
  * THIS IS UNDER DEVELOPMENT AND SHOULD NOT BE ENABLED IN PRODUCTS.
  */
 #ifndef LWIP_SNMP_V3
-#define LWIP_SNMP_V3               0
+#define LWIP_SNMP_V3               1
 #endif
 
 #ifndef LWIP_SNMP_V3_MBEDTLS

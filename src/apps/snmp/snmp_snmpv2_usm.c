@@ -57,7 +57,7 @@ static u8_t snmp_name_to_oid(const char *name, u32_t *oid, u8_t len)
   u8_t i;
 
   for (i = 0; i < len; i++) {
-	oid[i] = name[i];
+    oid[i] = name[i];
   }
 
   return len;
@@ -203,22 +203,22 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
     engineid_start = 1;
 
     if (engineid_len != eid_len) {
-	  /* EngineID length does not match! */
-	  return SNMP_ERR_NOSUCHINSTANCE;
+      /* EngineID length does not match! */
+      return SNMP_ERR_NOSUCHINSTANCE;
     }
 
     if (engineid_len > row_oid->len) {
       /* Verify partial EngineID */
       snmp_engineid_to_oid(engineid, engineid_oid, row_oid->len - 1);
       if (!snmp_oid_equal(&row_oid->id[engineid_start], row_oid->len - 1, engineid_oid, row_oid->len - 1)) {
-	    return SNMP_ERR_NOSUCHINSTANCE;
+        return SNMP_ERR_NOSUCHINSTANCE;
       }
     }
     else {
       /* Verify complete EngineID */
       snmp_engineid_to_oid(engineid, engineid_oid, engineid_len);
       if (!snmp_oid_equal(&row_oid->id[engineid_start], engineid_len, engineid_oid, engineid_len)) {
-	    return SNMP_ERR_NOSUCHINSTANCE;
+        return SNMP_ERR_NOSUCHINSTANCE;
       }
     }
 
@@ -230,8 +230,8 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
       name_start = engineid_start + engineid_len + 1;
 
       if (name_len > SNMP_V3_MAX_USER_LENGTH) {
-	    /* specified name is too long, max length is 32 according to mib file.*/
-	    return SNMP_ERR_NOSUCHINSTANCE;
+        /* specified name is too long, max length is 32 according to mib file.*/
+        return SNMP_ERR_NOSUCHINSTANCE;
       }
 
       if (row_oid->len < engineid_len + name_len + 2) {
@@ -245,7 +245,7 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
         /* Full name given according to oid. Also test for too much data.*/
         u8_t tmplen = row_oid->len - engineid_len - 2;
         if (!snmp_oid_in_range(&row_oid->id[name_start], name_len, usmUserTable_oid_ranges, tmplen)) {
-	      return SNMP_ERR_NOSUCHINSTANCE;
+          return SNMP_ERR_NOSUCHINSTANCE;
         }
       }
 
