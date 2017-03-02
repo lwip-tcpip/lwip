@@ -1112,7 +1112,7 @@ snmp_next_oid_init(struct snmp_next_oid_state *state,
 this methid is intended if the complete OID is not yet known but it is very expensive to build it up,
 so it is possible to test the starting part before building up the complete oid and pass it to snmp_next_oid_check()*/
 u8_t
-snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len)
+snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, u8_t oid_len)
 {
   if (state->status != SNMP_NEXT_OID_STATUS_BUF_TO_SMALL) {
     u8_t start_oid_len = (oid_len < state->start_oid_len) ? oid_len : state->start_oid_len;
@@ -1132,7 +1132,7 @@ snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, cons
 
 /** checks the passed OID if it is a candidate to be the next one (get_next); returns !=0 if passed oid is currently closest, otherwise 0 */
 u8_t
-snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len, void* reference)
+snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, u8_t oid_len, void* reference)
 {
   /* do not overwrite a fail result */
   if (state->status != SNMP_NEXT_OID_STATUS_BUF_TO_SMALL) {

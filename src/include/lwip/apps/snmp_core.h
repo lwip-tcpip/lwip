@@ -286,8 +286,8 @@ struct snmp_next_oid_state
 void snmp_next_oid_init(struct snmp_next_oid_state *state,
   const u32_t *start_oid, u8_t start_oid_len,
   u32_t *next_oid_buf, u8_t next_oid_max_len);
-u8_t snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len);
-u8_t snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, const u8_t oid_len, void* reference);
+u8_t snmp_next_oid_precheck(struct snmp_next_oid_state *state, const u32_t *oid, u8_t oid_len);
+u8_t snmp_next_oid_check(struct snmp_next_oid_state *state, const u32_t *oid, u8_t oid_len, void* reference);
 
 void snmp_oid_assign(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len);
 void snmp_oid_combine(struct snmp_obj_id* target, const u32_t *oid1, u8_t oid1_len, const u32_t *oid2, u8_t oid2_len);
