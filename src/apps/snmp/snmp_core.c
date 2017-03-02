@@ -198,11 +198,11 @@ const struct snmp_obj_id_const_ref snmp_zero_dot_zero = { LWIP_ARRAYSIZE(snmp_ze
 #include "lwip/apps/snmp_snmpv2_framework.h"
 #include "lwip/apps/snmp_snmpv2_usm.h"
 static const struct snmp_mib* const default_mibs[] = { &mib2, &snmpframeworkmib, &snmpusmmib };
-static u8_t snmp_num_mibs                          = 3;
+static u8_t snmp_num_mibs                          = LWIP_ARRAYSIZE(default_mibs);
 #elif SNMP_LWIP_MIB2
 #include "lwip/apps/snmp_mib2.h"
 static const struct snmp_mib* const default_mibs[] = { &mib2 };
-static u8_t snmp_num_mibs                          = 1;
+static u8_t snmp_num_mibs                          = LWIP_ARRAYSIZE(default_mibs);
 #else
 static const struct snmp_mib* const default_mibs[] = { NULL };
 static u8_t snmp_num_mibs                          = 0;

@@ -48,8 +48,8 @@
 #if LWIP_SNMP_V3
 #include "lwip/apps/snmpv3.h"
 #include "snmpv3_priv.h"
-#ifdef LWIP_SNMPV3_INCLUDE_ENGINE
-#include LWIP_SNMPV3_INCLUDE_ENGINE
+#ifdef LWIP_HOOK_FILENAME
+#include LWIP_HOOK_FILENAME
 #endif
 #endif
 
@@ -294,6 +294,7 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
           err = snmp_process_set_request(&request);
         }
       }
+#if LWIP_SNMP_V3
       else {
         struct snmp_varbind vb;
 
@@ -356,10 +357,9 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
         }
 
         request.request_out_type = (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_REPORT);
-#if LWIP_SNMP_V3
         request.request_id = request.msg_id;
-#endif
       }
+#endif
 
       if (err == ERR_OK) {
         err = snmp_complete_outbound_frame(&request);

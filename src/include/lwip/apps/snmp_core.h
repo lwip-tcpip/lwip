@@ -351,12 +351,14 @@ struct snmp_statistics
   u32_t outsetrequests;
   u32_t outgetresponses;
   u32_t outtraps;
+#if LWIP_SNMP_V3
   u32_t unsupportedseclevels;
   u32_t notintimewindows;
   u32_t unknownusernames;
   u32_t unknownengineids;
   u32_t wrongdigests;
   u32_t decryptionerrors;
+#endif
 };
 
 extern struct snmp_statistics snmp_stats;
