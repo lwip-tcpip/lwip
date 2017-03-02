@@ -1083,6 +1083,10 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
 
     for (i = 0; i < msg->msg_iovlen; i++) {
+      u8_t apiflags = write_flags;
+      if (i + 1 < msg->msg_iovlen) {
+        apiflags |= NETCONN_MORE;
+      }
       written = 0;
       err = netconn_write_partly(sock->conn, msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len, write_flags, &written);
       if (err == ERR_OK) {
