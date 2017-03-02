@@ -545,13 +545,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
   }
 
-  if (netconn_is_nonblocking(sock->conn) && (sock->rcvevent <= 0)) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning EWOULDBLOCK\n", s));
-    set_errno(EWOULDBLOCK);
-    done_socket(sock);
-    return -1;
-  }
-
   /* wait for a new connection */
   err = netconn_accept(sock->conn, &newconn);
   if (err != ERR_OK) {
@@ -592,7 +585,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
    * not be NULL if addr is valid.
    */
-  if (addr != NULL) {
+  if ((addr != NULL) && (addrlen != NULL)) {
     union sockaddr_aligned tempaddr;
     /* get the IP address and port of the remote host */
     err = netconn_peer(newconn, &naddr, &port);
@@ -604,7 +597,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
       done_socket(sock);
       return -1;
     }
-    LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
 
     IPADDR_PORT_TO_SOCKADDR(&tempaddr, &naddr, port);
     if (*addrlen > tempaddr.sa.sa_len) {
@@ -2857,18 +2849,13 @@ lwip_ioctl(int s, long cmd, void *argp)
         *((int*)argp) = p->tot_len - sock->lastoffset;
       } else {
         struct netbuf *rxbuf;
-        err_t err;
-        if (sock->rcvevent <= 0) {
+        err_t err = netconn_recv_udp_raw_netbuf_flags(sock->conn, &rxbuf, NETCONN_DONTBLOCK);
+        if (err != ERR_OK) {
           *((int*)argp) = 0;
         } else {
-          err = netconn_recv_udp_raw_netbuf(sock->conn, &rxbuf);
-          if (err != ERR_OK) {
-            *((int*)argp) = 0;
-          } else {
-            sock->lastdata = rxbuf;
-            sock->lastoffset = 0;
-            *((int*)argp) = rxbuf->p->tot_len;
-          }
+          sock->lastdata = rxbuf;
+          sock->lastoffset = 0;
+          *((int*)argp) = rxbuf->p->tot_len;
         }
       }
       done_socket(sock);
