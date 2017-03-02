@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2017-03-02: Simon Goldschmidt
+  * netconn: added nonblocking accept/recv to netconn API (task #14396)
+
   2017-02-28: Simon Goldschmidt
   * Added LWIP_SINGLE_NETIF for small targets with only one netif
 

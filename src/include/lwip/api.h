@@ -311,7 +311,9 @@ err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
 err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
 err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
 err_t   netconn_recv_udp_raw_netbuf(struct netconn *conn, struct netbuf **new_buf);
+err_t   netconn_recv_udp_raw_netbuf_flags(struct netconn *conn, struct netbuf **new_buf, u8_t apiflags);
 err_t   netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf);
+err_t   netconn_recv_tcp_pbuf_flags(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags);
 err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
                              const ip_addr_t *addr, u16_t port);
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
