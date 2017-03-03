@@ -161,14 +161,14 @@ snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
         goto error;
       }
 
-      snmp_pbuf_stream_writebuf(&write_stream, out_bytes, out_len);
+      snmp_pbuf_stream_writebuf(&write_stream, out_bytes, (u16_t)out_len);
     }
     
     out_len = LWIP_ARRAYSIZE(out_bytes);
     if(mbedtls_cipher_finish(&ctx, out_bytes, &out_len) != 0) {
       goto error;
     }
-    snmp_pbuf_stream_writebuf(&write_stream, out_bytes, out_len);
+    snmp_pbuf_stream_writebuf(&write_stream, out_bytes, (u16_t)out_len);
   } else if (algo == SNMP_V3_PRIV_ALGO_AES) {
     u8_t iv_local[16];
 

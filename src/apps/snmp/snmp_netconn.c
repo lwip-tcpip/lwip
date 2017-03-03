@@ -66,7 +66,7 @@ snmp_netconn_thread(void *arg)
 
 #if LWIP_SNMP_V3
   /* Start the engine time timer */
-  tcpip_enginetime_timer(NULL);
+  snmpv3_enginetime_timer(NULL);
 #endif
 
   do {

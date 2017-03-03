@@ -71,7 +71,8 @@ static u32_t engineboots = 0;
  *
  * @return              pointer to the user table entry or NULL if not found.
  */
-static struct user_table_entry *get_user(const char *username)
+static struct user_table_entry*
+get_user(const char *username)
 {
   size_t i;
 
@@ -88,7 +89,8 @@ static struct user_table_entry *get_user(const char *username)
   return NULL;
 }
 
-u8_t snmpv3_get_amount_of_users(void)
+u8_t
+snmpv3_get_amount_of_users(void)
 {
   return LWIP_ARRAYSIZE(user_table);
 }
@@ -99,7 +101,8 @@ u8_t snmpv3_get_amount_of_users(void)
  * @param index is the user index.
  * @return ERR_OK if user is found, ERR_VAL is user is not found.
  */
-err_t snmpv3_get_username(char *username, u8_t index)
+err_t
+snmpv3_get_username(char *username, u8_t index)
 {
   if (index < LWIP_ARRAYSIZE(user_table)) {
     MEMCPY(username, user_table[index].username, sizeof(user_table[0].username));
@@ -114,7 +117,8 @@ err_t snmpv3_get_username(char *username, u8_t index)
  *
  * @param arg unused argument
  */
-void tcpip_enginetime_timer(void *arg)
+void
+snmpv3_enginetime_timer(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
   
@@ -124,7 +128,7 @@ void tcpip_enginetime_timer(void *arg)
   snmpv3_get_engine_time_internal();
 
   /* restart timer */
-  sys_timeout(1000, tcpip_enginetime_timer, NULL);
+  sys_timeout(1000, snmpv3_enginetime_timer, NULL);
 }
 
 err_t
