@@ -1,10 +1,10 @@
 /**
  * @file
- * Additional SNMPv3 functionality RFC3414 and RFC3826.
+ * Dummy SNMPv3 functions.
  */
 
 /*
- * Copyright (c) 2016 Elias Oenal.
+ * Copyright (c) 2017 Dirk Ziegelmeier.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,7 +29,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
- * Author: Elias Oenal <lwip@eliasoenal.com>
+ * Author: Dirk Ziegelmeier <dziegel@gmx.de>
  */
 
 #ifndef LWIP_HDR_APPS_SNMP_V3_DUMMY_H
