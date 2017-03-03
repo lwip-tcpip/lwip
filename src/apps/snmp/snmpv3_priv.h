@@ -39,6 +39,7 @@
 
 #if LWIP_SNMP && LWIP_SNMP_V3
 
+#include "lwip/apps/snmpv3.h"
 #include "snmp_pbuf_stream.h"
 
 /* According to RFC 3411 */
@@ -67,9 +68,9 @@ typedef enum
 
 s32_t snmpv3_get_engine_boots_internal(void);
 s32_t snmpv3_get_engine_time_internal(void);
-err_t snmpv3_auth(struct snmp_pbuf_stream* stream, u16_t length, const u8_t* key, u8_t algo, u8_t* hmac_out);
+err_t snmpv3_auth(struct snmp_pbuf_stream* stream, u16_t length, const u8_t* key, snmpv3_auth_algo_t algo, u8_t* hmac_out);
 err_t snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length, const u8_t* key,
-    const u8_t* priv_param, const u32_t engine_boots, const u32_t engine_time, u8_t algo, snmpv3_priv_mode_t mode);
+    const u8_t* priv_param, const u32_t engine_boots, const u32_t engine_time, snmpv3_priv_algo_t algo, snmpv3_priv_mode_t mode);
 err_t snmpv3_build_priv_param(u8_t* priv_param);
 void snmpv3_enginetime_timer(void *arg);
 
