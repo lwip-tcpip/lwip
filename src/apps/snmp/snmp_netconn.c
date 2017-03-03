@@ -64,11 +64,6 @@ snmp_netconn_thread(void *arg)
   
   snmp_traps_handle = conn;
 
-#if LWIP_SNMP_V3
-  /* Start the engine time timer */
-  snmpv3_enginetime_timer(NULL);
-#endif
-
   do {
     err = netconn_recv(conn, &buf);
 

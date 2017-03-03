@@ -1,6 +1,6 @@
 /**
  * @file
- * Additional SNMPv3 functionality RFC3414 and RFC3826 (internal API, do not use in client code).
+ * Additional SNMPv3 functionality RFC3414 and RFC3826.
  */
 
 /*
@@ -32,47 +32,21 @@
  * Author: Elias Oenal <lwip@eliasoenal.com>
  */
 
-#ifndef LWIP_HDR_APPS_SNMP_V3_PRIV_H
-#define LWIP_HDR_APPS_SNMP_V3_PRIV_H
+#ifndef LWIP_HDR_APPS_SNMP_V3_DUMMY_H
+#define LWIP_HDR_APPS_SNMP_V3_DUMMY_H
 
 #include "lwip/apps/snmp_opts.h"
+#include "lwip/err.h"
 
 #if LWIP_SNMP && LWIP_SNMP_V3
 
-#include "snmp_pbuf_stream.h"
+err_t snmpv3_set_user_auth_algo(const char *username, snmpv3_auth_algo_t algo);
+err_t snmpv3_set_user_priv_algo(const char *username, snmpv3_priv_algo_t algo);
+err_t snmpv3_set_user_auth_key(const char *username, const char *password);
+err_t snmpv3_set_user_priv_key(const char *username, const char *password);
 
-/* According to RFC 3411 */
-#define SNMP_V3_MAX_ENGINE_ID_LENGTH  32
-#define SNMP_V3_MAX_USER_LENGTH       32
+void snmpv3_dummy_init(void);
 
-#define SNMP_V3_MAX_AUTH_PARAM_LENGTH  12
-#define SNMP_V3_MAX_PRIV_PARAM_LENGTH  8
+#endif /* LWIP_SNMP && LWIP_SNMP_V3 */
 
-#define SNMP_V3_AUTH_FLAG      0x01
-#define SNMP_V3_PRIV_FLAG      0x02
-
-/* Security levels */
-#define SNMP_V3_NOAUTHNOPRIV   0x00
-#define SNMP_V3_AUTHNOPRIV     SNMP_V3_AUTH_FLAG
-#define SNMP_V3_AUTHPRIV       (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)
-
-#define SNMP_V3_MD5_LEN        16
-#define SNMP_V3_SHA_LEN        20
-
-typedef enum 
-{
-  SNMP_V3_PRIV_MODE_DECRYPT = 0,
-  SNMP_V3_PRIV_MODE_ENCRYPT = 1
-} snmpv3_priv_mode_t;
-
-s32_t snmpv3_get_engine_boots_internal(void);
-s32_t snmpv3_get_engine_time_internal(void);
-err_t snmpv3_auth(struct snmp_pbuf_stream* stream, u16_t length, const u8_t* key, u8_t algo, u8_t* hmac_out);
-err_t snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length, const u8_t* key,
-    const u8_t* priv_param, const u32_t engine_boots, const u32_t engine_time, u8_t algo, snmpv3_priv_mode_t mode);
-err_t snmpv3_build_priv_param(u8_t* priv_param);
-void snmpv3_enginetime_timer(void *arg);
-
-#endif
-
-#endif /* LWIP_HDR_APPS_SNMP_V3_PRIV_H */
+#endif /* LWIP_HDR_APPS_SNMP_V3_DUMMY_H */

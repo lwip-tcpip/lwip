@@ -35,6 +35,7 @@
 
 #include "lwip/apps/snmpv3.h"
 #include "snmpv3_priv.h"
+#include "snmpv3_dummy.h"
 #include <string.h>
 #include "lwip/err.h"
 #include "lwip/def.h"
@@ -132,7 +133,7 @@ snmpv3_enginetime_timer(void *arg)
 }
 
 err_t
-snmpv3_set_user_auth_algo(const char *username, u8_t algo)
+snmpv3_set_user_auth_algo(const char *username, snmpv3_auth_algo_t algo)
 {
   struct user_table_entry *p = get_user(username);
 
@@ -158,7 +159,7 @@ snmpv3_set_user_auth_algo(const char *username, u8_t algo)
 }
 
 err_t
-snmpv3_set_user_priv_algo(const char *username, u8_t algo)
+snmpv3_set_user_priv_algo(const char *username, snmpv3_priv_algo_t algo)
 {
   struct user_table_entry *p = get_user(username);
 
@@ -256,7 +257,7 @@ snmpv3_set_user_priv_key(const char *username, const char *password)
  * @return              ERR_OK if the user was found, ERR_VAL if not.
  */
 err_t
-snmpv3_get_user_storagetype(const char *username, u8_t *type)
+snmpv3_get_user_storagetype(const char *username, snmpv3_user_storagetype_t *type)
 {
   if (get_user(username) != NULL) {
     /* Found user in user table
@@ -277,7 +278,7 @@ snmpv3_get_user_storagetype(const char *username, u8_t *type)
  * @param priv_key is a pointer to a pointer to a string. Implementation has to set this if user was found.
  */
 err_t
-snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *priv_algo, u8_t *priv_key)
+snmpv3_get_user(const char* username, snmpv3_auth_algo_t *auth_algo, u8_t *auth_key, snmpv3_priv_algo_t *priv_algo, u8_t *priv_key)
 {
   const struct user_table_entry *p;
   
@@ -372,6 +373,16 @@ void
 snmpv3_reset_engine_time(void)
 {
   enginetime = 0;
+}
+
+/**
+ * Initialize dummy SNMPv3 implementation
+ */
+void
+snmpv3_dummy_init(void)
+{
+  /* Start the engine time timer */
+  snmpv3_enginetime_timer(NULL);
 }
 
 #endif /* LWIP_SNMP && LWIP_SNMP_V3 */

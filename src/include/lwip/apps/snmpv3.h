@@ -40,22 +40,28 @@
 
 #if LWIP_SNMP && LWIP_SNMP_V3
 
-#define SNMP_V3_AUTH_ALGO_INVAL  0
-#define SNMP_V3_AUTH_ALGO_MD5    1
-#define SNMP_V3_AUTH_ALGO_SHA    2
+typedef enum 
+{
+  SNMP_V3_AUTH_ALGO_INVAL = 0,
+  SNMP_V3_AUTH_ALGO_MD5   = 1,
+  SNMP_V3_AUTH_ALGO_SHA   = 2
+} snmpv3_auth_algo_t;
 
-#define SNMP_V3_PRIV_ALGO_INVAL  0
-#define SNMP_V3_PRIV_ALGO_DES    1
-#define SNMP_V3_PRIV_ALGO_AES    2
+typedef enum 
+{
+  SNMP_V3_PRIV_ALGO_INVAL = 0,
+  SNMP_V3_PRIV_ALGO_DES   = 1,
+  SNMP_V3_PRIV_ALGO_AES   = 2
+} snmpv3_priv_algo_t;
 
-#define SNMP_V3_PRIV_MODE_DECRYPT  0
-#define SNMP_V3_PRIV_MODE_ENCRYPT  1
-
-#define SNMP_V3_USER_STORAGETYPE_OTHER        1
-#define SNMP_V3_USER_STORAGETYPE_VOLATILE     2
-#define SNMP_V3_USER_STORAGETYPE_NONVOLATILE  3
-#define SNMP_V3_USER_STORAGETYPE_PERMANENT    4
-#define SNMP_V3_USER_STORAGETYPE_READONLY     5
+typedef enum 
+{
+  SNMP_V3_USER_STORAGETYPE_OTHER       = 1,
+  SNMP_V3_USER_STORAGETYPE_VOLATILE    = 2,
+  SNMP_V3_USER_STORAGETYPE_NONVOLATILE = 3,
+  SNMP_V3_USER_STORAGETYPE_PERMANENT   = 4,
+  SNMP_V3_USER_STORAGETYPE_READONLY    = 5
+} snmpv3_user_storagetype_t;
 
 /*
  * The following callback functions must be implemented by the application.
@@ -71,15 +77,10 @@ void snmpv3_set_engine_boots(u32_t boots);
 u32_t snmpv3_get_engine_time(void);
 void snmpv3_reset_engine_time(void);
 
-err_t snmpv3_get_user(const char* username, u8_t *auth_algo, u8_t *auth_key, u8_t *priv_algo, u8_t *priv_key);
+err_t snmpv3_get_user(const char* username, snmpv3_auth_algo_t *auth_algo, u8_t *auth_key, snmpv3_priv_algo_t *priv_algo, u8_t *priv_key);
 u8_t snmpv3_get_amount_of_users(void);
-err_t snmpv3_get_user_storagetype(const char *username, u8_t *storagetype);
+err_t snmpv3_get_user_storagetype(const char *username, snmpv3_user_storagetype_t *storagetype);
 err_t snmpv3_get_username(char *username, u8_t index);
-
-err_t snmpv3_set_user_auth_algo(const char *username, u8_t algo);
-err_t snmpv3_set_user_priv_algo(const char *username, u8_t algo);
-err_t snmpv3_set_user_auth_key(const char *username, const char *password);
-err_t snmpv3_set_user_priv_key(const char *username, const char *password);
 
 /* The following functions are provided by the SNMPv3 agent */
 

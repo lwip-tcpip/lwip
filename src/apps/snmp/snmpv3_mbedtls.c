@@ -107,7 +107,7 @@ free_md:
 err_t
 snmpv3_crypt(struct snmp_pbuf_stream* stream, u16_t length,
     const u8_t* key, const u8_t* priv_param, const u32_t engine_boots,
-    const u32_t engine_time, u8_t algo, u8_t mode)
+    const u32_t engine_time, u8_t algo, snmpv3_priv_mode_t mode)
 {
   size_t i;
   mbedtls_cipher_context_t ctx;

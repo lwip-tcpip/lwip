@@ -57,7 +57,7 @@ static void snmp_name_to_oid(const char *name, u32_t *oid, size_t len)
   }
 }
 
-static const struct snmp_obj_id *snmp_auth_algo_to_oid(u8_t algo)
+static const struct snmp_obj_id *snmp_auth_algo_to_oid(snmpv3_auth_algo_t algo)
 {
   if (algo == SNMP_V3_AUTH_ALGO_MD5) {
     return &usmHMACMD5AuthProtocol;
@@ -69,7 +69,7 @@ static const struct snmp_obj_id *snmp_auth_algo_to_oid(u8_t algo)
   return &usmNoAuthProtocol;
 }
 
-static const struct snmp_obj_id *snmp_priv_algo_to_oid(u8_t algo)
+static const struct snmp_obj_id *snmp_priv_algo_to_oid(snmpv3_priv_algo_t algo)
 {
   if (algo == SNMP_V3_PRIV_ALGO_DES) {
     return &usmDESPrivProtocol;
@@ -282,7 +282,7 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
 
 static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, void *value)
 {
-  u8_t u8;
+  snmpv3_user_storagetype_t storage_type;
 
   switch (SNMP_TABLE_GET_COLUMN_FROM_OID(cell_instance->instance_oid.id)) {
   case 3: /* usmUserSecurityName */
@@ -295,8 +295,9 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
   case 5: /* usmUserAuthProtocol */
     {
       const struct snmp_obj_id *auth_algo;
-      snmpv3_get_user((const char*)cell_instance->reference.ptr, &u8, NULL, NULL, NULL);
-      auth_algo = snmp_auth_algo_to_oid(u8);
+      snmpv3_auth_algo_t auth_algo_val;
+      snmpv3_get_user((const char*)cell_instance->reference.ptr, &auth_algo_val, NULL, NULL, NULL);
+      auth_algo = snmp_auth_algo_to_oid(auth_algo_val);
       MEMCPY(value, auth_algo->id, auth_algo->len * sizeof(u32_t));
       return auth_algo->len * sizeof(u32_t);
     }
@@ -307,8 +308,9 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
   case 8: /* usmUserPrivProtocol */
     {
       const struct snmp_obj_id *priv_algo;
-      snmpv3_get_user((const char*)cell_instance->reference.ptr, NULL, NULL, &u8, NULL);
-      priv_algo = snmp_priv_algo_to_oid(u8);
+      snmpv3_priv_algo_t priv_algo_val;
+      snmpv3_get_user((const char*)cell_instance->reference.ptr, NULL, NULL, &priv_algo_val, NULL);
+      priv_algo = snmp_priv_algo_to_oid(priv_algo_val);
       MEMCPY(value, priv_algo->id, priv_algo->len * sizeof(u32_t));
       return priv_algo->len * sizeof(u32_t);
     }
@@ -320,8 +322,8 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
     /* TODO: Implement usmUserPublic */
     return 0;
   case 12: /* usmUserStorageType */
-    snmpv3_get_user_storagetype((const char*)cell_instance->reference.ptr, &u8);
-    *(s32_t*)value = u8;
+    snmpv3_get_user_storagetype((const char*)cell_instance->reference.ptr, &storage_type);
+    *(s32_t*)value = storage_type;
     return sizeof(s32_t);
   case 13: /* usmUserStatus */
     *(s32_t*)value = 1; /* active */
