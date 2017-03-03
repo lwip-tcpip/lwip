@@ -44,11 +44,11 @@
 #if LWIP_SNMP && LWIP_SNMP_V3
 
 struct user_table_entry {
-  char username[32];
-  u8_t auth_algo;
-  u8_t auth_key[20];
-  u8_t priv_algo;
-  u8_t priv_key[20];
+  char               username[32];
+  snmpv3_auth_algo_t auth_algo;
+  u8_t               auth_key[20];
+  snmpv3_priv_algo_t priv_algo;
+  u8_t               priv_key[20];
 };
 
 static struct user_table_entry user_table[] = {
@@ -381,6 +381,14 @@ snmpv3_reset_engine_time(void)
 void
 snmpv3_dummy_init(void)
 {
+  snmpv3_set_engine_id("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02", 12);
+
+  snmpv3_set_user_auth_algo("lwip", SNMP_V3_AUTH_ALGO_SHA);
+  snmpv3_set_user_auth_key("lwip", "maplesyrup");
+
+  snmpv3_set_user_priv_algo("lwip", SNMP_V3_PRIV_ALGO_DES);
+  snmpv3_set_user_priv_key("lwip", "maplesyrup");
+
   /* Start the engine time timer */
   snmpv3_enginetime_timer(NULL);
 }
