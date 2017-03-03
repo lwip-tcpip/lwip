@@ -148,8 +148,7 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
 	$(LWIPDIR)/apps/snmp/snmp_table.c \
 	$(LWIPDIR)/apps/snmp/snmp_threadsync.c \
 	$(LWIPDIR)/apps/snmp/snmp_traps.c \
-	$(LWIPDIR)/apps/snmp/snmpv3_mbedtls.c \
-	$(LWIPDIR)/apps/snmp/snmpv3_dummy.c
+	$(LWIPDIR)/apps/snmp/snmpv3_mbedtls.c
 
 # HTTPDFILES: HTTP server
 HTTPDFILES=$(LWIPDIR)/apps/httpd/fs.c \

@@ -85,6 +85,7 @@ err_t snmpv3_get_username(char *username, u8_t index);
 /* The following functions are provided by the SNMPv3 agent */
 
 void snmpv3_engine_id_changed(void);
+s32_t snmpv3_get_engine_time_internal(void);
 
 void snmpv3_password_to_key_md5(
     const u8_t *password,     /* IN */
