@@ -1560,17 +1560,14 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
       err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
       if (err == ERR_OK) {
         conn->current_msg->msg.w.offset += len;
-        /* update write state if making another loop */
-        if (write_more) {
-          conn->current_msg->msg.w.vector_off += len;
-          /* check if current vector is finished */
-          if (conn->current_msg->msg.w.vector_off == conn->current_msg->msg.w.vector->len) {
-            conn->current_msg->msg.w.vector_cnt--;
-            /* if we have additional vectors, move on to them */
-            if (conn->current_msg->msg.w.vector_cnt > 0) {
-              conn->current_msg->msg.w.vector++;
-              conn->current_msg->msg.w.vector_off = 0;
-            }
+        conn->current_msg->msg.w.vector_off += len;
+        /* check if current vector is finished */
+        if (conn->current_msg->msg.w.vector_off == conn->current_msg->msg.w.vector->len) {
+          conn->current_msg->msg.w.vector_cnt--;
+          /* if we have additional vectors, move on to them */
+          if (conn->current_msg->msg.w.vector_cnt > 0) {
+            conn->current_msg->msg.w.vector++;
+            conn->current_msg->msg.w.vector_off = 0;
           }
         }
       }
