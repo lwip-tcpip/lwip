@@ -55,6 +55,14 @@
 
 #include <string.h>
 
+#define SNMP_V3_AUTH_FLAG      0x01
+#define SNMP_V3_PRIV_FLAG      0x02
+
+/* Security levels */
+#define SNMP_V3_NOAUTHNOPRIV   0x00
+#define SNMP_V3_AUTHNOPRIV     SNMP_V3_AUTH_FLAG
+#define SNMP_V3_AUTHPRIV       (SNMP_V3_AUTH_FLAG | SNMP_V3_PRIV_FLAG)
+
 /* public (non-static) constants */
 /** SNMP community string */
 const char *snmp_community = SNMP_COMMUNITY;
@@ -306,44 +314,44 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
         switch (request.error_status) {
         case SNMP_ERR_AUTHORIZATIONERROR:
           {
-            struct snmp_obj_id oid = { 11, { 1, 3, 6, 1, 6, 3, 15, 1, 1, 5, 0 } };
+            static const u32_t oid[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1, 5, 0 };
+            snmp_oid_assign(&vb.oid, oid, LWIP_ARRAYSIZE(oid));
             vb.value = &snmp_stats.wrongdigests;
-            MEMCPY(&vb.oid, &oid, sizeof(struct snmp_obj_id));
           }
           break;
         case SNMP_ERR_UNKNOWN_ENGINEID:
           {
-            struct snmp_obj_id oid = { 11, { 1, 3, 6, 1, 6, 3, 15, 1, 1, 4, 0 } };
+            static const u32_t oid[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1, 4, 0 };
+            snmp_oid_assign(&vb.oid, oid, LWIP_ARRAYSIZE(oid));
             vb.value = &snmp_stats.unknownengineids;
-            MEMCPY(&vb.oid, &oid, sizeof(struct snmp_obj_id));
           }
           break;
         case SNMP_ERR_UNKNOWN_SECURITYNAME:
           {
-            struct snmp_obj_id oid = { 11, { 1, 3, 6, 1, 6, 3, 15, 1, 1, 3, 0 } };
+            static const u32_t oid[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1, 3, 0 };
+            snmp_oid_assign(&vb.oid, oid, LWIP_ARRAYSIZE(oid));
             vb.value = &snmp_stats.unknownusernames;
-            MEMCPY(&vb.oid, &oid, sizeof(struct snmp_obj_id));
           }
           break;
         case SNMP_ERR_UNSUPPORTED_SECLEVEL:
           {
-            struct snmp_obj_id oid = { 11, { 1, 3, 6, 1, 6, 3, 15, 1, 1, 1, 0 } };
+            static const u32_t oid[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1, 1, 0 };
+            snmp_oid_assign(&vb.oid, oid, LWIP_ARRAYSIZE(oid));
             vb.value = &snmp_stats.unsupportedseclevels;
-            MEMCPY(&vb.oid, &oid, sizeof(struct snmp_obj_id));
           }
           break;
         case SNMP_ERR_NOTINTIMEWINDOW:
           {
-            struct snmp_obj_id oid = { 11, { 1, 3, 6, 1, 6, 3, 15, 1, 1, 2, 0 } };
+            static const u32_t oid[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1, 2, 0 };
+            snmp_oid_assign(&vb.oid, oid, LWIP_ARRAYSIZE(oid));
             vb.value = &snmp_stats.notintimewindows;
-            MEMCPY(&vb.oid, &oid, sizeof(struct snmp_obj_id));
           }
           break;
         case SNMP_ERR_DECRYIPTION_ERROR:
           {
-            struct snmp_obj_id oid = { 11, { 1, 3, 6, 1, 6, 3, 15, 1, 1, 6, 0 } };
+            static const u32_t oid[] = { 1, 3, 6, 1, 6, 3, 15, 1, 1, 6, 0 };
+            snmp_oid_assign(&vb.oid, oid, LWIP_ARRAYSIZE(oid));
             vb.value = &snmp_stats.decryptionerrors;
-            MEMCPY(&vb.oid, &oid, sizeof(struct snmp_obj_id));
           }
           break;
         default:
