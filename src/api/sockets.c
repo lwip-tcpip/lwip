@@ -834,7 +834,7 @@ lwip_listen(int s, int backlog)
 static int
 lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
 {
-  u8_t apiflags;
+  u8_t apiflags = NETCONN_NOAUTORCVD;
   int recvd = 0;
   int recv_left = len;
 
@@ -873,8 +873,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
               sock->conn->callback(sock->conn, NETCONN_EVT_RCVPLUS, 0);
             }
           }
-          sock_set_errno(sock, 0);
-          return recvd;
+          goto lwip_recv_tcp_done;
         }
         /* We should really do some error checking here. */
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: p == NULL, error is \"%s\"!\n",
@@ -928,6 +927,12 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
     apiflags |= NETCONN_DONTBLOCK;
     /* @todo: do we need to support peeking more than one pbuf? */
   } while ((recv_left > 0) || (flags & MSG_PEEK));
+lwip_recv_tcp_done:
+  if (recvd > 0) {
+    /* ensure window update after copying all data */
+    netconn_tcp_recvd(sock->conn, recvd);
+  }
+  sock_set_errno(sock, 0);
   return recvd;
 }
 
