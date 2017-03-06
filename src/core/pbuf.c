@@ -683,6 +683,36 @@ pbuf_header_force(struct pbuf *p, s16_t header_size_increment)
    return pbuf_header_impl(p, header_size_increment, 1);
 }
 
+/** Similar to pbuf_header(-size) but de-refs header pbufs for (size >= p->len)
+ *
+ * @param q pbufs to operate on
+ * @param size The number of bytes to remove from the beginning of the pbuf list.
+ *             While size >= p->len, pbufs are freed.
+ *        ATTENTION: this is the opposite direction as @ref pbuf_header, but
+ *                   takes an u16_t not s16_t!
+ * @return the new head pbuf
+ */
+struct pbuf*
+pbuf_free_header(struct pbuf *q, u16_t size)
+{
+  struct pbuf *p = q;
+  u16_t free_left = size;
+  while (free_left && p) {
+    s16_t free_len = (free_left > INT16_MAX ? INT16_MAX : (s16_t)free_left);
+    if (free_len >= p->len) {
+      struct pbuf *f = p;
+      free_left -= p->len;
+      p = p->next;
+      f->next = 0;
+      pbuf_free(f);
+    } else {
+      pbuf_header(p, -free_len);
+      free_left -= free_len;
+    }
+  }
+  return p;
+}
+
 /**
  * @ingroup pbuf
  * Dereference a pbuf chain or queue and deallocate any no-longer-used

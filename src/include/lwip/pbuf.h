@@ -248,6 +248,7 @@ struct pbuf *pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type,
 void pbuf_realloc(struct pbuf *p, u16_t size);
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
 u8_t pbuf_header_force(struct pbuf *p, s16_t header_size);
+struct pbuf *pbuf_free_header(struct pbuf *q, u16_t size);
 void pbuf_ref(struct pbuf *p);
 u8_t pbuf_free(struct pbuf *p);
 u16_t pbuf_clen(const struct pbuf *p);
