@@ -559,7 +559,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
 }
 
 static err_t
-netconn_tcp_recvd_msg(struct netconn *conn, u16_t len, struct api_msg* msg)
+netconn_tcp_recvd_msg(struct netconn *conn, u32_t len, struct api_msg* msg)
 {
   LWIP_ERROR("netconn_recv_tcp_pbuf: invalid conn", (conn != NULL) &&
              NETCONNTYPE_GROUP(netconn_type(conn)) == NETCONN_TCP, return ERR_ARG;);
@@ -571,7 +571,7 @@ netconn_tcp_recvd_msg(struct netconn *conn, u16_t len, struct api_msg* msg)
 }
 
 err_t
-netconn_tcp_recvd(struct netconn *conn, u16_t len)
+netconn_tcp_recvd(struct netconn *conn, u32_t len)
 {
   err_t err;
   API_MSG_VAR_DECLARE(msg);
