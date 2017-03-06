@@ -1906,6 +1906,16 @@
 #if !defined LWIP_FIONREAD_LINUXMODE || defined __DOXYGEN__
 #define LWIP_FIONREAD_LINUXMODE         0
 #endif
+
+/**
+ * LWIP_SOCKET_SELECT==1 (default): enable select() for sockets (uses a netconn
+ * callback to keep track of events).
+ * This saves RAM (counters per socket) and code (netconn event callback), which
+ * should improve performance a bit).
+ */
+#if !defined LWIP_SOCKET_SELECT || defined __DOXYGEN__
+#define LWIP_SOCKET_SELECT              1
+#endif
 /**
  * @}
  */

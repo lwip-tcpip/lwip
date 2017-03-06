@@ -209,8 +209,11 @@ union lwip_sock_lastdata {
 struct lwip_sock {
   /** sockets currently are built on netconns, each socket has one netconn */
   struct netconn *conn;
+  /** last error that occurred on this socket */
+  int err;
   /** data that was left from the previous read */
   union lwip_sock_lastdata lastdata;
+#if LWIP_SOCKET_SELECT
   /** number of times data was received, set by event_callback(),
       tested by the receive and select functions */
   s16_t rcvevent;
@@ -219,10 +222,9 @@ struct lwip_sock {
   u16_t sendevent;
   /** error happened for this socket, set by event_callback(), tested by select */
   u16_t errevent;
-  /** last error that occurred on this socket */
-  int err;
   /** counter of how many threads are waiting for this socket using select */
   SELWAIT_T select_waiting;
+#endif /* LWIP_SOCKET_SELECT */
 #if LWIP_NETCONN_FULLDUPLEX
   /* counter of how many threads are using a struct lwip_sock (not the 'int') */
   u8_t fd_used;
@@ -311,7 +313,12 @@ static volatile int select_cb_ctr;
 } while (0)
 
 /* Forward declaration of some functions */
+#if LWIP_SOCKET_SELECT
 static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
+#define DEFAULT_SOCKET_EVENTCB event_callback
+#else
+#define DEFAULT_SOCKET_EVENTCB NULL
+#endif
 #if !LWIP_TCPIP_CORE_LOCKING
 static void lwip_getsockopt_callback(void *arg);
 static void lwip_setsockopt_callback(void *arg);
@@ -451,6 +458,7 @@ alloc_socket(struct netconn *newconn, int accepted)
 {
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
+  LWIP_UNUSED_ARG(accepted);
 
   /* allocate a new socket identifier */
   for (i = 0; i < NUM_SOCKETS; ++i) {
@@ -461,7 +469,6 @@ alloc_socket(struct netconn *newconn, int accepted)
       if (sockets[i].fd_used) {
         continue;
       }
-      LWIP_ASSERT("sockets[i].select_waiting == 0", sockets[i].select_waiting == 0);
       sockets[i].fd_used    = 1;
       sockets[i].fd_free_pending = 0;
 #endif
@@ -470,11 +477,14 @@ alloc_socket(struct netconn *newconn, int accepted)
          after having marked it as used. */
       SYS_ARCH_UNPROTECT(lev);
       sockets[i].lastdata.pbuf = NULL;
+#if LWIP_SOCKET_SELECT
+      LWIP_ASSERT("sockets[i].select_waiting == 0", sockets[i].select_waiting == 0);
       sockets[i].rcvevent   = 0;
       /* TCP sendbuf is empty, but the socket is not yet writable until connected
        * (unless it has been created by accept()). */
       sockets[i].sendevent  = (NETCONNTYPE_GROUP(newconn->type) == NETCONN_TCP ? (accepted != 0) : 1);
       sockets[i].errevent   = 0;
+#endif /* LWIP_SOCKET_SELECT */
       sockets[i].err        = 0;
       return i + LWIP_SOCKET_OFFSET;
     }
@@ -538,6 +548,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   u16_t port = 0;
   int newsock;
   err_t err;
+  int recvevent;
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d)...\n", s));
@@ -570,7 +581,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
   }
   LWIP_ASSERT("invalid socket index", (newsock >= LWIP_SOCKET_OFFSET) && (newsock < NUM_SOCKETS + LWIP_SOCKET_OFFSET));
-  LWIP_ASSERT("newconn->callback == event_callback", newconn->callback == event_callback);
   nsock = &sockets[newsock - LWIP_SOCKET_OFFSET];
 
   /* See event_callback: If data comes in right away after an accept, even
@@ -579,9 +589,16 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * so nsock->rcvevent is >= 1 here!
    */
   SYS_ARCH_PROTECT(lev);
-  nsock->rcvevent += (s16_t)(-1 - newconn->socket);
+  recvevent = (s16_t)(-1 - newconn->socket);
   newconn->socket = newsock;
   SYS_ARCH_UNPROTECT(lev);
+
+  if (newconn->callback) {
+    while(recvevent > 0) {
+      recvevent--;
+      newconn->callback(newconn, NETCONN_EVT_RCVPLUS, 0);
+    }
+  }
 
   /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
    * not be NULL if addr is valid.
@@ -1342,19 +1359,19 @@ lwip_socket(int domain, int type, int protocol)
   switch (type) {
   case SOCK_RAW:
     conn = netconn_new_with_proto_and_callback(DOMAIN_TO_NETCONN_TYPE(domain, NETCONN_RAW),
-                                               (u8_t)protocol, event_callback);
+                                               (u8_t)protocol, DEFAULT_SOCKET_EVENTCB);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_RAW, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
     break;
   case SOCK_DGRAM:
     conn = netconn_new_with_callback(DOMAIN_TO_NETCONN_TYPE(domain,
                  ((protocol == IPPROTO_UDPLITE) ? NETCONN_UDPLITE : NETCONN_UDP)) ,
-                 event_callback);
+                 DEFAULT_SOCKET_EVENTCB);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_DGRAM, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
     break;
   case SOCK_STREAM:
-    conn = netconn_new_with_callback(DOMAIN_TO_NETCONN_TYPE(domain, NETCONN_TCP), event_callback);
+    conn = netconn_new_with_callback(DOMAIN_TO_NETCONN_TYPE(domain, NETCONN_TCP), DEFAULT_SOCKET_EVENTCB);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_STREAM, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
     break;
@@ -1408,6 +1425,7 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
   return lwip_sendmsg(s, &msg, 0);
 }
 
+#if LWIP_SOCKET_SELECT
 /**
  * Go through the readset and writeset lists and see which socket of the sockets
  * set in the sets has events. On return, readset, writeset and exceptset have
@@ -1891,6 +1909,7 @@ again:
   SYS_ARCH_UNPROTECT(lev);
   done_socket(sock);
 }
+#endif /* LWIP_SOCKET_SELECT */
 
 /**
  * Close one end of a full-duplex connection.
