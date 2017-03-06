@@ -857,14 +857,12 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
             }
           }
           sock_set_errno(sock, 0);
-          done_socket(sock);
           return recvd;
         }
         /* We should really do some error checking here. */
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: p == NULL, error is \"%s\"!\n",
           lwip_strerr(err)));
         sock_set_errno(sock, err_to_errno(err));
-        done_socket(sock);
         if (err == ERR_CLSD) {
           return 0;
         } else {
