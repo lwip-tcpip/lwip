@@ -58,11 +58,12 @@ extern "C" {
  */
 
 /* Flags for netconn_write (u8_t) */
-#define NETCONN_NOFLAG    0x00
-#define NETCONN_NOCOPY    0x00 /* Only for source code compatibility */
-#define NETCONN_COPY      0x01
-#define NETCONN_MORE      0x02
-#define NETCONN_DONTBLOCK 0x04
+#define NETCONN_NOFLAG      0x00
+#define NETCONN_NOCOPY      0x00 /* Only for source code compatibility */
+#define NETCONN_COPY        0x01
+#define NETCONN_MORE        0x02
+#define NETCONN_DONTBLOCK   0x04
+#define NETCONN_NOAUTORCVD  0x08 /* prevent netconn_recv_data_tcp() from updating the tcp window - must be done manually via netconn_tcp_recvd() */
 
 /* Flags for struct netconn.flags (u8_t) */
 /** Should this netconn avoid blocking? */
@@ -319,6 +320,7 @@ err_t   netconn_recv_udp_raw_netbuf(struct netconn *conn, struct netbuf **new_bu
 err_t   netconn_recv_udp_raw_netbuf_flags(struct netconn *conn, struct netbuf **new_buf, u8_t apiflags);
 err_t   netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf);
 err_t   netconn_recv_tcp_pbuf_flags(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags);
+err_t   netconn_tcp_recvd(struct netconn *conn, u16_t len);
 err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
                              const ip_addr_t *addr, u16_t port);
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);

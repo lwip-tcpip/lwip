@@ -558,6 +558,32 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   return ERR_OK;
 }
 
+static err_t
+netconn_tcp_recvd_msg(struct netconn *conn, u16_t len, struct api_msg* msg)
+{
+  LWIP_ERROR("netconn_recv_tcp_pbuf: invalid conn", (conn != NULL) &&
+             NETCONNTYPE_GROUP(netconn_type(conn)) == NETCONN_TCP, return ERR_ARG;);
+
+  msg->conn = conn;
+  msg->msg.r.len = len;
+
+  return netconn_apimsg(lwip_netconn_do_recv, msg);
+}
+
+err_t
+netconn_tcp_recvd(struct netconn *conn, u16_t len)
+{
+  err_t err;
+  API_MSG_VAR_DECLARE(msg);
+  LWIP_ERROR("netconn_recv_tcp_pbuf: invalid conn", (conn != NULL) &&
+             NETCONNTYPE_GROUP(netconn_type(conn)) == NETCONN_TCP, return ERR_ARG;);
+
+  API_MSG_VAR_ALLOC(msg);
+  err = netconn_tcp_recvd_msg(conn, len, &API_VAR_REF(msg));
+  API_MSG_VAR_FREE(msg);
+  return err;
+}
+
 #if LWIP_TCP
 static err_t
 netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags)
@@ -576,23 +602,28 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
     return sys_mbox_valid(&conn->acceptmbox) ? ERR_CONN : ERR_CLSD;
   }
 
-  /* need to allocate API message here so empty message pool does not result in event loss
-    * see bug #47512: MPU_COMPATIBLE may fail on empty pool */
-  API_MSG_VAR_ALLOC(msg);
+  if (!(apiflags & NETCONN_NOAUTORCVD)) {
+    /* need to allocate API message here so empty message pool does not result in event loss
+      * see bug #47512: MPU_COMPATIBLE may fail on empty pool */
+    API_MSG_VAR_ALLOC(msg);
+  }
 
   err = netconn_recv_data(conn, (void **)new_buf, apiflags);
   if (err != ERR_OK) {
-    API_MSG_VAR_FREE(msg);
+    if (!(apiflags & NETCONN_NOAUTORCVD)) {
+      API_MSG_VAR_FREE(msg);
+    }
     return err;
   }
   buf = *new_buf;
-  /* Let the stack know that we have taken the data. */
-  API_VAR_REF(msg).conn = conn;
-  API_VAR_REF(msg).msg.r.len = buf ? buf->tot_len : 1;
-  /* don't care for the return value of lwip_netconn_do_recv */
-  /* @todo: this should really be fixed, e.g. by retrying in poll on error */
-  netconn_apimsg(lwip_netconn_do_recv, &API_VAR_REF(msg));
-  API_MSG_VAR_FREE(msg);
+  if (!(apiflags & NETCONN_NOAUTORCVD)) {
+    /* Let the stack know that we have taken the data. */
+    u16_t len = buf ? buf->tot_len : 1;
+    /* don't care for the return value of lwip_netconn_do_recv */
+    /* @todo: this should really be fixed, e.g. by retrying in poll on error */
+    netconn_tcp_recvd_msg(conn, len,  &API_VAR_REF(msg));
+    API_MSG_VAR_FREE(msg);
+  }
 
   /* If we are closed, we indicate that we no longer wish to use the socket */
   if (buf == NULL) {
