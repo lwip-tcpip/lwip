@@ -987,6 +987,8 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       lwip_sock_make_addr(sock->conn, &tmpaddr, port, from, fromlen);
       LWIP_DEBUGF(SOCKETS_DEBUG, (" len=%d\n", ret));
     }
+    done_socket(sock);
+    return ret;
   } else {
     struct netbuf    *buf;
     u16_t            buflen, copylen;
