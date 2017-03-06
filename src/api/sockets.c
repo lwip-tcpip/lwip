@@ -200,14 +200,17 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #define SELWAIT_T u8_t
 #endif
 
+union lwip_sock_lastdata {
+  struct netbuf *netbuf;
+  struct pbuf *pbuf;
+};
+
 /** Contains all internal pointers and states used for a socket */
 struct lwip_sock {
   /** sockets currently are built on netconns, each socket has one netconn */
   struct netconn *conn;
   /** data that was left from the previous read */
-  void *lastdata;
-  /** offset in the data that was left from the previous read */
-  u16_t lastoffset;
+  union lwip_sock_lastdata lastdata;
   /** number of times data was received, set by event_callback(),
       tested by the receive and select functions */
   s16_t rcvevent;
@@ -466,8 +469,7 @@ alloc_socket(struct netconn *newconn, int accepted)
       /* The socket is not yet known to anyone, so no need to protect
          after having marked it as used. */
       SYS_ARCH_UNPROTECT(lev);
-      sockets[i].lastdata   = NULL;
-      sockets[i].lastoffset = 0;
+      sockets[i].lastdata.pbuf = NULL;
       sockets[i].rcvevent   = 0;
       /* TCP sendbuf is empty, but the socket is not yet writable until connected
        * (unless it has been created by accept()). */
@@ -490,7 +492,7 @@ alloc_socket(struct netconn *newconn, int accepted)
 static void
 free_socket(struct lwip_sock *sock, int is_tcp)
 {
-  void *lastdata;
+  union lwip_sock_lastdata lastdata;
   SYS_ARCH_DECL_PROTECT(lev);
 
   /* Protect socket array */
@@ -506,18 +508,17 @@ free_socket(struct lwip_sock *sock, int is_tcp)
 #endif
 
   lastdata         = sock->lastdata;
-  sock->lastdata   = NULL;
-  sock->lastoffset = 0;
+  sock->lastdata.pbuf = NULL;
   sock->err        = 0;
   sock->conn = NULL;
   SYS_ARCH_UNPROTECT(lev);
   /* don't use 'sock' after this line, as another task might have allocated it */
 
-  if (lastdata != NULL) {
+  if (lastdata.pbuf != NULL) {
     if (is_tcp) {
-      pbuf_free((struct pbuf *)lastdata);
+      pbuf_free(lastdata.pbuf);
     } else {
-      netbuf_delete((struct netbuf *)lastdata);
+      netbuf_delete(lastdata.netbuf);
     }
   }
 }
@@ -688,7 +689,7 @@ lwip_close(int s)
   if (sock->conn != NULL) {
     is_tcp = NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP;
   } else {
-    LWIP_ASSERT("sock->lastdata == NULL", sock->lastdata == NULL);
+    LWIP_ASSERT("sock->lastdata == NULL", sock->lastdata.pbuf == NULL);
   }
 
 #if LWIP_IGMP
@@ -834,10 +835,10 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
     err_t err;
     u16_t copylen;
 
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: top while sock->lastdata=%p\n", sock->lastdata));
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: top while sock->lastdata=%p\n", sock->lastdata.pbuf));
     /* Check if there is data left from the last recv operation. */
-    if (sock->lastdata) {
-      p = (struct pbuf *)sock->lastdata;
+    if (sock->lastdata.pbuf) {
+      p = sock->lastdata.pbuf;
     } else {
       /* No data was left from the previous operation, so we try to get
          some from the network. */
@@ -871,7 +872,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
         }
       }
       LWIP_ASSERT("p != NULL", p != NULL);
-      sock->lastdata = p;
+      sock->lastdata.pbuf = p;
     }
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: buflen=%"U16_F" len=%"SZT_F" off=%d\n",
@@ -900,11 +901,10 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
       if (p->tot_len - copylen > 0) {
         /* If so, it should be saved in the sock structure for the next recv call.
            We store the pbuf but hide/free the consumed data: */
-        sock->lastdata = p;
-        sock->lastoffset += copylen;
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: lastdata now pbuf=%p\n", sock->lastdata));
+        sock->lastdata.pbuf = pbuf_free_header(p, copylen);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: lastdata now pbuf=%p\n", sock->lastdata.pbuf));
       } else {
-        sock->lastdata = NULL;
+        sock->lastdata.pbuf = NULL;
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: deleting pbuf=%p\n", p));
         pbuf_free(p);
       }
@@ -986,7 +986,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom[UDP/RAW]: top sock->lastdata=%p\n", sock->lastdata));
     /* Check if there is data left from the last recv operation. */
-    buf = (struct netbuf *)sock->lastdata;
+    buf = sock->lastdata.netbuf;
     if (buf == NULL) {
       /* No data was left from the previous operation, so we try to get
          some from the network. */
@@ -1002,7 +1002,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         return -1;
       }
       LWIP_ASSERT("buf != NULL", buf != NULL);
-      sock->lastdata = buf;
+      sock->lastdata.netbuf = buf;
     }
 
     buflen = buf->p->tot_len;
@@ -1032,7 +1032,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
     /* If we don't peek the incoming message: zero lastdata pointer and free the netbuf */
     if ((flags & MSG_PEEK) == 0) {
-      sock->lastdata = NULL;
+      sock->lastdata.netbuf = NULL;
       netbuf_delete(buf);
     }
   }
@@ -1450,7 +1450,7 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
     SYS_ARCH_PROTECT(lev);
     sock = tryget_socket_unconn(i);
     if (sock != NULL) {
-      void* lastdata = sock->lastdata;
+      void* lastdata = sock->lastdata.pbuf;
       s16_t rcvevent = sock->rcvevent;
       u16_t sendevent = sock->sendevent;
       u16_t errevent = sock->errevent;
@@ -2857,7 +2857,6 @@ lwip_ioctl(int s, long cmd, void *argp)
   struct lwip_sock *sock = get_socket(s);
   u8_t val;
 #if LWIP_SO_RCVBUF
-  u16_t buflen = 0;
   int recv_avail;
 #endif /* LWIP_SO_RCVBUF */
 
@@ -2875,18 +2874,17 @@ lwip_ioctl(int s, long cmd, void *argp)
     }
 #if LWIP_FIONREAD_LINUXMODE
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
-      struct pbuf *p;
-      if (sock->lastdata) {
-        p = ((struct netbuf *)sock->lastdata)->p;
-        *((int*)argp) = p->tot_len - sock->lastoffset;
+      struct netbuf *nb;
+      if (sock->lastdata.netbuf) {
+        nb = sock->lastdata.netbuf;
+        *((int*)argp) = nb->p->tot_len;
       } else {
         struct netbuf *rxbuf;
         err_t err = netconn_recv_udp_raw_netbuf_flags(sock->conn, &rxbuf, NETCONN_DONTBLOCK);
         if (err != ERR_OK) {
           *((int*)argp) = 0;
         } else {
-          sock->lastdata = rxbuf;
-          sock->lastoffset = 0;
+          sock->lastdata.netbuf = rxbuf;
           *((int*)argp) = rxbuf->p->tot_len;
         }
       }
@@ -2901,19 +2899,16 @@ lwip_ioctl(int s, long cmd, void *argp)
     if (recv_avail < 0) {
       recv_avail = 0;
     }
-    *((int*)argp) = recv_avail;
 
     /* Check if there is data left from the last recv operation. /maq 041215 */
-    if (sock->lastdata) {
-      struct pbuf *p = (struct pbuf *)sock->lastdata;
+    if (sock->lastdata.netbuf) {
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
-        p = ((struct netbuf *)p)->p;
+        recv_avail += sock->lastdata.pbuf->tot_len;
+      } else {
+        recv_avail += sock->lastdata.netbuf->p->tot_len;
       }
-      buflen = p->tot_len;
-      buflen -= sock->lastoffset;
-
-      *((int*)argp) += buflen;
     }
+    *((int*)argp) = recv_avail;
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %"U16_F"\n", s, argp, *((u16_t*)argp)));
     sock_set_errno(sock, 0);
