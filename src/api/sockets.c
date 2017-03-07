@@ -1163,7 +1163,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   /* else, UDP and RAW NETCONNs */
 #if LWIP_UDP || LWIP_RAW
   {
-    struct netbuf *chain_buf;
+    struct netbuf chain_buf;
 
     LWIP_UNUSED_ARG(flags);
     LWIP_ERROR("lwip_sendmsg: invalid msghdr name", (((msg->msg_name == NULL) && (msg->msg_namelen == 0)) ||
@@ -1171,36 +1171,31 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
                sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
     /* initialize chain buffer with destination */
-    chain_buf = netbuf_new();
-    if (!chain_buf) {
-      sock_set_errno(sock, err_to_errno(ERR_MEM));
-      done_socket(sock);
-      return -1;
-    }
+    memset(&chain_buf, 0, sizeof(struct netbuf));
     if (msg->msg_name) {
       u16_t remote_port;
-      SOCKADDR_TO_IPADDR_PORT((const struct sockaddr *)msg->msg_name, &chain_buf->addr, remote_port);
-      netbuf_fromport(chain_buf) = remote_port;
+      SOCKADDR_TO_IPADDR_PORT((const struct sockaddr *)msg->msg_name, &chain_buf.addr, remote_port);
+      netbuf_fromport(&chain_buf) = remote_port;
     }
 #if LWIP_NETIF_TX_SINGLE_PBUF
     for (i = 0; i < msg->msg_iovlen; i++) {
       size += msg->msg_iov[i].iov_len;
     }
     /* Allocate a new netbuf and copy the data into it. */
-    if (netbuf_alloc(chain_buf, (u16_t)size) == NULL) {
+    if (netbuf_alloc(&chain_buf, (u16_t)size) == NULL) {
        err = ERR_MEM;
     } else {
       /* flatten the IO vectors */
       size_t offset = 0;
       for (i = 0; i < msg->msg_iovlen; i++) {
-        MEMCPY(&((u8_t*)chain_buf->p->payload)[offset], msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
+        MEMCPY(&((u8_t*)chain_buf.p->payload)[offset], msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
         offset += msg->msg_iov[i].iov_len;
       }
 #if LWIP_CHECKSUM_ON_COPY
       {
         /* This can be improved by using LWIP_CHKSUM_COPY() and aggregating the checksum for each IO vector */
-        u16_t chksum = ~inet_chksum_pbuf(chain_buf->p);
-        netbuf_set_chksum(chain_buf, chksum);
+        u16_t chksum = ~inet_chksum_pbuf(chain_buf.p);
+        netbuf_set_chksum(&chain_buf, chksum);
       }
 #endif /* LWIP_CHECKSUM_ON_COPY */
       err = ERR_OK;
@@ -1218,34 +1213,34 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
       LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
       p->len = p->tot_len = (u16_t)msg->msg_iov[i].iov_len;
       /* netbuf empty, add new pbuf */
-      if (chain_buf->p == NULL) {
-        chain_buf->p = chain_buf->ptr = p;
+      if (chain_buf.p == NULL) {
+        chain_buf.p = chain_buf.ptr = p;
         /* add pbuf to existing pbuf chain */
       } else {
-        pbuf_cat(chain_buf->p, p);
+        pbuf_cat(chain_buf.p, p);
       }
     }
     /* save size of total chain */
     if (err == ERR_OK) {
-      size = netbuf_len(chain_buf);
+      size = netbuf_len(&chain_buf);
     }
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
     if (err == ERR_OK) {
 #if LWIP_IPV4 && LWIP_IPV6
       /* Dual-stack: Unmap IPv4 mapped IPv6 addresses */
-      if (IP_IS_V6_VAL(chain_buf->addr) && ip6_addr_isipv4mappedipv6(ip_2_ip6(&chain_buf->addr))) {
-        unmap_ipv4_mapped_ipv6(ip_2_ip4(&chain_buf->addr), ip_2_ip6(&chain_buf->addr));
-        IP_SET_TYPE_VAL(chain_buf->addr, IPADDR_TYPE_V4);
+      if (IP_IS_V6_VAL(chain_buf-addr) && ip6_addr_isipv4mappedipv6(ip_2_ip6(&chain_buf.addr))) {
+        unmap_ipv4_mapped_ipv6(ip_2_ip4(&chain_buf.addr), ip_2_ip6(&chain_buf.addr));
+        IP_SET_TYPE_VAL(chain_buf.addr, IPADDR_TYPE_V4);
       }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
       /* send the data */
-      err = netconn_send(sock->conn, chain_buf);
+      err = netconn_send(sock->conn, &chain_buf);
     }
 
     /* deallocated the buffer */
-    netbuf_delete(chain_buf);
+    netbuf_free(&chain_buf);
 
     sock_set_errno(sock, err_to_errno(err));
     done_socket(sock);
