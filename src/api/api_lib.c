@@ -867,7 +867,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
  */
 err_t
 netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u16_t vectorcnt,
-u8_t apiflags, size_t *bytes_written)
+                             u8_t apiflags, size_t *bytes_written)
 {
   API_MSG_VAR_DECLARE(msg);
   err_t err;
