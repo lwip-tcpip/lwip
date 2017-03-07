@@ -131,6 +131,10 @@ netbuf_free(struct netbuf *buf)
     pbuf_free(buf->p);
   }
   buf->p = buf->ptr = NULL;
+#if LWIP_CHECKSUM_ON_COPY
+  buf->flags = 0;
+  buf->toport_chksum = 0;
+#endif /* LWIP_CHECKSUM_ON_COPY */
 }
 
 /**
