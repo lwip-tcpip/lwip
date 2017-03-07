@@ -1285,8 +1285,12 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #endif /* LWIP_TCP */
   }
 
-  /* @todo: split into multiple sendto's? */
-  LWIP_ASSERT("lwip_sendto: size must fit in u16_t", size <= 0xffff);
+  if (size > 0xFFFF) {
+    /* cannot fit into one datagram (at least for us) */
+    sock_set_errno(sock, EMSGSIZE);
+    done_socket(sock);
+    return -1;
+  }
   short_size = (u16_t)size;
   LWIP_ERROR("lwip_sendto: invalid address", (((to == NULL) && (tolen == 0)) ||
              (IS_SOCK_ADDR_LEN_VALID(tolen) &&
