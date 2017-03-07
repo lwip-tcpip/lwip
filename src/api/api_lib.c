@@ -877,13 +877,6 @@ netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u1
 
   LWIP_ERROR("netconn_write: invalid conn",  (conn != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_write: invalid conn->type",  (NETCONNTYPE_GROUP(conn->type)== NETCONN_TCP), return ERR_VAL;);
-  size = 0;
-  for (i = 0; i < vectorcnt; i++) {
-    size += vectors[i].len;
-  }
-  if (size == 0) {
-    return ERR_OK;
-  }
   dontblock = netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK);
 #if LWIP_SO_SNDTIMEO
   if (conn->send_timeout != 0) {
@@ -893,6 +886,22 @@ netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u1
   if (dontblock && !bytes_written) {
     /* This implies netconn_write() cannot be used for non-blocking send, since
        it has no way to return the number of bytes written. */
+    return ERR_VAL;
+  }
+
+  /* sum up the total size */
+  size = 0;
+  for (i = 0; i < vectorcnt; i++) {
+    size += vectors[i].len;
+    if (size < vectors[i].len) {
+      /* overflow */
+      return ERR_VAL;
+    }
+  }
+  if (size == 0) {
+    return ERR_OK;
+  } else if (size > INT_MAX) {
+    /* this is required by the socket layer (cannot send full size_t range) */
     return ERR_VAL;
   }
 
