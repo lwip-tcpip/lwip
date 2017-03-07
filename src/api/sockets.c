@@ -852,7 +852,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
     err_t err;
     u16_t copylen;
 
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: top while sock->lastdata=%p\n", sock->lastdata.pbuf));
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: top while sock->lastdata=%p\n", (void*)sock->lastdata.pbuf));
     /* Check if there is data left from the last recv operation. */
     if (sock->lastdata.pbuf) {
       p = sock->lastdata.pbuf;
@@ -861,7 +861,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
          some from the network. */
       err = netconn_recv_tcp_pbuf_flags(sock->conn, &p, apiflags);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: netconn_recv err=%d, pbuf=%p\n",
-        err, p));
+        err, (void*)p));
 
       if (err != ERR_OK) {
         if (recvd > 0) {
@@ -916,10 +916,10 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
         /* If so, it should be saved in the sock structure for the next recv call.
            We store the pbuf but hide/free the consumed data: */
         sock->lastdata.pbuf = pbuf_free_header(p, copylen);
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: lastdata now pbuf=%p\n", sock->lastdata.pbuf));
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: lastdata now pbuf=%p\n", (void*)sock->lastdata.pbuf));
       } else {
         sock->lastdata.pbuf = NULL;
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: deleting pbuf=%p\n", p));
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: deleting pbuf=%p\n", (void*)p));
         pbuf_free(p);
       }
     }
@@ -1006,7 +1006,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       apiflags = 0;
     }
 
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom[UDP/RAW]: top sock->lastdata=%p\n", sock->lastdata));
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom[UDP/RAW]: top sock->lastdata=%p\n", (void*)sock->lastdata.netbuf));
     /* Check if there is data left from the last recv operation. */
     buf = sock->lastdata.netbuf;
     if (buf == NULL) {
@@ -1014,7 +1014,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
          some from the network. */
       err = netconn_recv_udp_raw_netbuf_flags(sock->conn, &buf, apiflags);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom[UDP/RAW]: netconn_recv err=%d, netbuf=%p\n",
-        err, buf));
+        err, (void*)buf));
 
       if (err != ERR_OK) {
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom[UDP/RAW](%d): buf == NULL, error is \"%s\"!\n",
