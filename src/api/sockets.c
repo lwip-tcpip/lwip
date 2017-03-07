@@ -889,7 +889,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
       sock->lastdata.pbuf = p;
     }
 
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: buflen=%"U16_F" len=%"SZT_F" off=%d\n",
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: buflen=%"U16_F" recv_left=%d off=%d\n",
        p->tot_len, recv_left, recvd));
 
     if (recv_left > p->tot_len) {
