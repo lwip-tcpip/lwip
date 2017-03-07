@@ -1134,14 +1134,16 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
 
   LWIP_ERROR("lwip_sendmsg: invalid msghdr", msg != NULL,
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
-  LWIP_ERROR("lwip_sendmsg: maximum iovs exceeded", (msg->msg_iovlen <= IOV_MAX),
+  LWIP_ERROR("lwip_sendmsg: invalid msghdr iov", msg->msg_iov != NULL,
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  LWIP_ERROR("lwip_sendmsg: maximum iovs exceeded", (msg->msg_iovlen > 0) && (msg->msg_iovlen <= IOV_MAX),
+             sock_set_errno(sock, EMSGSIZE); return -1;);
+  LWIP_ERROR("lwip_sendmsg: unsupported flags", ((flags == 0) || (flags == MSG_NOSIGNAL)),
+             sock_set_errno(sock, EOPNOTSUPP); return -1;);
 
   LWIP_UNUSED_ARG(msg->msg_control);
   LWIP_UNUSED_ARG(msg->msg_controllen);
   LWIP_UNUSED_ARG(msg->msg_flags);
-  LWIP_ERROR("lwip_sendmsg: invalid msghdr iov", (msg->msg_iov != NULL && msg->msg_iovlen != 0),
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
   if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
 #if LWIP_TCP
@@ -1180,6 +1182,14 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
 #if LWIP_NETIF_TX_SINGLE_PBUF
     for (i = 0; i < msg->msg_iovlen; i++) {
       size += msg->msg_iov[i].iov_len;
+      if ((msg->msg_iov[i].iov_len > INT_MAX) || (size < (int)msg->msg_iov[i].iov_len)) {
+        /* overflow */
+        goto sendmsg_emsgsize;
+      }
+    }
+    if (size > 0xFFFF) {
+      /* overflow */
+      goto sendmsg_emsgsize;
     }
     /* Allocate a new netbuf and copy the data into it. */
     if (netbuf_alloc(&chain_buf, (u16_t)size) == NULL) {
@@ -1204,19 +1214,28 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     /* create a chained netbuf from the IO vectors. NOTE: we assemble a pbuf chain
        manually to avoid having to allocate, chain, and delete a netbuf for each iov */
     for (i = 0; i < msg->msg_iovlen; i++) {
-      struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
+      struct pbuf *p;
+      if (msg->msg_iov[i].iov_len > 0xFFFF) {
+        /* overflow */
+        goto sendmsg_emsgsize;
+      }
+      p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
       if (p == NULL) {
         err = ERR_MEM; /* let netbuf_delete() cleanup chain_buf */
         break;
       }
       p->payload = msg->msg_iov[i].iov_base;
-      LWIP_ASSERT("iov_len < u16_t", msg->msg_iov[i].iov_len <= 0xFFFF);
       p->len = p->tot_len = (u16_t)msg->msg_iov[i].iov_len;
       /* netbuf empty, add new pbuf */
       if (chain_buf.p == NULL) {
         chain_buf.p = chain_buf.ptr = p;
         /* add pbuf to existing pbuf chain */
       } else {
+        if (chain_buf.p->tot_len + p->len > 0xffff) {
+          /* overflow */
+          pbuf_free(p);
+          goto sendmsg_emsgsize;
+        }
         pbuf_cat(chain_buf.p, p);
       }
     }
@@ -1245,6 +1264,11 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     sock_set_errno(sock, err_to_errno(err));
     done_socket(sock);
     return (err == ERR_OK ? size : -1);
+sendmsg_emsgsize:
+    sock_set_errno(sock, EMSGSIZE);
+    netbuf_free(&chain_buf);
+    done_socket(sock);
+    return -1;
   }
 #else /* LWIP_UDP || LWIP_RAW */
   sock_set_errno(sock, err_to_errno(ERR_ARG));
