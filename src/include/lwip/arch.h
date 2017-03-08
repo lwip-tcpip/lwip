@@ -162,6 +162,19 @@ typedef uintptr_t mem_ptr_t;
 #endif
 #endif
 
+/** Define this to 1 in arch/cc.h of your port if your compiler does not provide
+ * the limits.h header. You need to define the type limits yourself in this case
+ * (e.g. INT_MAX).
+ */
+#ifndef LWIP_NO_LIMITS_H
+#define LWIP_NO_LIMITS_H 0
+#endif
+
+/* Include limits.h? */
+#if !LWIP_NO_LIMITS_H
+#include <limits.h>
+#endif
+
 /** C++ const_cast<target_type>(val) equivalent to remove constness from a value (GCC -Wcast-qual) */
 #ifndef LWIP_CONST_CAST
 #define LWIP_CONST_CAST(target_type, val) ((target_type)((ptrdiff_t)val))
