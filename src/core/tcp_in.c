@@ -810,9 +810,12 @@ tcp_process(struct tcp_pcb *pcb)
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
         ip_current_src_addr(), tcphdr->dest, tcphdr->src);
       /* Resend SYN immediately (don't wait for rto timeout) to establish
-        connection faster */
-      pcb->rtime = 0;
-      tcp_rexmit_rto(pcb);
+        connection faster, but do not send more SYNs than we otherwise would
+        have, or we might get caught in a loop on loopback interfaces. */
+      if (pcb->nrtx < TCP_SYNMAXRTX) {
+        pcb->rtime = 0;
+        tcp_rexmit_rto(pcb);
+      }
     }
     break;
   case SYN_RCVD:
