@@ -1248,7 +1248,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     if (err == ERR_OK) {
 #if LWIP_IPV4 && LWIP_IPV6
       /* Dual-stack: Unmap IPv4 mapped IPv6 addresses */
-      if (IP_IS_V6_VAL(chain_buf-addr) && ip6_addr_isipv4mappedipv6(ip_2_ip6(&chain_buf.addr))) {
+      if (IP_IS_V6_VAL(chain_buf.addr) && ip6_addr_isipv4mappedipv6(ip_2_ip6(&chain_buf.addr))) {
         unmap_ipv4_mapped_ipv6(ip_2_ip4(&chain_buf.addr), ip_2_ip6(&chain_buf.addr));
         IP_SET_TYPE_VAL(chain_buf.addr, IPADDR_TYPE_V4);
       }
