@@ -980,7 +980,6 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   pcb->mss = tcp_eff_send_mss_netif(pcb->mss, netif, &pcb->remote_ip);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
-  pcb->ssthresh = TCP_WND;
 #if LWIP_CALLBACK_API
   pcb->connected = connected;
 #else /* LWIP_CALLBACK_API */
@@ -1646,6 +1645,14 @@ tcp_alloc(u8_t prio)
     pcb->cwnd = 1;
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
+
+    /* RFC 5681 recommends setting ssthresh abritrarily high and gives an example
+    of using the largest advertised receive window.  We've seen complications with
+    receiving TCPs that use window scaling and/or window auto-tuning where the
+    initial advertised window is very small and then grows rapidly once the
+    connection is established. To avoid these complications, we set ssthresh to the
+    largest effective cwnd (amount of in-flight data) that the sender can have. */
+    pcb->ssthresh = TCP_SND_BUF;
 
 #if LWIP_CALLBACK_API
     pcb->recv = tcp_recv_null;
