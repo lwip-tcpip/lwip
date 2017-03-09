@@ -1420,7 +1420,9 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
   pcb->unacked = NULL;
 
   /* increment number of retransmissions */
-  ++pcb->nrtx;
+  if (pcb->nrtx < 0xFF) {
+    ++pcb->nrtx;
+  }
 
   /* Don't take any RTT measurements after retransmitting. */
   pcb->rttest = 0;
@@ -1465,7 +1467,9 @@ tcp_rexmit(struct tcp_pcb *pcb)
   }
 #endif /* TCP_OVERSIZE */
 
-  ++pcb->nrtx;
+  if (pcb->nrtx < 0xFF) {
+    ++pcb->nrtx;
+  }
 
   /* Don't take any rtt measurements after retransmitting. */
   pcb->rttest = 0;
