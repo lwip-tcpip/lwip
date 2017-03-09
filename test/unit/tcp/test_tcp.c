@@ -46,9 +46,9 @@ tcp_setup(void)
 static void
 tcp_teardown(void)
 {
-  tcp_remove_all();
   netif_list = NULL;
   netif_default = NULL;
+  tcp_remove_all();
 }
 
 
