@@ -422,6 +422,8 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   pcb->mss = TCP_MSS;
   /* disable initial congestion window (we don't send a SYN here...) */
   pcb->cwnd = 2*TCP_MSS;
+  /* start in congestion advoidance */
+  pcb->ssthresh = pcb->cwnd;
 
   /* send 6 mss-sized segments */
   for (i = 0; i < 6; i++) {
@@ -442,7 +444,9 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   /* ACK the first segment */
   p = tcp_create_rx_segment(pcb, NULL, 0, 0, TCP_MSS, TCP_ACK);
   test_tcp_input(p, &netif);
-  /* ensure this didn't trigger a retransmission */
+  /* ensure this didn't trigger a retransmission. Only one
+  segment should be transmitted because cwnd opened up by
+  TCP_MSS and a fraction since we are in congestion avoidance */
   EXPECT(txcounters.num_tx_calls == 1);
   EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
   memset(&txcounters, 0, sizeof(txcounters));
