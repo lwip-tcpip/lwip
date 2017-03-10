@@ -152,16 +152,16 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #define IS_SOCK_ADDR_ALIGNED(name)      ((((mem_ptr_t)(name)) % 4) == 0)
 
 
-#define LWIP_SOCKOPT_CHECK_OPTLEN(optlen, opttype) do { if ((optlen) < sizeof(opttype)) { return EINVAL; }}while(0)
+#define LWIP_SOCKOPT_CHECK_OPTLEN(sock, optlen, opttype) do { if ((optlen) < sizeof(opttype)) { done_socket(sock); return EINVAL; }}while(0)
 #define LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, opttype) do { \
-  LWIP_SOCKOPT_CHECK_OPTLEN(optlen, opttype); \
-  if ((sock)->conn == NULL) { return EINVAL; } }while(0)
+  LWIP_SOCKOPT_CHECK_OPTLEN(sock, optlen, opttype); \
+  if ((sock)->conn == NULL) { done_socket(sock); return EINVAL; } }while(0)
 #define LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, opttype) do { \
-  LWIP_SOCKOPT_CHECK_OPTLEN(optlen, opttype); \
-  if (((sock)->conn == NULL) || ((sock)->conn->pcb.tcp == NULL)) { return EINVAL; } }while(0)
+  LWIP_SOCKOPT_CHECK_OPTLEN(sock, optlen, opttype); \
+  if (((sock)->conn == NULL) || ((sock)->conn->pcb.tcp == NULL)) { done_socket(sock); return EINVAL; } }while(0)
 #define LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, opttype, netconntype) do { \
   LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, opttype); \
-  if (NETCONNTYPE_GROUP(netconn_type((sock)->conn)) != netconntype) { return ENOPROTOOPT; } }while(0)
+  if (NETCONNTYPE_GROUP(netconn_type((sock)->conn)) != netconntype) { done_socket(sock); return ENOPROTOOPT; } }while(0)
 
 
 #define LWIP_SETGETSOCKOPT_DATA_VAR_REF(name)     API_VAR_REF(name)
@@ -172,6 +172,7 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
   name = (struct lwip_setgetsockopt_data *)memp_malloc(MEMP_SOCKET_SETGETSOCKOPT_DATA); \
   if (name == NULL) { \
     sock_set_errno(sock, ENOMEM); \
+    done_socket(sock); \
     return -1; \
   } }while(0)
 #else /* LWIP_MPU_COMPATIBLE */
@@ -658,7 +659,7 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
   /* check size, family and alignment of 'name' */
   LWIP_ERROR("lwip_bind: invalid address", (IS_SOCK_ADDR_LEN_VALID(namelen) &&
              IS_SOCK_ADDR_TYPE_VALID(name) && IS_SOCK_ADDR_ALIGNED(name)),
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
   LWIP_UNUSED_ARG(namelen);
 
   SOCKADDR_TO_IPADDR_PORT(name, &local_addr, local_port);
@@ -755,7 +756,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     /* check size, family and alignment of 'name' */
     LWIP_ERROR("lwip_connect: invalid address", IS_SOCK_ADDR_LEN_VALID(namelen) &&
                IS_SOCK_ADDR_TYPE_VALID_OR_UNSPEC(name) && IS_SOCK_ADDR_ALIGNED(name),
-               sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+               sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
 
     SOCKADDR_TO_IPADDR_PORT(name, &remote_addr, remote_port);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
@@ -1236,13 +1237,13 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   }
 
   LWIP_ERROR("lwip_sendmsg: invalid msghdr", msg != NULL,
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
   LWIP_ERROR("lwip_sendmsg: invalid msghdr iov", msg->msg_iov != NULL,
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
   LWIP_ERROR("lwip_sendmsg: maximum iovs exceeded", (msg->msg_iovlen > 0) && (msg->msg_iovlen <= IOV_MAX),
-             sock_set_errno(sock, EMSGSIZE); return -1;);
+             sock_set_errno(sock, EMSGSIZE); done_socket(sock); return -1;);
   LWIP_ERROR("lwip_sendmsg: unsupported flags", ((flags == 0) || (flags == MSG_NOSIGNAL)),
-             sock_set_errno(sock, EOPNOTSUPP); return -1;);
+             sock_set_errno(sock, EOPNOTSUPP); done_socket(sock); return -1;);
 
   LWIP_UNUSED_ARG(msg->msg_control);
   LWIP_UNUSED_ARG(msg->msg_controllen);
@@ -1273,7 +1274,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
     LWIP_UNUSED_ARG(flags);
     LWIP_ERROR("lwip_sendmsg: invalid msghdr name", (((msg->msg_name == NULL) && (msg->msg_namelen == 0)) ||
                IS_SOCK_ADDR_LEN_VALID(msg->msg_namelen)) ,
-               sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+               sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
 
     /* initialize chain buffer with destination */
     memset(&chain_buf, 0, sizeof(struct netbuf));
@@ -1417,7 +1418,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   LWIP_ERROR("lwip_sendto: invalid address", (((to == NULL) && (tolen == 0)) ||
              (IS_SOCK_ADDR_LEN_VALID(tolen) &&
              IS_SOCK_ADDR_TYPE_VALID(to) && IS_SOCK_ADDR_ALIGNED(to))),
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
   LWIP_UNUSED_ARG(tolen);
 
   /* initialize a buffer */
@@ -2319,7 +2320,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       break;
 
     case SO_ERROR:
-      LWIP_SOCKOPT_CHECK_OPTLEN(*optlen, int);
+      LWIP_SOCKOPT_CHECK_OPTLEN(sock, *optlen, int);
       /* only overwrite ERR_OK or temporary errors */
       if (((sock->err == 0) || (sock->err == EINPROGRESS)) && (sock->conn != NULL)) {
         sock_set_errno(sock, err_to_errno(sock->conn->last_err));
