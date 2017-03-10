@@ -1103,7 +1103,7 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
   struct lwip_sock *sock;
   int recv_flags = flags;
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvmsg(%d, message=%p, flags=0x%x)\n", s, message, flags));
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvmsg(%d, message=%p, flags=0x%x)\n", s, (void*)message, flags));
   LWIP_ERROR("lwip_recvmsg: invalid message pointer", message != NULL, return ERR_ARG;);
   LWIP_ERROR("lwip_recvmsg: unsupported flags", ((flags == 0) || (flags == MSG_PEEK)),
              set_errno(EOPNOTSUPP); return -1;);
