@@ -261,7 +261,7 @@ struct mdns_answer {
   u16_t rd_offset;
 };
 
-err_t
+static err_t
 mdns_domain_add_label_base(struct mdns_domain *domain, u8_t len)
 {
   if (len > MDNS_LABEL_MAXLEN) {
