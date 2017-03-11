@@ -1144,8 +1144,9 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
         /* sum up received bytes */
         ret += recvd_local;
       }
-      if ((recvd_local < 0) || (recvd_local < (int)message->msg_iov[i].iov_len)) {
-        /* returned prematurely */
+      if ((recvd_local < 0) || (recvd_local < (int)message->msg_iov[i].iov_len) ||
+          (flags & MSG_PEEK)) {
+        /* returned prematurely (or peeking, which might actually be limitated to the first iov) */
         if (ret <= 0) {
           /* nothing received at all, propagate the error */
           ret = recvd_local;
