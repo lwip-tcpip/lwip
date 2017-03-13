@@ -226,8 +226,8 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
     case PP_HTONS(TFTP_WRQ):
     {
       const char tftp_null = 0;
-      char filename[TFTP_MAX_FILENAME_LEN];
-      char mode[TFTP_MAX_MODE_LEN];
+      char filename[TFTP_MAX_FILENAME_LEN+1];
+      char mode[TFTP_MAX_MODE_LEN+1];
       u16_t filename_end_offset;
       u16_t mode_end_offset;
 
@@ -240,11 +240,11 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
 
       /* find \0 in pbuf -> end of filename string */
       filename_end_offset = pbuf_memfind(p, &tftp_null, sizeof(tftp_null), 2);
-      if((u16_t)(filename_end_offset-2) > sizeof(filename)) {
+      if((u16_t)(filename_end_offset-1) > sizeof(filename)) {
         send_error(addr, port, TFTP_ERROR_ACCESS_VIOLATION, "Filename too long/not NULL terminated");
         break;
       }
-      pbuf_copy_partial(p, filename, filename_end_offset-2, 2);
+      pbuf_copy_partial(p, filename, filename_end_offset-1, 2);
 
       /* find \0 in pbuf -> end of mode string */
       mode_end_offset = pbuf_memfind(p, &tftp_null, sizeof(tftp_null), filename_end_offset+1);
