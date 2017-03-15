@@ -35,7 +35,9 @@
  *
  */
 
-/*
+/**
+ * @defgroup bridgeif IEEE 802.1D bridge interface
+ * @ingroup addons
  * This file implements an IEEE 802.1D bridge by using a multilayer netif approach
  * (one hardware-independent netif for the bridge that uses hardware netifs for its ports).
  * On transmit, the bridge selects the outgoing port(s).
@@ -270,7 +272,9 @@ bridgeif_age_tmr(void *arg)
   sys_timeout(BRIDGEIF_AGE_TIMER_MS, bridgeif_age_tmr, arg);
 }
 
-/** Add a static entry to the forwarding database.
+/**
+ * @ingroup bridgeif
+ * Add a static entry to the forwarding database.
  * A static entry marks where frames to a specific eth address (unicast or group address) are
  * forwarded.
  * bits [0..(BRIDGEIF_MAX_PORTS-1)]: hw ports
@@ -306,7 +310,10 @@ bridgeif_fdb_add(struct netif *bridgeif, const struct eth_addr *addr, bridgeif_p
   return ERR_MEM;
 }
 
-/** Remove a static entry from the forwarding database */
+/**
+ * @ingroup bridgeif
+ * Remove a static entry from the forwarding database
+ */
 err_t
 bridgeif_fdb_remove(struct netif *bridgeif, const struct eth_addr *addr)
 {
@@ -537,7 +544,9 @@ bridgeif_tcpip_input(struct pbuf *p, struct netif *netif)
 }
 #endif /* BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT */
 
-/** Initialization function passed to netif_add().
+/**
+ * @ingroup bridgeif
+ * Initialization function passed to netif_add().
  *
  * @param netif the lwip network interface structure for this ethernetif
  * @return ERR_OK if the loopif is initialized
@@ -640,7 +649,10 @@ bridgeif_init(struct netif *netif)
   return ERR_OK;
 }
 
-/** Add a port to the bridge */
+/**
+ * @ingroup bridgeif
+ * Add a port to the bridge
+ */
 err_t
 bridgeif_add_port(struct netif *bridgeif, struct netif *portif)
 {

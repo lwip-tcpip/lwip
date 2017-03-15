@@ -40,6 +40,12 @@
 
 #include "lwip/opt.h"
 
+/**
+ * @defgroup bridgeif_opts Options
+ * @ingroup bridgeif
+ * @{
+ */
+
 /** BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT==1: set port netif's 'input' function
  * to call directly into bridgeif code and on top of that, directly call into
  * the selected forwarding port's 'linkoutput' function.
@@ -81,5 +87,9 @@
 #ifndef BRIDGEIF_FW_DEBUG
 #define BRIDGEIF_FW_DEBUG                   LWIP_DBG_OFF
 #endif
+
+/**
+ * @}
+ */
 
 #endif /* LWIP_HDR_NETIF_BRIDGEIF_OPTS_H */
