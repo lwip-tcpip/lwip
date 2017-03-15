@@ -36,8 +36,8 @@
  */
 
 /**
- * @defgroup bridgeif IEEE 802.1D bridge interface
- * @ingroup addons
+ * @defgroup bridgeif IEEE 802.1D bridge
+ * @ingroup netifs
  * This file implements an IEEE 802.1D bridge by using a multilayer netif approach
  * (one hardware-independent netif for the bridge that uses hardware netifs for its ports).
  * On transmit, the bridge selects the outgoing port(s).

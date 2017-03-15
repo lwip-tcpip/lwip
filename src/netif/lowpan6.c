@@ -40,8 +40,8 @@
  */
 
 /**
- * @defgroup sixlowpan 6LowPAN netif
- * @ingroup addons
+ * @defgroup sixlowpan 6LowPAN
+ * @ingroup netifs
  * 6LowPAN netif implementation
  */
 

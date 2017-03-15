@@ -40,8 +40,8 @@
 
 
 /**
- * @defgroup slipif SLIP netif
- * @ingroup addons
+ * @defgroup slipif SLIP
+ * @ingroup netifs
  *
  * This is an arch independent SLIP netif. The specific serial hooks must be
  * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send

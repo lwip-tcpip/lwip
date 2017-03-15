@@ -80,8 +80,8 @@
  */
 
 /**
- * @defgroup ppp PPP netif
- * @ingroup addons
+ * @defgroup ppp PPP
+ * @ingroup netifs
  * @verbinclude "ppp.txt"
  */
 
