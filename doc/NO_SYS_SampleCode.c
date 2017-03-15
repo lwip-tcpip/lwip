@@ -74,7 +74,7 @@ void main(void)
   netif_set_up(&netif);
   
   /* Start DHCP and HTTPD */
-  dhcp_init();
+  dhcp_start(&netif );
   httpd_init();
 
   while(1) {
