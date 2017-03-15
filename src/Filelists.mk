@@ -80,6 +80,7 @@ APIFILES=$(LWIPDIR)/api/api_lib.c \
 
 # NETIFFILES: Files implementing various generic network interface functions
 NETIFFILES=$(LWIPDIR)/netif/ethernet.c \
+	$(LWIPDIR)/netif/bridgeif.c \
 	$(LWIPDIR)/netif/slipif.c
 
 # SIXLOWPAN: 6LoWPAN
