@@ -115,7 +115,7 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
     }
   }
   LWIP_ASSERT("*sem > 0", *sem > 0);
-  *sem--;
+  (*sem)--;
   LWIP_ASSERT("*sem > 0", *sem > 0);
   /* return the time we waited for the sem */
   return ret;
@@ -125,7 +125,7 @@ void sys_sem_signal(sys_sem_t *sem)
 {
   LWIP_ASSERT("sem != NULL", sem != NULL);
   LWIP_ASSERT("*sem > 0", *sem > 0);
-  *sem++;
+  (*sem)++;
   LWIP_ASSERT("*sem > 0", *sem > 0);
 }
 
@@ -156,7 +156,7 @@ void sys_mutex_lock(sys_mutex_t *mutex)
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
   LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
   /* we count up just to check the correct pairing of lock/unlock */
-  *mutex++;
+  (*mutex)++;
   LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
 }
 
@@ -166,7 +166,7 @@ void sys_mutex_unlock(sys_mutex_t *mutex)
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
   LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
   /* we count down just to check the correct pairing of lock/unlock */
-  *mutex--;
+  (*mutex)--;
   LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
 }
 
@@ -223,7 +223,7 @@ void sys_mbox_set_invalid(sys_mbox_t *mbox)
 void sys_mbox_post(sys_mbox_t *q, void *msg)
 {
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != q", q->sem != q);
+  LWIP_ASSERT("q->sem == q", q->sem == q);
   LWIP_ASSERT("q->q_mem != NULL", q->q_mem != NULL);
   LWIP_ASSERT("q->used >= 0", q->used >= 0);
   LWIP_ASSERT("q->size > 0", q->size > 0);
@@ -242,7 +242,7 @@ void sys_mbox_post(sys_mbox_t *q, void *msg)
 err_t sys_mbox_trypost(sys_mbox_t *q, void *msg)
 {
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != q", q->sem != q);
+  LWIP_ASSERT("q->sem == q", q->sem == q);
   LWIP_ASSERT("q->q_mem != NULL", q->q_mem != NULL);
   LWIP_ASSERT("q->used >= 0", q->used >= 0);
   LWIP_ASSERT("q->size > 0", q->size > 0);
@@ -260,7 +260,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
   u32_t ret = 0;
   u32_t ret2;
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
-  LWIP_ASSERT("q->sem != q", q->sem != q);
+  LWIP_ASSERT("q->sem == q", q->sem == q);
   LWIP_ASSERT("q->q_mem != NULL", q->q_mem != NULL);
   LWIP_ASSERT("q->used >= 0", q->used >= 0);
   LWIP_ASSERT("q->size > 0", q->size > 0);

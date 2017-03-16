@@ -32,11 +32,14 @@
 #ifndef LWIP_HDR_LWIPOPTS_H
 #define LWIP_HDR_LWIPOPTS_H
 
-/* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
+/* We link to special sys_arch.c (for basic non-waiting API layers unit tests) */
 #define NO_SYS                          0
 #define SYS_LIGHTWEIGHT_PROT            0
 #define LWIP_NETCONN                    1
 #define LWIP_SOCKET                     1
+#define LWIP_NETCONN_FULLDUPLEX         1
+#define LWIP_HAVE_LOOPIF                1
+#define TCPIP_THREAD_TEST
 
 /* Enable DHCP to test it, disable UDP checksum to easier inject packets */
 #define LWIP_DHCP                       1

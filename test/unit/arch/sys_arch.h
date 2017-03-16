@@ -64,9 +64,5 @@ typedef u32_t sys_thread_t;
 typedef int (*test_sys_arch_waiting_fn)(void* wait_element);
 void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn);
 
-/* no multithreading supported: define to nothing */
-#define LOCK_TCPIP_CORE()
-#define UNLOCK_TCPIP_CORE()
-
 #endif /* LWIP_HDR_TEST_SYS_ARCH_H */
 
