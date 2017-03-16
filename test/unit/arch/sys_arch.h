@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2017 Simon Goldschmidt
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -29,34 +29,44 @@
  * Author: Simon Goldschmidt
  *
  */
-#ifndef LWIP_HDR_LWIPOPTS_H
-#define LWIP_HDR_LWIPOPTS_H
+#ifndef LWIP_HDR_TEST_SYS_ARCH_H
+#define LWIP_HDR_TEST_SYS_ARCH_H
 
-/* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
-#define NO_SYS                          0
-#define SYS_LIGHTWEIGHT_PROT            0
-#define LWIP_NETCONN                    1
-#define LWIP_SOCKET                     1
+typedef int sys_sem_t;
+#define sys_sem_valid(sema) ((sema) != NULL)
 
-/* Enable DHCP to test it, disable UDP checksum to easier inject packets */
-#define LWIP_DHCP                       1
+typedef int sys_mutex_t;
+#define sys_mutex_valid(mutex) (((mutex) != NULL)
 
-/* Minimal changes to opt.h required for tcp unit tests: */
-#define MEM_SIZE                        16000
-#define TCP_SND_QUEUELEN                40
-#define MEMP_NUM_TCP_SEG                TCP_SND_QUEUELEN
-#define TCP_SND_BUF                     (12 * TCP_MSS)
-#define TCP_WND                         (10 * TCP_MSS)
-#define LWIP_WND_SCALE                  1
-#define TCP_RCV_SCALE                   0
-#define PBUF_POOL_SIZE                  400 /* pbuf tests need ~200KByte */
+struct lwip_mbox {
+  void* sem;
+  void** q_mem;
+  unsigned int head, tail;
+  int size;
+  int used;
+};
+typedef struct lwip_mbox sys_mbox_t;
+#define SYS_MBOX_NULL NULL
+#define sys_mbox_valid(mbox) ((mbox != NULL) && ((mbox)->sem != NULL)  && ((mbox)->sem != (void*)-1))
 
-/* Enable IGMP and MDNS for MDNS tests */
-#define LWIP_IGMP                       1
-#define LWIP_MDNS_RESPONDER             1
-#define LWIP_NUM_NETIF_CLIENT_DATA      (LWIP_MDNS_RESPONDER)
+/* DWORD (thread id) is used for sys_thread_t but we won't include windows.h */
+typedef u32_t sys_thread_t;
 
-/* Minimal changes to opt.h required for etharp unit tests: */
-#define ETHARP_SUPPORT_STATIC_ENTRIES   1
+#define SYS_ARCH_DECL_PROTECT(lev)
+#define SYS_ARCH_PROTECT(lev)
+#define SYS_ARCH_UNPROTECT(lev)
 
-#endif /* LWIP_HDR_LWIPOPTS_H */
+/* to implement doing something while waiting:
+ * pass a function to test_sys_arch_wait_callback() that returns
+ * '0' if waiting again and
+ * '1' if now there should be something to do (used for asserting)
+ */
+typedef int (*test_sys_arch_waiting_fn)(void* wait_element);
+void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn);
+
+/* no multithreading supported: define to nothing */
+#define LOCK_TCPIP_CORE()
+#define UNLOCK_TCPIP_CORE()
+
+#endif /* LWIP_HDR_TEST_SYS_ARCH_H */
+
