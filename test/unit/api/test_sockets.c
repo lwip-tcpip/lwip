@@ -208,6 +208,7 @@ static void test_sockets_sendmsg_udp(int domain)
       break;
 #endif /* LWIP_IPV4 */
     default:
+      addr_size = 0;
       fail();
       break;
   }
