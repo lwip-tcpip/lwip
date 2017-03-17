@@ -33,6 +33,9 @@
 
 #include <lwip/opt.h>
 #include <lwip/arch.h>
+#if !NO_SYS
+#include "sys_arch.h"
+#endif
 #include <lwip/stats.h>
 #include <lwip/debug.h>
 #include <lwip/sys.h>
@@ -54,7 +57,6 @@ void sys_init(void)
 }
 
 #if !NO_SYS
-#include "sys_arch.h"
 
 test_sys_arch_waiting_fn the_waiting_fn;
 
