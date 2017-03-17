@@ -1,5 +1,7 @@
 #include "test_sockets.h"
 
+#include "lwip/mem.h"
+#include "lwip/opt.h"
 #include "lwip/sockets.h"
 #include "lwip/stats.h"
 
@@ -170,6 +172,198 @@ static void test_sockets_init_loopback_addr(int domain, struct sockaddr_storage 
   }
 }
 
+static void test_sockets_msgapi_update_iovs(struct msghdr *msg, size_t bytes)
+{
+  int i;
+
+  /* note: this modifies the underyling iov_base and iov_len for a partial
+     read for an individual vector. This updates the msg->msg_iov pointer
+     to skip fully consumed vecotrs */
+  
+  /* process fully consumed vectors */
+  for (i = 0; i < msg->msg_iovlen; i++) {
+    if (msg->msg_iov[i].iov_len <= bytes) {
+      /* reduce bytes by amount of this vector */
+      bytes -= msg->msg_iov[i].iov_len;
+    } else {
+      break; /* iov not fully consumed */
+    }
+  }
+
+  /* slide down over fully consumed vectors */
+  msg->msg_iov = &msg->msg_iov[i];
+  msg->msg_iovlen -= i;
+
+  /* update new first vector with any remaining amount */
+  msg->msg_iov[0].iov_base = ((u8_t *)msg->msg_iov[0].iov_base + bytes);
+  msg->msg_iov[0].iov_len -= bytes;
+}
+
+static void test_sockets_msgapi_tcp(int domain)
+{
+  #define BUF_SZ          (TCP_SND_BUF/4)
+  #define TOTAL_DATA_SZ   (BUF_SZ*8) /* ~(TCP_SND_BUF*2) that accounts for integer rounding */
+  int listnr, s1, s2, i, ret, opt;
+  int bytes_written, bytes_read;
+  struct sockaddr_storage addr_storage;
+  socklen_t addr_size;
+  struct iovec siovs[8];
+  struct msghdr smsg;
+  u8_t * snd_buf;
+  struct iovec riovs[5];
+  struct iovec riovs_tmp[5];
+  struct msghdr rmsg;
+  u8_t * rcv_buf;
+  int    rcv_off;
+  int    rcv_trailer;
+  u8_t val;
+
+  test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
+
+  listnr = test_sockets_alloc_socket_nonblocking(domain, SOCK_STREAM);
+  fail_unless(listnr >= 0);
+  s1 = test_sockets_alloc_socket_nonblocking(domain, SOCK_STREAM);
+  fail_unless(s1 >= 0);
+
+  /* setup a listener socket on loopback with ephemeral port */
+  ret = lwip_bind(listnr, (struct sockaddr*)&addr_storage, addr_size);
+  fail_unless(ret == 0);
+  ret = lwip_listen(listnr, 0);
+  fail_unless(ret == 0);
+
+  /* update address with ephemeral port */
+  ret = lwip_getsockname(listnr, (struct sockaddr*)&addr_storage, &addr_size);
+  fail_unless(ret == 0);
+
+  /* connect, won't complete until we accept it */
+  ret = lwip_connect(s1, (struct sockaddr*)&addr_storage, addr_size);
+  fail_unless(ret == -1);
+  fail_unless(errno == EINPROGRESS);
+
+  while (tcpip_thread_poll_one());
+
+  /* accept, creating the other side of the connection */
+  s2 = lwip_accept(listnr, NULL, NULL);
+  fail_unless(s2 >= 0);
+
+  /* double check s1 is connected */
+  ret = lwip_connect(s1, (struct sockaddr*)&addr_storage, addr_size);
+  fail_unless(ret == -1);
+  fail_unless(errno == EISCONN);
+
+  /* set s2 to non-blocking, not inherited from listener */
+  opt = lwip_fcntl(s2, F_GETFL, 0);
+  fail_unless(opt == 0);
+  opt |= O_NONBLOCK;
+  ret = lwip_fcntl(s2, F_SETFL, opt);
+  fail_unless(ret == 0);
+
+  /* we are done with listener, close it */
+  ret = lwip_close(listnr);
+  fail_unless(ret == 0);
+
+  /* allocate a buffer for a stream of incrementing hex (0x00..0xFF) which we will use
+     to create an input vector set that is larger than the TCP's send buffer. This will
+     force execution of the partial IO vector send case */
+  snd_buf = (u8_t*)mem_malloc(BUF_SZ);
+  val = 0x00;
+  fail_unless(snd_buf != NULL);
+  for (i = 0; i < BUF_SZ; i++,val++) {
+    snd_buf[i] = val;
+  }
+
+  /* send the buffer 8 times in one message, equating to TOTAL_DATA_SZ */
+  for (i = 0; i < 8; i++) {
+    siovs[i].iov_base = snd_buf;
+    siovs[i].iov_len = BUF_SZ;
+  }
+
+  /* allocate a receive buffer, same size as snd_buf for easy verification */
+  rcv_buf = (u8_t*)mem_malloc(BUF_SZ);
+  fail_unless(rcv_buf != NULL);
+  memset(rcv_buf, 0, BUF_SZ);
+  /* split across iovs */
+  for (i = 0; i < 4; i++) {
+    riovs[i].iov_base = &rcv_buf[i*(BUF_SZ/4)];
+    riovs[i].iov_len = BUF_SZ/4;
+  }
+  /* handling trailing bytes if buffer doesn't evenly divide by 4 */
+  if ((BUF_SZ % 4) != 0) {
+    riovs[5].iov_base = &rcv_buf[4*(BUF_SZ/4)];
+    riovs[5].iov_len = BUF_SZ - (4*(BUF_SZ/4));
+    rcv_trailer = 1;
+  } else {
+    rcv_trailer = 0;
+  }
+  /* we use a copy of riovs since we'll be modifying base and len during
+     receiving. This gives us an easy way to reset the iovs for next recvmsg */
+  memcpy(riovs_tmp, riovs, sizeof(riovs));
+
+  memset(&smsg, 0, sizeof(smsg));
+  smsg.msg_iov = siovs;
+  smsg.msg_iovlen = 8;
+
+  memset(&rmsg, 0, sizeof(rmsg));
+  rmsg.msg_iov = riovs_tmp;
+  rmsg.msg_iovlen = (rcv_trailer ? 5 : 4);
+
+  bytes_written = 0;
+  bytes_read = 0;
+  rcv_off = 0;
+
+  while (bytes_written < TOTAL_DATA_SZ && (bytes_read < TOTAL_DATA_SZ)) {
+    /* send data */
+    if (bytes_written < TOTAL_DATA_SZ) {
+      ret = lwip_sendmsg(s1, &smsg, 0);
+      /* note: since we always receive after sending, there will be open
+         space in the send buffer */
+      fail_unless(ret > 0);
+    
+      bytes_written += ret;
+      if (bytes_written < TOTAL_DATA_SZ) {
+        test_sockets_msgapi_update_iovs(&smsg, (size_t)ret);
+      }
+    }
+
+    while (tcpip_thread_poll_one());
+
+    /* receive and verify data */
+    do {
+      if (bytes_read < TOTAL_DATA_SZ) {
+        ret = lwip_recvmsg(s2, &rmsg, 0);
+        fail_unless(ret > 0 || (ret == -1 && errno == EWOULDBLOCK));
+
+        if (ret > 0) {
+          rcv_off += ret;
+          /* we have received a full buffer */
+          if (rcv_off == BUF_SZ) {
+            /* note: since iovs are just pointers, compare underlying buf */
+            fail_unless(!memcmp(snd_buf, rcv_buf, BUF_SZ));
+            bytes_read += BUF_SZ;
+            /* reset receive state for next buffer */
+            rcv_off = 0;
+            memset(rcv_buf, 0, BUF_SZ);
+            memcpy(riovs_tmp, riovs, sizeof(riovs));
+            rmsg.msg_iov = riovs_tmp;
+            rmsg.msg_iovlen = (rcv_trailer ? 5 : 4);
+          } else { /* partial read */
+            test_sockets_msgapi_update_iovs(&rmsg, (size_t)ret);
+          }
+        }
+      } else {
+        break;
+      }
+    } while(ret > 0);
+  }
+  
+  ret = lwip_close(s1);
+  fail_unless(ret == 0);
+  ret = lwip_close(s2);
+  fail_unless(ret == 0);
+  mem_free(snd_buf);
+  mem_free(rcv_buf);
+}
+
 static void test_sockets_msgapi_udp_send_recv_loop(int s, struct msghdr *smsg, struct msghdr *rmsg)
 {
   int i, ret;
@@ -190,6 +384,12 @@ static void test_sockets_msgapi_udp_send_recv_loop(int s, struct msghdr *smsg, s
     fail_unless(*((u8_t*)rmsg->msg_iov[1].iov_base) == 0xAD);
     fail_unless(*((u8_t*)rmsg->msg_iov[2].iov_base) == 0xBE);
     fail_unless(*((u8_t*)rmsg->msg_iov[3].iov_base) == 0xEF);
+
+    /* clear rcv_buf to ensure no data is being skipped */
+    *((u8_t*)rmsg->msg_iov[0].iov_base) = 0x00;
+    *((u8_t*)rmsg->msg_iov[1].iov_base) = 0x00;
+    *((u8_t*)rmsg->msg_iov[2].iov_base) = 0x00;
+    *((u8_t*)rmsg->msg_iov[3].iov_base) = 0x00;
   }
 }
 
@@ -272,9 +472,11 @@ START_TEST(test_sockets_msgapis)
   LWIP_UNUSED_ARG(_i);
 #if LWIP_IPV4
   test_sockets_msgapi_udp(AF_INET);
+  test_sockets_msgapi_tcp(AF_INET);
 #endif
 #if LWIP_IPV6
   test_sockets_msgapi_udp(AF_INET6);
+  test_sockets_msgapi_tcp(AF_INET6);
 #endif
 }
 END_TEST
