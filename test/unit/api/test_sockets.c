@@ -203,6 +203,7 @@ static void test_sockets_msgapi_tcp(int domain)
 {
   #define BUF_SZ          (TCP_SND_BUF/4)
   #define TOTAL_DATA_SZ   (BUF_SZ*8) /* ~(TCP_SND_BUF*2) that accounts for integer rounding */
+  #define NEED_TRAILER    (BUF_SZ % 4 != 0)
   int listnr, s1, s2, i, ret, opt;
   int bytes_written, bytes_read;
   struct sockaddr_storage addr_storage;
@@ -215,7 +216,7 @@ static void test_sockets_msgapi_tcp(int domain)
   struct msghdr rmsg;
   u8_t * rcv_buf;
   int    rcv_off;
-  int    rcv_trailer;
+  int    rcv_trailer = 0;
   u8_t val;
 
   test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
@@ -288,13 +289,14 @@ static void test_sockets_msgapi_tcp(int domain)
     riovs[i].iov_len = BUF_SZ/4;
   }
   /* handling trailing bytes if buffer doesn't evenly divide by 4 */
+#if NEED_TRAILER
   if ((BUF_SZ % 4) != 0) {
     riovs[5].iov_base = &rcv_buf[4*(BUF_SZ/4)];
     riovs[5].iov_len = BUF_SZ - (4*(BUF_SZ/4));
     rcv_trailer = 1;
-  } else {
-    rcv_trailer = 0;
   }
+#endif /* NEED_TRAILER */
+
   /* we use a copy of riovs since we'll be modifying base and len during
      receiving. This gives us an easy way to reset the iovs for next recvmsg */
   memcpy(riovs_tmp, riovs, sizeof(riovs));
