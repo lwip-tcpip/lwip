@@ -7,15 +7,10 @@
 
 
 /* Setups/teardown functions */
-static int tcpip_init_called;
 
 static void
 sockets_setup(void)
 {
-  if (!tcpip_init_called) {
-    tcpip_init_called = 1;
-    tcpip_init(NULL, NULL);
-  }
 }
 
 static void
@@ -27,6 +22,7 @@ sockets_teardown(void)
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 #endif
 
+#if LWIP_SOCKET
 static int
 test_sockets_alloc_socket_nonblocking(int domain, int type)
 {
@@ -95,10 +91,14 @@ static void test_sockets_allfunctions_basic_domain(int domain)
   if (domain == AF_INET) {
 #if LWIP_IPV4
     struct sockaddr_in *addr4 = (struct sockaddr_in *)&addr;
-    addr4->sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr4->sin_addr.s_addr = PP_HTONL(INADDR_LOOPBACK);
 #endif
   } else {
 #if LWIP_IPV6
+    struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&addr;
+    struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
+    addr6->sin6_addr = lo6;
+    //addr6->sin6_family = AF_INET6; /* TODO: fixme! */
 #endif
   }
   ret = lwip_connect(s2, (struct sockaddr*)&addr, addrlen);
@@ -208,6 +208,9 @@ static void test_sockets_sendmsg_udp(int domain)
     }
       break;
 #endif /* LWIP_IPV4 */
+    default:
+      fail();
+      break;
   }
 
   s = test_sockets_alloc_socket_nonblocking(domain, SOCK_DGRAM);
@@ -230,6 +233,9 @@ static void test_sockets_sendmsg_udp(int domain)
         fail_unless(addr_size == sizeof(struct sockaddr_in));
         break;
 #endif /* LWIP_IPV6 */
+    default:
+      fail();
+      break;
   }
 
   msg.msg_iov = iovs;
@@ -280,3 +286,12 @@ sockets_suite(void)
   };
   return create_suite("SOCKETS", tests, sizeof(tests)/sizeof(testfunc), sockets_setup, sockets_teardown);
 }
+
+#else /* LWIP_SOCKET */
+
+Suite *
+sockets_suite(void)
+{
+  return create_suite("SOCKETS", NULL, 0, NULL, NULL);
+}
+#endif /* LWIP_SOCKET */

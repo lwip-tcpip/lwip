@@ -11,6 +11,9 @@
 #include "api/test_sockets.h"
 
 #include "lwip/init.h"
+#if !NO_SYS
+#include "lwip/tcpip.h"
+#endif
 
 Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, SFun setup, SFun teardown)
 {
@@ -51,7 +54,11 @@ int main(void)
   size_t num = sizeof(suites)/sizeof(void*);
   LWIP_ASSERT("No suites defined", num > 0);
 
+#if NO_SYS
   lwip_init();
+#else
+  tcpip_init(NULL, NULL);
+#endif
 
   sr = srunner_create((suites[0])());
   for(i = 1; i < num; i++) {

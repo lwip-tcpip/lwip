@@ -33,19 +33,11 @@
 
 #include <lwip/opt.h>
 #include <lwip/arch.h>
-#include "sys_arch.h"
 #include <lwip/stats.h>
 #include <lwip/debug.h>
 #include <lwip/sys.h>
 
 #include <string.h>
-
-test_sys_arch_waiting_fn the_waiting_fn;
-
-void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn)
-{
-  the_waiting_fn = waiting_fn;
-}
 
 u32_t sys_jiffies(void)
 {
@@ -62,6 +54,14 @@ void sys_init(void)
 }
 
 #if !NO_SYS
+#include "sys_arch.h"
+
+test_sys_arch_waiting_fn the_waiting_fn;
+
+void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn)
+{
+  the_waiting_fn = waiting_fn;
+}
 
 err_t sys_sem_new(sys_sem_t *sem, u8_t count)
 {
