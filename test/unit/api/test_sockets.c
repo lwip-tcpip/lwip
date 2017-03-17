@@ -98,7 +98,6 @@ static void test_sockets_allfunctions_basic_domain(int domain)
     struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)&addr;
     struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
     addr6->sin6_addr = lo6;
-    //addr6->sin6_family = AF_INET6; /* TODO: fixme! */
 #endif
   }
   ret = lwip_connect(s2, (struct sockaddr*)&addr, addrlen);
