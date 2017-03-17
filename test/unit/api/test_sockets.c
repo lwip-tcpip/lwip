@@ -138,49 +138,47 @@ START_TEST(test_sockets_allfunctions_basic)
 }
 END_TEST
 
-static void test_sockets_sendmsg_udp_send_recv_loop(int s, struct msghdr *msg)
+static void test_sockets_msgapi_udp_send_recv_loop(int s, struct msghdr *smsg, struct msghdr *rmsg)
 {
   int i, ret;
-  u8_t buf[4];
 
   /* send/receive our datagram of IO vectors 10 times */
   for (i = 0; i < 10; i++) {
-    ret = lwip_sendmsg(s, msg, 0);
+    ret = lwip_sendmsg(s, smsg, 0);
     fail_unless(ret == 4);
 
     while (tcpip_thread_poll_one());
 
-    ret = lwip_recv(s, buf, sizeof(buf), 0);
+    /* receive the datagram split across 4 buffers */
+    ret = lwip_recvmsg(s, rmsg, 0);
     fail_unless(ret == 4);
 
     /* verify data */
-    fail_unless(buf[0] == 0xDE);
-    fail_unless(buf[1] == 0xAD);
-    fail_unless(buf[2] == 0xBE);
-    fail_unless(buf[3] == 0xEF);
+    fail_unless(*((u8_t*)rmsg->msg_iov[0].iov_base) == 0xDE);
+    fail_unless(*((u8_t*)rmsg->msg_iov[1].iov_base) == 0xAD);
+    fail_unless(*((u8_t*)rmsg->msg_iov[2].iov_base) == 0xBE);
+    fail_unless(*((u8_t*)rmsg->msg_iov[3].iov_base) == 0xEF);
   }
 }
 
-static void test_sockets_sendmsg_udp(int domain)
+static void test_sockets_msgapi_udp(int domain)
 {
   int s, i, ret;
   struct sockaddr_storage addr_storage;
   socklen_t addr_size;
-
-  struct iovec iovs[4];
-  struct msghdr msg;
-  u8_t bytes[4];
-
-  /* each datagram should be 0xDEADBEEF */
-  bytes[0] = 0xDE;
-  bytes[1] = 0xAD;
-  bytes[2] = 0xBE;
-  bytes[3] = 0xEF;
+  struct iovec riovs[4];
+  struct msghdr rmsg = {0};
+  u8_t rcv_buf[4];
+  struct iovec siovs[4];
+  struct msghdr smsg = {0};
+  u8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
 
   /* initialize IO vectors with data */
   for (i = 0; i < 4; i++) {
-    iovs[i].iov_base = &bytes[i];
-    iovs[i].iov_len = sizeof(char);
+    siovs[i].iov_base = &snd_buf[i];
+    siovs[i].iov_len = sizeof(u8_t);
+    riovs[i].iov_base = &rcv_buf[i];
+    riovs[i].iov_len = sizeof(u8_t);
   }
 
   /* set up address to send to */
@@ -238,39 +236,39 @@ static void test_sockets_sendmsg_udp(int domain)
       break;
   }
 
-  msg.msg_iov = iovs;
-  msg.msg_iovlen = 4;
-  msg.msg_control = NULL;
-  msg.msg_controllen = 0;
-  msg.msg_flags = 0;
+  /* send and receive the datagram in 4 pieces */
+  smsg.msg_iov = siovs;
+  smsg.msg_iovlen = 4;
+  rmsg.msg_iov = riovs;
+  rmsg.msg_iovlen = 4;
 
   /* perform a sendmsg with remote host (self) */
-  msg.msg_name = &addr_storage;
-  msg.msg_namelen = addr_size;
+  smsg.msg_name = &addr_storage;
+  smsg.msg_namelen = addr_size;
 
-  test_sockets_sendmsg_udp_send_recv_loop(s, &msg);
+  test_sockets_msgapi_udp_send_recv_loop(s, &smsg, &rmsg);
 
   /* Connect to self, allowing us to not pass message name */
   ret = lwip_connect(s, (struct sockaddr*)&addr_storage, addr_size);
   fail_unless(ret == 0);
 
-  msg.msg_name = NULL;
-  msg.msg_namelen = 0;
+  smsg.msg_name = NULL;
+  smsg.msg_namelen = 0;
 
-  test_sockets_sendmsg_udp_send_recv_loop(s, &msg);
+  test_sockets_msgapi_udp_send_recv_loop(s, &smsg, &rmsg);
 
   ret = lwip_close(s);
   fail_unless(ret == 0);
 }
 
-START_TEST(test_sockets_sendmsg)
+START_TEST(test_sockets_msgapis)
 {
   LWIP_UNUSED_ARG(_i);
 #if LWIP_IPV4
-  test_sockets_sendmsg_udp(AF_INET);
+  test_sockets_msgapi_udp(AF_INET);
 #endif
 #if LWIP_IPV6
-  test_sockets_sendmsg_udp(AF_INET6);
+  test_sockets_msgapi_udp(AF_INET6);
 #endif
 }
 END_TEST
@@ -282,7 +280,7 @@ sockets_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_sockets_basics),
     TESTFUNC(test_sockets_allfunctions_basic),
-    TESTFUNC(test_sockets_sendmsg),
+    TESTFUNC(test_sockets_msgapis),
   };
   return create_suite("SOCKETS", tests, sizeof(tests)/sizeof(testfunc), sockets_setup, sockets_teardown);
 }
