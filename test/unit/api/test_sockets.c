@@ -167,10 +167,10 @@ static void test_sockets_msgapi_udp(int domain)
   struct sockaddr_storage addr_storage;
   socklen_t addr_size;
   struct iovec riovs[4];
-  struct msghdr rmsg = {0};
+  struct msghdr rmsg;
   u8_t rcv_buf[4];
   struct iovec siovs[4];
-  struct msghdr smsg = {0};
+  struct msghdr smsg;
   u8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
 
   /* initialize IO vectors with data */
@@ -237,8 +237,10 @@ static void test_sockets_msgapi_udp(int domain)
   }
 
   /* send and receive the datagram in 4 pieces */
+  memset(&smsg, 0, sizeof(smsg));
   smsg.msg_iov = siovs;
   smsg.msg_iovlen = 4;
+  memset(&rmsg, 0, sizeof(rmsg));
   rmsg.msg_iov = riovs;
   rmsg.msg_iovlen = 4;
 
