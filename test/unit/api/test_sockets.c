@@ -138,6 +138,38 @@ START_TEST(test_sockets_allfunctions_basic)
 }
 END_TEST
 
+static void test_sockets_init_loopback_addr(int domain, struct sockaddr_storage *addr_st, socklen_t *sz)
+{
+  memset(addr_st, 0, sizeof(*addr_st));
+  switch(domain) {
+#if LWIP_IPV6
+    case AF_INET6: {
+      struct sockaddr_in6 *addr = (struct sockaddr_in6*)addr_st;
+      struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
+      addr->sin6_family = AF_INET6;
+      addr->sin6_port = 0; /* use ephemeral port */
+      addr->sin6_addr = lo6;
+      *sz = sizeof(*addr);
+   }
+      break;
+#endif /* LWIP_IPV6 */
+#if LWIP_IPV4
+    case AF_INET: {
+      struct sockaddr_in *addr = (struct sockaddr_in*)addr_st;
+      addr->sin_family = AF_INET;
+      addr->sin_port = 0; /* use ephemeral port */
+      addr->sin_addr.s_addr = PP_HTONL(INADDR_LOOPBACK);
+      *sz = sizeof(*addr);
+    }
+      break;
+#endif /* LWIP_IPV4 */
+    default:
+      *sz = 0;
+      fail();
+      break;
+  }
+}
+
 static void test_sockets_msgapi_udp_send_recv_loop(int s, struct msghdr *smsg, struct msghdr *rmsg)
 {
   int i, ret;
@@ -181,35 +213,7 @@ static void test_sockets_msgapi_udp(int domain)
     riovs[i].iov_len = sizeof(u8_t);
   }
 
-  /* set up address to send to */
-  memset(&addr_storage, 0, sizeof(addr_storage));
-  switch(domain) {
-#if LWIP_IPV6
-    case AF_INET6: {
-      struct sockaddr_in6 *addr = (struct sockaddr_in6*)&addr_storage;
-      struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
-      addr->sin6_family = AF_INET6;
-      addr->sin6_port = 0; /* use ephemeral port */
-      addr->sin6_addr = lo6;
-      addr_size = sizeof(*addr);
-   }
-      break;
-#endif /* LWIP_IPV6 */
-#if LWIP_IPV4
-    case AF_INET: {
-      struct sockaddr_in *addr = (struct sockaddr_in*)&addr_storage;
-      addr->sin_family = AF_INET;
-      addr->sin_port = 0; /* use ephemeral port */
-      addr->sin_addr.s_addr = PP_HTONL(INADDR_LOOPBACK);
-      addr_size = sizeof(*addr);
-    }
-      break;
-#endif /* LWIP_IPV4 */
-    default:
-      addr_size = 0;
-      fail();
-      break;
-  }
+  test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
 
   s = test_sockets_alloc_socket_nonblocking(domain, SOCK_DGRAM);
   fail_unless(s >= 0);
