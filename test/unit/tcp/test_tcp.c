@@ -29,10 +29,16 @@ test_tcp_tmr(void)
 }
 
 /* Setups/teardown functions */
+static struct netif *old_netif_list;
+static struct netif *old_netif_default;
 
 static void
 tcp_setup(void)
 {
+  old_netif_list = netif_list;
+  old_netif_default = netif_default;
+  netif_list = NULL;
+  netif_default = NULL;
   /* reset iss to default (6510) */
   tcp_ticks = 0;
   tcp_ticks = 0 - (tcp_next_iss(NULL) - 6510);
@@ -49,6 +55,9 @@ tcp_teardown(void)
   netif_list = NULL;
   netif_default = NULL;
   tcp_remove_all();
+  /* restore netif_list for next tests (e.g. loopif) */
+  netif_list = old_netif_list;
+  netif_default = old_netif_default;
 }
 
 

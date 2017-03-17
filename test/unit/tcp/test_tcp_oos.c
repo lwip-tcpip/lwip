@@ -118,19 +118,28 @@ tcp_oos_tcplen(struct tcp_pcb* pcb)
 }
 
 /* Setup/teardown functions */
+static struct netif *old_netif_list;
+static struct netif *old_netif_default;
 
 static void
 tcp_oos_setup(void)
 {
+  old_netif_list = netif_list;
+  old_netif_default = netif_default;
+  netif_list = NULL;
+  netif_default = NULL;
   tcp_remove_all();
 }
 
 static void
 tcp_oos_teardown(void)
 {
-  tcp_remove_all();
   netif_list = NULL;
   netif_default = NULL;
+  tcp_remove_all();
+  /* restore netif_list for next tests (e.g. loopif) */
+  netif_list = old_netif_list;
+  netif_default = old_netif_default;
 }
 
 
