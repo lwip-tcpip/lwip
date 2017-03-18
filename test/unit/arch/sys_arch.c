@@ -97,7 +97,7 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
       /* wait infinite */
       LWIP_ASSERT("cannot wait without waiting callback", the_waiting_fn != NULL);
       do {
-        int expectSomething = the_waiting_fn(sem);
+        int expectSomething = the_waiting_fn(sem, NULL);
         LWIP_ASSERT("*sem > 0", *sem > 0);
         LWIP_ASSERT("expecting a semaphore count but it's 0", !expectSomething || (*sem > 1));
         ret++;
@@ -106,7 +106,7 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
     else
     {
       if (the_waiting_fn) {
-        int expectSomething = the_waiting_fn(sem);
+        int expectSomething = the_waiting_fn(sem, NULL);
         LWIP_ASSERT("expecting a semaphore count but it's 0", !expectSomething || (*sem > 1));
       }
       LWIP_ASSERT("*sem > 0", *sem > 0);
@@ -275,7 +275,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
       /* wait infinite */
       LWIP_ASSERT("cannot wait without waiting callback", the_waiting_fn != NULL);
       do {
-        int expectSomething = the_waiting_fn(q);
+        int expectSomething = the_waiting_fn(NULL, q);
         LWIP_ASSERT("q->used >= 0", q->used >= 0);
         LWIP_ASSERT("expecting item available but it's 0", !expectSomething || (q->used > 0));
         ret++;
@@ -284,7 +284,7 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
     else
     {
       if (the_waiting_fn) {
-        int expectSomething = the_waiting_fn(q);
+        int expectSomething = the_waiting_fn(NULL, q);
         LWIP_ASSERT("expecting item available count but it's 0", !expectSomething || (q->used > 0));
       }
       LWIP_ASSERT("q->used >= 0", q->used >= 0);

@@ -56,12 +56,12 @@ typedef u32_t sys_thread_t;
 #define SYS_ARCH_PROTECT(lev)
 #define SYS_ARCH_UNPROTECT(lev)
 
-/* to implement doing something while waiting:
+/* to implement doing something while blocking on an mbox or semaphore:
  * pass a function to test_sys_arch_wait_callback() that returns
  * '0' if waiting again and
  * '1' if now there should be something to do (used for asserting)
  */
-typedef int (*test_sys_arch_waiting_fn)(void* wait_element);
+typedef int (*test_sys_arch_waiting_fn)(sys_sem_t* wait_sem, sys_mbox_t* wait_mbox);
 void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn);
 
 #endif /* LWIP_HDR_TEST_SYS_ARCH_H */
