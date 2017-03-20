@@ -54,24 +54,30 @@ static const char * const g_psHTTPHeaderStrings[] =
 #define DEFAULT_404_HTML_PERSISTENT 14 /* default 404 body, but including Connection: keep-alive */
 #endif
 
+#define HTTP_CONTENT_TYPE(contenttype) "Content-Type: "contenttype"\r\n\r\n"
+#define HTTP_CONTENT_TYPE_ENCODING(contenttype, encoding) "Content-Type: "contenttype"\r\nContent-Encoding: "encoding"\r\n\r\n"
 
-#define HTTP_HDR_HTML           "Content-type: text/html\r\n\r\n"
-#define HTTP_HDR_SSI            "Content-type: text/html\r\nExpires: Fri, 10 Apr 2008 14:00:00 GMT\r\nPragma: no-cache\r\n\r\n"
-#define HTTP_HDR_GIF            "Content-type: image/gif\r\n\r\n"
-#define HTTP_HDR_PNG            "Content-type: image/png\r\n\r\n"
-#define HTTP_HDR_JPG            "Content-type: image/jpeg\r\n\r\n"
-#define HTTP_HDR_BMP            "Content-type: image/bmp\r\n\r\n"
-#define HTTP_HDR_ICO            "Content-type: image/x-icon\r\n\r\n"
-#define HTTP_HDR_APP            "Content-type: application/octet-stream\r\n\r\n"
-#define HTTP_HDR_JS             "Content-type: application/javascript\r\n\r\n"
-#define HTTP_HDR_RA             "Content-type: application/javascript\r\n\r\n"
-#define HTTP_HDR_CSS            "Content-type: text/css\r\n\r\n"
-#define HTTP_HDR_SWF            "Content-type: application/x-shockwave-flash\r\n\r\n"
-#define HTTP_HDR_XML            "Content-type: text/xml\r\n\r\n"
-#define HTTP_HDR_PDF            "Content-type: application/pdf\r\n\r\n"
-#define HTTP_HDR_JSON           "Content-type: application/json\r\n\r\n"
+#define HTTP_HDR_HTML           HTTP_CONTENT_TYPE("text/html")
+#define HTTP_HDR_SSI            HTTP_CONTENT_TYPE("text/html\r\nExpires: Fri, 10 Apr 2008 14:00:00 GMT\r\nPragma: no-cache")
+#define HTTP_HDR_GIF            HTTP_CONTENT_TYPE("image/gif")
+#define HTTP_HDR_PNG            HTTP_CONTENT_TYPE("image/png")
+#define HTTP_HDR_JPG            HTTP_CONTENT_TYPE("image/jpeg")
+#define HTTP_HDR_BMP            HTTP_CONTENT_TYPE("image/bmp")
+#define HTTP_HDR_ICO            HTTP_CONTENT_TYPE("image/x-icon")
+#define HTTP_HDR_APP            HTTP_CONTENT_TYPE("application/octet-stream")
+#define HTTP_HDR_JS             HTTP_CONTENT_TYPE("application/javascript")
+#define HTTP_HDR_RA             HTTP_CONTENT_TYPE("application/javascript")
+#define HTTP_HDR_CSS            HTTP_CONTENT_TYPE("text/css")
+#define HTTP_HDR_SWF            HTTP_CONTENT_TYPE("application/x-shockwave-flash")
+#define HTTP_HDR_XML            HTTP_CONTENT_TYPE("text/xml")
+#define HTTP_HDR_PDF            HTTP_CONTENT_TYPE("application/pdf")
+#define HTTP_HDR_JSON           HTTP_CONTENT_TYPE("application/json")
+#define HTTP_HDR_CSV            HTTP_CONTENT_TYPE("text/csv")
+#define HTTP_HDR_TSV            HTTP_CONTENT_TYPE("text/tsv")
+#define HTTP_HDR_SVG            HTTP_CONTENT_TYPE("image/svg+xml")
+#define HTTP_HDR_SVGZ           HTTP_CONTENT_TYPE_ENCODING("image/svg+xml", "gzip")
 
-#define HTTP_HDR_DEFAULT_TYPE   "Content-type: text/plain\r\n\r\n"
+#define HTTP_HDR_DEFAULT_TYPE   HTTP_CONTENT_TYPE("text/plain")
 
 /** A list of extension-to-HTTP header strings (see outdated RFC 1700 MEDIA TYPES
  * and http://www.iana.org/assignments/media-types for registered content types
@@ -97,7 +103,13 @@ static const tHTTPHeader g_psHTTPHeaders[] =
  { "xml",  HTTP_HDR_XML},
  { "xsl",  HTTP_HDR_XML},
  { "pdf",  HTTP_HDR_PDF},
- { "json", HTTP_HDR_JSON}
+ { "json", HTTP_HDR_JSON},
+#if HTTPD_ADDITIONAL_CONTENT_TYPES
+ /* If you need to add content types not listed here:
+  * #define HTTPD_ADDITIONAL_CONTENT_TYPES {"ct1", HTTP_CONTENT_TYPE("text/ct1")}, {"exe", HTTP_CONTENT_TYPE("application/exe")}
+  */
+ , HTTPD_ADDITIONAL_CONTENT_TYPES
+#endif
 };
 
 #define NUM_HTTP_HEADERS (sizeof(g_psHTTPHeaders) / sizeof(tHTTPHeader))
