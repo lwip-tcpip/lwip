@@ -61,6 +61,7 @@
 #if LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS
 
 #include "lwip/altcp.h"
+#include "lwip/apps/altcp_tls.h"
 #include "lwip/priv/altcp_priv.h"
 
 #include "altcp_mbedtls_structs.h"
@@ -186,7 +187,7 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
 
   /* handle NULL pbufs or other errors */
   if ((p == NULL) || (err != ERR_OK)) {
-    err_t err = ERR_OK;
+    err_t local_err = ERR_OK;
     if (p == NULL) {
       /* remote host sent FIN, remember this (SSL state is destroyed
          when both sides are closed only!) */
@@ -195,7 +196,7 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
     if (state->flags & ALTCP_MBEDTLS_FLAGS_UPPER_CALLED) {
       /* need to notify upper layer (e.g. 'accept' called or 'connect' succeeded) */
       if (conn->recv) {
-        err = conn->recv(conn->arg, conn, p, err);
+        local_err = conn->recv(conn->arg, conn, p, err);
       } else {
         /* no recv callback? close connection */
         if (p) {
@@ -216,7 +217,7 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
     if (conn->state && ((state->flags & ALTCP_MBEDTLS_FLAGS_CLOSED) == ALTCP_MBEDTLS_FLAGS_CLOSED)) {
       altcp_mbedtls_dealloc(conn);
     }
-    return err;
+    return local_err;
   }
 
   /* If we come here, the connection is in good state (handshake phase or application data phase).
@@ -502,7 +503,8 @@ altcp_mbedtls_debug(void *ctx, int level, const char *file, int line, const char
 
 #ifndef ALTCP_MBEDTLS_RNG_FN
 /** ATTENTION: It is *really* important to *NOT* use this dummy RNG in production code!!!! */
-int dummy_rng(void *ctx, unsigned char *buffer , size_t len)
+static int
+dummy_rng(void *ctx, unsigned char *buffer , size_t len)
 {
   static size_t ctr;
   size_t i;
@@ -840,7 +842,7 @@ altcp_mbedtls_dealloc(struct altcp_pcb *conn)
   }
 }
 
-err_t
+static err_t
 altcp_mbedtls_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
 {
   if (conn) {
@@ -850,7 +852,7 @@ altcp_mbedtls_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *add
 }
 
 #ifdef LWIP_DEBUG
-enum tcp_state
+static enum tcp_state
 altcp_mbedtls_dbg_get_tcp_state(struct altcp_pcb *conn)
 {
   if (conn) {

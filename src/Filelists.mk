@@ -175,6 +175,10 @@ TFTPFILES=$(LWIPDIR)/apps/tftp/tftp_server.c
 # MQTTFILES: MQTT client files
 MQTTFILES=$(LWIPDIR)/apps/mqtt/mqtt.c
 
+# ALTCP_TLS_MBEDTLS: MBEDTLS port of altcp_tls
+ALTCP_TLS_MBEDTLS=$(LWIPDIR)/apps/altcp_tls/altcp_mbedtls.c \
+	$(LWIPDIR)/apps/altcp_tls/altcp_mbedtls_mem.c
+
 # LWIPAPPFILES: All LWIP APPs
 LWIPAPPFILES=$(SNMPFILES) \
 	$(HTTPDFILES) \
@@ -183,4 +187,5 @@ LWIPAPPFILES=$(SNMPFILES) \
 	$(MDNSFILES) \
 	$(NETBIOSNSFILES) \
 	$(TFTPFILES) \
-	$(MQTTFILES)
+	$(MQTTFILES) \
+	$(ALTCP_TLS_MBEDTLS)
