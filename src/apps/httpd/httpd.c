@@ -95,8 +95,9 @@
 #include "lwip/apps/fs.h"
 #include "httpd_structs.h"
 #include "lwip/def.h"
-#include "lwip/ip.h"
-#include "lwip/tcp.h"
+
+#include "lwip/altcp.h"
+#include "lwip/altcp_tcp.h"
 
 #include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
@@ -235,7 +236,7 @@ struct http_state {
   struct fs_file *handle;
   const char *file;       /* Pointer to first unsent byte in buf. */
 
-  struct tcp_pcb *pcb;
+  struct altcp_pcb *pcb;
 #if LWIP_HTTPD_SUPPORT_REQUESTLIST
   struct pbuf *req;
 #endif /* LWIP_HTTPD_SUPPORT_REQUESTLIST */
@@ -294,12 +295,12 @@ LWIP_MEMPOOL_DECLARE(HTTPD_SSI_STATE, MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS, sizeof(
 #endif /* LWIP_HTTPD_SSI */
 #endif /* HTTPD_USE_MEM_POOL */
 
-static err_t http_close_conn(struct tcp_pcb *pcb, struct http_state *hs);
-static err_t http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_conn);
+static err_t http_close_conn(struct altcp_pcb *pcb, struct http_state *hs);
+static err_t http_close_or_abort_conn(struct altcp_pcb *pcb, struct http_state *hs, u8_t abort_conn);
 static err_t http_find_file(struct http_state *hs, const char *uri, int is_09);
 static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check, char* params);
-static err_t http_poll(void *arg, struct tcp_pcb *pcb);
-static u8_t http_check_eof(struct tcp_pcb *pcb, struct http_state *hs);
+static err_t http_poll(void *arg, struct altcp_pcb *pcb);
+static u8_t http_check_eof(struct altcp_pcb *pcb, struct http_state *hs);
 #if LWIP_HTTPD_FS_ASYNC_READ
 static void http_continue(void *connection);
 #endif /* LWIP_HTTPD_FS_ASYNC_READ */
@@ -508,7 +509,7 @@ http_state_free(struct http_state *hs)
 
 /** Call tcp_write() in a loop trying smaller and smaller length
  *
- * @param pcb tcp_pcb to send
+ * @param pcb altcp_pcb to send
  * @param ptr Data to send
  * @param length Length of data to send (in/out: on return, contains the
  *        amount of data sent)
@@ -516,7 +517,7 @@ http_state_free(struct http_state *hs)
  * @return the return value of tcp_write
  */
 static err_t
-http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
+http_write(struct altcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
 {
   u16_t len, max_len;
   err_t err;
@@ -526,7 +527,7 @@ http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
     return ERR_OK;
   }
   /* We cannot send more data than space available in the send buffer. */
-  max_len = tcp_sndbuf(pcb);
+  max_len = altcp_sndbuf(pcb);
   if (max_len < len) {
     len = max_len;
   }
@@ -539,10 +540,10 @@ http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
 #endif /* HTTPD_MAX_WRITE_LEN */
   do {
     LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Trying go send %d bytes\n", len));
-    err = tcp_write(pcb, ptr, len, apiflags);
+    err = altcp_write(pcb, ptr, len, apiflags);
     if (err == ERR_MEM) {
-      if ((tcp_sndbuf(pcb) == 0) ||
-        (tcp_sndqueuelen(pcb) >= TCP_SND_QUEUELEN)) {
+      if ((altcp_sndbuf(pcb) == 0) ||
+        (altcp_sndqueuelen(pcb) >= TCP_SND_QUEUELEN)) {
           /* no need to try smaller sizes */
           len = 1;
       } else {
@@ -579,7 +580,7 @@ http_write(struct tcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
  * @param hs connection state to free
  */
 static err_t
-http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_conn)
+http_close_or_abort_conn(struct altcp_pcb *pcb, struct http_state *hs, u8_t abort_conn)
 {
   err_t err;
   LWIP_DEBUGF(HTTPD_DEBUG, ("Closing connection %p\n", (void*)pcb));
@@ -599,24 +600,24 @@ http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_
 #endif /* LWIP_HTTPD_SUPPORT_POST*/
 
 
-  tcp_arg(pcb, NULL);
-  tcp_recv(pcb, NULL);
-  tcp_err(pcb, NULL);
-  tcp_poll(pcb, NULL, 0);
-  tcp_sent(pcb, NULL);
+  altcp_arg(pcb, NULL);
+  altcp_recv(pcb, NULL);
+  altcp_err(pcb, NULL);
+  altcp_poll(pcb, NULL, 0);
+  altcp_sent(pcb, NULL);
   if (hs != NULL) {
     http_state_free(hs);
   }
 
   if (abort_conn) {
-    tcp_abort(pcb);
+    altcp_abort(pcb);
     return ERR_OK;
   }
-  err = tcp_close(pcb);
+  err = altcp_close(pcb);
   if (err != ERR_OK) {
     LWIP_DEBUGF(HTTPD_DEBUG, ("Error %d closing %p\n", err, (void*)pcb));
     /* error closing, try again later in poll */
-    tcp_poll(pcb, http_poll, HTTPD_POLL_INTERVAL);
+    altcp_poll(pcb, http_poll, HTTPD_POLL_INTERVAL);
   }
   return err;
 }
@@ -629,7 +630,7 @@ http_close_or_abort_conn(struct tcp_pcb *pcb, struct http_state *hs, u8_t abort_
  * @param hs connection state to free
  */
 static err_t
-http_close_conn(struct tcp_pcb *pcb, struct http_state *hs)
+http_close_conn(struct altcp_pcb *pcb, struct http_state *hs)
 {
    return http_close_or_abort_conn(pcb, hs, 0);
 }
@@ -638,7 +639,7 @@ http_close_conn(struct tcp_pcb *pcb, struct http_state *hs)
  * close the file (Connection: keep-alive)
  */
 static void
-http_eof(struct tcp_pcb *pcb, struct http_state *hs)
+http_eof(struct altcp_pcb *pcb, struct http_state *hs)
 {
   /* HTTP/1.1 persistent connection? (Not supported for SSI) */
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
@@ -973,7 +974,7 @@ get_http_headers(struct http_state *hs, const char *uri)
  *                                      so don't send HTTP body yet
  */
 static u8_t
-http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
+http_send_headers(struct altcp_pcb *pcb, struct http_state *hs)
 {
   err_t err;
   u16_t len;
@@ -1059,7 +1060,7 @@ http_send_headers(struct tcp_pcb *pcb, struct http_state *hs)
  *           1 if the file is not finished and data has been read
  */
 static u8_t
-http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
+http_check_eof(struct altcp_pcb *pcb, struct http_state *hs)
 {
   int bytes_left;
 #if LWIP_HTTPD_DYNAMIC_FILE_READ
@@ -1158,7 +1159,7 @@ http_check_eof(struct tcp_pcb *pcb, struct http_state *hs)
  *           - 0: no data has been written (no need to call tcp_output)
  */
 static u8_t
-http_send_data_nonssi(struct tcp_pcb *pcb, struct http_state *hs)
+http_send_data_nonssi(struct altcp_pcb *pcb, struct http_state *hs)
 {
   err_t err;
   u16_t len;
@@ -1185,7 +1186,7 @@ http_send_data_nonssi(struct tcp_pcb *pcb, struct http_state *hs)
  *           - 0: no data has been written (no need to call tcp_output)
  */
 static u8_t
-http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
+http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
 {
   err_t err = ERR_OK;
   u16_t len;
@@ -1509,7 +1510,7 @@ http_send_data_ssi(struct tcp_pcb *pcb, struct http_state *hs)
  * @param hs connection state
  */
 static u8_t
-http_send(struct tcp_pcb *pcb, struct http_state *hs)
+http_send(struct altcp_pcb *pcb, struct http_state *hs)
 {
   u8_t data_to_send = HTTP_NO_DATA_TO_SEND;
 
@@ -1890,13 +1891,13 @@ http_continue(void *connection)
  *
  * @param inp the received pbuf
  * @param hs the connection state
- * @param pcb the tcp_pcb which received this packet
+ * @param pcb the altcp_pcb which received this packet
  * @return ERR_OK if request was OK and hs has been initialized correctly
  *         ERR_INPROGRESS if request was OK so far but not fully received
  *         another err_t otherwise
  */
 static err_t
-http_parse_request(struct pbuf *inp, struct http_state *hs, struct tcp_pcb *pcb)
+http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pcb)
 {
   char *data;
   char *crlf;
@@ -2353,7 +2354,7 @@ http_err(void *arg, err_t err)
  * This means that more data can be sent.
  */
 static err_t
-http_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
+http_sent(void *arg, struct altcp_pcb *pcb, u16_t len)
 {
   struct http_state *hs = (struct http_state *)arg;
 
@@ -2380,11 +2381,11 @@ http_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
  * This could be increased, but we don't want to waste resources for bad connections.
  */
 static err_t
-http_poll(void *arg, struct tcp_pcb *pcb)
+http_poll(void *arg, struct altcp_pcb *pcb)
 {
   struct http_state *hs = (struct http_state *)arg;
   LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_poll: pcb=%p hs=%p pcb_state=%s\n",
-    (void*)pcb, (void*)hs, tcp_debug_state_str(pcb->state)));
+    (void*)pcb, (void*)hs, tcp_debug_state_str(altcp_dbg_get_tcp_state(pcb))));
 
   if (hs == NULL) {
     err_t closed;
@@ -2415,7 +2416,7 @@ http_poll(void *arg, struct tcp_pcb *pcb)
       if(http_send(pcb, hs)) {
         /* If we wrote anything to be sent, go ahead and send it now. */
         LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("tcp_output\n"));
-        tcp_output(pcb);
+        altcp_output(pcb);
       }
     }
   }
@@ -2428,7 +2429,7 @@ http_poll(void *arg, struct tcp_pcb *pcb)
  * For HTTP 1.0, this should normally only happen once (if the request fits in one packet).
  */
 static err_t
-http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
+http_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 {
   struct http_state *hs = (struct http_state *)arg;
   LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_recv: pcb=%p pbuf=%p err=%s\n", (void*)pcb,
@@ -2438,7 +2439,7 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     /* error or closed by other side? */
     if (p != NULL) {
       /* Inform TCP that we have taken the data. */
-      tcp_recved(pcb, p->tot_len);
+      altcp_recved(pcb, p->tot_len);
       pbuf_free(p);
     }
     if (hs == NULL) {
@@ -2456,7 +2457,7 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 #endif /* LWIP_HTTPD_SUPPORT_POST && LWIP_HTTPD_POST_MANUAL_WND */
   {
     /* Inform TCP that we have taken the data. */
-    tcp_recved(pcb, p->tot_len);
+    altcp_recved(pcb, p->tot_len);
   }
 
 #if LWIP_HTTPD_SUPPORT_POST
@@ -2513,7 +2514,7 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
  * A new incoming connection has been accepted.
  */
 static err_t
-http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
+http_accept(void *arg, struct altcp_pcb *pcb, err_t err)
 {
   struct http_state *hs;
   LWIP_UNUSED_ARG(err);
@@ -2525,7 +2526,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
   }
 
   /* Set priority */
-  tcp_setprio(pcb, HTTPD_TCP_PRIO);
+  altcp_setprio(pcb, HTTPD_TCP_PRIO);
 
   /* Allocate memory for the structure that holds the state of the
      connection - initialized by that function. */
@@ -2538,13 +2539,13 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 
   /* Tell TCP that this is the structure we wish to be passed for our
      callbacks. */
-  tcp_arg(pcb, hs);
+  altcp_arg(pcb, hs);
 
   /* Set up the various callback functions */
-  tcp_recv(pcb, http_recv);
-  tcp_err(pcb, http_err);
-  tcp_poll(pcb, http_poll, HTTPD_POLL_INTERVAL);
-  tcp_sent(pcb, http_sent);
+  altcp_recv(pcb, http_recv);
+  altcp_err(pcb, http_err);
+  altcp_poll(pcb, http_poll, HTTPD_POLL_INTERVAL);
+  altcp_sent(pcb, http_sent);
 
   return ERR_OK;
 }
@@ -2556,7 +2557,7 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 void
 httpd_init(void)
 {
-  struct tcp_pcb *pcb;
+  struct altcp_pcb *pcb;
   err_t err;
 
 #if HTTPD_USE_MEM_POOL
@@ -2567,16 +2568,16 @@ httpd_init(void)
 #endif
   LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));
 
-  pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
+  pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
-  tcp_setprio(pcb, HTTPD_TCP_PRIO);
+  altcp_setprio(pcb, HTTPD_TCP_PRIO);
   /* set SOF_REUSEADDR here to explicitly bind httpd to multiple interfaces */
-  err = tcp_bind(pcb, IP_ANY_TYPE, HTTPD_SERVER_PORT);
+  err = altcp_bind(pcb, IP_ANY_TYPE, HTTPD_SERVER_PORT);
   LWIP_UNUSED_ARG(err); /* in case of LWIP_NOASSERT */
   LWIP_ASSERT("httpd_init: tcp_bind failed", err == ERR_OK);
-  pcb = tcp_listen(pcb);
+  pcb = altcp_listen(pcb);
   LWIP_ASSERT("httpd_init: tcp_listen failed", pcb != NULL);
-  tcp_accept(pcb, http_accept);
+  altcp_accept(pcb, http_accept);
 }
 
 #if LWIP_HTTPD_SSI

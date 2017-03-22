@@ -264,7 +264,7 @@
    The function have this signature: u16_t fn(struct tcp_pcb* pcb); */
 #if !defined HTTPD_MAX_WRITE_LEN || defined __DOXYGEN__
 #if HTTPD_LIMIT_SENDING_TO_2MSS
-#define HTTPD_MAX_WRITE_LEN(pcb)    (2 * tcp_mss(pcb))
+#define HTTPD_MAX_WRITE_LEN(pcb)    (2 * altcp_mss(pcb))
 #endif
 #endif
 
