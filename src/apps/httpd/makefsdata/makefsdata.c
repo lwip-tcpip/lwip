@@ -206,6 +206,8 @@ int main(int argc, char *argv[])
   printf("     by Jim Pettinato               - circa 2003 " NEWLINE);
   printf("     extended by Simon Goldschmidt  - 2009 " NEWLINE NEWLINE);
 
+  LWIP_ASSERT("sizeof(hdr_buf) must fit into an u16_t", sizeof(hdr_buf) <= 0xffff);
+
   strcpy(path, "fs");
   for (i = 1; i < argc; i++) {
     if (argv[i] == NULL) {
