@@ -177,14 +177,20 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   LWIP_ASSERT("recv_udp must have a pcb argument", pcb != NULL);
   LWIP_ASSERT("recv_udp must have an argument", arg != NULL);
   conn = (struct netconn *)arg;
+
+  if (conn == NULL) {
+    pbuf_free(p);
+    return;
+  }
+
   LWIP_ASSERT("recv_udp: recv for wrong pcb!", conn->pcb.udp == pcb);
 
 #if LWIP_SO_RCVBUF
   SYS_ARCH_GET(conn->recv_avail, recv_avail);
-  if ((conn == NULL) || !sys_mbox_valid(&conn->recvmbox) ||
+  if (!sys_mbox_valid(&conn->recvmbox) ||
       ((recv_avail + (int)(p->tot_len)) > conn->recv_bufsize)) {
 #else  /* LWIP_SO_RCVBUF */
-  if ((conn == NULL) || !sys_mbox_valid(&conn->recvmbox)) {
+  if (!sys_mbox_valid(&conn->recvmbox)) {
 #endif /* LWIP_SO_RCVBUF */
     pbuf_free(p);
     return;
