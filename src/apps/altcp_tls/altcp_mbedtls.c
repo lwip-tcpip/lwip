@@ -56,6 +56,10 @@
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/apps/altcp_tls_opts.h"
+
+#if LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS
+
 #include "lwip/altcp.h"
 #include "lwip/priv/altcp_priv.h"
 
@@ -76,18 +80,6 @@
 #include "mbedtls/ssl_cache.h"
 
 #include <string.h>
-
-/** Configure debug level of this file */
-#ifndef ALTCP_MBEDTLS_DEBUG
-#define ALTCP_MBEDTLS_DEBUG   LWIP_DBG_ON//FF
-#endif
-
-/** Set a session timeout in seconds for the basic session cache
- * ATTENTION: Using a session cache can lower security by reusing keys!
- */
-#ifndef ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
-#define ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS   30//0
-#endif
 
 #ifndef ALTCP_MBEDTLS_ENTROPY_PTR
 #define ALTCP_MBEDTLS_ENTROPY_PTR   NULL
@@ -866,4 +858,5 @@ const struct altcp_functions altcp_mbedtls_functions = {
   altcp_mbedtls_dealloc
 };
 
+#endif /* LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS */
 #endif /* LWIP_ALTCP */
