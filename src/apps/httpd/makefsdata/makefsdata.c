@@ -989,10 +989,10 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   /* ATTENTION: headers are done now (double-CRLF has been written!) */
 
   if (precalcChksum) {
+    LWIP_ASSERT("hdr_len + cur_len <= sizeof(hdr_buf)", hdr_len + cur_len <= sizeof(hdr_buf));
     memcpy(&hdr_buf[hdr_len], cur_string, cur_len);
     hdr_len += cur_len;
 
-    LWIP_ASSERT("hdr_len <= 0xffff", hdr_len <= 0xffff);
     LWIP_ASSERT("strlen(hdr_buf) == hdr_len", strlen(hdr_buf) == hdr_len);
     acc = ~inet_chksum(hdr_buf, (u16_t)hdr_len);
     *http_hdr_len = (u16_t)hdr_len;
