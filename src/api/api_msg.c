@@ -471,8 +471,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   struct netconn *newconn;
   struct netconn *conn = (struct netconn *)arg;
 
-  LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: newpcb->tate: %s\n", tcp_debug_state_str(newpcb->state)));
-
   if (conn == NULL) {
     return ERR_VAL;
   }
@@ -489,6 +487,8 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     }
     return ERR_VAL;
   }
+
+  LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: newpcb->tate: %s\n", tcp_debug_state_str(newpcb->state)));
 
   /* We have to set the callback here even though
    * the new socket is unknown. newconn->socket is marked as -1. */
