@@ -360,8 +360,9 @@ mqtt_take_request(struct mqtt_request_t **tail, u16_t pkt_id)
 static void
 mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
 {
-  struct mqtt_request_t *r = *tail;
+  struct mqtt_request_t *r;
   LWIP_ASSERT("mqtt_request_time_elapsed: tail != NULL", tail != NULL);
+  r = *tail;
   while (t > 0 && r != NULL) {
     if (t >= r->timeout_diff) {
       t -= (u8_t)r->timeout_diff;
