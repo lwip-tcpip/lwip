@@ -349,9 +349,12 @@ void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interv
 #if LWIP_TCP_TIMESTAMPS
 #define          tcp_mss(pcb)             (((pcb)->flags & TF_TIMESTAMP) ? ((pcb)->mss - 12)  : (pcb)->mss)
 #else /* LWIP_TCP_TIMESTAMPS */
+/** @ingroup tcp_raw */
 #define          tcp_mss(pcb)             ((pcb)->mss)
 #endif /* LWIP_TCP_TIMESTAMPS */
+/** @ingroup tcp_raw */
 #define          tcp_sndbuf(pcb)          (TCPWND16((pcb)->snd_buf))
+/** @ingroup tcp_raw */
 #define          tcp_sndqueuelen(pcb)     ((pcb)->snd_queuelen)
 /** @ingroup tcp_raw */
 #define          tcp_nagle_disable(pcb)   ((pcb)->flags |= TF_NODELAY)
