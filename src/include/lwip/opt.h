@@ -1352,6 +1352,18 @@
 #define LWIP_WND_SCALE                  0
 #define TCP_RCV_SCALE                   0
 #endif
+
+/** LWIP_ALTCP==1: enable the altcp API
+ * altcp is an abstraction layer that prevents applications linking against the
+ * tcp.h functions but provides the same functionality. It is used to e.g. add
+ * SSL/TLS or proxy-connect support to an application written for the tcp callback
+ * API without that application knowing the protocol details.
+ * Applications written against the altcp API are directly linked against the
+ * tcp callback API for LWIP_ALTCP==0, but then cannot use layered protocols.
+ */
+#ifndef LWIP_ALTCP
+#define LWIP_ALTCP                      (LWIP_TCP && LWIP_CALLBACK_API)
+#endif
 /**
  * @}
  */
