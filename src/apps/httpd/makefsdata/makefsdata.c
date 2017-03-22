@@ -502,6 +502,7 @@ u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed,
   buf = (u8_t*)malloc(fsize);
   LWIP_ASSERT("buf != NULL", buf != NULL);
   r = fread(buf, 1, fsize, inFile);
+  LWIP_ASSERT("r == fsize", r == fsize);
   *file_size = fsize;
   *is_compressed = 0;
 #if MAKEFS_SUPPORT_DEFLATE
