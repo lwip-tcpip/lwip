@@ -78,6 +78,11 @@ typedef void  (*altcp_setprio_fn)(struct altcp_pcb *conn, u8_t prio);
 
 typedef void  (*altcp_dealloc_fn)(struct altcp_pcb *conn);
 
+typedef err_t (*altcp_get_tcp_addrinfo_fn)(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
+#ifdef LWIP_DEBUG
+typedef enum tcp_state (*altcp_dbg_get_tcp_state_fn)(struct altcp_pcb *conn);
+#endif
+
 struct altcp_functions {
   altcp_set_poll_fn     set_poll;
   altcp_recved_fn       recved;
@@ -94,6 +99,10 @@ struct altcp_functions {
   altcp_sndqueuelen_fn  sndqueuelen;
   altcp_setprio_fn      setprio;
   altcp_dealloc_fn      dealloc;
+  altcp_get_tcp_addrinfo_fn   addrinfo;
+#ifdef LWIP_DEBUG
+  altcp_dbg_get_tcp_state_fn  dbg_get_tcp_state;
+#endif
 };
 
 

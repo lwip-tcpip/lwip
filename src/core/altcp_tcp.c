@@ -343,6 +343,29 @@ altcp_tcp_dealloc(struct altcp_pcb *conn)
   /* no private state to clean up */
 }
 
+err_t
+altcp_tcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
+{
+  if (conn) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->inner_conn;
+    return tcp_tcp_get_tcp_addrinfo(pcb, local, addr, port);
+  }
+  return ERR_VAL;
+}
+
+#ifdef LWIP_DEBUG
+enum tcp_state
+altcp_tcp_dbg_get_tcp_state(struct altcp_pcb *conn)
+{
+  if (conn) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->inner_conn;
+    if (pcb) {
+      return pcb->state;
+    }
+  }
+  return CLOSED;
+}
+#endif
 const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_set_poll,
   altcp_tcp_recved,
@@ -358,7 +381,11 @@ const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_sndbuf,
   altcp_tcp_sndqueuelen,
   altcp_tcp_setprio,
-  altcp_tcp_dealloc
+  altcp_tcp_dealloc,
+  altcp_tcp_get_tcp_addrinfo
+#ifdef LWIP_DEBUG
+  ,altcp_tcp_dbg_get_tcp_state
+#endif
 };
 
 #endif /* LWIP_ALTCP */

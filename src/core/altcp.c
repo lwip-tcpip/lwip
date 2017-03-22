@@ -242,4 +242,24 @@ altcp_setprio(struct altcp_pcb *conn, u8_t prio)
   }
 }
 
+err_t
+altcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
+{
+  if (conn && conn->fns && conn->fns->addrinfo) {
+    return conn->fns->addrinfo(conn, local, addr, port);
+  }
+  return ERR_VAL;
+}
+
+#ifdef LWIP_DEBUG
+enum tcp_state
+altcp_dbg_get_tcp_state(struct altcp_pcb *conn)
+{
+  if (conn && conn->fns && conn->fns->dbg_get_tcp_state) {
+    return conn->fns->dbg_get_tcp_state(conn);
+  }
+  return CLOSED;
+}
+#endif
+
 #endif /* LWIP_ALTCP */

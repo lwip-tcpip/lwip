@@ -39,8 +39,6 @@
  *
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
- * @todo:
- * - access to local/remote ip/port
  */
 #ifndef LWIP_HDR_ALTCP_H
 #define LWIP_HDR_ALTCP_H
@@ -112,10 +110,13 @@ u16_t altcp_mss(struct altcp_pcb *conn);
 u16_t altcp_sndbuf(struct altcp_pcb *conn);
 u16_t altcp_sndqueuelen(struct altcp_pcb *conn);
 
-#define TCP_PRIO_MIN    1
-#define TCP_PRIO_NORMAL 64
-#define TCP_PRIO_MAX    127
 void  altcp_setprio(struct altcp_pcb *conn, u8_t prio);
+
+err_t altcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
+
+#ifdef LWIP_DEBUG
+enum tcp_state altcp_dbg_get_tcp_state(struct altcp_pcb *conn);
+#endif
 
 #ifdef __cplusplus
 }
@@ -156,6 +157,12 @@ void  altcp_setprio(struct altcp_pcb *conn, u8_t prio);
 #define altcp_sndbuf tcp_sndbuf
 #define altcp_sndqueuelen tcp_sndqueuelen
 #define altcp_setprio tcp_setprio
+
+#define altcp_get_tcp_addrinfo tcp_get_tcp_addrinfo
+
+#ifdef LWIP_DEBUG
+#define altcp_dbg_get_tcp_state tcp_dbg_get_tcp_state
+#endif
 
 #endif /* LWIP_ALTCP */
 

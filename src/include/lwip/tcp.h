@@ -395,8 +395,9 @@ void             tcp_setprio (struct tcp_pcb *pcb, u8_t prio);
 
 err_t            tcp_output  (struct tcp_pcb *pcb);
 
+err_t            tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_addr_t *addr, u16_t *port);
 
-const char* tcp_debug_state_str(enum tcp_state s);
+#define tcp_dbg_get_tcp_state(pcb) ((pcb)->state)
 
 /* for compatibility with older implementation */
 #define tcp_new_ip6() tcp_new_ip_type(IPADDR_TYPE_V6)

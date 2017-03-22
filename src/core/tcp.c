@@ -2055,6 +2055,30 @@ tcp_debug_state_str(enum tcp_state s)
   return tcp_state_str[s];
 }
 
+err_t
+tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_addr_t *addr, u16_t *port)
+{
+  if (pcb) {
+    if (local) {
+      if (addr) {
+        *addr = pcb->local_ip;
+      }
+      if (port) {
+        *port = pcb->local_port;
+      }
+    } else {
+      if (addr) {
+        *addr = pcb->remote_ip;
+      }
+      if (port) {
+        *port = pcb->remote_port;
+      }
+    }
+    return ERR_OK;
+  }
+  return ERR_VAL;
+}
+
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
 /**
  * Print a tcp header for debugging purposes.

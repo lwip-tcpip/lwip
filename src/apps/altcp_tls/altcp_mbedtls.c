@@ -840,6 +840,27 @@ altcp_mbedtls_dealloc(struct altcp_pcb *conn)
   }
 }
 
+err_t
+altcp_mbedtls_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
+{
+  if (conn) {
+    return altcp_get_tcp_addrinfo(conn->inner_conn, local, addr, port);
+  }
+  return ERR_VAL;
+}
+
+#ifdef LWIP_DEBUG
+enum tcp_state
+altcp_mbedtls_dbg_get_tcp_state(struct altcp_pcb *conn)
+{
+  if (conn) {
+    return altcp_dbg_get_tcp_state(conn->inner_conn);
+  }
+  return CLOSED;
+}
+#endif
+
+
 const struct altcp_functions altcp_mbedtls_functions = {
   altcp_mbedtls_set_poll,
   altcp_mbedtls_recved,
@@ -855,7 +876,11 @@ const struct altcp_functions altcp_mbedtls_functions = {
   altcp_mbedtls_sndbuf,
   altcp_mbedtls_sndqueuelen,
   altcp_mbedtls_setprio,
-  altcp_mbedtls_dealloc
+  altcp_mbedtls_dealloc,
+  altcp_mbedtls_get_tcp_addrinfo
+#ifdef LWIP_DEBUG
+  ,altcp_mbedtls_dbg_get_tcp_state
+#endif
 };
 
 #endif /* LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS */
