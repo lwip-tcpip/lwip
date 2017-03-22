@@ -1,5 +1,7 @@
 /**
  * @file
+ * @defgroup altcp Application layered TCP
+ * @ingroup callbackstyle_api
  * Application layered TCP connection API (to be used from TCPIP thread)\n
  * This interface mimics the tcp callback API to the application while preventing
  * direct linking (much like virtual functions).
@@ -74,6 +76,10 @@ altcp_free(struct altcp_pcb *conn)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_arg()
+ */
 void
 altcp_arg(struct altcp_pcb *conn, void *arg)
 {
@@ -82,6 +88,10 @@ altcp_arg(struct altcp_pcb *conn, void *arg)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_accept()
+ */
 void
 altcp_accept(struct altcp_pcb *conn, altcp_accept_fn accept)
 {
@@ -90,6 +100,10 @@ altcp_accept(struct altcp_pcb *conn, altcp_accept_fn accept)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_recv()
+ */
 void
 altcp_recv(struct altcp_pcb *conn, altcp_recv_fn recv)
 {
@@ -98,6 +112,10 @@ altcp_recv(struct altcp_pcb *conn, altcp_recv_fn recv)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_sent()
+ */
 void
 altcp_sent(struct altcp_pcb *conn, altcp_sent_fn sent)
 {
@@ -106,6 +124,10 @@ altcp_sent(struct altcp_pcb *conn, altcp_sent_fn sent)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_poll()
+ */
 void
 altcp_poll(struct altcp_pcb *conn, altcp_poll_fn poll, u8_t interval)
 {
@@ -118,6 +140,10 @@ altcp_poll(struct altcp_pcb *conn, altcp_poll_fn poll, u8_t interval)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_err()
+ */
 void
 altcp_err(struct altcp_pcb *conn, altcp_err_fn err)
 {
@@ -128,6 +154,10 @@ altcp_err(struct altcp_pcb *conn, altcp_err_fn err)
 
 /* Generic functions calling the "virtual" ones */
 
+/**
+ * @ingroup altcp
+ * @see tcp_recved()
+ */
 void
 altcp_recved(struct altcp_pcb *conn, u16_t len)
 {
@@ -136,6 +166,10 @@ altcp_recved(struct altcp_pcb *conn, u16_t len)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_bind()
+ */
 err_t
 altcp_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port)
 {
@@ -145,6 +179,10 @@ altcp_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port)
   return ERR_VAL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_connect()
+ */
 err_t
 altcp_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port, altcp_connected_fn connected)
 {
@@ -154,6 +192,10 @@ altcp_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port, altcp
   return ERR_VAL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_listen_with_backlog_and_err()
+ */
 struct altcp_pcb *
 altcp_listen_with_backlog_and_err(struct altcp_pcb *conn, u8_t backlog, err_t *err)
 {
@@ -163,6 +205,10 @@ altcp_listen_with_backlog_and_err(struct altcp_pcb *conn, u8_t backlog, err_t *e
   return NULL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_abort()
+ */
 void
 altcp_abort(struct altcp_pcb *conn)
 {
@@ -171,6 +217,10 @@ altcp_abort(struct altcp_pcb *conn)
   }
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_close()
+ */
 err_t
 altcp_close(struct altcp_pcb *conn)
 {
@@ -180,6 +230,10 @@ altcp_close(struct altcp_pcb *conn)
   return ERR_VAL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_shutdown()
+ */
 err_t
 altcp_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
 {
@@ -189,6 +243,10 @@ altcp_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
   return ERR_VAL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_write()
+ */
 err_t
 altcp_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t apiflags)
 {
@@ -198,6 +256,10 @@ altcp_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t apiflag
   return ERR_VAL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_output()
+ */
 err_t
 altcp_output(struct altcp_pcb *conn)
 {
@@ -207,6 +269,10 @@ altcp_output(struct altcp_pcb *conn)
   return ERR_VAL;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_mss()
+ */
 u16_t
 altcp_mss(struct altcp_pcb *conn)
 {
@@ -216,6 +282,10 @@ altcp_mss(struct altcp_pcb *conn)
   return 0;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_sndbuf()
+ */
 u16_t
 altcp_sndbuf(struct altcp_pcb *conn)
 {
@@ -225,6 +295,10 @@ altcp_sndbuf(struct altcp_pcb *conn)
   return 0;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_sndqueuelen()
+ */
 u16_t
 altcp_sndqueuelen(struct altcp_pcb *conn)
 {
@@ -234,6 +308,10 @@ altcp_sndqueuelen(struct altcp_pcb *conn)
   return 0;
 }
 
+/**
+ * @ingroup altcp
+ * @see tcp_setprio()
+ */
 void
 altcp_setprio(struct altcp_pcb *conn, u8_t prio)
 {
