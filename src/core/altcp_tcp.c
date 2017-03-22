@@ -46,6 +46,7 @@
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/altcp.h"
+#include "lwip/altcp_tcp.h"
 #include "lwip/priv/altcp_priv.h"
 #include "lwip/tcp.h"
 #include "lwip/mem.h"
@@ -343,7 +344,7 @@ altcp_tcp_dealloc(struct altcp_pcb *conn)
   /* no private state to clean up */
 }
 
-err_t
+static err_t
 altcp_tcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
 {
   if (conn) {
@@ -354,7 +355,7 @@ altcp_tcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u
 }
 
 #ifdef LWIP_DEBUG
-enum tcp_state
+static enum tcp_state
 altcp_tcp_dbg_get_tcp_state(struct altcp_pcb *conn)
 {
   if (conn) {

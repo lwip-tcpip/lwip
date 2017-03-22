@@ -1203,7 +1203,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
    * have to split the insert string between two tcp_write operations. */
 
   /* How much data could we send? */
-  len = tcp_sndbuf(pcb);
+  len = altcp_sndbuf(pcb);
 
   /* Do we have remaining data to send before parsing more? */
   if(ssi->parsed > hs->file) {
@@ -1217,7 +1217,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
     }
 
     /* If the send buffer is full, return now. */
-    if(tcp_sndbuf(pcb) == 0) {
+    if(altcp_sndbuf(pcb) == 0) {
       return data_to_send;
     }
   }
