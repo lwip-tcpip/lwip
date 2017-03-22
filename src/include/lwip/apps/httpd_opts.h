@@ -132,6 +132,16 @@
 #define HTTPD_SERVER_PORT                   80
 #endif
 
+/** The https server port for HTTPD to use */
+#if !defined HTTPD_SERVER_PORT_HTTPS || defined __DOXYGEN__
+#define HTTPD_SERVER_PORT_HTTPS             443
+#endif
+
+/** Enable https support? */
+#if !defined HTTPD_ENABLE_HTTPS || defined __DOXYGEN__
+#define HTTPD_ENABLE_HTTPS                  0
+#endif
+
 /** Maximum retries before the connection is aborted/closed.
  * - number of times pcb->poll is called -> default is 4*500ms = 2s;
  * - reset when pcb->sent is called

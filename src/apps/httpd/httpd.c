@@ -98,6 +98,9 @@
 
 #include "lwip/altcp.h"
 #include "lwip/altcp_tcp.h"
+#if HTTPD_ENABLE_HTTPS
+#include "lwip/apps/altcp_tls.h"
+#endif
 
 #include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
@@ -2588,6 +2591,23 @@ httpd_init(void)
   LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
   httpd_init_pcb(pcb, HTTPD_SERVER_PORT);
 }
+
+#if HTTPD_ENABLE_HTTPS
+void
+httpd_inits(struct altcp_tls_config *conf)
+{
+#if LWIP_ALTCP_TLS
+  struct altcp_pcb *pcb_tls;
+  struct altcp_pcb *pcb_tcp = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
+  LWIP_ASSERT("httpd_init: tcp_new failed", pcb_tcp != NULL);
+  pcb_tls = altcp_tls_new(conf, pcb_tcp);
+  LWIP_ASSERT("httpd_init: altcp_tls_new failed", pcb_tls != NULL);
+  httpd_init_pcb(pcb_tls, HTTPD_SERVER_PORT_HTTPS);
+#else /* LWIP_ALTCP_TLS */
+  LWIP_UNUSED_ARG(conf);
+#endif /* LWIP_ALTCP_TLS */
+}
+#endif /* HTTPD_ENABLE_HTTPS */
 
 #if LWIP_HTTPD_SSI
 /**
