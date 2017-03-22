@@ -1362,7 +1362,7 @@
  * tcp callback API for LWIP_ALTCP==0, but then cannot use layered protocols.
  */
 #ifndef LWIP_ALTCP
-#define LWIP_ALTCP                      (LWIP_TCP && LWIP_CALLBACK_API)
+#define LWIP_ALTCP                      0
 #endif
 /**
  * @}
