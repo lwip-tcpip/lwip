@@ -188,7 +188,13 @@ altcp_mbedtls_free(void *conf, altcp_mbedtls_state_t *state)
 void *
 altcp_mbedtls_alloc_config(size_t size)
 {
-  void *ret = (altcp_mbedtls_state_t *)mem_malloc(size);
+  void *ret;
+  size_t checked_size = (mem_size_t)size;
+  if (size != checked_size) {
+    /* allocation too big (mem_size_t overflow) */
+    return NULL;
+  }
+  ret = (altcp_mbedtls_state_t *)mem_malloc((mem_size_t)size);
   if (ret != NULL) {
     memset(ret, 0, size);
   }
