@@ -16,6 +16,17 @@
 #error "This tests needs TCP_SND_BUF to be > TCP_WND"
 #endif
 
+/* used with check_seqnos() */
+#define SEQNO1 (0xFFFFFF00 - TCP_MSS)
+#define ISS    6510
+static u32_t seqnos[] = {
+    SEQNO1,
+    SEQNO1 + (1 * TCP_MSS),
+    SEQNO1 + (2 * TCP_MSS),
+    SEQNO1 + (3 * TCP_MSS),
+    SEQNO1 + (4 * TCP_MSS),
+    SEQNO1 + (5 * TCP_MSS) };
+
 static u8_t test_tcp_timer;
 
 /* our own version of tcp_tmr so we can reset fast/slow timer state */
@@ -400,16 +411,7 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   ip_addr_t remote_ip, local_ip, netmask;
   u16_t remote_port = 0x100, local_port = 0x101;
   err_t err;
-#define SEQNO1 (0xFFFFFF00 - TCP_MSS)
-#define ISS    6510
   u16_t i, sent_total = 0;
-  u32_t seqnos[] = {
-    SEQNO1,
-    SEQNO1 + (1 * TCP_MSS),
-    SEQNO1 + (2 * TCP_MSS),
-    SEQNO1 + (3 * TCP_MSS),
-    SEQNO1 + (4 * TCP_MSS),
-    SEQNO1 + (5 * TCP_MSS)};
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
@@ -500,16 +502,7 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   ip_addr_t remote_ip, local_ip, netmask;
   u16_t remote_port = 0x100, local_port = 0x101;
   err_t err;
-#define SEQNO1 (0xFFFFFF00 - TCP_MSS)
-#define ISS    6510
   u16_t i, sent_total = 0;
-  u32_t seqnos[] = {
-    SEQNO1,
-    SEQNO1 + (1 * TCP_MSS),
-    SEQNO1 + (2 * TCP_MSS),
-    SEQNO1 + (3 * TCP_MSS),
-    SEQNO1 + (4 * TCP_MSS),
-    SEQNO1 + (5 * TCP_MSS)};
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
