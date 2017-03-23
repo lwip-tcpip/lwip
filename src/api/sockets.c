@@ -1016,6 +1016,7 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, const struct iovec *iov
   u16_t buflen, copylen, copied;
   int i;
 
+  LWIP_UNUSED_ARG(dbg_s);
   LWIP_ERROR("lwip_recvfrom_udp_raw: invalid arguments", (iov != NULL) || (iovcnt <= 0), return ERR_ARG;);
 
   if (flags & MSG_DONTWAIT) {
