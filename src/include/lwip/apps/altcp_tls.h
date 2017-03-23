@@ -44,6 +44,9 @@
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
 #include "altcp_tls_opts.h"
+
+#if LWIP_ALTCP_TLS
+
 #include "lwip/altcp.h"
 
 #ifdef __cplusplus
@@ -62,6 +65,6 @@ struct altcp_pcb *altcp_tls_new(struct altcp_tls_config* config, struct altcp_pc
 }
 #endif
 
+#endif /* LWIP_ALTCP_TLS */
 #endif /* LWIP_ALTCP */
-
 #endif /* LWIP_HDR_ALTCP_TLS_H */
