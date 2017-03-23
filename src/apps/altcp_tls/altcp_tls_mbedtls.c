@@ -64,8 +64,8 @@
 #include "lwip/apps/altcp_tls.h"
 #include "lwip/priv/altcp_priv.h"
 
-#include "altcp_mbedtls_structs.h"
-#include "altcp_mbedtls_mem.h"
+#include "altcp_tls_mbedtls_structs.h"
+#include "altcp_tls_mbedtls_mem.h"
 
 /* @todo: which includes are really needed? */
 #include "mbedtls/entropy.h"

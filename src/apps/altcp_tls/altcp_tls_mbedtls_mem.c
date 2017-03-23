@@ -52,8 +52,8 @@
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
-#include "altcp_mbedtls_mem.h"
-#include "altcp_mbedtls_structs.h"
+#include "altcp_tls_mbedtls_mem.h"
+#include "altcp_tls_mbedtls_structs.h"
 #include "lwip/mem.h"
 
 #include "mbedtls/platform.h"

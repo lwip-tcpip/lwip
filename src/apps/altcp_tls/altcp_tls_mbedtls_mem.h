@@ -47,7 +47,7 @@
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
-#include "altcp_mbedtls_structs.h"
+#include "altcp_tls_mbedtls_structs.h"
 
 #ifdef __cplusplus
 extern "C" {
