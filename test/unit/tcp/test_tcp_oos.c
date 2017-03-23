@@ -166,7 +166,6 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
   LWIP_UNUSED_ARG(_i);
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -308,7 +307,6 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
   LWIP_UNUSED_ARG(_i);
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -485,7 +483,6 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   }
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -578,7 +575,6 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin_edge)
   }
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -670,7 +666,6 @@ START_TEST(test_tcp_recv_ooseq_max_bytes)
   }
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -751,7 +746,6 @@ START_TEST(test_tcp_recv_ooseq_max_pbufs)
   }
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -854,7 +848,6 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
   }
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);

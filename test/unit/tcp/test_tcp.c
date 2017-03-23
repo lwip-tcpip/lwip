@@ -107,7 +107,6 @@ START_TEST(test_tcp_recv_inseq)
   LWIP_UNUSED_ARG(_i);
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -159,7 +158,6 @@ START_TEST(test_tcp_malformed_header)
   LWIP_UNUSED_ARG(_i);
 
   /* initialize local vars */
-  memset(&netif, 0, sizeof(netif));
   IP_ADDR4(&local_ip, 192, 168, 1, 1);
   IP_ADDR4(&remote_ip, 192, 168, 1, 2);
   IP_ADDR4(&netmask,   255, 255, 255, 0);
@@ -604,7 +602,6 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   IP_ADDR4(&netmask,   255, 255, 255, 0);
   test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
   memset(&counters, 0, sizeof(counters));
-  memset(&txcounters, 0, sizeof(txcounters));
 
   /* create and initialize the pcb */
   pcb = test_tcp_new_counters_pcb(&counters);
