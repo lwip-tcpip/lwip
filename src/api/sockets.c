@@ -244,6 +244,7 @@ struct lwip_sock {
 #define SELECT_SEM_PTR(sem) (&(sem))
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
+#if LWIP_SOCKET_SELECT
 /** Description for a task waiting in select */
 struct lwip_select_cb {
   /** Pointer to the next waiting task */
@@ -261,6 +262,7 @@ struct lwip_select_cb {
   /** semaphore to wake up a task waiting for select */
   SELECT_SEM_T sem;
 };
+#endif /* LWIP_SOCKET_SELECT */
 
 /** A struct sockaddr replacement that has the same alignment as sockaddr_in/
  *  sockaddr_in6 if instantiated.
@@ -301,11 +303,14 @@ static void lwip_socket_drop_registered_memberships(int s);
 
 /** The global array of available sockets */
 static struct lwip_sock sockets[NUM_SOCKETS];
+
+#if LWIP_SOCKET_SELECT
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
 /** This counter is increased from lwip_select when the list is changed
     and checked in event_callback to see if it has changed. */
 static volatile int select_cb_ctr;
+#endif /* LWIP_SOCKET_SELECT */
 
 #define sock_set_errno(sk, e) do { \
   const int sockerr = (e); \
