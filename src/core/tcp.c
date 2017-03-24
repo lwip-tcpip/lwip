@@ -144,9 +144,9 @@ static err_t tcp_close_shutdown_fin(struct tcp_pcb *pcb);
 void
 tcp_init(void)
 {
-#if LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND)
+#ifdef LWIP_RAND
   tcp_port = TCP_ENSURE_LOCAL_PORT_RANGE(LWIP_RAND());
-#endif /* LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND) */
+#endif /* LWIP_RAND */
 }
 
 /**

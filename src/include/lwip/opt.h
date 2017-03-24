@@ -748,15 +748,6 @@
 #if !defined IP_FORWARD_ALLOW_TX_ON_RX_NETIF || defined __DOXYGEN__
 #define IP_FORWARD_ALLOW_TX_ON_RX_NETIF 0
 #endif
-
-/**
- * LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS==1: randomize the local port for the first
- * local TCP/UDP pcb (default==0). This can prevent creating predictable port
- * numbers after booting a device.
- */
-#if !defined LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS || defined __DOXYGEN__
-#define LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS 0
-#endif
 /**
  * @}
  */
