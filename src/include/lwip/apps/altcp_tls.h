@@ -55,10 +55,11 @@ extern "C" {
 
 struct altcp_tls_config;
 
-struct altcp_tls_config* altcp_tls_create_config(void);
-struct altcp_tls_config* altcp_tls_create_config_privkey_cert(const u8_t *privkey, size_t privkey_len,
+struct altcp_tls_config *altcp_tls_create_config_server_privkey_cert(const u8_t *privkey, size_t privkey_len,
                             const u8_t *privkey_pass, size_t privkey_pass_len,
                             const u8_t *cert, size_t cert_len);
+struct altcp_tls_config *altcp_tls_create_config_client(const u8_t *cert, size_t cert_len);
+
 struct altcp_pcb *altcp_tls_new(struct altcp_tls_config* config, struct altcp_pcb *inner_pcb);
 
 #ifdef __cplusplus
