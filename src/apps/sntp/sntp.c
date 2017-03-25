@@ -158,6 +158,17 @@
 #define SNTP_OFFSET_TIMESTAMPS \
     (SNTP_OFFSET_TRANSMIT_TIME + 8 - sizeof(struct sntp_timestamps))
 
+/* Round-trip delay arithmetic helpers */
+#if SNTP_COMP_ROUNDTRIP
+# if !LWIP_HAVE_INT64
+#  error "SNTP round-trip delay compensation requires 64-bit arithmetic"
+# endif
+# define SNTP_SEC_FRAC_TO_S64(s, f) \
+    ((s64_t)(((u64_t)(s) << 32) | (u32_t)(f)))
+# define SNTP_TIMESTAMP_TO_S64(t) \
+    SNTP_SEC_FRAC_TO_S64(lwip_ntohl((t).sec), lwip_ntohl((t).frac))
+#endif /* SNTP_COMP_ROUNDTRIP */
+
 /**
  * 64-bit NTP timestamp, in network byte order.
  */
@@ -170,7 +181,7 @@ struct sntp_time {
  * Timestamps to be extracted from the NTP header.
  */
 struct sntp_timestamps {
-#if SNTP_CHECK_RESPONSE >= 2
+#if SNTP_COMP_ROUNDTRIP || SNTP_CHECK_RESPONSE >= 2
   struct sntp_time orig;
   struct sntp_time recv;
 #endif
@@ -275,6 +286,38 @@ sntp_process(const struct sntp_timestamps *timestamps)
   sec  = lwip_ntohl(timestamps->xmit.sec);
   frac = lwip_ntohl(timestamps->xmit.frac);
 
+#if SNTP_COMP_ROUNDTRIP
+# if SNTP_CHECK_RESPONSE >= 2
+  if (timestamps->recv.sec != 0 || timestamps->recv.frac != 0)
+# endif
+  {
+    s32_t dest_sec;
+    u32_t dest_frac;
+    u32_t step_sec;
+
+    /* Get the destination time stamp, i.e. the current system time */
+    SNTP_GET_SYSTEM_TIME_NTP(dest_sec, dest_frac);
+
+    step_sec = (dest_sec < sec) ? ((u32_t)sec - (u32_t)dest_sec)
+                                : ((u32_t)dest_sec - (u32_t)sec);
+    /* In order to avoid overflows, skip the compensation if the clock step
+     * is larger than about 34 years. */
+    if ((step_sec >> 30) == 0) {
+      s64_t t1, t2, t3, t4;
+
+      t4 = SNTP_SEC_FRAC_TO_S64(dest_sec, dest_frac);
+      t3 = SNTP_SEC_FRAC_TO_S64(sec, frac);
+      t1 = SNTP_TIMESTAMP_TO_S64(timestamps->orig);
+      t2 = SNTP_TIMESTAMP_TO_S64(timestamps->recv);
+      /* Clock offset calculation according to RFC 4330 */
+      t4 += ((t2 - t1) + (t3 - t4)) / 2;
+
+      sec  = (u32_t)((u64_t)t4 >> 32);
+      frac = (u32_t)((u64_t)t4);
+    }
+  }
+#endif /* SNTP_COMP_ROUNDTRIP */
+
   SNTP_SET_SYSTEM_TIME_NTP(sec, frac);
   LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_process: %s, %" U32_F " us\n",
                                  sntp_format_time(sec), SNTP_FRAC_TO_US(frac)));
@@ -289,7 +332,7 @@ sntp_initialize_request(struct sntp_msg *req)
   memset(req, 0, SNTP_MSG_LEN);
   req->li_vn_mode = SNTP_LI_NO_WARNING | SNTP_VERSION | SNTP_MODE_CLIENT;
 
-#if SNTP_CHECK_RESPONSE >= 2
+#if SNTP_CHECK_RESPONSE >= 2 || SNTP_COMP_ROUNDTRIP
   {
     u32_t sec, frac;
     /* Get the transmit timestamp */
@@ -297,12 +340,14 @@ sntp_initialize_request(struct sntp_msg *req)
     sec  = lwip_htonl(sec);
     frac = lwip_htonl(frac);
 
+# if SNTP_CHECK_RESPONSE >= 2
     sntp_last_timestamp_sent.sec  = sec;
     sntp_last_timestamp_sent.frac = frac;
+# endif
     req->transmit_timestamp[0] = sec;
     req->transmit_timestamp[1] = frac;
   }
-#endif /* SNTP_CHECK_RESPONSE >= 2 */
+#endif /* SNTP_CHECK_RESPONSE >= 2 || SNTP_COMP_ROUNDTRIP */
 }
 
 /**
