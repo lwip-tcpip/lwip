@@ -186,6 +186,10 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
 {
   altcp_mbedtls_state_t *state;
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
+
+  LWIP_ASSERT("no err expected", err == ERR_OK);
+  LWIP_UNUSED_ARG(err);
+
   if (!conn) {
     /* no connection given as arg? should not happen, but prevent pbuf/conn leaks */
     if (p != NULL) {
@@ -205,29 +209,24 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
     return ERR_CLSD;
   }
 
-  /* handle NULL pbufs or other errors */
-  if ((p == NULL) || (err != ERR_OK)) {
-    err_t local_err = ERR_OK;
-    if (p == NULL) {
-      /* remote host sent FIN, remember this (SSL state is destroyed
-         when both sides are closed only!) */
-      state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED;
-    }
+  /* handle NULL pbuf (connection closed) */
+  if (p == NULL) {
+    /* remote host sent FIN, remember this (SSL state is destroyed
+        when both sides are closed only!) */
+    state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED;
     if ((state->flags & (ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE|ALTCP_MBEDTLS_FLAGS_UPPER_CALLED)) ==
         (ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE|ALTCP_MBEDTLS_FLAGS_UPPER_CALLED)) {
       /* need to notify upper layer (e.g. 'accept' called or 'connect' succeeded) */
-      if ((err == ERR_OK) && ((state->rx != NULL) || (state->rx_app != NULL))) {
-        LWIP_ASSERT("p == NULL", p == NULL);
-        /* this is a normal close (FIN) but we have unprocessed data */
+      if ((state->rx != NULL) || (state->rx_app != NULL)) {
+        /* this is a normal close (FIN) but we have unprocessed data, so delay the FIN */
         altcp_mbedtls_handle_rx_appldata(conn, state);
         return ERR_OK;
       }
       if (conn->recv) {
-        local_err = conn->recv(conn->arg, conn, p, err);
-        if ((local_err != ERR_OK) && (p != NULL)) {
-          pbuf_free(p);
+        err_t local_err = conn->recv(conn->arg, conn, NULL, ERR_OK);
+        if (local_err == ERR_ABRT) {
+          return ERR_ABRT;
         }
-        p = NULL;
       }
     } else {
       /* before connection setup is done: call 'err' */
@@ -235,14 +234,12 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
         conn->err(conn->arg, ERR_CLSD);
       }
     }
-    if (p) {
-      pbuf_free(p);
-    }
     altcp_close(conn);
+    state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSED;
     if (conn->state && ((state->flags & ALTCP_MBEDTLS_FLAGS_CLOSED) == ALTCP_MBEDTLS_FLAGS_CLOSED)) {
       altcp_mbedtls_dealloc(conn);
     }
-    return local_err;
+    return ERR_OK;
   }
 
   /* If we come here, the connection is in good state (handshake phase or application data phase).
@@ -415,14 +412,13 @@ altcp_mbedtls_handle_rx_appldata(struct altcp_pcb *conn, altcp_mbedtls_state_t *
       if (err != ERR_OK) {
         if (err == ERR_ABRT) {
           /* recv callback needs to return this as the pcb is deallocated */
-          return err;
+          return ERR_ABRT;
         }
         /* we hide all other errors as we retry feeding the pbuf to the app later */
         return ERR_OK;
       }
     }
-  }
-  while (ret > 0);
+  } while (ret > 0);
   return ERR_OK;
 }
 
@@ -503,7 +499,7 @@ altcp_mbedtls_lower_sent(void *arg, struct altcp_pcb *inner_conn, u16_t len)
 
 /** Poll callback from lower connection (i.e. TCP)
  * Just pass this on to the application.
- * @todo: retry sending if 
+ * @todo: retry sending?
  */
 static err_t
 altcp_mbedtls_lower_poll(void *arg, struct altcp_pcb *inner_conn)
@@ -513,7 +509,10 @@ altcp_mbedtls_lower_poll(void *arg, struct altcp_pcb *inner_conn)
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
     /* check if there's unreceived rx data */
     if (conn->state) {
-      altcp_mbedtls_handle_rx_appldata(conn, (altcp_mbedtls_state_t *)conn->state);
+      if (altcp_mbedtls_handle_rx_appldata(conn, (altcp_mbedtls_state_t *)conn->state) ==
+        ERR_ABRT) {
+        return ERR_ABRT;
+      }
     }
     if (conn->poll) {
       return conn->poll(conn->arg, conn);
@@ -832,10 +831,6 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
   }
   state = (altcp_mbedtls_state_t*)conn->state;
   if (state != NULL) {
-    if (state->rx != NULL) {
-      pbuf_free(state->rx);
-      state->rx = NULL;
-    }
     state->flags |= ALTCP_MBEDTLS_FLAGS_TX_CLOSED;
     if (state->flags & ALTCP_MBEDTLS_FLAGS_RX_CLOSED) {
       altcp_mbedtls_dealloc(conn);
