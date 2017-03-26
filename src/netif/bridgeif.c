@@ -612,17 +612,19 @@ bridgeif_init(struct netif *netif)
    * You can instead declare your own function an call etharp_output()
    * from it if you have to do some checks before sending (e.g. if link
    * is available...) */
+#if LWIP_IPV4
   netif->output = etharp_output;
+#endif /* LWIP_IPV4 */
 #if LWIP_IPV6
   netif->output_ip6 = ethip6_output;
 #endif /* LWIP_IPV6 */
   netif->linkoutput = bridgeif_output;
 
   /* set MAC hardware address length */
-  netif->hwaddr_len = ETHARP_HWADDR_LEN;
+  netif->hwaddr_len = ETH_HWADDR_LEN;
 
   /* set MAC hardware address */
-  memcpy(netif->hwaddr, &br->ethaddr, ETHARP_HWADDR_LEN);
+  memcpy(netif->hwaddr, &br->ethaddr, ETH_HWADDR_LEN);
 
   /* maximum transfer unit */
   netif->mtu = 1500;
