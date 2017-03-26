@@ -160,6 +160,7 @@ enum tcp_state altcp_dbg_get_tcp_state(struct altcp_pcb *conn);
 #define altcp_setprio tcp_setprio
 
 #define altcp_get_tcp_addrinfo tcp_get_tcp_addrinfo
+#define altcp_get_ip(pcb, local) ((local) ? (&(pcb)->local_ip) : (&(pcb)->remote_ip))
 
 #ifdef LWIP_DEBUG
 #define altcp_dbg_get_tcp_state tcp_dbg_get_tcp_state
