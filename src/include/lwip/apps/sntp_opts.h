@@ -46,8 +46,10 @@
  */
 
 /** SNTP macro to change system time in seconds
- * Define SNTP_SET_SYSTEM_TIME_US(sec, us) to set the time in microseconds instead of this one
- * if you need the additional precision.
+ * Define SNTP_SET_SYSTEM_TIME_US(sec, us) to set the time in microseconds
+ * instead of this one if you need the additional precision. Alternatively,
+ * define SNTP_SET_SYSTEM_TIME_NTP(sec, frac) in order to work with native
+ * NTP timestamps instead.
  */
 #if !defined SNTP_SET_SYSTEM_TIME || defined __DOXYGEN__
 #define SNTP_SET_SYSTEM_TIME(sec)   LWIP_UNUSED_ARG(sec)
@@ -141,6 +143,8 @@
 
 /** SNTP macro to get system time, used with SNTP_CHECK_RESPONSE >= 2
  * to send in request and compare in response.
+ * Alternatively, define SNTP_GET_SYSTEM_TIME_NTP(sec, frac) in order to
+ * work with native NTP timestamps instead.
  */
 #if !defined SNTP_GET_SYSTEM_TIME || defined __DOXYGEN__
 #define SNTP_GET_SYSTEM_TIME(sec, us)     do { (sec) = 0; (us) = 0; } while(0)

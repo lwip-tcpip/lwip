@@ -76,17 +76,6 @@
 #error "SNTPv4 RFC 4330 enforces a minimum update time of 15 seconds (define SNTP_SUPPRESS_DELAY_CHECK to disable this error)!"
 #endif
 
-/* Configure behaviour depending on microsecond or second precision */
-#ifdef SNTP_SET_SYSTEM_TIME_US
-#define SNTP_CALC_TIME_US           1
-#define SNTP_RECEIVE_TIME_SIZE      2
-#else
-#define SNTP_SET_SYSTEM_TIME_US(sec, us)
-#define SNTP_CALC_TIME_US           0
-#define SNTP_RECEIVE_TIME_SIZE      1
-#endif
-
-
 /* the various debug levels for this file */
 #define SNTP_DEBUG_TRACE        (SNTP_DEBUG | LWIP_DBG_TRACE)
 #define SNTP_DEBUG_STATE        (SNTP_DEBUG | LWIP_DBG_STATE)
@@ -121,18 +110,55 @@
 #define SNTP_OFFSET_RECEIVE_TIME    32
 #define SNTP_OFFSET_TRANSMIT_TIME   40
 
-/* number of seconds between 1900 and 1970 (MSB=1)*/
-#define DIFF_SEC_1900_1970         (2208988800UL)
-/* number of seconds between 1970 and Feb 7, 2036 (6:28:16 UTC) (MSB=0) */
-#define DIFF_SEC_1970_2036         (2085978496UL)
+/* Number of seconds between 1970 and Feb 7, 2036 06:28:16 UTC (epoch 1) */
+#define DIFF_SEC_1970_2036          ((u32_t)2085978496L)
+
+/** Convert NTP timestamp fraction to microseconds.
+ */
+#ifndef SNTP_FRAC_TO_US
+# if LWIP_HAVE_INT64
+#  define SNTP_FRAC_TO_US(f)        ((u32_t)(((u64_t)(f) * 1000000UL) >> 32))
+# else
+#  define SNTP_FRAC_TO_US(f)        ((u32_t)(f) / 4295)
+# endif
+#endif /* !SNTP_FRAC_TO_US */
+
+/* Configure behaviour depending on native, microsecond or second precision.
+ * Treat NTP timestamps as signed two's-complement integers. This way,
+ * timestamps that have the MSB set simply become negative offsets from
+ * the epoch (Feb 7, 2036 06:28:16 UTC). Representable dates range from
+ * 1968 to 2104.
+ */
+#ifndef SNTP_SET_SYSTEM_TIME_NTP
+# ifdef SNTP_SET_SYSTEM_TIME_US
+#  define SNTP_SET_SYSTEM_TIME_NTP(s, f) \
+    SNTP_SET_SYSTEM_TIME_US((u32_t)((s) + DIFF_SEC_1970_2036), SNTP_FRAC_TO_US(f))
+# else
+#  define SNTP_SET_SYSTEM_TIME_NTP(s, f) \
+    SNTP_SET_SYSTEM_TIME((u32_t)((s) + DIFF_SEC_1970_2036))
+# endif
+#endif /* !SNTP_SET_SYSTEM_TIME_NTP */
+
+/* Get the system time either natively as NTP timestamp or convert from
+ * Unix time in seconds and microseconds. Take care to avoid overflow if the
+ * microsecond value is at the maximum of 999999. Also add 0.5 us fudge to
+ * avoid special values like 0, and to mask round-off errors that would
+ * otherwise break round-trip conversion identity.
+ */
+#ifndef SNTP_GET_SYSTEM_TIME_NTP
+# define SNTP_GET_SYSTEM_TIME_NTP(s, f) do { \
+    u32_t sec_, usec_; \
+    SNTP_GET_SYSTEM_TIME(sec_, usec_); \
+    (s) = (s32_t)(sec_ - DIFF_SEC_1970_2036); \
+    (f) = usec_ * 4295 - ((usec_ * 2143) >> 16) + 2147; \
+  } while (0)
+#endif /* !SNTP_GET_SYSTEM_TIME_NTP */
 
 /**
  * SNTP packet format (without optional fields)
  * Timestamps are coded as 64 bits:
- * - 32 bits seconds since Jan 01, 1970, 00:00
- * - 32 bits seconds fraction (0-padded)
- * For future use, if the MSB in the seconds part is set, seconds are based
- * on Feb 07, 2036, 06:28:16.
+ * - signed 32 bits seconds since Feb 07, 2036, 06:28:16 UTC (epoch 1)
+ * - unsigned 32 bits seconds fraction (2^32 = 1 second)
  */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -203,34 +229,32 @@ static ip_addr_t sntp_last_server_address;
 static u32_t sntp_last_timestamp_sent[2];
 #endif /* SNTP_CHECK_RESPONSE >= 2 */
 
+#ifndef sntp_format_time
+/* Debug print helper. */
+static const char *
+sntp_format_time(s32_t sec)
+{
+  time_t ut;
+  ut = (u32_t)((u32_t)sec + DIFF_SEC_1970_2036);
+  return ctime(&ut);
+}
+#endif /* !sntp_format_time */
+
 /**
  * SNTP processing of received timestamp
  */
 static void
 sntp_process(u32_t *receive_timestamp)
 {
-  /* convert SNTP time (1900-based) to unix GMT time (1970-based)
-   * if MSB is 0, SNTP time is 2036-based!
-   */
-  u32_t rx_secs = lwip_ntohl(receive_timestamp[0]);
-  int is_1900_based = ((rx_secs & 0x80000000) != 0);
-  u32_t t = is_1900_based ? (rx_secs - DIFF_SEC_1900_1970) : (rx_secs + DIFF_SEC_1970_2036);
-  time_t tim = t;
+  s32_t sec;
+  u32_t frac;
 
-#if SNTP_CALC_TIME_US
-  u32_t us = lwip_ntohl(receive_timestamp[1]) / 4295;
-  SNTP_SET_SYSTEM_TIME_US(t, us);
-  /* display local time from GMT time */
-  LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_process: %s, %"U32_F" us", ctime(&tim), us));
+  sec  = lwip_ntohl(receive_timestamp[0]);
+  frac = lwip_ntohl(receive_timestamp[1]);
 
-#else /* SNTP_CALC_TIME_US */
-
-  /* change system time and/or the update the RTC clock */
-  SNTP_SET_SYSTEM_TIME(t);
-  /* display local time from GMT time */
-  LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_process: %s", ctime(&tim)));
-#endif /* SNTP_CALC_TIME_US */
-  LWIP_UNUSED_ARG(tim);
+  SNTP_SET_SYSTEM_TIME_NTP(sec, frac);
+  LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_process: %s, %" U32_F " us\n",
+                                 sntp_format_time(sec), SNTP_FRAC_TO_US(frac)));
 }
 
 /**
@@ -244,14 +268,16 @@ sntp_initialize_request(struct sntp_msg *req)
 
 #if SNTP_CHECK_RESPONSE >= 2
   {
-    u32_t sntp_time_sec, sntp_time_us;
-    /* fill in transmit timestamp and save it in 'sntp_last_timestamp_sent' */
-    SNTP_GET_SYSTEM_TIME(sntp_time_sec, sntp_time_us);
-    sntp_last_timestamp_sent[0] = lwip_htonl(sntp_time_sec + DIFF_SEC_1900_1970);
-    req->transmit_timestamp[0] = sntp_last_timestamp_sent[0];
-    /* we send/save us instead of fraction to be faster... */
-    sntp_last_timestamp_sent[1] = lwip_htonl(sntp_time_us);
-    req->transmit_timestamp[1] = sntp_last_timestamp_sent[1];
+    u32_t sec, frac;
+    /* Get the transmit timestamp */
+    SNTP_GET_SYSTEM_TIME_NTP(sec, frac);
+    sec  = lwip_htonl(sec);
+    frac = lwip_htonl(frac);
+
+    sntp_last_timestamp_sent[0] = sec;
+    sntp_last_timestamp_sent[1] = frac;
+    req->transmit_timestamp[0] = sec;
+    req->transmit_timestamp[1] = frac;
   }
 #endif /* SNTP_CHECK_RESPONSE >= 2 */
 }
@@ -336,7 +362,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
 {
   u8_t mode;
   u8_t stratum;
-  u32_t receive_timestamp[SNTP_RECEIVE_TIME_SIZE];
+  u32_t receive_timestamp[2];
   err_t err;
 
   LWIP_UNUSED_ARG(arg);
@@ -383,7 +409,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
           {
             /* correct answer */
             err = ERR_OK;
-            pbuf_copy_partial(p, &receive_timestamp, SNTP_RECEIVE_TIME_SIZE * 4, SNTP_OFFSET_TRANSMIT_TIME);
+            pbuf_copy_partial(p, &receive_timestamp, 8, SNTP_OFFSET_TRANSMIT_TIME);
           }
         }
       } else {
