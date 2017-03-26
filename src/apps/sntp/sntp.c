@@ -154,6 +154,29 @@
   } while (0)
 #endif /* !SNTP_GET_SYSTEM_TIME_NTP */
 
+/* Start offset of the timestamps to extract from the SNTP packet */
+#define SNTP_OFFSET_TIMESTAMPS \
+    (SNTP_OFFSET_TRANSMIT_TIME + 8 - sizeof(struct sntp_timestamps))
+
+/**
+ * 64-bit NTP timestamp, in network byte order.
+ */
+struct sntp_time {
+  u32_t sec;
+  u32_t frac;
+};
+
+/**
+ * Timestamps to be extracted from the NTP header.
+ */
+struct sntp_timestamps {
+#if SNTP_CHECK_RESPONSE >= 2
+  struct sntp_time orig;
+  struct sntp_time recv;
+#endif
+  struct sntp_time xmit;
+};
+
 /**
  * SNTP packet format (without optional fields)
  * Timestamps are coded as 64 bits:
@@ -225,8 +248,8 @@ static ip_addr_t sntp_last_server_address;
 
 #if SNTP_CHECK_RESPONSE >= 2
 /** Saves the last timestamp sent (which is sent back by the server)
- * to compare against in response */
-static u32_t sntp_last_timestamp_sent[2];
+ * to compare against in response. Stored in network byte order. */
+static struct sntp_time sntp_last_timestamp_sent;
 #endif /* SNTP_CHECK_RESPONSE >= 2 */
 
 #ifndef sntp_format_time
@@ -244,13 +267,13 @@ sntp_format_time(s32_t sec)
  * SNTP processing of received timestamp
  */
 static void
-sntp_process(u32_t *receive_timestamp)
+sntp_process(const struct sntp_timestamps *timestamps)
 {
   s32_t sec;
   u32_t frac;
 
-  sec  = lwip_ntohl(receive_timestamp[0]);
-  frac = lwip_ntohl(receive_timestamp[1]);
+  sec  = lwip_ntohl(timestamps->xmit.sec);
+  frac = lwip_ntohl(timestamps->xmit.frac);
 
   SNTP_SET_SYSTEM_TIME_NTP(sec, frac);
   LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_process: %s, %" U32_F " us\n",
@@ -274,8 +297,8 @@ sntp_initialize_request(struct sntp_msg *req)
     sec  = lwip_htonl(sec);
     frac = lwip_htonl(frac);
 
-    sntp_last_timestamp_sent[0] = sec;
-    sntp_last_timestamp_sent[1] = frac;
+    sntp_last_timestamp_sent.sec  = sec;
+    sntp_last_timestamp_sent.frac = frac;
     req->transmit_timestamp[0] = sec;
     req->transmit_timestamp[1] = frac;
   }
@@ -360,9 +383,9 @@ sntp_try_next_server(void* arg)
 static void
 sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
 {
+  struct sntp_timestamps timestamps;
   u8_t mode;
   u8_t stratum;
-  u32_t receive_timestamp[2];
   err_t err;
 
   LWIP_UNUSED_ARG(arg);
@@ -384,32 +407,31 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
   {
     /* process the response */
     if (p->tot_len == SNTP_MSG_LEN) {
-      pbuf_copy_partial(p, &mode, 1, SNTP_OFFSET_LI_VN_MODE);
-      mode &= SNTP_MODE_MASK;
+      mode = pbuf_get_at(p, SNTP_OFFSET_LI_VN_MODE) & SNTP_MODE_MASK;
       /* if this is a SNTP response... */
       if (((sntp_opmode == SNTP_OPMODE_POLL) && (mode == SNTP_MODE_SERVER)) ||
           ((sntp_opmode == SNTP_OPMODE_LISTENONLY) && (mode == SNTP_MODE_BROADCAST))) {
-        pbuf_copy_partial(p, &stratum, 1, SNTP_OFFSET_STRATUM);
+        stratum = pbuf_get_at(p, SNTP_OFFSET_STRATUM);
+
         if (stratum == SNTP_STRATUM_KOD) {
           /* Kiss-of-death packet. Use another server or increase UPDATE_DELAY. */
           err = SNTP_ERR_KOD;
           LWIP_DEBUGF(SNTP_DEBUG_STATE, ("sntp_recv: Received Kiss-of-Death\n"));
         } else {
+          pbuf_copy_partial(p, &timestamps, sizeof(timestamps),
+                            SNTP_OFFSET_TIMESTAMPS);
 #if SNTP_CHECK_RESPONSE >= 2
           /* check originate_timetamp against sntp_last_timestamp_sent */
-          u32_t originate_timestamp[2];
-          pbuf_copy_partial(p, &originate_timestamp, 8, SNTP_OFFSET_ORIGINATE_TIME);
-          if ((originate_timestamp[0] != sntp_last_timestamp_sent[0]) ||
-              (originate_timestamp[1] != sntp_last_timestamp_sent[1]))
-          {
-            LWIP_DEBUGF(SNTP_DEBUG_WARN, ("sntp_recv: Invalid originate timestamp in response\n"));
+          if (timestamps.orig.sec != sntp_last_timestamp_sent.sec ||
+              timestamps.orig.frac != sntp_last_timestamp_sent.frac) {
+            LWIP_DEBUGF(SNTP_DEBUG_WARN,
+                        ("sntp_recv: Invalid originate timestamp in response\n"));
           } else
 #endif /* SNTP_CHECK_RESPONSE >= 2 */
           /* @todo: add code for SNTP_CHECK_RESPONSE >= 3 and >= 4 here */
           {
             /* correct answer */
             err = ERR_OK;
-            pbuf_copy_partial(p, &receive_timestamp, 8, SNTP_OFFSET_TRANSMIT_TIME);
           }
         }
       } else {
@@ -429,7 +451,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
 #endif /* SNTP_CHECK_RESPONSE >= 1 */
   pbuf_free(p);
   if (err == ERR_OK) {
-    sntp_process(receive_timestamp);
+    sntp_process(&timestamps);
 
     /* Set up timeout for next request (only if poll response was received)*/
     if (sntp_opmode == SNTP_OPMODE_POLL) {
