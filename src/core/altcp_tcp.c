@@ -354,6 +354,22 @@ altcp_tcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u
   return ERR_VAL;
 }
 
+static ip_addr_t *
+altcp_tcp_get_ip(struct altcp_pcb *conn, int local)
+{
+  if (conn) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->inner_conn;
+    if (pcb) {
+      if (local) {
+        return &pcb->local_ip;
+      } else {
+        return &pcb->remote_ip;
+      }
+    }
+  }
+  return NULL;
+}
+
 #ifdef LWIP_DEBUG
 static enum tcp_state
 altcp_tcp_dbg_get_tcp_state(struct altcp_pcb *conn)
@@ -383,7 +399,8 @@ const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_sndqueuelen,
   altcp_tcp_setprio,
   altcp_tcp_dealloc,
-  altcp_tcp_get_tcp_addrinfo
+  altcp_tcp_get_tcp_addrinfo,
+  altcp_tcp_get_ip
 #ifdef LWIP_DEBUG
   ,altcp_tcp_dbg_get_tcp_state
 #endif

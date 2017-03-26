@@ -79,32 +79,51 @@ typedef void  (*altcp_setprio_fn)(struct altcp_pcb *conn, u8_t prio);
 typedef void  (*altcp_dealloc_fn)(struct altcp_pcb *conn);
 
 typedef err_t (*altcp_get_tcp_addrinfo_fn)(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
+typedef ip_addr_t *(*altcp_get_ip_fn)(struct altcp_pcb *conn, int local);
+
 #ifdef LWIP_DEBUG
 typedef enum tcp_state (*altcp_dbg_get_tcp_state_fn)(struct altcp_pcb *conn);
 #endif
 
 struct altcp_functions {
-  altcp_set_poll_fn     set_poll;
-  altcp_recved_fn       recved;
-  altcp_bind_fn         bind;
-  altcp_connect_fn      connect;
-  altcp_listen_fn       listen;
-  altcp_abort_fn        abort;
-  altcp_close_fn        close;
-  altcp_shutdown_fn     shutdown;
-  altcp_write_fn        write;
-  altcp_output_fn       output;
-  altcp_mss_fn          mss;
-  altcp_sndbuf_fn       sndbuf;
-  altcp_sndqueuelen_fn  sndqueuelen;
-  altcp_setprio_fn      setprio;
-  altcp_dealloc_fn      dealloc;
+  altcp_set_poll_fn           set_poll;
+  altcp_recved_fn             recved;
+  altcp_bind_fn               bind;
+  altcp_connect_fn            connect;
+  altcp_listen_fn             listen;
+  altcp_abort_fn              abort;
+  altcp_close_fn              close;
+  altcp_shutdown_fn           shutdown;
+  altcp_write_fn              write;
+  altcp_output_fn             output;
+  altcp_mss_fn                mss;
+  altcp_sndbuf_fn             sndbuf;
+  altcp_sndqueuelen_fn        sndqueuelen;
+  altcp_setprio_fn            setprio;
+  altcp_dealloc_fn            dealloc;
   altcp_get_tcp_addrinfo_fn   addrinfo;
+  altcp_get_ip_fn             getip;
 #ifdef LWIP_DEBUG
   altcp_dbg_get_tcp_state_fn  dbg_get_tcp_state;
 #endif
 };
 
+void altcp_default_set_poll(struct altcp_pcb *conn, u8_t interval);
+void altcp_default_recved(struct altcp_pcb *conn, u16_t len);
+err_t altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port);
+err_t altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx);
+err_t altcp_default_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t apiflags);
+err_t altcp_default_output(struct altcp_pcb *conn);
+u16_t altcp_default_mss(struct altcp_pcb *conn);
+u16_t altcp_default_sndbuf(struct altcp_pcb *conn);
+u16_t altcp_default_sndqueuelen(struct altcp_pcb *conn);
+void altcp_default_setprio(struct altcp_pcb *conn, u8_t prio);
+void altcp_default_dealloc(struct altcp_pcb *conn);
+err_t altcp_default_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
+ip_addr_t *altcp_default_get_ip(struct altcp_pcb *conn, int local);
+#ifdef LWIP_DEBUG
+enum tcp_state altcp_default_dbg_get_tcp_state(struct altcp_pcb *conn);
+#endif
 
 #ifdef __cplusplus
 }

@@ -780,15 +780,6 @@ altcp_mbedtls_recved(struct altcp_pcb *conn, u16_t len)
 }
 
 static err_t
-altcp_mbedtls_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port)
-{
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
-  return altcp_bind(conn->inner_conn, ipaddr, port);
-}
-
-static err_t
 altcp_mbedtls_connect(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port, altcp_connected_fn connected)
 {
   if (conn == NULL) {
@@ -837,15 +828,6 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
     }
   }
   return altcp_close(conn->inner_conn);
-}
-
-static err_t
-altcp_mbedtls_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
-{
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
-  return altcp_shutdown(conn->inner_conn, shut_rx, shut_tx);
 }
 
 /** Write data to a TLS connection. Calls into mbedTLS, which in turn calls into
@@ -917,15 +899,6 @@ altcp_mbedtls_bio_send(void* ctx, const unsigned char* dataptr, size_t size)
   return written;
 }
 
-static err_t
-altcp_mbedtls_output(struct altcp_pcb *conn)
-{
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
-  return altcp_output(conn->inner_conn);
-}
-
 static u16_t
 altcp_mbedtls_mss(struct altcp_pcb *conn)
 {
@@ -934,32 +907,6 @@ altcp_mbedtls_mss(struct altcp_pcb *conn)
   }
   /* @todo: LWIP_MIN(mss, mbedtls_ssl_get_max_frag_len()) ? */
   return altcp_mss(conn->inner_conn);
-}
-
-static u16_t
-altcp_mbedtls_sndbuf(struct altcp_pcb *conn)
-{
-  if (conn == NULL) {
-    return 0;
-  }
-  return altcp_sndbuf(conn->inner_conn);
-}
-
-static u16_t
-altcp_mbedtls_sndqueuelen(struct altcp_pcb *conn)
-{
-  if (conn == NULL) {
-    return 0;
-  }
-  return altcp_sndqueuelen(conn->inner_conn);
-}
-
-static void
-altcp_mbedtls_setprio(struct altcp_pcb *conn, u8_t prio)
-{
-  if (conn != NULL) {
-    altcp_setprio(conn->inner_conn, prio);
-  }
 }
 
 static void
@@ -977,46 +924,26 @@ altcp_mbedtls_dealloc(struct altcp_pcb *conn)
   }
 }
 
-static err_t
-altcp_mbedtls_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
-{
-  if (conn) {
-    return altcp_get_tcp_addrinfo(conn->inner_conn, local, addr, port);
-  }
-  return ERR_VAL;
-}
-
-#ifdef LWIP_DEBUG
-static enum tcp_state
-altcp_mbedtls_dbg_get_tcp_state(struct altcp_pcb *conn)
-{
-  if (conn) {
-    return altcp_dbg_get_tcp_state(conn->inner_conn);
-  }
-  return CLOSED;
-}
-#endif
-
-
 const struct altcp_functions altcp_mbedtls_functions = {
   altcp_mbedtls_set_poll,
   altcp_mbedtls_recved,
-  altcp_mbedtls_bind,
+  altcp_default_bind,
   altcp_mbedtls_connect,
   altcp_mbedtls_listen,
   altcp_mbedtls_abort,
   altcp_mbedtls_close,
-  altcp_mbedtls_shutdown,
+  altcp_default_shutdown,
   altcp_mbedtls_write,
-  altcp_mbedtls_output,
+  altcp_default_output,
   altcp_mbedtls_mss,
-  altcp_mbedtls_sndbuf,
-  altcp_mbedtls_sndqueuelen,
-  altcp_mbedtls_setprio,
+  altcp_default_sndbuf,
+  altcp_default_sndqueuelen,
+  altcp_default_setprio,
   altcp_mbedtls_dealloc,
-  altcp_mbedtls_get_tcp_addrinfo
+  altcp_default_get_tcp_addrinfo,
+  altcp_default_get_ip
 #ifdef LWIP_DEBUG
-  ,altcp_mbedtls_dbg_get_tcp_state
+  ,altcp_default_dbg_get_tcp_state
 #endif
 };
 

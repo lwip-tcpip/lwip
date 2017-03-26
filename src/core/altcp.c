@@ -329,6 +329,15 @@ altcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t
   return ERR_VAL;
 }
 
+ip_addr_t *
+altcp_get_ip(struct altcp_pcb *conn, int local)
+{
+  if (conn && conn->fns && conn->fns->getip) {
+    return conn->fns->getip(conn, local);
+  }
+  return NULL;
+}
+
 #ifdef LWIP_DEBUG
 enum tcp_state
 altcp_dbg_get_tcp_state(struct altcp_pcb *conn)
@@ -339,5 +348,132 @@ altcp_dbg_get_tcp_state(struct altcp_pcb *conn)
   return CLOSED;
 }
 #endif
+
+/* Default implementations for the "virtual" functions */
+
+void
+altcp_mbedtls_set_poll(struct altcp_pcb *conn, u8_t interval)
+{
+  if (conn && conn->inner_conn) {
+    altcp_poll(conn->inner_conn, conn->poll, interval);
+  }
+}
+
+void
+altcp_default_recved(struct altcp_pcb *conn, u16_t len)
+{
+  if (conn && conn->inner_conn) {
+    altcp_recved(conn->inner_conn, len);
+  }
+}
+
+err_t
+altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_bind(conn->inner_conn, ipaddr, port);
+  }
+  return ERR_VAL;
+}
+
+err_t
+altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_shutdown(conn->inner_conn, shut_rx, shut_tx);
+  }
+  return ERR_VAL;
+}
+
+err_t
+altcp_default_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t apiflags)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_write(conn->inner_conn, dataptr, len, apiflags);
+  }
+  return ERR_VAL;
+}
+
+err_t
+altcp_default_output(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_output(conn->inner_conn);
+  }
+  return ERR_VAL;
+}
+
+u16_t
+altcp_default_mss(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_mss(conn->inner_conn);
+  }
+  return 0;
+}
+
+u16_t
+altcp_default_sndbuf(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_sndbuf(conn->inner_conn);
+  }
+  return 0;
+}
+
+u16_t
+altcp_default_sndqueuelen(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_sndqueuelen(conn->inner_conn);
+  }
+  return 0;
+}
+
+void
+altcp_default_setprio(struct altcp_pcb *conn, u8_t prio)
+{
+  if (conn && conn->inner_conn) {
+    altcp_setprio(conn->inner_conn, prio);
+  }
+}
+
+void
+altcp_default_dealloc(struct altcp_pcb *conn)
+{
+  LWIP_UNUSED_ARG(conn);
+  /* nothing to do */
+}
+
+err_t
+altcp_default_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_get_tcp_addrinfo(conn->inner_conn, local, addr, port);
+  }
+  return ERR_VAL;
+}
+
+ip_addr_t *
+altcp_default_get_ip(struct altcp_pcb *conn, int local)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_get_ip(conn->inner_conn, local);
+  }
+  return NULL;
+}
+
+
+#ifdef LWIP_DEBUG
+enum tcp_state
+altcp_default_dbg_get_tcp_state(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_dbg_get_tcp_state(conn->inner_conn);
+  }
+  return CLOSED;
+}
+#endif
+
 
 #endif /* LWIP_ALTCP */
