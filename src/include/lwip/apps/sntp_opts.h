@@ -121,7 +121,7 @@
  *
  * Although not strictly required, it makes sense to combine this option with
  * SNTP_CHECK_RESPONSE >= 2 for sanity-checking of the received timestamps.
- * Also, in order for the round-trip calculation to work, the the difference
+ * Also, in order for the round-trip calculation to work, the difference
  * between the local clock and the NTP server clock must not be larger than
  * about 34 years. If that limit is exceeded, the implementation will fall back
  * to setting the clock without compensation. In order to ensure that the local
