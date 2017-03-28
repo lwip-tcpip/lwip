@@ -132,8 +132,17 @@ enum tcp_state altcp_dbg_get_tcp_state(struct altcp_pcb *conn);
 
 #include "lwip/tcp.h"
 
+#define altcp_accept_fn tcp_accept_fn
+#define altcp_connected_fn tcp_connected_fn
+#define altcp_recv_fn tcp_recv_fn
+#define altcp_sent_fn tcp_sent_fn
+#define altcp_poll_fn tcp_poll_fn
+#define altcp_err_fn tcp_err_fn
+
 #define altcp_pcb tcp_pcb
 #define altcp_tcp_new_ip_type tcp_new_ip_type
+#define altcp_tcp_new tcp_new
+#define altcp_tcp_new_ip6 tcp_new_ip6
 
 #define altcp_arg tcp_arg
 #define altcp_accept tcp_accept
@@ -160,6 +169,9 @@ enum tcp_state altcp_dbg_get_tcp_state(struct altcp_pcb *conn);
 #define altcp_mss tcp_mss
 #define altcp_sndbuf tcp_sndbuf
 #define altcp_sndqueuelen tcp_sndqueuelen
+#define altcp_nagle_disable tcp_nagle_disable
+#define altcp_nagle_enable tcp_nagle_enable
+#define altcp_nagle_disabled tcp_nagle_disabled
 #define altcp_setprio tcp_setprio
 
 #define altcp_get_tcp_addrinfo tcp_get_tcp_addrinfo
