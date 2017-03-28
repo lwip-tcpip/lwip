@@ -150,8 +150,7 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
 	$(LWIPDIR)/apps/snmp/snmp_scalar.c \
 	$(LWIPDIR)/apps/snmp/snmp_table.c \
 	$(LWIPDIR)/apps/snmp/snmp_threadsync.c \
-	$(LWIPDIR)/apps/snmp/snmp_traps.c \
-	$(LWIPDIR)/apps/snmp/snmpv3_mbedtls.c
+	$(LWIPDIR)/apps/snmp/snmp_traps.c
 
 # HTTPDFILES: HTTP server
 HTTPDFILES=$(LWIPDIR)/apps/httpd/fs.c \
@@ -178,9 +177,10 @@ TFTPFILES=$(LWIPDIR)/apps/tftp/tftp_server.c
 # MQTTFILES: MQTT client files
 MQTTFILES=$(LWIPDIR)/apps/mqtt/mqtt.c
 
-# ALTCP_TLS_MBEDTLS: MBEDTLS port of altcp_tls
-ALTCP_TLS_MBEDTLS=$(LWIPDIR)/apps/altcp_tls/altcp_tls_mbedtls.c \
-	$(LWIPDIR)/apps/altcp_tls/altcp_tls_mbedtls_mem.c
+# MBEDTLS_FILES: MBEDTLS related files of lwIP rep
+MBEDTLS_FILES=$(LWIPDIR)/apps/altcp_tls/altcp_tls_mbedtls.c \
+	$(LWIPDIR)/apps/altcp_tls/altcp_tls_mbedtls_mem.c \
+	$(LWIPDIR)/apps/snmp/snmpv3_mbedtls.c
 
 # LWIPAPPFILES: All LWIP APPs
 LWIPAPPFILES=$(SNMPFILES) \
@@ -192,4 +192,4 @@ LWIPAPPFILES=$(SNMPFILES) \
 	$(NETBIOSNSFILES) \
 	$(TFTPFILES) \
 	$(MQTTFILES) \
-	$(ALTCP_TLS_MBEDTLS)
+	$(MBEDTLS_FILES)
