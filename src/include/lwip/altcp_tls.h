@@ -5,6 +5,8 @@
  * @defgroup altcp_tls TLS layer
  * @ingroup altcp
  * This file contains function prototypes for a TLS layer.
+ * A port to ARM mbedtls is provided in the apps/ tree
+ * (LWIP_ALTCP_TLS_MBEDTLS option).
  */
 
 /*
