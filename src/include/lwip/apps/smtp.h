@@ -1,11 +1,7 @@
 #ifndef LWIP_HDR_APPS_SMTP_H
 #define LWIP_HDR_APPS_SMTP_H
 
-/** Set this to 1 to enable data handler callback on BODY */
-#ifndef SMTP_BODYDH
-#define SMTP_BODYDH               0
-#endif
-
+#include "lwip/apps/smtp_opts.h"
 #include "lwip/err.h"
 
 /** The default TCP port used for SMTP */

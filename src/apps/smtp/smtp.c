@@ -4,47 +4,57 @@
  * 
  * Author: Simon Goldschmidt
  *
+ * @defgroup smtp SMTP client
+ * @ingroup apps
+ * 
+ * This is simple SMTP client for raw API.
+ * It is a minimal implementation of SMTP as specified in RFC 5321.
+ *
  * Example usage:
- *
- * void my_smtp_result_fn(void *arg, u8_t smtp_result, u16_t srv_err, err_t err)
- * {
- *   printf("mail (%p) sent with results: 0x%02x, 0x%04x, 0x%08x\n", arg,
- *          smtp_result, srv_err, err);
- * }
- * static void my_smtp_test(void)
- * {
- *   smtp_set_server_addr("mymailserver.org");
- *   -> set both username and password as NULL if no auth needed
- *   smtp_set_auth("username", "password");
- *   smtp_send_mail("sender", "recipient", "subject", "body", my_smtp_result_fn,
- *                  some_argument);
- * }
- *
+@code{.c}
+ void my_smtp_result_fn(void *arg, u8_t smtp_result, u16_t srv_err, err_t err)
+ {
+   printf("mail (%p) sent with results: 0x%02x, 0x%04x, 0x%08x\n", arg,
+          smtp_result, srv_err, err);
+ }
+ static void my_smtp_test(void)
+ {
+   smtp_set_server_addr("mymailserver.org");
+   -> set both username and password as NULL if no auth needed
+   smtp_set_auth("username", "password");
+   smtp_send_mail("sender", "recipient", "subject", "body", my_smtp_result_fn,
+                  some_argument);
+ }
+@endcode
+
  * When using from any other thread than the tcpip_thread (for NO_SYS==0), use
  * smtp_send_mail_int()!
- *
- *
+ * 
  * SMTP_BODYDH usage:
+@code{.c}
+ int my_smtp_bodydh_fn(void *arg, struct smtp_bodydh *bdh)
+ {
+    if(bdh->state >= 10) {
+       return BDH_DONE;
+    }
+    sprintf(bdh->buffer,"Line #%2d\r\n",bdh->state);
+    bdh->length = strlen(bdh->buffer);
+    ++bdh->state;
+    return BDH_WORKING;
+ }
+ 
+ smtp_send_mail_bodycback("sender", "recipient", "subject", 
+                my_smtp_bodydh_fn, my_smtp_result_fn, some_argument);
+@endcode
  * 
- * int my_smtp_bodydh_fn(void *arg, struct smtp_bodydh *bdh)
- * {
- *    if(bdh->state >= 10) {
- *       return BDH_DONE;
- *    }
- *    sprintf(bdh->buffer,"Line #%2d\r\n",bdh->state);
- *    bdh->length = strlen(bdh->buffer);
- *    ++bdh->state;
- *    return BDH_WORKING;
- * }
- * 
- * smtp_send_mail_bodycback("sender", "recipient", "subject", 
- *                my_smtp_bodydh_fn, my_smtp_result_fn, some_argument);
- * 
+ * @todo:
+ * - attachments (the main difficulty here is streaming base64-encoding to
+ *   prevent having to allocate a buffer for the whole encoded file at once)
+ * - test with more mail servers...
+ *
  */
 
 #include "lwip/apps/smtp.h"
-
-#include "lwip/opt.h"
 
 #if LWIP_TCP && LWIP_CALLBACK_API
 #include "lwip/sys.h"
@@ -57,61 +67,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-/** This is simple SMTP client for raw API.
- * It is a minimal implementation of SMTP as specified in RFC 5321.
- *
- * @todo:
- * - attachments (the main difficulty here is streaming base64-encoding to
- *   prevent having to allocate a buffer for the whole encoded file at once)
- * - test with more mail servers...
- */
-
-/**
- * SMTP_DEBUG: Enable debugging for SNTP.
- */
-#ifndef SMTP_DEBUG
-#define SMTP_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/** Maximum length reserved for server name */
-#ifndef SMTP_MAX_SERVERNAME_LEN
-#define SMTP_MAX_SERVERNAME_LEN 256
-#endif
-
-/** Maximum length reserved for username */
-#ifndef SMTP_MAX_USERNAME_LEN
-#define SMTP_MAX_USERNAME_LEN   32
-#endif
-
-/** Maximum length reserved for password */
-#ifndef SMTP_MAX_PASS_LEN
-#define SMTP_MAX_PASS_LEN       32
-#endif
-
-/** Set this to 0 if you know the authentication data will not change
- * during the smtp session, which saves some heap space. */
-#ifndef SMTP_COPY_AUTHDATA
-#define SMTP_COPY_AUTHDATA      1
-#endif
-
-/** Set this to 0 to save some code space if you know for sure that all data
- * passed to this module conforms to the requirements in the SMTP RFC.
- * WARNING: use this with care!
- */
-#ifndef SMTP_CHECK_DATA
-#define SMTP_CHECK_DATA         1
-#endif
-
-/** Set this to 1 to enable AUTH PLAIN support */
-#ifndef SMTP_SUPPORT_AUTH_PLAIN
-#define SMTP_SUPPORT_AUTH_PLAIN 1
-#endif
-
-/** Set this to 1 to enable AUTH LOGIN support */
-#ifndef SMTP_SUPPORT_AUTH_LOGIN
-#define SMTP_SUPPORT_AUTH_LOGIN 1
-#endif
 
 /** TCP poll interval. Unit is 0.5 sec. */
 #define SMTP_POLL_INTERVAL      4
@@ -204,12 +159,6 @@
 #define SMTP_AUTH_PLAIN_DATA(session) smtp_auth_plain
 #define SMTP_AUTH_PLAIN_LEN(session)  smtp_auth_plain_len
 #endif /* SMTP_COPY_AUTHDATA */
-
-/* Memory allocation/deallocation can be overridden... */
-#ifndef SMTP_STATE_MALLOC
-#define SMTP_STATE_MALLOC(size)       mem_malloc(size)
-#define SMTP_STATE_FREE(ptr)          mem_free(ptr)
-#endif
 
 #if SMTP_BODYDH
 #ifndef SMTP_BODYDH_MALLOC
@@ -387,7 +336,8 @@ smtp_pbuf_str(struct pbuf* p)
 }
 #endif /* LWIP_DEBUG */
 
-/** Set IP address or DNS name for next SMTP connection
+/** @ingroup smtp
+ * Set IP address or DNS name for next SMTP connection
  *
  * @param server IP address (in ASCII representation) or DNS name of the server
  */
@@ -405,7 +355,8 @@ smtp_set_server_addr(const char* server)
   return ERR_OK;
 }
 
-/** Set TCP port for next SMTP connection
+/** @ingroup smtp
+ * Set TCP port for next SMTP connection
  *
  * @param port TCP port
  */
@@ -423,7 +374,8 @@ smtp_set_tls_config(struct altcp_tls_config *tls_config)
 }
 #endif
 
-/** Set authentication parameters for next SMTP connection
+/** @ingroup smtp
+ * Set authentication parameters for next SMTP connection
  *
  * @param username login name as passed to the server
  * @param pass password passed to the server together with username
@@ -595,7 +547,8 @@ leave:
   return err;
 }
 
-/** Send an email via the currently selected server, username and password.
+/** @ingroup smtp
+ *  Send an email via the currently selected server, username and password.
  *
  * @param from source email address (must be NULL-terminated)
  * @param to target email address (must be NULL-terminated)
@@ -654,7 +607,8 @@ smtp_send_mail(const char* from, const char* to, const char* subject, const char
   return smtp_send_mail_alloced(s);
 }
 
-/** Same as smtp_send_mail, but doesn't copy from, to, subject and body into
+/** @ingroup smtp
+ * Same as smtp_send_mail, but doesn't copy from, to, subject and body into
  * an internal buffer to save memory.
  * WARNING: the above data must stay untouched until the callback function is
  *          called (unless the function returns != ERR_OK)
@@ -695,7 +649,8 @@ smtp_send_mail_static(const char *from, const char* to, const char* subject,
 }
 
 
-/** Same as smpt_send_mail but takes a struct smtp_send_request as single
+/** @ingroup smtp
+ * Same as smpt_send_mail but takes a struct smtp_send_request as single
  * parameter which contains all the other parameters.
  * To be used with tcpip_callback to send mail from interrupt context or from
  * another thread.
