@@ -186,7 +186,7 @@ struct mqtt_client_t
   u16_t inpub_pkt_id;
   /** Connection state */
   u8_t conn_state;
-  struct tcp_pcb *conn;
+  struct altcp_pcb *conn;
   /** Connection callback */
   void *connect_arg;
   mqtt_connection_cb_t connect_cb;
