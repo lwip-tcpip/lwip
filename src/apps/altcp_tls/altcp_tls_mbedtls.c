@@ -57,12 +57,12 @@
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/apps/altcp_tls_opts.h"
+#include "lwip/apps/altcp_tls_mbedtls_opts.h"
 
 #if LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS
 
 #include "lwip/altcp.h"
-#include "lwip/apps/altcp_tls.h"
+#include "lwip/altcp_tls.h"
 #include "lwip/priv/altcp_priv.h"
 
 #include "altcp_tls_mbedtls_structs.h"

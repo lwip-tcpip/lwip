@@ -55,7 +55,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/altcp.h"
 #include "lwip/altcp_tcp.h"
-#include "lwip/apps/altcp_tls.h"
+#include "lwip/altcp_tls.h"
 #include <string.h>
 
 #if LWIP_TCP && LWIP_CALLBACK_API

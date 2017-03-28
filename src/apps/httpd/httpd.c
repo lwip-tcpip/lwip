@@ -99,7 +99,7 @@
 #include "lwip/altcp.h"
 #include "lwip/altcp_tcp.h"
 #if HTTPD_ENABLE_HTTPS
-#include "lwip/apps/altcp_tls.h"
+#include "lwip/altcp_tls.h"
 #endif
 
 #include <string.h> /* memset */

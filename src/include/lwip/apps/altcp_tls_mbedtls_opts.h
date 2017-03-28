@@ -2,7 +2,7 @@
  * @file
  * Application layered TCP/TLS connection API (to be used from TCPIP thread)
  *
- * This file contains function prototypes for a TLS layer.
+ * This file contains options for an mbedtls port of the TLS layer.
  */
 
 /*
@@ -36,36 +36,32 @@
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
  */
-#ifndef LWIP_HDR_ALTCP_TLS_H
-#define LWIP_HDR_ALTCP_TLS_H
+#ifndef LWIP_HDR_ALTCP_TLS_OPTS_H
+#define LWIP_HDR_ALTCP_TLS_OPTS_H
 
 #include "lwip/opt.h"
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
-#include "altcp_tls_opts.h"
-
-#if LWIP_ALTCP_TLS
-
-#include "lwip/altcp.h"
-
-#ifdef __cplusplus
-extern "C" {
+/** LWIP_ALTCP_TLS_MBEDTLS==1: use mbedTLS for TLS support for altcp API
+ * mbedtls include directory must be reachable via include search path
+ */
+#ifndef LWIP_ALTCP_TLS_MBEDTLS
+#define LWIP_ALTCP_TLS_MBEDTLS                        0
 #endif
 
-struct altcp_tls_config;
-
-struct altcp_tls_config *altcp_tls_create_config_server_privkey_cert(const u8_t *privkey, size_t privkey_len,
-                            const u8_t *privkey_pass, size_t privkey_pass_len,
-                            const u8_t *cert, size_t cert_len);
-struct altcp_tls_config *altcp_tls_create_config_client(const u8_t *cert, size_t cert_len);
-
-struct altcp_pcb *altcp_tls_new(struct altcp_tls_config* config, struct altcp_pcb *inner_pcb);
-
-#ifdef __cplusplus
-}
+/** Configure debug level of this file */
+#ifndef ALTCP_MBEDTLS_DEBUG
+#define ALTCP_MBEDTLS_DEBUG                           LWIP_DBG_OFF
 #endif
 
-#endif /* LWIP_ALTCP_TLS */
+/** Set a session timeout in seconds for the basic session cache
+ * ATTENTION: Using a session cache can lower security by reusing keys!
+ */
+#ifndef ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
+#define ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS   0
+#endif
+
 #endif /* LWIP_ALTCP */
-#endif /* LWIP_HDR_ALTCP_TLS_H */
+
+#endif /* LWIP_HDR_ALTCP_TLS_OPTS_H */

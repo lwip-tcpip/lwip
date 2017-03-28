@@ -1355,6 +1355,12 @@
 #ifndef LWIP_ALTCP
 #define LWIP_ALTCP                      0
 #endif
+
+/** LWIP_ALTCP_TLS==1: enable TLS support for altcp API */
+#ifndef LWIP_ALTCP_TLS
+#define LWIP_ALTCP_TLS                  0
+#endif
+
 /**
  * @}
  */
