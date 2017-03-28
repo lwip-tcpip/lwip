@@ -34,8 +34,9 @@
  * Author: Erik Ekman <erik@kryo.se>
  *
  */
-#ifndef LWIP_HDR_MDNS_H
-#define LWIP_HDR_MDNS_H
+
+#ifndef LWIP_HDR_APPS_MDNS_H
+#define LWIP_HDR_APPS_MDNS_H
 
 #include "lwip/apps/mdns_opts.h"
 #include "lwip/netif.h"
@@ -66,4 +67,4 @@ void mdns_resp_netif_settings_changed(struct netif *netif);
 
 #endif /* LWIP_MDNS_RESPONDER */
 
-#endif /* LWIP_HDR_MDNS_H */
+#endif /* LWIP_HDR_APPS_MDNS_H */
