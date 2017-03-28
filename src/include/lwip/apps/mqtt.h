@@ -40,6 +40,7 @@
 #include "lwip/apps/mqtt_opts.h"
 #include "lwip/err.h"
 #include "lwip/ip_addr.h"
+#include "lwip/apps/altcp_tls.h"
 
 #ifdef __cplusplus
 extern "C" {
