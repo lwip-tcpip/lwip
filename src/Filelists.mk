@@ -160,6 +160,9 @@ HTTPDFILES=$(LWIPDIR)/apps/httpd/fs.c \
 # LWIPERFFILES: IPERF server
 LWIPERFFILES=$(LWIPDIR)/apps/lwiperf/lwiperf.c
 
+# SMTPFILES: SMTP client
+SMTPFILES=$(LWIPDIR)/apps/smtp/smtp.c
+
 # SNTPFILES: SNTP client
 SNTPFILES=$(LWIPDIR)/apps/sntp/sntp.c
 
@@ -183,6 +186,7 @@ ALTCP_TLS_MBEDTLS=$(LWIPDIR)/apps/altcp_tls/altcp_tls_mbedtls.c \
 LWIPAPPFILES=$(SNMPFILES) \
 	$(HTTPDFILES) \
 	$(LWIPERFFILES) \
+	$(SMTPFILES) \
 	$(SNTPFILES) \
 	$(MDNSFILES) \
 	$(NETBIOSNSFILES) \
