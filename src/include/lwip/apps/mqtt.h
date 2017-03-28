@@ -45,7 +45,12 @@
 extern "C" {
 #endif
 
-typedef struct mqtt_client_t mqtt_client_t;
+typedef struct mqtt_client_s mqtt_client_t;
+
+struct altcp_pcb;
+#if LWIP_ALTCP && LWIP_ALTCP_TLS
+struct altcp_tls_config;
+#endif
 
 /** @ingroup mqtt
  * Default MQTT port (non-TLS) */
@@ -180,7 +185,7 @@ struct mqtt_ringbuf_t {
 };
 
 /** MQTT client */
-struct mqtt_client_t
+struct mqtt_client_s
 {
   /** Timers and timeouts */
   u16_t cyclic_tick;
