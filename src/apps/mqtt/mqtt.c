@@ -1285,7 +1285,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   if (client->conn == NULL) {
     return ERR_MEM;
   }
-#if LWIP_ALTCP_TLS
+#if LWIP_ALTCP && LWIP_ALTCP_TLS
   if (client_info->tls_config) {
     struct altcp_pcb *pcb_tls = altcp_tls_new(client_info->tls_config, client->conn);
     if (pcb_tls == NULL) {
