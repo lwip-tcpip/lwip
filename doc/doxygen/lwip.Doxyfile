@@ -2082,6 +2082,7 @@ PREDEFINED             = __DOXYGEN__=1 \
                          LWIP_IGMP=1 \
                          LWIP_TCP=1 \
                          LWIP_ALTCP=1 \
+                         LWIP_ALTCP_TLS=1 \
                          LWIP_IPV6_SCOPES=1 \
                          TCP_LISTEN_BACKLOG=1 \
                          LWIP_SNMP=1 \
@@ -2118,7 +2119,8 @@ PREDEFINED             = __DOXYGEN__=1 \
                          SO_REUSE=1 \
                          SO_REUSE_RXTOALL=1 \
                          LWIP_HAVE_SLIPIF=1 \
-                         LWIP_6LOWPAN=1
+                         LWIP_6LOWPAN=1 \
+                         HTTPD_ENABLE_HTTPS=1
  
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

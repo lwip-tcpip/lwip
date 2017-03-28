@@ -2593,6 +2593,11 @@ httpd_init(void)
 }
 
 #if HTTPD_ENABLE_HTTPS
+/**
+ * @ingroup httpd
+ * Initialize the httpd: set up a listening PCB and bind it to the defined port.
+ * Also set up TLS connection handling (HTTPS).
+ */
 void
 httpd_inits(struct altcp_tls_config *conf)
 {

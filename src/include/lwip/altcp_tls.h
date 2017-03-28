@@ -2,6 +2,8 @@
  * @file
  * Application layered TCP/TLS connection API (to be used from TCPIP thread)
  *
+ * @defgroup altcp_tls TLS layer
+ * @ingroup altcp
  * This file contains function prototypes for a TLS layer.
  */
 
@@ -51,13 +53,26 @@
 extern "C" {
 #endif
 
+/** @ingroup altcp_tls
+ * ALTCP_TLS configuration handle, content depends on port (e.g. mbedtls) 
+ */
 struct altcp_tls_config;
 
+/** @ingroup altcp_tls
+ * Create an ALTCP_TLS server configuration handle
+ */
 struct altcp_tls_config *altcp_tls_create_config_server_privkey_cert(const u8_t *privkey, size_t privkey_len,
                             const u8_t *privkey_pass, size_t privkey_pass_len,
                             const u8_t *cert, size_t cert_len);
+
+/** @ingroup altcp_tls
+ * Create an ALTCP_TLS client configuration handle
+ */
 struct altcp_tls_config *altcp_tls_create_config_client(const u8_t *cert, size_t cert_len);
 
+/** @ingroup altcp_tls
+ * Create new ALTCP_TLS layer
+ */
 struct altcp_pcb *altcp_tls_new(struct altcp_tls_config* config, struct altcp_pcb *inner_pcb);
 
 #ifdef __cplusplus

@@ -367,6 +367,11 @@ smtp_set_server_port(u16_t port)
 }
 
 #if LWIP_ALTCP && LWIP_ALTCP_TLS
+/** @ingroup smtp
+ * Set TLS configuration for next SMTP connection
+ *
+ * @param tls_config TLS configuration
+ */
 void
 smtp_set_tls_config(struct altcp_tls_config *tls_config)
 {

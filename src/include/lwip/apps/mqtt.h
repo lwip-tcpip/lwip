@@ -79,6 +79,7 @@ struct mqtt_connect_client_info_t {
   u8_t will_qos;
   u8_t will_retain;
 #if LWIP_ALTCP && LWIP_ALTCP_TLS
+  /** TLS configuration for secure connections */
   struct altcp_tls_config *tls_config;
 #endif
 };
