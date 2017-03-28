@@ -334,6 +334,34 @@ altcp_tcp_sndqueuelen(struct altcp_pcb *conn)
 }
 
 static void
+altcp_tcp_nagle_disable(struct altcp_pcb *conn)
+{
+  if (conn && conn->state) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
+    tcp_nagle_disable(pcb);
+  }
+}
+
+static void
+altcp_tcp_nagle_enable(struct altcp_pcb *conn)
+{
+  if (conn && conn->state) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
+    tcp_nagle_enable(pcb);
+  }
+}
+
+static int
+altcp_tcp_nagle_disabled(struct altcp_pcb *conn)
+{
+  if (conn && conn->state) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
+    return tcp_nagle_disabled(pcb);
+  }
+  return 0;
+}
+
+static void
 altcp_tcp_setprio(struct altcp_pcb *conn, u8_t prio)
 {
   if (conn != NULL) {
@@ -402,6 +430,9 @@ const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_mss,
   altcp_tcp_sndbuf,
   altcp_tcp_sndqueuelen,
+  altcp_nagle_disable,
+  altcp_nagle_enable,
+  altcp_nagle_disabled,
   altcp_tcp_setprio,
   altcp_tcp_dealloc,
   altcp_tcp_get_tcp_addrinfo,

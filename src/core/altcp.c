@@ -308,6 +308,31 @@ altcp_sndqueuelen(struct altcp_pcb *conn)
   return 0;
 }
 
+void
+altcp_nagle_disable(struct altcp_pcb *conn)
+{
+  if (conn && conn->fns && conn->fns->nagle_disable) {
+    conn->fns->nagle_disable(conn);
+  }
+}
+
+void
+altcp_nagle_enable(struct altcp_pcb *conn)
+{
+  if (conn && conn->fns && conn->fns->nagle_enable) {
+    conn->fns->nagle_enable(conn);
+  }
+}
+
+int
+altcp_nagle_disabled(struct altcp_pcb *conn)
+{
+  if (conn && conn->fns && conn->fns->nagle_disabled) {
+    return conn->fns->nagle_disabled(conn);
+  }
+  return 0;
+}
+
 /**
  * @ingroup altcp
  * @see tcp_setprio()
@@ -426,6 +451,31 @@ altcp_default_sndqueuelen(struct altcp_pcb *conn)
 {
   if (conn && conn->inner_conn) {
     return altcp_sndqueuelen(conn->inner_conn);
+  }
+  return 0;
+}
+
+void
+altcp_default_nagle_disable(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    altcp_nagle_disable(conn->inner_conn);
+  }
+}
+
+void
+altcp_default_nagle_enable(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    altcp_nagle_enable(conn->inner_conn);
+  }
+}
+
+int
+altcp_default_nagle_disabled(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_nagle_disabled(conn->inner_conn);
   }
   return 0;
 }

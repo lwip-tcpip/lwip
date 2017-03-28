@@ -569,7 +569,7 @@ http_write(struct altcp_pcb *pcb, const void* ptr, u16_t *length, u8_t apiflags)
    /* ensure nagle is normally enabled (only disabled for persistent connections
       when all data has been enqueued but the connection stays open for the next
       request */
-   tcp_nagle_enable(pcb);
+   altcp_nagle_enable(pcb);
 #endif
 
   return err;
@@ -656,7 +656,7 @@ http_eof(struct altcp_pcb *pcb, struct http_state *hs)
     hs->keepalive = 1;
     http_add_connection(hs);
     /* ensure nagle doesn't interfere with sending all data as fast as possible: */
-    tcp_nagle_disable(pcb);
+    altcp_nagle_disable(pcb);
   } else
 #endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
   {
@@ -985,7 +985,7 @@ http_send_headers(struct altcp_pcb *pcb, struct http_state *hs)
   u16_t hdrlen, sendlen;
 
   /* How much data can we send? */
-  len = tcp_sndbuf(pcb);
+  len = altcp_sndbuf(pcb);
   sendlen = len;
 
   while(len && (hs->hdr_index < NUM_FILE_HDR_STRINGS) && sendlen) {
@@ -1093,7 +1093,7 @@ http_check_eof(struct altcp_pcb *pcb, struct http_state *hs)
     count = LWIP_MIN(hs->buf_len, bytes_left);
   } else {
     /* We don't have a send buffer so allocate one now */
-    count = tcp_sndbuf(pcb);
+    count = altcp_sndbuf(pcb);
     if(bytes_left < count) {
       count = bytes_left;
     }
@@ -1386,7 +1386,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
 #if !LWIP_HTTPD_SSI_INCLUDE_TAG
                 if(ssi->tag_started <= hs->file) {
                   /* pretend to have sent the tag, too */
-                  len += ssi->tag_end - ssi->tag_started;
+                  len += (u16_t)(ssi->tag_end - ssi->tag_started);
                 }
 #endif /* !LWIP_HTTPD_SSI_INCLUDE_TAG*/
                 hs->file += len;
@@ -1432,7 +1432,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
 #if !LWIP_HTTPD_SSI_INCLUDE_TAG
             if(ssi->tag_started <= hs->file) {
               /* pretend to have sent the tag, too */
-              len += ssi->tag_end - ssi->tag_started;
+              len += (u16_t)(ssi->tag_end - ssi->tag_started);
             }
 #endif /* !LWIP_HTTPD_SSI_INCLUDE_TAG*/
             hs->file += len;
@@ -1853,7 +1853,7 @@ void httpd_post_data_recved(void *connection, u16_t recved_len)
       }
       if (hs->pcb != NULL) {
         if (len != 0) {
-          tcp_recved(hs->pcb, len);
+          altcp_recved(hs->pcb, len);
         }
         if ((hs->post_content_len_left == 0) && (hs->unrecved_bytes == 0)) {
           /* finished handling POST */
@@ -1882,7 +1882,7 @@ http_continue(void *connection)
     if (http_send(hs->pcb, hs)) {
       /* If we wrote anything to be sent, go ahead and send it now. */
       LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("tcp_output\n"));
-      tcp_output(hs->pcb);
+      altcp_output(hs->pcb);
     }
   }
 }
@@ -2398,7 +2398,7 @@ http_poll(void *arg, struct altcp_pcb *pcb)
     LWIP_UNUSED_ARG(closed);
 #if LWIP_HTTPD_ABORT_ON_CLOSE_MEM_ERROR
     if (closed == ERR_MEM) {
-       tcp_abort(pcb);
+       altcp_abort(pcb);
        return ERR_ABRT;
     }
 #endif /* LWIP_HTTPD_ABORT_ON_CLOSE_MEM_ERROR */

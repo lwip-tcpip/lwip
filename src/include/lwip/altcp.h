@@ -109,6 +109,9 @@ err_t altcp_output(struct altcp_pcb *conn);
 u16_t altcp_mss(struct altcp_pcb *conn);
 u16_t altcp_sndbuf(struct altcp_pcb *conn);
 u16_t altcp_sndqueuelen(struct altcp_pcb *conn);
+void  altcp_nagle_disable(struct altcp_pcb *conn);
+void  altcp_nagle_enable(struct altcp_pcb *conn);
+int   altcp_nagle_disabled(struct altcp_pcb *conn);
 
 void  altcp_setprio(struct altcp_pcb *conn, u8_t prio);
 
