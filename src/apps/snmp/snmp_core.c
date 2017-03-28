@@ -34,17 +34,16 @@
 */
 
 /**
- * @defgroup snmp SNMPv2c agent
+ * @defgroup snmp SNMPv2c/v3 agent
  * @ingroup apps
- * SNMPv2c compatible agent\n
+ * SNMPv2c and SNMPv3 compatible agent\n
  * There is also a MIB compiler and a MIB viewer in lwIP contrib repository
  * (lwip-contrib/apps/LwipMibCompiler).\n
  * The agent implements the most important MIB2 MIBs including IPv6 support
  * (interfaces, UDP, TCP, SNMP, ICMP, SYSTEM). IP MIB is an older version
- * whithout IPv6 statistics (TODO).\n
+ * without IPv6 statistics (TODO).\n
  * Rewritten by Martin Hentschel <info@cl-soft.de> and
  * Dirk Ziegelmeier <dziegel@gmx.de>\n
- * Work on SNMPv3 has started, but is not finished.\n
  *
  * 0 Agent Capabilities
  * ====================
@@ -52,6 +51,7 @@
  * Features:
  * ---------
  * - SNMPv2c support.
+ * - SNMPv3 support (a port to ARM mbedtls is provided, LWIP_SNMP_V3_MBEDTLS option).
  * - Low RAM usage - no memory pools, stack only.
  * - MIB2 implementation is separated from SNMP stack.
  * - Support for multiple MIBs (snmp_set_mibs() call) - e.g. for private MIB.
@@ -91,6 +91,14 @@
  *   management protocols CMIP (Common Management Information Protocol)
  *   and CMOT (CMip Over Tcp).
  * 
+ * SNMPv3
+ * ------
+ * When SNMPv3 is used, several functions from snmpv3.h must be implemented
+ * by the user. This is mainly user management and persistence handling.
+ * The sample provided in lwip-contrib is insecure, don't use it in production
+ * systems, especially the missing persistence for engine boots variable
+ * simplifies replay attacks.
+ *  
  * MIB II
  * ------
  *   The standard lwIP stack management information base.
