@@ -55,6 +55,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/altcp.h"
 #include "lwip/altcp_tcp.h"
+#include "lwip/apps/altcp_tls.h"
 #include <string.h>
 
 #if LWIP_TCP && LWIP_CALLBACK_API
@@ -1284,6 +1285,16 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   if (client->conn == NULL) {
     return ERR_MEM;
   }
+#if LWIP_ALTCP_TLS
+  if (client_info->tls_config) {
+    struct altcp_pcb *pcb_tls = altcp_tls_new(client_info->tls_config, client->conn);
+    if (pcb_tls == NULL) {
+      altcp_close(client->conn);
+      return ERR_MEM;
+    }
+    client->conn = pcb_tls;
+  }
+#endif
 
   /* Set arg pointer for callbacks */
   altcp_arg(client->conn, client);

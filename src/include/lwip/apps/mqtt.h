@@ -48,8 +48,11 @@ extern "C" {
 typedef struct mqtt_client_t mqtt_client_t;
 
 /** @ingroup mqtt
- * Default MQTT port */
-#define MQTT_PORT 1883
+ * Default MQTT port (non-TLS) */
+#define MQTT_PORT     1883
+/** @ingroup mqtt
+ * Default MQTT TLS port */
+#define MQTT_TLS_PORT 8883
 
 /*---------------------------------------------------------------------------------------------- */
 /* Connection with server */
@@ -71,6 +74,9 @@ struct mqtt_connect_client_info_t {
   const char* will_msg;
   u8_t will_qos;
   u8_t will_retain;
+#if LWIP_ALTCP && LWIP_ALTCP_TLS
+  struct altcp_tls_config *tls_config;
+#endif
 };
 
 /**
