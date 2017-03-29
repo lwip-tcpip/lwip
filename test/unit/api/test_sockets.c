@@ -254,8 +254,8 @@ static void test_sockets_msgapi_tcp(int domain)
 
   /* set s2 to non-blocking, not inherited from listener */
   opt = lwip_fcntl(s2, F_GETFL, 0);
-  fail_unless(opt == 0);
-  opt |= O_NONBLOCK;
+  fail_unless(opt == 6);
+  opt = O_NONBLOCK;
   ret = lwip_fcntl(s2, F_SETFL, opt);
   fail_unless(ret == 0);
 

@@ -3149,13 +3149,15 @@ lwip_ioctl(int s, long cmd, void *argp)
 
 /** A minimal implementation of fcntl.
  * Currently only the commands F_GETFL and F_SETFL are implemented.
- * Only the flag O_NONBLOCK is implemented.
+ * The flag O_NONBLOCK and access modes are supported for F_GETFL, only
+ * the flag O_NONBLOCK is implemented for F_SETFL.
  */
 int
 lwip_fcntl(int s, int cmd, int val)
 {
   struct lwip_sock *sock = get_socket(s);
   int ret = -1;
+  int op_mode = 0;
 
   if (!sock) {
     return -1;
@@ -3165,6 +3167,25 @@ lwip_fcntl(int s, int cmd, int val)
   case F_GETFL:
     ret = netconn_is_nonblocking(sock->conn) ? O_NONBLOCK : 0;
     sock_set_errno(sock, 0);
+
+    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+#if LWIP_TCPIP_CORE_LOCKING
+      LOCK_TCPIP_CORE();
+      LWIP_ASSERT("sock->conn->pcb.tcp != NULL", sock->conn->pcb.tcp != NULL);
+      if(!(sock->conn->pcb.tcp->flags & TF_RXCLOSED)) {
+        op_mode |= O_RDONLY;
+      }
+      if (!(sock->conn->pcb.tcp->flags & TF_FIN)) {
+        op_mode |= O_WRONLY;
+      }
+      UNLOCK_TCPIP_CORE();
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
+    } else {
+      op_mode |= O_RDWR;
+    }
+
+    ret |= (op_mode == (O_RDONLY|O_WRONLY)) ? O_RDWR : op_mode;
+
     break;
   case F_SETFL:
     if ((val & ~O_NONBLOCK) == 0) {
