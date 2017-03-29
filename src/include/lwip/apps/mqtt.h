@@ -67,16 +67,20 @@ struct altcp_tls_config;
 struct mqtt_connect_client_info_t {
   /** Client identifier, must be set by caller */
   const char *client_id;
-  /** User name and password, set to NULL if not used */
+  /** User name, set to NULL if not used */
   const char* client_user;
+  /** Password, set to NULL if not used */
   const char* client_pass;
   /** keep alive time in seconds, 0 to disable keep alive functionality*/
   u16_t keep_alive;
   /** will topic, set to NULL if will is not to be used,
       will_msg, will_qos and will retain are then ignored */
   const char* will_topic;
+  /** will_msg, see will_topic */
   const char* will_msg;
+  /** will_qos, see will_topic */
   u8_t will_qos;
+  /** will_retain, see will_topic */
   u8_t will_retain;
 #if LWIP_ALTCP && LWIP_ALTCP_TLS
   /** TLS configuration for secure connections */
@@ -89,13 +93,21 @@ struct mqtt_connect_client_info_t {
  * Connection status codes */
 typedef enum
 {
+  /** Accepted */
   MQTT_CONNECT_ACCEPTED                 = 0,
+  /** Refused protocol version */
   MQTT_CONNECT_REFUSED_PROTOCOL_VERSION = 1,
+  /** Refused identifier */
   MQTT_CONNECT_REFUSED_IDENTIFIER       = 2,
+  /** Refused server */
   MQTT_CONNECT_REFUSED_SERVER           = 3,
+  /** Refused user credentials */
   MQTT_CONNECT_REFUSED_USERNAME_PASS    = 4,
+  /** Refused not authorized */
   MQTT_CONNECT_REFUSED_NOT_AUTHORIZED_  = 5,
+  /** Disconnected */
   MQTT_CONNECT_DISCONNECTED             = 256,
+  /** Timeout */
   MQTT_CONNECT_TIMEOUT                  = 257
 } mqtt_connection_status_t;
 
