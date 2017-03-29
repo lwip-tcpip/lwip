@@ -481,9 +481,13 @@ bridgeif_input(struct pbuf *p, struct netif *netif)
   bridgeif_portmask_t dstports;
   struct eth_addr *src, *dst;
   bridgeif_private_t *br;
-  bridgeif_port_t *port = (bridgeif_port_t *)netif_get_client_data(netif, bridgeif_netif_client_id);
+  bridgeif_port_t *port;
+  if (p == NULL || netif == NULL) {
+    return ERR_VAL;
+  }
+  port = (bridgeif_port_t *)netif_get_client_data(netif, bridgeif_netif_client_id);
   LWIP_ASSERT("port data not set", port != NULL);
-  if (p == NULL || netif == NULL || port == NULL || port->bridge == NULL) {
+  if (port == NULL || port->bridge == NULL) {
     return ERR_VAL;
   }
   br = (bridgeif_private_t *)port->bridge;
