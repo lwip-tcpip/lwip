@@ -3171,19 +3171,30 @@ lwip_fcntl(int s, int cmd, int val)
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
 #if LWIP_TCPIP_CORE_LOCKING
       LOCK_TCPIP_CORE();
-      LWIP_ASSERT("sock->conn->pcb.tcp != NULL", sock->conn->pcb.tcp != NULL);
-      if(!(sock->conn->pcb.tcp->flags & TF_RXCLOSED)) {
-        op_mode |= O_RDONLY;
+#else
+      SYS_ARCH_DECL_PROTECT(lev);
+      /* the proper thing to do here would be to get into the tcpip_thread,
+         but locking should be OK as well since we only *read* some flags */
+      SYS_ARCH_PROTECT(lev);
+#endif
+      if (sock->conn && sock->conn->pcb.tcp) {
+        if(!(sock->conn->pcb.tcp->flags & TF_RXCLOSED)) {
+          op_mode |= O_RDONLY;
+        }
+        if (!(sock->conn->pcb.tcp->flags & TF_FIN)) {
+          op_mode |= O_WRONLY;
+        }
       }
-      if (!(sock->conn->pcb.tcp->flags & TF_FIN)) {
-        op_mode |= O_WRONLY;
-      }
+#if LWIP_TCPIP_CORE_LOCKING
       UNLOCK_TCPIP_CORE();
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
+#else
+      SYS_ARCH_UNPROTECT(lev);
+#endif
     } else {
       op_mode |= O_RDWR;
     }
 
+    /* ensure O_RDWR for (O_RDONLY|O_WRONLY) != O_RDWR cases */
     ret |= (op_mode == (O_RDONLY|O_WRONLY)) ? O_RDWR : op_mode;
 
     break;
