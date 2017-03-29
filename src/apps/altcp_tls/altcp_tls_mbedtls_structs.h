@@ -43,6 +43,10 @@
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/apps/altcp_tls_mbedtls_opts.h"
+
+#if LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS
+
 #include "lwip/altcp.h"
 #include "lwip/pbuf.h"
 
@@ -76,6 +80,6 @@ typedef struct altcp_mbedtls_state_s {
 }
 #endif
 
+#endif /* LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS */
 #endif /* LWIP_ALTCP */
-
 #endif /* LWIP_HDR_ALTCP_MBEDTLS_STRUCTS_H */
