@@ -1299,7 +1299,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
              sock_set_errno(sock, err_to_errno(ERR_ARG)); done_socket(sock); return -1;);
   LWIP_ERROR("lwip_sendmsg: maximum iovs exceeded", (msg->msg_iovlen > 0) && (msg->msg_iovlen <= IOV_MAX),
              sock_set_errno(sock, EMSGSIZE); done_socket(sock); return -1;);
-  LWIP_ERROR("lwip_sendmsg: unsupported flags", ((flags == 0) || (flags == MSG_NOSIGNAL)),
+  LWIP_ERROR("lwip_sendmsg: unsupported flags", (flags & ~(MSG_DONTWAIT|MSG_MORE)) == 0,
              sock_set_errno(sock, EOPNOTSUPP); done_socket(sock); return -1;);
 
   LWIP_UNUSED_ARG(msg->msg_control);
