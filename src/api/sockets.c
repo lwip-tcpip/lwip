@@ -3177,7 +3177,7 @@ lwip_fcntl(int s, int cmd, int val)
          but locking should be OK as well since we only *read* some flags */
       SYS_ARCH_PROTECT(lev);
 #endif
-      if (sock->conn && sock->conn->pcb.tcp) {
+      if (sock->conn->pcb.tcp) {
         if(!(sock->conn->pcb.tcp->flags & TF_RXCLOSED)) {
           op_mode |= O_RDONLY;
         }
