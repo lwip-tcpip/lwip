@@ -377,7 +377,7 @@ altcp_dbg_get_tcp_state(struct altcp_pcb *conn)
 /* Default implementations for the "virtual" functions */
 
 void
-altcp_mbedtls_set_poll(struct altcp_pcb *conn, u8_t interval)
+altcp_default_set_poll(struct altcp_pcb *conn, u8_t interval)
 {
   if (conn && conn->inner_conn) {
     altcp_poll(conn->inner_conn, conn->poll, interval);
