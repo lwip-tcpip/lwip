@@ -1356,7 +1356,11 @@
 #define LWIP_ALTCP                      0
 #endif
 
-/** LWIP_ALTCP_TLS==1: enable TLS support for altcp API */
+/** LWIP_ALTCP_TLS==1: enable TLS support for altcp API.
+ * This needs a port of the functions in altcp_tls.h to a TLS library.
+ * A port to ARM mbedtls is provided with lwIP, see apps/altcp_tls/ directory
+ * and LWIP_ALTCP_TLS_MBEDTLS option.
+ */
 #ifndef LWIP_ALTCP_TLS
 #define LWIP_ALTCP_TLS                  0
 #endif
