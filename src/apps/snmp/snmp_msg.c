@@ -1672,7 +1672,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
     struct snmp_pbuf_stream inbound_stream;
     OF_BUILD_EXEC( snmp_pbuf_stream_init(&inbound_stream, request->inbound_pbuf, request->inbound_varbind_offset, request->inbound_varbind_len) );
     OF_BUILD_EXEC( snmp_pbuf_stream_init(&(request->outbound_pbuf_stream), request->outbound_pbuf, request->outbound_varbind_offset, request->outbound_pbuf->tot_len - request->outbound_varbind_offset) );
-    snmp_pbuf_stream_writeto(&inbound_stream, &(request->outbound_pbuf_stream), 0);
+    OF_BUILD_EXEC( snmp_pbuf_stream_writeto(&inbound_stream, &(request->outbound_pbuf_stream), 0) );
   }
 
   frame_size = request->outbound_pbuf_stream.offset;
@@ -1683,7 +1683,7 @@ snmp_complete_outbound_frame(struct snmp_request *request)
     u8_t i;
     outbound_padding = (8 - (u8_t)((frame_size - request->outbound_scoped_pdu_seq_offset) & 0x07)) & 0x07;
     for (i = 0; i < outbound_padding; i++) {
-      snmp_pbuf_stream_write(&request->outbound_pbuf_stream, 0);
+      OF_BUILD_EXEC( snmp_pbuf_stream_write(&request->outbound_pbuf_stream, 0) );
     }
   }
 #endif
