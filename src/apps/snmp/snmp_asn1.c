@@ -442,6 +442,9 @@ snmp_asn1_dec_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tl
     tlv->value_len  = data;
   } else if (data > 0x80) { /* long form */
     u8_t length_bytes = data - 0x80;
+    if (length_bytes > pbuf_stream->length) {
+      return ERR_VAL;
+    }
     tlv->length_len = length_bytes + 1; /* this byte + defined number of length bytes following */
     tlv->value_len = 0;
 
