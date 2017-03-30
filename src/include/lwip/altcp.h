@@ -117,6 +117,7 @@ void  altcp_setprio(struct altcp_pcb *conn, u8_t prio);
 
 err_t altcp_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
 ip_addr_t *altcp_get_ip(struct altcp_pcb *conn, int local);
+u16_t altcp_get_port(struct altcp_pcb *conn, int local);
 
 #ifdef LWIP_DEBUG
 enum tcp_state altcp_dbg_get_tcp_state(struct altcp_pcb *conn);

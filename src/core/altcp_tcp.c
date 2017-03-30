@@ -425,6 +425,23 @@ altcp_tcp_get_ip(struct altcp_pcb *conn, int local)
   return NULL;
 }
 
+static u16_t
+altcp_tcp_get_port(struct altcp_pcb *conn, int local)
+{
+  if (conn) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
+    ALTCP_TCP_ASSERT_CONN(conn);
+    if (pcb) {
+      if (local) {
+        return pcb->local_port;
+      } else {
+        return pcb->remote_port;
+      }
+    }
+  }
+  return 0;
+}
+
 #ifdef LWIP_DEBUG
 static enum tcp_state
 altcp_tcp_dbg_get_tcp_state(struct altcp_pcb *conn)
@@ -459,7 +476,8 @@ const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_setprio,
   altcp_tcp_dealloc,
   altcp_tcp_get_tcp_addrinfo,
-  altcp_tcp_get_ip
+  altcp_tcp_get_ip,
+  altcp_tcp_get_port
 #ifdef LWIP_DEBUG
   ,altcp_tcp_dbg_get_tcp_state
 #endif

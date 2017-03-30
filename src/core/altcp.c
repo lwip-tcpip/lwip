@@ -363,6 +363,15 @@ altcp_get_ip(struct altcp_pcb *conn, int local)
   return NULL;
 }
 
+u16_t
+altcp_get_port(struct altcp_pcb *conn, int local)
+{
+  if (conn && conn->fns && conn->fns->getport) {
+    return conn->fns->getport(conn, local);
+  }
+  return 0;
+}
+
 #ifdef LWIP_DEBUG
 enum tcp_state
 altcp_dbg_get_tcp_state(struct altcp_pcb *conn)
@@ -513,6 +522,14 @@ altcp_default_get_ip(struct altcp_pcb *conn, int local)
   return NULL;
 }
 
+u16_t
+altcp_default_get_port(struct altcp_pcb *conn, int local)
+{
+  if (conn && conn->inner_conn) {
+    return altcp_get_port(conn->inner_conn, local);
+  }
+  return 0;
+}
 
 #ifdef LWIP_DEBUG
 enum tcp_state

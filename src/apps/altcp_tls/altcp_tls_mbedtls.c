@@ -944,7 +944,8 @@ const struct altcp_functions altcp_mbedtls_functions = {
   altcp_default_setprio,
   altcp_mbedtls_dealloc,
   altcp_default_get_tcp_addrinfo,
-  altcp_default_get_ip
+  altcp_default_get_ip,
+  altcp_default_get_port
 #ifdef LWIP_DEBUG
   ,altcp_default_dbg_get_tcp_state
 #endif

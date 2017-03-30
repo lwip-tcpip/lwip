@@ -83,6 +83,7 @@ typedef void  (*altcp_dealloc_fn)(struct altcp_pcb *conn);
 
 typedef err_t (*altcp_get_tcp_addrinfo_fn)(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
 typedef ip_addr_t *(*altcp_get_ip_fn)(struct altcp_pcb *conn, int local);
+typedef u16_t (*altcp_get_port_fn)(struct altcp_pcb *conn, int local);
 
 #ifdef LWIP_DEBUG
 typedef enum tcp_state (*altcp_dbg_get_tcp_state_fn)(struct altcp_pcb *conn);
@@ -109,6 +110,7 @@ struct altcp_functions {
   altcp_dealloc_fn            dealloc;
   altcp_get_tcp_addrinfo_fn   addrinfo;
   altcp_get_ip_fn             getip;
+  altcp_get_port_fn           getport;
 #ifdef LWIP_DEBUG
   altcp_dbg_get_tcp_state_fn  dbg_get_tcp_state;
 #endif
@@ -130,6 +132,7 @@ void  altcp_default_setprio(struct altcp_pcb *conn, u8_t prio);
 void  altcp_default_dealloc(struct altcp_pcb *conn);
 err_t altcp_default_get_tcp_addrinfo(struct altcp_pcb *conn, int local, ip_addr_t *addr, u16_t *port);
 ip_addr_t *altcp_default_get_ip(struct altcp_pcb *conn, int local);
+u16_t altcp_default_get_port(struct altcp_pcb *conn, int local);
 #ifdef LWIP_DEBUG
 enum tcp_state altcp_default_dbg_get_tcp_state(struct altcp_pcb *conn);
 #endif
