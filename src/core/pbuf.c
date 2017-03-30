@@ -1051,18 +1051,12 @@ u16_t
 pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
 {
   const struct pbuf *p;
-  u16_t left;
+  u16_t left = 0;
   u16_t buf_copy_len;
   u16_t copied_total = 0;
 
   LWIP_ERROR("pbuf_copy_partial: invalid buf", (buf != NULL), return 0;);
   LWIP_ERROR("pbuf_copy_partial: invalid dataptr", (dataptr != NULL), return 0;);
-
-  left = 0;
-
-  if ((buf == NULL) || (dataptr == NULL)) {
-    return 0;
-  }
 
   /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
   for (p = buf; len != 0 && p != NULL; p = p->next) {
