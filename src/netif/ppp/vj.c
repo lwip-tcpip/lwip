@@ -483,7 +483,9 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
   cs = &comp->rstate[comp->last_recv = IPH_PROTO(ip)];
   comp->flags &=~ VJF_TOSS;
   IPH_PROTO_SET(ip, IP_PROTO_TCP);
-  MEMCPY(&cs->cs_ip, ip, hlen);
+  /* copy from/to bigger buffers checked above instead of cs->cs_ip and ip
+     just to help static code analysis to see this is correct ;-) */
+  MEMCPY(&cs->cs_hdr, nb->payload, hlen);
   cs->cs_hlen = (u16_t)hlen;
   INCR(vjs_uncompressedin);
   return 0;
