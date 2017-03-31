@@ -924,7 +924,7 @@ altcp_mbedtls_bio_send(void* ctx, const unsigned char* dataptr, size_t size)
       if (written) {
         return written;
       }
-      return 0;//MBEDTLS_ERR_SSL_WANT_WRITE;
+      return 0; /* MBEDTLS_ERR_SSL_WANT_WRITE; */
     } else {
       LWIP_ASSERT("tls_write, tcp_write: err != ERR MEM", 0);
       /* @todo: return MBEDTLS_ERR_NET_CONN_RESET or MBEDTLS_ERR_NET_SEND_FAILED */
