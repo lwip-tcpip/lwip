@@ -608,6 +608,8 @@ bridgeif_init(struct netif *netif)
 
   init_data = (bridgeif_initdata_t *)netif->state;
   LWIP_ASSERT("init_data != NULL", (init_data != NULL));
+  LWIP_ASSERT("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
+    init_data->max_ports <= BRIDGEIF_MAX_PORTS);
 
   alloc_len = sizeof(bridgeif_private_t) + (init_data->max_ports*sizeof(bridgeif_port_t) + (init_data->max_fdb_static_entries*sizeof(bridgeif_fdb_static_entry_t)));
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));

@@ -69,6 +69,8 @@
 /** BRIDGEIF_MAX_PORTS: this is used to create a typedef used for forwarding
  * bit-fields: the number of bits required is this + 1 (for the internal/cpu port)
  * (63 is the maximum, resulting in an u64_t for the bit mask)
+ * ATTENTION: this controls the maximum number of the implementation only!
+ * The max. number of ports per bridge must still be passed via netif_add parameter!
  */
 #ifndef BRIDGEIF_MAX_PORTS
 #define BRIDGEIF_MAX_PORTS                  7
