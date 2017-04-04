@@ -604,6 +604,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
+  const ip4_addr_t *safe_gw = gw ? gw : IP4_ADDR_ANY4;
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
   netif_ext_callback_args_t args;
   ip_addr_t old_addr;
@@ -612,7 +613,7 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 #endif
 
   /* address is actually being changed? */
-  if (ip4_addr_cmp(gw, netif_ip4_gw(netif)) == 0) {
+  if (ip4_addr_cmp(safe_gw, netif_ip4_gw(netif)) == 0) {
     ip4_addr_set(ip_2_ip4(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -639,6 +640,7 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
+  const ip4_addr_t *safe_netmask = netmask ? netmask : IP4_ADDR_ANY4;
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
   netif_ext_callback_args_t args;
   ip_addr_t old_addr;
@@ -647,7 +649,7 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 #endif
   
   /* address is actually being changed? */
-  if (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0) {
+  if (ip4_addr_cmp(safe_netmask, netif_ip4_netmask(netif)) == 0) {
     mib2_remove_route_ip4(0, netif);
     /* set new netmask to netif */
     ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
