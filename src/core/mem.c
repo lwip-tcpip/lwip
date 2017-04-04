@@ -765,12 +765,18 @@ void *
 mem_calloc(mem_size_t count, mem_size_t size)
 {
   void *p;
+  size_t alloc_size = (size_t)count * (size_t)size;
+
+  if ((size_t)(mem_size_t)alloc_size != alloc_size) {
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_calloc: could not allocate %"SZT_F" bytes\n", alloc_size));
+    return NULL;
+  }
 
   /* allocate 'count' objects of size 'size' */
-  p = mem_malloc(count * size);
+  p = mem_malloc((mem_size_t)alloc_size);
   if (p) {
     /* zero the memory */
-    memset(p, 0, (size_t)count * (size_t)size);
+    memset(p, 0, alloc_size);
   }
   return p;
 }
