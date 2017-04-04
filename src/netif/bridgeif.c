@@ -627,7 +627,7 @@ bridgeif_init(struct netif *netif)
   br->fdbs = (bridgeif_fdb_static_entry_t*)(((u8_t*)(br + 1)) + (init_data->max_ports*sizeof(bridgeif_port_t)));
 
   br->max_fdbd_entries = init_data->max_fdb_dynamic_entries;
-  br->fdbd = bridgeif_fdb_init(init_data->max_fdb_static_entries);
+  br->fdbd = bridgeif_fdb_init(init_data->max_fdb_dynamic_entries);
   if (br->fdbd == NULL) {
     LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory in fdb_init\n"));
     mem_free(br);
