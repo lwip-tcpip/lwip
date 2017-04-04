@@ -220,8 +220,11 @@ bridgeif_fdb_init(u16_t max_fdb_entries)
 {
   bridgeif_dfdb_t *fdb;
   mem_size_t alloc_len = sizeof(bridgeif_dfdb_t) + (max_fdb_entries*sizeof(bridgeif_dfdb_entry_t));
-  LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
+  LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len));
   fdb = (bridgeif_dfdb_t*)mem_malloc(alloc_len);
+  if (fdb == NULL) {
+    return NULL;
+  }
   memset(fdb, 0, alloc_len);
   fdb->max_fdb_entries = max_fdb_entries;
   fdb->fdb = (bridgeif_dfdb_entry_t *)(fdb + 1);
@@ -596,6 +599,11 @@ bridgeif_init(struct netif *netif)
 
   br->max_fdbd_entries = init_data->max_fdb_dynamic_entries;
   br->fdbd = bridgeif_fdb_init(init_data->max_fdb_static_entries);
+  if (br->fdbd == NULL) {
+    LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory in fdb_init\n"));
+    mem_free(br);
+    return ERR_MEM;
+  }
 
 #if LWIP_NETIF_HOSTNAME
   /* Initialize interface hostname */
