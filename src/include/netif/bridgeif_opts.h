@@ -50,7 +50,7 @@
  * to call directly into bridgeif code and on top of that, directly call into
  * the selected forwarding port's 'linkoutput' function.
  * This means that the bridgeif input/output path is protected from concurrent access
- * but as well, the port netif's drivers must correctly handle concurrent access!
+ * but as well, *all* bridge port netif's drivers must correctly handle concurrent access!
  * == 0: get into tcpip_thread for every input packet (no multithreading)
  * ATTENTION: as ==0 relies on tcpip.h, the default depends on NO_SYS setting
  */

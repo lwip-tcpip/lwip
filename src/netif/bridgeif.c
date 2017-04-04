@@ -44,6 +44,29 @@
  * On receive, the port netif calls into the bridge (via its netif->input function) and
  * the bridge selects the port(s) (and/or its netif->input function) to pass the received pbuf to.
  *
+ * Usage:
+ * - add the port netifs just like you would when using them as dedicated netif without a bridge
+ *   - only NETIF_FLAG_ETHARP/NETIF_FLAG_ETHERNET netifs are supported as bridge ports
+ *   - add the bridge port netifs without IPv4 addresses (i.e. pass 'NULL, NULL, NULL')
+ *   - don't add IPv6 addresses to the port netifs!
+ * - set up the bridge configuration in a global variable of type 'bridgeif_initdata_t' that contains
+ *   - the MAC address of the bridge
+ *   - some configuration options controlling the memory consumption (maximum number of ports
+ *     and FDB entries)
+ *   - e.g. for a bridge MAC address 00-01-02-03-04-05, 2 bridge ports, 1024 FDB entries + 16 static MAC entries:
+ *     bridgeif_initdata_t mybridge_initdata = BRIDGEIF_INITDATA1(2, 1024, 16, MAKE_ETH_ADDR(0, 1, 2, 3, 4, 5));
+ * - add the bridge netif (with IPv4 config):
+ *   struct netif bridge_netif;
+ *   netif_add(&bridge_netif, &my_ip, &my_netmask, &my_gw, &mybridge_initdata, bridgeif_init, tcpip_input);
+ *   NOTE: the passed 'input' function depends on BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT setting,
+ *         which controls where the forwarding is done (netif low level input context vs. tcpip_thread)
+ * - set up all ports netifs and the bridge netif
+ *
+ * - When adding a port netif, NETIF_FLAG_ETHARP flag will be removed from a port
+ *   to prevent ETHARP working on that port netif (we only want one IP per bridge not per port).
+ * - When adding a port netif, its input function is changed to call into the bridge.
+ *
+ *
  * @todo:
  * - compact static FDB entries (instead of walking the whole array)
  * - add FDB query/read access
@@ -555,6 +578,10 @@ bridgeif_tcpip_input(struct pbuf *p, struct netif *netif)
  * @ingroup bridgeif
  * Initialization function passed to netif_add().
  *
+ * ATTENTION: A pointer to a @ref bridgeif_initdata_t must be passed as 'state'
+ *            to @ref netif_add when adding the bridge. I supplies MAC address
+ *            and controls memory allocation (number of ports, FDB size).
+ *
  * @param netif the lwip network interface structure for this ethernetif
  * @return ERR_OK if the loopif is initialized
  *         ERR_MEM if private data couldn't be allocated
@@ -569,8 +596,10 @@ bridgeif_init(struct netif *netif)
 
   LWIP_ASSERT("netif != NULL", (netif != NULL));
 #if !BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT
-  LWIP_ASSERT("bridgeif does not need tcpip_input, use netif_input/ethernet_input instead",
-    netif->input != tcpip_input);
+  if (netif->input == tcpip_input) {
+    LWIP_DEBUGF(BRIDGEIF_DEBUG|LWIP_DBG_ON, ("bridgeif does not need tcpip_input, use netif_input/ethernet_input instead",
+      netif->input != tcpip_input));
+  }
 #endif
 
   if (bridgeif_netif_client_id == 0xFF) {

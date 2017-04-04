@@ -695,7 +695,7 @@ mqtt_incomming_suback(struct mqtt_request_t *r, u8_t result)
  * @param remaining_length Remaining length of complete message
  */
 static mqtt_connection_status_t
-  mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u32_t remaining_length)
+mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u32_t remaining_length)
 {
   mqtt_connection_status_t res = MQTT_CONNECT_ACCEPTED;
 
@@ -704,6 +704,9 @@ static mqtt_connection_status_t
   /* Control packet type */
   u8_t pkt_type = MQTT_CTL_PACKET_TYPE(client->rx_buffer[0]);
   u16_t pkt_id = 0;
+
+  LWIP_ERROR("buffer length mismatch", fixed_hdr_idx + length <= MQTT_VAR_HEADER_BUFFER_LEN,
+    return MQTT_CONNECT_DISCONNECTED);
 
   if (pkt_type == MQTT_MSG_TYPE_CONNACK) {
     if (client->conn_state == MQTT_CONNECTING) {
