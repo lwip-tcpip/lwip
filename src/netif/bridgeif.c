@@ -244,11 +244,10 @@ bridgeif_fdb_init(u16_t max_fdb_entries)
   bridgeif_dfdb_t *fdb;
   mem_size_t alloc_len = sizeof(bridgeif_dfdb_t) + (max_fdb_entries*sizeof(bridgeif_dfdb_entry_t));
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len));
-  fdb = (bridgeif_dfdb_t*)mem_malloc(alloc_len);
+  fdb = (bridgeif_dfdb_t*)mem_calloc(1, alloc_len);
   if (fdb == NULL) {
     return NULL;
   }
-  memset(fdb, 0, alloc_len);
   fdb->max_fdb_entries = max_fdb_entries;
   fdb->fdb = (bridgeif_dfdb_entry_t *)(fdb + 1);
   return fdb;
@@ -612,12 +611,11 @@ bridgeif_init(struct netif *netif)
 
   alloc_len = sizeof(bridgeif_private_t) + (init_data->max_ports*sizeof(bridgeif_port_t) + (init_data->max_fdb_static_entries*sizeof(bridgeif_fdb_static_entry_t)));
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
-  br = (bridgeif_private_t*)mem_malloc(alloc_len);
+  br = (bridgeif_private_t*)mem_calloc(1, alloc_len);
   if (br == NULL) {
     LWIP_DEBUGF(NETIF_DEBUG, ("bridgeif_init: out of memory\n"));
     return ERR_MEM;
   }
-  memset(br, 0, alloc_len);
   memcpy(&br->ethaddr, &init_data->ethaddr, sizeof(br->ethaddr));
   br->netif = netif;
 

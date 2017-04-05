@@ -280,9 +280,8 @@ static void test_sockets_msgapi_tcp(int domain)
   }
 
   /* allocate a receive buffer, same size as snd_buf for easy verification */
-  rcv_buf = (u8_t*)mem_malloc(BUF_SZ);
+  rcv_buf = (u8_t*)mem_calloc(1, BUF_SZ);
   fail_unless(rcv_buf != NULL);
-  memset(rcv_buf, 0, BUF_SZ);
   /* split across iovs */
   for (i = 0; i < 4; i++) {
     riovs[i].iov_base = &rcv_buf[i*(BUF_SZ/4)];

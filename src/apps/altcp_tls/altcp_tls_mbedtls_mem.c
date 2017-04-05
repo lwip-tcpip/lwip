@@ -173,9 +173,8 @@ altcp_mbedtls_mem_init(void)
 altcp_mbedtls_state_t *
 altcp_mbedtls_alloc(void *conf)
 {
-  altcp_mbedtls_state_t *ret = (altcp_mbedtls_state_t *)mem_malloc(sizeof(altcp_mbedtls_state_t));
+  altcp_mbedtls_state_t *ret = (altcp_mbedtls_state_t *)mem_calloc(1, sizeof(altcp_mbedtls_state_t));
   if (ret != NULL) {
-    memset(ret, 0, sizeof(altcp_mbedtls_state_t));
     ret->conf = conf;
   }
   return ret;
@@ -198,10 +197,7 @@ altcp_mbedtls_alloc_config(size_t size)
     /* allocation too big (mem_size_t overflow) */
     return NULL;
   }
-  ret = (altcp_mbedtls_state_t *)mem_malloc((mem_size_t)size);
-  if (ret != NULL) {
-    memset(ret, 0, size);
-  }
+  ret = (altcp_mbedtls_state_t *)mem_calloc(1, (mem_size_t)size);
   return ret;
 }
 

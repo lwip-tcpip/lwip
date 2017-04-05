@@ -1238,11 +1238,7 @@ mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb
 mqtt_client_t *
 mqtt_client_new(void)
 {
-  mqtt_client_t *client = (mqtt_client_t *)mem_malloc(sizeof(mqtt_client_t));
-  if (client != NULL) {
-    memset(client, 0, sizeof(mqtt_client_t));
-  }
-  return client;
+  return (mqtt_client_t *)mem_calloc(1, sizeof(mqtt_client_t));
 }
 
 

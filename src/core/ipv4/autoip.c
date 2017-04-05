@@ -270,13 +270,12 @@ autoip_start(struct netif *netif)
     /* no AutoIP client attached yet? */
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
       ("autoip_start(): starting new AUTOIP client\n"));
-    autoip = (struct autoip *)mem_malloc(sizeof(struct autoip));
+    autoip = (struct autoip *)mem_calloc(1, sizeof(struct autoip));
     if (autoip == NULL) {
       LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
         ("autoip_start(): could not allocate autoip\n"));
       return ERR_MEM;
     }
-    memset(autoip, 0, sizeof(struct autoip));
     /* store this AutoIP client in the netif */
     netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip"));
