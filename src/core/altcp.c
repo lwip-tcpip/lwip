@@ -59,8 +59,7 @@ extern const struct altcp_functions altcp_tcp_functions;
 struct altcp_pcb *
 altcp_alloc(void)
 {
-  /* FIXME: pool alloc */
-  struct altcp_pcb *ret = (struct altcp_pcb *)mem_malloc(sizeof(struct altcp_pcb));
+  struct altcp_pcb *ret = (struct altcp_pcb *)memp_malloc(MEMP_ALTCP_PCB);
   if (ret != NULL) {
     memset(ret, 0, sizeof(struct altcp_pcb));
   }
@@ -70,9 +69,8 @@ altcp_alloc(void)
 void
 altcp_free(struct altcp_pcb *conn)
 {
-  /* FIXME: pool alloc */
   if (conn) {
-    mem_free(conn);
+    memp_free(MEMP_ALTCP_PCB, conn);
   }
 }
 

@@ -400,6 +400,16 @@
 #endif
 
 /**
+ * MEMP_NUM_ALTCP_PCB: the number of simultaneously active altcp layer pcbs.
+ * (requires the LWIP_ALTCP option)
+ * Connections with multiple layers require more than one altcp_pcb (e.g. TLS
+ * over TCP requires 2 altcp_pcbs, one for TLS and one for TCP).
+ */
+#if !defined MEMP_NUM_ALTCP_PCB || defined __DOXYGEN__
+#define MEMP_NUM_ALTCP_PCB              MEMP_NUM_TCP_PCB
+#endif
+
+/**
  * MEMP_NUM_REASSDATA: the number of IP packets simultaneously queued for
  * reassembly (whole packets, not fragments!)
  */

@@ -57,6 +57,7 @@
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 #include "lwip/priv/tcp_priv.h"
+#include "lwip/altcp.h"
 #include "lwip/ip4_frag.h"
 #include "lwip/netbuf.h"
 #include "lwip/api.h"
