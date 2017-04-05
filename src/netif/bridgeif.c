@@ -597,8 +597,7 @@ bridgeif_init(struct netif *netif)
   LWIP_ASSERT("netif != NULL", (netif != NULL));
 #if !BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT
   if (netif->input == tcpip_input) {
-    LWIP_DEBUGF(BRIDGEIF_DEBUG|LWIP_DBG_ON, ("bridgeif does not need tcpip_input, use netif_input/ethernet_input instead",
-      netif->input != tcpip_input));
+    LWIP_DEBUGF(BRIDGEIF_DEBUG|LWIP_DBG_ON, ("bridgeif does not need tcpip_input, use netif_input/ethernet_input instead"));
   }
 #endif
 
