@@ -85,7 +85,7 @@ typedef struct bridgeif_initdata_s {
  * Use this for constant initialization of a bridgeif_initdat_t
  * (each byte of ethaddr must be passed)
  */
-#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, {{e0, e1, e2, e3, e4, e5}}
+#define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {{e0, e1, e2, e3, e4, e5}, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 
 err_t bridgeif_init(struct netif *netif);
 err_t bridgeif_add_port(struct netif *bridgeif, struct netif *portif);
