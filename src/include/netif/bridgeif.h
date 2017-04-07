@@ -58,7 +58,8 @@ typedef u64_t bridgeif_portmask_t;
 
 #define BR_FLOOD ((bridgeif_portmask_t)-1)
 
-/** Initialisation data for @ref bridgeif_init.
+/** @ingroup bridgeif
+ * Initialisation data for @ref bridgeif_init.
  * An instance of this type must be passed as parameter 'state' to @ref netif_add
  * when the bridge is added.
  */
@@ -75,11 +76,15 @@ typedef struct bridgeif_initdata_s {
   u16_t           max_fdb_static_entries;
 } bridgeif_initdata_t;
 
-/* Use this for constant initialization of a bridgeif_initdat_t
-   (ethaddr must be passed as MAKE_ETH_ADDR())*/
+/** @ingroup bridgeif
+ * Use this for constant initialization of a bridgeif_initdat_t
+ * (ethaddr must be passed as MAKE_ETH_ADDR())
+ */
 #define BRIDGEIF_INITDATA1(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, ethaddr) {ethaddr, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
-/* Use this for constant initialization of a bridgeif_initdat_t
-   (each byte of ethaddr must be passed)*/
+/** @ingroup bridgeif
+ * Use this for constant initialization of a bridgeif_initdat_t
+ * (each byte of ethaddr must be passed)
+ */
 #define BRIDGEIF_INITDATA2(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, e0, e1, e2, e3, e4, e5) {max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, {{e0, e1, e2, e3, e4, e5}}
 
 err_t bridgeif_init(struct netif *netif);
