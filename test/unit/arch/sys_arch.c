@@ -156,7 +156,8 @@ void sys_mutex_lock(sys_mutex_t *mutex)
 {
   /* nothing to do, no multithreading supported */
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
-  LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
+  /* check that the mutext is valid and unlocked (no nested locking) */
+  LWIP_ASSERT("*mutex >= 1", *mutex == 1);
   /* we count up just to check the correct pairing of lock/unlock */
   (*mutex)++;
   LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
