@@ -2053,12 +2053,14 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
       break;
     case NETCONN_EVT_RCVMINUS:
       sock->rcvevent--;
+      goto no_select_wakeup;
       break;
     case NETCONN_EVT_SENDPLUS:
       sock->sendevent = 1;
       break;
     case NETCONN_EVT_SENDMINUS:
       sock->sendevent = 0;
+      goto no_select_wakeup;
       break;
     case NETCONN_EVT_ERROR:
       sock->errevent = 1;
@@ -2069,6 +2071,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   }
 
   if (sock->select_waiting == 0) {
+no_select_wakeup:
     /* noone is waiting for this socket, no need to check select_cb_list */
     SYS_ARCH_UNPROTECT(lev);
     done_socket(sock);
