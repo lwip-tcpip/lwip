@@ -32,6 +32,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-04-11: Simon Goldschmidt
+  * sockets.c: task #14420 (Remove sys_sem_signal from inside SYS_ARCH_PROTECT
+    crit section) done for LWIP_TCPIP_CORE_LOCKING==1
+
   2017-03-01: Simon Goldschmidt
   * httpd: LWIP_HTTPD_POST_MANUAL_WND: fixed double-free when httpd_post_data_recved
     is called nested from httpd_post_receive_data() (bug #50424)

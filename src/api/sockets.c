@@ -305,6 +305,17 @@ static void lwip_socket_drop_registered_memberships(int s);
 static struct lwip_sock sockets[NUM_SOCKETS];
 
 #if LWIP_SOCKET_SELECT
+#if LWIP_TCPIP_CORE_LOCKING
+/* protect the select_cb_list using core lock */
+#define LWIP_SOCKET_SELECT_DECL_PROTECT(lev)
+#define LWIP_SOCKET_SELECT_PROTECT(lev)   LOCK_TCPIP_CORE()
+#define LWIP_SOCKET_SELECT_UNPROTECT(lev) UNLOCK_TCPIP_CORE()
+#else /* LWIP_TCPIP_CORE_LOCKING */
+/* protect the select_cb_list using SYS_LIGHTWEIGHT_PROT */
+#define LWIP_SOCKET_SELECT_DECL_PROTECT(lev)  SYS_ARCH_DECL_PROTECT(lev)
+#define LWIP_SOCKET_SELECT_PROTECT(lev)       SYS_ARCH_PROTECT(lev)
+#define LWIP_SOCKET_SELECT_UNPROTECT(lev)     SYS_ARCH_UNPROTECT(lev)
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
 /** This counter is increased from lwip_select when the list is changed
@@ -600,10 +611,12 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   SYS_ARCH_UNPROTECT(lev);
 
   if (newconn->callback) {
+    LOCK_TCPIP_CORE();
     while(recvevent > 0) {
       recvevent--;
       newconn->callback(newconn, NETCONN_EVT_RCVPLUS, 0);
     }
+    UNLOCK_TCPIP_CORE();
   }
 
   /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
@@ -877,7 +890,9 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
           if (err == ERR_CLSD) {
             /* closed but already received data, ensure select gets the FIN, too */
             if (sock->conn->callback != NULL) {
+              LOCK_TCPIP_CORE();
               sock->conn->callback(sock->conn, NETCONN_EVT_RCVPLUS, 0);
+              UNLOCK_TCPIP_CORE();
             }
           }
           goto lwip_recv_tcp_done;
@@ -1778,6 +1793,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   fd_set used_sockets;
 #endif
   SYS_ARCH_DECL_PROTECT(lev);
+  LWIP_SOCKET_SELECT_DECL_PROTECT(lev2);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
                   maxfdp1, (void *)readset, (void *) writeset, (void *) exceptset,
@@ -1832,7 +1848,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
     /* Protect the select_cb_list */
-    SYS_ARCH_PROTECT(lev);
+    LWIP_SOCKET_SELECT_PROTECT(lev2);
 
     /* Put this select_cb on top of list */
     select_cb.next = select_cb_list;
@@ -1844,7 +1860,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     select_cb_ctr++;
 
     /* Now we can safely unprotect */
-    SYS_ARCH_UNPROTECT(lev);
+    LWIP_SOCKET_SELECT_UNPROTECT(lev2);
 
     /* Increase select_waiting for each socket we are interested in */
     maxfdp2 = maxfdp1;
@@ -1917,7 +1933,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       }
     }
     /* Take us off the list */
-    SYS_ARCH_PROTECT(lev);
+    LWIP_SOCKET_SELECT_PROTECT(lev2);
     if (select_cb.next != NULL) {
       select_cb.next->prev = select_cb.prev;
     }
@@ -1930,7 +1946,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     }
     /* Increasing this counter tells event_callback that the list has changed. */
     select_cb_ctr++;
-    SYS_ARCH_UNPROTECT(lev);
+    LWIP_SOCKET_SELECT_UNPROTECT(lev2);
 
 #if LWIP_NETCONN_SEM_PER_THREAD
     if (select_cb.sem_signalled && (!waited || (waitres == SYS_ARCH_TIMEOUT))) {
@@ -2058,7 +2074,9 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
      of waiting select calls + 1. This list is expected to be small. */
 
   /* At this point, SYS_ARCH is still protected! */
+#if !LWIP_TCPIP_CORE_LOCKING
 again:
+#endif
   for (scb = select_cb_list; scb != NULL; scb = scb->next) {
     /* remember the state of select_cb_list to detect changes */
     last_select_cb_ctr = select_cb_ctr;
@@ -2083,19 +2101,30 @@ again:
       }
       if (do_signal) {
         scb->sem_signalled = 1;
+#if LWIP_TCPIP_CORE_LOCKING
+        /* We are called with core lock held, so we can unlock interrupts here
+           (last_select_cb_ctr is protected by core lock) */
+        SYS_ARCH_UNPROTECT(lev);
+#else
         /* Don't call SYS_ARCH_UNPROTECT() before signaling the semaphore, as this might
            lead to the select thread taking itself off the list, invalidating the semaphore. */
+#endif
         sys_sem_signal(SELECT_SEM_PTR(scb->sem));
+#if LWIP_TCPIP_CORE_LOCKING
+        SYS_ARCH_PROTECT(lev);
+#endif
       }
     }
     /* unlock interrupts with each step */
     SYS_ARCH_UNPROTECT(lev);
     /* this makes sure interrupt protection time is short */
     SYS_ARCH_PROTECT(lev);
+#if !LWIP_TCPIP_CORE_LOCKING
     if (last_select_cb_ctr != select_cb_ctr) {
       /* someone has changed select_cb_list, restart at the beginning */
       goto again;
     }
+#endif
   }
   SYS_ARCH_UNPROTECT(lev);
   done_socket(sock);
