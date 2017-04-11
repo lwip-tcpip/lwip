@@ -2006,6 +2006,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   int s;
   struct lwip_sock *sock;
   struct lwip_select_cb *scb;
+  int has_recvevent, has_sendevent, has_errevent;
 #if !LWIP_TCPIP_CORE_LOCKING
   int last_select_cb_ctr;
 #endif
@@ -2080,7 +2081,12 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
      of waiting select calls + 1. This list is expected to be small. */
 
   /* At this point, SYS_ARCH is still protected! */
-#if !LWIP_TCPIP_CORE_LOCKING
+  has_recvevent = sock->rcvevent > 0;
+  has_sendevent = sock->sendevent != 0;
+  has_errevent = sock->errevent != 0;
+#if LWIP_TCPIP_CORE_LOCKING
+  SYS_ARCH_UNPROTECT(lev);
+#else
 again:
   /* remember the state of select_cb_list to detect changes */
   last_select_cb_ctr = select_cb_ctr;
@@ -2090,51 +2096,44 @@ again:
       /* semaphore not signalled yet */
       int do_signal = 0;
       /* Test this select call for our socket */
-      if (sock->rcvevent > 0) {
+      if (has_recvevent) {
         if (scb->readset && FD_ISSET(s, scb->readset)) {
           do_signal = 1;
         }
       }
-      if (sock->sendevent != 0) {
+      if (has_sendevent) {
         if (!do_signal && scb->writeset && FD_ISSET(s, scb->writeset)) {
           do_signal = 1;
         }
       }
-      if (sock->errevent != 0) {
+      if (has_errevent) {
         if (!do_signal && scb->exceptset && FD_ISSET(s, scb->exceptset)) {
           do_signal = 1;
         }
       }
       if (do_signal) {
         scb->sem_signalled = 1;
-#if LWIP_TCPIP_CORE_LOCKING
-        /* We are called with core lock held, so we can unlock interrupts here
-           (last_select_cb_ctr is protected by core lock) */
-        SYS_ARCH_UNPROTECT(lev);
-#else
         /* Don't call SYS_ARCH_UNPROTECT() before signaling the semaphore, as this might
            lead to the select thread taking itself off the list, invalidating the semaphore. */
-#endif
         sys_sem_signal(SELECT_SEM_PTR(scb->sem));
-#if LWIP_TCPIP_CORE_LOCKING
-        SYS_ARCH_PROTECT(lev);
-#endif
       }
     }
+#if LWIP_TCPIP_CORE_LOCKING
+  }
+#else
     /* unlock interrupts with each step */
     SYS_ARCH_UNPROTECT(lev);
     /* this makes sure interrupt protection time is short */
     SYS_ARCH_PROTECT(lev);
-#if !LWIP_TCPIP_CORE_LOCKING
     if (last_select_cb_ctr != select_cb_ctr) {
       /* someone has changed select_cb_list, restart at the beginning */
       goto again;
     }
     /* remember the state of select_cb_list to detect changes */
     last_select_cb_ctr = select_cb_ctr;
-#endif
   }
   SYS_ARCH_UNPROTECT(lev);
+#endif
   done_socket(sock);
 }
 #endif /* LWIP_SOCKET_SELECT */
