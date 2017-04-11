@@ -315,12 +315,12 @@ static struct lwip_sock sockets[NUM_SOCKETS];
 #define LWIP_SOCKET_SELECT_DECL_PROTECT(lev)  SYS_ARCH_DECL_PROTECT(lev)
 #define LWIP_SOCKET_SELECT_PROTECT(lev)       SYS_ARCH_PROTECT(lev)
 #define LWIP_SOCKET_SELECT_UNPROTECT(lev)     SYS_ARCH_UNPROTECT(lev)
-#endif /* LWIP_TCPIP_CORE_LOCKING */
-/** The global list of tasks waiting for select */
-static struct lwip_select_cb *select_cb_list;
 /** This counter is increased from lwip_select when the list is changed
     and checked in event_callback to see if it has changed. */
 static volatile int select_cb_ctr;
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+/** The global list of tasks waiting for select */
+static struct lwip_select_cb *select_cb_list;
 #endif /* LWIP_SOCKET_SELECT */
 
 #define sock_set_errno(sk, e) do { \
@@ -1856,8 +1856,10 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       select_cb_list->prev = &select_cb;
     }
     select_cb_list = &select_cb;
+#if !LWIP_TCPIP_CORE_LOCKING
     /* Increasing this counter tells event_callback that the list has changed. */
     select_cb_ctr++;
+#endif
 
     /* Now we can safely unprotect */
     LWIP_SOCKET_SELECT_UNPROTECT(lev2);
@@ -1944,8 +1946,10 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       LWIP_ASSERT("select_cb.prev != NULL", select_cb.prev != NULL);
       select_cb.prev->next = select_cb.next;
     }
+#if !LWIP_TCPIP_CORE_LOCKING
     /* Increasing this counter tells event_callback that the list has changed. */
     select_cb_ctr++;
+#endif
     LWIP_SOCKET_SELECT_UNPROTECT(lev2);
 
 #if LWIP_NETCONN_SEM_PER_THREAD
@@ -2002,7 +2006,9 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   int s;
   struct lwip_sock *sock;
   struct lwip_select_cb *scb;
+#if !LWIP_TCPIP_CORE_LOCKING
   int last_select_cb_ctr;
+#endif
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_UNUSED_ARG(len);
@@ -2076,10 +2082,10 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   /* At this point, SYS_ARCH is still protected! */
 #if !LWIP_TCPIP_CORE_LOCKING
 again:
+  /* remember the state of select_cb_list to detect changes */
+  last_select_cb_ctr = select_cb_ctr;
 #endif
   for (scb = select_cb_list; scb != NULL; scb = scb->next) {
-    /* remember the state of select_cb_list to detect changes */
-    last_select_cb_ctr = select_cb_ctr;
     if (scb->sem_signalled == 0) {
       /* semaphore not signalled yet */
       int do_signal = 0;
@@ -2124,6 +2130,8 @@ again:
       /* someone has changed select_cb_list, restart at the beginning */
       goto again;
     }
+    /* remember the state of select_cb_list to detect changes */
+    last_select_cb_ctr = select_cb_ctr;
 #endif
   }
   SYS_ARCH_UNPROTECT(lev);
