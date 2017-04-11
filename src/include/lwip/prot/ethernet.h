@@ -55,6 +55,7 @@ extern "C" {
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
+/** An Ethernet MAC address */
 struct eth_addr {
   PACK_STRUCT_FLD_8(u8_t addr[ETH_HWADDR_LEN]);
 } PACK_STRUCT_STRUCT;
@@ -62,6 +63,9 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
+
+/** Initialize a struct eth_addr with its 6 bytes (takes care of correct braces) */
+#define ETH_ADDR(b0, b1, b2, b3, b4, b5) {{b0, b1, b2, b3, b4, b5}}
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"

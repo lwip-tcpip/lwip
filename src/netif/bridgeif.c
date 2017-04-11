@@ -54,7 +54,7 @@
  *   - some configuration options controlling the memory consumption (maximum number of ports
  *     and FDB entries)
  *   - e.g. for a bridge MAC address 00-01-02-03-04-05, 2 bridge ports, 1024 FDB entries + 16 static MAC entries:
- *     bridgeif_initdata_t mybridge_initdata = BRIDGEIF_INITDATA1(2, 1024, 16, MAKE_ETH_ADDR(0, 1, 2, 3, 4, 5));
+ *     bridgeif_initdata_t mybridge_initdata = BRIDGEIF_INITDATA1(2, 1024, 16, ETH_ADDR(0, 1, 2, 3, 4, 5));
  * - add the bridge netif (with IPv4 config):
  *   struct netif bridge_netif;
  *   netif_add(&bridge_netif, &my_ip, &my_netmask, &my_gw, &mybridge_initdata, bridgeif_init, tcpip_input);

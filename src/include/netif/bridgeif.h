@@ -78,7 +78,7 @@ typedef struct bridgeif_initdata_s {
 
 /** @ingroup bridgeif
  * Use this for constant initialization of a bridgeif_initdat_t
- * (ethaddr must be passed as MAKE_ETH_ADDR())
+ * (ethaddr must be passed as ETH_ADDR())
  */
 #define BRIDGEIF_INITDATA1(max_ports, max_fdb_dynamic_entries, max_fdb_static_entries, ethaddr) {ethaddr, max_ports, max_fdb_dynamic_entries, max_fdb_static_entries}
 /** @ingroup bridgeif
