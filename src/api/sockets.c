@@ -2049,13 +2049,18 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   /* Set event as required */
   switch (evt) {
     case NETCONN_EVT_RCVPLUS:
-      sock->rcvevent++;
+      if (sock->rcvevent++ > 0) {
+        goto no_select_wakeup;
+      }
       break;
     case NETCONN_EVT_RCVMINUS:
       sock->rcvevent--;
       goto no_select_wakeup;
       break;
     case NETCONN_EVT_SENDPLUS:
+      if (sock->sendevent) {
+        goto no_select_wakeup;
+      }
       sock->sendevent = 1;
       break;
     case NETCONN_EVT_SENDMINUS:
