@@ -2044,7 +2044,8 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   /* Set event as required */
   switch (evt) {
     case NETCONN_EVT_RCVPLUS:
-      if (sock->rcvevent++ > 0) {
+      sock->rcvevent++;
+      if (sock->rcvevent > 1) {
         goto no_select_wakeup;
       }
       break;
