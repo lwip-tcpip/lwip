@@ -8,6 +8,7 @@
 #include "etharp/test_etharp.h"
 #include "dhcp/test_dhcp.h"
 #include "mdns/test_mdns.h"
+#include "mqtt/test_mqtt.h"
 #include "api/test_sockets.h"
 
 #include "lwip/init.h"
@@ -49,6 +50,7 @@ int main(void)
     etharp_suite,
     dhcp_suite,
     mdns_suite,
+    mqtt_suite,
     sockets_suite
   };
   size_t num = sizeof(suites)/sizeof(void*);
