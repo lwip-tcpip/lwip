@@ -387,6 +387,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 err_t
 netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
+  err_t err;
 #if LWIP_TCP
   void *accept_ptr;
   struct netconn *newconn;
@@ -398,10 +399,18 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   *new_conn = NULL;
   LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return ERR_ARG;);
 
-  if (ERR_IS_FATAL(conn->last_err)) {
-    /* don't recv on fatal errors: this might block the application task
+  /* NOTE: Although the opengroup spec says a pending error shall be returned to
+           send/recv/getsockopt(SO_ERROR) only, we return it for listening
+           connections also, to handle embedded-system errors */
+  err = netconn_err(conn);
+  if (err != ERR_OK) {
+    /* return pending error */
+    return err;
+  }
+  if (conn->flags & NETCONN_FLAG_MBOXCLOSED) {
+    /* don't accept if closed: this might block the application task
        waiting on acceptmbox forever! */
-    return conn->last_err;
+    return ERR_CLSD;
   }
   if (!sys_mbox_valid(&conn->acceptmbox)) {
     return ERR_CLSD;
@@ -432,29 +441,24 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
     sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
   }
-  newconn = (struct netconn *)accept_ptr;
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
-  if (accept_ptr == &netconn_aborted) {
-    /* a connection has been aborted: out of pcbs or out of netconns during accept */
-    /* @todo: set netconn error, but this would be fatal and thus block further accepts */
+  if (lwip_netconn_is_err_msg(accept_ptr, &err)) {
+    /* a connection has been aborted: e.g. out of pcbs or out of netconns during accept */
 #if TCP_LISTEN_BACKLOG
     API_MSG_VAR_FREE(msg);
 #endif /* TCP_LISTEN_BACKLOG */
-    return ERR_ABRT;
+    return err;
   }
-  if (newconn == NULL) {
+  if (accept_ptr == NULL) {
     /* connection has been aborted */
-    /* in this special case, we set the netconn error from application thread, as
-       on a ready-to-accept listening netconn, there should not be anything running
-       in tcpip_thread */
-    NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
 #if TCP_LISTEN_BACKLOG
     API_MSG_VAR_FREE(msg);
 #endif /* TCP_LISTEN_BACKLOG */
     return ERR_CLSD;
   }
+  newconn = (struct netconn *)accept_ptr;
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */
   API_MSG_VAR_REF(msg).conn = newconn;
@@ -494,23 +498,27 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
 {
   void *buf = NULL;
   u16_t len;
+  err_t err;
 
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
-  LWIP_ERROR("netconn_recv: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
 
-  if (ERR_IS_FATAL(conn->last_err)) {
-    /* don't recv on fatal errors: this might block the application task
-       waiting on recvmbox forever! */
-    /* @todo: this does not allow us to fetch data that has been put into recvmbox
-       before the fatal error occurred - is that a problem? */
-    return conn->last_err;
+  err = netconn_err(conn);
+  if (err != ERR_OK) {
+    /* return pending error */
+    return err;
+  }
+  if (!sys_mbox_valid(&conn->recvmbox)) {
+    return ERR_CLSD;
   }
 
-  if (netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK)) {
+  if (netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK) || (conn->flags & NETCONN_FLAG_MBOXCLOSED)) {
     if (sys_arch_mbox_tryfetch(&conn->recvmbox, &buf) == SYS_ARCH_TIMEOUT) {
-     return ERR_WOULDBLOCK;
+      if (conn->flags & NETCONN_FLAG_MBOXCLOSED) {
+        return ERR_CLSD;
+      }
+      return ERR_WOULDBLOCK;
     }
   } else {
 #if LWIP_SO_RCVTIMEO
@@ -527,10 +535,14 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   {
-    /* If we received a NULL pointer, we are closed */
-    if (buf == NULL) {
-      /* new_buf has been zeroed above alredy */
-      return ERR_OK;
+    /* Check if this is an error message or a pbuf */
+    if (lwip_netconn_is_err_msg(buf, &err)) {
+      /* new_buf has been zeroed above already */
+      if (err == ERR_CLSD) {
+        /* connection closed translates to ERR_OK with *new_buf == NULL */
+        return ERR_OK;
+      }
+      return err;
     }
     len = ((struct pbuf *)buf)->tot_len;
   }
@@ -630,7 +642,11 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
     API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
     if (conn->pcb.ip == NULL) {
       /* race condition: RST during recv */
-      return conn->last_err == ERR_OK ? ERR_RST : conn->last_err;
+      err = netconn_err(conn);
+      if (err != ERR_OK) {
+        return err;
+      }
+      return ERR_RST;
     }
     /* RX side is closed, so deallocate the recvmbox */
     netconn_close_shutdown(conn, NETCONN_SHUT_RD);
@@ -992,6 +1008,28 @@ netconn_close(struct netconn *conn)
 {
   /* shutting down both ends is the same as closing */
   return netconn_close_shutdown(conn, NETCONN_SHUT_RDWR);
+}
+
+/**
+ * @ingroup netconn_common
+ * Get and reset pending error on a netconn
+ *
+ * @param conn the netconn to get the error from
+ * @return and pending error or ERR_OK if no error was pending
+ */
+err_t
+netconn_err(struct netconn *conn)
+{
+  err_t err;
+  SYS_ARCH_DECL_PROTECT(lev);
+  if (conn == NULL) {
+    return ERR_OK;
+  }
+  SYS_ARCH_PROTECT(lev);
+  err = conn->pending_err;
+  conn->pending_err = ERR_OK;
+  SYS_ARCH_UNPROTECT(lev);
+  return err;
 }
 
 /**

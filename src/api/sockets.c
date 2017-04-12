@@ -210,8 +210,6 @@ union lwip_sock_lastdata {
 struct lwip_sock {
   /** sockets currently are built on netconns, each socket has one netconn */
   struct netconn *conn;
-  /** last error that occurred on this socket */
-  int err;
   /** data that was left from the previous read */
   union lwip_sock_lastdata lastdata;
 #if LWIP_SOCKET_SELECT
@@ -325,7 +323,6 @@ static struct lwip_select_cb *select_cb_list;
 
 #define sock_set_errno(sk, e) do { \
   const int sockerr = (e); \
-  sk->err = sockerr; \
   set_errno(sockerr); \
 } while (0)
 
@@ -502,7 +499,6 @@ alloc_socket(struct netconn *newconn, int accepted)
       sockets[i].sendevent  = (NETCONNTYPE_GROUP(newconn->type) == NETCONN_TCP ? (accepted != 0) : 1);
       sockets[i].errevent   = 0;
 #endif /* LWIP_SOCKET_SELECT */
-      sockets[i].err        = 0;
       return i + LWIP_SOCKET_OFFSET;
     }
     SYS_ARCH_UNPROTECT(lev);
@@ -534,9 +530,8 @@ free_socket(struct lwip_sock *sock, int is_tcp)
   }
 #endif
 
-  lastdata         = sock->lastdata;
+  lastdata = sock->lastdata;
   sock->lastdata.pbuf = NULL;
-  sock->err        = 0;
   sock->conn = NULL;
   SYS_ARCH_UNPROTECT(lev);
   /* don't use 'sock' after this line, as another task might have allocated it */
@@ -2422,12 +2417,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
 
     case SO_ERROR:
       LWIP_SOCKOPT_CHECK_OPTLEN(sock, *optlen, int);
-      /* only overwrite ERR_OK or temporary errors */
-      if (((sock->err == 0) || (sock->err == EINPROGRESS)) && (sock->conn != NULL)) {
-        sock_set_errno(sock, err_to_errno(sock->conn->last_err));
-      }
-      *(int *)optval = sock->err;
-      sock->err = 0;
+      *(int *)optval = err_to_errno(netconn_err(sock->conn));
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n",
                   s, *(int *)optval));
       break;
@@ -3243,6 +3233,8 @@ lwip_fcntl(int s, int cmd, int val)
 
     break;
   case F_SETFL:
+    /* Bits corresponding to the file access mode and the file creation flags [..] that are set in arg shall be ignored */
+    val &= ~(O_RDONLY|O_WRONLY|O_RDWR);
     if ((val & ~O_NONBLOCK) == 0) {
       /* only O_NONBLOCK, all other bits are zero */
       netconn_set_nonblocking(sock->conn, val & O_NONBLOCK);

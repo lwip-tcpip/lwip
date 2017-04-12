@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2017-04-11: Simon Goldschmidt
+  * netconn/sockets: remove fatal error handling, fix asynchronous error handling,
+    ensure data before RST can be received
+
   2017-03-02: Simon Goldschmidt
   * netconn: added nonblocking accept/recv to netconn API (task #14396)
 

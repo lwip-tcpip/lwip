@@ -66,6 +66,8 @@ extern "C" {
 #define NETCONN_NOAUTORCVD  0x08 /* prevent netconn_recv_data_tcp() from updating the tcp window - must be done manually via netconn_tcp_recvd() */
 
 /* Flags for struct netconn.flags (u8_t) */
+/** This netconn had an error, don't block on recvmbox/acceptmbox any more */
+#define NETCONN_FLAG_MBOXCLOSED               0x01
 /** Should this netconn avoid blocking? */
 #define NETCONN_FLAG_NON_BLOCKING             0x02
 /** Was the last connect action a non-blocking one? */
@@ -215,8 +217,8 @@ struct netconn {
     struct udp_pcb *udp;
     struct raw_pcb *raw;
   } pcb;
-  /** the last error this netconn had */
-  err_t last_err;
+  /** the last asynchronous unreported error this netconn had */
+  err_t pending_err;
 #if !LWIP_NETCONN_SEM_PER_THREAD
   /** sem that is used to synchronously execute functions in the core context */
   sys_sem_t op_completed;
@@ -278,16 +280,6 @@ struct netvector {
                            (*c->callback)(c, e, l); \
                          }
 
-/** Set conn->last_err to err but don't overwrite fatal errors */
-#define NETCONN_SET_SAFE_ERR(conn, err) do { if ((conn) != NULL) { \
-  SYS_ARCH_DECL_PROTECT(netconn_set_safe_err_lev); \
-  SYS_ARCH_PROTECT(netconn_set_safe_err_lev); \
-  if (!ERR_IS_FATAL((conn)->last_err)) { \
-    (conn)->last_err = err; \
-  } \
-  SYS_ARCH_UNPROTECT(netconn_set_safe_err_lev); \
-}} while(0);
-
 /* Network connection functions: */
 
 /** @ingroup netconn_common
@@ -348,7 +340,7 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 #endif /* LWIP_DNS */
 
-#define netconn_err(conn)               ((conn)->last_err)
+err_t   netconn_err(struct netconn *conn);
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 
 /** Set the blocking status of netconn calls (@todo: write/send is missing) */
