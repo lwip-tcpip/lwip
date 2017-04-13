@@ -695,6 +695,127 @@ START_TEST(test_tcp_tx_full_window_lost_from_unacked)
 }
 END_TEST
 
+START_TEST(test_tcp_rto_tracking)
+{
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf* p;
+  err_t err;
+  u16_t i, sent_total = 0;
+  LWIP_UNUSED_ARG(_i);
+
+  for (i = 0; i < sizeof(tx_data); i++) {
+    tx_data[i] = (u8_t)i;
+  }
+
+  /* initialize local vars */
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+  memset(&counters, 0, sizeof(counters));
+
+  /* create and initialize the pcb */
+  tcp_ticks = SEQNO1 - ISS;
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT, TEST_REMOTE_PORT);
+  pcb->mss = TCP_MSS;
+  /* Set congestion window large enough to send all our segments */
+  pcb->cwnd = 5*TCP_MSS;
+
+  /* send 5 mss-sized segments */
+  for (i = 0; i < 5; i++) {
+    err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
+    EXPECT_RET(err == ERR_OK);
+    sent_total += TCP_MSS;
+  }
+  check_seqnos(pcb->unsent, 5, seqnos);
+  EXPECT(pcb->unacked == NULL);
+  err = tcp_output(pcb);
+  EXPECT(txcounters.num_tx_calls == 5);
+  EXPECT(txcounters.num_tx_bytes == 5 * (TCP_MSS + 40U));
+  memset(&txcounters, 0, sizeof(txcounters));
+  /* Check all 5 are in-flight */
+  EXPECT(pcb->unsent == NULL);
+  check_seqnos(pcb->unacked, 5, seqnos);
+
+  /* Force us into retransmisson timeout */
+  while (!(pcb->flags & TF_RTO)) {
+    test_tcp_tmr();
+  }
+  /* Ensure 4 remaining segments are back on unsent, ready for retransmission */
+  check_seqnos(pcb->unsent, 4, &seqnos[1]);
+  /* Ensure 1st segment is on unacked (already retransmitted) */
+  check_seqnos(pcb->unacked, 1, seqnos);
+  EXPECT(txcounters.num_tx_calls == 1);
+  EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
+  memset(&txcounters, 0, sizeof(txcounters));
+  /* Ensure rto_end points to next byte */
+  EXPECT(pcb->rto_end == seqnos[5]);
+  EXPECT(pcb->rto_end == pcb->snd_nxt);
+  /* Check cwnd was reset */
+  EXPECT(pcb->cwnd == pcb->mss);
+
+  /* Add another segment to send buffer which is outside of RTO */
+  err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
+  EXPECT_RET(err == ERR_OK);
+  sent_total += TCP_MSS;
+  check_seqnos(pcb->unsent, 5, &seqnos[1]);
+  /* Ensure no new data was sent */
+  EXPECT(txcounters.num_tx_calls == 0);
+  EXPECT(txcounters.num_tx_bytes == 0);
+  EXPECT(pcb->rto_end == pcb->snd_nxt);
+
+  /* ACK first segment */
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, TCP_MSS, TCP_ACK);
+  test_tcp_input(p, &netif);
+  /* Next two retranmissions should go out, due to cwnd in slow start */
+  EXPECT(txcounters.num_tx_calls == 2);
+  EXPECT(txcounters.num_tx_bytes == 2 * (TCP_MSS + 40U));
+  memset(&txcounters, 0, sizeof(txcounters));
+  check_seqnos(pcb->unacked, 2, &seqnos[1]);
+  check_seqnos(pcb->unsent, 3, &seqnos[3]);
+  /* RTO should still be marked */
+  EXPECT(pcb->flags & TF_RTO);
+  /* cwnd should have only grown by 1 MSS */
+  EXPECT(pcb->cwnd == (tcpwnd_size_t)(2 * pcb->mss));
+  /* Ensure no new data was sent */
+  EXPECT(pcb->rto_end == pcb->snd_nxt);
+
+  /* ACK the next two segments */
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, 2*TCP_MSS, TCP_ACK);
+  test_tcp_input(p, &netif);
+  /* Final 2 retransmissions and 1 new data should go out */
+  EXPECT(txcounters.num_tx_calls == 3);
+  EXPECT(txcounters.num_tx_bytes == 3 * (TCP_MSS + 40U));
+  memset(&txcounters, 0, sizeof(txcounters));
+  check_seqnos(pcb->unacked, 3, &seqnos[3]);
+  EXPECT(pcb->unsent == NULL);
+  /* RTO should still be marked */
+  EXPECT(pcb->flags & TF_RTO);
+  /* cwnd should have only grown by 1 MSS */
+  EXPECT(pcb->cwnd == (tcpwnd_size_t)(3 * pcb->mss));
+  /* snd_nxt should have been advanced past rto_end */
+  EXPECT(TCP_SEQ_GT(pcb->snd_nxt, pcb->rto_end));
+
+  /* ACK the next two segments, finishing our RTO, leaving new segment unacked */
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, 2*TCP_MSS, TCP_ACK);
+  test_tcp_input(p, &netif);
+  EXPECT(!(pcb->flags & TF_RTO));
+  check_seqnos(pcb->unacked, 1, &seqnos[5]);
+  /* We should be in ABC congestion avoidance, so no change in cwnd */
+  EXPECT(pcb->cwnd == (tcpwnd_size_t)(3 * pcb->mss));
+  EXPECT(pcb->cwnd >= pcb->ssthresh);
+  /* Ensure ABC congestion avoidance is tracking bytes acked */
+  EXPECT(pcb->bytes_acked == (tcpwnd_size_t)(2 * pcb->mss));
+
+  /* make sure the pcb is freed */
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
+  tcp_abort(pcb);
+  EXPECT_RET(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 tcp_suite(void)
@@ -707,7 +828,8 @@ tcp_suite(void)
     TESTFUNC(test_tcp_fast_rexmit_wraparound),
     TESTFUNC(test_tcp_rto_rexmit_wraparound),
     TESTFUNC(test_tcp_tx_full_window_lost_from_unacked),
-    TESTFUNC(test_tcp_tx_full_window_lost_from_unsent)
+    TESTFUNC(test_tcp_tx_full_window_lost_from_unsent),
+    TESTFUNC(test_tcp_rto_tracking)
   };
   return create_suite("TCP", tests, sizeof(tests)/sizeof(testfunc), tcp_setup, tcp_teardown);
 }

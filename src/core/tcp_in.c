@@ -1103,6 +1103,7 @@ tcp_receive(struct tcp_pcb *pcb)
       }
     } else if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)) {
       /* We come here when the ACK acknowledges new data. */
+      tcpwnd_size_t acked;
 
       /* Reset the "IN Fast Retransmit" flag, since we are no longer
          in fast retransmit. Also reset the congestion window to the
@@ -1110,6 +1111,7 @@ tcp_receive(struct tcp_pcb *pcb)
       if (pcb->flags & TF_INFR) {
         pcb->flags &= ~TF_INFR;
         pcb->cwnd = pcb->ssthresh;
+        pcb->bytes_acked = 0;
       }
 
       /* Reset the number of retransmissions. */
@@ -1117,6 +1119,9 @@ tcp_receive(struct tcp_pcb *pcb)
 
       /* Reset the retransmission time-out. */
       pcb->rto = (pcb->sa >> 3) + pcb->sv;
+
+      /* Record how much data this ACK acks */
+      acked = (tcpwnd_size_t)(ackno - pcb->lastack);
 
       /* Reset the fast retransmit variables. */
       pcb->dupacks = 0;
@@ -1126,12 +1131,25 @@ tcp_receive(struct tcp_pcb *pcb)
          ssthresh). */
       if (pcb->state >= ESTABLISHED) {
         if (pcb->cwnd < pcb->ssthresh) {
-          if ((tcpwnd_size_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
-            pcb->cwnd += pcb->mss;
+          tcpwnd_size_t increase;
+          /* limit to 1 SMSS segment during period following RTO */
+          u8_t num_seg = (pcb->flags & TF_RTO) ? 1 : 2;
+          /* RFC 3465, section 2.2 Slow Start */
+          increase = LWIP_MIN(acked, (tcpwnd_size_t)(num_seg * pcb->mss));
+          if (pcb->cwnd + increase > pcb->cwnd) {
+            pcb->cwnd += increase;
           }
           LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: slow start cwnd %"TCPWNDSIZE_F"\n", pcb->cwnd));
         } else {
-          tcpwnd_size_t new_cwnd = (pcb->cwnd + pcb->mss * pcb->mss / pcb->cwnd);
+          tcpwnd_size_t new_cwnd = pcb->cwnd;
+          /* RFC 3465, section 2.1 Congestion Avoidance */
+          if (pcb->bytes_acked + acked > pcb->bytes_acked) {
+            pcb->bytes_acked += acked;
+            if (pcb->bytes_acked >= pcb->cwnd) {
+              pcb->bytes_acked -= pcb->cwnd;
+              new_cwnd = pcb->cwnd + pcb->mss;
+            }
+          }
           if (new_cwnd > pcb->cwnd) {
             pcb->cwnd = new_cwnd;
           }
@@ -1222,6 +1240,21 @@ tcp_receive(struct tcp_pcb *pcb)
         }
       }
       pcb->snd_buf += recv_acked;
+      /* check if this ACK ends our retransmission of in-flight data */
+      if (pcb->flags & TF_RTO) {
+        /* RTO is done if
+            1) both queues are empty or
+            2) unacked is empty and unsent head contains data not part of RTO or
+            3) unacked head contains data not part of RTO */
+        if (pcb->unacked == NULL) {
+          if ((pcb->unsent == NULL) ||
+              (TCP_SEQ_LEQ(pcb->rto_end, lwip_ntohl(pcb->unsent->tcphdr->seqno)))) {
+            pcb->flags &= ~TF_RTO;
+          }
+        } else if (TCP_SEQ_LEQ(pcb->rto_end, lwip_ntohl(pcb->unacked->tcphdr->seqno))) {
+          pcb->flags &= ~TF_RTO;
+        }
+      }
       /* End of ACK for new data processing. */
     } else {
       /* Out of sequence ACK, didn't really ack anything */

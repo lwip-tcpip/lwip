@@ -1419,6 +1419,11 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
   /* unacked queue is now empty */
   pcb->unacked = NULL;
 
+  /* Mark RTO in-progress */
+  pcb->flags |= TF_RTO;
+  /* Record the next byte following retransmit */
+  pcb->rto_end = lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
+
   /* increment number of retransmissions */
   if (pcb->nrtx < 0xFF) {
     ++pcb->nrtx;

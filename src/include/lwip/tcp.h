@@ -209,6 +209,7 @@ struct tcp_pcb {
 #if LWIP_TCP_TIMESTAMPS
 #define TF_TIMESTAMP   0x0400U   /* Timestamp option enabled */
 #endif
+#define TF_RTO         0x0800U /* RTO timer has fired, in-flight data moved to unsent and being retransmitted */
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
@@ -245,6 +246,9 @@ struct tcp_pcb {
   tcpwnd_size_t cwnd;
   tcpwnd_size_t ssthresh;
 
+  /* first byte following last rto byte */
+  u32_t rto_end;
+
   /* sender variables */
   u32_t snd_nxt;   /* next new seqno to be sent */
   u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
@@ -261,6 +265,8 @@ struct tcp_pcb {
   /* Extra bytes available at the end of the last pbuf in unsent. */
   u16_t unsent_oversize;
 #endif /* TCP_OVERSIZE */
+
+  tcpwnd_size_t bytes_acked;
 
   /* These are ordered by sequence number: */
   struct tcp_seg *unsent;   /* Unsent (queued) segments. */

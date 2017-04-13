@@ -1100,6 +1100,7 @@ tcp_slowtmr_start:
           LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"TCPWNDSIZE_F
                                        " ssthresh %"TCPWNDSIZE_F"\n",
                                        pcb->cwnd, pcb->ssthresh));
+          pcb->bytes_acked = 0;
 
           /* The following needs to be called AFTER cwnd is set to one
              mss - STJ */
