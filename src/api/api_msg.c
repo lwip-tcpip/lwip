@@ -816,7 +816,8 @@ netconn_drain(struct netconn *conn)
     while (sys_mbox_tryfetch(&conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
 #if LWIP_TCP
       if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
-        if (mem != NULL) {
+        err_t err;
+        if (lwip_netconn_is_err_msg(mem, &err) == 0) {
           p = (struct pbuf*)mem;
           /* pcb might be set to NULL already by err_tcp() */
           if (conn->pcb.tcp != NULL) {
