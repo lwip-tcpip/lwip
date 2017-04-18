@@ -374,9 +374,14 @@ lwip_socket_thread_cleanup(void)
 static void
 sock_inc_used(struct lwip_sock *sock)
 {
+  SYS_ARCH_DECL_PROTECT(lev);
+
   LWIP_ASSERT("sock != NULL", sock != NULL);
-  SYS_ARCH_INC(sock->fd_used, 1);
+
+  SYS_ARCH_PROTECT(lev);
+  ++sock->fd_used;
   LWIP_ASSERT("sock->fd_used != 0", sock->fd_used != 0);
+  SYS_ARCH_UNPROTECT(lev);
 }
 
 /* In full-duplex mode,sock->fd_used != 0 prevents a socket descriptor from being
