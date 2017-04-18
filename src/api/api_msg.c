@@ -817,7 +817,7 @@ netconn_drain(struct netconn *conn)
 #if LWIP_TCP
       if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
         err_t err;
-        if (lwip_netconn_is_err_msg(mem, &err) == 0) {
+        if (!lwip_netconn_is_err_msg(mem, &err)) {
           p = (struct pbuf*)mem;
           /* pcb might be set to NULL already by err_tcp() */
           if (conn->pcb.tcp != NULL) {
@@ -839,7 +839,8 @@ netconn_drain(struct netconn *conn)
 #if LWIP_TCP
   if (sys_mbox_valid(&conn->acceptmbox)) {
     while (sys_mbox_tryfetch(&conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
-      if (mem != &netconn_aborted) {
+      err_t err;
+      if (!lwip_netconn_is_err_msg(mem, &err)) {
         struct netconn *newconn = (struct netconn *)mem;
         /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
         /* pcb might be set to NULL already by err_tcp() */
