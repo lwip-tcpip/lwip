@@ -1808,6 +1808,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 
   if (nready < 0) {
     set_errno(EBADF);
+    lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
     return -1;
   }
 
