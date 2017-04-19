@@ -847,6 +847,7 @@ lwip_listen(int s, int backlog)
   return 0;
 }
 
+#if LWIP_TCP
 /* Helper function to loop over receiving pbufs from netconn
  * until "len" bytes are received or we're otherwise done.
  * Keeps sock->lastdata for peeking or partly copying.
@@ -957,6 +958,7 @@ lwip_recv_tcp_done:
   sock_set_errno(sock, 0);
   return recvd;
 }
+#endif
 
 /* Convert a netbuf's address data to struct sockaddr */
 static int
@@ -1111,12 +1113,15 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
   if (!sock) {
     return -1;
   }
+#if LWIP_TCP
   if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
     ret = lwip_recv_tcp(sock, mem, len, flags);
     lwip_recv_tcp_from(sock, from, fromlen, "lwip_recvfrom", s, ret);
     done_socket(sock);
     return ret;
-  } else {
+  } else
+#endif
+  {
     u16_t datagram_len = 0;
     struct iovec vec;
     err_t err;
@@ -1154,7 +1159,6 @@ int
 lwip_recvmsg(int s, struct msghdr *message, int flags)
 {
   struct lwip_sock *sock;
-  int recv_flags = flags;
   int buflen, i;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvmsg(%d, message=%p, flags=0x%x)\n", s, (void*)message, flags));
@@ -1186,6 +1190,7 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
 
   if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
 #if LWIP_TCP
+    int recv_flags = flags;
     message->msg_flags = 0;
     /* recv the data */
     buflen = 0;
@@ -3218,6 +3223,7 @@ lwip_fcntl(int s, int cmd, int val)
          but locking should be OK as well since we only *read* some flags */
       SYS_ARCH_PROTECT(lev);
 #endif
+#if LWIP_TCP
       if (sock->conn->pcb.tcp) {
         if(!(sock->conn->pcb.tcp->flags & TF_RXCLOSED)) {
           op_mode |= O_RDONLY;
@@ -3226,6 +3232,7 @@ lwip_fcntl(int s, int cmd, int val)
           op_mode |= O_WRONLY;
         }
       }
+#endif
 #if LWIP_TCPIP_CORE_LOCKING
       UNLOCK_TCPIP_CORE();
 #else

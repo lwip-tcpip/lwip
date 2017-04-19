@@ -387,8 +387,8 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 err_t
 netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
-  err_t err;
 #if LWIP_TCP
+  err_t err;
   void *accept_ptr;
   struct netconn *newconn;
 #if TCP_LISTEN_BACKLOG
@@ -570,6 +570,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   return ERR_OK;
 }
 
+#if LWIP_TCP
 static err_t
 netconn_tcp_recvd_msg(struct netconn *conn, u32_t len, struct api_msg* msg)
 {
@@ -596,7 +597,6 @@ netconn_tcp_recvd(struct netconn *conn, u32_t len)
   return err;
 }
 
-#if LWIP_TCP
 static err_t
 netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags)
 {

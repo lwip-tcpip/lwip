@@ -88,7 +88,6 @@ static err_t lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_
 const u8_t netconn_aborted = 0;
 const u8_t netconn_reset = 0;
 const u8_t netconn_closed = 0;
-#endif /* LWIP_TCP */
 
 /** Translate an error to a unique void* passed via an mbox */
 static void*
@@ -125,6 +124,7 @@ lwip_netconn_is_err_msg(void *msg, err_t *err)
   }
   return 0;
 }
+#endif /* LWIP_TCP */
 
 
 #if LWIP_RAW
