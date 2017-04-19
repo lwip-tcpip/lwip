@@ -991,6 +991,7 @@ lwip_sock_make_addr(struct netconn *conn, ip_addr_t *fromaddr, u16_t port,
   return truncated;
 }
 
+#if LWIP_TCP
 /* Helper function to get a tcp socket's remote address info */
 static int
 lwip_recv_tcp_from(struct lwip_sock *sock, struct sockaddr *from, socklen_t *fromlen, const char *dbg_fn, int dbg_s, int dbg_ret)
@@ -1019,6 +1020,7 @@ lwip_recv_tcp_from(struct lwip_sock *sock, struct sockaddr *from, socklen_t *fro
   }
   return 0;
 }
+#endif
 
 /* Helper function to receive a netbuf from a udp or raw netconn.
  * Keeps sock->lastdata for peeking.
