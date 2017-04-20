@@ -916,10 +916,16 @@ netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u1
   }
   if (size == 0) {
     return ERR_OK;
-  } else if (size > INT_MAX) {
+  } else if (size > SSIZE_MAX) {
+    ssize_t limited;
     /* this is required by the socket layer (cannot send full size_t range) */
+    if (!bytes_written) {
       return ERR_VAL;
     }
+    /* limit the amount of data to send */
+    limited = SSIZE_MAX;
+    size = (size_t)limited;
+  }
 
   API_MSG_VAR_ALLOC(msg);
   /* non-blocking write sends as much  */

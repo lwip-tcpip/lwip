@@ -172,7 +172,7 @@ typedef uintptr_t mem_ptr_t;
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
  * the limits.h header. You need to define the type limits yourself in this case
- * (e.g. INT_MAX).
+ * (e.g. INT_MAX, SSIZE_MAX).
  */
 #ifndef LWIP_NO_LIMITS_H
 #define LWIP_NO_LIMITS_H 0
@@ -182,6 +182,24 @@ typedef uintptr_t mem_ptr_t;
 #if !LWIP_NO_LIMITS_H
 #include <limits.h>
 #endif
+
+/* Do we need to define ssize_t? This is a compatibility hack:
+ * Unfortunately, this type seems to be unavailable on some systems (even if
+ * sys/types or unistd.h are available).
+ * Being like that, we define it to 'int' if SSIZE_MAX is not defined.
+ */
+#ifdef SSIZE_MAX
+/* If SSIZE_MAX is defined, unistd.h should provide the type as well */
+#ifndef LWIP_NO_UNISTD_H
+#define LWIP_NO_UNISTD_H 0
+#endif
+#if !LWIP_NO_UNISTD_H
+#include <unistd.h>
+#endif
+#else /* SSIZE_MAX */
+typedef int ssize_t;
+#define SSIZE_MAX INT_MAX
+#endif /* SSIZE_MAX */
 
 /** C++ const_cast<target_type>(val) equivalent to remove constness from a value (GCC -Wcast-qual) */
 #ifndef LWIP_CONST_CAST
