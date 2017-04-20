@@ -1495,7 +1495,7 @@ lwip_netconn_do_recv(void *m)
   msg->err = ERR_OK;
   if (msg->conn->pcb.tcp != NULL) {
     if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
-      u32_t remaining = msg->msg.r.len;
+      size_t remaining = msg->msg.r.len;
       do {
         u16_t recved = (remaining > 0xffff) ? 0xffff : (u16_t)remaining;
         tcp_recved(msg->conn->pcb.tcp, recved);

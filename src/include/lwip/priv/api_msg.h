@@ -120,7 +120,7 @@ struct api_msg {
     } w;
     /** used for lwip_netconn_do_recv */
     struct {
-      u32_t len;
+      size_t len;
     } r;
 #if LWIP_TCP
     /** used for lwip_netconn_do_close (/shutdown) */
