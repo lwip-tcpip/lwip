@@ -1141,7 +1141,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       done_socket(sock);
       return -1;
     }
-    ret = len < datagram_len ? len :datagram_len;
+    ret = LWIP_MIN(len, datagram_len);
   }
 
   sock_set_errno(sock, 0);
