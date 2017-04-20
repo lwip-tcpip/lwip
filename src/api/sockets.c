@@ -913,7 +913,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
     }
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recv_tcp: buflen=%"U16_F" recv_left=%d off=%d\n",
-       p->tot_len, recv_left, recvd));
+       p->tot_len, recv_left, (int)recvd));
 
     if (recv_left > p->tot_len) {
       copylen = p->tot_len;
