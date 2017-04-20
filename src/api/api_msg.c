@@ -871,7 +871,7 @@ static err_t
 lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
 {
   err_t err;
-  u8_t shut, shut_rx, shut_tx, close;
+  u8_t shut, shut_rx, shut_tx, shut_close;
   u8_t close_finished = 0;
   struct tcp_pcb* tpcb;
 #if LWIP_SO_LINGER
@@ -891,20 +891,20 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
   /* shutting down both ends is the same as closing
      (also if RD or WR side was shut down before already) */
   if (shut == NETCONN_SHUT_RDWR) {
-    close = 1;
+    shut_close = 1;
   } else if (shut_rx &&
              ((tpcb->state == FIN_WAIT_1) ||
               (tpcb->state == FIN_WAIT_2) ||
               (tpcb->state == CLOSING))) {
-    close = 1;
+    shut_close = 1;
   } else if (shut_tx && ((tpcb->flags & TF_RXCLOSED) != 0)) {
-    close = 1;
+    shut_close = 1;
   } else {
-    close = 0;
+    shut_close = 0;
   }
 
   /* Set back some callback pointers */
-  if (close) {
+  if (shut_close) {
     tcp_arg(tpcb, NULL);
   }
   if (tpcb->state == LISTEN) {
@@ -918,13 +918,13 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
     if (shut_tx) {
       tcp_sent(tpcb, NULL);
     }
-    if (close) {
+    if (shut_close) {
       tcp_poll(tpcb, NULL, 0);
       tcp_err(tpcb, NULL);
     }
   }
   /* Try to close the connection */
-  if (close) {
+  if (shut_close) {
 #if LWIP_SO_LINGER
     /* check linger possibilites before calling tcp_close */
     err = ERR_OK;
@@ -993,7 +993,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
       if (conn->current_msg->msg.sd.polls_left == 0) {
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
         close_finished = 1;
-        if (close) {
+        if (shut_close) {
           /* in this case, we want to RST the connection */
           tcp_abort(tpcb);
           err = ERR_OK;
@@ -1011,7 +1011,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
     conn->current_msg = NULL;
     conn->state = NETCONN_NONE;
     if (err == ERR_OK) {
-      if (close) {
+      if (shut_close) {
         /* Set back some callback pointers as conn is going away */
         conn->pcb.tcp = NULL;
         /* Trigger select() in socket layer. Make sure everybody notices activity
