@@ -920,6 +920,10 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
     } else {
       copylen = (u16_t)recv_left;
     }
+    if (recvd + copylen < recvd) {
+      /* int overflow */
+      copylen = INT_MAX - recvd;
+    }
 
     /* copy the contents of the received buffer into
     the supplied memory pointer mem */
@@ -1487,7 +1491,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #endif /* LWIP_TCP */
   }
 
-  if (size > 0xFFFF) {
+  if (size > LWIP_MIN(0xFFFF, INT_MAX)) {
     /* cannot fit into one datagram (at least for us) */
     sock_set_errno(sock, EMSGSIZE);
     done_socket(sock);
