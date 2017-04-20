@@ -270,8 +270,15 @@ struct netconn {
   netconn_callback callback;
 };
 
+/** This vector type is passed to @ref netconn_write_vectors_partly to send
+ * multiple buffers at once.
+ * ATTENTION: This type has to directly map @ref struct iovec since one is casted
+ *            into the other!
+ */
 struct netvector {
+  /** pointer to the application buffer that contains the data to send */
   const void *ptr;
+  /** size of the application data to send */
   size_t len;
 };
 
