@@ -711,10 +711,10 @@ tcp_process(struct tcp_pcb *pcb)
         acceptable = 1;
       } else  if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt,
                                   pcb->rcv_nxt + pcb->rcv_wnd)) {
-        /* If the sequence number is inside the window, we only send an ACK
+        /* If the sequence number is inside the window, we send a challenge ACK
            and wait for a re-send with matching sequence number.
-           This violates RFC 793, but is required to protection against
-           CVE-2004-0230 (RST spoofing attack). */
+           This follows RFC 5961 section 3.2 and addresses CVE-2004-0230
+           (RST spoofing attack), which is present in RFC 793 RST handling. */
         tcp_ack_now(pcb);
       }
     }
