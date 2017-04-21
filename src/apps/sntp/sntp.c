@@ -435,10 +435,6 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(pcb);
 
-  /* packet received: stop retry timeout  */
-  sys_untimeout(sntp_try_next_server, NULL);
-  sys_untimeout(sntp_request, NULL);
-
   err = ERR_ARG;
 #if SNTP_CHECK_RESPONSE >= 1
   /* check server address and port */
@@ -453,7 +449,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
     if (p->tot_len == SNTP_MSG_LEN) {
       mode = pbuf_get_at(p, SNTP_OFFSET_LI_VN_MODE) & SNTP_MODE_MASK;
       /* if this is a SNTP response... */
-      if (((sntp_opmode == SNTP_OPMODE_POLL) && (mode == SNTP_MODE_SERVER)) ||
+      if (((sntp_opmode == SNTP_OPMODE_POLL)       && (mode == SNTP_MODE_SERVER)) ||
           ((sntp_opmode == SNTP_OPMODE_LISTENONLY) && (mode == SNTP_MODE_BROADCAST))) {
         stratum = pbuf_get_at(p, SNTP_OFFSET_STRATUM);
 
@@ -462,8 +458,7 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
           err = SNTP_ERR_KOD;
           LWIP_DEBUGF(SNTP_DEBUG_STATE, ("sntp_recv: Received Kiss-of-Death\n"));
         } else {
-          pbuf_copy_partial(p, &timestamps, sizeof(timestamps),
-                            SNTP_OFFSET_TIMESTAMPS);
+          pbuf_copy_partial(p, &timestamps, sizeof(timestamps), SNTP_OFFSET_TIMESTAMPS);
 #if SNTP_CHECK_RESPONSE >= 2
           /* check originate_timetamp against sntp_last_timestamp_sent */
           if (timestamps.orig.sec != sntp_last_timestamp_sent.sec ||
@@ -493,12 +488,18 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
     err = ERR_TIMEOUT;
   }
 #endif /* SNTP_CHECK_RESPONSE >= 1 */
+
   pbuf_free(p);
+
   if (err == ERR_OK) {
+    /* correct packet received: process it it */
     sntp_process(&timestamps);
 
     /* Set up timeout for next request (only if poll response was received)*/
     if (sntp_opmode == SNTP_OPMODE_POLL) {
+      sys_untimeout(sntp_try_next_server, NULL);
+      sys_untimeout(sntp_request, NULL);
+
       /* Correct response, reset retry timeout */
       SNTP_RESET_RETRY_TIMEOUT();
 
@@ -506,17 +507,14 @@ sntp_recv(void *arg, struct udp_pcb* pcb, struct pbuf *p, const ip_addr_t *addr,
       LWIP_DEBUGF(SNTP_DEBUG_STATE, ("sntp_recv: Scheduled next time request: %"U32_F" ms\n",
         (u32_t)SNTP_UPDATE_DELAY));
     }
-  } else if (err != ERR_TIMEOUT) {
-    /* Errors are only processed in case of an explicit poll response */
+  } else if (err == SNTP_ERR_KOD) {
+    /* KOD errors are only processed in case of an explicit poll response */
     if (sntp_opmode == SNTP_OPMODE_POLL) {
-      if (err == SNTP_ERR_KOD) {
-        /* Kiss-of-death packet. Use another server or increase UPDATE_DELAY. */
-        sntp_try_next_server(NULL);
-      } else {
-        /* another error, try the same server again */
-        sntp_retry(NULL);
-      }
+      /* Kiss-of-death packet. Use another server or increase UPDATE_DELAY. */
+      sntp_try_next_server(NULL);
     }
+  } else {
+    /* ignore any broken packet, poll mode: retry after timeout to avoid flooding */
   }
 }
 
