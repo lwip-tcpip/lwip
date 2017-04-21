@@ -458,18 +458,18 @@ mqtt_output_append_string(struct mqtt_ringbuf_t *rb, const char *str, u16_t leng
  * Append fixed header
  * @param rb Output ring buffer
  * @param msg_type see enum mqtt_message_type
- * @param dup MQTT DUP flag
- * @param qos MQTT QoS field
- * @param retain MQTT retain flag
+ * @param fdup MQTT DUP flag
+ * @param fqos MQTT QoS field
+ * @param fretain MQTT retain flag
  * @param r_length Remaining length after fixed header
  */
 
 static void
-mqtt_output_append_fixed_header(struct mqtt_ringbuf_t *rb, u8_t msg_type, u8_t dup,
-                 u8_t qos, u8_t retain, u16_t r_length)
+mqtt_output_append_fixed_header(struct mqtt_ringbuf_t *rb, u8_t msg_type, u8_t fdup,
+                 u8_t fqos, u8_t fretain, u16_t r_length)
 {
   /* Start with control byte */
-  mqtt_output_append_u8(rb, (((msg_type & 0x0f) << 4) | ((dup & 1) << 3) | ((qos & 3) << 1) | (retain & 1)));
+  mqtt_output_append_u8(rb, (((msg_type & 0x0f) << 4) | ((fdup & 1) << 3) | ((fqos & 3) << 1) | (fretain & 1)));
   /* Encode remaining length field */
   do {
     mqtt_output_append_u8(rb, (r_length & 0x7f) | (r_length >= 128 ? 0x80 : 0));
