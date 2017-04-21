@@ -140,14 +140,18 @@
  * Turned off by default.
  */
 #if !defined SNTP_STARTUP_DELAY || defined __DOXYGEN__
+#ifdef LWIP_RAND
+#define SNTP_STARTUP_DELAY          1
+#else
 #define SNTP_STARTUP_DELAY          0
+#endif
 #endif
 
 /** If you want the startup delay to be a function, define this
  * to a function (including the brackets) and define SNTP_STARTUP_DELAY to 1.
  */
 #if !defined SNTP_STARTUP_DELAY_FUNC || defined __DOXYGEN__
-#define SNTP_STARTUP_DELAY_FUNC     SNTP_STARTUP_DELAY
+#define SNTP_STARTUP_DELAY_FUNC     (LWIP_RAND() % 5000)
 #endif
 
 /** SNTP receive timeout - in milliseconds
