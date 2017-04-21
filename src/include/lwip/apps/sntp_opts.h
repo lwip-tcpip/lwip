@@ -98,7 +98,7 @@
  *        response comes from the server we sent the request to.
  * - >= 2 to check returned Originate Timestamp against Transmit Timestamp
  *        sent to the server (to ensure response to older request).
- * - >= 3 @todo: discard reply if any of the LI, Stratum, or Transmit Timestamp
+ * - >= 3 @todo: discard reply if any of the VN, Stratum, or Transmit Timestamp
  *        fields is 0 or the Mode field is not 4 (unicast) or 5 (broadcast).
  * - >= 4 @todo: to check that the Root Delay and Root Dispersion fields are each
  *        greater than or equal to 0 and less than infinity, where infinity is
