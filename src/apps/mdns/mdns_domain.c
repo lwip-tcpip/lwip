@@ -137,6 +137,67 @@ mdns_domain_add_label_pbuf(struct mdns_domain *domain, const struct pbuf *p, u16
 }
 
 /**
+ * Add a partial domain to a domain
+ * @param domain The domain to add a label to
+ * @param source The domain to add, like &lt;\x09_services\007_dns-sd\000&gt;
+ * @return ERR_OK on success, an err_t otherwise if label too long
+ */
+err_t
+mdns_domain_add_domain(struct mdns_domain *domain, struct mdns_domain *source)
+{
+  u8_t len = source->length;
+  if (len > 0 && (1 + len + domain->length >= MDNS_DOMAIN_MAXLEN)) {
+    return ERR_VAL;
+  }
+  /* Allow only zero marker on last byte */
+  if (len == 0 && (1 + domain->length > MDNS_DOMAIN_MAXLEN)) {
+    return ERR_VAL;
+  }
+  if (len) {
+    /* Copy partial domain */
+    MEMCPY(&domain->name[domain->length], source->name, len);
+    domain->length += len;
+  }
+  else {
+    /* Add zero marker */
+    domain->name[domain->length] = len;
+    domain->length++;
+  }
+  return ERR_OK;
+}
+
+/**
+ * Add a string domain to a domain
+ * @param domain The domain to add a label to
+ * @param source The string to add, like &lt;_services._dns-sd&gt;
+ * @return ERR_OK on success, an err_t otherwise if label too long
+ */
+err_t
+mdns_domain_add_string(struct mdns_domain *domain, const char *source)
+{
+  u8_t *len = &domain->name[domain->length];
+  u8_t *end = &domain->name[MDNS_DOMAIN_MAXLEN];
+  u8_t *start = len + 1;
+  *len = 0;
+  while (*source && start < end) {
+      if (*source == '.') {
+        len = start++;
+        *len = 0;
+        source++;
+      }
+      else {
+        *start++ = *source++;
+        *len = *len + 1;
+      }
+  }
+  if (start == end)
+      return ERR_VAL;
+  domain->length = start - &domain->name[0];
+  return ERR_OK;
+}
+
+
+/**
  * Internal readname function with max 6 levels of recursion following jumps
  * while decompressing name
  */
@@ -432,6 +493,33 @@ mdns_build_service_domain(struct mdns_domain *domain, struct mdns_service *servi
   LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
   return mdns_add_dotlocal(domain);
 }
+
+#if LWIP_MDNS_SEARCH
+/**
+ * Build domain name for a request
+ * @param domain Where to write the domain name
+ * @param request The request struct, containing service name, type and protocol
+ * @param include_name Whether to include the service name in the domain
+ * @return ERR_OK if domain was written. If service name is included,
+ *         <name>.<type>.<proto>.local. will be written, otherwise <type>.<proto>.local.
+ *         An err_t is returned on error.
+ */
+err_t
+mdns_build_request_domain(struct mdns_domain *domain, struct mdns_request *request, int include_name)
+{
+  err_t res;
+  memset(domain, 0, sizeof(struct mdns_domain));
+  if (include_name) {
+    res = mdns_domain_add_label(domain, request->name, (u8_t)strlen(request->name));
+    LWIP_ERROR("mdns_build_request_domain: Failed to add label", (res == ERR_OK), return res);
+  }
+  res = mdns_domain_add_domain(domain, &request->service);
+  LWIP_ERROR("mdns_build_request_domain: Failed to add domain", (res == ERR_OK), return res);
+  res = mdns_domain_add_label(domain, dnssd_protos[request->proto], (u8_t)strlen(dnssd_protos[request->proto]));
+  LWIP_ERROR("mdns_build_request_domain: Failed to add label", (res == ERR_OK), return res);
+  return mdns_add_dotlocal(domain);
+}
+#endif
 
 /**
  * Return bytes needed to write before jump for best result of compressing supplied domain

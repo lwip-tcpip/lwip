@@ -125,6 +125,9 @@ void mdns_send_unicast_msg_delayed_ipv6(void *arg);
 void mdns_start_multicast_timeouts_ipv6(struct netif *netif);
 #endif
 void mdns_prepare_txtdata(struct mdns_service *service);
+#ifdef LWIP_MDNS_SEARCH
+err_t mdns_send_request(struct mdns_request *req, struct netif *netif, const ip_addr_t *destination);
+#endif
 
 #endif /* LWIP_MDNS_RESPONDER */
 

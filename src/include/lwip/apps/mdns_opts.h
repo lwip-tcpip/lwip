@@ -68,6 +68,18 @@
 #endif
 
 /**
+ * LWIP_MDNS_SEARCH==1: Turn on search over multicast DNS module.
+ */
+#ifndef LWIP_MDNS_SEARCH
+#define LWIP_MDNS_SEARCH                1
+#endif
+
+/** The maximum number of running requests */
+#ifndef MDNS_MAX_REQUESTS
+#define MDNS_MAX_REQUESTS               2
+#endif
+
+/**
  * MDNS_DEBUG: Enable debugging for multicast DNS.
  */
 #ifndef MDNS_DEBUG
