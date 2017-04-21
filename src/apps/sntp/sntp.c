@@ -42,11 +42,10 @@
  * This is simple "SNTP" client for the lwIP raw API.
  * It is a minimal implementation of SNTPv4 as specified in RFC 4330.
  *
- * For a list of some public NTP servers, see this link :
+ * For a list of some public NTP servers, see this link:
  * http://support.ntp.org/bin/view/Servers/NTPPoolServers
  *
  * @todo:
- * - set/change servers at runtime
  * - complete SNTP_CHECK_RESPONSE checks 3 and 4
  */
 
@@ -90,10 +89,10 @@
 
 #define SNTP_OFFSET_LI_VN_MODE      0
 #define SNTP_LI_MASK                0xC0
-#define SNTP_LI_NO_WARNING          0x00
-#define SNTP_LI_LAST_MINUTE_61_SEC  0x01
-#define SNTP_LI_LAST_MINUTE_59_SEC  0x02
-#define SNTP_LI_ALARM_CONDITION     0x03 /* (clock not synchronized) */
+#define SNTP_LI_NO_WARNING          (0x00 << 6)
+#define SNTP_LI_LAST_MINUTE_61_SEC  (0x01 << 6)
+#define SNTP_LI_LAST_MINUTE_59_SEC  (0x02 << 6)
+#define SNTP_LI_ALARM_CONDITION     (0x03 << 6) /* (clock not synchronized) */
 
 #define SNTP_VERSION_MASK           0x38
 #define SNTP_VERSION                (4/* NTP Version 4*/<<3)
