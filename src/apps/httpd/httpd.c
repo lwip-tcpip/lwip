@@ -1226,7 +1226,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
 
   /* We have sent all the data that was already parsed so continue parsing
    * the buffer contents looking for SSI tags. */
-  while((ssi->parse_left) && (err == ERR_OK)) {
+  while(((ssi->tag_state == TAG_SENDING) || ssi->parse_left) && (err == ERR_OK)) {
     if (len == 0) {
       return data_to_send;
     }
@@ -1493,7 +1493,19 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
    * file data to send so send it now. In TAG_SENDING state, we've already
    * handled this so skip the send if that's the case. */
   if((ssi->tag_state != TAG_SENDING) && (ssi->parsed > hs->file)) {
-    len = (u16_t)LWIP_MIN(ssi->parsed - hs->file, 0xffff);
+#if LWIP_HTTPD_DYNAMIC_FILE_READ && !LWIP_HTTPD_SSI_INCLUDE_TAG
+    if ((ssi->tag_state != TAG_NONE) && (ssi->tag_started > ssi->tag_end)) {
+      /* If we found tag on the edge of the read buffer: just throw away the first part
+         (we have copied/saved everything required for parsing on later). */
+      len = (u16_t)(ssi->tag_started - hs->file);
+      hs->left -= (ssi->parsed - ssi->tag_started);
+      ssi->parsed = ssi->tag_started;
+      ssi->tag_started = hs->buf;
+    } else
+#endif /* LWIP_HTTPD_DYNAMIC_FILE_READ && !LWIP_HTTPD_SSI_INCLUDE_TAG */
+    {
+      len = (u16_t)LWIP_MIN(ssi->parsed - hs->file, 0xffff);
+    }
 
     err = http_write(pcb, hs->file, &len, HTTP_IS_DATA_VOLATILE(hs));
     if (err == ERR_OK) {
