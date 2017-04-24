@@ -66,6 +66,10 @@
 #include <stdlib.h> /* for malloc()/free() */
 #endif
 
+#define MEM_STATS_INC_LOCKED(x)         SYS_ARCH_LOCKED(MEM_STATS_INC(x))
+#define MEM_STATS_INC_USED_LOCKED(x, y) SYS_ARCH_LOCKED(MEM_STATS_INC_USED(x, y))
+#define MEM_STATS_DEC_USED_LOCKED(x, y) SYS_ARCH_LOCKED(MEM_STATS_DEC_USED(x, y))
+
 #if MEM_LIBC_MALLOC || MEM_USE_POOLS
 
 /** mem_init is not used when using pools instead of a heap or using
@@ -123,13 +127,13 @@ mem_malloc(mem_size_t size)
 {
   void* ret = mem_clib_malloc(size + MEM_LIBC_STATSHELPER_SIZE);
   if (ret == NULL) {
-    MEM_STATS_INC(err);
+    MEM_STATS_INC_LOCKED(err);
   } else {
     LWIP_ASSERT("malloc() must return aligned memory", LWIP_MEM_ALIGN(ret) == ret);
 #if LWIP_STATS && MEM_STATS
     *(mem_size_t*)ret = size;
     ret = (u8_t*)ret + MEM_LIBC_STATSHELPER_SIZE;
-    MEM_STATS_INC_USED(used, size);
+    MEM_STATS_INC_USED_LOCKED(used, size);
 #endif
   }
   return ret;
@@ -146,7 +150,7 @@ mem_free(void *rmem)
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 #if LWIP_STATS && MEM_STATS
   rmem = (u8_t*)rmem - MEM_LIBC_STATSHELPER_SIZE;
-  MEM_STATS_DEC_USED(used, *(mem_size_t*)rmem);
+  MEM_STATS_DEC_USED_LOCKED(used, *(mem_size_t*)rmem);
 #endif
   mem_clib_free(rmem);
 }
@@ -183,7 +187,7 @@ mem_malloc(mem_size_t size)
           continue;
         }
 #endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
-        MEM_STATS_INC(err);
+        MEM_STATS_INC_LOCKED(err);
         return NULL;
       }
       break;
@@ -191,7 +195,7 @@ mem_malloc(mem_size_t size)
   }
   if (poolnr > MEMP_POOL_LAST) {
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
-    MEM_STATS_INC(err);
+    MEM_STATS_INC_LOCKED(err);
     return NULL;
   }
 
@@ -203,7 +207,7 @@ mem_malloc(mem_size_t size)
 #if MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS)
   /* truncating to u16_t is safe because struct memp_desc::size is u16_t */
   element->size = (u16_t)size;
-  MEM_STATS_INC_USED(used, element->size);
+  MEM_STATS_INC_USED_LOCKED(used, element->size);
 #endif /* MEMP_OVERFLOW_CHECK || (LWIP_STATS && MEM_STATS) */
 #if MEMP_OVERFLOW_CHECK
   /* initialize unused memory (diff between requested size and selected pool's size) */
@@ -235,7 +239,7 @@ mem_free(void *rmem)
   LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == LWIP_MEM_ALIGN(hmem)));
   LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
 
-  MEM_STATS_DEC_USED(used, hmem->size);
+  MEM_STATS_DEC_USED_LOCKED(used, hmem->size);
 #if MEMP_OVERFLOW_CHECK
   {
      u16_t i;
@@ -317,11 +321,11 @@ static volatile u8_t mem_free_count;
 
 #else /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
 
-/* Protect the heap only by using a semaphore */
+/* Protect the heap only by using a mutex */
 #define LWIP_MEM_FREE_DECL_PROTECT()
 #define LWIP_MEM_FREE_PROTECT()    sys_mutex_lock(&mem_mutex)
 #define LWIP_MEM_FREE_UNPROTECT()  sys_mutex_unlock(&mem_mutex)
-/* mem_malloc is protected using semaphore AND LWIP_MEM_ALLOC_PROTECT */
+/* mem_malloc is protected using mutex AND LWIP_MEM_ALLOC_PROTECT */
 #define LWIP_MEM_ALLOC_DECL_PROTECT()
 #define LWIP_MEM_ALLOC_PROTECT()
 #define LWIP_MEM_ALLOC_UNPROTECT()
@@ -431,12 +435,9 @@ mem_free(void *rmem)
     (u8_t *)rmem < (u8_t *)ram_end);
 
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
-    SYS_ARCH_DECL_PROTECT(lev);
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\n"));
     /* protect mem stats from concurrent access */
-    SYS_ARCH_PROTECT(lev);
-    MEM_STATS_INC(illegal);
-    SYS_ARCH_UNPROTECT(lev);
+    MEM_STATS_INC_LOCKED(illegal);
     return;
   }
   /* protect the heap from concurrent access */
@@ -500,12 +501,9 @@ mem_trim(void *rmem, mem_size_t newsize)
    (u8_t *)rmem < (u8_t *)ram_end);
 
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
-    SYS_ARCH_DECL_PROTECT(lev);
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_trim: illegal memory\n"));
     /* protect mem stats from concurrent access */
-    SYS_ARCH_PROTECT(lev);
-    MEM_STATS_INC(illegal);
-    SYS_ARCH_UNPROTECT(lev);
+    MEM_STATS_INC_LOCKED(illegal);
     return rmem;
   }
   /* Get the corresponding struct mem ... */

@@ -447,6 +447,15 @@ void sys_arch_unprotect(sys_prot_t pval);
                               } while(0)
 #endif /* SYS_ARCH_SET */
 
+#ifndef SYS_ARCH_LOCKED
+#define SYS_ARCH_LOCKED(code) do { \
+                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                SYS_ARCH_PROTECT(old_level); \
+                                code; \
+                                SYS_ARCH_UNPROTECT(old_level); \
+                              } while(0)
+#endif /* SYS_ARCH_LOCKED */
+
 
 #ifdef __cplusplus
 }
