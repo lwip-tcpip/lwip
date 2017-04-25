@@ -548,13 +548,13 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 
       pos += seglen;
     }
+#endif /* !LWIP_NETIF_TX_SINGLE_PBUF */
   } else {
 #if TCP_OVERSIZE
     LWIP_ASSERT("unsent_oversize mismatch (pcb->unsent is NULL)",
                 pcb->unsent_oversize == 0);
 #endif /* TCP_OVERSIZE */
   }
-#endif /* !LWIP_NETIF_TX_SINGLE_PBUF */
 
   /*
    * Phase 3: Create new segments.
