@@ -9,9 +9,19 @@ HISTORY
   2017-04-25: Simon Goldschmidt
   * dhcp: added two hooks for adding and parsing user defined DHCP options
 
+  2017-04-25: Joel Cunningham
+  * sockets: added CMSG and IP_PKTINFO for use with recvmsg (task #14247)
+
+  2017-04-20: Joel Cunningham
+  * tcp: added Appropriate Byte Counting support (task #14128)
+
   2017-04-11: Simon Goldschmidt
   * netconn/sockets: remove fatal error handling, fix asynchronous error handling,
     ensure data before RST can be received
+
+  2017-03-02: Joel Cunningham
+  * netconn/sockets: vectorize netconn_write for TCP, treating a vectored I/O write
+    atomically in regards to TCP segmentation (patch #8882)
 
   2017-03-02: Simon Goldschmidt
   * netconn: added nonblocking accept/recv to netconn API (task #14396)
@@ -30,6 +40,9 @@ HISTORY
 
   2017-02-04: David van Moolenbroek
     - IPv6 scopes support
+
+  2017-01-20: Joel Cunningham
+  * sockets: add interface name/index APIs (task #14314)
   
   2017-01-08: David van Moolenbroek
   * Extensions to RAW API (patch #9208)
@@ -42,6 +55,9 @@ HISTORY
   2017-04-11: Simon Goldschmidt
   * sockets.c: task #14420 (Remove sys_sem_signal from inside SYS_ARCH_PROTECT
     crit section) done for LWIP_TCPIP_CORE_LOCKING==1
+
+  2017-03-08: Joel Cunningham
+  * tcp: initialize ssthresh to TCP_SND_BUF (bug #50476)
 
   2017-03-01: Simon Goldschmidt
   * httpd: LWIP_HTTPD_POST_MANUAL_WND: fixed double-free when httpd_post_data_recved
