@@ -521,7 +521,7 @@ static void test_sockets_msgapi_cmsg(int domain)
   
   /* Verify message header */
   cmsg = CMSG_FIRSTHDR(&msg);
-  fail_unless(cmsg);
+  fail_unless(cmsg != NULL);
   fail_unless(cmsg->cmsg_len > 0);
   fail_unless(cmsg->cmsg_level == IPPROTO_IP);
   fail_unless(cmsg->cmsg_type = IP_PKTINFO);
