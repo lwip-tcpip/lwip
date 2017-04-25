@@ -524,7 +524,7 @@ static void test_sockets_msgapi_cmsg(int domain)
   fail_unless(cmsg != NULL);
   fail_unless(cmsg->cmsg_len > 0);
   fail_unless(cmsg->cmsg_level == IPPROTO_IP);
-  fail_unless(cmsg->cmsg_type = IP_PKTINFO);
+  fail_unless(cmsg->cmsg_type == IP_PKTINFO);
 
   /* Verify message data */
   pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
