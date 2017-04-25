@@ -468,12 +468,103 @@ static void test_sockets_msgapi_udp(int domain)
   fail_unless(ret == 0);
 }
 
+#if LWIP_IPV4
+static void test_sockets_msgapi_cmsg(int domain)
+{
+  int s, ret, enable;
+  struct sockaddr_storage addr_storage;
+  socklen_t addr_size;
+  struct iovec iov;
+  struct msghdr msg;
+  struct cmsghdr *cmsg;
+  struct in_pktinfo *pktinfo;
+  u8_t rcv_buf[4];
+  u8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+  u8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
+
+  test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
+
+  s = test_sockets_alloc_socket_nonblocking(domain, SOCK_DGRAM);
+  fail_unless(s >= 0);
+
+  ret = lwip_bind(s, (struct sockaddr*)&addr_storage, addr_size);
+  fail_unless(ret == 0);
+
+  /* Update addr with epehermal port */
+  ret = lwip_getsockname(s, (struct sockaddr*)&addr_storage, &addr_size);
+  fail_unless(ret == 0);
+
+  enable = 1;
+  ret = lwip_setsockopt(s, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+  fail_unless(ret == 0);
+
+  /* Receive full message, including control message */
+  iov.iov_base = rcv_buf;
+  iov.iov_len = sizeof(rcv_buf);
+  msg.msg_control = cmsg_buf;
+  msg.msg_controllen = sizeof(cmsg_buf);
+  msg.msg_flags = 0;
+  msg.msg_iov = &iov;
+  msg.msg_iovlen = 1;
+  msg.msg_name = NULL;
+  msg.msg_namelen = 0;
+
+  memset(rcv_buf, 0, sizeof(rcv_buf));
+  ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct sockaddr*)&addr_storage, addr_size);
+  fail_unless(ret == sizeof(snd_buf));
+  
+  tcpip_thread_poll_one();
+
+  ret = lwip_recvmsg(s, &msg, 0);
+  fail_unless(ret == sizeof(rcv_buf));
+  fail_unless(!memcmp(rcv_buf, snd_buf, sizeof(rcv_buf)));
+  
+  /* Verify message header */
+  cmsg = CMSG_FIRSTHDR(&msg);
+  fail_unless(cmsg);
+  fail_unless(cmsg->cmsg_len > 0);
+  fail_unless(cmsg->cmsg_level == IPPROTO_IP);
+  fail_unless(cmsg->cmsg_type = IP_PKTINFO);
+
+  /* Verify message data */
+  pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
+  /* We only have loopback interface enabled */
+  fail_unless(pktinfo->ipi_ifindex == 1);
+  fail_unless(pktinfo->ipi_addr.s_addr == PP_HTONL(INADDR_LOOPBACK));
+
+  /* Verify there are no additional messages */
+  cmsg = CMSG_NXTHDR(&msg, cmsg);
+  fail_unless(cmsg == NULL);
+
+  /* Send datagram again, testing truncation */
+  memset(rcv_buf, 0, sizeof(rcv_buf));
+  ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct sockaddr*)&addr_storage, addr_size);
+  fail_unless(ret == sizeof(snd_buf));
+
+  tcpip_thread_poll_one();
+
+  msg.msg_controllen = 1;
+  msg.msg_flags = 0;
+  ret = lwip_recvmsg(s, &msg, 0);
+  fail_unless(ret == sizeof(rcv_buf));
+  fail_unless(!memcmp(rcv_buf, snd_buf, sizeof(rcv_buf)));
+  /* Ensure truncation was returned */
+  fail_unless(msg.msg_flags & MSG_CTRUNC);
+  /* Ensure no control messages were returned */
+  fail_unless(msg.msg_controllen == 0);
+
+  ret = lwip_close(s);
+  fail_unless(ret == 0);
+}
+#endif /* LWIP_IPV4 */
+
 START_TEST(test_sockets_msgapis)
 {
   LWIP_UNUSED_ARG(_i);
 #if LWIP_IPV4
   test_sockets_msgapi_udp(AF_INET);
   test_sockets_msgapi_tcp(AF_INET);
+  test_sockets_msgapi_cmsg(AF_INET);
 #endif
 #if LWIP_IPV6
   test_sockets_msgapi_udp(AF_INET6);

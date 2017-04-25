@@ -135,6 +135,42 @@ struct msghdr {
 #define MSG_TRUNC   0x04
 #define MSG_CTRUNC  0x08
 
+/* RFC 3542, Section 20: Ancillary Data */
+struct cmsghdr {
+  socklen_t  cmsg_len;   /* number of bytes, including header */
+  int        cmsg_level; /* originating protocol */
+  int        cmsg_type;  /* protocol-specific type */
+};
+/* Data section follows header and possible padding, typically referred to as
+      unsigned char cmsg_data[]; */
+
+/* cmsg header/data alignment */
+#define ALIGN_H(size) LWIP_MEM_ALIGN_SIZE(size)
+#define ALIGN_D(size) LWIP_MEM_ALIGN_SIZE(size)
+
+#define CMSG_FIRSTHDR(mhdr) \
+          ((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
+           (struct cmsghdr *)(mhdr)->msg_control : \
+           (struct cmsghdr *)NULL)
+
+#define CMSG_NXTHDR(mhdr, cmsg) \
+        (((cmsg) == NULL) ? CMSG_FIRSTHDR(mhdr) : \
+         (((u8_t *)(cmsg) + ALIGN_H((cmsg)->cmsg_len) \
+                            + ALIGN_D(sizeof(struct cmsghdr)) > \
+           (u8_t *)((mhdr)->msg_control) + (mhdr)->msg_controllen) ? \
+          (struct cmsghdr *)NULL : \
+          (struct cmsghdr *)((u8_t *)(cmsg) + \
+                                      ALIGN_H((cmsg)->cmsg_len))))
+
+#define CMSG_DATA(cmsg) ((u8_t *)(cmsg) + \
+                         ALIGN_D(sizeof(struct cmsghdr)))
+
+#define CMSG_SPACE(length) (ALIGN_D(sizeof(struct cmsghdr)) + \
+                            ALIGN_H(length))
+
+#define CMSG_LEN(length) (ALIGN_D(sizeof(struct cmsghdr)) + \
+                           length)
+
 /* Socket protocol types (TCP/UDP/RAW) */
 #define SOCK_STREAM     1
 #define SOCK_DGRAM      2
@@ -221,6 +257,7 @@ struct linger {
  */
 #define IP_TOS             1
 #define IP_TTL             2
+#define IP_PKTINFO         8
 
 #if LWIP_TCP
 /*
@@ -271,6 +308,13 @@ typedef struct ip_mreq {
     struct in_addr imr_interface; /* local IP address of interface */
 } ip_mreq;
 #endif /* LWIP_IGMP */
+
+#if LWIP_IPV4
+struct in_pktinfo {
+  unsigned int   ipi_ifindex;  /* Interface index */
+  struct in_addr ipi_addr;     /* Destination (from header) address */
+};
+#endif /* LWIP_IPV4 */
 
 /*
  * The Type of Service provides an indication of the abstract

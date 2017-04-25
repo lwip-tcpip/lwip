@@ -245,12 +245,10 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     ip_addr_set(&buf->addr, addr);
     buf->port = port;
 #if LWIP_NETBUF_RECVINFO
-    {
+    if (conn->flags & NETCONN_FLAG_PKTINFO) {
       /* get the UDP header - always in the first pbuf, ensured by udp_input */
       const struct udp_hdr* udphdr = (const struct udp_hdr*)ip_next_header_ptr();
-#if LWIP_CHECKSUM_ON_COPY
       buf->flags = NETBUF_FLAG_DESTADDR;
-#endif /* LWIP_CHECKSUM_ON_COPY */
       ip_addr_set(&buf->toaddr, ip_current_dest_addr());
       buf->toport_chksum = udphdr->dest;
     }
@@ -694,6 +692,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 {
   struct netconn *conn;
   int size;
+  u8_t init_flags = 0;
 
   conn = (struct netconn *)memp_malloc(MEMP_NETCONN);
   if (conn == NULL) {
@@ -714,6 +713,9 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #if LWIP_UDP
   case NETCONN_UDP:
     size = DEFAULT_UDP_RECVMBOX_SIZE;
+#if LWIP_NETBUF_RECVINFO
+    init_flags |= NETCONN_FLAG_PKTINFO;
+#endif /* LWIP_NETBUF_RECVINFO */
     break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
@@ -761,7 +763,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #if LWIP_SO_LINGER
   conn->linger = -1;
 #endif /* LWIP_SO_LINGER */
-  conn->flags = 0;
+  conn->flags = init_flags;
   return conn;
 free_and_return:
   memp_free(MEMP_NETCONN, conn);

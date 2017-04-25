@@ -81,6 +81,10 @@ extern "C" {
     dual-stack usage by default. */
 #define NETCONN_FLAG_IPV6_V6ONLY              0x20
 #endif /* LWIP_IPV6 */
+#if LWIP_NETBUF_RECVINFO
+/** Received packet info will be recorded for this netconn */
+#define NETCONN_FLAG_PKTINFO                  0x40
+#endif /* LWIP_NETBUF_RECVINFO */
 
 
 /* Helpers to process several netconn_types by the same code */
