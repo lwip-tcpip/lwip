@@ -1332,7 +1332,7 @@ pbuf_coalesce(struct pbuf *p, pbuf_layer layer)
  * @return a new pbuf or NULL if allocation fails
  */
 struct pbuf *
-pbuf_alloc_copy(pbuf_layer layer, pbuf_type type, struct pbuf *p)
+pbuf_clone(pbuf_layer layer, pbuf_type type, struct pbuf *p)
 {
   struct pbuf *q;
   err_t err;

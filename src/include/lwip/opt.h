@@ -1521,10 +1521,10 @@
  * be needed without this flag! Use this only if you need to!
  *
  * ATTENTION: a driver should *NOT* rely on getting single pbufs but check TX
- * pbufs for being in one piece. If not, @ref pbuf_alloc_copy can be used to get
+ * pbufs for being in one piece. If not, @ref pbuf_clone can be used to get
  * a single pbuf:
  *   if (p->next != NULL) {
- *     struct pbuf *q = pbuf_alloc_copy(PBUF_RAW, PBUF_RAM, p);
+ *     struct pbuf *q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
  *     if (q == NULL) {
  *       return ERR_MEM;
  *     }
