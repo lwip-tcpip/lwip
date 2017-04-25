@@ -2717,6 +2717,55 @@
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif)
 #endif
+
+/**
+ * LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type):
+ * Called from various dhcp functions when sending a DHCP message.
+ * This hook is called just before the DHCP message trailer is added, so the
+ * options are at the end of a DHCP message.
+ * Arguments:
+ * - netif: struct netif that the packet will be sent through
+ * - dhcp: struct dhcp on that netif
+ * - state: current dhcp state (dhcp_state_enum_t as an u8_t)
+ * - msg: struct dhcp_msg that will be sent
+ * - msg_type: dhcp message type to be sent (u8_t)
+ * Returns void
+ *
+ * Options need to appended like this:
+ *   LWIP_ASSERT("dhcp option overflow", dhcp->options_out_len + option_len + 2 <= DHCP_OPTIONS_LEN);
+ *   dhcp->msg_out->options[dhcp->options_out_len++] = <option_number>;
+ *   dhcp->msg_out->options[dhcp->options_out_len++] = <option_len>;
+ *   dhcp->msg_out->options[dhcp->options_out_len++] = <option_bytes>;
+ *   [...]
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type)
+#endif
+
+/**
+ * LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset):
+ * Called from dhcp_parse_reply when receiving a DHCP message.
+ * This hook is called for every option in the received message that is not handled internally.
+ * Arguments:
+ * - netif: struct netif that the packet will be sent through
+ * - dhcp: struct dhcp on that netif
+ * - state: current dhcp state (dhcp_state_enum_t as an u8_t)
+ * - msg: struct dhcp_msg that was received
+ * - msg_type: dhcp message type received (u8_t, ATTENTION: only valid after
+ *             the message type option has been parsed!)
+ * - option: option value (u8_t)
+ * - len: option data length (u8_t)
+ * - pbuf: pbuf where option data is contained
+ * - offset: offset in pbuf where option *data* begins
+ * Returns void
+ *
+ * A nice way to get the option contents is @ref pbuf_get_contiguous:
+ *  u8_t buf[32];
+ *  u8_t *ptr = (u8_t*)pbuf_get_contiguous(p, buf, sizeof(buf), LWIP_MIN(option_len, sizeof(buf)), offset);
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset)
+#endif
 /**
  * @}
  */
