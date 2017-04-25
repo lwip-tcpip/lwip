@@ -199,7 +199,7 @@ igmp_report_groups(struct netif *netif)
   if(group != NULL) {
     group = group->next;
   }
-  
+
   while (group != NULL) {
     igmp_delaying_member(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
     group = group->next;
@@ -252,7 +252,7 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
     /* Group already exists. */
     return group;
   }
-  
+
   /* Group doesn't exist yet, create a new one */
   group = (struct igmp_group *)memp_malloc(MEMP_IGMP_GROUP);
   if (group != NULL) {
@@ -262,7 +262,7 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
     group->last_reporter_flag = 0;
     group->use                = 0;
 
-    /* Ensure allsystems group is always first in list */    
+    /* Ensure allsystems group is always first in list */
     if (list_head == NULL) {
       /* this is the first entry in linked list */
       LWIP_ASSERT("igmp_lookup_group: first group must be allsystems",
