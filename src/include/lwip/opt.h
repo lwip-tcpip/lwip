@@ -1514,13 +1514,22 @@
 #endif
 
 /**
- * LWIP_NETIF_TX_SINGLE_PBUF: if this is set to 1, lwIP tries to put all data
+ * LWIP_NETIF_TX_SINGLE_PBUF: if this is set to 1, lwIP *tries* to put all data
  * to be sent into one single pbuf. This is for compatibility with DMA-enabled
  * MACs that do not support scatter-gather.
  * Beware that this might involve CPU-memcpy before transmitting that would not
  * be needed without this flag! Use this only if you need to!
  *
- * @todo: TCP and IP-frag do not work with this, yet:
+ * ATTENTION: a driver should *NOT* rely on getting single pbufs but check TX
+ * pbufs for being in one piece. If not, @ref pbuf_alloc_copy can be used to get
+ * a single pbuf:
+ *   if (p->next != NULL) {
+ *     struct pbuf *q = pbuf_alloc_copy(PBUF_RAW, PBUF_RAM, p);
+ *     if (q == NULL) {
+ *       return ERR_MEM;
+ *     }
+ *     p = q; ATTENTION: do NOT free the old 'p' as the ref belongs to the caller!
+ *   }
  */
 #if !defined LWIP_NETIF_TX_SINGLE_PBUF || defined __DOXYGEN__
 #define LWIP_NETIF_TX_SINGLE_PBUF             0
