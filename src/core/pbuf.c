@@ -1319,6 +1319,33 @@ pbuf_coalesce(struct pbuf *p, pbuf_layer layer)
   return q;
 }
 
+/**
+ * @ingroup pbuf
+ * Allocates a new pbuf of same length (via @pbuf_alloc) and copies the source
+ * pbuf into this new pbuf (using @pbuf_copy).
+ *
+ * @param layer pbuf_layer of the new pbuf
+ * @param type this parameter decides how and where the pbuf should be allocated
+ *             (@see pbuf_alloc)
+ * @param p the source pbuf
+ *
+ * @return a new pbuf or NULL if allocation fails
+ */
+struct pbuf *
+pbuf_alloc_copy(pbuf_layer layer, pbuf_type type, struct pbuf *p)
+{
+  struct pbuf *q;
+  err_t err;
+  q = pbuf_alloc(layer, p->tot_len, type);
+  if (q == NULL) {
+    return NULL;
+  }
+  err = pbuf_copy(q, p);
+  LWIP_UNUSED_ARG(err); /* in case of LWIP_NOASSERT */
+  LWIP_ASSERT("pbuf_copy failed", err == ERR_OK);
+  return q;
+}
+
 #if LWIP_CHECKSUM_ON_COPY
 /**
  * Copies data into a single pbuf (*not* into a pbuf queue!) and updates
