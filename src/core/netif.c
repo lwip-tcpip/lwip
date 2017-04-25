@@ -222,6 +222,22 @@ netif_input(struct pbuf *p, struct netif *inp)
  * @ingroup netif
  * Add a network interface to the list of lwIP netifs.
  *
+ * Same as @ref netif_add but without IPv4 addresses
+ */
+struct netif *
+netif_add_noaddr(struct netif *netif, void *state, netif_init_fn init, netif_input_fn input)
+{
+  return netif_add(netif,
+#if LWIP_IPV4
+    NULL, NULL, NULL,
+#endif /* LWIP_IPV4*/
+    state, init, input);
+}
+
+/**
+ * @ingroup netif
+ * Add a network interface to the list of lwIP netifs.
+ *
  * @param netif a pre-allocated netif structure
  * @param ipaddr IP address for the new netif
  * @param netmask network mask for the new netif
