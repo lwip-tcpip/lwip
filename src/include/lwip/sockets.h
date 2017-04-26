@@ -144,9 +144,13 @@ struct cmsghdr {
 /* Data section follows header and possible padding, typically referred to as
       unsigned char cmsg_data[]; */
 
-/* cmsg header/data alignment */
-#define ALIGN_H(size) LWIP_MEM_ALIGN_SIZE(size)
-#define ALIGN_D(size) LWIP_MEM_ALIGN_SIZE(size)
+/* cmsg header/data alignment. NOTE: we align to native word size (double word
+size on 16-bit arch) so structures are not placed at an unaligned address.
+16-bit arch needs double word to ensure 32-bit alignment because socklen_t
+could be 32 bits. If we ever have cmsg data with a 64-bit variable, alignment
+will need to increase long long */
+#define ALIGN_H(size) (((size) + sizeof(long) - 1U) & ~(sizeof(long)-1U))
+#define ALIGN_D(size) ALIGN_H(size)
 
 #define CMSG_FIRSTHDR(mhdr) \
           ((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
