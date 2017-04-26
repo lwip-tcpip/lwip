@@ -73,21 +73,21 @@ extern "C" {
    beginning of a PCB type definition. It is located here so that
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
-#define IP_PCB \
+#define IP_PCB                             \
   /* ip addresses in network byte order */ \
-  ip_addr_t local_ip; \
-  ip_addr_t remote_ip; \
-   /* Socket options */  \
-  u8_t so_options;      \
-   /* Type Of Service */ \
-  u8_t tos;              \
-  /* Time To Live */     \
-  u8_t ttl               \
+  ip_addr_t local_ip;                      \
+  ip_addr_t remote_ip;                     \
+  /* Socket options */                     \
+  u8_t so_options;                         \
+  /* Type Of Service */                    \
+  u8_t tos;                                \
+  /* Time To Live */                       \
+  u8_t ttl                                 \
   /* link layer address resolution hint */ \
   IP_PCB_ADDRHINT
 
 struct ip_pcb {
-/* Common members of all PCB types */
+  /* Common members of all PCB types */
   IP_PCB;
 };
 
