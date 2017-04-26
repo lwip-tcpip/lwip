@@ -37,6 +37,36 @@ static u8_t testbuf_3[TESTBUFSIZE_3];
 static u8_t testbuf_3a[TESTBUFSIZE_3];
 
 /* Test functions */
+START_TEST(test_pbuf_alloc_zero_pbufs)
+{
+  struct pbuf *p;
+  LWIP_UNUSED_ARG(_i);
+
+  p = pbuf_alloc(PBUF_RAW, 0, PBUF_ROM);
+  fail_unless(p != NULL);
+  if (p != NULL) {
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_RAW, 0, PBUF_RAM);
+  fail_unless(p != NULL);
+  if (p != NULL) {
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_RAW, 0, PBUF_REF);
+  fail_unless(p != NULL);
+  if (p != NULL) {
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  fail_unless(p != NULL);
+  if (p != NULL) {
+    pbuf_free(p);
+  }
+}
+END_TEST
 
 /** Call pbuf_copy on a pbuf with zero length */
 START_TEST(test_pbuf_copy_zero_pbuf)
@@ -229,6 +259,7 @@ Suite *
 pbuf_suite(void)
 {
   testfunc tests[] = {
+    TESTFUNC(test_pbuf_alloc_zero_pbufs),
     TESTFUNC(test_pbuf_copy_zero_pbuf),
     TESTFUNC(test_pbuf_split_64k_on_small_pbufs),
     TESTFUNC(test_pbuf_queueing_bigger_than_64k),
