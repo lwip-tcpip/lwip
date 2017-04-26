@@ -305,7 +305,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
       p = NULL;
       last = NULL;
       rem_len = length;
-      while (rem_len > 0) {
+      do {
         q = (struct pbuf *)memp_malloc(MEMP_PBUF_POOL);
         if (q == NULL) {
           PBUF_POOL_IS_EMPTY();
@@ -332,7 +332,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
         last = q;
         rem_len -= q->len;
         offset = 0;
-      }
+      } while (rem_len > 0);
       break;
     }
   case PBUF_RAM:
