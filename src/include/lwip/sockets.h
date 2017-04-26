@@ -159,8 +159,8 @@ struct cmsghdr {
                             + ALIGN_D(sizeof(struct cmsghdr)) > \
            (u8_t *)((mhdr)->msg_control) + (mhdr)->msg_controllen) ? \
           (struct cmsghdr *)NULL : \
-          (struct cmsghdr *)((u8_t *)(cmsg) + \
-                                      ALIGN_H((cmsg)->cmsg_len))))
+          (struct cmsghdr *)((void*)((u8_t *)(cmsg) + \
+                                      ALIGN_H((cmsg)->cmsg_len)))))
 
 #define CMSG_DATA(cmsg) ((void*)((u8_t *)(cmsg) + \
                          ALIGN_D(sizeof(struct cmsghdr))))
