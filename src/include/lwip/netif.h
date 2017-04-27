@@ -509,13 +509,13 @@ err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t
 #endif /* !LWIP_IPV6_ADDRESS_LIFETIMES */
 #endif /* LWIP_IPV6 */
 
-#if LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_USE_HINTS
 #define NETIF_SET_HINTS(netif, netifhint)  (netif)->hints = (netifhint)
 #define NETIF_RESET_HINTS(netif)      (netif)->hints = NULL
-#else /* LWIP_NETIF_HWADDRHINT */
+#else /* LWIP_NETIF_USE_HINTS */
 #define NETIF_SET_HINTS(netif, netifhint)
 #define NETIF_RESET_HINTS(netif)
-#endif /* LWIP_NETIF_HWADDRHINT */
+#endif /* LWIP_NETIF_USE_HINTS */
 
 u8_t netif_name_to_index(const char *name);
 char * netif_index_to_name(u8_t idx, char *name);
