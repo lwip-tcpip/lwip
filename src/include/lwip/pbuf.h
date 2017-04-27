@@ -55,7 +55,8 @@ extern "C" {
 #define LWIP_SUPPORT_CUSTOM_PBUF ((IP_FRAG && !LWIP_NETIF_TX_SINGLE_PBUF) || (LWIP_IPV6 && LWIP_IPV6_FRAG))
 #endif
 
-/** PBUF_NEEDS_COPY(p): return a boolean value indicating whether the given
+/** @ingroup pbuf 
+ * PBUF_NEEDS_COPY(p): return a boolean value indicating whether the given
  * pbuf needs to be copied in order to be kept around beyond the current call
  * stack without risking being corrupted. The default setting provides safety:
  * it will make a copy iof any pbuf chain that does not consist entirely of
