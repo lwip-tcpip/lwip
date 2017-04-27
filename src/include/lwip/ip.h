@@ -252,7 +252,7 @@ extern struct ip_globals ip_data;
 #define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint) \
         (IP_IS_V6(dest) ? \
         ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif_hint) : \
-        ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, v))
+        ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif_hint))
 /**
  * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
