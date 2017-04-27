@@ -21,6 +21,9 @@
  * Use dhcp_release() to end the lease and use dhcp_stop()
  * to remove the DHCP client.
  *
+ * @see LWIP_HOOK_DHCP_APPEND_OPTIONS
+ * @see LWIP_HOOK_DHCP_PARSE_OPTION 
+ *
  * @see netifapi_dhcp4
  */
 
