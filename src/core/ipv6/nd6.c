@@ -1907,9 +1907,9 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
 
 #if LWIP_NETIF_HWADDRHINT
-  if (netif->addr_hint != NULL) {
+  if (netif->hints != NULL) {
     /* per-pcb cached entry was given */
-    u8_t addr_hint = *(netif->addr_hint);
+    u8_t addr_hint = netif->hints->addr_hint;
     if (addr_hint < LWIP_ND6_NUM_DESTINATIONS) {
       nd6_cached_destination_index = addr_hint;
     }
@@ -1968,9 +1968,9 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   }
 
 #if LWIP_NETIF_HWADDRHINT
-  if (netif->addr_hint != NULL) {
+  if (netif->hints != NULL) {
     /* per-pcb cached entry was given */
-    *(netif->addr_hint) = nd6_cached_destination_index;
+    netif->hints->addr_hint = nd6_cached_destination_index;
   }
 #endif /* LWIP_NETIF_HWADDRHINT */
 

@@ -225,6 +225,15 @@ u8_t netif_alloc_client_data_id(void);
 #define netif_get_client_data(netif, id)       (netif)->client_data[(id)]
 #endif
 
+#if LWIP_NETIF_HWADDRHINT
+#define LWIP_NETIF_USE_HINTS              1
+struct netif_hint {
+  u8_t addr_hint;
+};
+#else /* LWIP_NETIF_HWADDRHINT */
+#define LWIP_NETIF_USE_HINTS              0
+#endif /* LWIP_NETIF_HWADDRHINT */
+
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
  *  function for the device driver: hwaddr_len, hwaddr[], mtu, flags */
@@ -345,9 +354,9 @@ struct netif {
       filter table of the ethernet MAC. */
   netif_mld_mac_filter_fn mld_mac_filter;
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
-#if LWIP_NETIF_HWADDRHINT
-  u8_t *addr_hint;
-#endif /* LWIP_NETIF_HWADDRHINT */
+#if LWIP_NETIF_USE_HINTS
+  struct netif_hint *hints;
+#endif /* LWIP_NETIF_USE_HINTS */
 #if ENABLE_LOOPBACK
   /* List of packets to be queued for ourselves. */
   struct pbuf *loop_first;
@@ -501,9 +510,11 @@ err_t netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t
 #endif /* LWIP_IPV6 */
 
 #if LWIP_NETIF_HWADDRHINT
-#define NETIF_SET_HWADDRHINT(netif, hint) ((netif)->addr_hint = (hint))
+#define NETIF_SET_HINTS(netif, netifhint)  (netif)->hints = (netifhint)
+#define NETIF_RESET_HINTS(netif)      (netif)->hints = NULL
 #else /* LWIP_NETIF_HWADDRHINT */
-#define NETIF_SET_HWADDRHINT(netif, hint)
+#define NETIF_SET_HINTS(netif, netifhint)
+#define NETIF_RESET_HINTS(netif)
 #endif /* LWIP_NETIF_HWADDRHINT */
 
 u8_t netif_name_to_index(const char *name);

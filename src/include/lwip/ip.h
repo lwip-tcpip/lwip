@@ -63,11 +63,11 @@ extern "C" {
 #define LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p) LWIP_ASSERT("p->ref == 1", (p)->ref == 1)
 #endif
 
-#if LWIP_NETIF_HWADDRHINT
-#define IP_PCB_ADDRHINT ;u8_t addr_hint
-#else
-#define IP_PCB_ADDRHINT
-#endif /* LWIP_NETIF_HWADDRHINT */
+#if LWIP_NETIF_USE_HINTS
+#define IP_PCB_NETIFHINT ;struct netif_hint netif_hints
+#else /* LWIP_NETIF_USE_HINTS */
+#define IP_PCB_NETIFHINT
+#endif /* LWIP_NETIF_USE_HINTS */
 
 /** This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
@@ -84,7 +84,7 @@ extern "C" {
   /* Time To Live */                       \
   u8_t ttl                                 \
   /* link layer address resolution hint */ \
-  IP_PCB_ADDRHINT
+  IP_PCB_NETIFHINT
 
 struct ip_pcb {
   /* Common members of all PCB types */
@@ -248,11 +248,11 @@ extern struct ip_globals ip_data;
         (IP_IS_V6(dest) ? \
         ip6_output_if(p, ip_2_ip6(src), LWIP_IP_HDRINCL, 0, 0, 0, netif) : \
         ip4_output_if(p, ip_2_ip4(src), LWIP_IP_HDRINCL, 0, 0, 0, netif))
-/** Output IP packet with addr_hint */
-#define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
+/** Output IP packet with netif_hint */
+#define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint) \
         (IP_IS_V6(dest) ? \
-        ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, addr_hint) : \
-        ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, addr_hint))
+        ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif_hint) : \
+        ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, v))
 /**
  * @ingroup ip
  * Get netif for address combination. See \ref ip6_route and \ref ip4_route
@@ -280,8 +280,8 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
         ip4_output_if(p, src, dest, ttl, tos, proto, netif)
 #define ip_output_if_src(p, src, dest, ttl, tos, proto, netif) \
         ip4_output_if_src(p, src, dest, ttl, tos, proto, netif)
-#define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
-        ip4_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
+#define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint) \
+        ip4_output_hinted(p, src, dest, ttl, tos, proto, netif_hint)
 #define ip_output_if_hdrincl(p, src, dest, netif) \
         ip4_output_if(p, src, LWIP_IP_HDRINCL, 0, 0, 0, netif)
 #define ip_route(src, dest) \
@@ -300,8 +300,8 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
         ip6_output_if(p, src, dest, ttl, tos, proto, netif)
 #define ip_output_if_src(p, src, dest, ttl, tos, proto, netif) \
         ip6_output_if_src(p, src, dest, ttl, tos, proto, netif)
-#define ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint) \
-        ip6_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
+#define ip_output_hinted(p, src, dest, ttl, tos, proto, netif_hint) \
+        ip6_output_hinted(p, src, dest, ttl, tos, proto, netif_hint)
 #define ip_output_if_hdrincl(p, src, dest, netif) \
         ip6_output_if(p, src, LWIP_IP_HDRINCL, 0, 0, 0, netif)
 #define ip_route(src, dest) \

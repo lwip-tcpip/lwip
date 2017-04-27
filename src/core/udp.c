@@ -859,9 +859,9 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (u16_t)ip_proto));
   /* output to IP */
-  NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
+  NETIF_SET_HINTS(netif, &(pcb->netif_hints));
   err = ip_output_if_src(q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
-  NETIF_SET_HWADDRHINT(netif, NULL);
+  NETIF_RESET_HINTS(netif);
 
   /* @todo: must this be increased even if error occurred? */
   MIB2_STATS_INC(mib2.udpoutdatagrams);

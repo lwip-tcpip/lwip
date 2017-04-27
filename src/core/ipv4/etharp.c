@@ -118,10 +118,10 @@ static u8_t etharp_cached_entry;
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
 #if LWIP_NETIF_HWADDRHINT
-#define ETHARP_SET_HINT(netif, hint)  if (((netif) != NULL) && ((netif)->addr_hint != NULL))  \
-                                      *((netif)->addr_hint) = (hint);
+#define ETHARP_SET_ADDRHINT(netif, addrhint)  do { if (((netif) != NULL) && ((netif)->hints != NULL)) { \
+                                              (netif)->hints->addr_hint = (addrhint); }} while(0)
 #else /* LWIP_NETIF_HWADDRHINT */
-#define ETHARP_SET_HINT(netif, hint)  (etharp_cached_entry = (hint))
+#define ETHARP_SET_ADDRHINT(netif, addrhint)  (etharp_cached_entry = (addrhint))
 #endif /* LWIP_NETIF_HWADDRHINT */
 
 
@@ -850,9 +850,9 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
       }
     }
 #if LWIP_NETIF_HWADDRHINT
-    if (netif->addr_hint != NULL) {
+    if (netif->hints != NULL) {
       /* per-pcb cached entry was given */
-      u8_t etharp_cached_entry = *(netif->addr_hint);
+      u8_t etharp_cached_entry = netif->hints->addr_hint;
       if (etharp_cached_entry < ARP_TABLE_SIZE) {
 #endif /* LWIP_NETIF_HWADDRHINT */
         if ((arp_table[etharp_cached_entry].state >= ETHARP_STATE_STABLE) &&
@@ -878,7 +878,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 #endif
           (ip4_addr_cmp(dst_addr, &arp_table[i].ipaddr))) {
         /* found an existing, stable entry */
-        ETHARP_SET_HINT(netif, i);
+        ETHARP_SET_ADDRHINT(netif, i);
         return etharp_output_to_arp_index(netif, q, i);
       }
     }
@@ -988,7 +988,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
   /* stable entry? */
   if (arp_table[i].state >= ETHARP_STATE_STABLE) {
     /* we have a valid IP->Ethernet address mapping */
-    ETHARP_SET_HINT(netif, i);
+    ETHARP_SET_ADDRHINT(netif, i);
     /* send the packet */
     result = ethernet_output(netif, q, srcaddr, &(arp_table[i].ethaddr), ETHTYPE_IP);
   /* pending entry? (either just created or already pending */

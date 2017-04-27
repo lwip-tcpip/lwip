@@ -412,9 +412,9 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
       return ERR_VAL;
     }
     /* @todo multicast loop support, if at all desired for this scenario.. */
-    NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
+    NETIF_SET_HINTS(netif, &pcb->netif_hints);
     err = ip_output_if_hdrincl(p, src_ip, dst_ip, netif);
-    NETIF_SET_HWADDRHINT(netif, NULL);
+    NETIF_RESET_HINTS(netif);
     return err;
   }
 
@@ -485,9 +485,9 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   ttl = pcb->ttl;
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
-  NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
+  NETIF_SET_HINTS(netif, &pcb->netif_hints);
   err = ip_output_if(q, src_ip, dst_ip, ttl, pcb->tos, pcb->protocol, netif);
-  NETIF_SET_HWADDRHINT(netif, NULL);
+  NETIF_RESET_HINTS(netif);
 
   /* did we chain a header earlier? */
   if (q != p) {

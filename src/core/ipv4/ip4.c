@@ -1006,7 +1006,7 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
   return ip4_output_if(p, src, dest, ttl, tos, proto, netif);
 }
 
-#if LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_USE_HINTS
 /** Like ip_output, but takes and addr_hint pointer that is passed on to netif->addr_hint
  *  before calling ip_output_if.
  *
@@ -1019,7 +1019,7 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  * @param ttl the TTL value to be set in the IP header
  * @param tos the TOS value to be set in the IP header
  * @param proto the PROTOCOL to be set in the IP header
- * @param addr_hint address hint pointer set to netif->addr_hint before
+ * @param netif_hint netif output hint pointer set to netif->hint before
  *        calling ip_output_if()
  *
  * @return ERR_RTE if no route is found
@@ -1027,7 +1027,7 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
  */
 err_t
 ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
-          u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint)
+          u8_t ttl, u8_t tos, u8_t proto, struct netif_hint *netif_hint)
 {
   struct netif *netif;
   err_t err;
@@ -1041,13 +1041,13 @@ ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
     return ERR_RTE;
   }
 
-  NETIF_SET_HWADDRHINT(netif, addr_hint);
+  NETIF_SET_HINTS(netif, netif_hint);
   err = ip4_output_if(p, src, dest, ttl, tos, proto, netif);
-  NETIF_SET_HWADDRHINT(netif, NULL);
+  NETIF_RESET_HINTS(netif);
 
   return err;
 }
-#endif /* LWIP_NETIF_HWADDRHINT*/
+#endif /* LWIP_NETIF_USE_HINTS*/
 
 #if IP_DEBUG
 /* Print an IP header by using LWIP_DEBUGF

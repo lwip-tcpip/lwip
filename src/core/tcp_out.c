@@ -969,10 +969,10 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
         &pcb->local_ip, &pcb->remote_ip);
     }
 #endif
-    NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
+    NETIF_SET_HINTS(netif, &(pcb->netif_hints));
     err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip,
       pcb->ttl, pcb->tos, IP_PROTO_TCP, netif);
-    NETIF_SET_HWADDRHINT(netif, NULL);
+    NETIF_RESET_HINTS(netif);
   }
   pbuf_free(p);
 
@@ -1319,10 +1319,10 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
 #endif /* CHECKSUM_GEN_TCP */
   TCP_STATS_INC(tcp.xmit);
 
-  NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
+  NETIF_SET_HINTS(netif, &(pcb->netif_hints));
   err = ip_output_if(seg->p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
     pcb->tos, IP_PROTO_TCP, netif);
-  NETIF_SET_HWADDRHINT(netif, NULL);
+  NETIF_RESET_HINTS(netif);
   return err;
 }
 
@@ -1573,9 +1573,9 @@ tcp_keepalive(struct tcp_pcb *pcb)
     TCP_STATS_INC(tcp.xmit);
 
     /* Send output to IP */
-    NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
+    NETIF_SET_HINTS(netif, &(pcb->netif_hints));
     err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP, netif);
-    NETIF_SET_HWADDRHINT(netif, NULL);
+    NETIF_RESET_HINTS(netif);
   }
   pbuf_free(p);
 
@@ -1666,10 +1666,10 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     TCP_STATS_INC(tcp.xmit);
 
     /* Send output to IP */
-    NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
+    NETIF_SET_HINTS(netif, &(pcb->netif_hints));
     err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
       0, IP_PROTO_TCP, netif);
-    NETIF_SET_HWADDRHINT(netif, NULL);
+    NETIF_RESET_HINTS(netif);
   }
 
   pbuf_free(p);

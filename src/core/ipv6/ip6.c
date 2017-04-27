@@ -1114,7 +1114,7 @@ ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 }
 
 
-#if LWIP_NETIF_HWADDRHINT
+#if LWIP_NETIF_USE_HINTS
 /** Like ip6_output, but takes and addr_hint pointer that is passed on to netif->addr_hint
  *  before calling ip6_output_if.
  *
@@ -1128,7 +1128,7 @@ ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  * @param hl the Hop Limit value to be set in the IPv6 header
  * @param tc the Traffic Class value to be set in the IPv6 header
  * @param nexth the Next Header to be set in the IPv6 header
- * @param addr_hint address hint pointer set to netif->addr_hint before
+ * @param netif_hint netif output hint pointer set to netif->hint before
  *        calling ip_output_if()
  *
  * @return ERR_RTE if no route is found
@@ -1136,7 +1136,7 @@ ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  */
 err_t
 ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
-          u8_t hl, u8_t tc, u8_t nexth, u8_t *addr_hint)
+          u8_t hl, u8_t tc, u8_t nexth, struct netif_hint *netif_hint)
 {
   struct netif *netif;
   struct ip6_hdr *ip6hdr;
@@ -1169,13 +1169,13 @@ ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
     return ERR_RTE;
   }
 
-  NETIF_SET_HWADDRHINT(netif, addr_hint);
+  NETIF_SET_HINTS(netif, netif_hint);
   err = ip6_output_if(p, src, dest, hl, tc, nexth, netif);
-  NETIF_SET_HWADDRHINT(netif, NULL);
+  NETIF_RESET_HINTS(netif);
 
   return err;
 }
-#endif /* LWIP_NETIF_HWADDRHINT*/
+#endif /* LWIP_NETIF_USE_HINTS*/
 
 #if LWIP_IPV6_MLD
 /**
