@@ -2733,9 +2733,9 @@
  *
  * Options need to appended like this:
  *   LWIP_ASSERT("dhcp option overflow", dhcp->options_out_len + option_len + 2 <= DHCP_OPTIONS_LEN);
- *   dhcp->msg_out->options[dhcp->options_out_len++] = <option_number>;
- *   dhcp->msg_out->options[dhcp->options_out_len++] = <option_len>;
- *   dhcp->msg_out->options[dhcp->options_out_len++] = <option_bytes>;
+ *   dhcp->msg_out->options[dhcp->options_out_len++] = &lt;option_number&gt;;
+ *   dhcp->msg_out->options[dhcp->options_out_len++] = &lt;option_len&gt;;
+ *   dhcp->msg_out->options[dhcp->options_out_len++] = &lt;option_bytes&gt;;
  *   [...]
  */
 #ifdef __DOXYGEN__
@@ -2759,7 +2759,7 @@
  * - offset: offset in pbuf where option *data* begins
  * Returns void
  *
- * A nice way to get the option contents is @ref pbuf_get_contiguous:
+ * A nice way to get the option contents is pbuf_get_contiguous():
  *  u8_t buf[32];
  *  u8_t *ptr = (u8_t*)pbuf_get_contiguous(p, buf, sizeof(buf), LWIP_MIN(option_len, sizeof(buf)), offset);
  */

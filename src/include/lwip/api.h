@@ -276,7 +276,7 @@ struct netconn {
 
 /** This vector type is passed to @ref netconn_write_vectors_partly to send
  * multiple buffers at once.
- * ATTENTION: This type has to directly map @ref struct iovec since one is casted
+ * ATTENTION: This type has to directly map struct iovec since one is casted
  *            into the other!
  */
 struct netvector {
