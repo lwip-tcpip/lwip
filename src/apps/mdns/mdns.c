@@ -1993,7 +1993,7 @@ mdns_resp_remove_netif(struct netif *netif)
  * @param txt_fn Callback to get TXT data. Will be called each time a TXT reply is created to
  *               allow dynamic replies.
  * @param txt_data Userdata pointer for txt_fn
- * @return ERR_OK if the service was added to the netif, an err_t otherwise
+ * @return service_id if the service was added to the netif, an err_t otherwise
  */
 err_t
 mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_data)
@@ -2039,7 +2039,29 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 #if LWIP_IPV4
   mdns_announce(netif, IP4_ADDR_ANY);
 #endif
+  return slot;
+}
 
+/**
+ * @ingroup mdns
+ * Delete a service on the selected network interface.
+ * @param netif The network interface on which service should be removed
+ * @param slot The service slot number returned by mdns_resp_add_service
+ * @return ERR_OK if the service was removed from the netif, an err_t otherwise
+ */
+err_t
+mdns_resp_del_service(struct netif *netif, int slot)
+{
+  struct mdns_host* mdns;
+  struct mdns_service *srv;
+  LWIP_ASSERT("mdns_resp_del_service: netif != NULL", netif);
+  mdns = NETIF_TO_HOST(netif);
+  LWIP_ERROR("mdns_resp_del_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
+  LWIP_ERROR("mdns_resp_del_service: Invalid Service ID", (mdns->services[slot] != NULL), return ERR_VAL);
+  
+  srv = mdns->services[slot];
+  mdns->services[slot] = NULL;
+  mem_free(srv);
   return ERR_OK;
 }
 
