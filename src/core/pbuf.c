@@ -368,6 +368,7 @@ pbuf_alloc_reference(void *payload, u16_t length, pbuf_type type)
 /**
  * @ingroup pbuf
  * Initialize a custom pbuf (already allocated).
+ * Example of custom pbuf usage: @ref zerocopyrx
  *
  * @param l flag to define header size
  * @param length size of the pbuf's payload
