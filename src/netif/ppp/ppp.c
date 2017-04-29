@@ -973,28 +973,7 @@ out:
 
 /* merge a pbuf chain into one pbuf */
 struct pbuf *ppp_singlebuf(struct pbuf *p) {
-  struct pbuf *q, *b;
-  u8_t *pl;
-
-  if(p->tot_len == p->len) {
-    return p;
-  }
-
-  q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-  if(!q) {
-    PPPDEBUG(LOG_ERR,
-             ("ppp_singlebuf: unable to alloc new buf (%d)\n", p->tot_len));
-    return p; /* live dangerously */
-  }
-
-  for(b = p, pl = (u8_t*)q->payload; b != NULL; b = b->next) {
-    MEMCPY(pl, b->payload, b->len);
-    pl += b->len;
-  }
-
-  pbuf_free(p);
-
-  return q;
+  return pbuf_coalesce(p, PBUF_RAW);
 }
 
 /*
