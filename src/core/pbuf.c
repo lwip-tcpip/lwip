@@ -1262,18 +1262,14 @@ struct pbuf*
 pbuf_coalesce(struct pbuf *p, pbuf_layer layer)
 {
   struct pbuf *q;
-  err_t err;
   if (p->next == NULL) {
     return p;
   }
-  q = pbuf_alloc(layer, p->tot_len, PBUF_RAM);
+  q = pbuf_clone(layer, PBUF_RAM, p);
   if (q == NULL) {
     /* @todo: what do we do now? */
     return p;
   }
-  err = pbuf_copy(q, p);
-  LWIP_UNUSED_ARG(err); /* in case of LWIP_NOASSERT */
-  LWIP_ASSERT("pbuf_copy failed", err == ERR_OK);
   pbuf_free(p);
   return q;
 }
