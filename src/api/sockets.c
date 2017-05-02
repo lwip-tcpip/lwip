@@ -2938,16 +2938,23 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
 
         switch (NETCONNTYPE_GROUP(netconn_type(sock->conn)))
         {
+#if LWIP_TCP
         case NETCONN_TCP:
            tcp_bind_netif(sock->conn->pcb.tcp, n);
            break;
+#endif
+#if LWIP_UDP
         case NETCONN_UDP:
            udp_bind_netif(sock->conn->pcb.udp, n);
            break;
+#endif
+#if LWIP_RAW
         case NETCONN_RAW:
            raw_bind_netif(sock->conn->pcb.raw, n);
            break;
+#endif
         default:
+           LWIP_ASSERT("Unhandled netconn type in SO_BINDTODEVICE", 0);
            break;
         }
       }
