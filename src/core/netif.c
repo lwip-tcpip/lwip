@@ -1433,7 +1433,7 @@ netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipa
 /**
 * @ingroup netif
 * Return the interface index for the netif with name
-* or 0 (invalid interface) if not found/on error
+* or NETIF_NO_INDEX if not found/on error
 *
 * @param name the name of the netif
 */
@@ -1445,7 +1445,7 @@ netif_name_to_index(const char *name)
     return netif_get_index(netif);
   }
   /* No name found, return invalid index */
-  return 0;
+  return NETIF_NO_INDEX;
 }
 
 /**
