@@ -262,7 +262,7 @@ static ip_addr_t sntp_last_server_address;
 static struct sntp_time sntp_last_timestamp_sent;
 #endif /* SNTP_CHECK_RESPONSE >= 2 */
 
-#ifndef sntp_format_time
+#if defined(LWIP_DEBUG) && !defined(sntp_format_time)
 /* Debug print helper. */
 static const char *
 sntp_format_time(s32_t sec)
@@ -271,7 +271,7 @@ sntp_format_time(s32_t sec)
   ut = (u32_t)((u32_t)sec + DIFF_SEC_1970_2036);
   return ctime(&ut);
 }
-#endif /* !sntp_format_time */
+#endif /* LWIP_DEBUG && !sntp_format_time */
 
 /**
  * SNTP processing of received timestamp
