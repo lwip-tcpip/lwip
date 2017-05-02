@@ -129,6 +129,7 @@ again:
 static u8_t
 udp_input_local_match(struct udp_pcb *pcb, struct netif *inp, u8_t broadcast)
 {
+  LWIP_UNUSED_ARG(inp);       /* in IPv6 only case */
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
 
   /* check if PCB is bound to specific netif */
