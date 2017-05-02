@@ -2920,6 +2920,38 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       }
       break;
 #endif /* LWIP_UDP */
+    case SO_BINDTODEVICE:
+      {
+        struct ifreq *iface;
+        struct netif* n = NULL;
+
+        LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, struct ifreq);
+
+        iface = (struct ifreq*)optval;
+        if (iface->ifr_name[0] != 0) {
+          n = netif_find(iface->ifr_name);
+          if (n == NULL) {
+             done_socket(sock);
+             return ENODEV;
+          }
+        }
+
+        switch (NETCONNTYPE_GROUP(netconn_type(sock->conn)))
+        {
+        case NETCONN_TCP:
+           tcp_bind_netif(sock->conn->pcb.tcp, n);
+           break;
+        case NETCONN_UDP:
+           udp_bind_netif(sock->conn->pcb.udp, n);
+           break;
+        case NETCONN_RAW:
+           raw_bind_netif(sock->conn->pcb.raw, n);
+           break;
+        default:
+           break;
+        }
+      }
+      break;
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n",
                   s, optname));
