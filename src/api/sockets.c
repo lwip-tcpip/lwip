@@ -2922,12 +2922,12 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
 #endif /* LWIP_UDP */
     case SO_BINDTODEVICE:
       {
-        struct ifreq *iface;
+        const struct ifreq *iface;
         struct netif* n = NULL;
 
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, struct ifreq);
 
-        iface = (struct ifreq*)optval;
+        iface = (const struct ifreq*)optval;
         if (iface->ifr_name[0] != 0) {
           n = netif_find(iface->ifr_name);
           if (n == NULL) {
