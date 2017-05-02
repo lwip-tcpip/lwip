@@ -268,6 +268,12 @@ tcp_input(struct pbuf *p, struct netif *inp)
        are LISTENing for incoming connections. */
     prev = NULL;
     for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+      /* check if PCB is bound to specific netif */
+      if ((pcb->netif_idx != NETIF_NO_INDEX) &&
+          (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
+        continue;
+      }
+      
       if (lpcb->local_port == tcphdr->dest) {
         if (IP_IS_ANY_TYPE_VAL(lpcb->local_ip)) {
           /* found an ANY TYPE (IPv4/IPv6) match */

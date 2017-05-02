@@ -121,6 +121,7 @@ struct udp_pcb * udp_new_ip_type(u8_t type);
 void             udp_remove     (struct udp_pcb *pcb);
 err_t            udp_bind       (struct udp_pcb *pcb, const ip_addr_t *ipaddr,
                                  u16_t port);
+void             udp_bind_netif (struct udp_pcb *pcb, const struct netif* netif);
 err_t            udp_connect    (struct udp_pcb *pcb, const ip_addr_t *ipaddr,
                                  u16_t port);
 void             udp_disconnect (struct udp_pcb *pcb);

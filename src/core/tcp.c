@@ -546,7 +546,7 @@ tcp_abort(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb to bind (no check is done whether this pcb is
  *        already bound!)
- * @param ipaddr the local ip address to bind to (use IP4_ADDR_ANY to bind
+ * @param ipaddr the local ip address to bind to (use IPx_ADDR_ANY to bind
  *        to any local address
  * @param port the local port to bind to
  * @return ERR_USE if the port is already in use
@@ -639,6 +639,24 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: bind to port %"U16_F"\n", port));
   return ERR_OK;
 }
+
+/**
+ * @ingroup tcp_raw
+ * Binds the connection to a netif and IP address.
+ *
+ * @param pcb the tcp_pcb to bind.
+ * @param netif the netif to bind to. Can be NULL.
+ */
+void
+tcp_bind_netif(struct tcp_pcb *pcb, const struct netif *netif)
+{
+  if (netif != NULL) {
+    pcb->netif_idx = netif_get_index(netif);
+  } else {
+    pcb->netif_idx = NETIF_NO_INDEX;
+  }
+}
+
 #if LWIP_CALLBACK_API
 /**
  * Default accept callback if no accept callback is specified by the user.

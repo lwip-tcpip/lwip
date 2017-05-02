@@ -77,6 +77,8 @@ extern "C" {
   /* ip addresses in network byte order */ \
   ip_addr_t local_ip;                      \
   ip_addr_t remote_ip;                     \
+  /* Bound netif index */                  \
+  u8_t netif_idx;                          \
   /* Socket options */                     \
   u8_t so_options;                         \
   /* Type Of Service */                    \

@@ -105,6 +105,7 @@ struct raw_pcb * raw_new        (u8_t proto);
 struct raw_pcb * raw_new_ip_type(u8_t type, u8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
 err_t            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+void             raw_bind_netif (struct raw_pcb *pcb, const struct netif *netif);
 err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 void             raw_disconnect (struct raw_pcb *pcb);
 
