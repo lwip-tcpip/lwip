@@ -1007,6 +1007,9 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 /**
  * @ingroup udp_raw
  * Bind an UDP PCB to a specific netif.
+ * After calling this function, all packets received via this PCB
+ * are guaranteed to have come in via the specified netif, and all
+ * outgoing packets will go out via the specified netif.
  *
  * @param pcb UDP PCB to be bound.
  * @param netif netif to bind udp pcb to. Can be NULL.

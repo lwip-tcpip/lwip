@@ -643,6 +643,9 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 /**
  * @ingroup tcp_raw
  * Binds the connection to a netif and IP address.
+ * After calling this function, all packets received via this PCB
+ * are guaranteed to have come in via the specified netif, and all
+ * outgoing packets will go out via the specified netif.
  *
  * @param pcb the tcp_pcb to bind.
  * @param netif the netif to bind to. Can be NULL.
@@ -926,21 +929,18 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
     /* check if we have a route to the remote host */
     netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
   }
-
   if (netif == NULL) {
     /* Don't even try to send a SYN packet if we have no route since that will fail. */
     return ERR_RTE;
   }
 
+  /* check if local IP has been assigned to pcb, if not, get one */
   if (ip_addr_isany(&pcb->local_ip)) {
-    /* no local IP address set, yet. */
     const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, ipaddr);
-    if (local_ip != NULL) {
-      /* Use the address as local address of the pcb. */
-      ip_addr_copy(pcb->local_ip, *local_ip);
-    } else {
+    if (local_ip == NULL) {
       return ERR_RTE;
     }
+    ip_addr_copy(pcb->local_ip, *local_ip);
   }
 
 #if LWIP_IPV6 && LWIP_IPV6_SCOPES

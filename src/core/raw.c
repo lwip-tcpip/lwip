@@ -235,7 +235,10 @@ raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 
 /**
  * @ingroup raw_raw
- * Bind a RAW PCB.
+ * Bind an RAW PCB to a specific netif.
+ * After calling this function, all packets received via this PCB
+ * are guaranteed to have come in via the specified netif, and all
+ * outgoing packets will go out via the specified netif.
  *
  * @param pcb RAW PCB to be bound with netif.
  * @param netif netif to bind to. Can be NULL.
