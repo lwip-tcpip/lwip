@@ -94,7 +94,9 @@
 /* Forward declarations.*/
 static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif);
 
-static struct netif* tcp_route(const struct tcp_pcb *pcb, const ip_addr_t *src, const ip_addr_t *dst)
+/* tcp_route: common code that returns a fixed bound netif or calls ip_route */
+static struct netif *
+tcp_route(const struct tcp_pcb *pcb, const ip_addr_t *src, const ip_addr_t *dst)
 {
   LWIP_UNUSED_ARG(src); /* in case IPv4-only and source-based routing is disabled */
 
