@@ -96,6 +96,8 @@ static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct
 
 static struct netif* tcp_route(const struct tcp_pcb *pcb, const ip_addr_t *src, const ip_addr_t *dst)
 {
+  LWIP_UNUSED_ARG(src); /* in case IPv4-only and source-based routing is disabled */
+
   if ((pcb != NULL) && (pcb->netif_idx != NETIF_NO_INDEX)) {
     return netif_get_by_index(pcb->netif_idx);
   } else {
