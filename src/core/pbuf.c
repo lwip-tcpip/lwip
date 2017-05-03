@@ -110,20 +110,6 @@
 volatile u8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
 
-/* Initialize members of struct pbuf after allocation */
-static void
-pbuf_init_alloced_pbuf(struct pbuf *p, void* payload, u16_t tot_len, u16_t len, u8_t type)
-{
-  p->next = NULL;
-  p->payload = payload;
-  p->tot_len = tot_len;
-  p->len = len;
-  p->type = type;
-  p->flags = 0;
-  p->ref = 1;
-  p->if_idx = NETIF_NO_INDEX;
-}
-
 /**
  * Attempt to reclaim some memory from queued out-of-sequence TCP segments
  * if we run out of pool pbufs. It's better to give priority to new packets
@@ -185,6 +171,20 @@ pbuf_pool_is_empty(void)
 #endif /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
 }
 #endif /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
+
+/* Initialize members of struct pbuf after allocation */
+static void
+pbuf_init_alloced_pbuf(struct pbuf *p, void* payload, u16_t tot_len, u16_t len, u8_t type)
+{
+  p->next = NULL;
+  p->payload = payload;
+  p->tot_len = tot_len;
+  p->len = len;
+  p->type = type;
+  p->flags = 0;
+  p->ref = 1;
+  p->if_idx = NETIF_NO_INDEX;
+}
 
 /**
  * @ingroup pbuf
