@@ -374,14 +374,11 @@ udp_input(struct pbuf *p, struct netif *inp)
                   pbuf_header_force(p, hdrs_len);
                   p_header_changed = 1;
                 }
-                q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+                q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
                 if (q != NULL) {
-                  err_t err = pbuf_copy(q, p);
-                  if (err == ERR_OK) {
-                    /* move payload to UDP data */
-                    pbuf_header(q, -hdrs_len);
-                    mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
-                  }
+                  /* move payload to UDP data */
+                  pbuf_header(q, -hdrs_len);
+                  mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
                 }
               }
             }
