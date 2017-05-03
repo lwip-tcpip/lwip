@@ -369,12 +369,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
     if (netif == NULL)
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
     {
-      if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
-        /* Don't call ip_route() with IP_ANY_TYPE */
-        netif = ip_route(IP46_ADDR_ANY(IP_GET_TYPE(ipaddr)), ipaddr);
-      } else {
-        netif = ip_route(&pcb->local_ip, ipaddr);
-      }
+      netif = ip_route(&pcb->local_ip, ipaddr);
     }
   }
 
