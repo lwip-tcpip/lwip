@@ -451,7 +451,7 @@ err_t tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
-void tcp_rst(u32_t seqno, u32_t ackno,
+void tcp_rst(const struct tcp_pcb* pcb, u32_t seqno, u32_t ackno,
        const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
        u16_t local_port, u16_t remote_port);
 

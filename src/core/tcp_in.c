@@ -224,6 +224,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
+
+    /* check if PCB is bound to specific netif */
+    if ((pcb->netif_idx != NETIF_NO_INDEX) &&
+        (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
+      continue;
+    }
+
     if (pcb->remote_port == tcphdr->src &&
         pcb->local_port == tcphdr->dest &&
         ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()) &&
@@ -250,6 +257,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
        in the TIME-WAIT state. */
     for (pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+
+      /* check if PCB is bound to specific netif */
+      if ((pcb->netif_idx != NETIF_NO_INDEX) &&
+          (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
+        continue;
+      }
+
       if (pcb->remote_port == tcphdr->src &&
           pcb->local_port == tcphdr->dest &&
           ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()) &&
@@ -516,14 +530,13 @@ aborted:
       inseg.p = NULL;
     }
   } else {
-
     /* If no matching PCB was found, send a TCP RST (reset) to the
        sender. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_input: no PCB match found, resetting.\n"));
     if (!(TCPH_FLAGS(tcphdr) & TCP_RST)) {
       TCP_STATS_INC(tcp.proterr);
       TCP_STATS_INC(tcp.drop);
-      tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
+      tcp_rst(NULL, ackno, seqno + tcplen, ip_current_dest_addr(),
         ip_current_src_addr(), tcphdr->dest, tcphdr->src);
     }
     pbuf_free(p);
@@ -565,7 +578,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* For incoming segments with the ACK flag set, respond with a
        RST. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
-    tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
+    tcp_rst((const struct tcp_pcb*)pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
       ip_current_src_addr(), tcphdr->dest, tcphdr->src);
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
@@ -611,6 +624,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #endif /* LWIP_CALLBACK_API || TCP_LISTEN_BACKLOG */
     /* inherit socket options */
     npcb->so_options = pcb->so_options & SOF_INHERITED;
+    npcb->netif_idx = pcb->netif_idx;
     /* Register the new PCB so that we can begin receiving segments
        for it. */
     TCP_REG_ACTIVE(npcb);
@@ -663,7 +677,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
        should be sent in reply */
     if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd)) {
       /* If the SYN is in the window it is an error, send a reset */
-      tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
+      tcp_rst(pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
         ip_current_src_addr(), tcphdr->dest, tcphdr->src);
       return;
     }
@@ -813,7 +827,7 @@ tcp_process(struct tcp_pcb *pcb)
     /* received ACK? possibly a half-open connection */
     else if (flags & TCP_ACK) {
       /* send a RST to bring the other side in a non-synchronized state. */
-      tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
+      tcp_rst(pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
         ip_current_src_addr(), tcphdr->dest, tcphdr->src);
       /* Resend SYN immediately (don't wait for rto timeout) to establish
         connection faster, but do not send more SYNs than we otherwise would
@@ -873,7 +887,7 @@ tcp_process(struct tcp_pcb *pcb)
         }
       } else {
         /* incorrect ACK number, send RST */
-        tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
+        tcp_rst(pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
           ip_current_src_addr(), tcphdr->dest, tcphdr->src);
       }
     } else if ((flags & TCP_SYN) && (seqno == pcb->rcv_nxt - 1)) {

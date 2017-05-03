@@ -94,6 +94,15 @@
 /* Forward declarations.*/
 static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif);
 
+static struct netif* tcp_route(const struct tcp_pcb *pcb, const ip_addr_t *src, const ip_addr_t *dst)
+{
+  if ((pcb != NULL) && (pcb->netif_idx != NETIF_NO_INDEX)) {
+    return netif_get_by_index(pcb->netif_idx);
+  } else {
+    return ip_route(src, dst);
+  }
+}
+
 /** Allocate a pbuf and create a tcphdr at p->payload, used for output
  * functions other than the default tcp_output -> tcp_output_segment
  * (e.g. tcp_send_empty_ack, etc.)
@@ -959,7 +968,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   }
 #endif
 
-  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
@@ -1040,7 +1049,7 @@ tcp_output(struct tcp_pcb *pcb)
     for (; useg->next != NULL; useg = useg->next);
   }
 
-  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     return ERR_RTE;
   }
@@ -1339,6 +1348,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
  * tcp_rst() has a number of arguments that are taken from a tcp_pcb for
  * most other segment output functions.
  *
+ * @param pcb TCP pcb
  * @param seqno the sequence number to use for the outgoing segment
  * @param ackno the acknowledge number to use for the outgoing segment
  * @param local_ip the local IP address to send the segment from
@@ -1347,7 +1357,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
  * @param remote_port the remote TCP port to send the segment to
  */
 void
-tcp_rst(u32_t seqno, u32_t ackno,
+tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
   const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
   u16_t local_port, u16_t remote_port)
 {
@@ -1379,7 +1389,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCP_STATS_INC(tcp.xmit);
   MIB2_STATS_INC(mib2.tcpoutrsts);
 
-  netif = ip_route(local_ip, remote_ip);
+  netif = tcp_route(pcb, local_ip, remote_ip);
   if (netif != NULL) {
 #if CHECKSUM_GEN_TCP
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
@@ -1559,7 +1569,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
                 ("tcp_keepalive: could not allocate memory for pbuf\n"));
     return ERR_MEM;
   }
-  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
@@ -1653,7 +1663,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     pcb->snd_nxt = snd_nxt;
   }
 
-  netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     err = ERR_RTE;
   } else {
