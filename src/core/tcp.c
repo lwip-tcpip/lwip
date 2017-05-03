@@ -1290,7 +1290,7 @@ tcp_slowtmr_start:
 
 /**
  * Is called every TCP_FAST_INTERVAL (250 ms) and process data previously
- * "refused" by upper layer (application) and sends delayed ACKs.
+ * "refused" by upper layer (application) and sends delayed ACKs or pending FINs.
  *
  * Automatically called from tcp_tmr().
  */
