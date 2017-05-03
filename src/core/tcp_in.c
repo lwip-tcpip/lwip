@@ -1247,9 +1247,9 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->polltmr = 0;
 
 #if TCP_OVERSIZE
-        if (pcb->unsent == NULL) {
-          pcb->unsent_oversize = 0;
-        }
+      if (pcb->unsent == NULL) {
+        pcb->unsent_oversize = 0;
+      }
 #endif /* TCP_OVERSIZE */
 
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
