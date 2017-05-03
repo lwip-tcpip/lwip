@@ -117,26 +117,21 @@
 #define HTTP11_CONNECTIONKEEPALIVE2 "Connection: Keep-Alive"
 #endif
 
-/** These defines check whether tcp_write has to copy data or not */
-
-/** This was TI's check whether to let TCP copy data or not
- * \#define HTTP_IS_DATA_VOLATILE(hs) ((hs->file < (char *)0x20000000) ? 0 : TCP_WRITE_FLAG_COPY)
- */
-#ifndef HTTP_IS_DATA_VOLATILE
-#if LWIP_HTTPD_SSI
-/* Copy for SSI files, no copy for non-SSI files */
-#define HTTP_IS_DATA_VOLATILE(hs)   ((hs)->ssi ? TCP_WRITE_FLAG_COPY : 0)
-#else /* LWIP_HTTPD_SSI */
-/** Default: don't copy if the data is sent from file-system directly */
-#define HTTP_IS_DATA_VOLATILE(hs) (((hs->file != NULL) && (hs->handle != NULL) && (hs->file == \
-                                   (const char*)hs->handle->data + hs->handle->len - hs->left)) \
-                                   ? 0 : TCP_WRITE_FLAG_COPY)
-#endif /* LWIP_HTTPD_SSI */
+#if LWIP_HTTPD_DYNAMIC_FILE_READ
+#define HTTP_IS_DYNAMIC_FILE(hs) ((hs)->buf != NULL)
+#else
+#define HTTP_IS_DYNAMIC_FILE(hs) 0
 #endif
 
-/** Default: headers are sent from ROM */
+/* This defines checks whether tcp_write has to copy data or not */
+
+#ifndef HTTP_IS_DATA_VOLATILE
+/** tcp_write does not have to copy data when sent from rom-file-system directly */
+#define HTTP_IS_DATA_VOLATILE(hs)       (HTTP_IS_DYNAMIC_FILE(hs) ? TCP_WRITE_FLAG_COPY : 0)
+#endif
+/** Default: dynamic headers are sent from ROM (non-dynamic headers are handled like file data) */
 #ifndef HTTP_IS_HDR_VOLATILE
-#define HTTP_IS_HDR_VOLATILE(hs, ptr) 0
+#define HTTP_IS_HDR_VOLATILE(hs, ptr)   0
 #endif
 
 /* Return values for http_send_*() */
