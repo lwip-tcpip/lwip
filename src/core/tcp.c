@@ -924,27 +924,24 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
     netif = netif_get_by_index(pcb->netif_idx);
   } else {
     /* check if we have a route to the remote host */
-    if (ip_addr_isany(&pcb->local_ip)) {
-      /* no local IP address set, yet. */
-      const ip_addr_t *local_ip;
-      ip_route_get_local_ip(&pcb->local_ip, &pcb->remote_ip, netif, local_ip);
-      if ((netif == NULL) || (local_ip == NULL)) {
-        /* Don't even try to send a SYN packet if we have no route
-           since that will fail. */
-        return ERR_RTE;
-      }
+    netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
+  }
+
+  if (netif == NULL) {
+    /* Don't even try to send a SYN packet if we have no route since that will fail. */
+    return ERR_RTE;
+  }
+
+  if (ip_addr_isany(&pcb->local_ip)) {
+    /* no local IP address set, yet. */
+    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, ipaddr);
+    if (local_ip != NULL) {
       /* Use the address as local address of the pcb. */
       ip_addr_copy(pcb->local_ip, *local_ip);
     } else {
-      netif = ip_route(&pcb->local_ip, &pcb->remote_ip);
-      if (netif == NULL) {
-        /* Don't even try to send a SYN packet if we have no route
-           since that will fail. */
-        return ERR_RTE;
-      }
+      return ERR_RTE;
     }
   }
-  LWIP_ASSERT("netif != NULL", netif != NULL);
 
 #if LWIP_IPV6 && LWIP_IPV6_SCOPES
   /* If the given IP address should have a zone but doesn't, assign one now.
