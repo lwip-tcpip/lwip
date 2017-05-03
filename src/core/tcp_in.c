@@ -1000,6 +1000,42 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
 }
 #endif /* TCP_QUEUE_OOSEQ */
 
+/** Remove segments from a list if the incoming ACK acknowledges them */
+static struct tcp_seg *
+tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const char* dbg_list_name,
+                        struct tcp_seg *dbg_other_seg_list)
+{
+  struct tcp_seg *next;
+  u16_t clen;
+  while (seg_list != NULL &&
+          TCP_SEQ_LEQ(lwip_ntohl(seg_list->tcphdr->seqno) +
+                      TCP_TCPLEN(seg_list), ackno)) {
+    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %"U32_F":%"U32_F" from pcb->%s\n",
+                                  dbg_list_name, lwip_ntohl(seg_list->tcphdr->seqno),
+                                  lwip_ntohl(seg_list->tcphdr->seqno) + TCP_TCPLEN(seg_list)));
+
+    next = seg_list;
+    seg_list = seg_list->next;
+
+    clen = pbuf_clen(next->p);
+    LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"TCPWNDSIZE_F" ... ",
+                                 (tcpwnd_size_t)pcb->snd_queuelen));
+    LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= clen));
+
+    pcb->snd_queuelen -= clen;
+    recv_acked += next->len;
+    tcp_seg_free(next);
+
+    LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing %s)\n", dbg_list_name,
+                                 (tcpwnd_size_t)pcb->snd_queuelen));
+    if (pcb->snd_queuelen != 0) {
+      LWIP_ASSERT("tcp_receive: valid queue length",
+                  seg_list != NULL || dbg_other_seg_list != NULL);
+    }
+  }
+  return seg_list;
+}
+
 /**
  * Called by tcp_process. Checks if the given segment is an ACK for outstanding
  * data, and if so frees the memory of the buffered data. Next, it places the
@@ -1185,30 +1221,14 @@ tcp_receive(struct tcp_pcb *pcb)
 
       /* Remove segment from the unacknowledged list if the incoming
          ACK acknowledges them. */
-      while (pcb->unacked != NULL &&
-             TCP_SEQ_LEQ(lwip_ntohl(pcb->unacked->tcphdr->seqno) +
-                         TCP_TCPLEN(pcb->unacked), ackno)) {
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %"U32_F":%"U32_F" from pcb->unacked\n",
-                                      lwip_ntohl(pcb->unacked->tcphdr->seqno),
-                                      lwip_ntohl(pcb->unacked->tcphdr->seqno) +
-                                      TCP_TCPLEN(pcb->unacked)));
-
-        next = pcb->unacked;
-        pcb->unacked = pcb->unacked->next;
-
-        LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"TCPWNDSIZE_F" ... ", (tcpwnd_size_t)pcb->snd_queuelen));
-        LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
-
-        pcb->snd_queuelen -= pbuf_clen(next->p);
-        recv_acked += next->len;
-        tcp_seg_free(next);
-
-        LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing unacked)\n", (tcpwnd_size_t)pcb->snd_queuelen));
-        if (pcb->snd_queuelen != 0) {
-          LWIP_ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
-                      pcb->unsent != NULL);
-        }
-      }
+      pcb->unacked = tcp_free_acked_segments(pcb, pcb->unacked, "unacked", pcb->unsent);
+      /* We go through the ->unsent list to see if any of the segments
+         on the list are acknowledged by the ACK. This may seem
+         strange since an "unsent" segment shouldn't be acked. The
+         rationale is that lwIP puts all outstanding segments on the
+         ->unsent list after a retransmission, so these segments may
+         in fact have been sent once. */
+      pcb->unsent = tcp_free_acked_segments(pcb, pcb->unsent, "unsent", pcb->unacked);
 
       /* If there's nothing left to acknowledge, stop the retransmit
          timer, otherwise reset it to start again */
@@ -1220,6 +1240,12 @@ tcp_receive(struct tcp_pcb *pcb)
 
       pcb->polltmr = 0;
 
+#if TCP_OVERSIZE
+        if (pcb->unsent == NULL) {
+          pcb->unsent_oversize = 0;
+        }
+#endif /* TCP_OVERSIZE */
+
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
       if (ip_current_is_v6()) {
         /* Inform neighbor reachability of forward progress. */
@@ -1227,38 +1253,6 @@ tcp_receive(struct tcp_pcb *pcb)
       }
 #endif /* LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS*/
 
-      /* We go through the ->unsent list to see if any of the segments
-         on the list are acknowledged by the ACK. This may seem
-         strange since an "unsent" segment shouldn't be acked. The
-         rationale is that lwIP puts all outstanding segments on the
-         ->unsent list after a retransmission, so these segments may
-         in fact have been sent once. */
-      while (pcb->unsent != NULL &&
-             TCP_SEQ_LEQ(lwip_ntohl(pcb->unsent->tcphdr->seqno) +
-                         TCP_TCPLEN(pcb->unsent), ackno)) {
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %"U32_F":%"U32_F" from pcb->unsent\n",
-                                      lwip_ntohl(pcb->unsent->tcphdr->seqno), lwip_ntohl(pcb->unsent->tcphdr->seqno) +
-                                      TCP_TCPLEN(pcb->unsent)));
-
-        next = pcb->unsent;
-        pcb->unsent = pcb->unsent->next;
-#if TCP_OVERSIZE
-        if (pcb->unsent == NULL) {
-          pcb->unsent_oversize = 0;
-        }
-#endif /* TCP_OVERSIZE */
-        LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"TCPWNDSIZE_F" ... ", (tcpwnd_size_t)pcb->snd_queuelen));
-        LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
-        /* Prevent ACK for FIN to generate a sent event */
-        pcb->snd_queuelen -= pbuf_clen(next->p);
-        recv_acked += next->len;
-        tcp_seg_free(next);
-        LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing unsent)\n", (tcpwnd_size_t)pcb->snd_queuelen));
-        if (pcb->snd_queuelen != 0) {
-          LWIP_ASSERT("tcp_receive: valid queue length",
-            pcb->unacked != NULL || pcb->unsent != NULL);
-        }
-      }
       pcb->snd_buf += recv_acked;
       /* check if this ACK ends our retransmission of in-flight data */
       if (pcb->flags & TF_RTO) {
