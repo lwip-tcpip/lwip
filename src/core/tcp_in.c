@@ -1007,12 +1007,17 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
 {
   struct tcp_seg *next;
   u16_t clen;
+
+  LWIP_UNUSED_ARG(dbg_list_name);
+  LWIP_UNUSED_ARG(dbg_other_seg_list);
+
   while (seg_list != NULL &&
           TCP_SEQ_LEQ(lwip_ntohl(seg_list->tcphdr->seqno) +
                       TCP_TCPLEN(seg_list), ackno)) {
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %"U32_F":%"U32_F" from pcb->%s\n",
-                                  dbg_list_name, lwip_ntohl(seg_list->tcphdr->seqno),
-                                  lwip_ntohl(seg_list->tcphdr->seqno) + TCP_TCPLEN(seg_list)));
+                                  lwip_ntohl(seg_list->tcphdr->seqno),
+                                  lwip_ntohl(seg_list->tcphdr->seqno) + TCP_TCPLEN(seg_list),
+                                  dbg_list_name));
 
     next = seg_list;
     seg_list = seg_list->next;
@@ -1026,8 +1031,9 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
     recv_acked += next->len;
     tcp_seg_free(next);
 
-    LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing %s)\n", dbg_list_name,
-                                 (tcpwnd_size_t)pcb->snd_queuelen));
+    LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing %s)\n",
+                                 (tcpwnd_size_t)pcb->snd_queuelen,
+                                 dbg_list_name));
     if (pcb->snd_queuelen != 0) {
       LWIP_ASSERT("tcp_receive: valid queue length",
                   seg_list != NULL || dbg_other_seg_list != NULL);
