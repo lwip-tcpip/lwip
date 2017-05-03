@@ -359,8 +359,6 @@ udp_input(struct pbuf *p, struct netif *inp)
         /* pass broadcast- or multicast packets to all multicast pcbs
            if SOF_REUSEADDR is set on the first match */
         struct udp_pcb *mpcb;
-        u8_t p_header_changed = 0;
-        s16_t hdrs_len = (s16_t)(ip_current_header_tot_len() + UDP_HLEN);
         for (mpcb = udp_pcbs; mpcb != NULL; mpcb = mpcb->next) {
           if (mpcb != pcb) {
             /* compare PCB local addr+port to UDP destination addr+port */
@@ -369,24 +367,13 @@ udp_input(struct pbuf *p, struct netif *inp)
               /* pass a copy of the packet to all local matches */
               if (mpcb->recv != NULL) {
                 struct pbuf *q;
-                /* for that, move payload to IP header again */
-                if (p_header_changed == 0) {
-                  pbuf_header_force(p, hdrs_len);
-                  p_header_changed = 1;
-                }
                 q = pbuf_clone(PBUF_RAW, PBUF_POOL, p);
                 if (q != NULL) {
-                  /* move payload to UDP data */
-                  pbuf_header(q, -hdrs_len);
                   mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
                 }
               }
             }
           }
-        }
-        if (p_header_changed) {
-          /* and move payload to UDP data again */
-          pbuf_header(p, -hdrs_len);
         }
       }
 #endif /* SO_REUSE && SO_REUSE_RXTOALL */
