@@ -288,7 +288,6 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
   case 3: /* usmUserSecurityName */
     MEMCPY(value, cell_instance->reference.ptr, cell_instance->reference_len);
     return (s16_t)cell_instance->reference_len;
-    break;
   case 4: /* usmUserCloneFrom */
     MEMCPY(value, snmp_zero_dot_zero.id, snmp_zero_dot_zero.len * sizeof(u32_t));
     return snmp_zero_dot_zero.len * sizeof(u32_t);

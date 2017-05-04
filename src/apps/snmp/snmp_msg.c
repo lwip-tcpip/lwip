@@ -1187,7 +1187,6 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       /* unsupported input PDU for this agent (no parse error) */
       LWIP_DEBUGF(SNMP_DEBUG, ("Unknown/Invalid SNMP PDU type received: %d", tlv.type)); \
       return ERR_ARG;
-      break;
   }
   request->request_type = tlv.type & SNMP_ASN1_DATATYPE_MASK;
   request->request_out_type = (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_GET_RESP);
