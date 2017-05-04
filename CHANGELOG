@@ -52,6 +52,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-05-09: Joel Cunningham
+  * tcp: add zero-window probe timeout (bug #50837)
+
   2017-04-11: Simon Goldschmidt
   * sockets.c: task #14420 (Remove sys_sem_signal from inside SYS_ARCH_PROTECT
     crit section) done for LWIP_TCPIP_CORE_LOCKING==1

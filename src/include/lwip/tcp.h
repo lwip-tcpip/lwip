@@ -310,6 +310,8 @@ struct tcp_pcb {
   u8_t persist_cnt;
   /* Persist timer back-off */
   u8_t persist_backoff;
+  /* Number of persist probes */
+  u8_t persist_probe;
 
   /* KEEPALIVE counter */
   u8_t keep_cnt_sent;

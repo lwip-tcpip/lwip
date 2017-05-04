@@ -1072,17 +1072,21 @@ tcp_slowtmr_start:
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached\n"));
     } else {
       if (pcb->persist_backoff > 0) {
-        /* If snd_wnd is zero, use persist timer to send 1 byte probes
-         * instead of using the standard retransmission mechanism. */
-        u8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff-1];
-        if (pcb->persist_cnt < backoff_cnt) {
-          pcb->persist_cnt++;
-        }
-        if (pcb->persist_cnt >= backoff_cnt) {
-          if (tcp_zero_window_probe(pcb) == ERR_OK) {
-            pcb->persist_cnt = 0;
-            if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
-              pcb->persist_backoff++;
+        if (pcb->persist_probe >= TCP_MAXRTX) {
+          ++pcb_remove; /* max probes reached */
+        } else {
+          /* If snd_wnd is zero, use persist timer to send 1 byte probes
+           * instead of using the standard retransmission mechanism. */
+          u8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff-1];
+          if (pcb->persist_cnt < backoff_cnt) {
+            pcb->persist_cnt++;
+          }
+          if (pcb->persist_cnt >= backoff_cnt) {
+            if (tcp_zero_window_probe(pcb) == ERR_OK) {
+              pcb->persist_cnt = 0;
+              if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
+                pcb->persist_backoff++;
+              }
             }
           }
         }

@@ -1103,6 +1103,7 @@ tcp_output(struct tcp_pcb *pcb)
     if (pcb->persist_backoff == 0) {
       pcb->persist_cnt = 0;
       pcb->persist_backoff = 1;
+      pcb->persist_probe = 0;
     }
     goto output_done;
   }
@@ -1636,6 +1637,14 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   if (seg == NULL) {
     /* nothing to send, zero window probe not needed */
     return ERR_OK;
+  }
+
+  /* increment probe count. NOTE: we record probe even if it fails
+     to actually transmit due to an error. This ensures memory exhaustion/
+     routing problem doesn't leave a zero-window pcb as an indefinite zombie.
+     RTO mechanism has similar behavior, see pcb->nrtx */
+  if (pcb->persist_probe < 0xFF) {
+    ++pcb->persist_probe;
   }
 
   is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
