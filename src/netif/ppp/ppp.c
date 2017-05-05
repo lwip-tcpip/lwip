@@ -923,7 +923,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
        */
       for (i = 0; (protp = protocols[i]) != NULL; ++i) {
         if (protp->protocol == protocol) {
-          pb = ppp_singlebuf(pb);
+          pb = pbuf_coalesce(pb, PBUF_RAW);
           (*protp->input)(pcb, (u8_t*)pb->payload, pb->len);
           goto out;
         }
@@ -969,11 +969,6 @@ drop:
 
 out:
   pbuf_free(pb);
-}
-
-/* merge a pbuf chain into one pbuf */
-struct pbuf *ppp_singlebuf(struct pbuf *p) {
-  return pbuf_coalesce(p, PBUF_RAW);
 }
 
 /*

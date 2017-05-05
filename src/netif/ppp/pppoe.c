@@ -394,7 +394,7 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
     return;
   }
 
-  pb = ppp_singlebuf(pb);
+  pb = pbuf_coalesce(pb, PBUF_RAW);
 
   if (pb->len < sizeof(*ethhdr)) {
     goto done;

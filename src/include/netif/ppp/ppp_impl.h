@@ -406,9 +406,6 @@ void ppp_link_end(ppp_pcb *pcb);
 /* function called to process input packet */
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb);
 
-/* helper function, merge a pbuf chain into one pbuf */
-struct pbuf *ppp_singlebuf(struct pbuf *p);
-
 
 /*
  * Functions called by PPP protocols.

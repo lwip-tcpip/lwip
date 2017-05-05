@@ -507,7 +507,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
     return;
   }
 
-  p = ppp_singlebuf(p);
+  p = pbuf_coalesce(p, PBUF_RAW);
   inp = (u8_t*)p->payload;
   /* Decode AVPs */
   while (p->len > 0) {
