@@ -291,10 +291,8 @@ netif_add(struct netif *netif,
   if (gw == NULL) {
     gw = ip_2_ip4(IP4_ADDR_ANY);
   }
-#endif /* LWIP_IPV4 */
 
   /* reset new interface configuration state */
-#if LWIP_IPV4
   ip_addr_set_zero_ip4(&netif->ip_addr);
   ip_addr_set_zero_ip4(&netif->netmask);
   ip_addr_set_zero_ip4(&netif->gw);
