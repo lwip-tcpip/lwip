@@ -281,6 +281,7 @@ netif_add(struct netif *netif,
 
   LWIP_ASSERT("No init function given", init != NULL);
 
+#if LWIP_IPV4
   if (ipaddr == NULL) {
     ipaddr = ip_2_ip4(IP4_ADDR_ANY);
   }
@@ -290,6 +291,7 @@ netif_add(struct netif *netif,
   if (gw == NULL) {
     gw = ip_2_ip4(IP4_ADDR_ANY);
   }
+#endif /* LWIP_IPV4 */
 
   /* reset new interface configuration state */
 #if LWIP_IPV4
