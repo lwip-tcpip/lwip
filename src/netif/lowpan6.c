@@ -413,6 +413,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     /* Move to payload. */
     pbuf_header(p, -IP6_HLEN);
 
+#if LWIP_UDP
     /* Compress UDP header? */
     if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
       /* @todo support optional checksum compression */
@@ -452,6 +453,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 
       pbuf_header(p, -UDP_HLEN);
     }
+#endif /* LWIP_UDP */
   }
 
 #else /* LWIP_6LOWPAN_HC */
@@ -698,8 +700,13 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
   s8_t i;
   s8_t ip6_offset = IP6_HLEN;
 
+#if LWIP_UDP
+#define UDP_HLEN_ALLOC UDP_HLEN
+#else
+#define UDP_HLEN_ALLOC 0
+#endif
 
-  q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN, PBUF_POOL);
+  q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN_ALLOC, PBUF_POOL);
   if (q == NULL) {
     pbuf_free(p);
     return NULL;
@@ -904,6 +911,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
 
   /* Next Header Compression (NHC) decoding? */
   if (lowpan6_buffer[0] & 0x04) {
+#if LWIP_UDP
     if ((lowpan6_buffer[lowpan6_offset] & 0xf8) == 0xf0) {
       struct udp_hdr *udphdr;
 
@@ -943,7 +951,9 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
       udphdr->len = lwip_htons(p->tot_len - lowpan6_offset + UDP_HLEN);
 
       ip6_offset += UDP_HLEN;
-    } else {
+    } else
+#endif /* LWIP_UDP */
+    {
       /* @todo support NHC other than UDP */
       pbuf_free(p);
       pbuf_free(q);
