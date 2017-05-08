@@ -2448,6 +2448,10 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
 
     /* The option flags */
     case SO_BROADCAST:
+      if (NETCONNTYPE_GROUP(sock->conn->type) != SOCK_DGRAM) {
+        done_socket(sock);
+        return ENOPROTOOPT;
+      }
     case SO_KEEPALIVE:
 #if SO_REUSE
     case SO_REUSEADDR:
