@@ -1447,6 +1447,7 @@ smtp_send_mail_bodycback(const char *from, const char* to, const char* subject,
   memset(s, 0, sizeof(struct smtp_session));
   s->bodydh = (struct smtp_bodydh_state*)SMTP_BODYDH_MALLOC(sizeof(struct smtp_bodydh_state));
   if (s->bodydh == NULL) {
+    SMTP_STATE_FREE(s);
     return ERR_MEM;
   }
   memset(s->bodydh, 0, sizeof(struct smtp_bodydh));
