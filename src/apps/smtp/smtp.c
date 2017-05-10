@@ -655,7 +655,7 @@ smtp_send_mail_static(const char *from, const char* to, const char* subject,
 
 
 /** @ingroup smtp
- * Same as smpt_send_mail but takes a struct smtp_send_request as single
+ * Same as smtp_send_mail but takes a struct smtp_send_request as single
  * parameter which contains all the other parameters.
  * To be used with tcpip_callback to send mail from interrupt context or from
  * another thread.
@@ -731,7 +731,7 @@ smtp_verify(const char *data, size_t data_len, u8_t linebreaks_allowed)
 }
 #endif /* SMTP_CHECK_DATA */
 
-/** Frees the smpt_session and calls the callback function */
+/** Frees the smtp_session and calls the callback function */
 static void
 smtp_free(struct smtp_session *s, u8_t result, u16_t srv_err, err_t err)
 {
