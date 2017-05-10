@@ -863,9 +863,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
   LWIP_ASSERT("this should be checked internally", NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP);
 
   if (flags & MSG_DONTWAIT) {
-    apiflags = NETCONN_DONTBLOCK;
-  } else {
-    apiflags = 0;
+    apiflags |= NETCONN_DONTBLOCK;
   }
 
   do {
