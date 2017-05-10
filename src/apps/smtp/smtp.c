@@ -1419,8 +1419,8 @@ smtp_send_bodyh_data(struct altcp_pcb *pcb, char **from, u16_t *howmany)
   err_t err;
   u16_t len = *howmany;
 
-  len = (u16_t)LWIP_MIN(len, tcp_sndbuf(pcb));
-  err = tcp_write(pcb, *from, len, TCP_WRITE_FLAG_COPY);
+  len = (u16_t)LWIP_MIN(len, altcp_sndbuf(pcb));
+  err = altcp_write(pcb, *from, len, TCP_WRITE_FLAG_COPY);
   if (err == ERR_OK) {
     *from += len;
     if ((*howmany -= len) > 0) {
