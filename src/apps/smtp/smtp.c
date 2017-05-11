@@ -483,20 +483,24 @@ smtp_send_mail_alloced(struct smtp_session *s)
    * - only 7-bit ASCII is allowed
    */
   if (smtp_verify(s->to, s->to_len, 0) != ERR_OK) {
-    return ERR_ARG;
+    err = ERR_ARG;
+    goto leave;
   }
   if (smtp_verify(s->from, s->from_len, 0) != ERR_OK) {
-    return ERR_ARG;
+    err = ERR_ARG;
+    goto leave;
   }
   if (smtp_verify(s->subject, s->subject_len, 0) != ERR_OK) {
-    return ERR_ARG;
+    err = ERR_ARG;
+    goto leave;
   }
 #if SMTP_BODYDH
   if (s->bodydh == NULL)
 #endif /* SMTP_BODYDH */
   {
     if (smtp_verify(s->body, s->body_len, 0) != ERR_OK) {
-      return ERR_ARG;
+      err = ERR_ARG;
+      goto leave;
     }
   }
 #endif /* SMTP_CHECK_DATA */
