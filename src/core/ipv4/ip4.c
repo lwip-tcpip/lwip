@@ -123,7 +123,7 @@ ip4_set_default_multicast_netif(struct netif* default_multicast_netif)
 #ifdef LWIP_HOOK_IP4_ROUTE_SRC
 /**
  * Source based IPv4 routing must be fully implemented in
- * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides he parameters.
+ * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
 struct netif *
 ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src)
