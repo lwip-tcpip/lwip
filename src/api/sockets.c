@@ -2852,6 +2852,11 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
 #if SO_REUSE
     case SO_REUSEADDR:
 #endif /* SO_REUSE */
+      if ((optname == SO_BROADCAST) &&
+          (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP)) {
+        done_socket(sock);
+        return ENOPROTOOPT;
+      }
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, int);
       if (*(const int*)optval) {
         ip_set_option(sock->conn->pcb.ip, optname);
