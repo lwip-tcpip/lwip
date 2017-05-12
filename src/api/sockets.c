@@ -2448,7 +2448,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
 
     /* The option flags */
     case SO_BROADCAST:
-      if (NETCONNTYPE_GROUP(sock->conn->type) != SOCK_DGRAM) {
+      if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
         done_socket(sock);
         return ENOPROTOOPT;
       }
