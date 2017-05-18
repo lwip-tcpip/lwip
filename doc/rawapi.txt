@@ -443,7 +443,7 @@ Call these functions in the order of appearance:
   the stack; add this to your main loop or equivalent.
 
 
---- Optimalization hints
+--- Optimization hints
 
 The first thing you want to optimize is the lwip_standard_checksum()
 routine from src/core/inet.c. You can override this standard
@@ -486,14 +486,13 @@ remain unchanged until sent. Because the send- (or write-)functions return
 when the packets have been enqueued for sending, data must be kept stable
 after that, too.
 
-This implies that PBUF_RAM/PBUF_POOL pbufs passed to raw-API send functions
-must *not* be reused by the application unless their ref-count is 1.
+This implies that *ALL* pbufs passed to send functions must *not* be reused by
+the application unless the send function returns an error indicating the pbuf
+is not sent/queued for sending.
 
-For no-copy pbufs (PBUF_ROM/PBUF_REF), data must be kept unchanged, too,
-but the stack/driver will/must copy PBUF_REF'ed data when enqueueing, while
-PBUF_ROM-pbufs are just enqueued (as ROM-data is expected to never change).
 
-Also, data passed to tcp_write without the copy-flag must not be changed!
+Also, data passed to tcp_write without the copy-flag must not be changed until
+sent and ACKed (check the amount of bytes marked as 'sent')!
 
 Therefore, be careful which type of PBUF you use and if you copy TCP data
 or not!
