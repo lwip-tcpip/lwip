@@ -69,7 +69,7 @@ extern "C" {
  * for other purposes. For more background information on this, see tasks #6735
  * and #7896, and bugs #11400 and #49914. */
 #ifndef PBUF_NEEDS_COPY
-#define PBUF_NEEDS_COPY(p)  ((p)->type != PBUF_ROM)
+#define PBUF_NEEDS_COPY(p)  ((p)->type_internal & PBUF_TYPE_FLAG_DATA_VOLATILE)
 #endif /* PBUF_NEEDS_COPY */
 
 /* @todo: We need a mechanism to prevent wasting memory in every pbuf
@@ -111,6 +111,33 @@ typedef enum {
   PBUF_RAW
 } pbuf_layer;
 
+
+/* Base flags for pbuf_type definitions: */
+
+/** Indicates that the payload directly follows the struct pbuf.
+ *  This makes @ref pbuf_header work in both directions. */
+#define PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS       0x80
+/** Indicates the data stored in this pbuf can change. If this pbuf needs
+ * to be queued, it must be copied/duplicated. */
+#define PBUF_TYPE_FLAG_DATA_VOLATILE                0x40
+/** 4 bits are reserved for 16 allocation sources (e.g. heap, pool1, pool2, etc)
+ * Internally, we use: 0=heap, 1=MEMP_PBUF, 2=MEMP_PBUF_POOL -> 13 types free*/
+#define PBUF_TYPE_ALLOC_SRC_MASK                    0x0F
+/** Indicates this pbuf is used for RX (if not set, indicates use for TX).
+ * This information can be used to keep some spare RX buffers e.g. for
+ * receiving TCP ACKs to unblock a connection) */
+#define PBUF_ALLOC_FLAG_RX                          0x0100
+/** Indicates the application needs the pbuf payload to be in one piece */
+#define PBUF_ALLOC_FLAG_DATA_CONTIGUOUS             0x0200
+
+#define PBUF_TYPE_ALLOC_SRC_MASK_STD_HEAP           0x00
+#define PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF      0x01
+#define PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF_POOL 0x02
+/** First pbuf allocation type for applications */
+#define PBUF_TYPE_ALLOC_SRC_MASK_APP_MIN            0x03
+/** Last pbuf allocation type for applications */
+#define PBUF_TYPE_ALLOC_SRC_MASK_APP_MAX            PBUF_TYPE_ALLOC_SRC_MASK
+
 /**
  * @ingroup pbuf
  * Enumeration of pbuf types
@@ -122,22 +149,22 @@ typedef enum {
       pbuf_alloc() allocates PBUF_RAM pbufs as unchained pbufs (although that might
       change in future versions).
       This should be used for all OUTGOING packets (TX).*/
-  PBUF_RAM,
+  PBUF_RAM = (PBUF_ALLOC_FLAG_DATA_CONTIGUOUS | PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | PBUF_TYPE_ALLOC_SRC_MASK_STD_HEAP),
   /** pbuf data is stored in ROM, i.e. struct pbuf and its payload are located in
       totally different memory areas. Since it points to ROM, payload does not
       have to be copied when queued for transmission. */
-  PBUF_ROM,
+  PBUF_ROM = PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF,
   /** pbuf comes from the pbuf pool. Much like PBUF_ROM but payload might change
       so it has to be duplicated when queued before transmitting, depending on
       who has a 'ref' to it. */
-  PBUF_REF,
+  PBUF_REF = (PBUF_TYPE_FLAG_DATA_VOLATILE | PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF),
   /** pbuf payload refers to RAM. This one comes from a pool and should be used
       for RX. Payload can be chained (scatter-gather RX) but like PBUF_RAM, struct
       pbuf and its payload are allocated in one piece of contiguous memory (so
       the first payload byte can be calculated from struct pbuf).
       Don't use this for TX, if the pool becomes empty e.g. because of TCP queuing,
       you are unable to receive TCP acks! */
-  PBUF_POOL
+  PBUF_POOL = (PBUF_ALLOC_FLAG_RX | PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS | PBUF_TYPE_ALLOC_SRC_MASK_STD_MEMP_PBUF_POOL)
 } pbuf_type;
 
 
@@ -175,8 +202,10 @@ struct pbuf {
   /** length of this buffer */
   u16_t len;
 
-  /** pbuf_type as u8_t instead of enum to save space */
-  u8_t /*pbuf_type*/ type;
+  /** a bit field indicating pbuf type and allocation sources
+      (see PBUF_TYPE_FLAG_*, PBUF_ALLOC_FLAG_* and PBUF_TYPE_ALLOC_SRC_MASK)
+    */
+  u8_t type_internal;
 
   /** misc flags */
   u8_t flags;
@@ -248,6 +277,9 @@ struct pbuf *pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type,
                                  u16_t payload_mem_len);
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
 void pbuf_realloc(struct pbuf *p, u16_t size);
+#define pbuf_get_allocsrc(p)          ((p)->type_internal & PBUF_TYPE_ALLOC_SRC_MASK)
+#define pbuf_match_allocsrc(p, type)  (pbuf_get_allocsrc(p) == ((type) & PBUF_TYPE_ALLOC_SRC_MASK))
+#define pbuf_match_type(p, type)      pbuf_match_allocsrc(p, type)
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
 u8_t pbuf_header_force(struct pbuf *p, s16_t header_size);
 struct pbuf *pbuf_free_header(struct pbuf *q, u16_t size);

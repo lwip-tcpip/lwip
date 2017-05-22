@@ -538,7 +538,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
         /* If the last unsent pbuf is of type PBUF_ROM, try to extend it. */
         struct pbuf *p;
         for (p = last_unsent->p; p->next != NULL; p = p->next);
-        if (p->type == PBUF_ROM &&
+        if (((p->type_internal & (PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS|PBUF_TYPE_FLAG_DATA_VOLATILE)) == 0) &&
             (const u8_t *)p->payload + p->len == (const u8_t *)arg) {
           LWIP_ASSERT("tcp_write: ROM pbufs cannot be oversized", pos == 0);
           extendlen = seglen;
