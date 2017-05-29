@@ -8,6 +8,10 @@ ethernet.c
 lowpan6.c
           A 6LoWPAN implementation as a netif.
 
+lowpan6_ble.c
+          A 6LoWPAN over Bluetooth Low Energy (BLE) implementation as netif,
+          according to RFC-7668.
+
 slipif.c
           A generic implementation of the SLIP (Serial Line IP)
           protocol. It requires a sio (serial I/O) module to work.
