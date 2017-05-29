@@ -249,6 +249,15 @@
 #endif
 
 /**
+ * MEMP_MEM_INIT==1: Force use of memset to initialize pool memory.
+ * Useful if pool are moved in uninitialized section of memory. This will ensure
+ * default values in pcbs struct are well initialized in all conditions.
+ */
+#if !defined MEMP_MEM_INIT || defined __DOXYGEN__
+#define MEMP_MEM_INIT                 0
+#endif
+
+/**
  * MEM_ALIGNMENT: should be set to the alignment of the CPU
  *    4 byte alignment -> \#define MEM_ALIGNMENT 4
  *    2 byte alignment -> \#define MEM_ALIGNMENT 2
