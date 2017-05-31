@@ -1194,6 +1194,50 @@ lwip_netconn_do_bind(void *m)
   msg->err = err;
   TCPIP_APIMSG_ACK(msg);
 }
+/**
+ * Bind a pcb contained in a netconn to an interface
+ * Called from netconn_bind_if.
+ *
+ * @param m the api_msg_msg pointing to the connection and containing
+ *          the IP address and port to bind to
+ */
+void
+lwip_netconn_do_bind_if(void *m)
+{
+  struct netif* netif;
+  struct api_msg *msg = (struct api_msg*)m;
+  err_t err;
+  
+  netif = netif_get_by_index(msg->msg.bc.if_idx);
+
+  if ((netif != NULL) && (msg->conn->pcb.tcp != NULL)) {
+    err = ERR_OK;
+    switch (NETCONNTYPE_GROUP(msg->conn->type)) {
+#if LWIP_RAW
+    case NETCONN_RAW:
+      raw_bind_netif(msg->conn->pcb.raw, netif);
+      break;
+#endif /* LWIP_RAW */
+#if LWIP_UDP
+    case NETCONN_UDP:
+      udp_bind_netif(msg->conn->pcb.udp, netif);
+      break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
+    case NETCONN_TCP:
+      tcp_bind_netif(msg->conn->pcb.tcp, netif);
+      break;
+#endif /* LWIP_TCP */
+    default:
+      err = ERR_VAL;
+      break;
+    }
+  } else {
+    err = ERR_VAL;
+  }
+  msg->err = err;
+  TCPIP_APIMSG_ACK(msg);
+}
 
 #if LWIP_TCP
 /**

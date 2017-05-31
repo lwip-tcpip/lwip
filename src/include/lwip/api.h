@@ -312,6 +312,7 @@ err_t   netconn_getaddr(struct netconn *conn, ip_addr_t *addr,
 #define netconn_addr(c,i,p) netconn_getaddr(c,i,p,1)
 
 err_t   netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port);
+err_t   netconn_bind_if(struct netconn *conn, u8_t if_idx);
 err_t   netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port);
 err_t   netconn_disconnect (struct netconn *conn);
 err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);

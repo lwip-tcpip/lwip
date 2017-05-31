@@ -94,6 +94,7 @@ struct api_msg {
     struct {
       API_MSG_M_DEF_C(ip_addr_t, ipaddr);
       u16_t port;
+      u8_t if_idx;
     } bc;
     /** used for lwip_netconn_do_getaddr */
     struct {
@@ -189,6 +190,7 @@ int lwip_netconn_is_err_msg(void *msg, err_t *err);
 void lwip_netconn_do_newconn         (void *m);
 void lwip_netconn_do_delconn         (void *m);
 void lwip_netconn_do_bind            (void *m);
+void lwip_netconn_do_bind_if         (void *m);
 void lwip_netconn_do_connect         (void *m);
 void lwip_netconn_do_disconnect      (void *m);
 void lwip_netconn_do_listen          (void *m);

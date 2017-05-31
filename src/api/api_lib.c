@@ -283,6 +283,32 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 
 /**
  * @ingroup netconn_common
+ * Bind a netconn to a specific interface and port.
+ * Binding one netconn twice might not always be checked correctly!
+ *
+ * @param conn the netconn to bind
+ * @param if_idx the local interface index to bind the netconn to 
+ * @return ERR_OK if bound, any other err_t on failure
+ */
+err_t
+netconn_bind_if(struct netconn *conn, u8_t if_idx)
+{
+  API_MSG_VAR_DECLARE(msg);
+  err_t err;
+  
+  LWIP_ERROR("netconn_bind_if: invalid conn", (conn != NULL), return ERR_ARG;);
+
+  API_MSG_VAR_ALLOC(msg);
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.bc.if_idx = if_idx;
+  err = netconn_apimsg(lwip_netconn_do_bind_if, &API_MSG_VAR_REF(msg));
+  API_MSG_VAR_FREE(msg);
+
+  return err;
+}
+
+/**
+ * @ingroup netconn_common
  * Connect a netconn to a specific remote IP address and port.
  *
  * @param conn the netconn to connect
