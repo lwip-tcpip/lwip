@@ -430,6 +430,7 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
   p->pbuf.len = p->pbuf.tot_len = length;
   p->pbuf.type_internal = (u8_t)type;
   p->pbuf.ref = 1;
+  p->pbuf.if_idx = NETIF_NO_INDEX;
   return &p->pbuf;
 }
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
