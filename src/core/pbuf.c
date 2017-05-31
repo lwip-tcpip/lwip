@@ -174,14 +174,14 @@ pbuf_pool_is_empty(void)
 
 /* Initialize members of struct pbuf after allocation */
 static void
-pbuf_init_alloced_pbuf(struct pbuf *p, void* payload, u16_t tot_len, u16_t len, pbuf_type type)
+pbuf_init_alloced_pbuf(struct pbuf *p, void* payload, u16_t tot_len, u16_t len, pbuf_type type, u8_t flags)
 {
   p->next = NULL;
   p->payload = payload;
   p->tot_len = tot_len;
   p->len = len;
   p->type_internal = (u8_t)type;
-  p->flags = 0;
+  p->flags = flags;
   p->ref = 1;
   p->if_idx = NETIF_NO_INDEX;
 }
@@ -276,7 +276,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
           return NULL;
         }
         pbuf_init_alloced_pbuf(q, LWIP_MEM_ALIGN((void *)((u8_t *)q + SIZEOF_STRUCT_PBUF + offset)),
-          rem_len, LWIP_MIN(rem_len, PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)), type);
+          rem_len, LWIP_MIN(rem_len, PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)), type, 0);
         LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
                 ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
         LWIP_ASSERT("PBUF_POOL_BUFSIZE must be bigger than MEM_ALIGNMENT",
@@ -309,7 +309,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
         return NULL;
       }
       pbuf_init_alloced_pbuf(p, LWIP_MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset)),
-        length, length, type);
+        length, length, type, 0);
       LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
              ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
       break;
@@ -359,7 +359,7 @@ pbuf_alloc_reference(void *payload, u16_t length, pbuf_type type)
                 (type == PBUF_ROM) ? "ROM" : "REF"));
     return NULL;
   }
-  pbuf_init_alloced_pbuf(p, payload, length, length, type);
+  pbuf_init_alloced_pbuf(p, payload, length, length, type, 0);
   return p;
 }
 
@@ -420,17 +420,12 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
     return NULL;
   }
 
-  p->pbuf.next = NULL;
   if (payload_mem != NULL) {
-    p->pbuf.payload = (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
+    pbuf_init_alloced_pbuf(p->pbuf, (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset),
+                           length, length, type, PBUF_FLAG_IS_CUSTOM);
   } else {
-    p->pbuf.payload = NULL;
+    pbuf_init_alloced_pbuf(p->pbuf, NULL, length, length, type, PBUF_FLAG_IS_CUSTOM);
   }
-  p->pbuf.flags = PBUF_FLAG_IS_CUSTOM;
-  p->pbuf.len = p->pbuf.tot_len = length;
-  p->pbuf.type_internal = (u8_t)type;
-  p->pbuf.ref = 1;
-  p->pbuf.if_idx = NETIF_NO_INDEX;
   return &p->pbuf;
 }
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
