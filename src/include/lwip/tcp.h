@@ -143,6 +143,14 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 #define TCPWND16(x)             (x)
 #define TCP_WND_MAX(pcb)        TCP_WND
 #endif
+/* Increments a tcpwnd_size_t and holds at max value rather than rollover */
+#define TCP_WND_INC(wnd, inc)   do { \
+                                  if ((tcpwnd_size_t)(wnd + inc) >= wnd) { \
+                                    wnd += inc; \
+                                  } else { \
+                                    wnd = (tcpwnd_size_t)-1; \
+                                  } \
+                                } while(0)
 
 #if LWIP_WND_SCALE || TCP_LISTEN_BACKLOG || LWIP_TCP_TIMESTAMPS
 typedef u16_t tcpflags_t;

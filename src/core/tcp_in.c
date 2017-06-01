@@ -1200,22 +1200,14 @@ tcp_receive(struct tcp_pcb *pcb)
           u8_t num_seg = (pcb->flags & TF_RTO) ? 1 : 2;
           /* RFC 3465, section 2.2 Slow Start */
           increase = LWIP_MIN(acked, (tcpwnd_size_t)(num_seg * pcb->mss));
-          if (pcb->cwnd + increase > pcb->cwnd) {
-            pcb->cwnd += increase;
-          }
+          TCP_WND_INC(pcb->cwnd, increase);
           LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: slow start cwnd %"TCPWNDSIZE_F"\n", pcb->cwnd));
         } else {
-          tcpwnd_size_t new_cwnd = pcb->cwnd;
           /* RFC 3465, section 2.1 Congestion Avoidance */
-          if (pcb->bytes_acked + acked > pcb->bytes_acked) {
-            pcb->bytes_acked += acked;
-            if (pcb->bytes_acked >= pcb->cwnd) {
-              pcb->bytes_acked -= pcb->cwnd;
-              new_cwnd = pcb->cwnd + pcb->mss;
-            }
-          }
-          if (new_cwnd > pcb->cwnd) {
-            pcb->cwnd = new_cwnd;
+          TCP_WND_INC(pcb->bytes_acked, acked);
+          if (pcb->bytes_acked >= pcb->cwnd) {
+            pcb->bytes_acked -= pcb->cwnd;
+            TCP_WND_INC(pcb->cwnd, pcb->mss);
           }
           LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: congestion avoidance cwnd %"TCPWNDSIZE_F"\n", pcb->cwnd));
         }
