@@ -2042,11 +2042,21 @@ lwip_netconn_do_gethostbyname(void *arg)
 
   API_EXPR_DEREF(msg->err) = dns_gethostbyname_addrtype(msg->name,
     API_EXPR_REF(msg->addr), lwip_netconn_do_dns_found, msg, addrtype);
+#if LWIP_TCPIP_CORE_LOCKING
+  /* For core locking, only block if we need to wait for answer/timeout */
+  if (API_EXPR_DEREF(msg->err) == ERR_INPROGRESS) {
+    UNLOCK_TCPIP_CORE();
+    sys_sem_wait(API_EXPR_REF_SEM(msg->sem));
+    LOCK_TCPIP_CORE();
+    LWIP_ASSERT("do_gethostbyname still in progress!!", API_EXPR_DEREF(msg->err) != ERR_INPROGRESS);
+  }
+#else /* LWIP_TCPIP_CORE_LOCKING */
   if (API_EXPR_DEREF(msg->err) != ERR_INPROGRESS) {
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */
     sys_sem_signal(API_EXPR_REF_SEM(msg->sem));
   }
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 }
 #endif /* LWIP_DNS */
 

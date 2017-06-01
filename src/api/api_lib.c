@@ -1184,18 +1184,14 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-  cberr = tcpip_callback(lwip_netconn_do_gethostbyname, &API_VAR_REF(msg));
-  if (cberr != ERR_OK) {
-#if !LWIP_NETCONN_SEM_PER_THREAD
-    sys_sem_free(API_EXPR_REF(API_VAR_REF(msg).sem));
-#endif /* !LWIP_NETCONN_SEM_PER_THREAD */
-    API_VAR_FREE(MEMP_DNS_API_MSG, msg);
-    return cberr;
-  }
-  sys_sem_wait(API_EXPR_REF_SEM(API_VAR_REF(msg).sem));
+  cberr = tcpip_send_msg_wait_sem(lwip_netconn_do_gethostbyname, &API_VAR_REF(msg), API_EXPR_REF(API_VAR_REF(msg).sem));
 #if !LWIP_NETCONN_SEM_PER_THREAD
   sys_sem_free(API_EXPR_REF(API_VAR_REF(msg).sem));
 #endif /* !LWIP_NETCONN_SEM_PER_THREAD */
+  if (cberr != ERR_OK) {
+    API_VAR_FREE(MEMP_DNS_API_MSG, msg);
+    return cberr;
+  }
 
 #if LWIP_MPU_COMPATIBLE
   *addr = msg->addr;

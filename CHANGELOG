@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2017-06-20: Joel Cunningham
+  * netconn/netdb: added core locking support to netconn_gethostbyname (task #14523)
+
   2017-04-25: Simon Goldschmidt
   * dhcp: added two hooks for adding and parsing user defined DHCP options
 
