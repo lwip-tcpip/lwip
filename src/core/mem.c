@@ -732,10 +732,10 @@ mem_malloc_adjust_lfree:
     /* if we got interrupted by a mem_free, try again */
   } while (local_mem_free_count != 0);
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
-  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
   MEM_STATS_INC(err);
   LWIP_MEM_ALLOC_UNPROTECT();
   sys_mutex_unlock(&mem_mutex);
+  LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
   return NULL;
 }
 
