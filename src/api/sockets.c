@@ -414,15 +414,25 @@ done_socket(struct lwip_sock *sock)
 
 /* Translate a socket 'int' into a pointer (only fails if the index is invalid) */
 static struct lwip_sock *
-tryget_socket_unconn(int fd)
+tryget_socket_unconn_nouse(int fd)
 {
   int s = fd - LWIP_SOCKET_OFFSET;
   if ((s < 0) || (s >= NUM_SOCKETS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("tryget_socket_unconn(%d): invalid\n", fd));
     return NULL;
   }
-  sock_inc_used(&sockets[s]);
   return &sockets[s];
+}
+
+/* Translate a socket 'int' into a pointer (only fails if the index is invalid) */
+static struct lwip_sock *
+tryget_socket_unconn(int fd)
+{
+  struct lwip_sock *ret = tryget_socket_unconn_nouse(fd);
+  if (ret != NULL) {
+    sock_inc_used(ret);
+  }
+  return ret;
 }
 
 /**
@@ -1791,7 +1801,7 @@ lwip_select_inc_sockets_used_set(int maxfdp, fd_set *fdset, fd_set *used_sockets
         SYS_ARCH_PROTECT(lev);
         sock = tryget_socket_unconn(i);
         if (sock != NULL) {
-          sock_inc_used(sock);
+          /* leave the socket used until released by lwip_select_dec_sockets_used */
           FD_SET(i, used_sockets);
         }
         SYS_ARCH_UNPROTECT(lev);
@@ -1822,7 +1832,7 @@ lwip_select_dec_sockets_used(int maxfdp, fd_set *used_sockets)
   for (i = LWIP_SOCKET_OFFSET; i < maxfdp; i++) {
     /* if this FD is not in the set, continue */
     if (FD_ISSET(i, used_sockets)) {
-      struct lwip_sock *sock = tryget_socket_unconn(i);
+      struct lwip_sock *sock = tryget_socket_unconn_nouse(i);
       LWIP_ASSERT("socket gone at the end of select", sock != NULL);
       if (sock != NULL) {
         done_socket(sock);
