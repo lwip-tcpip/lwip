@@ -944,7 +944,7 @@ get_http_headers(struct http_state *hs, const char *uri)
       hs->handle->len);
     len = strlen(hs->hdr_content_len);
     if (len <= LWIP_HTTPD_MAX_CONTENT_LEN_SIZE - LWIP_HTTPD_MAX_CONTENT_LEN_OFFSET) {
-      SMEMCPY(&hs->hdr_content_len[len], CRLF "\0", 3);
+      SMEMCPY(&hs->hdr_content_len[len], CRLF, 3);
       hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_NR] = hs->hdr_content_len;
     } else {
       add_content_len = 0;
