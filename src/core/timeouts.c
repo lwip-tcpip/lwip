@@ -176,7 +176,7 @@ void sys_timeouts_init(void)
 {
   size_t i;
   /* tcp_tmr() at index 0 is started on demand */
-  for (i = 1; i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
+  for (i = (LWIP_TCP ? 1 : 0); i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
     /* we have to cast via size_t to get rid of const warning
       (this is OK as cyclic_timer() casts back to const* */
     sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, LWIP_CONST_CAST(void*, &lwip_cyclic_timers[i]));
