@@ -353,9 +353,8 @@ smtp_set_server_addr(const char* server)
   }
   if (len != 0) {
     MEMCPY(smtp_server, server, len);
-  } else {
-    smtp_server[0] = 0;
   }
+  smtp_server[len] = 0;
   return ERR_OK;
 }
 
