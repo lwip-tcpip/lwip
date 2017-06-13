@@ -192,47 +192,6 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #define LWIP_SO_SNDRCVTIMEO_GET_MS(optval) ((((const struct timeval *)(optval))->tv_sec * 1000U) + (((const struct timeval *)(optval))->tv_usec / 1000U))
 #endif
 
-#define NUM_SOCKETS MEMP_NUM_NETCONN
-
-/** This is overridable for the rare case where more than 255 threads
- * select on the same socket...
- */
-#ifndef SELWAIT_T
-#define SELWAIT_T u8_t
-#endif
-
-union lwip_sock_lastdata {
-  struct netbuf *netbuf;
-  struct pbuf *pbuf;
-};
-
-/** Contains all internal pointers and states used for a socket */
-struct lwip_sock {
-  /** sockets currently are built on netconns, each socket has one netconn */
-  struct netconn *conn;
-  /** data that was left from the previous read */
-  union lwip_sock_lastdata lastdata;
-#if LWIP_SOCKET_SELECT
-  /** number of times data was received, set by event_callback(),
-      tested by the receive and select functions */
-  s16_t rcvevent;
-  /** number of times data was ACKed (free send buffer), set by event_callback(),
-      tested by select */
-  u16_t sendevent;
-  /** error happened for this socket, set by event_callback(), tested by select */
-  u16_t errevent;
-  /** counter of how many threads are waiting for this socket using select */
-  SELWAIT_T select_waiting;
-#endif /* LWIP_SOCKET_SELECT */
-#if LWIP_NETCONN_FULLDUPLEX
-  /* counter of how many threads are using a struct lwip_sock (not the 'int') */
-  u8_t fd_used;
-  /* status of pending close/delete actions */
-  u8_t fd_free_pending;
-#define LWIP_SOCK_FD_FREE_TCP  1
-#define LWIP_SOCK_FD_FREE_FREE 2
-#endif
-};
 
 #if LWIP_NETCONN_SEM_PER_THREAD
 #define SELECT_SEM_T        sys_sem_t*
@@ -422,6 +381,12 @@ tryget_socket_unconn_nouse(int fd)
     return NULL;
   }
   return &sockets[s];
+}
+
+struct lwip_sock*
+lwip_socket_dbg_get_socket(int fd)
+{
+  return tryget_socket_unconn_nouse(fd);
 }
 
 /* Translate a socket 'int' into a pointer (only fails if the index is invalid) */

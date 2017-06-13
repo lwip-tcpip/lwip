@@ -3,9 +3,28 @@
 #include "lwip/mem.h"
 #include "lwip/opt.h"
 #include "lwip/sockets.h"
+#include "lwip/priv/sockets_priv.h"
 #include "lwip/stats.h"
 
 #include "lwip/tcpip.h"
+
+
+static int
+test_sockets_get_used_count(void)
+{
+  int used = 0;
+  int i;
+
+  for (i = 0; i < NUM_SOCKETS; i++) {
+    struct lwip_sock* s = lwip_socket_dbg_get_socket(i);
+    if (s != NULL) {
+      if (s->fd_used) {
+        used++;
+      }
+    }
+  }
+  return used;
+}
 
 
 /* Setups/teardown functions */
@@ -18,6 +37,7 @@ sockets_setup(void)
 static void
 sockets_teardown(void)
 {
+  fail_unless(test_sockets_get_used_count() == 0);
 }
 
 #ifndef NUM_SOCKETS
@@ -573,6 +593,42 @@ START_TEST(test_sockets_msgapis)
 }
 END_TEST
 
+START_TEST(test_sockets_select)
+{
+#if LWIP_SOCKET_SELECT
+  int s;
+  int ret;
+  fd_set readset;
+  fd_set writeset;
+  fd_set errset;
+  struct timeval tv;
+
+  fail_unless(test_sockets_get_used_count() == 0);
+
+  s = lwip_socket(AF_INET, SOCK_STREAM, 0);
+  fail_unless(s >= 0);
+  fail_unless(test_sockets_get_used_count() == 0);
+
+  FD_ZERO(&readset);
+  FD_SET(s, &readset);
+  FD_ZERO(&writeset);
+  FD_SET(s, &writeset);
+  FD_ZERO(&errset);
+  FD_SET(s, &errset);
+
+  tv.tv_sec = tv.tv_usec = 0;
+  ret = lwip_select(s + 1, &readset, &writeset, &errset, &tv);
+  fail_unless(ret == 0);
+  fail_unless(test_sockets_get_used_count() == 0);
+
+  ret = lwip_close(s);
+  fail_unless(ret == 0);
+
+#endif
+  LWIP_UNUSED_ARG(_i);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 sockets_suite(void)
@@ -581,6 +637,7 @@ sockets_suite(void)
     TESTFUNC(test_sockets_basics),
     TESTFUNC(test_sockets_allfunctions_basic),
     TESTFUNC(test_sockets_msgapis),
+    TESTFUNC(test_sockets_select),
   };
   return create_suite("SOCKETS", tests, sizeof(tests)/sizeof(testfunc), sockets_setup, sockets_teardown);
 }
