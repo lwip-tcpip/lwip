@@ -351,7 +351,11 @@ smtp_set_server_addr(const char* server)
   if (len > SMTP_MAX_SERVERNAME_LEN) {
     return ERR_MEM;
   }
-  MEMCPY(smtp_server, server, len);
+  if (len != 0) {
+    MEMCPY(smtp_server, server, len);
+  } else {
+    smtp_server[0] = 0;
+  }
   return ERR_OK;
 }
 
