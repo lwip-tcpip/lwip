@@ -101,6 +101,9 @@
 #if HTTPD_ENABLE_HTTPS
 #include "lwip/altcp_tls.h"
 #endif
+#ifdef LWIP_HOOK_FILENAME
+#include LWIP_HOOK_FILENAME
+#endif
 
 #include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
