@@ -346,7 +346,9 @@ smtp_set_server_addr(const char* server)
 {
   size_t len = 0;
   if (server != NULL) {
-    len = strnlen(server, SMTP_MAX_SERVERNAME_LEN); /* strnlen: length WITHOUT terminating 0 byte */
+    /* strnlen: returns length WITHOUT terminating 0 byte OR
+     * SMTP_MAX_SERVERNAME_LEN+1 when string is too long */
+    len = strnlen(server, SMTP_MAX_SERVERNAME_LEN+1);
   }
   if (len > SMTP_MAX_SERVERNAME_LEN) {
     return ERR_MEM;
