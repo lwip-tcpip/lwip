@@ -348,13 +348,13 @@ smtp_set_server_addr(const char* server)
   if (server != NULL) {
     len = strnlen(server, SMTP_MAX_SERVERNAME_LEN); /* strnlen: length WITHOUT terminating 0 byte */
   }
-  if (len >= SMTP_MAX_SERVERNAME_LEN) {
-    return ERR_MEM; /* too long or no room for terminating 0 byte */
+  if (len > SMTP_MAX_SERVERNAME_LEN) {
+    return ERR_MEM;
   }
   if (len != 0) {
     MEMCPY(smtp_server, server, len);
   }
-  smtp_server[len] = 0;
+  smtp_server[len] = 0; /* always OK because of smtp_server[SMTP_MAX_SERVERNAME_LEN + 1] */
   return ERR_OK;
 }
 
