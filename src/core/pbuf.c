@@ -387,6 +387,7 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
                     void *payload_mem, u16_t payload_mem_len)
 {
   u16_t offset;
+  void *payload;
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloced_custom(length=%"U16_F")\n", length));
 
   /* determine header offset */
@@ -421,11 +422,11 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
   }
 
   if (payload_mem != NULL) {
-    pbuf_init_alloced_pbuf(&p->pbuf, (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset),
-                           length, length, type, PBUF_FLAG_IS_CUSTOM);
+    payload = (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
   } else {
-    pbuf_init_alloced_pbuf(&p->pbuf, NULL, length, length, type, PBUF_FLAG_IS_CUSTOM);
+    payload = NULL;
   }
+  pbuf_init_alloced_pbuf(&p->pbuf, payload, length, length, type, PBUF_FLAG_IS_CUSTOM);
   return &p->pbuf;
 }
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
