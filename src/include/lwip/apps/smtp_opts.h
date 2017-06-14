@@ -24,7 +24,7 @@ extern "C" {
 #define SMTP_DEBUG              LWIP_DBG_OFF
 #endif
 
-/** Maximum length reserved for server name */
+/** Maximum length reserved for server name including terminating 0 byte */
 #ifndef SMTP_MAX_SERVERNAME_LEN
 #define SMTP_MAX_SERVERNAME_LEN 256
 #endif
