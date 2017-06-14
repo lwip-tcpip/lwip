@@ -3354,6 +3354,65 @@ lwip_fcntl(int s, int cmd, int val)
   return ret;
 }
 
+const char *
+lwip_inet_ntop(int af, const void *src, char *dst, socklen_t size)
+{
+  const char *ret = NULL;
+  switch (af) {
+#if LWIP_IPV4
+    case AF_INET:
+      ret = ip4addr_ntoa_r((const ip4_addr_t*)src, dst, size);
+      if (ret == NULL) {
+        set_errno(ENOSPC);
+      }
+      break;
+#endif
+#if LWIP_IPV6
+    case AF_INET6:
+      ret = ip6addr_ntoa_r((const ip6_addr_t*)src, dst, size);
+      if (ret == NULL) {
+        set_errno(ENOSPC);
+      }
+      break;
+#endif
+    default:
+      set_errno(EAFNOSUPPORT);
+      break;
+  }
+  return ret;
+}
+
+int
+lwip_inet_pton(int af, const char *src, void *dst)
+{
+  int err;
+  switch (af) {
+#if LWIP_IPV4
+    case AF_INET:
+      err = ip4addr_aton(src, (ip4_addr_t*)dst);
+      break;
+#endif
+#if LWIP_IPV6
+    case AF_INET6:
+    {
+      /* convert into temporary variable since ip6_addr_t might be larger
+         than in6_addr when scopes are enabled */
+      ip6_addr_t addr;
+      err = ip6addr_aton(src, &addr);
+      if (err) {
+        memcpy(dst, &addr.addr, sizeof(addr.addr));
+      }
+      break;
+    }
+#endif
+    default:
+      err = -1;
+      set_errno(EAFNOSUPPORT);
+      break;
+  }
+  return err;
+}
+
 #if LWIP_IGMP
 /** Register a new IGMP membership. On socket close, the membership is dropped automatically.
  *
