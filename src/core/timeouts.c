@@ -105,6 +105,7 @@ const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
 #endif /* LWIP_IPV6_MLD */
 #endif /* LWIP_IPV6 */
 };
+const int lwip_num_cyclic_timers = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 
 #if LWIP_TIMERS && !LWIP_TIMERS_CUSTOM
 
