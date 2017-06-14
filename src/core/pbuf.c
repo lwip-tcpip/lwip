@@ -421,10 +421,10 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
   }
 
   if (payload_mem != NULL) {
-    pbuf_init_alloced_pbuf(p->pbuf, (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset),
+    pbuf_init_alloced_pbuf(&p->pbuf, (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset),
                            length, length, type, PBUF_FLAG_IS_CUSTOM);
   } else {
-    pbuf_init_alloced_pbuf(p->pbuf, NULL, length, length, type, PBUF_FLAG_IS_CUSTOM);
+    pbuf_init_alloced_pbuf(&p->pbuf, NULL, length, length, type, PBUF_FLAG_IS_CUSTOM);
   }
   return &p->pbuf;
 }
