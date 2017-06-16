@@ -632,8 +632,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
   }
 
   if(LWIP_MEM_ALIGN(n0->payload) != n0->payload) {
-    struct pbuf *np, *q;
-    u8_t *bufptr;
+    struct pbuf *np;
 
 #if IP_FORWARD
     /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
@@ -655,11 +654,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
       goto bad;
     }
 
-    bufptr = (u8_t*)n0->payload;
-    for(q = np; q != NULL; q = q->next) {
-      MEMCPY(q->payload, bufptr, q->len);
-      bufptr += q->len;
-    }
+    pbuf_take(np, n0->payload, n0->len);
 
     if(n0->next) {
       pbuf_chain(np, n0->next);
