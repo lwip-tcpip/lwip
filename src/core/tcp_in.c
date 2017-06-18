@@ -1058,7 +1058,9 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
 static void
 tcp_receive(struct tcp_pcb *pcb)
 {
+#if TCP_QUEUE_OOSEQ || TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
   struct tcp_seg *next;
+#endif
 #if TCP_QUEUE_OOSEQ
   struct tcp_seg *prev, *cseg;
 #endif /* TCP_QUEUE_OOSEQ */
