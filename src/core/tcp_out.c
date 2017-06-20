@@ -836,8 +836,8 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
   }
 #if LWIP_TCP_TIMESTAMPS
   if ((pcb->flags & TF_TIMESTAMP) || ((flags & TCP_SYN) && (pcb->state != SYN_RCVD))) {
-    /* The timestamp option is only included in SYN packets,
-     * and in data segments if we agreed about it with the remote host. */
+    /* Make sure the timestamp option is only included in data segments if we
+       agreed about it with the remote host (and in active open SYN segments). */
     optflags |= TF_SEG_OPTS_TS;
   }
 #endif /* LWIP_TCP_TIMESTAMPS */
