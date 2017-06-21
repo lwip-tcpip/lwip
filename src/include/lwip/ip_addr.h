@@ -248,8 +248,11 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 
-#define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)         1
-#define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr) 1
+#define IP_ADDR_PCB_VERSION_MATCH(addr, pcb)          1
+#define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr)  1
+
+#define ip_addr_set_any_val(is_ipv6, ipaddr)          ip_addr_set_any(is_ipv6, &(ipaddr))
+#define ip_addr_set_loopback_val(is_ipv6, ipaddr)     ip_addr_set_loopback(is_ipv6, &(ipaddr))
 
 #if LWIP_IPV4
 
@@ -270,6 +273,7 @@ typedef ip4_addr_t ip_addr_t;
 #define ip_addr_copy(dest, src)                 ip4_addr_copy(dest, src)
 #define ip_addr_copy_from_ip4(dest, src)        ip4_addr_copy(dest, src)
 #define ip_addr_set_ip4_u32(ipaddr, val)        ip4_addr_set_u32(ip_2_ip4(ipaddr), val)
+#define ip_addr_set_ip4_u32_val(ipaddr, val)    ip_addr_set_ip4_u32(&(ipaddr), val)
 #define ip_addr_get_ip4_u32(ipaddr)             ip4_addr_get_u32(ip_2_ip4(ipaddr))
 #define ip_addr_set(dest, src)                  ip4_addr_set(dest, src)
 #define ip_addr_set_ipaddr(dest, src)           ip4_addr_set(dest, src)
