@@ -157,7 +157,7 @@ tcp_timer_needed(void)
 #endif /* LWIP_TCP */
 
 /**
- * Timer callback function that calls mld6_tmr() and reschedules itself.
+ * Timer callback function that calls cyclic->handler() and reschedules itself.
  *
  * @param arg unused argument
  */
