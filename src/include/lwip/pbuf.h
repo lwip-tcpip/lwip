@@ -90,25 +90,25 @@ typedef enum {
   /** Includes spare room for transport layer header, e.g. UDP header.
    * Use this if you intend to pass the pbuf to functions like udp_send().
    */
-  PBUF_TRANSPORT,
+  PBUF_TRANSPORT = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN,
   /** Includes spare room for IP header.
    * Use this if you intend to pass the pbuf to functions like raw_send().
    */
-  PBUF_IP,
+  PBUF_IP = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN,
   /** Includes spare room for link layer header (ethernet header).
    * Use this if you intend to pass the pbuf to functions like ethernet_output().
    * @see PBUF_LINK_HLEN
    */
-  PBUF_LINK,
+  PBUF_LINK = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN,
   /** Includes spare room for additional encapsulation header before ethernet
    * headers (e.g. 802.11).
    * Use this if you intend to pass the pbuf to functions like netif->linkoutput().
    * @see PBUF_LINK_ENCAPSULATION_HLEN
    */
-  PBUF_RAW_TX,
+  PBUF_RAW_TX = PBUF_LINK_ENCAPSULATION_HLEN,
   /** Use this for input packets in a netif driver when calling netif->input()
    * in the most common case - ethernet-layer netif driver. */
-  PBUF_RAW
+  PBUF_RAW = 0
 } pbuf_layer;
 
 

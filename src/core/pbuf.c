@@ -194,7 +194,7 @@ pbuf_init_alloced_pbuf(struct pbuf *p, void* payload, u16_t tot_len, u16_t len, 
  * layer at which the pbuf is allocated and the requested size
  * (from the size parameter).
  *
- * @param layer flag to define header size
+ * @param layer header size
  * @param length size of the pbuf's payload
  * @param type this parameter decides how and where the pbuf
  * should be allocated as follows:
@@ -222,38 +222,11 @@ struct pbuf *
 pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
 {
   struct pbuf *p;
-  u16_t offset;
+  u16_t offset = (u16_t)layer;
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc(length=%"U16_F")\n", length));
 
   if ((type == PBUF_REF) || (type == PBUF_ROM)) {
     return pbuf_alloc_reference(NULL, length, type);
-  }
-
-  /* determine header offset */
-  switch (layer) {
-  case PBUF_TRANSPORT:
-    /* add room for transport (often TCP) layer header */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
-    break;
-  case PBUF_IP:
-    /* add room for IP layer header */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN;
-    break;
-  case PBUF_LINK:
-    /* add room for link layer header */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
-    break;
-  case PBUF_RAW_TX:
-    /* add room for encapsulating link layer headers (e.g. 802.11) */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN;
-    break;
-  case PBUF_RAW:
-    /* no offset (e.g. RX buffers or chain successors) */
-    offset = 0;
-    break;
-  default:
-    LWIP_ASSERT("pbuf_alloc: bad pbuf layer", 0);
-    return NULL;
   }
 
   switch (type) {
@@ -370,7 +343,7 @@ pbuf_alloc_reference(void *payload, u16_t length, pbuf_type type)
  * Initialize a custom pbuf (already allocated).
  * Example of custom pbuf usage: @ref zerocopyrx
  *
- * @param l flag to define header size
+ * @param l header size
  * @param length size of the pbuf's payload
  * @param type type of the pbuf (only used to treat the pbuf accordingly, as
  *        this function allocates no memory)
@@ -386,35 +359,9 @@ struct pbuf*
 pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_custom *p,
                     void *payload_mem, u16_t payload_mem_len)
 {
-  u16_t offset;
+  u16_t offset = (u16_t)l;
   void *payload;
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloced_custom(length=%"U16_F")\n", length));
-
-  /* determine header offset */
-  switch (l) {
-  case PBUF_TRANSPORT:
-    /* add room for transport (often TCP) layer header */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
-    break;
-  case PBUF_IP:
-    /* add room for IP layer header */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN;
-    break;
-  case PBUF_LINK:
-    /* add room for link layer header */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
-    break;
-  case PBUF_RAW_TX:
-    /* add room for encapsulating link layer headers (e.g. 802.11) */
-    offset = PBUF_LINK_ENCAPSULATION_HLEN;
-    break;
-  case PBUF_RAW:
-    offset = 0;
-    break;
-  default:
-    LWIP_ASSERT("pbuf_alloced_custom: bad pbuf layer", 0);
-    return NULL;
-  }
 
   if (LWIP_MEM_ALIGN_SIZE(offset) + length > payload_mem_len) {
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_LEVEL_WARNING, ("pbuf_alloced_custom(length=%"U16_F") buffer too short\n", length));
