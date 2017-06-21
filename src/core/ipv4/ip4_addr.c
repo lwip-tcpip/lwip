@@ -281,7 +281,7 @@ ip4addr_ntoa(const ip4_addr_t *addr)
 }
 
 /**
- * Same as ipaddr_ntoa, but reentrant since a user-supplied buffer is used.
+ * Same as ip4addr_ntoa, but reentrant since a user-supplied buffer is used.
  *
  * @param addr ip address in network order to convert
  * @param buf target buffer where the string is stored

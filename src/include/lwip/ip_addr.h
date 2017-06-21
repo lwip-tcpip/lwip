@@ -143,6 +143,9 @@ extern const ip_addr_t ip_addr_any_type;
 #define ip_addr_set_ip4_u32(ipaddr, val)  do{if(ipaddr){ip4_addr_set_u32(ip_2_ip4(ipaddr), val); \
   IP_SET_TYPE(ipaddr, IPADDR_TYPE_V4); }}while(0)
 /** @ingroup ip4addr */
+#define ip_addr_set_ip4_u32_val(ipaddr, val)  do{ ip4_addr_set_u32(ip_2_ip4(&(ipaddr)), val); \
+  IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4); }while(0)
+/** @ingroup ip4addr */
 #define ip_addr_get_ip4_u32(ipaddr)  (((ipaddr) && IP_IS_V4(ipaddr)) ? \
   ip4_addr_get_u32(ip_2_ip4(ipaddr)) : 0)
 /** @ingroup ipaddr */
@@ -165,9 +168,17 @@ extern const ip_addr_t ip_addr_any_type;
   ip6_addr_set_any(ip_2_ip6(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V6); }else{ \
   ip4_addr_set_any(ip_2_ip4(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V4); }}while(0)
 /** @ingroup ipaddr */
+#define ip_addr_set_any_val(is_ipv6, ipaddr)      do{if(is_ipv6){ \
+  ip6_addr_set_any(ip_2_ip6(&(ipaddr))); IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_set_any(ip_2_ip4(&(ipaddr))); IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4); }}while(0)
+/** @ingroup ipaddr */
 #define ip_addr_set_loopback(is_ipv6, ipaddr) do{if(is_ipv6){ \
   ip6_addr_set_loopback(ip_2_ip6(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V6); }else{ \
   ip4_addr_set_loopback(ip_2_ip4(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V4); }}while(0)
+/** @ingroup ipaddr */
+#define ip_addr_set_loopback_val(is_ipv6, ipaddr) do{if(is_ipv6){ \
+  ip6_addr_set_loopback(ip_2_ip6(&(ipaddr))); IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_set_loopback(ip_2_ip4(&(ipaddr))); IP_SET_TYPE_VAL(ipaddr, IPADDR_TYPE_V4); }}while(0)
 /** @ingroup ipaddr */
 #define ip_addr_set_hton(dest, src)  do{if(IP_IS_V6(src)){ \
   ip6_addr_set_hton(ip_2_ip6(ipaddr), (src)); IP_SET_TYPE(dest, IPADDR_TYPE_V6); }else{ \
@@ -214,12 +225,8 @@ extern const ip_addr_t ip_addr_any_type;
 #define ip_addr_debug_print_val(debug, ipaddr) do { if(IP_IS_V6_VAL(ipaddr)) { \
   ip6_addr_debug_print_val(debug, *ip_2_ip6(&(ipaddr))); } else { \
   ip4_addr_debug_print_val(debug, *ip_2_ip4(&(ipaddr))); }}while(0)
-/** @ingroup ipaddr */
-#define ipaddr_ntoa(addr)   (((addr) == NULL) ? "NULL" : \
-  ((IP_IS_V6(addr)) ? ip6addr_ntoa(ip_2_ip6(addr)) : ip4addr_ntoa(ip_2_ip4(addr))))
-/** @ingroup ipaddr */
-#define ipaddr_ntoa_r(addr, buf, buflen)   (((addr) == NULL) ? "NULL" : \
-  ((IP_IS_V6(addr)) ? ip6addr_ntoa_r(ip_2_ip6(addr), buf, buflen) : ip4addr_ntoa_r(ip_2_ip4(addr), buf, buflen)))
+char *ipaddr_ntoa(const ip_addr_t *addr);
+char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen);
 int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 /** @ingroup ipaddr */

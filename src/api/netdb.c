@@ -342,9 +342,9 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   } else {
     /* service location specified, use loopback address */
     if ((hints != NULL) && (hints->ai_flags & AI_PASSIVE)) {
-      ip_addr_set_any(ai_family == AF_INET6, &addr);
+      ip_addr_set_any_val(ai_family == AF_INET6, addr);
     } else {
-      ip_addr_set_loopback(ai_family == AF_INET6, &addr);
+      ip_addr_set_loopback_val(ai_family == AF_INET6, addr);
     }
   }
 
