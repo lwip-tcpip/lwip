@@ -256,9 +256,6 @@ tcpip_input(struct pbuf *p, struct netif *inp)
  * tcpip_thread for easy access synchronization.
  * A function called in that way may access lwIP core code
  * without fearing concurrent access.
- * When LWIP_TCPIP_CORE_LOCKING is enabled, the specified
- * function is called after the lwIP core lock was aquired,
- * no message / mbox interaction is needed.
  * Blocks until the request is posted.
  * Must not be called from interrupt context!
  *
@@ -271,11 +268,6 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 err_t
 tcpip_callback(tcpip_callback_fn function, void *ctx)
 {
-#if LWIP_TCPIP_CORE_LOCKING
-  LOCK_TCPIP_CORE();
-  function(ctx);
-  UNLOCK_TCPIP_CORE();
-#else
   struct tcpip_msg *msg;
 
   LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
@@ -290,7 +282,6 @@ tcpip_callback(tcpip_callback_fn function, void *ctx)
   msg->msg.cb.ctx = ctx;
 
   sys_mbox_post(&mbox, msg);
-#endif
   return ERR_OK;
 }
 
