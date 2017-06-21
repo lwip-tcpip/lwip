@@ -48,6 +48,7 @@ struct lwip_mbox {
 typedef struct lwip_mbox sys_mbox_t;
 #define SYS_MBOX_NULL NULL
 #define sys_mbox_valid(mbox) ((mbox != NULL) && ((mbox)->sem != NULL)  && ((mbox)->sem != (void*)-1))
+#define sys_mbox_valid_val(mbox) (((mbox).sem != NULL)  && ((mbox).sem != (void*)-1))
 
 /* DWORD (thread id) is used for sys_thread_t but we won't include windows.h */
 typedef u32_t sys_thread_t;
