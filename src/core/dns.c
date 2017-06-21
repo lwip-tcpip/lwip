@@ -622,7 +622,7 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
         (lwip_strnicmp(name, dns_table[i].name, sizeof(dns_table[i].name)) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, dns_table[i].ipaddr)) {
       LWIP_DEBUGF(DNS_DEBUG, ("dns_lookup: \"%s\": found = ", name));
-      ip_addr_debug_print(DNS_DEBUG, &(dns_table[i].ipaddr));
+      ip_addr_debug_print_val(DNS_DEBUG, dns_table[i].ipaddr);
       LWIP_DEBUGF(DNS_DEBUG, ("\n"));
       if (addr) {
         ip_addr_copy(*addr, dns_table[i].ipaddr);
@@ -1103,7 +1103,7 @@ dns_correct_response(u8_t idx, u32_t ttl)
   entry->state = DNS_STATE_DONE;
 
   LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
-  ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
+  ip_addr_debug_print_val(DNS_DEBUG, entry->ipaddr);
   LWIP_DEBUGF(DNS_DEBUG, ("\n"));
 
   /* read the answer resource record's TTL, and maximize it if needed */

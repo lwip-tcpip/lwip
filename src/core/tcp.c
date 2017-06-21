@@ -1153,7 +1153,7 @@ tcp_slowtmr_start:
          (pcb->keep_idle + TCP_KEEP_DUR(pcb)) / TCP_SLOW_INTERVAL)
       {
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to "));
-        ip_addr_debug_print(TCP_DEBUG, &pcb->remote_ip);
+        ip_addr_debug_print_val(TCP_DEBUG, pcb->remote_ip);
         LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 
         ++pcb_remove;

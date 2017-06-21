@@ -230,9 +230,9 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   /* print the UDP source and destination */
   LWIP_DEBUGF(UDP_DEBUG, ("udp ("));
-  ip_addr_debug_print(UDP_DEBUG, ip_current_dest_addr());
+  ip_addr_debug_print_val(UDP_DEBUG, *ip_current_dest_addr());
   LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F") <-- (", lwip_ntohs(udphdr->dest)));
-  ip_addr_debug_print(UDP_DEBUG, ip_current_src_addr());
+  ip_addr_debug_print_val(UDP_DEBUG, *ip_current_src_addr());
   LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", lwip_ntohs(udphdr->src)));
 
   pcb = NULL;
@@ -245,9 +245,9 @@ udp_input(struct pbuf *p, struct netif *inp)
   for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
     /* print the PCB local and remote address */
     LWIP_DEBUGF(UDP_DEBUG, ("pcb ("));
-    ip_addr_debug_print(UDP_DEBUG, &pcb->local_ip);
+    ip_addr_debug_print_val(UDP_DEBUG, pcb->local_ip);
     LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F") <-- (", pcb->local_port));
-    ip_addr_debug_print(UDP_DEBUG, &pcb->remote_ip);
+    ip_addr_debug_print_val(UDP_DEBUG, pcb->remote_ip);
     LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", pcb->remote_port));
 
     /* compare PCB local addr+port to UDP destination addr+port */
@@ -974,7 +974,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
     udp_pcbs = pcb;
   }
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("udp_bind: bound to "));
-  ip_addr_debug_print(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, &pcb->local_ip);
+  ip_addr_debug_print_val(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, pcb->local_ip);
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, (", port %"U16_F")\n", pcb->local_port));
   return ERR_OK;
 }
@@ -1049,8 +1049,8 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   pcb->flags |= UDP_FLAGS_CONNECTED;
 
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("udp_connect: connected to "));
-  ip_addr_debug_print(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
-                      &pcb->remote_ip);
+  ip_addr_debug_print_val(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
+                      pcb->remote_ip);
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, (", port %"U16_F")\n", pcb->remote_port));
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
