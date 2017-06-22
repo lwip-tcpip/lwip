@@ -544,7 +544,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
           pbuf_header(inp, -(s16_t)(PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN));
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
 #if PPP_INPROC_IRQ_SAFE
-          if(tcpip_callback_with_block(pppos_input_callback, inp, 0) != ERR_OK) {
+          if(tcpip_try_callback(pppos_input_callback, inp) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);

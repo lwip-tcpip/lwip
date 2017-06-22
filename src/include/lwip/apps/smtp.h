@@ -40,7 +40,7 @@ typedef void (*smtp_result_fn)(void *arg, u8_t smtp_result, u16_t srv_err, err_t
  * which in turn can be used with tcpip_callback() to send mail
  * from interrupt context, e.g. like this:
  *    struct smtp_send_request *req; (to be filled)
- *    tcpip_callback_with_block(smtp_send_mail_int, (void*)req, 0);
+ *    tcpip_try_callback(smtp_send_mail_int, (void*)req);
  *
  * For member description, see parameter description of smtp_send_mail().
  * When using with tcpip_callback, this structure has to stay allocated

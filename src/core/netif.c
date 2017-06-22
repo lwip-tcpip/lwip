@@ -1000,7 +1000,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
-  tcpip_callback_with_block((tcpip_callback_fn)netif_poll, netif, 0);
+  tcpip_try_callback((tcpip_callback_fn)netif_poll, netif);
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
   return ERR_OK;

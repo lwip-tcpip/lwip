@@ -566,7 +566,7 @@ pbuf_free_int(void *p)
 err_t
 pbuf_free_callback(struct pbuf *p)
 {
-  return tcpip_callback_with_block(pbuf_free_int, p, 0);
+  return tcpip_try_callback(pbuf_free_int, p);
 }
 
 /**
@@ -579,7 +579,7 @@ pbuf_free_callback(struct pbuf *p)
 err_t
 mem_free_callback(void *m)
 {
-  return tcpip_callback_with_block(mem_free, m, 0);
+  return tcpip_try_callback(mem_free, m);
 }
 
 #endif /* !NO_SYS */
