@@ -476,8 +476,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
       || hlen > MAX_HDR) {
     PPPDEBUG(LOG_INFO, ("vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\n",
       IPH_PROTO(ip), hlen, nb->len));
-    comp->flags |= VJF_TOSS;
-    INCR(vjs_errorin);
+    vj_uncompress_err(comp);
     return -1;
   }
   cs = &comp->rstate[comp->last_recv = IPH_PROTO(ip)];
@@ -684,8 +683,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
   return vjlen;
 
 bad:
-  comp->flags |= VJF_TOSS;
-  INCR(vjs_errorin);
+  vj_uncompress_err(comp);
   return (-1);
 }
 
