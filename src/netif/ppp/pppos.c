@@ -217,6 +217,9 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     return ERR_MEM;
   }
 
+  /* Set nb->tot_len to actual payload length */
+  nb->tot_len = p->len;
+
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
@@ -261,6 +264,9 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
     MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     return ERR_MEM;
   }
+
+  /* Set nb->tot_len to actual payload length */
+  nb->tot_len = pb->tot_len;
 
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
