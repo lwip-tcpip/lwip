@@ -86,11 +86,6 @@
 #define SNTP_PORT                   123
 #endif
 
-/** Set this to 1 to allow config of SNTP server(s) by DNS name */
-#if !defined SNTP_SERVER_DNS || defined __DOXYGEN__
-#define SNTP_SERVER_DNS             0
-#endif
-
 /** Sanity check:
  * Define this to
  * - 0 to turn off sanity checks (default; smaller code)
