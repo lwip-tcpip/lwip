@@ -653,7 +653,7 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
 
   do {
     n = pbuf_try_get_at(p, response_offset++);
-    if (n < 0) {
+    if ((n < 0) || (response_offset == 0)) {
       return 0xFFFF;
     }
     /** @see RFC 1035 - 4.1.4. Message compression */
@@ -671,6 +671,9 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
           return 0xFFFF;
         }
         ++response_offset;
+        if (response_offset == 0) {
+          return 0xFFFF;
+        }
         ++query;
         --n;
       }
@@ -682,7 +685,10 @@ dns_compare_name(const char *query, struct pbuf* p, u16_t start_offset)
     }
   } while (n != 0);
 
-  return response_offset + 1;
+  if (response_offset == 0xFFFF) {
+    return 0xFFFF;
+  }
+  return (u16_t)(response_offset + 1);
 }
 
 /**
@@ -700,7 +706,7 @@ dns_skip_name(struct pbuf* p, u16_t query_idx)
 
   do {
     n = pbuf_try_get_at(p, offset++);
-    if (n < 0) {
+    if ((n < 0) || (offset == 0)) {
       return 0xFFFF;
     }
     /** @see RFC 1035 - 4.1.4. Message compression */
@@ -720,7 +726,10 @@ dns_skip_name(struct pbuf* p, u16_t query_idx)
     }
   } while (n != 0);
 
-  return offset + 1;
+  if (offset == 0xFFFF) {
+    return 0xFFFF;
+  }
+  return (u16_t)(offset + 1);
 }
 
 /**
@@ -782,9 +791,13 @@ dns_send(u8_t idx)
         ++n;
       }
       copy_len = (u16_t)(hostname - hostname_part);
+      if (query_idx + n + 1 > 0xFFFF) {
+        /* u16_t overflow */
+        goto overflow_return;
+      }
       pbuf_put_at(p, query_idx, n);
-      pbuf_take_at(p, hostname_part, copy_len, query_idx + 1);
-      query_idx += n + 1;
+      pbuf_take_at(p, hostname_part, copy_len, (u16_t)(query_idx + 1));
+      query_idx = (u16_t)(query_idx + n + 1);
     } while (*hostname != 0);
     pbuf_put_at(p, query_idx, 0);
     query_idx++;
@@ -838,6 +851,9 @@ dns_send(u8_t idx)
   }
 
   return err;
+overflow_return:
+  pbuf_free(p);
+  return ERR_VAL;
 }
 
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_RAND_SRC_PORT) != 0)
@@ -895,9 +911,9 @@ dns_alloc_pcb(void)
     }
   }
   /* if we come here, creating a new UDP pcb failed, so we have to use
-     an already existing one */
-  for (i = 0, idx = dns_last_pcb_idx + 1; i < DNS_MAX_SOURCE_PORTS; i++, idx++) {
-    if (idx >= DNS_MAX_SOURCE_PORTS) {
+     an already existing one (so overflow is no issue) */
+  for (i = 0, idx = (u8_t)(dns_last_pcb_idx + 1); i < DNS_MAX_SOURCE_PORTS; i++, idx++) {
+    if (idx >= LWIP_MAX(0xFF, DNS_MAX_SOURCE_PORTS)) {
       idx = 0;
     }
     if (dns_pcbs[idx] != NULL) {
@@ -1203,7 +1219,10 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
           goto memerr; /* ignore this packet */
         }
         /* skip the rest of the "question" part */
-        res_idx += SIZEOF_DNS_QUERY;
+        if (res_idx + SIZEOF_DNS_QUERY > 0xFFFF) {
+          goto memerr;
+        }
+        res_idx = (u16_t)(res_idx + SIZEOF_DNS_QUERY);
 
         /* Check for error. If so, call callback to inform. */
         if (hdr.flags2 & DNS_FLAG2_ERR_MASK) {
@@ -1220,7 +1239,10 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             if (pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx) != SIZEOF_DNS_ANSWER) {
               goto memerr; /* ignore this packet */
             }
-            res_idx += SIZEOF_DNS_ANSWER;
+            if (res_idx + SIZEOF_DNS_ANSWER > 0xFFFF) {
+              goto memerr;
+            }
+            res_idx = (u16_t)(res_idx + SIZEOF_DNS_ANSWER);
 
             if (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) {
 #if LWIP_IPV4
@@ -1266,7 +1288,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             if ((int)(res_idx + lwip_htons(ans.len)) > 0xFFFF) {
               goto memerr; /* ignore this packet */
             }
-            res_idx += lwip_htons(ans.len);
+            res_idx = (u16_t)(res_idx + lwip_htons(ans.len));
             --nanswers;
           }
 #if LWIP_IPV4 && LWIP_IPV6
@@ -1362,7 +1384,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
     }
     /* check if this is the oldest completed entry */
     if (entry->state == DNS_STATE_DONE) {
-      u8_t age = dns_seqno - entry->seqno;
+      u8_t age = (u8_t)(dns_seqno - entry->seqno);
       if (age > lseq) {
         lseq = age;
         lseqi = i;

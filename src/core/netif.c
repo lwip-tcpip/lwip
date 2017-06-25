@@ -161,7 +161,7 @@ netif_loopif_init(struct netif *netif)
   netif->output_ip6 = netif_loop_output_ipv6;
 #endif
 #if LWIP_LOOPIF_MULTICAST
-  netif->flags |= NETIF_FLAG_IGMP;
+  netif_set_flags(netif, NETIF_FLAG_IGMP);
 #endif
   return ERR_OK;
 }
@@ -380,7 +380,11 @@ netif_add(struct netif *netif,
       }
     } while (netif2 != NULL);
   }
-  netif_num = netif->num + 1;
+  if (netif->num == 254) {
+    netif_num = 0;
+  } else {
+    netif_num = (u8_t)(netif->num + 1);
+  }
 
   /* add this netif to the list */
   netif->next = netif_list;
@@ -724,7 +728,7 @@ void
 netif_set_up(struct netif *netif)
 {
   if (!(netif->flags & NETIF_FLAG_UP)) {
-    netif->flags |= NETIF_FLAG_UP;
+    netif_set_flags(netif, NETIF_FLAG_UP);
 
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
@@ -798,7 +802,7 @@ netif_set_down(struct netif *netif)
     }
 #endif
 
-    netif->flags &= ~NETIF_FLAG_UP;
+    netif_clear_flags(netif, NETIF_FLAG_UP);
     MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
 #if LWIP_IPV4 && LWIP_ARP
@@ -851,7 +855,7 @@ void
 netif_set_link_up(struct netif *netif)
 {
   if (!(netif->flags & NETIF_FLAG_LINK_UP)) {
-    netif->flags |= NETIF_FLAG_LINK_UP;
+    netif_set_flags(netif, NETIF_FLAG_LINK_UP);
 
 #if LWIP_DHCP
     dhcp_network_changed(netif);
@@ -883,7 +887,7 @@ void
 netif_set_link_down(struct netif *netif )
 {
   if (netif->flags & NETIF_FLAG_LINK_UP) {
-    netif->flags &= ~NETIF_FLAG_LINK_UP;
+    netif_clear_flags(netif, NETIF_FLAG_LINK_UP);
     NETIF_LINK_CALLBACK(netif);
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
     {
@@ -963,7 +967,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
     MIB2_STATS_NETIF_INC(stats_if, ifoutdiscards);
     return ERR_MEM;
   }
-  netif->loop_cnt_current += clen;
+  netif->loop_cnt_current = (u16_t)(netif->loop_cnt_current + clen);
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
   /* Copy the whole pbuf queue p into the single pbuf r */
@@ -1067,7 +1071,7 @@ netif_poll(struct netif *netif)
     /* adjust the number of pbufs on queue */
     LWIP_ASSERT("netif->loop_cnt_current underflow",
       ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
-    netif->loop_cnt_current -= clen;
+    netif->loop_cnt_current = (u16_t)(netif->loop_cnt_current - clen);
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
     /* 'in_end' now points to the last pbuf from 'in' */
@@ -1126,8 +1130,11 @@ netif_alloc_client_data_id(void)
   u8_t result = netif_client_id;
   netif_client_id++;
 
+#if LWIP_NUM_NETIF_CLIENT_DATA > 256
+#error LWIP_NUM_NETIF_CLIENT_DATA must be <= 256
+#endif
   LWIP_ASSERT("Increase LWIP_NUM_NETIF_CLIENT_DATA in lwipopts.h", result < LWIP_NUM_NETIF_CLIENT_DATA);
-  return result + LWIP_NETIF_CLIENT_DATA_INDEX_MAX;
+  return (u8_t)(result + LWIP_NETIF_CLIENT_DATA_INDEX_MAX);
 }
 #endif
 
