@@ -913,7 +913,7 @@ dns_alloc_pcb(void)
   /* if we come here, creating a new UDP pcb failed, so we have to use
      an already existing one (so overflow is no issue) */
   for (i = 0, idx = (u8_t)(dns_last_pcb_idx + 1); i < DNS_MAX_SOURCE_PORTS; i++, idx++) {
-    if (idx >= LWIP_MAX(0xFF, DNS_MAX_SOURCE_PORTS)) {
+    if (idx >= DNS_MAX_SOURCE_PORTS) {
       idx = 0;
     }
     if (dns_pcbs[idx] != NULL) {
