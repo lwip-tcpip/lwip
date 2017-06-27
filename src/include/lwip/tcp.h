@@ -152,11 +152,7 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
                                   } \
                                 } while(0)
 
-#if LWIP_WND_SCALE || TCP_LISTEN_BACKLOG || LWIP_TCP_TIMESTAMPS
 typedef u16_t tcpflags_t;
-#else
-typedef u8_t tcpflags_t;
-#endif
 
 /**
  * members common to struct tcp_pcb and struct tcp_listen_pcb
