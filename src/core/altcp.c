@@ -70,6 +70,9 @@ void
 altcp_free(struct altcp_pcb *conn)
 {
   if (conn) {
+    if (conn->fns && conn->fns->dealloc) {
+      conn->fns->dealloc(conn);
+    }
     memp_free(MEMP_ALTCP_PCB, conn);
   }
 }
