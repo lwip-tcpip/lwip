@@ -222,6 +222,7 @@ START_TEST(test_pbuf_take_at_edge)
     fail_unless(out[i] == testdata[i],
       "Bad data at pos %d, was %02X, expected %02X", p->len+i, out[i], testdata[i]);
   }
+  pbuf_free(p);
 }
 END_TEST
 
@@ -251,6 +252,7 @@ START_TEST(test_pbuf_get_put_at_edge)
   getdata = pbuf_get_at(p, p->len);
   fail_unless(*out == getdata,
     "pbuf_get_at() returned bad data at pos %d, was %02X, expected %02X", p->len, getdata, *out);
+  pbuf_free(p);
 }
 END_TEST
 
