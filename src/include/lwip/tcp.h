@@ -214,6 +214,9 @@ struct tcp_pcb {
 #define TF_TIMESTAMP   0x0400U   /* Timestamp option enabled */
 #endif
 #define TF_RTO         0x0800U /* RTO timer has fired, in-flight data moved to unsent and being retransmitted */
+#if LWIP_TCP_SACK_OUT
+#define TF_SACK        0x1000U /* Selective ACKs enabled */
+#endif
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
@@ -228,6 +231,19 @@ struct tcp_pcb {
   tcpwnd_size_t rcv_wnd;   /* receiver window available */
   tcpwnd_size_t rcv_ann_wnd; /* receiver window to announce */
   u32_t rcv_ann_right_edge; /* announced right edge of window */
+
+#ifdef LWIP_TCP_SACK_OUT
+  /* SACK ranges to include in ACK packets.
+     SACK entry is invalid if left=right. */
+  struct
+  {
+      /* Left edge of the SACK: the first acknowledged sequence number. */
+      u32_t left;
+
+      /* Right edge of the SACK: the last acknowledged sequence number +1 (so first NOT acknowledged). */
+      u32_t right;
+  } rcv_sacks[LWIP_TCP_MAX_SACK_NUM];
+#endif
 
   /* Retransmission timer. */
   s16_t rtime;
