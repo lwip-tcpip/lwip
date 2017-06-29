@@ -1048,26 +1048,6 @@ tcp_output(struct tcp_pcb *pcb)
      return tcp_send_empty_ack(pcb);
   }
 
-  /* useg should point to last segment on unacked queue */
-  useg = pcb->unacked;
-  if (useg != NULL) {
-    for (; useg->next != NULL; useg = useg->next);
-  }
-
-  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
-  if (netif == NULL) {
-    return ERR_RTE;
-  }
-
-  /* If we don't have a local IP address, we get one from netif */
-  if (ip_addr_isany(&pcb->local_ip)) {
-    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
-    if (local_ip == NULL) {
-      return ERR_RTE;
-    }
-    ip_addr_copy(pcb->local_ip, *local_ip);
-  }
-
 #if TCP_OUTPUT_DEBUG
   if (seg == NULL) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n",
@@ -1093,6 +1073,26 @@ tcp_output(struct tcp_pcb *pcb)
   if (seg == NULL) {
     /* nothing to send: shortcut out of here */
     goto output_done;
+  }
+
+  /* useg should point to last segment on unacked queue */
+  useg = pcb->unacked;
+  if (useg != NULL) {
+    for (; useg->next != NULL; useg = useg->next);
+  }
+
+  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
+  if (netif == NULL) {
+    return ERR_RTE;
+  }
+
+  /* If we don't have a local IP address, we get one from netif */
+  if (ip_addr_isany(&pcb->local_ip)) {
+    const ip_addr_t *local_ip = ip_netif_get_local_ip(netif, &pcb->remote_ip);
+    if (local_ip == NULL) {
+      return ERR_RTE;
+    }
+    ip_addr_copy(pcb->local_ip, *local_ip);
   }
 
   /* Check if we need to start the persistent timer when the next unsent segment
