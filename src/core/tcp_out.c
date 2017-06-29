@@ -1089,6 +1089,12 @@ tcp_output(struct tcp_pcb *pcb)
                  lwip_ntohl(seg->tcphdr->seqno), pcb->lastack));
   }
 #endif /* TCP_CWND_DEBUG */
+
+  if (seg == NULL) {
+    /* nothing to send: shortcut out of here */
+    goto output_done;
+  }
+
   /* Check if we need to start the persistent timer when the next unsent segment
    * does not fit within the remaining send window and RTO timer is not running (we
    * have no in-flight data). A traditional approach would fill the remaining window
@@ -1187,7 +1193,6 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
-output_done:
 #if TCP_OVERSIZE
   if (pcb->unsent == NULL) {
     /* last unsent has been removed, reset unsent_oversize */
@@ -1195,6 +1200,7 @@ output_done:
   }
 #endif /* TCP_OVERSIZE */
 
+output_done:
   pcb->flags &= ~TF_NAGLEMEMERR;
   return ERR_OK;
 }
