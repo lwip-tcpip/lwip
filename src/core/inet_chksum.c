@@ -315,10 +315,10 @@ inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
 
   addr = ip4_addr_get_u32(src);
   acc = (addr & 0xffffUL);
-  acc += ((addr >> 16) & 0xffffUL);
+  acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
   addr = ip4_addr_get_u32(dest);
-  acc += (addr & 0xffffUL);
-  acc += ((addr >> 16) & 0xffffUL);
+  acc = (u32_t)(acc + (addr & 0xffffUL));
+  acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
   /* fold down to 16 bits */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
@@ -349,11 +349,11 @@ ip6_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
 
   for (addr_part = 0; addr_part < 4; addr_part++) {
     addr = src->addr[addr_part];
-    acc += (addr & 0xffffUL);
-    acc += ((addr >> 16) & 0xffffUL);
+    acc = (u32_t)(acc + (addr & 0xffffUL));
+    acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
     addr = dest->addr[addr_part];
-    acc += (addr & 0xffffUL);
-    acc += ((addr >> 16) & 0xffffUL);
+    acc = (u32_t)(acc + (addr & 0xffffUL));
+    acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
   }
   /* fold down to 16 bits */
   acc = FOLD_U32T(acc);
@@ -461,10 +461,10 @@ inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
 
   addr = ip4_addr_get_u32(src);
   acc = (addr & 0xffffUL);
-  acc += ((addr >> 16) & 0xffffUL);
+  acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
   addr = ip4_addr_get_u32(dest);
-  acc += (addr & 0xffffUL);
-  acc += ((addr >> 16) & 0xffffUL);
+  acc = (u32_t)(acc + (addr & 0xffffUL));
+  acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
   /* fold down to 16 bits */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
@@ -497,11 +497,11 @@ ip6_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
 
   for (addr_part = 0; addr_part < 4; addr_part++) {
     addr = src->addr[addr_part];
-    acc += (addr & 0xffffUL);
-    acc += ((addr >> 16) & 0xffffUL);
+    acc = (u32_t)(acc + (addr & 0xffffUL));
+    acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
     addr = dest->addr[addr_part];
-    acc += (addr & 0xffffUL);
-    acc += ((addr >> 16) & 0xffffUL);
+    acc = (u32_t)(acc + (addr & 0xffffUL));
+    acc = (u32_t)(acc + ((addr >> 16) & 0xffffUL));
   }
   /* fold down to 16 bits */
   acc = FOLD_U32T(acc);
