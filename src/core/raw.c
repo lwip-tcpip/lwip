@@ -284,7 +284,7 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
     ip6_addr_select_zone(ip_2_ip6(&pcb->remote_ip), ip_2_ip6(&pcb->local_ip));
   }
 #endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
-  pcb->flags |= RAW_FLAGS_CONNECTED;
+  raw_set_flags(pcb, RAW_FLAGS_CONNECTED);
   return ERR_OK;
 }
 
@@ -309,7 +309,7 @@ raw_disconnect(struct raw_pcb *pcb)
 #endif
   pcb->netif_idx = NETIF_NO_INDEX;
   /* mark PCB as unconnected */
-  pcb->flags &= ~RAW_FLAGS_CONNECTED;
+  raw_clear_flags(pcb, RAW_FLAGS_CONNECTED);
 }
 
 /**
@@ -468,7 +468,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   } else {
     /* first pbuf q equals given pbuf */
     q = p;
-    if (pbuf_header(q, -header_size)) {
+    if (pbuf_header(q, (s16_t)-header_size)) {
       LWIP_ASSERT("Can't restore header we just removed!", 0);
       return ERR_MEM;
     }

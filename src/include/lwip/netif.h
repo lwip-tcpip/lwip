@@ -428,7 +428,7 @@ void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
 #endif /* LWIP_IPV4 */
 
 #define netif_set_flags(netif, set_flags)     do { (netif)->flags = (u8_t)((netif)->flags |  (set_flags)); } while(0)
-#define netif_clear_flags(netif, set_flags)   do { (netif)->flags = (u8_t)((netif)->flags & ~(set_flags)); } while(0)
+#define netif_clear_flags(netif, clr_flags)   do { (netif)->flags = (u8_t)((netif)->flags & ~(clr_flags)); } while(0)
 #define netif_is_flag_set(nefif, flag)        (((netif)->flags & (flag)) != 0)
 
 void netif_set_up(struct netif *netif);

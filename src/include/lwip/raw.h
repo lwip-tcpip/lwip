@@ -118,6 +118,10 @@ void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *re
 #define          raw_flags(pcb) ((pcb)->flags)
 #define          raw_setflags(pcb,f)  ((pcb)->flags = (f))
 
+#define          raw_set_flags(pcb, set_flags)     do { (pcb)->flags = (u8_t)((pcb)->flags |  (set_flags)); } while(0)
+#define          raw_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (u8_t)((pcb)->flags & ~(clr_flags)); } while(0)
+#define          raw_is_flag_set(pcb, flag)        (((pcb)->flags & (flag)) != 0)
+
 /* The following functions are the lower layer interface to RAW. */
 u8_t             raw_input      (struct pbuf *p, struct netif *inp);
 #define raw_init() /* Compatibility define, no init needed. */

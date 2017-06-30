@@ -358,6 +358,10 @@ void             tcp_accept  (struct tcp_pcb *pcb, tcp_accept_fn accept);
 #endif /* LWIP_CALLBACK_API */
 void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval);
 
+#define          tcp_set_flags(pcb, set_flags)     do { (pcb)->flags = (tcpflags_t)((pcb)->flags |  (set_flags)); } while(0)
+#define          tcp_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (tcpflags_t)((pcb)->flags & ~(clr_flags)); } while(0)
+#define          tcp_is_flag_set(pcb, flag)        (((pcb)->flags & (flag)) != 0)
+
 #if LWIP_TCP_TIMESTAMPS
 #define          tcp_mss(pcb)             (((pcb)->flags & TF_TIMESTAMP) ? ((pcb)->mss - 12)  : (pcb)->mss)
 #else /* LWIP_TCP_TIMESTAMPS */
@@ -369,11 +373,11 @@ void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interv
 /** @ingroup tcp_raw */
 #define          tcp_sndqueuelen(pcb)     ((pcb)->snd_queuelen)
 /** @ingroup tcp_raw */
-#define          tcp_nagle_disable(pcb)   ((pcb)->flags |= TF_NODELAY)
+#define          tcp_nagle_disable(pcb)   tcp_set_flags(pcb, TF_NODELAY)
 /** @ingroup tcp_raw */
-#define          tcp_nagle_enable(pcb)    ((pcb)->flags = (tcpflags_t)((pcb)->flags & ~TF_NODELAY))
+#define          tcp_nagle_enable(pcb)    tcp_clear_flags(pcb, TF_NODELAY)
 /** @ingroup tcp_raw */
-#define          tcp_nagle_disabled(pcb)  (((pcb)->flags & TF_NODELAY) != 0)
+#define          tcp_nagle_disabled(pcb)  tcp_is_flag_set(pcb, TF_NODELAY)
 
 #if TCP_LISTEN_BACKLOG
 #define          tcp_backlog_set(pcb, new_backlog) do { \

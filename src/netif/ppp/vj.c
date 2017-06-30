@@ -471,7 +471,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
   hlen = IPH_HL(ip) << 2;
   if (IPH_PROTO(ip) >= MAX_SLOTS
       || hlen + sizeof(struct tcp_hdr) > nb->len
-      || (hlen += TCPH_HDRLEN(((struct tcp_hdr *)&((char *)ip)[hlen])) << 2)
+      || (hlen += TCPH_HDRLEN_BYTES((struct tcp_hdr *)&((char *)ip)[hlen]))
           > nb->len
       || hlen > MAX_HDR) {
     PPPDEBUG(LOG_INFO, ("vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\n",
