@@ -1587,7 +1587,7 @@ tcp_receive(struct tcp_pcb *pcb)
         tcp_ack(pcb);
 
 #if LWIP_TCP_SACK_OUT
-        if (!LWIP_TCP_SACK_VALID(pcb, 0)) {
+        if (LWIP_TCP_SACK_VALID(pcb, 0)) {
           /* Normally the ACK for the data received could be piggy-backed on a data packet,
              but lwIP currently does not support including SACKs in data packets. So we force
              it to respond with an empty ACK packet (only if there is at least one SACK to be sent).
