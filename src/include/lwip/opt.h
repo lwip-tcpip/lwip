@@ -1215,13 +1215,13 @@
  * LWIP_TCP_SACK_OUT==1: TCP will support sending selective acknowledgements (SACKs).
  */
 #if !defined LWIP_TCP_SACK_OUT || defined __DOXYGEN__
-#define LWIP_TCP_SACK_OUT                        0
+#define LWIP_TCP_SACK_OUT               0
 #endif
 
 /**
- * LWIP_TCP_MAX_SACK_NUM: The maximum number of SACK values to include in TCP packets.
+ * LWIP_TCP_MAX_SACK_NUM: The maximum number of SACK values to include in TCP segments.
  * Must be at least 1, but is only used if LWIP_TCP_SACK_OUT is enabled.
- * NOTE: Even though we never send more than 4 SACK ranges in a single packet
+ * NOTE: Even though we never send more than 3 or 4 SACK ranges in a single segment
  * (depending on other options), setting this option to values greater than 4 is not pointless.
  * This is basically the max number of SACK ranges we want to keep track of.
  * As new data is delivered, some of the SACK ranges may be removed or merged.
@@ -1229,7 +1229,7 @@
  * The amount of memory used to store SACK ranges is LWIP_TCP_MAX_SACK_NUM * 8 bytes for each TCP PCB.
  */
 #if !defined LWIP_TCP_MAX_SACK_NUM || defined __DOXYGEN__
-#define LWIP_TCP_MAX_SACK_NUM                4
+#define LWIP_TCP_MAX_SACK_NUM           4
 #endif
 
 /**

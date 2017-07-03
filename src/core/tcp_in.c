@@ -59,6 +59,8 @@
 #include "lwip/nd6.h"
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
+#include <string.h>
+
 /** Initial CWND calculation as defined RFC 2581 */
 #define LWIP_TCP_CALC_INITIAL_CWND(mss) LWIP_MIN((4U * (mss)), LWIP_MAX((2U * (mss)), 4380U));
 
@@ -92,8 +94,10 @@ static void tcp_timewait_input(struct tcp_pcb *pcb);
 #if LWIP_TCP_SACK_OUT
 static void tcp_add_sack(struct tcp_pcb *pcb, u32_t left, u32_t right);
 static void tcp_remove_sacks_lt(struct tcp_pcb *pcb, u32_t seq);
+#if TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
 static void tcp_remove_sacks_gt(struct tcp_pcb *pcb, u32_t seq);
-#endif
+#endif /* TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS */
+#endif /* LWIP_TCP_SACK_OUT */
 
 /**
  * The initial input processing of TCP. It verifies the TCP header, demultiplexes
@@ -1503,7 +1507,7 @@ tcp_receive(struct tcp_pcb *pcb)
               memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
             }
           }
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
         }
 #endif /* TCP_QUEUE_OOSEQ */
 
@@ -1583,14 +1587,14 @@ tcp_receive(struct tcp_pcb *pcb)
         tcp_ack(pcb);
 
 #if LWIP_TCP_SACK_OUT
-        if (pcb->rcv_sacks[0].left != pcb->rcv_sacks[0].right) {
+        if (!LWIP_TCP_SACK_VALID(pcb, 0)) {
           /* Normally the ACK for the data received could be piggy-backed on a data packet,
              but lwIP currently does not support including SACKs in data packets. So we force
              it to respond with an empty ACK packet (only if there is at least one SACK to be sent).
              NOTE: tcp_send_empty_ack() on success clears the ACK flags (set by tcp_ack()) */
           tcp_send_empty_ack(pcb);
         }
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
 
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
         if (ip_current_is_v6()) {
@@ -1612,7 +1616,7 @@ tcp_receive(struct tcp_pcb *pcb)
             pcb->rcv_sacks[0].left = seqno;
             pcb->rcv_sacks[0].right = seqno + inseg.len;
           }
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
         } else {
           /* If the queue is not empty, we walk through the queue and
              try to find a place where the sequence number of the
@@ -1628,9 +1632,9 @@ tcp_receive(struct tcp_pcb *pcb)
 
 #if LWIP_TCP_SACK_OUT
           /* This is the left edge of the lowest possible SACK range.
-             It may start before the newly received segment. */
+             It may start before the newly received segment (possibly adjusted below). */
           u32_t sackbeg = TCP_SEQ_LT(seqno, pcb->ooseq->tcphdr->seqno) ? seqno : pcb->ooseq->tcphdr->seqno;
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
           prev = NULL;
           for (next = pcb->ooseq; next != NULL; next = next->next) {
             if (seqno == next->tcphdr->seqno) {
@@ -1701,7 +1705,7 @@ tcp_receive(struct tcp_pcb *pcb)
               if (prev != NULL && prev->tcphdr->seqno + prev->len != next->tcphdr->seqno) {
                 sackbeg = next->tcphdr->seqno;
               }
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
 
               /* We don't use 'prev' below, so let's set it to current 'next'.
                  This way even if we break the loop below, 'prev' will be pointing
@@ -1789,9 +1793,10 @@ tcp_receive(struct tcp_pcb *pcb)
 #if LWIP_TCP_SACK_OUT
              if (pcb->flags & TF_SACK) {
                /* Let's remove all SACKs from next's seqno up. */
+               /* @todo: is this really allowed??? */
                tcp_remove_sacks_gt(pcb, next->tcphdr->seqno);
              }
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
              /* too much ooseq data, dump this and everything after it */
              tcp_segs_free(next);
              if (prev == NULL) {
@@ -1904,7 +1909,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
           pcb->rcv_wnd = pcb->rcv_ann_wnd = TCP_WND;
         }
         break;
-#endif
+#endif /* LWIP_WND_SCALE */
 #if LWIP_TCP_TIMESTAMPS
       case LWIP_TCP_OPT_TS:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: TS\n"));
@@ -1929,7 +1934,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
         /* Advance to next option (6 bytes already read) */
         tcp_optidx += LWIP_TCP_OPT_LEN_TS - 6;
         break;
-#endif
+#endif /* LWIP_TCP_TIMESTAMPS */
 #if LWIP_TCP_SACK_OUT
       case LWIP_TCP_OPT_SACK_PERM:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: SACK_PERM\n"));
@@ -1944,7 +1949,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
           pcb->flags |= TF_SACK;
         }
         break;
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
       default:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: other\n"));
         data = tcp_getoptbyte();
@@ -1994,7 +1999,7 @@ tcp_add_sack(struct tcp_pcb *pcb, u32_t left, u32_t right)
      while moving all other SACKs forward.
      We run this loop for all entries, until we find the first invalid one.
      There is no point checking after that. */
-  for (i = unused_idx = 0; (i < LWIP_TCP_MAX_SACK_NUM) && (pcb->rcv_sacks[i].left != pcb->rcv_sacks[i].right); ++i) {
+  for (i = unused_idx = 0; (i < LWIP_TCP_MAX_SACK_NUM) && LWIP_TCP_SACK_VALID(pcb, i); ++i) {
     /* We only want to use SACK at [i] if it doesn't overlap with left:right range.
        It does not overlap if its right side is before the newly added SACK,
        or if its left side is after the newly added SACK.
@@ -2048,7 +2053,7 @@ tcp_remove_sacks_lt(struct tcp_pcb *pcb, u32_t seq)
 
   /* We run this loop for all entries, until we find the first invalid one.
      There is no point checking after that. */
-  for (i = unused_idx = 0; (i < LWIP_TCP_MAX_SACK_NUM) && (pcb->rcv_sacks[i].left != pcb->rcv_sacks[i].right); ++i) {
+  for (i = unused_idx = 0; (i < LWIP_TCP_MAX_SACK_NUM) && LWIP_TCP_SACK_VALID(pcb, i); ++i) {
     /* We only want to use SACK at index [i] if its right side is > 'seq'. */
     if (TCP_SEQ_GT(pcb->rcv_sacks[i].right, seq)) {
       if (unused_idx != i) {
@@ -2069,6 +2074,7 @@ tcp_remove_sacks_lt(struct tcp_pcb *pcb, u32_t seq)
   }
 }
 
+#if TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
 /**
  * Called to remove a range of SACKs.
  *
@@ -2087,7 +2093,7 @@ tcp_remove_sacks_gt(struct tcp_pcb *pcb, u32_t seq)
 
   /* We run this loop for all entries, until we find the first invalid one.
      There is no point checking after that. */
-  for (i = unused_idx = 0; (i < LWIP_TCP_MAX_SACK_NUM) && (pcb->rcv_sacks[i].left != pcb->rcv_sacks[i].right); ++i) {
+  for (i = unused_idx = 0; (i < LWIP_TCP_MAX_SACK_NUM) && LWIP_TCP_SACK_VALID(pcb, i); ++i) {
     /* We only want to use SACK at index [i] if its left side is < 'seq'. */
     if (TCP_SEQ_LT(pcb->rcv_sacks[i].left, seq)) {
       if (unused_idx != i) {
@@ -2107,6 +2113,7 @@ tcp_remove_sacks_gt(struct tcp_pcb *pcb, u32_t seq)
     pcb->rcv_sacks[i].left = pcb->rcv_sacks[i].right = 0;
   }
 }
+#endif /* TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS */
 
 #endif /* LWIP_TCP_SACK_OUT */
 

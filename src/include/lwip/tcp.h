@@ -152,6 +152,17 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
                                   } \
                                 } while(0)
 
+#if LWIP_TCP_SACK_OUT
+/** SACK ranges to include in ACK packets.
+ * SACK entry is invalid if left==right. */
+struct tcp_sack_range {
+  /** Left edge of the SACK: the first acknowledged sequence number. */
+  u32_t left;
+  /** Right edge of the SACK: the last acknowledged sequence number +1 (so first NOT acknowledged). */
+  u32_t right;
+};
+#endif /* LWIP_TCP_SACK_OUT */
+
 typedef u16_t tcpflags_t;
 
 /**
@@ -232,18 +243,11 @@ struct tcp_pcb {
   tcpwnd_size_t rcv_ann_wnd; /* receiver window to announce */
   u32_t rcv_ann_right_edge; /* announced right edge of window */
 
-#ifdef LWIP_TCP_SACK_OUT
-  /* SACK ranges to include in ACK packets.
-     SACK entry is invalid if left=right. */
-  struct
-  {
-      /* Left edge of the SACK: the first acknowledged sequence number. */
-      u32_t left;
-
-      /* Right edge of the SACK: the last acknowledged sequence number +1 (so first NOT acknowledged). */
-      u32_t right;
-  } rcv_sacks[LWIP_TCP_MAX_SACK_NUM];
-#endif
+#if LWIP_TCP_SACK_OUT
+  /* SACK ranges to include in ACK packets (entry is invalid if left==right) */
+  struct tcp_sack_range rcv_sacks[LWIP_TCP_MAX_SACK_NUM];
+#define LWIP_TCP_SACK_VALID(pcb, idx) ((pcb)->rcv_sacks[idx].left == (pcb)->rcv_sacks[idx].right)
+#endif /* LWIP_TCP_SACK_OUT */
 
   /* Retransmission timer. */
   s16_t rtime;

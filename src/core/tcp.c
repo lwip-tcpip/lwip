@@ -1181,7 +1181,7 @@ tcp_slowtmr_start:
       LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: dropping OOSEQ queued data\n"));
 #if LWIP_TCP_SACK_OUT
       memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
     }
 #endif /* TCP_QUEUE_OOSEQ */
 
@@ -1893,7 +1893,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     pcb->ooseq = NULL;
 #if LWIP_TCP_SACK_OUT
     memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
-#endif
+#endif /* LWIP_TCP_SACK_OUT */
 #endif /* TCP_QUEUE_OOSEQ */
 
     /* Stop the retransmission timer as it will expect data on unacked
