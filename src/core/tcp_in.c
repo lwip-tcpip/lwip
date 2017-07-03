@@ -154,7 +154,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* CHECKSUM_CHECK_TCP */
 
   /* sanity-check header length */
-  hdrlen_bytes = TCPH_HDRLEN(tcphdr) * 4;
+  hdrlen_bytes = TCPH_HDRLEN_BYTES(tcphdr);
   if ((hdrlen_bytes < TCP_HLEN) || (hdrlen_bytes > p->tot_len)) {
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: invalid header length (%"U16_F")\n", (u16_t)hdrlen_bytes));
     TCP_STATS_INC(tcp.lenerr);
@@ -163,12 +163,12 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
-  tcphdr_optlen = hdrlen_bytes - TCP_HLEN;
+  tcphdr_optlen = (u16_t)(hdrlen_bytes - TCP_HLEN);
   tcphdr_opt2 = NULL;
   if (p->len >= hdrlen_bytes) {
     /* all options are in the first pbuf */
     tcphdr_opt1len = tcphdr_optlen;
-    pbuf_header(p, -(s16_t)hdrlen_bytes); /* cannot fail */
+    pbuf_header(p, (s16_t)-(s16_t)hdrlen_bytes); /* cannot fail */
   } else {
     u16_t opt2len;
     /* TCP header fits into first pbuf, options don't - data is in the next pbuf */

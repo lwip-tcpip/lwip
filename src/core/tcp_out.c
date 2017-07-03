@@ -1311,12 +1311,12 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
 #endif /* TCP_CHECKSUM_ON_COPY_SANITY_CHECK */
     if ((seg->flags & TF_SEG_DATA_CHECKSUMMED) == 0) {
       LWIP_ASSERT("data included but not checksummed",
-        seg->p->tot_len == (TCPH_HDRLEN(seg->tcphdr) * 4));
+        seg->p->tot_len == TCPH_HDRLEN_BYTES(seg->tcphdr);
     }
 
     /* rebuild TCP header checksum (TCP header changes for retransmissions!) */
     acc = ip_chksum_pseudo_partial(seg->p, IP_PROTO_TCP,
-      seg->p->tot_len, TCPH_HDRLEN(seg->tcphdr) * 4, &pcb->local_ip, &pcb->remote_ip);
+      seg->p->tot_len, TCPH_HDRLEN_BYTES(seg->tcphdr), &pcb->local_ip, &pcb->remote_ip);
     /* add payload checksum */
     if (seg->chksum_swapped) {
       seg->chksum = SWAP_BYTES_IN_WORD(seg->chksum);
