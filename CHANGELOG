@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2017-07-03: Jakub Schmidtke
+  * tcp: added support for sending TCP SACKs
+
   2017-06-20: Joel Cunningham
   * netconn/netdb: added core locking support to netconn_gethostbyname (task #14523)
 
