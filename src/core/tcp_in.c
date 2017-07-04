@@ -1793,7 +1793,6 @@ tcp_receive(struct tcp_pcb *pcb)
 #if LWIP_TCP_SACK_OUT
              if (pcb->flags & TF_SACK) {
                /* Let's remove all SACKs from next's seqno up. */
-               /* @todo: is this really allowed??? */
                tcp_remove_sacks_gt(pcb, next->tcphdr->seqno);
              }
 #endif /* LWIP_TCP_SACK_OUT */
