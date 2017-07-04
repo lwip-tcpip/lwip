@@ -270,13 +270,15 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     }
   case PBUF_RAM:
     {
-      mem_size_t alloc_len = LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF + offset) + LWIP_MEM_ALIGN_SIZE(length);
-      
+      u16_t payload_len = (u16_t)(LWIP_MEM_ALIGN_SIZE(offset) + LWIP_MEM_ALIGN_SIZE(length));
+      mem_size_t alloc_len = (mem_size_t)(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF) + payload_len);
+
       /* bug #50040: Check for integer overflow when calculating alloc_len */
-      if (alloc_len < LWIP_MEM_ALIGN_SIZE(length)) {
+      if ((payload_len < LWIP_MEM_ALIGN_SIZE(length)) ||
+          (alloc_len < LWIP_MEM_ALIGN_SIZE(length))) {
         return NULL;
       }
-    
+
       /* If pbuf is to be allocated in RAM, allocate memory for it. */
       p = (struct pbuf*)mem_malloc(alloc_len);
       if (p == NULL) {
@@ -1045,7 +1047,7 @@ void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
 
     /* continue until the total length (summed up as u16_t) overflows */
     while ((r != NULL) && ((u16_t)(tot_len_front + r->len) > tot_len_front)) {
-      tot_len_front += r->len;
+      tot_len_front = (u16_t)(tot_len_front + r->len);
       i = r;
       r = r->next;
     }
@@ -1056,7 +1058,7 @@ void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
     if (r != NULL) {
       /* Update the tot_len field in the first part */
       for (i = p; i != NULL; i = i->next) {
-        i->tot_len -= r->tot_len;
+        i->tot_len = (u16_t)(i->tot_len - r->tot_len);
         LWIP_ASSERT("tot_len/len mismatch in last pbuf",
                     (i->next != NULL) || (i->tot_len == i->len));
       }

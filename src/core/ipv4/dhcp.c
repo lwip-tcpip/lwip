@@ -319,7 +319,7 @@ dhcp_check(struct netif *netif)
     dhcp->tries++;
   }
   msecs = 500;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_check(): set request timeout %"U16_F" msecs\n", msecs));
 }
 #endif /* DHCP_DOES_ARP_CHECK */
@@ -396,8 +396,6 @@ dhcp_select(struct netif *netif)
 
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_REQUESTING, dhcp->msg_out, DHCP_REQUEST);
     dhcp_option_trailer(dhcp);
-    /* shrink the pbuf to the actual content length */
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* send broadcast to any DHCP server */
     udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
@@ -409,8 +407,8 @@ dhcp_select(struct netif *netif)
   if (dhcp->tries < 255) {
     dhcp->tries++;
   }
-  msecs = (dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  msecs = (u16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_select(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
@@ -554,7 +552,7 @@ dhcp_t1_timeout(struct netif *netif)
     /* Calculate next timeout */
     if (((dhcp->t2_timeout - dhcp->lease_used) / 2) >= ((60 + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS))
     {
-       dhcp->t1_renew_time = ((dhcp->t2_timeout - dhcp->lease_used) / 2);
+       dhcp->t1_renew_time = (u16_t)((dhcp->t2_timeout - dhcp->lease_used) / 2);
     }
   }
 }
@@ -581,7 +579,7 @@ dhcp_t2_timeout(struct netif *netif)
     /* Calculate next timeout */
     if (((dhcp->t0_timeout - dhcp->lease_used) / 2) >= ((60 + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS))
     {
-       dhcp->t2_rebind_time = ((dhcp->t0_timeout - dhcp->lease_used) / 2);
+       dhcp->t2_rebind_time = (u16_t)((dhcp->t0_timeout - dhcp->lease_used) / 2);
     }
   }
 }
@@ -832,8 +830,6 @@ dhcp_inform(struct netif *netif)
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, &dhcp, DHCP_STATE_INFORMING, dhcp.msg_out, DHCP_INFORM);
     dhcp_option_trailer(&dhcp);
 
-    pbuf_realloc(dhcp.p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp.options_out_len);
-
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
 
     udp_sendto_if(dhcp_pcb, dhcp.p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
@@ -944,8 +940,6 @@ dhcp_decline(struct netif *netif)
 
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_BACKING_OFF, dhcp->msg_out, DHCP_DECLINE);
     dhcp_option_trailer(dhcp);
-    /* resize pbuf to reflect true size of options */
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* per section 4.4.4, broadcast DECLINE messages */
     udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
@@ -959,7 +953,7 @@ dhcp_decline(struct netif *netif)
     dhcp->tries++;
   }
   msecs = 10*1000;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_decline(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
@@ -996,9 +990,6 @@ dhcp_discover(struct netif *netif)
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_SELECTING, dhcp->msg_out, DHCP_DISCOVER);
     dhcp_option_trailer(dhcp);
 
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: realloc()ing\n"));
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
-
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
     udp_sendto_if_src(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
@@ -1016,8 +1007,8 @@ dhcp_discover(struct netif *netif)
     autoip_start(netif);
   }
 #endif /* LWIP_DHCP_AUTOIP_COOP */
-  msecs = (dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  msecs = (u16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
@@ -1167,8 +1158,6 @@ dhcp_renew(struct netif *netif)
     /* append DHCP message trailer */
     dhcp_option_trailer(dhcp);
 
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
-
     udp_sendto_if(dhcp_pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
     dhcp_delete_msg(dhcp);
 
@@ -1180,8 +1169,8 @@ dhcp_renew(struct netif *netif)
     dhcp->tries++;
   }
   /* back-off on retries, but to a maximum of 20 seconds */
-  msecs = dhcp->tries < 10 ? dhcp->tries * 2000 : 20 * 1000;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  msecs = (u16_t)(dhcp->tries < 10 ? dhcp->tries * 2000 : 20 * 1000);
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_renew(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
@@ -1219,8 +1208,6 @@ dhcp_rebind(struct netif *netif)
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_REBINDING, dhcp->msg_out, DHCP_DISCOVER);
     dhcp_option_trailer(dhcp);
 
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
-
     /* broadcast to server */
     udp_sendto_if(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_msg(dhcp);
@@ -1231,8 +1218,8 @@ dhcp_rebind(struct netif *netif)
   if (dhcp->tries < 255) {
     dhcp->tries++;
   }
-  msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  msecs = (u16_t)(dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000);
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
@@ -1268,8 +1255,6 @@ dhcp_reboot(struct netif *netif)
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_REBOOTING, dhcp->msg_out, DHCP_REQUEST);
     dhcp_option_trailer(dhcp);
 
-    pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
-
     /* broadcast to server */
     udp_sendto_if(dhcp_pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_msg(dhcp);
@@ -1280,8 +1265,8 @@ dhcp_reboot(struct netif *netif)
   if (dhcp->tries < 255) {
     dhcp->tries++;
   }
-  msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
+  msecs = (u16_t)(dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000);
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
@@ -1331,8 +1316,6 @@ dhcp_release_and_stop(struct netif *netif)
 
       LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, dhcp->state, dhcp->msg_out, DHCP_RELEASE);
       dhcp_option_trailer(dhcp);
-
-      pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
       udp_sendto_if(dhcp_pcb, dhcp->p_out, &server_ip_addr, DHCP_SERVER_PORT, netif);
       dhcp_delete_msg(dhcp);
@@ -1508,8 +1491,8 @@ dhcp_parse_reply(struct dhcp *dhcp, struct pbuf *p)
 again:
   q = p;
   while ((q != NULL) && (options_idx >= q->len)) {
-    options_idx -= q->len;
-    options_idx_max -= q->len;
+    options_idx = (u16_t)(options_idx - q->len);
+    options_idx_max = (u16_t)(options_idx_max - q->len);
     q = q->next;
   }
   if (q == NULL) {
@@ -1524,7 +1507,11 @@ again:
     u8_t len;
     u8_t decode_len = 0;
     int decode_idx = -1;
-    u16_t val_offset = offset + 2;
+    u16_t val_offset = (u16_t)(offset + 2);
+    if (val_offset < offset) {
+      /* overflow */
+      return ERR_BUF;
+    }
     /* len byte might be in the next pbuf */
     if ((offset + 1) < q->len) {
       len = options[offset + 1];
@@ -1604,7 +1591,11 @@ again:
           op, len, q, val_offset);
         break;
     }
-    offset += len + 2;
+    if (offset + len + 2 > 0xFFFF) {
+      /* overflow */
+      return ERR_BUF;
+    }
+    offset = (u16_t)(offset + len + 2);
     if (decode_len > 0) {
       u32_t value = 0;
       u16_t copy_len;
@@ -1617,11 +1608,17 @@ decode_next:
         }
         if (decode_len > 4) {
           /* decode more than one u32_t */
+          u16_t next_val_offset;
           LWIP_ERROR("decode_len %% 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
           dhcp_got_option(dhcp, decode_idx);
           dhcp_set_option_value(dhcp, decode_idx, lwip_htonl(value));
-          decode_len -= 4;
-          val_offset += 4;
+          decode_len = (u8_t)(decode_len - 4);
+          next_val_offset = (u16_t)(val_offset + 4);
+          if (next_val_offset < val_offset) {
+            /* overflow */
+            return ERR_BUF;
+          }
+          val_offset = next_val_offset;
           decode_idx++;
           goto decode_next;
         } else if (decode_len == 4) {
@@ -1635,8 +1632,8 @@ decode_next:
       }
     }
     if (offset >= q->len) {
-      offset -= q->len;
-      offset_max -= q->len;
+      offset = (u16_t)(offset - q->len);
+      offset_max = (u16_t)(offset_max - q->len);
       if ((offset < offset_max) && offset_max) {
         q = q->next;
         LWIP_ERROR("next pbuf was null", q != NULL, return ERR_VAL;);
@@ -1951,6 +1948,8 @@ dhcp_option_trailer(struct dhcp *dhcp)
     /* add a fill/padding byte */
     dhcp->msg_out->options[dhcp->options_out_len++] = 0;
   }
+  /* shrink the pbuf to the actual content length */
+  pbuf_realloc(dhcp->p_out, (u16_t)(sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len));
 }
 
 /** check if DHCP supplied netif->ip_addr

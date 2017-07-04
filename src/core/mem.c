@@ -469,16 +469,16 @@ mem_free(void *rmem)
  * Shrink memory returned by mem_malloc().
  *
  * @param rmem pointer to memory allocated by mem_malloc the is to be shrinked
- * @param newsize required size after shrinking (needs to be smaller than or
+ * @param new_size required size after shrinking (needs to be smaller than or
  *                equal to the previous size)
  * @return for compatibility reasons: is always == rmem, at the moment
  *         or NULL if newsize is > old size, in which case rmem is NOT touched
  *         or freed!
  */
 void *
-mem_trim(void *rmem, mem_size_t newsize)
+mem_trim(void *rmem, mem_size_t new_size)
 {
-  mem_size_t size;
+  mem_size_t size, newsize;
   mem_size_t ptr, ptr2;
   struct mem *mem, *mem2;
   /* use the FREE_PROTECT here: it protects with sem OR SYS_ARCH_PROTECT */
@@ -486,15 +486,14 @@ mem_trim(void *rmem, mem_size_t newsize)
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  newsize = LWIP_MEM_ALIGN_SIZE(newsize);
+  newsize = (mem_size_t)LWIP_MEM_ALIGN_SIZE(new_size);
+  if ((newsize > MEM_SIZE_ALIGNED) || (newsize < new_size)) {
+    return NULL;
+  }
 
   if (newsize < MIN_SIZE_ALIGNED) {
     /* every data block must be at least MIN_SIZE_ALIGNED long */
     newsize = MIN_SIZE_ALIGNED;
-  }
-
-  if (newsize > MEM_SIZE_ALIGNED) {
-    return NULL;
   }
 
   LWIP_ASSERT("mem_trim: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
@@ -512,7 +511,7 @@ mem_trim(void *rmem, mem_size_t newsize)
   /* ... and its offset pointer */
   ptr = (mem_size_t)((u8_t *)mem - ram);
 
-  size = mem->next - ptr - SIZEOF_STRUCT_MEM;
+  size = (mem_size_t)((mem_size_t)(mem->next - ptr) - SIZEOF_STRUCT_MEM);
   LWIP_ASSERT("mem_trim can only shrink memory", newsize <= size);
   if (newsize > size) {
     /* not supported */
@@ -533,7 +532,7 @@ mem_trim(void *rmem, mem_size_t newsize)
     /* remember the old next pointer */
     next = mem2->next;
     /* create new struct mem which is moved directly after the shrinked mem */
-    ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
+    ptr2 = (mem_size_t)(ptr + SIZEOF_STRUCT_MEM + newsize);
     if (lfree == mem2) {
       lfree = (struct mem *)(void *)&ram[ptr2];
     }
@@ -561,7 +560,7 @@ mem_trim(void *rmem, mem_size_t newsize)
      * @todo we could leave out MIN_SIZE_ALIGNED. We would create an empty
      *       region that couldn't hold data, but when mem->next gets freed,
      *       the 2 regions would be combined, resulting in more free memory */
-    ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
+    ptr2 = (mem_size_t)(ptr + SIZEOF_STRUCT_MEM + newsize);
     mem2 = (struct mem *)(void *)&ram[ptr2];
     if (mem2 < lfree) {
       lfree = mem2;
@@ -592,36 +591,36 @@ mem_trim(void *rmem, mem_size_t newsize)
 /**
  * Allocate a block of memory with a minimum of 'size' bytes.
  *
- * @param size is the minimum size of the requested block in bytes.
+ * @param size_in is the minimum size of the requested block in bytes.
  * @return pointer to allocated memory or NULL if no free memory was found.
  *
  * Note that the returned value will always be aligned (as defined by MEM_ALIGNMENT).
  */
 void *
-mem_malloc(mem_size_t size)
+mem_malloc(mem_size_t size_in)
 {
-  mem_size_t ptr, ptr2;
+  mem_size_t ptr, ptr2, size;
   struct mem *mem, *mem2;
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
   u8_t local_mem_free_count = 0;
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
   LWIP_MEM_ALLOC_DECL_PROTECT();
 
-  if (size == 0) {
+  if (size_in == 0) {
     return NULL;
   }
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  size = LWIP_MEM_ALIGN_SIZE(size);
+  size = (mem_size_t)LWIP_MEM_ALIGN_SIZE(size_in);
+  if ((size > MEM_SIZE_ALIGNED) ||
+      (size < size_in)) {
+    return NULL;
+  }
 
   if (size < MIN_SIZE_ALIGNED) {
     /* every data block must be at least MIN_SIZE_ALIGNED long */
     size = MIN_SIZE_ALIGNED;
-  }
-
-  if (size > MEM_SIZE_ALIGNED) {
-    return NULL;
   }
 
   /* protect the heap from concurrent access */
@@ -668,7 +667,7 @@ mem_malloc(mem_size_t size)
            *       region that couldn't hold data, but when mem->next gets freed,
            *       the 2 regions would be combined, resulting in more free memory
            */
-          ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
+          ptr2 = (mem_size_t)(ptr + SIZEOF_STRUCT_MEM + size);
           /* create mem2 struct */
           mem2 = (struct mem *)(void *)&ram[ptr2];
           mem2->used = 0;
