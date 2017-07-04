@@ -1176,12 +1176,8 @@ tcp_slowtmr_start:
 #if TCP_QUEUE_OOSEQ
     if (pcb->ooseq != NULL &&
         (tcp_ticks - pcb->tmr >= (u32_t)pcb->rto * TCP_OOSEQ_TIMEOUT)) {
-      tcp_segs_free(pcb->ooseq);
-      pcb->ooseq = NULL;
       LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: dropping OOSEQ queued data\n"));
-#if LWIP_TCP_SACK_OUT
-      memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
-#endif /* LWIP_TCP_SACK_OUT */
+      tcp_free_ooseq(pcb);
     }
 #endif /* TCP_QUEUE_OOSEQ */
 
@@ -1888,12 +1884,8 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 #if TCP_QUEUE_OOSEQ
     if (pcb->ooseq != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
+      tcp_free_ooseq(pcb);
     }
-    tcp_segs_free(pcb->ooseq);
-    pcb->ooseq = NULL;
-#if LWIP_TCP_SACK_OUT
-    memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
-#endif /* LWIP_TCP_SACK_OUT */
 #endif /* TCP_QUEUE_OOSEQ */
 
     /* Stop the retransmission timer as it will expect data on unacked
@@ -2111,6 +2103,19 @@ tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_addr_t *addr, u16_t 
     return ERR_OK;
   }
   return ERR_VAL;
+}
+
+/* Free all ooseq pbufs (and possibly reset SACK state) */
+void
+tcp_free_ooseq(struct tcp_pcb *pcb)
+{
+  if (pcb->ooseq) {
+    tcp_segs_free(pcb->ooseq);
+    pcb->ooseq = NULL;
+#if LWIP_TCP_SACK_OUT
+    memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
+#endif /* LWIP_TCP_SACK_OUT */
+  }
 }
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG

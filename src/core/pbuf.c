@@ -128,11 +128,10 @@ pbuf_free_ooseq(void)
   SYS_ARCH_SET(pbuf_free_ooseq_pending, 0);
 
   for (pcb = tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
-    if (NULL != pcb->ooseq) {
+    if (pcb->ooseq != NULL) {
       /** Free the ooseq pbufs of one PCB only */
       LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free_ooseq: freeing out-of-sequence pbufs\n"));
-      tcp_segs_free(pcb->ooseq);
-      pcb->ooseq = NULL;
+      tcp_free_ooseq(pcb);
       return;
     }
   }

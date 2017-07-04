@@ -502,6 +502,10 @@ void tcp_timer_needed(void);
 
 void tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr);
 
+#if TCP_QUEUE_OOSEQ
+void tcp_free_ooseq(struct tcp_pcb *pcb);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
