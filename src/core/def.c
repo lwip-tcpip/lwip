@@ -75,7 +75,7 @@
 u16_t
 lwip_htons(u16_t n)
 {
-  return (u16_t)PP_HTONS(n);
+  return PP_HTONS(n);
 }
 #endif /* lwip_htons */
 
@@ -89,7 +89,7 @@ lwip_htons(u16_t n)
 u32_t
 lwip_htonl(u32_t n)
 {
-  return (u32_t)PP_HTONL(n);
+  return PP_HTONL(n);
 }
 #endif /* lwip_htonl */
 

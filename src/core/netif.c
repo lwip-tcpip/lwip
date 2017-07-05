@@ -1353,7 +1353,7 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
         ((u32_t)(netif->hwaddr[1]) << 16) |
         ((u32_t)(netif->hwaddr[2]) << 8) |
         (0xff));
-    ip_2_ip6(&netif->ip6_addr[0])->addr[3] = lwip_htonl((0xfeul << 24) |
+    ip_2_ip6(&netif->ip6_addr[0])->addr[3] = lwip_htonl((u32_t)(0xfeul << 24) |
         ((u32_t)(netif->hwaddr[3]) << 16) |
         ((u32_t)(netif->hwaddr[4]) << 8) |
         (netif->hwaddr[5]));

@@ -92,7 +92,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   MIB2_STATS_INC(mib2.icmpinmsgs);
 
   iphdr_in = ip4_current_header();
-  hlen = IPH_HL(iphdr_in) * 4;
+  hlen = IPH_HL_BYTES(iphdr_in);
   if (hlen < IP_HLEN) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
     goto lenerr;
@@ -157,8 +157,13 @@ icmp_input(struct pbuf *p, struct netif *inp)
        * allocate a new one and copy p into it
        */
       struct pbuf *r;
+      u16_t alloc_len = (u16_t)(p->tot_len + hlen);
+      if (alloc_len < p->tot_len) {
+        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: allocating new pbuf failed (tot_len overflow)\n"));
+        goto icmperr;
+      }
       /* allocate new packet buffer with space for link headers */
-      r = pbuf_alloc(PBUF_LINK, p->tot_len + hlen, PBUF_RAM);
+      r = pbuf_alloc(PBUF_LINK, alloc_len, PBUF_RAM);
       if (r == NULL) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: allocating new pbuf failed\n"));
         goto icmperr;
@@ -188,7 +193,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       p = r;
     } else {
       /* restore p->payload to point to icmp header (cannot fail) */
-      if (pbuf_header(p, -(s16_t)(hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
+      if (pbuf_header(p, (s16_t)-(s16_t)(hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
         LWIP_ASSERT("icmp_input: restoring original p->payload failed\n", 0);
         goto icmperr;
       }
@@ -210,9 +215,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
       IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP) {
         /* adjust the checksum */
         if (iecho->chksum > PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
-          iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
+          iecho->chksum = (u16_t)(iecho->chksum + PP_HTONS((u16_t)(ICMP_ECHO << 8)) + 1);
         } else {
-          iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
+          iecho->chksum = (u16_t)(iecho->chksum + PP_HTONS(ICMP_ECHO << 8));
         }
       }
 #if LWIP_CHECKSUM_CTRL_PER_NETIF

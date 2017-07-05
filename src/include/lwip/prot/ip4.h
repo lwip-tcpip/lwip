@@ -101,6 +101,7 @@ PACK_STRUCT_END
 /* Macros to get struct ip_hdr fields: */
 #define IPH_V(hdr)  ((hdr)->_v_hl >> 4)
 #define IPH_HL(hdr) ((hdr)->_v_hl & 0x0f)
+#define IPH_HL_BYTES(hdr) ((u8_t)(IPH_HL(hdr) * 4))
 #define IPH_TOS(hdr) ((hdr)->_tos)
 #define IPH_LEN(hdr) ((hdr)->_len)
 #define IPH_ID(hdr) ((hdr)->_id)
