@@ -1412,7 +1412,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
 #endif /* TCP_CHECKSUM_ON_COPY_SANITY_CHECK */
     if ((seg->flags & TF_SEG_DATA_CHECKSUMMED) == 0) {
       LWIP_ASSERT("data included but not checksummed",
-        seg->p->tot_len == TCPH_HDRLEN_BYTES(seg->tcphdr);
+        seg->p->tot_len == TCPH_HDRLEN_BYTES(seg->tcphdr));
     }
 
     /* rebuild TCP header checksum (TCP header changes for retransmissions!) */
