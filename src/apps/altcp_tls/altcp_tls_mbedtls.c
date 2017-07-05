@@ -388,7 +388,7 @@ altcp_mbedtls_handle_rx_appldata(struct altcp_pcb *conn, altcp_mbedtls_state_t *
       if (ret) {
         LWIP_ASSERT("bogus receive length", ret <= PBUF_POOL_BUFSIZE);
         /* trim pool pbuf to actually decoded length */
-        pbuf_realloc(buf, (uint16_t)ret);
+        pbuf_realloc(buf, (u16_t)ret);
 
         state->bio_bytes_appl += ret;
         if (mbedtls_ssl_get_bytes_avail(&state->ssl_context) == 0) {

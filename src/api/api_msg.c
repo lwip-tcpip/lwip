@@ -60,10 +60,10 @@
 #define NETCONN_TCP_POLL_INTERVAL 2
 
 #define SET_NONBLOCKING_CONNECT(conn, val)  do { if (val) { \
-  (conn)->flags |= NETCONN_FLAG_IN_NONBLOCKING_CONNECT; \
+  netconn_set_flags(conn, NETCONN_FLAG_IN_NONBLOCKING_CONNECT); \
 } else { \
-  (conn)->flags &= ~ NETCONN_FLAG_IN_NONBLOCKING_CONNECT; }} while(0)
-#define IN_NONBLOCKING_CONNECT(conn) (((conn)->flags & NETCONN_FLAG_IN_NONBLOCKING_CONNECT) != 0)
+  netconn_clear_flags(conn, NETCONN_FLAG_IN_NONBLOCKING_CONNECT); }} while(0)
+#define IN_NONBLOCKING_CONNECT(conn) netconn_is_flag_set(conn, NETCONN_FLAG_IN_NONBLOCKING_CONNECT)
 
 /* forward declarations */
 #if LWIP_TCP
@@ -365,7 +365,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
        let select mark this pcb as writable again. */
     if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT) &&
       (tcp_sndqueuelen(conn->pcb.tcp) < TCP_SNDQUEUELOWAT)) {
-      conn->flags &= ~NETCONN_FLAG_CHECK_WRITESPACE;
+      netconn_clear_flags(conn, NETCONN_FLAG_CHECK_WRITESPACE);
       API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
     }
   }
@@ -399,7 +399,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
        let select mark this pcb as writable again. */
     if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT) &&
       (tcp_sndqueuelen(conn->pcb.tcp) < TCP_SNDQUEUELOWAT)) {
-      conn->flags &= ~NETCONN_FLAG_CHECK_WRITESPACE;
+      netconn_clear_flags(conn, NETCONN_FLAG_CHECK_WRITESPACE);
       API_EVENT(conn, NETCONN_EVT_SENDPLUS, len);
     }
   }
@@ -1543,7 +1543,7 @@ lwip_netconn_do_recv(void *m)
     if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
       size_t remaining = msg->msg.r.len;
       do {
-        u16_t recved = (remaining > 0xffff) ? 0xffff : (u16_t)remaining;
+        u16_t recved = (u16_t)((remaining > 0xffff) ? 0xffff : remaining);
         tcp_recved(msg->conn->pcb.tcp, recved);
         remaining -= recved;
       } while (remaining != 0);

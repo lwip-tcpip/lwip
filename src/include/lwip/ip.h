@@ -216,9 +216,9 @@ extern struct ip_globals ip_data;
 /** Gets an IP pcb option (SOF_* flags) */
 #define ip_get_option(pcb, opt)   ((pcb)->so_options & (opt))
 /** Sets an IP pcb option (SOF_* flags) */
-#define ip_set_option(pcb, opt)   ((pcb)->so_options |= (opt))
+#define ip_set_option(pcb, opt)   ((pcb)->so_options = (u8_t)((pcb)->so_options | (opt)))
 /** Resets an IP pcb option (SOF_* flags) */
-#define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
+#define ip_reset_option(pcb, opt) ((pcb)->so_options = (u8_t)((pcb)->so_options & ~(opt)))
 
 #if LWIP_IPV4 && LWIP_IPV6
 /**

@@ -227,7 +227,7 @@ bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct eth_addr *dst_addr)
     bridgeif_dfdb_entry_t *e = &fdb->fdb[i];
     if (e->used && e->ts) {
       if (!memcmp(&e->addr, dst_addr, sizeof(struct eth_addr))) {
-        bridgeif_portmask_t ret = 1 << e->port;
+        bridgeif_portmask_t ret = (bridgeif_portmask_t)(1 << e->port);
         BRIDGEIF_READ_UNPROTECT(lev);
         return ret;
       }
@@ -242,7 +242,9 @@ static void*
 bridgeif_fdb_init(u16_t max_fdb_entries)
 {
   bridgeif_dfdb_t *fdb;
-  mem_size_t alloc_len = sizeof(bridgeif_dfdb_t) + (max_fdb_entries*sizeof(bridgeif_dfdb_entry_t));
+  size_t alloc_len_sizet = sizeof(bridgeif_dfdb_t) + (max_fdb_entries*sizeof(bridgeif_dfdb_entry_t));
+  mem_size_t alloc_len = (mem_size_t)alloc_len_sizet;
+  LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_fdb_init: allocating %d bytes for private FDB data\n", (int)alloc_len));
   fdb = (bridgeif_dfdb_t*)mem_calloc(1, alloc_len);
   if (fdb == NULL) {
@@ -455,7 +457,7 @@ bridgeif_send_to_ports(bridgeif_private_t *br, struct pbuf *p, bridgeif_portmask
   bridgeif_portmask_t mask = 1;
   BRIDGEIF_DECL_PROTECT(lev);
   BRIDGEIF_READ_PROTECT(lev);
-  for (i = 0; i < BRIDGEIF_MAX_PORTS; i++, mask <<= 1) {
+  for (i = 0; i < BRIDGEIF_MAX_PORTS; i++, mask = (bridgeif_portmask_t)(mask << 1)) {
     if (dstports & mask) {
       err = bridgeif_send_to_port(br, p, i);
       if (err != ERR_OK) {
@@ -591,6 +593,7 @@ bridgeif_init(struct netif *netif)
 {
   bridgeif_initdata_t *init_data;
   bridgeif_private_t *br;
+  size_t alloc_len_sizet;
   mem_size_t alloc_len;
 
   LWIP_ASSERT("netif != NULL", (netif != NULL));
@@ -609,7 +612,9 @@ bridgeif_init(struct netif *netif)
   LWIP_ASSERT("init_data->max_ports <= BRIDGEIF_MAX_PORTS",
     init_data->max_ports <= BRIDGEIF_MAX_PORTS);
 
-  alloc_len = sizeof(bridgeif_private_t) + (init_data->max_ports*sizeof(bridgeif_port_t) + (init_data->max_fdb_static_entries*sizeof(bridgeif_fdb_static_entry_t)));
+  alloc_len_sizet = sizeof(bridgeif_private_t) + (init_data->max_ports*sizeof(bridgeif_port_t) + (init_data->max_fdb_static_entries*sizeof(bridgeif_fdb_static_entry_t)));
+  alloc_len = (mem_size_t)alloc_len_sizet;
+  LWIP_ASSERT("alloc_len == alloc_len_sizet", alloc_len == alloc_len_sizet);
   LWIP_DEBUGF(BRIDGEIF_DEBUG, ("bridgeif_init: allocating %d bytes for private data\n", (int)alloc_len));
   br = (bridgeif_private_t*)mem_calloc(1, alloc_len);
   if (br == NULL) {
@@ -730,7 +735,7 @@ bridgeif_add_port(struct netif *bridgeif, struct netif *portif)
   /* store pointer to bridge in netif */
   netif_set_client_data(portif, bridgeif_netif_client_id, port);
   /* remove ETHARP flag to prevent sending report events on netif-up */
-  portif->flags &= ~NETIF_FLAG_ETHARP;
+  netif_clear_flags(portif, NETIF_FLAG_ETHARP);
 
   return ERR_OK;
 }

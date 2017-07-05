@@ -683,8 +683,8 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
 
     if (client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) {
       /* Should have topic and pkt id*/
-      uint8_t *topic;
-      uint16_t after_topic;
+      u8_t *topic;
+      u16_t after_topic;
       u8_t bkp;
       u16_t topic_len = var_hdr_payload[0];
       topic_len = (topic_len << 8) + (u16_t)(var_hdr_payload[1]);

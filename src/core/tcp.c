@@ -824,7 +824,7 @@ tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
 void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
-  uint32_t wnd_inflation;
+  u32_t wnd_inflation;
 
   /* pcb->state LISTEN not allowed here */
   LWIP_ASSERT("don't call tcp_recved for listen-pcbs",

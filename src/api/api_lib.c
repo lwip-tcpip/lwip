@@ -1076,7 +1076,7 @@ netconn_err(struct netconn *conn)
 err_t
 netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx)
 {
-  return netconn_close_shutdown(conn, (shut_rx ? NETCONN_SHUT_RD : 0) | (shut_tx ? NETCONN_SHUT_WR : 0));
+  return netconn_close_shutdown(conn, (u8_t)((shut_rx ? NETCONN_SHUT_RD : 0) | (shut_tx ? NETCONN_SHUT_WR : 0)));
 }
 
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)

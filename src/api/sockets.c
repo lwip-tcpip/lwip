@@ -182,14 +182,14 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
 #define LWIP_SO_SNDRCVTIMEO_OPTTYPE int
 #define LWIP_SO_SNDRCVTIMEO_SET(optval, val) (*(int *)(optval) = (val))
-#define LWIP_SO_SNDRCVTIMEO_GET_MS(optval)   ((s32_t)*(const int*)(optval))
+#define LWIP_SO_SNDRCVTIMEO_GET_MS(optval)   ((long)*(const int*)(optval))
 #else
 #define LWIP_SO_SNDRCVTIMEO_OPTTYPE struct timeval
 #define LWIP_SO_SNDRCVTIMEO_SET(optval, val)  do { \
-  s32_t loc = (val); \
-  ((struct timeval *)(optval))->tv_sec = (loc) / 1000U; \
-  ((struct timeval *)(optval))->tv_usec = ((loc) % 1000U) * 1000U; }while(0)
-#define LWIP_SO_SNDRCVTIMEO_GET_MS(optval) ((((const struct timeval *)(optval))->tv_sec * 1000U) + (((const struct timeval *)(optval))->tv_usec / 1000U))
+  u32_t loc = (val); \
+  ((struct timeval *)(optval))->tv_sec = (long)((loc) / 1000U); \
+  ((struct timeval *)(optval))->tv_usec = (long)(((loc) % 1000U) * 1000U); }while(0)
+#define LWIP_SO_SNDRCVTIMEO_GET_MS(optval) ((((const struct timeval *)(optval))->tv_sec * 1000) + (((const struct timeval *)(optval))->tv_usec / 1000))
 #endif
 
 
@@ -1043,7 +1043,7 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
   copied = 0;
   /* copy the pbuf payload into the iovs */
   for (i = 0; (i < msg->msg_iovlen) && (copied < buflen); i++) {
-    u16_t len_left = buflen - copied;
+    u16_t len_left = (u16_t)(buflen - copied);
     if (msg->msg_iov[i].iov_len > len_left) {
       copylen = len_left;
     } else {
@@ -1053,7 +1053,7 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
     /* copy the contents of the received buffer into
         the supplied memory buffer */
     pbuf_copy_partial(buf->p, (u8_t*)msg->msg_iov[i].iov_base, copylen, copied);
-    copied += copylen;
+    copied = (u16_t)(copied + copylen);
   }
 
   /* Check to see from where the data was.*/
@@ -1203,14 +1203,14 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
   /* check for valid vectors */
   buflen = 0;
   for (i = 0; i < message->msg_iovlen; i++) {
-    if ((message->msg_iov[i].iov_base == NULL) || (message->msg_iov[i].iov_len == 0) ||
+    if ((message->msg_iov[i].iov_base == NULL) || ((ssize_t)message->msg_iov[i].iov_len <= 0) ||
         ((size_t)(ssize_t)message->msg_iov[i].iov_len != message->msg_iov[i].iov_len) ||
-        ((ssize_t)(buflen + message->msg_iov[i].iov_len) <= 0)) {
+        ((ssize_t)(buflen + (ssize_t)message->msg_iov[i].iov_len) <= 0)) {
       sock_set_errno(sock, ERR_VAL);
       done_socket(sock);
       return -1;
     }
-    buflen = (ssize_t)(buflen + message->msg_iov[i].iov_len);
+    buflen = (ssize_t)(buflen + (ssize_t)message->msg_iov[i].iov_len);
   }
 
   if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
@@ -1307,9 +1307,9 @@ lwip_send(int s, const void *data, size_t size, int flags)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
 
-  write_flags = NETCONN_COPY |
+  write_flags = (u8_t)(NETCONN_COPY |
     ((flags & MSG_MORE)     ? NETCONN_MORE      : 0) |
-    ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
+    ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0));
   written = 0;
   err = netconn_write_partly(sock->conn, data, size, write_flags, &written);
 
@@ -1350,9 +1350,9 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
 
   if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
 #if LWIP_TCP
-    write_flags = NETCONN_COPY |
+    write_flags = (u8_t)(NETCONN_COPY |
     ((flags & MSG_MORE)     ? NETCONN_MORE      : 0) |
-    ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
+    ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0));
 
     written = 0;
     err = netconn_write_vectors_partly(sock->conn, (struct netvector *)msg->msg_iov, (u16_t)msg->msg_iovlen, write_flags, &written);
@@ -1935,10 +1935,12 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           /* Wait forever */
           msectimeout = 0;
         } else {
-          msectimeout =  ((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
-          if (msectimeout == 0) {
+          long msecs_long = ((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
+          if (msecs_long <= 0) {
             /* Wait 1ms at least (0 means wait forever) */
             msectimeout = 1;
+          } else {
+            msectimeout = (u32_t)msecs_long;
           }
         }
 
@@ -2848,15 +2850,31 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
 
 #if LWIP_SO_SNDTIMEO
     case SO_SNDTIMEO:
-      LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, LWIP_SO_SNDRCVTIMEO_OPTTYPE);
-      netconn_set_sendtimeout(sock->conn, LWIP_SO_SNDRCVTIMEO_GET_MS(optval));
-      break;
+      {
+        long ms_long;
+        LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, LWIP_SO_SNDRCVTIMEO_OPTTYPE);
+        ms_long = LWIP_SO_SNDRCVTIMEO_GET_MS(optval);
+        if (ms_long < 0) {
+          done_socket(sock);
+          return EINVAL;
+        }
+        netconn_set_sendtimeout(sock->conn, ms_long);
+        break;
+      }
 #endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
-      LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, LWIP_SO_SNDRCVTIMEO_OPTTYPE);
-      netconn_set_recvtimeout(sock->conn, (int)LWIP_SO_SNDRCVTIMEO_GET_MS(optval));
-      break;
+      {
+        long ms_long;
+        LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, LWIP_SO_SNDRCVTIMEO_OPTTYPE);
+        ms_long = LWIP_SO_SNDRCVTIMEO_GET_MS(optval);
+        if (ms_long < 0) {
+          done_socket(sock);
+          return EINVAL;
+        }
+        netconn_set_recvtimeout(sock->conn, (u32_t)ms_long);
+        break;
+      }
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
     case SO_RCVBUF:
@@ -2896,9 +2914,9 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       }
 #endif /* LWIP_UDPLITE */
       if (*(const int*)optval) {
-        udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) | UDP_FLAGS_NOCHKSUM);
+        udp_set_flags(sock->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
       } else {
-        udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) & ~UDP_FLAGS_NOCHKSUM);
+        udp_clear_flags(sock->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
       }
       break;
 #endif /* LWIP_UDP */
@@ -2990,9 +3008,9 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     case IP_MULTICAST_LOOP:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, u8_t, NETCONN_UDP);
       if (*(const u8_t*)optval) {
-        udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) | UDP_FLAGS_MULTICAST_LOOP);
+        udp_set_flags(sock->conn->pcb.udp, UDP_FLAGS_MULTICAST_LOOP);
       } else {
-        udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) & ~UDP_FLAGS_MULTICAST_LOOP);
+        udp_clear_flags(sock->conn->pcb.udp, UDP_FLAGS_MULTICAST_LOOP);
       }
       break;
 #endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP */
@@ -3359,10 +3377,15 @@ const char *
 lwip_inet_ntop(int af, const void *src, char *dst, socklen_t size)
 {
   const char *ret = NULL;
+  int size_int = (int)size;
+  if (size_int < 0) {
+    set_errno(ENOSPC);
+    return NULL;
+  }
   switch (af) {
 #if LWIP_IPV4
     case AF_INET:
-      ret = ip4addr_ntoa_r((const ip4_addr_t*)src, dst, size);
+      ret = ip4addr_ntoa_r((const ip4_addr_t*)src, dst, size_int);
       if (ret == NULL) {
         set_errno(ENOSPC);
       }
@@ -3370,7 +3393,7 @@ lwip_inet_ntop(int af, const void *src, char *dst, socklen_t size)
 #endif
 #if LWIP_IPV6
     case AF_INET6:
-      ret = ip6addr_ntoa_r((const ip6_addr_t*)src, dst, size);
+      ret = ip6addr_ntoa_r((const ip6_addr_t*)src, dst, size_int);
       if (ret == NULL) {
         set_errno(ENOSPC);
       }

@@ -247,7 +247,7 @@ struct netconn {
 #if LWIP_SO_RCVTIMEO
   /** timeout in milliseconds to wait for new data to be received
       (or connections to arrive for listening netconns) */
-  int recv_timeout;
+  u32_t recv_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
   /** maximum amount of bytes queued in recvmbox
@@ -355,11 +355,15 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 err_t   netconn_err(struct netconn *conn);
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 
+#define netconn_set_flags(conn, set_flags)     do { (conn)->flags = (u8_t)((conn)->flags |  (set_flags)); } while(0)
+#define netconn_clear_flags(conn, clr_flags)   do { (conn)->flags = (u8_t)((conn)->flags & ~(clr_flags)); } while(0)
+#define netconn_is_flag_set(conn, flag)        (((conn)->flags & (flag)) != 0)
+
 /** Set the blocking status of netconn calls (@todo: write/send is missing) */
 #define netconn_set_nonblocking(conn, val)  do { if(val) { \
-  (conn)->flags |= NETCONN_FLAG_NON_BLOCKING; \
+  netconn_set_flags(conn, NETCONN_FLAG_NON_BLOCKING); \
 } else { \
-  (conn)->flags &= ~ NETCONN_FLAG_NON_BLOCKING; }} while(0)
+  netconn_clear_flags(conn, NETCONN_FLAG_NON_BLOCKING); }} while(0)
 /** Get the blocking status of netconn calls (@todo: write/send is missing) */
 #define netconn_is_nonblocking(conn)        (((conn)->flags & NETCONN_FLAG_NON_BLOCKING) != 0)
 
@@ -368,9 +372,9 @@ err_t   netconn_err(struct netconn *conn);
  * TCP: Set the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY)
  */
 #define netconn_set_ipv6only(conn, val)  do { if(val) { \
-  (conn)->flags |= NETCONN_FLAG_IPV6_V6ONLY; \
+  netconn_set_flags(conn, NETCONN_FLAG_IPV6_V6ONLY); \
 } else { \
-  (conn)->flags &= ~ NETCONN_FLAG_IPV6_V6ONLY; }} while(0)
+  netconn_clear_flags(conn, NETCONN_FLAG_IPV6_V6ONLY); }} while(0)
 /** @ingroup netconn_common
  * TCP: Get the IPv6 ONLY status of netconn calls (see NETCONN_FLAG_IPV6_V6ONLY)
  */
