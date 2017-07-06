@@ -116,7 +116,7 @@ struct ip_globals
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
   /** Header of the input IPv6 packet currently being processed. */
-  struct ip6_hdr *current_ip6_header;
+  const struct ip6_hdr *current_ip6_header;
 #endif /* LWIP_IPV6 */
   /** Total header length of current_ip4/6_header (i.e. after this, the UDP/TCP header starts) */
   u16_t current_ip_header_tot_len;
@@ -152,7 +152,7 @@ extern struct ip_globals ip_data;
 /** Get the IPv6 header of the current packet.
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip6_current_header()      ((const struct ip6_hdr*)(ip_data.current_ip6_header))
+#define ip6_current_header()      ip_data.current_ip6_header
 /** Returns TRUE if the current IP input packet is IPv6, FALSE if it is IPv4 */
 #define ip_current_is_v6()        (ip6_current_header() != NULL)
 /** Source IPv6 address of current_header */
@@ -194,7 +194,7 @@ extern struct ip_globals ip_data;
 /** Get the IPv6 header of the current packet.
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip6_current_header()      ((const struct ip6_hdr*)(ip_data.current_ip6_header))
+#define ip6_current_header()      ip_data.current_ip6_header
 /** Always returns TRUE when only supporting IPv6 only */
 #define ip_current_is_v6()        1
 /** Get the transport layer protocol */

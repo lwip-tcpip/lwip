@@ -57,7 +57,7 @@ const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 #define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
 #define islower(c)           in_range(c, 'a', 'z')
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-#define xchar(i)             ((i) < 10 ? '0' + (i) : 'A' + (i) - 10)
+#define xchar(i)             ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 #endif
 
 /**
