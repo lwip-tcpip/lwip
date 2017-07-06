@@ -3281,7 +3281,7 @@ lwip_ioctl(int s, long cmd, void *argp)
 
   case (long)FIONBIO:
     val = 0;
-    if (argp && *(u32_t*)argp) {
+    if (argp && *(int*)argp) {
       val = 1;
     }
     netconn_set_nonblocking(sock->conn, val);
