@@ -320,9 +320,9 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 
   /* Incrementally update the IP checksum. */
   if (IPH_CHKSUM(iphdr) >= PP_HTONS(0xffffU - 0x100)) {
-    IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + PP_HTONS(0x100) + 1);
+    IPH_CHKSUM_SET(iphdr, (u16_t)(IPH_CHKSUM(iphdr) + PP_HTONS(0x100) + 1));
   } else {
-    IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + PP_HTONS(0x100));
+    IPH_CHKSUM_SET(iphdr, (u16_t)(IPH_CHKSUM(iphdr) + PP_HTONS(0x100)));
   }
 
   LWIP_DEBUGF(IP_DEBUG, ("ip4_forward: forwarding packet to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -414,7 +414,7 @@ ip4_input_accept(struct netif *netif)
 err_t
 ip4_input(struct pbuf *p, struct netif *inp)
 {
-  struct ip_hdr *iphdr;
+  const struct ip_hdr *iphdr;
   struct netif *netif;
   u16_t iphdr_hlen;
   u16_t iphdr_len;
@@ -444,10 +444,8 @@ ip4_input(struct pbuf *p, struct netif *inp)
   }
 #endif
 
-  /* obtain IP header length in number of 32-bit words */
-  iphdr_hlen = IPH_HL(iphdr);
-  /* calculate IP header length in bytes */
-  iphdr_hlen *= 4;
+  /* obtain IP header length in bytes */
+  iphdr_hlen = IPH_HL_BYTES(iphdr);
   /* obtain ip length in bytes */
   iphdr_len = lwip_ntohs(IPH_LEN(iphdr));
 
@@ -565,7 +563,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   if (netif == NULL) {
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
-      struct udp_hdr *udphdr = (struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen);
+      const struct udp_hdr *udphdr = (const struct udp_hdr *)((const u8_t *)iphdr + iphdr_hlen);
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip4_input: UDP packet to DHCP client port %"U16_F"\n",
         lwip_ntohs(udphdr->dest)));
       if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(udphdr->dest)) {
@@ -608,7 +606,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     /* non-broadcast packet? */
     if (!ip4_addr_isbroadcast(ip4_current_dest_addr(), inp)) {
       /* try to forward IP packet on (other) interfaces */
-      ip4_forward(p, iphdr, inp);
+      ip4_forward(p, (struct ip_hdr *)p->payload, inp);
     } else
 #endif /* IP_FORWARD */
     {
@@ -630,7 +628,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     if (p == NULL) {
       return ERR_OK;
     }
-    iphdr = (struct ip_hdr *)p->payload;
+    iphdr = (const struct ip_hdr *)p->payload;
 #else /* IP_REASSEMBLY == 0, no packet fragment reassembly code present */
     pbuf_free(p);
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("IP packet dropped since it was fragmented (0x%"X16_F") (while IP_REASSEMBLY == 0).\n",
@@ -669,14 +667,14 @@ ip4_input(struct pbuf *p, struct netif *inp)
   ip_data.current_netif = netif;
   ip_data.current_input_netif = inp;
   ip_data.current_ip4_header = iphdr;
-  ip_data.current_ip_header_tot_len = IPH_HL(iphdr) * 4;
+  ip_data.current_ip_header_tot_len = IPH_HL_BYTES(iphdr);
 
 #if LWIP_RAW
   /* raw input did not eat the packet? */
   if (raw_input(p, inp) == 0)
 #endif /* LWIP_RAW */
   {
-    pbuf_header(p, -(s16_t)iphdr_hlen); /* Move to payload, no check necessary. */
+    pbuf_header(p, (s16_t)-(s16_t)iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP
@@ -710,8 +708,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
       /* send ICMP destination protocol unreachable unless is was a broadcast */
       if (!ip4_addr_isbroadcast(ip4_current_dest_addr(), netif) &&
           !ip4_addr_ismulticast(ip4_current_dest_addr())) {
-        pbuf_header_force(p, iphdr_hlen); /* Move to ip header, no check necessary. */
-        p->payload = iphdr;
+        pbuf_header_force(p, (s16_t)iphdr_hlen); /* Move to ip header, no check necessary. */
         icmp_dest_unreach(p, ICMP_DUR_PROTO);
       }
 #endif /* LWIP_ICMP */
@@ -839,11 +836,18 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 #if CHECKSUM_GEN_IP_INLINE
       int i;
 #endif /* CHECKSUM_GEN_IP_INLINE */
+      if (optlen > (IP_HLEN_MAX - IP_HLEN)) {
+        /* optlen too long */
+        LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: optlen too long\n"));
+        IP_STATS_INC(ip.err);
+        MIB2_STATS_INC(mib2.ipoutdiscards);
+        return ERR_VAL;
+      }
       /* round up to a multiple of 4 */
-      optlen_aligned = ((optlen + 3) & ~3);
-      ip_hlen += optlen_aligned;
+      optlen_aligned = (u16_t)((optlen + 3) & ~3);
+      ip_hlen = (u16_t)(ip_hlen + optlen_aligned);
       /* First write in the IP options */
-      if (pbuf_header(p, optlen_aligned)) {
+      if (pbuf_header(p, (s16_t)optlen_aligned)) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: not enough room for IP options in pbuf\n"));
         IP_STATS_INC(ip.err);
         MIB2_STATS_INC(mib2.ipoutdiscards);
@@ -852,7 +856,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
       MEMCPY(p->payload, ip_options, optlen);
       if (optlen < optlen_aligned) {
         /* zero the remaining bytes */
-        memset(((char*)p->payload) + optlen, 0, optlen_aligned - optlen);
+        memset(((char*)p->payload) + optlen, 0, (size_t)(optlen_aligned - optlen));
       }
 #if CHECKSUM_GEN_IP_INLINE
       for (i = 0; i < optlen_aligned/2; i++) {
@@ -934,6 +938,12 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
 #endif /* CHECKSUM_GEN_IP_INLINE */
   } else {
     /* IP header already included in p */
+    if (p->len < IP_HLEN) {
+      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: LWIP_IP_HDRINCL but pbuf is too short\n"));
+      IP_STATS_INC(ip.err);
+      MIB2_STATS_INC(mib2.ipoutdiscards);
+      return ERR_BUF;
+    }
     iphdr = (struct ip_hdr *)p->payload;
     ip4_addr_copy(dest_addr, iphdr->dest);
     dest = &dest_addr;
