@@ -90,7 +90,7 @@ extern "C" {
 struct ip6_reassdata {
   struct ip6_reassdata *next;
   struct pbuf *p;
-  const struct ip6_hdr *iphdr; /* pointer to the first (original) IPv6 header */
+  struct ip6_hdr *iphdr; /* pointer to the first (original) IPv6 header */
 #if IPV6_FRAG_COPYHEADER
   ip6_addr_p_t src; /* copy of the source address in the IP header */
   ip6_addr_p_t dest; /* copy of the destination address in the IP header */
