@@ -509,20 +509,20 @@ mld6_tmr(void)
  *
  * @param group the mld_group for which "delaying" membership report
  *              should be sent
- * @param maxresp the max resp delay provided in the query
+ * @param maxresp_in the max resp delay provided in the query
  */
 static void
-mld6_delayed_report(struct mld_group *group, u16_t maxresp)
+mld6_delayed_report(struct mld_group *group, u16_t maxresp_in)
 {
   /* Convert maxresp from milliseconds to tmr ticks */
-  maxresp = maxresp / MLD6_TMR_INTERVAL;
+  u16_t maxresp = maxresp_in / MLD6_TMR_INTERVAL;
   if (maxresp == 0) {
     maxresp = 1;
   }
 
 #ifdef LWIP_RAND
   /* Randomize maxresp. (if LWIP_RAND is supported) */
-  maxresp = LWIP_RAND() % maxresp;
+  maxresp = (u16_t)(LWIP_RAND() % maxresp);
   if (maxresp == 0) {
     maxresp = 1;
   }
