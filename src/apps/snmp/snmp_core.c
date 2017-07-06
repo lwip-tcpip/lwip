@@ -193,6 +193,9 @@
 #if (!LWIP_UDP && LWIP_SNMP)
   #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
+#if SNMP_MAX_OBJ_ID_LEN > 255
+  #error "SNMP_MAX_OBJ_ID_LEN must fit into an u8_t"
+#endif
 
 struct snmp_statistics snmp_stats;
 static const struct snmp_obj_id  snmp_device_enterprise_oid_default = {SNMP_DEVICE_ENTERPRISE_OID_LEN, SNMP_DEVICE_ENTERPRISE_OID};
@@ -509,10 +512,10 @@ snmp_oid_to_ip(const u32_t *oid, u8_t oid_len, ip_addr_t *ip)
 u8_t
 snmp_oid_to_ip_port(const u32_t *oid, u8_t oid_len, ip_addr_t *ip, u16_t *port)
 {
-  u8_t idx = 0;
+  u8_t idx;
 
   /* InetAddressType + InetAddress */
-  idx += snmp_oid_to_ip(&oid[idx], oid_len-idx, ip);
+  idx = snmp_oid_to_ip(&oid[0], oid_len, ip);
   if (idx == 0) {
     return 0;
   }
@@ -601,7 +604,7 @@ snmp_oid_append(struct snmp_obj_id* target, const u32_t *oid, u8_t oid_len)
 
   if (oid_len > 0) {
     MEMCPY(&target->id[target->len], oid, oid_len * sizeof(u32_t));
-    target->len += oid_len;
+    target->len = (u8_t)(target->len + oid_len);
   }
 }
 

@@ -390,11 +390,11 @@ struct in_pktinfo {
 #define IOC_INOUT       (IOC_IN|IOC_OUT)
                                         /* 0x20000000 distinguishes new &
                                            old ioctl's */
-#define _IO(x,y)        (IOC_VOID|((x)<<8)|(y))
+#define _IO(x,y)        ((long)(IOC_VOID|((x)<<8)|(y)))
 
-#define _IOR(x,y,t)     (IOC_OUT|(((long)sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
+#define _IOR(x,y,t)     ((long)(IOC_OUT|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y)))
 
-#define _IOW(x,y,t)     (IOC_IN|(((long)sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
+#define _IOW(x,y,t)     ((long)(IOC_IN|((sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y)))
 #endif /* !defined(FIONREAD) || !defined(FIONBIO) */
 
 #ifndef FIONREAD

@@ -2269,7 +2269,7 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
     } else
 #endif /* LWIP_HTTPD_CUSTOM_FILES */
     {
-      hs->left = file->len;
+      hs->left = (u32_t)file->len;
     }
     hs->retries = 0;
 #if LWIP_HTTPD_TIMING
@@ -2285,7 +2285,7 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
          search for the end of the header. */
       char *file_start = lwip_strnstr(hs->file, CRLF CRLF, hs->left);
       if (file_start != NULL) {
-        size_t diff = file_start + 4 - hs->file;
+        int diff = file_start + 4 - hs->file;
         hs->file += diff;
         hs->left -= (u32_t)diff;
       }

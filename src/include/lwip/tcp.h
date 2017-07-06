@@ -146,7 +146,7 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 /* Increments a tcpwnd_size_t and holds at max value rather than rollover */
 #define TCP_WND_INC(wnd, inc)   do { \
                                   if ((tcpwnd_size_t)(wnd + inc) >= wnd) { \
-                                    wnd += inc; \
+                                    wnd = (tcpwnd_size_t)(wnd + inc); \
                                   } else { \
                                     wnd = (tcpwnd_size_t)-1; \
                                   } \
@@ -257,9 +257,9 @@ struct tcp_pcb {
   /* RTT (round trip time) estimation variables */
   u32_t rttest; /* RTT estimate in 500ms ticks */
   u32_t rtseq;  /* sequence number being timed */
-  s16_t sa, sv; /* @todo document this */
+  s16_t sa, sv; /* @see "Congestion Avoidance and Control" by Van Jacobson and Karels */
 
-  s16_t rto;    /* retransmission time-out */
+  s16_t rto;    /* retransmission time-out (in ticks of TCP_SLOW_INTERVAL) */
   u8_t nrtx;    /* number of retransmissions */
 
   /* fast retransmit/recovery */

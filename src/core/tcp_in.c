@@ -62,7 +62,7 @@
 #include <string.h>
 
 /** Initial CWND calculation as defined RFC 2581 */
-#define LWIP_TCP_CALC_INITIAL_CWND(mss) LWIP_MIN((4U * (mss)), LWIP_MAX((2U * (mss)), 4380U));
+#define LWIP_TCP_CALC_INITIAL_CWND(mss) ((tcpwnd_size_t)LWIP_MIN((4U * (mss)), LWIP_MAX((2U * (mss)), 4380U)))
 
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
@@ -190,11 +190,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* determine how long the first and second parts of the options are */
     tcphdr_opt1len = p->len;
-    opt2len = tcphdr_optlen - tcphdr_opt1len;
+    opt2len = (u16_t)(tcphdr_optlen - tcphdr_opt1len);
 
     /* options continue in the next pbuf: set p to zero length and hide the
         options in the next pbuf (adjusting p->tot_len) */
-    pbuf_header(p, -(s16_t)tcphdr_opt1len);
+    pbuf_header(p, (s16_t)-(s16_t)tcphdr_opt1len);
 
     /* check that the options fit in the second pbuf */
     if (opt2len > p->next->len) {
@@ -209,8 +209,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* advance p->next to point after the options, and manually
         adjust p->tot_len to keep it consistent with the changed p->next */
-    pbuf_header(p->next, -(s16_t)opt2len);
-    p->tot_len -= opt2len;
+    pbuf_header(p->next, (s16_t)-(s16_t)opt2len);
+    p->tot_len = (u16_t)(p->tot_len - opt2len);
 
     LWIP_ASSERT("p->len == 0", p->len == 0);
     LWIP_ASSERT("p->tot_len == p->next->tot_len", p->tot_len == p->next->tot_len);
@@ -224,7 +224,16 @@ tcp_input(struct pbuf *p, struct netif *inp)
   tcphdr->wnd = lwip_ntohs(tcphdr->wnd);
 
   flags = TCPH_FLAGS(tcphdr);
-  tcplen = p->tot_len + ((flags & (TCP_FIN | TCP_SYN)) ? 1 : 0);
+  tcplen = p->tot_len;
+  if (flags & (TCP_FIN | TCP_SYN)) {
+    tcplen++;
+    if (tcplen < p->tot_len) {
+      /* u16_t overflow, cannot handle this */
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: length u16_t overflow, cannot handle this\n"));
+      TCP_STATS_INC(tcp.lenerr);
+      goto dropped;
+    }
+  }
 
   /* Demultiplex an incoming segment. First, we check if it is destined
      for an active connection. */
@@ -753,7 +762,7 @@ tcp_process(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: Connection RESET\n"));
       LWIP_ASSERT("tcp_input: pcb->state != CLOSED", pcb->state != CLOSED);
       recv_flags |= TF_RESET;
-      pcb->flags &= ~TF_ACK_DELAY;
+      tcp_clear_flags(pcb, TF_ACK_DELAY);
       return ERR_RST;
     } else {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: unacceptable reset seqno %"U32_F" rcv_nxt %"U32_F"\n",
@@ -1038,8 +1047,8 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
                                  (tcpwnd_size_t)pcb->snd_queuelen));
     LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= clen));
 
-    pcb->snd_queuelen -= clen;
-    recv_acked += next->len;
+    pcb->snd_queuelen = (u16_t)(pcb->snd_queuelen - clen);
+    recv_acked = (tcpwnd_size_t)(recv_acked + next->len);
     tcp_seg_free(next);
 
     LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"TCPWNDSIZE_F" (after freeing %s)\n",
@@ -1162,7 +1171,7 @@ tcp_receive(struct tcp_pcb *pcb)
                 /* Inflate the congestion window, but not if it means that
                    the value overflows. */
                 if ((tcpwnd_size_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
-                  pcb->cwnd += pcb->mss;
+                  pcb->cwnd = (tcpwnd_size_t)(pcb->cwnd + pcb->mss);
                 }
               } else if (pcb->dupacks == 3) {
                 /* Do fast retransmit */
@@ -1185,7 +1194,7 @@ tcp_receive(struct tcp_pcb *pcb)
          in fast retransmit. Also reset the congestion window to the
          slow start threshold. */
       if (pcb->flags & TF_INFR) {
-        pcb->flags &= ~TF_INFR;
+        tcp_clear_flags(pcb, TF_INFR);
         pcb->cwnd = pcb->ssthresh;
         pcb->bytes_acked = 0;
       }
@@ -1194,7 +1203,7 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->nrtx = 0;
 
       /* Reset the retransmission time-out. */
-      pcb->rto = (pcb->sa >> 3) + pcb->sv;
+      pcb->rto = (s16_t)((pcb->sa >> 3) + pcb->sv);
 
       /* Record how much data this ACK acks */
       acked = (tcpwnd_size_t)(ackno - pcb->lastack);
@@ -1218,7 +1227,7 @@ tcp_receive(struct tcp_pcb *pcb)
           /* RFC 3465, section 2.1 Congestion Avoidance */
           TCP_WND_INC(pcb->bytes_acked, acked);
           if (pcb->bytes_acked >= pcb->cwnd) {
-            pcb->bytes_acked -= pcb->cwnd;
+            pcb->bytes_acked = (tcpwnd_size_t)(pcb->bytes_acked - pcb->cwnd);
             TCP_WND_INC(pcb->cwnd, pcb->mss);
           }
           LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: congestion avoidance cwnd %"TCPWNDSIZE_F"\n", pcb->cwnd));
@@ -1265,7 +1274,7 @@ tcp_receive(struct tcp_pcb *pcb)
       }
 #endif /* LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS*/
 
-      pcb->snd_buf += recv_acked;
+      pcb->snd_buf = (tcpwnd_size_t)(pcb->snd_buf + recv_acked);
       /* check if this ACK ends our retransmission of in-flight data */
       if (pcb->flags & TF_RTO) {
         /* RTO is done if
@@ -1275,10 +1284,10 @@ tcp_receive(struct tcp_pcb *pcb)
         if (pcb->unacked == NULL) {
           if ((pcb->unsent == NULL) ||
               (TCP_SEQ_LEQ(pcb->rto_end, lwip_ntohl(pcb->unsent->tcphdr->seqno)))) {
-            pcb->flags &= ~TF_RTO;
+            tcp_clear_flags(pcb, TF_RTO);
           }
         } else if (TCP_SEQ_LEQ(pcb->rto_end, lwip_ntohl(pcb->unacked->tcphdr->seqno))) {
-          pcb->flags &= ~TF_RTO;
+          tcp_clear_flags(pcb, TF_RTO);
         }
       }
       /* End of ACK for new data processing. */
@@ -1302,14 +1311,14 @@ tcp_receive(struct tcp_pcb *pcb)
                                   m, (u16_t)(m * TCP_SLOW_INTERVAL)));
 
       /* This is taken directly from VJs original code in his paper */
-      m = m - (pcb->sa >> 3);
-      pcb->sa += m;
+      m = (s16_t)(m - (pcb->sa >> 3));
+      pcb->sa = (s16_t)(pcb->sa + m);
       if (m < 0) {
-        m = -m;
+        m = (s16_t)-m;
       }
-      m = m - (pcb->sv >> 2);
-      pcb->sv += m;
-      pcb->rto = (pcb->sa >> 3) + pcb->sv;
+      m = (s16_t)(m - (pcb->sv >> 2));
+      pcb->sv = (s16_t)(pcb->sv + m);
+      pcb->rto = (s16_t)((pcb->sa >> 3) + pcb->sv);
 
       LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: RTO %"U16_F" (%"U16_F" milliseconds)\n",
                                   pcb->rto, (u16_t)(pcb->rto * TCP_SLOW_INTERVAL)));

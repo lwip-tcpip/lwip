@@ -1086,7 +1086,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
     pcb->flags |= (TF_ACK_DELAY | TF_ACK_NOW);
   } else {
     /* remove ACK flags from the PCB, as we sent an empty ACK now */
-    pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+    tcp_clear_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
   }
 
   return err;
@@ -1245,7 +1245,7 @@ tcp_output(struct tcp_pcb *pcb)
     }
     pcb->unsent = seg->next;
     if (pcb->state != SYN_SENT) {
-      pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+      tcp_clear_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
     }
     snd_nxt = lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
@@ -1292,7 +1292,7 @@ tcp_output(struct tcp_pcb *pcb)
 #endif /* TCP_OVERSIZE */
 
 output_done:
-  pcb->flags &= ~TF_NAGLEMEMERR;
+  tcp_clear_flags(pcb, TF_NAGLEMEMERR);
   return ERR_OK;
 }
 

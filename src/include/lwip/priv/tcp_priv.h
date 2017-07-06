@@ -443,7 +443,7 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack(pcb)                               \
   do {                                             \
     if((pcb)->flags & TF_ACK_DELAY) {              \
-      (pcb)->flags &= ~TF_ACK_DELAY;               \
+      tcp_clear_flags((pcb), TF_ACK_DELAY);        \
       (pcb)->flags |= TF_ACK_NOW;                  \
     }                                              \
     else {                                         \

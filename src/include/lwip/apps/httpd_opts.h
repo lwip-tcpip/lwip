@@ -275,7 +275,7 @@
    The best place to define this is the hooks file (@see LWIP_HOOK_FILENAME) */
 #if !defined HTTPD_MAX_WRITE_LEN || defined __DOXYGEN__
 #if HTTPD_LIMIT_SENDING_TO_2MSS
-#define HTTPD_MAX_WRITE_LEN(pcb)    (2 * altcp_mss(pcb))
+#define HTTPD_MAX_WRITE_LEN(pcb)    ((u16_t)(2 * altcp_mss(pcb)))
 #endif
 #endif
 

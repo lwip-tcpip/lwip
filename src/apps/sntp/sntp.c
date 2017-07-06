@@ -110,7 +110,7 @@
 #define SNTP_OFFSET_TRANSMIT_TIME   40
 
 /* Number of seconds between 1970 and Feb 7, 2036 06:28:16 UTC (epoch 1) */
-#define DIFF_SEC_1970_2036          ((u32_t)2085978496L)
+#define DIFF_SEC_1970_2036          ((s32_t)2085978496L)
 
 /** Convert NTP timestamp fraction to microseconds.
  */
@@ -268,7 +268,7 @@ static const char *
 sntp_format_time(s32_t sec)
 {
   time_t ut;
-  ut = (u32_t)((u32_t)sec + DIFF_SEC_1970_2036);
+  ut = (time_t)((time_t)sec + (time_t)DIFF_SEC_1970_2036);
   return ctime(&ut);
 }
 #endif /* LWIP_DEBUG && !sntp_format_time */
@@ -282,7 +282,7 @@ sntp_process(const struct sntp_timestamps *timestamps)
   s32_t sec;
   u32_t frac;
 
-  sec  = lwip_ntohl(timestamps->xmit.sec);
+  sec  = (s32_t)lwip_ntohl(timestamps->xmit.sec);
   frac = lwip_ntohl(timestamps->xmit.frac);
 
 #if SNTP_COMP_ROUNDTRIP
@@ -311,7 +311,7 @@ sntp_process(const struct sntp_timestamps *timestamps)
       /* Clock offset calculation according to RFC 4330 */
       t4 += ((t2 - t1) + (t3 - t4)) / 2;
 
-      sec  = (u32_t)((u64_t)t4 >> 32);
+      sec  = (s32_t)((u64_t)t4 >> 32);
       frac = (u32_t)((u64_t)t4);
     }
   }
@@ -334,10 +334,11 @@ sntp_initialize_request(struct sntp_msg *req)
 
 #if SNTP_CHECK_RESPONSE >= 2 || SNTP_COMP_ROUNDTRIP
   {
+    s32_t secs;
     u32_t sec, frac;
     /* Get the transmit timestamp */
-    SNTP_GET_SYSTEM_TIME_NTP(sec, frac);
-    sec  = lwip_htonl(sec);
+    SNTP_GET_SYSTEM_TIME_NTP(secs, frac);
+    sec  = lwip_htonl((u32_t)secs);
     frac = lwip_htonl(frac);
 
 # if SNTP_CHECK_RESPONSE >= 2
