@@ -224,11 +224,10 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   u16_t offset = (u16_t)layer;
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc(length=%"U16_F")\n", length));
 
-  if ((type == PBUF_REF) || (type == PBUF_ROM)) {
-    return pbuf_alloc_reference(NULL, length, type);
-  }
-
   switch (type) {
+  case PBUF_REF:
+  case PBUF_ROM:
+    return pbuf_alloc_reference(NULL, length, type);
   case PBUF_POOL:
     {
       struct pbuf *q, *last;
