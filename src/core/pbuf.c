@@ -227,7 +227,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (type) {
   case PBUF_REF: /* fall through */
   case PBUF_ROM:
-    return pbuf_alloc_reference(NULL, length, type);
+    p = pbuf_alloc_reference(NULL, length, type);
   case PBUF_POOL:
     {
       struct pbuf *q, *last;
