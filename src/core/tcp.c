@@ -2105,6 +2105,7 @@ tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_addr_t *addr, u16_t 
   return ERR_VAL;
 }
 
+#if TCP_QUEUE_OOSEQ
 /* Free all ooseq pbufs (and possibly reset SACK state) */
 void
 tcp_free_ooseq(struct tcp_pcb *pcb)
@@ -2117,6 +2118,7 @@ tcp_free_ooseq(struct tcp_pcb *pcb)
 #endif /* LWIP_TCP_SACK_OUT */
   }
 }
+#endif /* TCP_QUEUE_OOSEQ */
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
 /**
