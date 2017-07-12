@@ -252,6 +252,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 }
 
 /**
+ * @ingroup lwip_os
  * Call a specific function in the thread context of
  * tcpip_thread for easy access synchronization.
  * A function called in that way may access lwIP core code
@@ -286,6 +287,7 @@ tcpip_callback(tcpip_callback_fn function, void *ctx)
 }
 
 /**
+ * @ingroup lwip_os
  * Call a specific function in the thread context of
  * tcpip_thread for easy access synchronization.
  * A function called in that way may access lwIP core code
