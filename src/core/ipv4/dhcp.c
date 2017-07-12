@@ -1347,8 +1347,8 @@ dhcp_release_and_stop(struct netif *netif)
 
 /**
  * @ingroup dhcp4
- * @deprecated Use dhcp_release_and_stop() instead.
  * This function calls dhcp_release_and_stop() internally.
+ * @deprecated Use dhcp_release_and_stop() instead.
  */
 err_t
 dhcp_release(struct netif *netif)
@@ -1359,8 +1359,8 @@ dhcp_release(struct netif *netif)
 
 /**
  * @ingroup dhcp4
- * @deprecated Use dhcp_release_and_stop() instead.
  * This function calls dhcp_release_and_stop() internally.
+ * @deprecated Use dhcp_release_and_stop() instead.
  */
 void
 dhcp_stop(struct netif *netif)
