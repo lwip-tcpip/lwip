@@ -214,6 +214,46 @@ void lwip_netconn_do_gethostbyname(void *arg);
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);
 void netconn_free(struct netconn *conn);
 
+/* netifapi related lwIP internal definitions */
+
+#if LWIP_MPU_COMPATIBLE
+#define NETIFAPI_IPADDR_DEF(type, m)  type m
+#else /* LWIP_MPU_COMPATIBLE */
+#define NETIFAPI_IPADDR_DEF(type, m)  const type * m
+#endif /* LWIP_MPU_COMPATIBLE */
+
+typedef void (*netifapi_void_fn)(struct netif *netif);
+typedef err_t (*netifapi_errt_fn)(struct netif *netif);
+
+struct netifapi_msg {
+  struct tcpip_api_call_data call;
+  struct netif *netif;
+  union {
+    struct {
+#if LWIP_IPV4
+      NETIFAPI_IPADDR_DEF(ip4_addr_t, ipaddr);
+      NETIFAPI_IPADDR_DEF(ip4_addr_t, netmask);
+      NETIFAPI_IPADDR_DEF(ip4_addr_t, gw);
+#endif /* LWIP_IPV4 */
+      void *state;
+      netif_init_fn init;
+      netif_input_fn input;
+    } add;
+    struct {
+      netifapi_void_fn voidfunc;
+      netifapi_errt_fn errtfunc;
+    } common;
+    struct {
+#if LWIP_MPU_COMPATIBLE
+      char name[NETIF_NAMESIZE];
+#else /* LWIP_MPU_COMPATIBLE */
+      char *name;
+#endif /* LWIP_MPU_COMPATIBLE */
+      u8_t index;
+    } ifs;
+  } msg;
+};
+
 #ifdef __cplusplus
 }
 #endif
