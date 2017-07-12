@@ -124,15 +124,23 @@ err_t netifapi_netif_index_to_name(u8_t index, char *name);
  * To be called from non-TCPIP threads
  */
 /** @ingroup netifapi_dhcp4 */
-#define netifapi_dhcp_start(n)        netifapi_netif_common(n, NULL, dhcp_start)
+#define netifapi_dhcp_start(n)            netifapi_netif_common(n, NULL, dhcp_start)
+/**
+ * @ingroup netifapi_dhcp4
+ * @deprecated Use netifapi_dhcp_release_and_stop() instead.
+ */
+#define netifapi_dhcp_stop(n)             netifapi_netif_common(n, dhcp_stop, NULL)
 /** @ingroup netifapi_dhcp4 */
-#define netifapi_dhcp_stop(n)         netifapi_netif_common(n, dhcp_stop, NULL)
+#define netifapi_dhcp_inform(n)           netifapi_netif_common(n, dhcp_inform, NULL)
 /** @ingroup netifapi_dhcp4 */
-#define netifapi_dhcp_inform(n)       netifapi_netif_common(n, dhcp_inform, NULL)
+#define netifapi_dhcp_renew(n)            netifapi_netif_common(n, NULL, dhcp_renew)
+/**
+ * @ingroup netifapi_dhcp4
+ * @deprecated Use netifapi_dhcp_release_and_stop() instead.
+ */
+#define netifapi_dhcp_release(n)          netifapi_netif_common(n, NULL, dhcp_release)
 /** @ingroup netifapi_dhcp4 */
-#define netifapi_dhcp_renew(n)        netifapi_netif_common(n, NULL, dhcp_renew)
-/** @ingroup netifapi_dhcp4 */
-#define netifapi_dhcp_release(n)      netifapi_netif_common(n, NULL, dhcp_release)
+#define netifapi_dhcp_release_and_stop(n) netifapi_netif_common(n, dhcp_release_and_stop, NULL)
 
 /**
  * @defgroup netifapi_autoip AUTOIP
