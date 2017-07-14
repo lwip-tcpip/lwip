@@ -1912,13 +1912,23 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         sock = tryget_socket_unconn(i);
         if (sock != NULL) {
           sock->select_waiting++;
-          LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
+          if (sock->select_waiting == 0) {
+            /* overflow - too many threads waiting */
+            sock->select_waiting--;
+            done_socket(sock);
+            nready = -1;
+            maxfdp2 = i;
+            SYS_ARCH_UNPROTECT(lev);
+            set_errno(EBUSY);
+            break;
+          }
           done_socket(sock);
         } else {
           /* Not a valid socket */
           nready = -1;
           maxfdp2 = i;
           SYS_ARCH_UNPROTECT(lev);
+          set_errno(EBADF);
           break;
         }
         SYS_ARCH_UNPROTECT(lev);
@@ -1969,6 +1979,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         } else {
           /* Not a valid socket */
           nready = -1;
+          set_errno(EBADF);
         }
         SYS_ARCH_UNPROTECT(lev);
       }
@@ -2002,7 +2013,6 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 
     if (nready < 0) {
       /* This happens when a socket got closed while waiting */
-      set_errno(EBADF);
       lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
       return -1;
     }
