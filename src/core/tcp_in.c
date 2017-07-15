@@ -1887,7 +1887,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
           return;
         }
         /* An MSS option with the right option length. */
-        mss = (tcp_getoptbyte() << 8);
+        mss = (u16_t)(tcp_getoptbyte() << 8);
         mss |= tcp_getoptbyte();
         /* Limit the mss to the configured TCP_MSS and prevent division by zero */
         pcb->mss = ((mss > TCP_MSS) || (mss == 0)) ? TCP_MSS : mss;
