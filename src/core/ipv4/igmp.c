@@ -207,7 +207,7 @@ igmp_report_groups(struct netif *netif)
 }
 
 /**
- * Search for a group in the global igmp_group_list
+ * Search for a group in the netif's igmp group list
  *
  * @param ifp the network interface for which to look
  * @param addr the group ip address to search for
@@ -286,9 +286,9 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
 }
 
 /**
- * Remove a group in the global igmp_group_list, but don't free it yet
+ * Remove a group from netif's igmp group list, but don't free it yet
  *
- * @param group the group to remove from the global igmp_group_list
+ * @param group the group to remove from the netif's igmp group list
  * @return ERR_OK if group was removed from the list, an err_t otherwise
  */
 static err_t
@@ -304,7 +304,7 @@ igmp_remove_group(struct netif* netif, struct igmp_group *group)
       break;
     }
   }
-  /* Group not found in the global igmp_group_list */
+  /* Group not found in netif's igmp group list */
   if (tmp_group == NULL) {
     err = ERR_ARG;
   }
