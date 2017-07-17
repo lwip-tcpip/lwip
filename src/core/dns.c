@@ -1265,17 +1265,17 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
               }
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
-              if ((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_t)))) {
+              if ((ans.type == PP_HTONS(DNS_RRTYPE_AAAA)) && (ans.len == PP_HTONS(sizeof(ip6_addr_p_t)))) {
 #if LWIP_IPV4 && LWIP_IPV6
                 if (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
                 {
-                  ip6_addr_t ip6addr;
+                  ip6_addr_p_t ip6addr;
                   /* read the IP address after answer resource record's header */
-                  if (pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_t), res_idx) != sizeof(ip6_addr_t)) {
+                  if (pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_p_t), res_idx) != sizeof(ip6_addr_p_t)) {
                     goto memerr; /* ignore this packet */
                   }
-                  ip_addr_copy_from_ip6(dns_table[i].ipaddr, ip6addr);
+                  ip_addr_copy_from_ip6_packed(dns_table[i].ipaddr, ip6addr);
                   pbuf_free(p);
                   /* handle correct response */
                   dns_correct_response(i, lwip_ntohl(ans.ttl));

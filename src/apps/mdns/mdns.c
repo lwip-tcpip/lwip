@@ -528,7 +528,7 @@ mdns_build_reverse_v6_domain(struct mdns_domain *domain, const ip6_addr_t *addr)
   }
   memset(domain, 0, sizeof(struct mdns_domain));
   ptr = (const u8_t *) addr;
-  for (i = sizeof(ip6_addr_t) - 1; i >= 0; i--) {
+  for (i = sizeof(ip6_addr_p_t) - 1; i >= 0; i--) {
     char buf;
     u8_t byte = ptr[i];
     int j;
@@ -1163,7 +1163,7 @@ mdns_add_aaaa_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct net
   struct mdns_domain host;
   mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_t), NULL);
+  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_p_t), NULL);
 }
 
 /** Write a x.y.z.ip6.arpa -> hostname.local PTR RR to outpacket */
@@ -1628,7 +1628,7 @@ mdns_handle_question(struct mdns_packet *pkt)
 #endif
       } else if (match & REPLY_HOST_AAAA) {
 #if LWIP_IPV6
-        if (ans.rd_length == sizeof(ip6_addr_t) &&
+        if (ans.rd_length == sizeof(ip6_addr_p_t) &&
             /* TODO this clears all AAAA responses if first addr is set as known */
             pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip6_addr(pkt->netif, 0), ans.rd_length) == 0) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: AAAA\n"));
