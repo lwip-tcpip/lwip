@@ -212,7 +212,7 @@ struct lwip_select_cb {
   fd_set *readset;
   /** writeset passed to select */
   fd_set *writeset;
-  /** unimplemented: exceptset passed to select */
+  /** exceptset passed to select */
   fd_set *exceptset;
   /** don't signal the same semaphore twice: set to 1 when signalled */
   int sem_signalled;
