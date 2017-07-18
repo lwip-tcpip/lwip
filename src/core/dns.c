@@ -1275,6 +1275,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
                   if (pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_p_t), res_idx) != sizeof(ip6_addr_p_t)) {
                     goto memerr; /* ignore this packet */
                   }
+                  /* @todo: scope ip6addr? Might be required for link-local addresses at least? */
                   ip_addr_copy_from_ip6_packed(dns_table[i].ipaddr, ip6addr);
                   pbuf_free(p);
                   /* handle correct response */
