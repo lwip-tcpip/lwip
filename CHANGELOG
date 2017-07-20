@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2017-07-20: Douglas
+  * sys: deprecate sys_arch_sem_wait and sys_arch_mbox_fetch returning the
+    time waited rather they are now defined to return != SYS_ARCH_TIMEOUT
+    on success.
+
   2017-07-03: Jakub Schmidtke
   * tcp: added support for sending TCP SACKs
 

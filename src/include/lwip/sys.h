@@ -184,8 +184,7 @@ void sys_sem_signal(sys_sem_t *sem);
  * Wait for a semaphore for the specified timeout
  * @param sem the semaphore to wait for
  * @param timeout timeout in milliseconds to wait (0 = wait forever)
- * @return time (in milliseconds) waited for the semaphore
- *         or SYS_ARCH_TIMEOUT on timeout
+ * @return SYS_ARCH_TIMEOUT on timeout, any other value on success
  */
 u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout);
 /**
@@ -262,9 +261,7 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
  * @param mbox mbox to get a message from
  * @param msg pointer where the message is stored
  * @param timeout maximum time (in milliseconds) to wait for a message (0 = wait forever)
- * @return time (in milliseconds) waited for a message, may be 0 if not waited
-           or SYS_ARCH_TIMEOUT on timeout
- *         The returned time has to be accurate to prevent timer jitter!
+ * @return SYS_ARCH_TIMEOUT on timeout, any other value if a message has been received
  */
 u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout);
 /* Allow port to override with a macro, e.g. special timeout for sys_arch_mbox_fetch() */
