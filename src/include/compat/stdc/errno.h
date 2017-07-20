@@ -1,6 +1,6 @@
 /**
  * @file
- * This file is a posix wrapper for lwip/errno.h.
+ * This file is a posix/stdc wrapper for lwip/errno.h.
  */
 
 /*
