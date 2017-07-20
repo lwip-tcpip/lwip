@@ -214,24 +214,30 @@ main-loop and from interrupts), the SYS_LIGHTWEIGHT_PROT protection SHOULD be en
 
 - sys_prot_t sys_arch_protect(void)
 
-  This optional function does a "fast" critical region protection and returns
-  the previous protection level. This function is only called during very short
-  critical regions. An embedded system which supports ISR-based drivers might
-  want to implement this function by disabling interrupts. Task-based systems
-  might want to implement this by using a mutex or disabling tasking. This
-  function should support recursive calls from the same task or interrupt. In
-  other words, sys_arch_protect() could be called while already protected. In
-  that case the return value indicates that it is already protected.
+  This optional function does a "fast" critical region protection. This function
+  is only called during very short critical regions. An embedded system which
+  supports ISR-based drivers might want to implement this function by disabling
+  interrupts. Task-based systems might want to implement this by using a mutex
+  or disabling tasking. This function should support recursive calls from the
+  same task or interrupt. In other words, sys_arch_protect() could be called
+  while already protected.
+
+  The return value is opaque to lwip and passed to the sys_arch_unprotect() call
+  matching the sys_arch_protect() call at the same nesting level. This value
+  might be used to restore the status. However implementations may depend on
+  every call to sys_arch_protect() having a matching call to sys_arch_unprotect()
+  and thus can use a nesting count or a recursive mutex.
 
   sys_arch_protect() is only required if your port is supporting an operating
   system.
 
 - void sys_arch_unprotect(sys_prot_t pval)
 
-  This optional function does a "fast" set of critical region protection to the
-  value specified by pval. See the documentation for sys_arch_protect() for
-  more information. This function is only required if your port is supporting
-  an operating system.
+  This optional function does a "fast" exit of critical region protection
+  nesting level. The value passed in pval is the opaque value returned the
+  respective call to sys_arch_protect(). See the documentation for
+  sys_arch_protect() for more information. This function is only required if
+  your port is supporting an operating system.
 
 For some configurations, you also need:
 
