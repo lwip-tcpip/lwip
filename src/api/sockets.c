@@ -461,6 +461,7 @@ alloc_socket(struct netconn *newconn, int accepted)
     if (!sockets[i].conn) {
 #if LWIP_NETCONN_FULLDUPLEX
       if (sockets[i].fd_used) {
+        SYS_ARCH_UNPROTECT(lev);
         continue;
       }
       sockets[i].fd_used    = 1;
