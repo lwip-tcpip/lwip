@@ -101,6 +101,9 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
         LWIP_ASSERT("*sem > 0", *sem > 0);
         LWIP_ASSERT("expecting a semaphore count but it's 0", !expectSomething || (*sem > 1));
         ret++;
+        if (ret == SYS_ARCH_TIMEOUT) {
+          ret--;
+        }
       } while(*sem == 1);
     }
     else
@@ -280,6 +283,9 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
         LWIP_ASSERT("q->used >= 0", q->used >= 0);
         LWIP_ASSERT("expecting item available but it's 0", !expectSomething || (q->used > 0));
         ret++;
+        if (ret == SYS_ARCH_TIMEOUT) {
+          ret--;
+        }
       } while(q->used == 0);
     }
     else
