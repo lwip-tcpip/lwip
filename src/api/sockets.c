@@ -1088,6 +1088,7 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
           chdr->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
           pkti->ipi_ifindex = buf->p->if_idx;
           inet_addr_from_ip4addr(&pkti->ipi_addr, ip_2_ip4(netbuf_destaddr(buf)));
+          msg->msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
           wrote_msg = 1;
         } else {
           msg->msg_flags |= MSG_CTRUNC;
