@@ -273,7 +273,7 @@ static struct lwip_sock sockets[NUM_SOCKETS];
 #define LWIP_SOCKET_SELECT_PROTECT(lev)       SYS_ARCH_PROTECT(lev)
 #define LWIP_SOCKET_SELECT_UNPROTECT(lev)     SYS_ARCH_UNPROTECT(lev)
 /** This counter is increased from lwip_select when the list is changed
-    and checked in event_callback to see if it has changed. */
+    and checked in select_check_waiters to see if it has changed. */
 static volatile int select_cb_ctr;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 /** The global list of tasks waiting for select */
@@ -289,6 +289,7 @@ static struct lwip_select_cb *select_cb_list;
 #if LWIP_SOCKET_SELECT
 static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
 #define DEFAULT_SOCKET_EVENTCB event_callback
+static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent);
 #else
 #define DEFAULT_SOCKET_EVENTCB NULL
 #endif
@@ -1896,7 +1897,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     }
     select_cb_list = &select_cb;
 #if !LWIP_TCPIP_CORE_LOCKING
-    /* Increasing this counter tells event_callback that the list has changed. */
+    /* Increasing this counter tells select_check_waiters that the list has changed. */
     select_cb_ctr++;
 #endif
 
@@ -1999,7 +2000,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       select_cb.prev->next = select_cb.next;
     }
 #if !LWIP_TCPIP_CORE_LOCKING
-    /* Increasing this counter tells event_callback that the list has changed. */
+    /* Increasing this counter tells select_check_waiters that the list has changed. */
     select_cb_ctr++;
 #endif
     LWIP_SOCKET_SELECT_UNPROTECT(lev2);
@@ -2050,17 +2051,19 @@ return_copy_fdsets:
 /**
  * Callback registered in the netconn layer for each socket-netconn.
  * Processes recvevent (data available) and wakes up tasks waiting for select.
+ *
+ * @note for LWIP_TCPIP_CORE_LOCKING any caller of this function
+ * must have the core lock held when signaling the following events
+ * as they might cause select_list_cb to be checked:
+ *   NETCONN_EVT_RCVPLUS
+ *   NETCONN_EVT_SENDPLUS
+ *   NETCONN_EVT_ERROR
  */
 static void
 event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 {
-  int s;
+  int s, check_waiters;
   struct lwip_sock *sock;
-  struct lwip_select_cb *scb;
-  int has_recvevent, has_sendevent, has_errevent;
-#if !LWIP_TCPIP_CORE_LOCKING
-  int last_select_cb_ctr;
-#endif
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_UNUSED_ARG(len);
@@ -2096,27 +2099,28 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     return;
   }
 
+  check_waiters = 1;
   SYS_ARCH_PROTECT(lev);
   /* Set event as required */
   switch (evt) {
     case NETCONN_EVT_RCVPLUS:
       sock->rcvevent++;
       if (sock->rcvevent > 1) {
-        goto no_select_wakeup;
+        check_waiters = 0;
       }
       break;
     case NETCONN_EVT_RCVMINUS:
       sock->rcvevent--;
-      goto no_select_wakeup;
+      check_waiters = 0;
     case NETCONN_EVT_SENDPLUS:
       if (sock->sendevent) {
-        goto no_select_wakeup;
+        check_waiters = 0;
       }
       sock->sendevent = 1;
       break;
     case NETCONN_EVT_SENDMINUS:
       sock->sendevent = 0;
-      goto no_select_wakeup;
+      check_waiters = 0;
     case NETCONN_EVT_ERROR:
       sock->errevent = 1;
       break;
@@ -2125,26 +2129,44 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
       break;
   }
 
-  if (sock->select_waiting == 0) {
-no_select_wakeup:
-    /* noone is waiting for this socket, no need to check select_cb_list */
+  if (sock->select_waiting && check_waiters) {
+    /* Save which events are active */
+    int has_recvevent, has_sendevent, has_errevent;
+    has_recvevent = sock->rcvevent > 0;
+    has_sendevent = sock->sendevent != 0;
+    has_errevent = sock->errevent != 0;
     SYS_ARCH_UNPROTECT(lev);
-    done_socket(sock);
-    return;
+    /* Check any select calls waiting on this socket */
+    select_check_waiters(s, has_recvevent, has_sendevent, has_errevent);
+  } else {
+    SYS_ARCH_UNPROTECT(lev);
   }
+  done_socket(sock);
+}
 
-  /* Now decide if anyone is waiting for this socket */
-  /* NOTE: This code goes through the select_cb_list list multiple times
-     ONLY IF a select was actually waiting. We go through the list the number
-     of waiting select calls + 1. This list is expected to be small. */
+/**
+ * Check if any select waiters are waiting on this socket and its events
+ *
+ * @note on synchronization of select_cb_list:
+ * LWIP_TCPIP_CORE_LOCKING: the select_cb_list must only be accessed while holding
+ * the core lock. We do a single pass through the list and signal any waiters.
+ * Core lock should already be held when calling here!!!!
 
-  /* At this point, SYS_ARCH is still protected! */
-  has_recvevent = sock->rcvevent > 0;
-  has_sendevent = sock->sendevent != 0;
-  has_errevent = sock->errevent != 0;
-#if LWIP_TCPIP_CORE_LOCKING
-  SYS_ARCH_UNPROTECT(lev);
-#else
+ * !LWIP_TCPIP_CORE_LOCKING: we use SYS_ARCH_PROTECT but unlock on each iteration
+ * of the loop, thus creating a possibility where a thread could modify the
+ * select_cb_list during our UNPROTECT/PROTECT. We use a generational counter to
+ * detect this change and restart the list walk. The list is expected to be small
+ */
+static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent)
+{
+  struct lwip_select_cb *scb;
+#if !LWIP_TCPIP_CORE_LOCKING
+  int last_select_cb_ctr;
+  SYS_ARCH_DECL_PROTECT(lev);
+#endif
+
+#if !LWIP_TCPIP_CORE_LOCKING
+  SYS_ARCH_PROTECT(lev);
 again:
   /* remember the state of select_cb_list to detect changes */
   last_select_cb_ctr = select_cb_ctr;
@@ -2171,8 +2193,9 @@ again:
       }
       if (do_signal) {
         scb->sem_signalled = 1;
-        /* Don't call SYS_ARCH_UNPROTECT() before signaling the semaphore, as this might
-           lead to the select thread taking itself off the list, invalidating the semaphore. */
+        /* For !LWIP_TCPIP_CORE_LOCKING, we don't call SYS_ARCH_UNPROTECT() before signaling
+           the semaphore, as this might lead to the select thread taking itself off the list,
+           invalidating the semaphore. */
         sys_sem_signal(SELECT_SEM_PTR(scb->sem));
       }
     }
@@ -2192,7 +2215,6 @@ again:
   }
   SYS_ARCH_UNPROTECT(lev);
 #endif
-  done_socket(sock);
 }
 #endif /* LWIP_SOCKET_SELECT */
 
