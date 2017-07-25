@@ -1942,7 +1942,8 @@ dhcp_supplied_address(const struct netif *netif)
 {
   if ((netif != NULL) && (netif_dhcp_data(netif) != NULL)) {
     struct dhcp* dhcp = netif_dhcp_data(netif);
-    return (dhcp->state == DHCP_STATE_BOUND) || (dhcp->state == DHCP_STATE_RENEWING);
+    return (dhcp->state == DHCP_STATE_BOUND) || (dhcp->state == DHCP_STATE_RENEWING) ||
+           (dhcp->state == DHCP_STATE_REBINDING);
   }
   return 0;
 }
