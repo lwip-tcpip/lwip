@@ -17,6 +17,7 @@ with newer versions.
 
   * socket API: according to the standard, SO_ERROR now only returns asynchronous errors.
     All other/normal/synchronous errors are (and always were) available via 'errno'.
+	LWIP_SOCKET_SET_ERRNO has been removed - 'errno' is always set - and required!
 
   * compatibility headers: moved from 'src/include/posix' to 'src/include/compat/posix',
     'src/include/compat/stdc' etc.

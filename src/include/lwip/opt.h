@@ -1849,13 +1849,6 @@
 #define LWIP_SOCKET                     1
 #endif
 
-/** LWIP_SOCKET_SET_ERRNO==1: Set errno when socket functions cannot complete
- * successfully, as required by POSIX. Default is POSIX-compliant.
- */
-#if !defined LWIP_SOCKET_SET_ERRNO || defined __DOXYGEN__
-#define LWIP_SOCKET_SET_ERRNO           1
-#endif
-
 /**
  * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names through defines.
  * LWIP_COMPAT_SOCKETS==2: Same as ==1 but correctly named functions are created.
