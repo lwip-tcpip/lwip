@@ -84,7 +84,6 @@ struct snmp_asn1_tlv
 
 err_t snmp_asn1_dec_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tlv);
 err_t snmp_asn1_dec_u32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value);
-err_t snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value);
 err_t snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value);
 err_t snmp_asn1_dec_oid(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t* oid, u8_t* oid_len, u8_t oid_max_len);
 err_t snmp_asn1_dec_raw(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u8_t *buf, u16_t* buf_len, u16_t buf_max_len);
@@ -93,14 +92,18 @@ err_t snmp_ans1_enc_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_t
 
 void snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed);
 void snmp_asn1_enc_u32t_cnt(u32_t value, u16_t *octets_needed);
-void snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed);
 void snmp_asn1_enc_s32t_cnt(s32_t value, u16_t *octets_needed);
 void snmp_asn1_enc_oid_cnt(const u32_t *oid, u16_t oid_len, u16_t *octets_needed);
 err_t snmp_asn1_enc_oid(struct snmp_pbuf_stream* pbuf_stream, const u32_t *oid, u16_t oid_len);
 err_t snmp_asn1_enc_s32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, s32_t value);
 err_t snmp_asn1_enc_u32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, u32_t value);
-err_t snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, const u32_t* value);
 err_t snmp_asn1_enc_raw(struct snmp_pbuf_stream* pbuf_stream, const u8_t *raw, u16_t raw_len);
+
+#if LWIP_HAVE_INT64
+err_t snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value);
+void snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed);
+err_t snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, const u32_t* value);
+#endif
 
 #ifdef __cplusplus
 }
