@@ -1597,6 +1597,7 @@ snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_v
 #if LWIP_HAVE_INT64
         case SNMP_ASN1_TYPE_COUNTER64:
           OVB_BUILD_EXEC(snmp_asn1_enc_u64t(pbuf_stream, len.value_value_len, (u32_t*) varbind->value));
+          break;
 #endif
         default:
           LWIP_ASSERT("Unknown variable type", 0);
