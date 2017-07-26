@@ -53,11 +53,20 @@ struct fsdata_chksum {
 #define FS_FILE_FLAGS_HEADER_INCLUDED     0x01
 #define FS_FILE_FLAGS_HEADER_PERSISTENT   0x02
 
+/** Define FS_FILE_EXTENSION_T_DEFINED if you have typedef'ed to your private
+ * pointer type (defaults to 'void' so the default usage is 'void*')
+ */
+#ifndef FS_FILE_EXTENSION_T_DEFINED
+typedef void fs_file_extension;
+#endif
+
 struct fs_file {
   const char *data;
   int len;
   int index;
-  void *pextension;
+  /* pextension is free for implementations to hold private (extensional)
+     arbitrary data, e.g. holding some file state or file system handle */
+  fs_file_extension *pextension;
 #if HTTPD_PRECALCULATED_CHECKSUM
   const struct fsdata_chksum *chksum;
   u16_t chksum_count;
