@@ -180,26 +180,51 @@ msg_generate_packet_id(mqtt_client_t *client)
 /*--------------------------------------------------------------------------------------------------------------------- */
 /* Output ring buffer */
 
-
-#define MQTT_RINGBUF_IDX_MASK ((MQTT_OUTPUT_RINGBUF_SIZE) - 1)
-
 /** Add single item to ring buffer */
-#define mqtt_ringbuf_put(rb, item) ((rb)->buf)[(rb)->put++ & MQTT_RINGBUF_IDX_MASK] = (item)
+static void
+mqtt_ringbuf_put(struct mqtt_ringbuf_t *rb, u8_t item)
+{
+  rb->buf[rb->put] = item;
+  rb->put++;
+  if (rb->put >= MQTT_OUTPUT_RINGBUF_SIZE) {
+    rb->put = 0;
+  }
+}
+
+/** Return pointer to ring buffer get position */
+static u8_t*
+mqtt_ringbuf_get_ptr(struct mqtt_ringbuf_t *rb)
+{
+  return &rb->buf[rb->get];
+}
+
+static void
+mqtt_ringbuf_advance_get_idx(struct mqtt_ringbuf_t *rb, u16_t len)
+{
+  LWIP_ASSERT("mqtt_ringbuf_advance_get_idx: len < MQTT_OUTPUT_RINGBUF_SIZE", len < MQTT_OUTPUT_RINGBUF_SIZE);
+
+  rb->get += len;
+  if (rb->get > MQTT_OUTPUT_RINGBUF_SIZE) {
+    rb->get = rb->get - MQTT_OUTPUT_RINGBUF_SIZE;
+  }
+}
 
 /** Return number of bytes in ring buffer */
-#define mqtt_ringbuf_len(rb) ((u16_t)((rb)->put - (rb)->get))
+static u16_t
+mqtt_ringbuf_len(struct mqtt_ringbuf_t *rb)
+{
+  u32_t len = rb->put - rb->get;
+  if (len > 0xFFFF) {
+    len += MQTT_OUTPUT_RINGBUF_SIZE;
+  }
+  return (u16_t)len;
+}
 
 /** Return number of bytes free in ring buffer */
 #define mqtt_ringbuf_free(rb) (MQTT_OUTPUT_RINGBUF_SIZE - mqtt_ringbuf_len(rb))
 
 /** Return number of bytes possible to read without wrapping around */
-#define mqtt_ringbuf_linear_read_length(rb) LWIP_MIN(mqtt_ringbuf_len(rb), (MQTT_OUTPUT_RINGBUF_SIZE - ((rb)->get & MQTT_RINGBUF_IDX_MASK)))
-
-/** Return pointer to ring buffer get position */
-#define mqtt_ringbuf_get_ptr(rb) (&(rb)->buf[(rb)->get & MQTT_RINGBUF_IDX_MASK])
-
-#define mqtt_ringbuf_advance_get_idx(rb, len) ((rb)->get += (len))
-
+#define mqtt_ringbuf_linear_read_length(rb) LWIP_MIN(mqtt_ringbuf_len(rb), (MQTT_OUTPUT_RINGBUF_SIZE - (rb)->get))
 
 /**
  * Try send as many bytes as possible from output ring buffer
@@ -220,7 +245,7 @@ mqtt_output_send(struct mqtt_ringbuf_t *rb, struct altcp_pcb *tpcb)
   }
 
   LWIP_DEBUGF(MQTT_DEBUG_TRACE,("mqtt_output_send: tcp_sndbuf: %d bytes, ringbuf_linear_available: %d, get %d, put %d\n",
-                                send_len, ringbuf_lin_len, ((rb)->get & MQTT_RINGBUF_IDX_MASK), ((rb)->put & MQTT_RINGBUF_IDX_MASK)));
+                                send_len, ringbuf_lin_len, rb->get, rb->put));
 
   if (send_len > ringbuf_lin_len) {
     /* Space in TCP output buffer is larger than available in ring buffer linear portion */
