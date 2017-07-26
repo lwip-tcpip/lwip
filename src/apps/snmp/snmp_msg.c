@@ -1900,13 +1900,13 @@ snmp_vb_enumerator_get_next(struct snmp_varbind_enumerator* enumerator, struct s
     switch (varbind->type) {
       case SNMP_ASN1_TYPE_INTEGER:
         VB_PARSE_EXEC(snmp_asn1_dec_s32t(&(enumerator->pbuf_stream), tlv.value_len, (s32_t*)varbind->value));
-        varbind->value_len = sizeof(s32_t*);
+        varbind->value_len = sizeof(s32_t);
         break;
       case SNMP_ASN1_TYPE_COUNTER:
       case SNMP_ASN1_TYPE_GAUGE:
       case SNMP_ASN1_TYPE_TIMETICKS:
         VB_PARSE_EXEC(snmp_asn1_dec_u32t(&(enumerator->pbuf_stream), tlv.value_len, (u32_t*)varbind->value));
-        varbind->value_len = sizeof(u32_t*);
+        varbind->value_len = sizeof(u32_t);
         break;
       case SNMP_ASN1_TYPE_OCTET_STRING:
       case SNMP_ASN1_TYPE_OPAQUE:
@@ -1938,7 +1938,7 @@ snmp_vb_enumerator_get_next(struct snmp_varbind_enumerator* enumerator, struct s
         break;
       case SNMP_ASN1_TYPE_COUNTER64:
         VB_PARSE_EXEC(snmp_asn1_dec_u64t(&(enumerator->pbuf_stream), tlv.value_len, (u32_t*)varbind->value));
-        varbind->value_len = 2 * sizeof(u32_t*);
+        varbind->value_len = 2 * sizeof(u32_t);
         break;
       default:
         VB_PARSE_ASSERT(0);

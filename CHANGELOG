@@ -63,6 +63,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-07-26: Simon Goldschmidt
+  * snmp_msg.c: fix bug #51578 (SNMP failed to decode some values on non 32bit platforms)
+
   2017-07-20: Simon Goldschmidt
   * compatibility headers: moved from 'src/include/posix' to 'src/include/compat/posix',
     'src/include/compat/stdc' etc.
