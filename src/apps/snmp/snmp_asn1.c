@@ -579,51 +579,25 @@ snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value
 err_t
 snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value)
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
-  u8_t *lsb_ptr = (u8_t*)value;
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-  u8_t *lsb_ptr = (u8_t*)value + sizeof(s32_t) - 1;
-#endif
-  u8_t sign;
   u8_t data;
 
   if ((len > 0) && (len < 5)) {
     PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
-    len--;
 
     if (data & 0x80) {
       /* negative, start from -1 */
-      *value = -1;
-      sign = 1;
-      *lsb_ptr &= data;
+      *value = (-1 << 8) | data;
     } else {
       /* positive, start from 0 */
-      *value = 0;
-      sign = 0;
-      *lsb_ptr |= data;
+      *value = data;
     }
-
-    /* OR/AND octets with value */
+    len--;
+    /* shift in the remaining value */
     while (len > 0) {
       PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
+      *value = (*value << 8) | data;
       len--;
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-      *value <<= 8;
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-      *value >>= 8;
-#endif
-
-      if (sign) {
-        *lsb_ptr |= 255;
-        *lsb_ptr &= data;
-      } else {
-        *lsb_ptr |= data;
-      }
     }
-
     return ERR_OK;
   }
 
