@@ -100,9 +100,9 @@ err_t snmp_asn1_enc_u32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_need
 err_t snmp_asn1_enc_raw(struct snmp_pbuf_stream* pbuf_stream, const u8_t *raw, u16_t raw_len);
 
 #if LWIP_HAVE_INT64
-err_t snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value);
-void snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed);
-err_t snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, const u32_t* value);
+err_t snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u64_t *value);
+void snmp_asn1_enc_u64t_cnt(u64_t value, u16_t *octets_needed);
+err_t snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, u64_t value);
 #endif
 
 #ifdef __cplusplus

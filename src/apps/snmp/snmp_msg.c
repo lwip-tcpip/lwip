@@ -1521,7 +1521,7 @@ snmp_varbind_length(struct snmp_varbind *varbind, struct snmp_varbind_len *len)
         if (varbind->value_len != sizeof(u64_t)) {
           return ERR_VAL;
         }
-        snmp_asn1_enc_u64t_cnt((u32_t*) varbind->value, &len->value_value_len);
+        snmp_asn1_enc_u64t_cnt(*(u64_t*)varbind->value, &len->value_value_len);
         break;
 #endif
       default:
@@ -1596,7 +1596,7 @@ snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_v
           break;
 #if LWIP_HAVE_INT64
         case SNMP_ASN1_TYPE_COUNTER64:
-          OVB_BUILD_EXEC(snmp_asn1_enc_u64t(pbuf_stream, len.value_value_len, (u32_t*) varbind->value));
+          OVB_BUILD_EXEC(snmp_asn1_enc_u64t(pbuf_stream, len.value_value_len, *(u64_t*) varbind->value));
           break;
 #endif
         default:
@@ -1944,7 +1944,7 @@ snmp_vb_enumerator_get_next(struct snmp_varbind_enumerator* enumerator, struct s
         break;
 #if LWIP_HAVE_INT64
       case SNMP_ASN1_TYPE_COUNTER64:
-        VB_PARSE_EXEC(snmp_asn1_dec_u64t(&(enumerator->pbuf_stream), tlv.value_len, (u32_t*)varbind->value));
+        VB_PARSE_EXEC(snmp_asn1_dec_u64t(&(enumerator->pbuf_stream), tlv.value_len, (u64_t*)varbind->value));
         varbind->value_len = sizeof(u64_t);
         break;
 #endif

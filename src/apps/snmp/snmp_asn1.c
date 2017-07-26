@@ -465,7 +465,8 @@ snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value
 
     if (data & 0x80) {
       /* negative, start from -1 */
-      *value = (-1 << 8) | data;
+      *value = -1;
+      *value = (*value << 8) | data;
     } else {
       /* positive, start from 0 */
       *value = data;
@@ -611,19 +612,18 @@ snmp_asn1_dec_raw(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u8_t *buf, u1
  *
  * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
  * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
- * of 0xFFFFFFFF is preceded with 0x00 and the length is 5 octets!!
+ * of 0xFFFFFFFFFFFFFFFF is preceded with 0x00 and the length is 9 octets!!
  */
 void
-snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
+snmp_asn1_enc_u64t_cnt(u64_t value, u16_t *octets_needed)
 {
   /* check if high u32 is 0 */
-  if (*value == 0x00) {
+  if ((value >> 32) == 0) {
     /* only low u32 is important */
-    value++;
-    snmp_asn1_enc_u32t_cnt(*value, octets_needed);
+    snmp_asn1_enc_u32t_cnt((u32_t)value, octets_needed);
   } else {
     /* low u32 does not matter for length determination */
-    snmp_asn1_enc_u32t_cnt(*value, octets_needed);
+    snmp_asn1_enc_u32t_cnt((u32_t)(value >> 32), octets_needed);
     *octets_needed = *octets_needed + 4; /* add the 4 bytes of low u32 */
   }
 }
@@ -633,24 +633,17 @@ snmp_asn1_enc_u64t_cnt(const u32_t *value, u16_t *octets_needed)
  *
  * @param pbuf_stream points to a pbuf stream
  * @param len length of the coded integer field
- * @param value return host order integer
+ * @param value return 64 bit integer
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  *
  * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
  * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
- * of 0xFFFFFFFF is preceded with 0x00 and the length is 5 octets!!
+ * of 0xFFFFFFFFFFFFFFFF is preceded with 0x00 and the length is 9 octets!!
  */
 err_t
-snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value)
+snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u64_t *value)
 {
   u8_t data;
-
-  if (len <= 4) {
-    /* high u32 is 0 */
-    *value = 0;
-    /* directly skip to low u32 */
-    value++;
-  }
 
   if ((len > 0) && (len <= 9)) {
     PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
@@ -662,15 +655,7 @@ snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value
 
       while (len > 0) {
         PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
-
-        if (len == 4) {
-          /* skip to low u32 */
-          value++;
-          *value = 0;
-        } else {
-          *value <<= 8;
-        }
-
+        *value <<= 8;
         *value |= data;
         len--;
       }
@@ -687,13 +672,13 @@ snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *value
  *
  * @param pbuf_stream points to a pbuf stream
  * @param octets_needed encoding length (from snmp_asn1_enc_u32t_cnt())
- * @param value is the host order u32_t value to be encoded
+ * @param value is the value to be encoded
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  *
  * @see snmp_asn1_enc_u64t_cnt()
  */
 err_t
-snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, const u32_t* value)
+snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, u64_t value)
 {
   if (octets_needed > 9) {
     return ERR_ARG;
@@ -704,21 +689,13 @@ snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, co
     octets_needed--;
   }
 
-  while (octets_needed > 4) {
-    octets_needed--;
-    PBUF_OP_EXEC(snmp_pbuf_stream_write(pbuf_stream, (u8_t)(*value >> ((octets_needed-4) << 3))));
-  }
-
-  /* skip to low u32 */
-  value++;
-
   while (octets_needed > 1) {
     octets_needed--;
-    PBUF_OP_EXEC(snmp_pbuf_stream_write(pbuf_stream, (u8_t)(*value >> (octets_needed << 3))));
+    PBUF_OP_EXEC(snmp_pbuf_stream_write(pbuf_stream, (u8_t)(value >> (octets_needed << 3))));
   }
 
   /* always write at least one octet (also in case of value == 0) */
-  PBUF_OP_EXEC(snmp_pbuf_stream_write(pbuf_stream, (u8_t)(*value)));
+  PBUF_OP_EXEC(snmp_pbuf_stream_write(pbuf_stream, (u8_t)(value)));
 
   return ERR_OK;
 }
