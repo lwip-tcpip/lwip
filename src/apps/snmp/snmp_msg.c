@@ -398,10 +398,12 @@ snmp_msg_getnext_validate_node_inst(struct snmp_node_instance* node_instance, vo
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
+#if LWIP_HAVE_INT64
   if ((node_instance->asn1_type == SNMP_ASN1_TYPE_COUNTER64) && (((struct snmp_request*)validate_arg)->version == SNMP_VERSION_1)) {
     /* according to RFC 2089 skip Counter64 objects in GetNext requests from v1 clients */
     return SNMP_ERR_NOSUCHINSTANCE;
   }
+#endif
 
   return SNMP_ERR_NOERROR;
 }
@@ -1514,12 +1516,14 @@ snmp_varbind_length(struct snmp_varbind *varbind, struct snmp_varbind_len *len)
         }
         snmp_asn1_enc_oid_cnt((u32_t*) varbind->value, varbind->value_len >> 2, &len->value_value_len);
         break;
+#if LWIP_HAVE_INT64
       case SNMP_ASN1_TYPE_COUNTER64:
-        if (varbind->value_len != (2 * sizeof (u32_t))) {
+        if (varbind->value_len != sizeof(u64_t)) {
           return ERR_VAL;
         }
         snmp_asn1_enc_u64t_cnt((u32_t*) varbind->value, &len->value_value_len);
         break;
+#endif
       default:
         /* unsupported type */
         return ERR_VAL;
@@ -1590,9 +1594,10 @@ snmp_append_outbound_varbind(struct snmp_pbuf_stream *pbuf_stream, struct snmp_v
         case SNMP_ASN1_TYPE_OBJECT_ID:
           OVB_BUILD_EXEC(snmp_asn1_enc_oid(pbuf_stream, (u32_t*) varbind->value, varbind->value_len / sizeof (u32_t)));
           break;
+#if LWIP_HAVE_INT64
         case SNMP_ASN1_TYPE_COUNTER64:
           OVB_BUILD_EXEC(snmp_asn1_enc_u64t(pbuf_stream, len.value_value_len, (u32_t*) varbind->value));
-          break;
+#endif
         default:
           LWIP_ASSERT("Unknown variable type", 0);
           break;
@@ -1936,10 +1941,12 @@ snmp_vb_enumerator_get_next(struct snmp_varbind_enumerator* enumerator, struct s
           VB_PARSE_ASSERT(0);
         }
         break;
+#if LWIP_HAVE_INT64
       case SNMP_ASN1_TYPE_COUNTER64:
         VB_PARSE_EXEC(snmp_asn1_dec_u64t(&(enumerator->pbuf_stream), tlv.value_len, (u32_t*)varbind->value));
-        varbind->value_len = 2 * sizeof(u32_t);
+        varbind->value_len = sizeof(u64_t);
         break;
+#endif
       default:
         VB_PARSE_ASSERT(0);
         break;

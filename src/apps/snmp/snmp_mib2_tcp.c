@@ -122,12 +122,22 @@ tcp_get_value(struct snmp_node_instance* instance, void* value)
   case 15: /* tcpOutRsts */
     *uint_ptr = STATS_GET(mib2.tcpoutrsts);
     return sizeof(*uint_ptr);
+#if LWIP_HAVE_INT64
   case 17: /* tcpHCInSegs */
-    memset(value, 0, 2*sizeof(u32_t)); /* not supported */
-    return 2*sizeof(u32_t);
+    {
+      /* use the 32 bit counter for now... */
+      u64_t val64 = STATS_GET(mib2.tcpinsegs);
+      *((u64_t*)value) = val64;
+    }
+    return sizeof(u64_t);
   case 18: /* tcpHCOutSegs */
-    memset(value, 0, 2*sizeof(u32_t)); /* not supported */
-    return 2*sizeof(u32_t);
+    {
+      /* use the 32 bit counter for now... */
+      u64_t val64 = STATS_GET(mib2.tcpoutsegs);
+      *((u64_t*)value) = val64;
+    }
+    return sizeof(u64_t);
+#endif
   default:
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_value(): unknown id: %"S32_F"\n", instance->node->oid));
     break;
@@ -512,8 +522,10 @@ static const struct snmp_scalar_node tcp_OutSegs       = SNMP_SCALAR_CREATE_NODE
 static const struct snmp_scalar_node tcp_RetransSegs   = SNMP_SCALAR_CREATE_NODE_READONLY(12, SNMP_ASN1_TYPE_COUNTER, tcp_get_value);
 static const struct snmp_scalar_node tcp_InErrs        = SNMP_SCALAR_CREATE_NODE_READONLY(14, SNMP_ASN1_TYPE_COUNTER, tcp_get_value);
 static const struct snmp_scalar_node tcp_OutRsts       = SNMP_SCALAR_CREATE_NODE_READONLY(15, SNMP_ASN1_TYPE_COUNTER, tcp_get_value);
+#if LWIP_HAVE_INT64
 static const struct snmp_scalar_node tcp_HCInSegs      = SNMP_SCALAR_CREATE_NODE_READONLY(17, SNMP_ASN1_TYPE_COUNTER64, tcp_get_value);
 static const struct snmp_scalar_node tcp_HCOutSegs     = SNMP_SCALAR_CREATE_NODE_READONLY(18, SNMP_ASN1_TYPE_COUNTER64, tcp_get_value);
+#endif
 
 #if LWIP_IPV4
 static const struct snmp_table_simple_col_def tcp_ConnTable_columns[] = {
@@ -561,8 +573,10 @@ CREATE_LWIP_SYNC_NODE(13, tcp_ConnTable)
 #endif /* LWIP_IPV4 */
 CREATE_LWIP_SYNC_NODE(14, tcp_InErrs)
 CREATE_LWIP_SYNC_NODE(15, tcp_OutRsts)
+#if LWIP_HAVE_INT64
 CREATE_LWIP_SYNC_NODE(17, tcp_HCInSegs)
 CREATE_LWIP_SYNC_NODE(18, tcp_HCOutSegs)
+#endif
 CREATE_LWIP_SYNC_NODE(19, tcp_ConnectionTable)
 CREATE_LWIP_SYNC_NODE(20, tcp_ListenerTable)
 
@@ -585,8 +599,10 @@ static const struct snmp_node* const tcp_nodes[] = {
   &SYNC_NODE_NAME(tcp_InErrs).node.node,
   &SYNC_NODE_NAME(tcp_OutRsts).node.node,
   &SYNC_NODE_NAME(tcp_HCInSegs).node.node,
+#if LWIP_HAVE_INT64
   &SYNC_NODE_NAME(tcp_HCOutSegs).node.node,
   &SYNC_NODE_NAME(tcp_ConnectionTable).node.node,
+#endif
   &SYNC_NODE_NAME(tcp_ListenerTable).node.node
 };
 
