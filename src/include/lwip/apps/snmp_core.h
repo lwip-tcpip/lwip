@@ -144,6 +144,9 @@ union snmp_variant_value
   const void* const_ptr;
   u32_t u32;
   s32_t s32;
+#if LWIP_HAVE_INT64
+  u64_t u64;
+#endif
 };
 
 
