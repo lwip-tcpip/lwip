@@ -77,8 +77,19 @@
  * connections (requires the PPP_SUPPORT option)
  */
 #ifndef MEMP_NUM_PPP_PCB
-#define MEMP_NUM_PPP_PCB       1
+#define MEMP_NUM_PPP_PCB                1
 #endif
+
+/**
+ * PPP_NUM_TIMEOUTS_PER_PCB: the number of sys_timeouts running in parallel per
+ * ppp_pcb. This is a conservative default which needs to be checked...
+ */
+#ifndef PPP_NUM_TIMEOUTS_PER_PCB
+#define PPP_NUM_TIMEOUTS_PER_PCB        6
+#endif
+
+/* The number of sys_timeouts required for the PPP module */
+#define PPP_NUM_TIMEOUTS                (PPP_SUPPORT * PPP_NUM_TIMEOUTS_PER_PCB * MEMP_NUM_PPP_PCB)
 
 #if PPP_SUPPORT
 
