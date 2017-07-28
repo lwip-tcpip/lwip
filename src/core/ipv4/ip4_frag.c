@@ -79,6 +79,10 @@
 
 #define IP_REASS_FLAG_LASTFRAG 0x01
 
+#define IP_REASS_VALIDATE_TELEGRAM_FINISHED  1
+#define IP_REASS_VALIDATE_PBUF_QUEUED        0
+#define IP_REASS_VALIDATE_PBUF_DROPPED       -1
+
 /** This is a helper struct which holds the starting
  * offset and the ending offset of this fragment to
  * easily chain the fragments.
@@ -333,7 +337,7 @@ ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
  * fragment was received at least once).
  * @param ipr points to the reassembly state
  * @param new_p points to the pbuf for the current fragment
- * @return 0 if invalid, >0 otherwise
+ * @return see IP_REASS_VALIDATE_* defines
  */
 static int
 ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p)
@@ -473,17 +477,17 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
     /* If valid is 0 here, there are some fragments missing in the middle
      * (since MF == 0 has already arrived). Such datagrams simply time out if
      * no more fragments are received... */
-    return valid;
+    return valid ? IP_REASS_VALIDATE_TELEGRAM_FINISHED : IP_REASS_VALIDATE_PBUF_QUEUED;
   }
   /* If we come here, not all fragments were received, yet! */
-  return 0; /* not yet valid! */
+  return IP_REASS_VALIDATE_PBUF_QUEUED; /* not yet valid! */
 #if IP_REASS_CHECK_OVERLAP
 freepbuf:
   clen = pbuf_clen(new_p);
   LWIP_ASSERT("ip_reass_pbufcount >= clen", ip_reass_pbufcount >= clen);
   ip_reass_pbufcount = (u16_t)(ip_reass_pbufcount - clen);
   pbuf_free(new_p);
-  return 0;
+  return IP_REASS_VALIDATE_PBUF_DROPPED;
 #endif /* IP_REASS_CHECK_OVERLAP */
 }
 
@@ -502,6 +506,7 @@ ip4_reass(struct pbuf *p)
   struct ip_reass_helper *iprh;
   u16_t offset, len, clen;
   u8_t hlen;
+  int valid;
 
   IPFRAG_STATS_INC(ip_frag.recv);
   MIB2_STATS_INC(mib2.ipreasmreqds);
@@ -572,10 +577,6 @@ ip4_reass(struct pbuf *p)
       SMEMCPY(&ipr->iphdr, fraghdr, IP_HLEN);
     }
   }
-  /* Track the current number of pbufs current 'in-flight', in order to limit
-     the number of fragments that may be enqueued at any one time
-     (overflow checked by testing against IP_REASS_MAX_PBUFS) */
-  ip_reass_pbufcount = (u16_t)(ip_reass_pbufcount + clen);
 
   /* At this point, we have either created a new entry or pointing
    * to an existing one */
@@ -595,7 +596,18 @@ ip4_reass(struct pbuf *p)
   }
   /* find the right place to insert this pbuf */
   /* @todo: trim pbufs if fragments are overlapping */
-  if (ip_reass_chain_frag_into_datagram_and_validate(ipr, p)) {
+  valid = ip_reass_chain_frag_into_datagram_and_validate(ipr, p);
+  if (valid == IP_REASS_VALIDATE_PBUF_DROPPED) {
+    goto nullreturn;
+  }
+  /* if we come here, the pbuf has been enqueued */
+
+  /* Track the current number of pbufs current 'in-flight', in order to limit
+     the number of fragments that may be enqueued at any one time
+     (overflow checked by testing against IP_REASS_MAX_PBUFS) */
+  ip_reass_pbufcount = (u16_t)(ip_reass_pbufcount + clen);
+
+  if (valid == IP_REASS_VALIDATE_TELEGRAM_FINISHED) {
     struct ip_reassdata *ipr_prev;
     /* the totally last fragment (flag more fragments = 0) was received at least
      * once AND all fragments are received */
