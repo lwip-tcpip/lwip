@@ -392,6 +392,12 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
 #endif /* IP_REASS_CHECK_OVERLAP */
         iprh_prev->next_pbuf = new_p;
       } else {
+#if IP_REASS_CHECK_OVERLAP
+        if (iprh->end > iprh_tmp->start) {
+          /* fragment overlaps with following, throw away */
+          goto freepbuf;
+        }
+#endif /* IP_REASS_CHECK_OVERLAP */
         /* fragment with the lowest offset */
         ipr->p = new_p;
       }
