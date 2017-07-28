@@ -431,8 +431,8 @@ dhcp_coarse_tmr(void)
       if (dhcp->t0_timeout && (++dhcp->lease_used == dhcp->t0_timeout)) {
         LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_coarse_tmr(): t0 timeout\n"));
         /* this clients' lease time has expired */
-        dhcp_release(netif);
-        dhcp_discover(netif);
+        dhcp_release_and_stop(netif);
+        dhcp_start(netif);
       /* timer is active (non zero), and triggers (zeroes) now? */
       } else if (dhcp->t2_rebind_time && (dhcp->t2_rebind_time-- == 1)) {
         LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_coarse_tmr(): t2 timeout\n"));
@@ -504,8 +504,8 @@ dhcp_timeout(struct netif *netif)
       dhcp_select(netif);
     } else {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_timeout(): REQUESTING, releasing, restarting\n"));
-      dhcp_release(netif);
-      dhcp_discover(netif);
+      dhcp_release_and_stop(netif);
+      dhcp_start(netif);
     }
 #if DHCP_DOES_ARP_CHECK
   /* received no ARP reply for the offered address (which is good) */
@@ -790,7 +790,7 @@ dhcp_start(struct netif *netif)
   result = dhcp_discover(netif);
   if (result != ERR_OK) {
     /* free resources allocated above */
-    dhcp_stop(netif);
+    dhcp_release_and_stop(netif);
     return ERR_MEM;
   }
   return result;
