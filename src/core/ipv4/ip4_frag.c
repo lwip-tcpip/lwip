@@ -337,10 +337,11 @@ ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
  * fragment was received at least once).
  * @param ipr points to the reassembly state
  * @param new_p points to the pbuf for the current fragment
+ * @param is_last is 1 if this pbuf has MF==0 (ipr->flags not updated yet)
  * @return see IP_REASS_VALIDATE_* defines
  */
 static int
-ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p)
+ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p, int is_last)
 {
   struct ip_reass_helper *iprh, *iprh_tmp, *iprh_prev=NULL;
   struct pbuf *q;
@@ -441,7 +442,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
 
   /* At this point, the validation part begins: */
   /* If we already received the last fragment */
-  if ((ipr->flags & IP_REASS_FLAG_LASTFRAG) != 0) {
+  if (is_last || ((ipr->flags & IP_REASS_FLAG_LASTFRAG) != 0)) {
     /* and had no holes so far */
     if (valid) {
       /* then check if the rest of the fragments is here */
@@ -469,8 +470,6 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
             ((struct ip_reass_helper*)ipr->p->payload) != iprh);
           LWIP_ASSERT("validate_datagram:next_pbuf!=NULL",
             iprh->next_pbuf == NULL);
-          LWIP_ASSERT("validate_datagram:datagram end!=datagram len",
-            iprh->end == ipr->datagram_len);
         }
       }
     }
@@ -507,6 +506,7 @@ ip4_reass(struct pbuf *p)
   u16_t offset, len, clen;
   u8_t hlen;
   int valid;
+  int is_last;
 
   IPFRAG_STATS_INC(ip_frag.recv);
   MIB2_STATS_INC(mib2.ipreasmreqds);
@@ -582,21 +582,17 @@ ip4_reass(struct pbuf *p)
    * to an existing one */
 
   /* check for 'no more fragments', and update queue entry*/
-  if ((IPH_OFFSET(fraghdr) & PP_NTOHS(IP_MF)) == 0) {
+  is_last = (IPH_OFFSET(fraghdr) & PP_NTOHS(IP_MF)) == 0;
+  if (is_last) {
     u16_t datagram_len = (u16_t)(offset + len);
     if ((datagram_len < offset) || (datagram_len > (0xFFFF - IP_HLEN))) {
       /* u16_t overflow, cannot handle this */
       goto nullreturn;
     }
-    ipr->datagram_len = datagram_len;
-    ipr->flags |= IP_REASS_FLAG_LASTFRAG;
-    LWIP_DEBUGF(IP_REASS_DEBUG,
-     ("ip4_reass: last fragment seen, total len %"S16_F"\n",
-      ipr->datagram_len));
   }
   /* find the right place to insert this pbuf */
   /* @todo: trim pbufs if fragments are overlapping */
-  valid = ip_reass_chain_frag_into_datagram_and_validate(ipr, p);
+  valid = ip_reass_chain_frag_into_datagram_and_validate(ipr, p, is_last);
   if (valid == IP_REASS_VALIDATE_PBUF_DROPPED) {
     goto nullreturn;
   }
@@ -606,6 +602,14 @@ ip4_reass(struct pbuf *p)
      the number of fragments that may be enqueued at any one time
      (overflow checked by testing against IP_REASS_MAX_PBUFS) */
   ip_reass_pbufcount = (u16_t)(ip_reass_pbufcount + clen);
+  if (is_last) {
+    u16_t datagram_len = (u16_t)(offset + len);
+    ipr->datagram_len = datagram_len;
+    ipr->flags |= IP_REASS_FLAG_LASTFRAG;
+    LWIP_DEBUGF(IP_REASS_DEBUG,
+     ("ip4_reass: last fragment seen, total len %"S16_F"\n",
+      ipr->datagram_len));
+  }
 
   if (valid == IP_REASS_VALIDATE_TELEGRAM_FINISHED) {
     struct ip_reassdata *ipr_prev;
