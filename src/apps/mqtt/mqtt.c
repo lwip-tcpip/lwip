@@ -204,7 +204,7 @@ mqtt_ringbuf_advance_get_idx(struct mqtt_ringbuf_t *rb, u16_t len)
   LWIP_ASSERT("mqtt_ringbuf_advance_get_idx: len < MQTT_OUTPUT_RINGBUF_SIZE", len < MQTT_OUTPUT_RINGBUF_SIZE);
 
   rb->get += len;
-  if (rb->get > MQTT_OUTPUT_RINGBUF_SIZE) {
+  if (rb->get >= MQTT_OUTPUT_RINGBUF_SIZE) {
     rb->get = rb->get - MQTT_OUTPUT_RINGBUF_SIZE;
   }
 }
