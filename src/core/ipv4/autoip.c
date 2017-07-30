@@ -460,7 +460,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
     */
     ip4_addr_t sipaddr, dipaddr;
     struct eth_addr netifaddr;
-    ETHADDR16_COPY(netifaddr.addr, netif->hwaddr);
+    SMEMCPY(netifaddr.addr, netif->hwaddr, ETH_HWADDR_LEN);
 
     /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
      * structure packing (not using structure copy which breaks strict-aliasing rules).

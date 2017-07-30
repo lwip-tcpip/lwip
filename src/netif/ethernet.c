@@ -297,8 +297,8 @@ ethernet_output(struct netif* netif, struct pbuf* p,
 
   ethhdr = (struct eth_hdr*)p->payload;
   ethhdr->type = eth_type_be;
-  ETHADDR16_COPY(&ethhdr->dest, dst);
-  ETHADDR16_COPY(&ethhdr->src,  src);
+  SMEMCPY(&ethhdr->dest, dst, ETH_HWADDR_LEN);
+  SMEMCPY(&ethhdr->src,  src, ETH_HWADDR_LEN);
 
   LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
     (netif->hwaddr_len == ETH_HWADDR_LEN));

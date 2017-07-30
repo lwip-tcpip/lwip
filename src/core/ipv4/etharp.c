@@ -464,7 +464,7 @@ etharp_update_arp_entry(struct netif *netif, const ip4_addr_t *ipaddr, struct et
 
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */
-  ETHADDR16_COPY(&arp_table[i].ethaddr, ethaddr);
+  SMEMCPY(&arp_table[i].ethaddr, ethaddr, ETH_HWADDR_LEN);
   /* reset time stamp */
   arp_table[i].ctime = 0;
   /* this is where we will send out queued packets! */
@@ -1132,8 +1132,8 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
               (netif->hwaddr_len == ETH_HWADDR_LEN));
 
   /* Write the ARP MAC-Addresses */
-  ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);
-  ETHADDR16_COPY(&hdr->dhwaddr, hwdst_addr);
+  SMEMCPY(&hdr->shwaddr, hwsrc_addr, ETH_HWADDR_LEN);
+  SMEMCPY(&hdr->dhwaddr, hwdst_addr, ETH_HWADDR_LEN);
   /* Copy struct ip4_addr_wordaligned to aligned ip4_addr, to support compilers without
    * structure packing. */
   IPADDR_WORDALIGNED_COPY_FROM_IP4_ADDR_T(&hdr->sipaddr, ipsrc_addr);

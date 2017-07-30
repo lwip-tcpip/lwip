@@ -314,8 +314,6 @@ struct netif {
   /** maximum transfer unit (in bytes) */
   u16_t mtu;
   /** link level hardware address of this interface */
-  /* Ensure hwaddr is 16-bit aligned by placing it behind u16_t value
-   * because it is accessed via ETHADDR16_COPY() macro in etharp.c and autoip.c */
   u8_t hwaddr[NETIF_MAX_HWADDR_LEN];
   /** number of bytes used in hwaddr */
   u8_t hwaddr_len;
