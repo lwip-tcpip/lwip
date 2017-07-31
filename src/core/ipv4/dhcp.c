@@ -744,7 +744,7 @@ dhcp_start(struct netif *netif)
 
   /* no DHCP client attached yet? */
   if (dhcp == NULL) {
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): mallocing new DHCP client\n"));
     dhcp = (struct dhcp *)mem_malloc(sizeof(struct dhcp));
     if (dhcp == NULL) {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): could not allocate dhcp\n"));
@@ -1851,7 +1851,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
            (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
 
   /* DHCP_REQUEST should reuse 'xid' from DHCPOFFER */
-  if (message_type != DHCP_REQUEST) {
+  if ((message_type != DHCP_REQUEST) || (dhcp->state == DHCP_STATE_REBOOTING)) {
     /* reuse transaction identifier in retransmissions */
     if (dhcp->tries == 0) {
 #if DHCP_CREATE_RAND_XID && defined(LWIP_RAND)
