@@ -303,7 +303,6 @@ ip6_reass(struct pbuf *p)
   hdrdiff += IP6_FRAG_HLEN;
   if (hdrdiff > len) {
     IP6_FRAG_STATS_INC(ip6_frag.proterr);
-    IP6_FRAG_STATS_INC(ip6_frag.drop);
     goto nullreturn;
   }
   len = (u16_t)(len - hdrdiff);
@@ -311,7 +310,6 @@ ip6_reass(struct pbuf *p)
   if (start > (0xFFFF - len)) {
     /* u16_t overflow, cannot handle this */
     IP6_FRAG_STATS_INC(ip6_frag.proterr);
-    IP6_FRAG_STATS_INC(ip6_frag.drop);
     goto nullreturn;
   }
 
@@ -349,7 +347,6 @@ ip6_reass(struct pbuf *p)
 #endif /* IP_REASS_FREE_OLDEST */
       {
         IP6_FRAG_STATS_INC(ip6_frag.memerr);
-        IP6_FRAG_STATS_INC(ip6_frag.drop);
         goto nullreturn;
       }
     }
@@ -404,7 +401,6 @@ ip6_reass(struct pbuf *p)
       /* @todo: send ICMPv6 time exceeded here? */
       /* drop this pbuf */
       IP6_FRAG_STATS_INC(ip6_frag.memerr);
-      IP6_FRAG_STATS_INC(ip6_frag.drop);
       goto nullreturn;
     }
   }
@@ -441,14 +437,12 @@ ip6_reass(struct pbuf *p)
       if (end > iprh_tmp->start) {
         /* fragment overlaps with following, throw away */
         IP6_FRAG_STATS_INC(ip6_frag.proterr);
-        IP6_FRAG_STATS_INC(ip6_frag.drop);
         goto nullreturn;
       }
       if (iprh_prev != NULL) {
         if (start < iprh_prev->end) {
           /* fragment overlaps with previous, throw away */
           IP6_FRAG_STATS_INC(ip6_frag.proterr);
-          IP6_FRAG_STATS_INC(ip6_frag.drop);
           goto nullreturn;
         }
       }
@@ -465,13 +459,11 @@ ip6_reass(struct pbuf *p)
       break;
     } else if (start == iprh_tmp->start) {
       /* received the same datagram twice: no need to keep the datagram */
-      IP6_FRAG_STATS_INC(ip6_frag.drop);
       goto nullreturn;
 #if IP_REASS_CHECK_OVERLAP
     } else if (start < iprh_tmp->end) {
       /* overlap: no need to keep the new datagram */
       IP6_FRAG_STATS_INC(ip6_frag.proterr);
-      IP6_FRAG_STATS_INC(ip6_frag.drop);
       goto nullreturn;
 #endif /* IP_REASS_CHECK_OVERLAP */
     } else {
@@ -672,6 +664,7 @@ ip6_reass(struct pbuf *p)
   return NULL;
 
 nullreturn:
+  IP6_FRAG_STATS_INC(ip6_frag.drop);
   pbuf_free(p);
   return NULL;
 }
