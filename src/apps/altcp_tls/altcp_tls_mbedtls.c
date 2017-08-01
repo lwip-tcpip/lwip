@@ -284,7 +284,6 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
       return ERR_OK;
     }
     /* If we come here, handshake succeeded. */
-    LWIP_ASSERT("rx pbufs left at end of handshake", state->rx == NULL);
     LWIP_ASSERT("state", state->bio_bytes_read == 0);
     LWIP_ASSERT("state", state->bio_bytes_appl == 0);
     state->flags |= ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE;
@@ -292,9 +291,12 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
     if (conn->connected) {
       conn->connected(conn->arg, conn, ERR_OK);
     }
+    if (state->rx)
+        goto pbuf_left;
     return ERR_OK;
   } else {
     /* handle application data */
+  pbuf_left:
     return altcp_mbedtls_handle_rx_appldata(conn, state);
   }
 }
