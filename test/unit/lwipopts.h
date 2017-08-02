@@ -67,4 +67,7 @@
 
 #define MEMP_NUM_SYS_TIMEOUT            (LWIP_NUM_SYS_TIMEOUT_INTERNAL + 1)
 
+/* MIB2 stats are required to check IPv4 reassembly results */
+#define MIB2_STATS                      1
+
 #endif /* LWIP_HDR_LWIPOPTS_H */

@@ -391,6 +391,11 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
         }
 #endif /* IP_REASS_CHECK_OVERLAP */
         iprh_prev->next_pbuf = new_p;
+        if (iprh_prev->end != iprh->start) {
+          /* There is a fragment missing between the current
+           * and the previous fragment */
+          valid = 0;
+        }
       } else {
 #if IP_REASS_CHECK_OVERLAP
         if (iprh->end > iprh_tmp->start) {
