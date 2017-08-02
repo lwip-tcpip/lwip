@@ -59,4 +59,7 @@
 /* Minimal changes to opt.h required for etharp unit tests: */
 #define ETHARP_SUPPORT_STATIC_ENTRIES   1
 
+/* MIB2 stats are required to check IPv4 reassembly results */
+#define MIB2_STATS                      1
+
 #endif /* LWIP_HDR_LWIPOPTS_H */
