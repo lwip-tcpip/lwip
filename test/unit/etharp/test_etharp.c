@@ -119,6 +119,7 @@ etharp_setup(void)
 {
   etharp_remove_all();
   default_netif_add();
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
@@ -126,6 +127,7 @@ etharp_teardown(void)
 {
   etharp_remove_all();
   default_netif_remove();
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 

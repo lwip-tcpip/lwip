@@ -7,6 +7,7 @@
 #include "lwip/stats.h"
 
 #include "lwip/tcpip.h"
+#include "lwip/priv/tcp_priv.h"
 
 
 static int
@@ -32,12 +33,23 @@ test_sockets_get_used_count(void)
 static void
 sockets_setup(void)
 {
+  /* expect full free heap */
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
 sockets_teardown(void)
 {
   fail_unless(test_sockets_get_used_count() == 0);
+  /* poll until all memory is released... */
+  tcpip_thread_poll_one();
+  while (tcp_tw_pcbs) {
+    tcp_abort(tcp_tw_pcbs);
+    tcpip_thread_poll_one();
+  }
+  tcpip_thread_poll_one();
+  /* ensure full free heap */
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 #ifndef NUM_SOCKETS

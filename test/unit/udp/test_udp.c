@@ -28,12 +28,14 @@ static void
 udp_setup(void)
 {
   udp_remove_all();
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
 udp_teardown(void)
 {
   udp_remove_all();
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 

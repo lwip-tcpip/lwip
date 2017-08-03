@@ -58,6 +58,7 @@ tcp_setup(void)
 
   test_tcp_timer = 0;
   tcp_remove_all();
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
@@ -69,6 +70,7 @@ tcp_teardown(void)
   /* restore netif_list for next tests (e.g. loopif) */
   netif_list = old_netif_list;
   netif_default = old_netif_default;
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 

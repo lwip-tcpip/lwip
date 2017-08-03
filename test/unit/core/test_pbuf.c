@@ -18,11 +18,13 @@
 static void
 pbuf_setup(void)
 {
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
 pbuf_teardown(void)
 {
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 

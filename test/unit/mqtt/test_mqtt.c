@@ -47,6 +47,7 @@ mqtt_setup(void)
   old_netif_default = netif_default;
   netif_list = NULL;
   netif_default = NULL;
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
@@ -57,6 +58,7 @@ mqtt_teardown(void)
   /* restore netif_list for next tests (e.g. loopif) */
   netif_list = old_netif_list;
   netif_default = old_netif_default;
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void test_mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status)
@@ -95,6 +97,10 @@ START_TEST(basic_connect)
   if (client->conn->recv(client->conn->callback_arg, client->conn, p, ERR_OK) != ERR_OK) {
     pbuf_free(p);
   }
+
+  mqtt_disconnect(client);
+  /* fixme: mqtt_client_fre() is missing... */
+  mem_free(client);
 }
 END_TEST
 

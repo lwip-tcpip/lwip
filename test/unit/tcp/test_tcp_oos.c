@@ -129,6 +129,7 @@ tcp_oos_setup(void)
   netif_list = NULL;
   netif_default = NULL;
   tcp_remove_all();
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
@@ -140,6 +141,7 @@ tcp_oos_teardown(void)
   /* restore netif_list for next tests (e.g. loopif) */
   netif_list = old_netif_list;
   netif_default = old_netif_default;
+  lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 
