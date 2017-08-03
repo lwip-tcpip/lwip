@@ -1139,18 +1139,15 @@ tcp_output(struct tcp_pcb *pcb)
      return tcp_send_empty_ack(pcb);
   }
 
-#if TCP_OUTPUT_DEBUG
   if (seg == NULL) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n",
                                    (void*)pcb->unsent));
-  }
-#endif /* TCP_OUTPUT_DEBUG */
-#if TCP_CWND_DEBUG
-  if (seg == NULL) {
     LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"TCPWNDSIZE_F
                                  ", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
                                  ", seg == NULL, ack %"U32_F"\n",
                                  pcb->snd_wnd, pcb->cwnd, wnd, pcb->lastack));
+    /* nothing to send: shortcut out of here */
+    goto output_done;
   } else {
     LWIP_DEBUGF(TCP_CWND_DEBUG,
                 ("tcp_output: snd_wnd %"TCPWNDSIZE_F", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
@@ -1158,12 +1155,6 @@ tcp_output(struct tcp_pcb *pcb)
                  pcb->snd_wnd, pcb->cwnd, wnd,
                  lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len,
                  lwip_ntohl(seg->tcphdr->seqno), pcb->lastack));
-  }
-#endif /* TCP_CWND_DEBUG */
-
-  if (seg == NULL) {
-    /* nothing to send: shortcut out of here */
-    goto output_done;
   }
 
   /* useg should point to last segment on unacked queue */
@@ -1194,8 +1185,7 @@ tcp_output(struct tcp_pcb *pcb)
    * subsequent window update is reliably received. With the goal of being lightweight,
    * we avoid splitting the unsent segment and treat the window as already zero.
    */
-  if (seg != NULL &&
-      lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd &&
+  if (lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd &&
       wnd > 0 && wnd == pcb->snd_wnd && pcb->unacked == NULL) {
     /* Start the persist timer */
     if (pcb->persist_backoff == 0) {
