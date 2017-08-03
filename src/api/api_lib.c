@@ -524,25 +524,30 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
 {
   void *buf = NULL;
   u16_t len;
-  err_t err;
 
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
 
-  err = netconn_err(conn);
-  if (err != ERR_OK) {
-    /* return pending error */
-    return err;
-  }
   if (!sys_mbox_valid(&conn->recvmbox)) {
-    return ERR_CLSD;
+    err_t err = netconn_err(conn);
+    if (err != ERR_OK) {
+      /* return pending error */
+      return err;
+    }
+    return ERR_CONN;
   }
 
-  if (netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK) || (conn->flags & NETCONN_FLAG_MBOXCLOSED)) {
+  if (netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK) ||
+    (conn->flags & NETCONN_FLAG_MBOXCLOSED) || (conn->pending_err != ERR_OK)) {
     if (sys_arch_mbox_tryfetch(&conn->recvmbox, &buf) == SYS_ARCH_TIMEOUT) {
+      err_t err = netconn_err(conn);
+      if (err != ERR_OK) {
+        /* return pending error */
+        return err;
+      }
       if (conn->flags & NETCONN_FLAG_MBOXCLOSED) {
-        return ERR_CLSD;
+        return ERR_CONN;
       }
       return ERR_WOULDBLOCK;
     }
@@ -561,6 +566,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   {
+    err_t err;
     /* Check if this is an error message or a pbuf */
     if (lwip_netconn_is_err_msg(buf, &err)) {
       /* new_buf has been zeroed above already */
