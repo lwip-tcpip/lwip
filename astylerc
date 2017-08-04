@@ -9,9 +9,7 @@ attach-extern-c
 attach-closing-while
 # indentation
 indent-switches
-indent-preproc-block
-indent-preproc-define
-max-continuation-indent=60
+max-continuation-indent=40
 # padding
 pad-oper
 pad-comma
