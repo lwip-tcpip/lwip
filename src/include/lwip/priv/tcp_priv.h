@@ -468,6 +468,7 @@ void tcp_rst(const struct tcp_pcb* pcb, u32_t seqno, u32_t ackno,
 u32_t tcp_next_iss(struct tcp_pcb *pcb);
 
 err_t tcp_keepalive(struct tcp_pcb *pcb);
+err_t tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split);
 err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
 void  tcp_trigger_input_pcb_close(void);
 

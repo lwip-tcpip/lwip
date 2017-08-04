@@ -1075,17 +1075,32 @@ tcp_slowtmr_start:
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached\n"));
     } else {
       if (pcb->persist_backoff > 0) {
+        LWIP_ASSERT("tcp_slowtimr: persist ticking with in-flight data", pcb->unacked == NULL);
+        LWIP_ASSERT("tcp_slowtimr: persist ticking with empty send buffer", pcb->unsent != NULL);
         if (pcb->persist_probe >= TCP_MAXRTX) {
           ++pcb_remove; /* max probes reached */
         } else {
-          /* If snd_wnd is zero, use persist timer to send 1 byte probes
-           * instead of using the standard retransmission mechanism. */
           u8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff-1];
           if (pcb->persist_cnt < backoff_cnt) {
             pcb->persist_cnt++;
           }
           if (pcb->persist_cnt >= backoff_cnt) {
-            if (tcp_zero_window_probe(pcb) == ERR_OK) {
+            int next_slot = 1; /* increment timer to next slot */
+            /* If snd_wnd is zero, send 1 byte probes */
+            if (pcb->snd_wnd == 0) {
+              if (tcp_zero_window_probe(pcb) != ERR_OK) {
+                next_slot = 0; /* try probe again with current slot */
+              }
+            /* snd_wnd not fully closed, split unsent head and fill window */
+            } else {
+              if (tcp_split_unsent_seg(pcb, (u16_t)pcb->snd_wnd) == ERR_OK) {
+                if (tcp_output(pcb) == ERR_OK) {
+                /* sending will cancel persist timer, else retry with current slot */
+                next_slot = 0;
+                }
+              }
+            }
+            if (next_slot) {
               pcb->persist_cnt = 0;
               if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
                 pcb->persist_backoff++;

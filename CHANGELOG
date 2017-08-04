@@ -79,6 +79,9 @@ HISTORY
     to make parameter order consistent with other ip*_route*() functions
     Same also applies to LWIP_HOOK_IP4_ROUTE_SRC() parameter order.
 
+  2017-08-04: Joel Cunningham
+  * tcp: re-work persist timer to fully close window (details in bug #50837)
+
   2017-07-26: Simon Goldschmidt
   * snmp_msg.c: fix bug #51578 (SNMP failed to decode some values on non 32bit platforms)
 

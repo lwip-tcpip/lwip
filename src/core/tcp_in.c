@@ -1108,17 +1108,6 @@ tcp_receive(struct tcp_pcb *pcb)
       }
       pcb->snd_wl1 = seqno;
       pcb->snd_wl2 = ackno;
-      if (pcb->snd_wnd == 0) {
-        if (pcb->persist_backoff == 0) {
-          /* start persist timer */
-          pcb->persist_cnt = 0;
-          pcb->persist_backoff = 1;
-          pcb->persist_probe = 0;
-        }
-      } else if (pcb->persist_backoff > 0) {
-        /* stop persist timer */
-        pcb->persist_backoff = 0;
-      }
       LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"TCPWNDSIZE_F"\n", pcb->snd_wnd));
 #if TCP_WND_DEBUG
     } else {
