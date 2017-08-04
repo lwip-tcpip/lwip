@@ -37,6 +37,9 @@ with newer versions.
     core API directly, it is highly recommended to enable LWIP_IPV6_SCOPES_DEBUG at least for
     a while, to ensure e.g. proper address initialization.
 
+  * LWIP_HOOK_DHCP_APPEND_OPTIONS() has changed, see description in opt.h (options_out_len is not
+    available in struct dhcp any more)
+	
 (2.0.1)
 
   ++ Application changes:

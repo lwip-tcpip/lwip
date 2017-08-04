@@ -7,6 +7,10 @@ HISTORY
   ++ New features:
 
   2017-08-04: Simon Goldschmidt
+  * Clean up DHCP a bit: no need keep msg_out and msg_in as members in struct
+    dhcp - they are used in a call stack only (p_out and options_out_len as well)
+
+  2017-08-04: Simon Goldschmidt
   * pbuf: split pbuf_header(s16_t) into pbuf_add_header(size_t) and
     pbuf_remove_header(size_t)
 

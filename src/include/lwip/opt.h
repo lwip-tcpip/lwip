@@ -2742,27 +2742,32 @@
 #endif
 
 /**
- * LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type):
+ * LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type, options_len_ptr):
  * Called from various dhcp functions when sending a DHCP message.
  * This hook is called just before the DHCP message trailer is added, so the
  * options are at the end of a DHCP message.
+ * Prototype:
+ *   void hook(struct netif *netif, struct dhcp *dhcp, u8_t state, struct dhcp_msg *msg,
+ *             u8_t msg_type, u16_t *options_len_ptr);
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - dhcp: struct dhcp on that netif
  * - state: current dhcp state (dhcp_state_enum_t as an u8_t)
  * - msg: struct dhcp_msg that will be sent
  * - msg_type: dhcp message type to be sent (u8_t)
+ * - options_len_ptr: pointer to the current length of options in the dhcp_msg "msg"
+ *                    (must be increased when options are added!)
  * Returns void
  *
  * Options need to appended like this:
- *   LWIP_ASSERT("dhcp option overflow", dhcp->options_out_len + option_len + 2 <= DHCP_OPTIONS_LEN);
- *   dhcp->msg_out->options[dhcp->options_out_len++] = &lt;option_number&gt;;
- *   dhcp->msg_out->options[dhcp->options_out_len++] = &lt;option_len&gt;;
- *   dhcp->msg_out->options[dhcp->options_out_len++] = &lt;option_bytes&gt;;
+ *   LWIP_ASSERT("dhcp option overflow", *options_len_ptr + option_len + 2 <= DHCP_OPTIONS_LEN);
+ *   msg->options[(*options_len_ptr)++] = &lt;option_number&gt;;
+ *   msg->options[(*options_len_ptr)++] = &lt;option_len&gt;;
+ *   msg->options[(*options_len_ptr)++] = &lt;option_bytes&gt;;
  *   [...]
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type)
+#define LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, state, msg, msg_type, options_len_ptr)
 #endif
 
 /**
