@@ -282,6 +282,9 @@ void pbuf_realloc(struct pbuf *p, u16_t size);
 #define pbuf_match_type(p, type)      pbuf_match_allocsrc(p, type)
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
 u8_t pbuf_header_force(struct pbuf *p, s16_t header_size);
+u8_t pbuf_add_header(struct pbuf *p, size_t header_size_increment);
+u8_t pbuf_add_header_force(struct pbuf *p, size_t header_size_increment);
+u8_t pbuf_remove_header(struct pbuf *p, size_t header_size);
 struct pbuf *pbuf_free_header(struct pbuf *q, u16_t size);
 void pbuf_ref(struct pbuf *p);
 u8_t pbuf_free(struct pbuf *p);
