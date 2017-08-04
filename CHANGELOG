@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2017-08-04: Simon Goldschmidt
+  * pbuf: split pbuf_header(s16_t) into pbuf_add_header(size_t) and
+    pbuf_remove_header(size_t)
+
   2017-07-20: Douglas
   * sys: deprecate sys_arch_sem_wait and sys_arch_mbox_fetch returning the
     time waited rather they are now defined to return != SYS_ARCH_TIMEOUT
