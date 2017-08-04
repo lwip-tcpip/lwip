@@ -1799,7 +1799,7 @@ http_post_request(struct pbuf *inp, struct http_state *hs,
             }
             if (q != NULL) {
               /* hide the remaining HTTP header */
-              pbuf_header(q, -(s16_t)start_offset);
+              pbuf_remove_header(q, start_offset);
 #if LWIP_HTTPD_POST_MANUAL_WND
               if (!post_auto_wnd) {
                 /* already tcp_recved() this data... */

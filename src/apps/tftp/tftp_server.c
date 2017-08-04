@@ -296,7 +296,7 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
       }
 
       blknum = lwip_ntohs(sbuf[1]);
-      pbuf_header(p, -TFTP_HEADER_LENGTH);
+      pbuf_remove_header(p, TFTP_HEADER_LENGTH);
 
       ret = tftp_state.ctx->write(tftp_state.handle, p);
       if (ret < 0) {

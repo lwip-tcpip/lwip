@@ -142,7 +142,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   initiate transfer();
 
 #if ETH_PAD_SIZE
-  pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
+  pbuf_remove_header(p, ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
   for (q = p; q != NULL; q = q->next) {
@@ -165,7 +165,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   /* increase ifoutdiscards or ifouterrors on error */
 
 #if ETH_PAD_SIZE
-  pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
+  pbuf_add_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
 
   LINK_STATS_INC(link.xmit);
@@ -202,7 +202,7 @@ low_level_input(struct netif *netif)
   if (p != NULL) {
 
 #if ETH_PAD_SIZE
-    pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
+    pbuf_remove_header(p, ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
     /* We iterate over the pbuf chain until we have read the entire
@@ -229,7 +229,7 @@ low_level_input(struct netif *netif)
       MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
     }
 #if ETH_PAD_SIZE
-    pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
+    pbuf_add_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
 
     LINK_STATS_INC(link.recv);

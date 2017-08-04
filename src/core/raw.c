@@ -414,7 +414,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 {
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
-  s16_t header_size;
+  u16_t header_size;
   u8_t ttl;
 
   if ((pcb == NULL) || (dst_ip == NULL) || (netif == NULL) || (src_ip == NULL) ||
@@ -451,7 +451,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
     return ERR_MEM;
   }
   /* not enough space to add an IP header to first pbuf in given p chain? */
-  if (pbuf_header(p, header_size)) {
+  if (pbuf_add_header(p, header_size)) {
     /* allocate header in new pbuf */
     q = pbuf_alloc(PBUF_IP, 0, PBUF_RAM);
     /* new header pbuf could not be allocated? */
@@ -468,7 +468,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   } else {
     /* first pbuf q equals given pbuf */
     q = p;
-    if (pbuf_header(q, (s16_t)-header_size)) {
+    if (pbuf_remove_header(q, header_size)) {
       LWIP_ASSERT("Can't restore header we just removed!", 0);
       return ERR_MEM;
     }

@@ -210,7 +210,7 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno,
 #endif /* TCP_CHECKSUM_ON_COPY */
 
   /* build TCP header */
-  if (pbuf_header(p, TCP_HLEN)) {
+  if (pbuf_add_header(p, TCP_HLEN)) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_create_segment: no room for TCP header in pbuf.\n"));
     TCP_STATS_INC(tcp.err);
     tcp_seg_free(seg);

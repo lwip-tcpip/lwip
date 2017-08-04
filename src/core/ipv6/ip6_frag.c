@@ -562,11 +562,11 @@ ip6_reass(struct pbuf *p)
         iprh_tmp = (struct ip6_reass_helper*)next_pbuf->payload;
 
         /* hide the fragment header for every succeeding fragment */
-        pbuf_header(next_pbuf, -IP6_FRAG_HLEN);
+        pbuf_remove_header(next_pbuf, IP6_FRAG_HLEN);
 #if IPV6_FRAG_COPYHEADER
         if (IPV6_FRAG_REQROOM > 0) {
           /* hide the extra bytes borrowed from ip6_hdr for struct ip6_reass_helper */
-          u8_t hdrerr = pbuf_header(next_pbuf, -(s16_t)(IPV6_FRAG_REQROOM));
+          u8_t hdrerr = pbuf_remove_header(next_pbuf, IPV6_FRAG_REQROOM);
           LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
           LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
         }
@@ -591,7 +591,7 @@ ip6_reass(struct pbuf *p)
        * header placed before the fragment header. */
       MEMCPY(p->payload, ipr->orig_hdr, IPV6_FRAG_REQROOM);
       /* get back room for struct ip6_reass_helper (only required if sizeof(void*) > 4) */
-      hdrerr = pbuf_header(p, -(s16_t)(IPV6_FRAG_REQROOM));
+      hdrerr = pbuf_remove_header(p, IPV6_FRAG_REQROOM);
       LWIP_UNUSED_ARG(hdrerr); /* in case of LWIP_NOASSERT */
       LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == 0);
     }
@@ -760,7 +760,7 @@ ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
       (rambuf->len == rambuf->tot_len) && (rambuf->next == NULL));
     poff += pbuf_copy_partial(p, (u8_t*)rambuf->payload + IP6_FRAG_HLEN, cop, poff);
     /* make room for the IP header */
-    if (pbuf_header(rambuf, IP6_HLEN)) {
+    if (pbuf_add_header(rambuf, IP6_HLEN)) {
       pbuf_free(rambuf);
       IP6_FRAG_STATS_INC(ip6_frag.memerr);
       return ERR_MEM;

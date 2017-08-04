@@ -178,7 +178,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (p->len >= hdrlen_bytes) {
     /* all options are in the first pbuf */
     tcphdr_opt1len = tcphdr_optlen;
-    pbuf_header(p, (s16_t)-(s16_t)hdrlen_bytes); /* cannot fail */
+    pbuf_remove_header(p, hdrlen_bytes); /* cannot fail */
   } else {
     u16_t opt2len;
     /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
@@ -186,7 +186,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_ASSERT("p->next != NULL", p->next != NULL);
 
     /* advance over the TCP header (cannot fail) */
-    pbuf_header(p, -TCP_HLEN);
+    pbuf_remove_header(p, TCP_HLEN);
 
     /* determine how long the first and second parts of the options are */
     tcphdr_opt1len = p->len;
@@ -194,7 +194,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* options continue in the next pbuf: set p to zero length and hide the
         options in the next pbuf (adjusting p->tot_len) */
-    pbuf_header(p, (s16_t)-(s16_t)tcphdr_opt1len);
+    pbuf_remove_header(p, tcphdr_opt1len);
 
     /* check that the options fit in the second pbuf */
     if (opt2len > p->next->len) {
@@ -209,7 +209,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* advance p->next to point after the options, and manually
         adjust p->tot_len to keep it consistent with the changed p->next */
-    pbuf_header(p->next, (s16_t)-(s16_t)opt2len);
+    pbuf_remove_header(p->next, opt2len);
     p->tot_len = (u16_t)(p->tot_len - opt2len);
 
     LWIP_ASSERT("p->len == 0", p->len == 0);

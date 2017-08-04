@@ -651,7 +651,7 @@ ip4_reass(struct pbuf *p)
       iprh = (struct ip_reass_helper*)r->payload;
 
       /* hide the ip header for every succeeding fragment */
-      pbuf_header(r, -IP_HLEN);
+      pbuf_remove_header(r, IP_HLEN);
       pbuf_cat(p, r);
       r = iprh->next_pbuf;
     }
@@ -779,7 +779,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
       (rambuf->len == rambuf->tot_len) && (rambuf->next == NULL));
     poff += pbuf_copy_partial(p, rambuf->payload, fragsize, poff);
     /* make room for the IP header */
-    if (pbuf_header(rambuf, IP_HLEN)) {
+    if (pbuf_add_header(rambuf, IP_HLEN)) {
       pbuf_free(rambuf);
       goto memerr;
     }

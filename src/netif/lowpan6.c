@@ -411,7 +411,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     }
 
     /* Move to payload. */
-    pbuf_header(p, -IP6_HLEN);
+    pbuf_remove_header(p, IP6_HLEN);
 
 #if LWIP_UDP
     /* Compress UDP header? */
@@ -451,7 +451,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
       buffer[ieee_header_len + lowpan6_header_len++] = ((u8_t *)p->payload)[6];
       buffer[ieee_header_len + lowpan6_header_len++] = ((u8_t *)p->payload)[7];
 
-      pbuf_header(p, -UDP_HLEN);
+      pbuf_remove_header(p, UDP_HLEN);
     }
 #endif /* LWIP_UDP */
   }
@@ -695,7 +695,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
 {
   struct pbuf * q;
   u8_t * lowpan6_buffer;
-  s8_t lowpan6_offset;
+  u16_t lowpan6_offset;
   struct ip6_hdr *ip6hdr;
   s8_t i;
   s8_t ip6_offset = IP6_HLEN;
@@ -963,7 +963,7 @@ lowpan6_decompress(struct pbuf * p, struct ieee_802154_addr * src, struct ieee_8
 
   /* Now we copy leftover contents from p to q, so we have all L2 and L3 headers (and L4?) in a single PBUF.
   * Replace p with q, and free p */
-  pbuf_header(p, -lowpan6_offset);
+  pbuf_remove_header(p, lowpan6_offset);
   MEMCPY((u8_t*)q->payload + ip6_offset, p->payload, p->len);
   q->len = q->tot_len = ip6_offset + p->len;
   if (p->next != NULL) {
@@ -1021,7 +1021,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
     datagram_offset += 2;
   }
 
-  pbuf_header(p, -datagram_offset); /* hide IEEE802.15.4 header. */
+  pbuf_remove_header(p, datagram_offset); /* hide IEEE802.15.4 header. */
 
   /* Check dispatch. */
   puc = (u8_t*)p->payload;
@@ -1058,7 +1058,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
       }
     }
 
-    pbuf_header(p, -4); /* hide frag1 dispatch */
+    pbuf_remove_header(p, 4); /* hide frag1 dispatch */
 
     lrh = (struct lowpan6_reass_helper *) mem_malloc(sizeof(struct lowpan6_reass_helper));
     if (lrh == NULL) {
@@ -1084,7 +1084,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
     datagram_size = ((u16_t)(puc[0] & 0x07) << 8) | (u16_t)puc[1];
     datagram_tag = ((u16_t)puc[2] << 8) | (u16_t)puc[3];
     datagram_offset = (u16_t)puc[4] << 3;
-    pbuf_header(p, -5); /* hide frag1 dispatch */
+    pbuf_remove_header(p, 5); /* hide frag1 dispatch */
 
     for (lrh = reass_list; lrh != NULL; lrh = lrh->next_packet) {
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
@@ -1141,7 +1141,7 @@ lowpan6_input(struct pbuf * p, struct netif *netif)
 
   if (*puc == 0x41) {
     /* This is a complete IPv6 packet, just skip dispatch byte. */
-    pbuf_header(p, -1); /* hide dispatch byte. */
+    pbuf_remove_header(p, 1); /* hide dispatch byte. */
   } else if ((*puc & 0xe0 )== 0x60) {
     /* IPv6 headers are compressed using IPHC. */
     p = lowpan6_decompress(p, &src, &dest);

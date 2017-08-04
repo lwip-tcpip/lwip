@@ -342,7 +342,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
     }
 #endif /* CHECKSUM_CHECK_UDP */
-    if (pbuf_header(p, -UDP_HLEN)) {
+    if (pbuf_remove_header(p, UDP_HLEN)) {
       /* Can we cope with this failing? Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
       UDP_STATS_INC(udp.drop);
@@ -712,7 +712,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
     return ERR_MEM;
   }
   /* not enough space to add an UDP header to first pbuf in given p chain? */
-  if (pbuf_header(p, UDP_HLEN)) {
+  if (pbuf_add_header(p, UDP_HLEN)) {
     /* allocate header in a separate new pbuf */
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */

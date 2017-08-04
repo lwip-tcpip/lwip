@@ -674,7 +674,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   if (raw_input(p, inp) == 0)
 #endif /* LWIP_RAW */
   {
-    pbuf_header(p, (s16_t)-(s16_t)iphdr_hlen); /* Move to payload, no check necessary. */
+    pbuf_remove_header(p, iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP
@@ -847,7 +847,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
       optlen_aligned = (u16_t)((optlen + 3) & ~3);
       ip_hlen = (u16_t)(ip_hlen + optlen_aligned);
       /* First write in the IP options */
-      if (pbuf_header(p, (s16_t)optlen_aligned)) {
+      if (pbuf_add_header(p, optlen_aligned)) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output_if_opt: not enough room for IP options in pbuf\n"));
         IP_STATS_INC(ip.err);
         MIB2_STATS_INC(mib2.ipoutdiscards);
@@ -866,7 +866,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     }
 #endif /* IP_OPTIONS_SEND */
     /* generate IP header */
-    if (pbuf_header(p, IP_HLEN)) {
+    if (pbuf_add_header(p, IP_HLEN)) {
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip4_output: not enough room for IP header in pbuf\n"));
 
       IP_STATS_INC(ip.err);

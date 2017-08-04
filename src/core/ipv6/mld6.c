@@ -561,7 +561,7 @@ mld6_send(struct netif *netif, struct mld_group *group, u8_t type)
   }
 
   /* Move to make room for Hop-by-hop options header. */
-  if (pbuf_header(p, -IP6_HBH_HLEN)) {
+  if (pbuf_remove_header(p, IP6_HBH_HLEN)) {
     pbuf_free(p);
     MLD6_STATS_INC(mld6.lenerr);
     return;

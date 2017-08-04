@@ -695,7 +695,7 @@ netif_found:
   hlen = hlen_tot = IP6_HLEN;
 
   /* Move to payload. */
-  pbuf_header(p, -IP6_HLEN);
+  pbuf_remove_header(p, IP6_HLEN);
 
   /* Process known option extension headers, if present. */
   while (nexth != IP6_NEXTH_NONE)
@@ -722,7 +722,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Skip over this header. */
-      pbuf_header(p, (s16_t)-(s16_t)hlen);
+      pbuf_remove_header(p, hlen);
       break;
     case IP6_NEXTH_DESTOPTS:
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Destination options header\n"));
@@ -746,7 +746,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Skip over this header. */
-      pbuf_header(p, (s16_t)-(s16_t)hlen);
+      pbuf_remove_header(p, hlen);
       break;
     case IP6_NEXTH_ROUTING:
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Routing header\n"));
@@ -770,7 +770,7 @@ netif_found:
       /* Skip over this header. */
       hlen_tot = (u16_t)(hlen_tot + hlen);
 
-      pbuf_header(p, (s16_t)-(s16_t)hlen);
+      pbuf_remove_header(p, hlen);
       break;
 
     case IP6_NEXTH_FRAGMENT:
@@ -804,7 +804,7 @@ netif_found:
       if ((frag_hdr->_fragment_offset &
            PP_HTONS(IP6_FRAG_OFFSET_MASK | IP6_FRAG_MORE_FLAG)) == 0) {
         /* This is a 1-fragment packet. Skip this header and continue. */
-        pbuf_header(p, (s16_t)-(s16_t)hlen);
+        pbuf_remove_header(p, hlen);
       } else {
 #if LWIP_IPV6_REASS
 
@@ -821,7 +821,7 @@ netif_found:
         ip6hdr = (struct ip6_hdr *)p->payload;
         nexth = IP6H_NEXTH(ip6hdr);
         hlen = hlen_tot = IP6_HLEN;
-        pbuf_header(p, -IP6_HLEN);
+        pbuf_remove_header(p, IP6_HLEN);
 
 #else /* LWIP_IPV6_REASS */
         /* free (drop) packet pbufs */
@@ -863,7 +863,7 @@ options_done:
   if (raw_input(p, inp) == 0)
   {
     /* Point to payload. */
-    pbuf_header(p, (s16_t)-(s16_t)hlen_tot);
+    pbuf_remove_header(p, hlen_tot);
 #else /* LWIP_RAW */
   {
 #endif /* LWIP_RAW */
@@ -996,7 +996,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 #endif /* LWIP_IPV6_SCOPES */
 
     /* generate IPv6 header */
-    if (pbuf_header(p, IP6_HLEN)) {
+    if (pbuf_add_header(p, IP6_HLEN)) {
       LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: not enough room for IPv6 header in pbuf\n"));
       IP6_STATS_INC(ip6.err);
       return ERR_BUF;
@@ -1204,7 +1204,7 @@ ip6_options_add_hbh_ra(struct pbuf *p, u8_t nexth, u8_t value)
   struct ip6_hbh_hdr *hbh_hdr;
 
   /* Move pointer to make room for hop-by-hop options header. */
-  if (pbuf_header(p, sizeof(struct ip6_hbh_hdr))) {
+  if (pbuf_add_header(p, sizeof(struct ip6_hbh_hdr))) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_options: no space for options header\n"));
     IP6_STATS_INC(ip6.err);
     return ERR_BUF;
