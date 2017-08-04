@@ -37,6 +37,6 @@ int lwip_unittests_run(void)
 /* helper functions */
 #define SKIP_POOL(x) (1 << x)
 #define SKIP_HEAP    (1 << MEMP_MAX)
-void lwip_check_ensure_no_alloc(uint32_t skip);
+void lwip_check_ensure_no_alloc(unsigned int skip);
 
 #endif /* LWIP_HDR_LWIP_CHECK_H */

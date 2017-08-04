@@ -33,12 +33,10 @@ Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, SFun se
   return s;
 }
 
-void lwip_check_ensure_no_alloc(uint32_t skip)
+void lwip_check_ensure_no_alloc(unsigned int skip)
 {
   int i;
-  uint32_t mask;
-
-  fail_unless(skip != 0);
+  unsigned int mask;
 
   if (!(skip & SKIP_HEAP)) {
     fail_unless(lwip_stats.mem.used == 0);
