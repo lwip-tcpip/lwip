@@ -1495,7 +1495,7 @@ dhcp_option_hostname(u16_t options_out_len, u8_t *options, struct netif *netif)
  *
  */
 static err_t
-dhcp_parse_reply(struct pbuf *p)
+dhcp_parse_reply(struct pbuf *p, struct dhcp *dhcp)
 {
   u8_t *options;
   u16_t offset;
@@ -1506,6 +1506,8 @@ dhcp_parse_reply(struct pbuf *p)
   int parse_file_as_options = 0;
   int parse_sname_as_options = 0;
   struct dhcp_msg *msg_in;
+
+  LWIP_UNUSED_ARG(dhcp);
 
   /* clear received options */
   dhcp_clear_all_options(dhcp);
@@ -1783,7 +1785,7 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     goto free_pbuf_and_return;
   }
   /* option fields could be unfold? */
-  if (dhcp_parse_reply(p) != ERR_OK) {
+  if (dhcp_parse_reply(p, dhcp) != ERR_OK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
       ("problem unfolding DHCP message - too short on memory?\n"));
     goto free_pbuf_and_return;
