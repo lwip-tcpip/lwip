@@ -1523,6 +1523,16 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
     return;
   }
 
+  /* Give up if any of the segment pbufs are still referenced by the netif
+     driver due to deferred transmission. No point loading the link further if
+     it is struggling to flush its buffered writes. */
+  for (seg = pcb->unacked; seg != NULL; seg = seg->next) {
+    if (seg->p->ref != 1) {
+      LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_rexmit_rto busy\n"));
+      return;
+    }
+  }
+
   /* Move all unacked segments to the head of the unsent queue */
   for (seg = pcb->unacked; seg->next != NULL; seg = seg->next);
   /* concatenate unsent queue after unacked queue */
@@ -1572,9 +1582,17 @@ tcp_rexmit(struct tcp_pcb *pcb)
     return;
   }
 
+  seg = pcb->unacked;
+
+  /* Give up if the first segment pbuf is still referenced by the netif driver
+     due to deferred transmission. */
+  if (seg->p->ref != 1) {
+    LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_rexmit busy\n"));
+    return;
+  }
+
   /* Move the first unacked segment to the unsent queue */
   /* Keep the unsent queue sorted. */
-  seg = pcb->unacked;
   pcb->unacked = seg->next;
 
   cur_seg = &(pcb->unsent);
@@ -1614,6 +1632,13 @@ void
 tcp_rexmit_fast(struct tcp_pcb *pcb)
 {
   if (pcb->unacked != NULL && !(pcb->flags & TF_INFR)) {
+    /* Give up if the first segment pbuf is still referenced by the netif driver
+       due to deferred transmission. */
+    if (pcb->unacked->p->ref != 1) {
+      LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_rexmit_fast busy\n"));
+      return;
+    }
+
     /* This is fast retransmit. Retransmit the first unacked segment. */
     LWIP_DEBUGF(TCP_FR_DEBUG,
                 ("tcp_receive: dupacks %"U16_F" (%"U32_F
