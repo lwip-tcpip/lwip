@@ -52,6 +52,7 @@
 #include "lwip/snmp.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
+#include "lwip/prot/iana.h"
 #include "netif/ethernet.h"
 
 #include <string.h>
@@ -650,7 +651,7 @@ etharp_input(struct pbuf *p, struct netif *netif)
   hdr = (struct etharp_hdr *)p->payload;
 
   /* RFC 826 "Packet Reception": */
-  if ((hdr->hwtype != PP_HTONS(HWTYPE_ETHERNET)) ||
+  if ((hdr->hwtype != PP_HTONS(IANA_HWTYPE_ETHERNET)) ||
       (hdr->hwlen != ETH_HWADDR_LEN) ||
       (hdr->protolen != sizeof(ip4_addr_t)) ||
       (hdr->proto != PP_HTONS(ETHTYPE_IP)))  {
@@ -1139,7 +1140,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   IPADDR_WORDALIGNED_COPY_FROM_IP4_ADDR_T(&hdr->sipaddr, ipsrc_addr);
   IPADDR_WORDALIGNED_COPY_FROM_IP4_ADDR_T(&hdr->dipaddr, ipdst_addr);
 
-  hdr->hwtype = PP_HTONS(HWTYPE_ETHERNET);
+  hdr->hwtype = PP_HTONS(IANA_HWTYPE_ETHERNET);
   hdr->proto = PP_HTONS(ETHTYPE_IP);
   /* set hwlen and protolen */
   hdr->hwlen = ETH_HWADDR_LEN;

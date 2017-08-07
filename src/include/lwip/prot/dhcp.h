@@ -128,9 +128,6 @@ typedef enum {
 #define DHCP_RELEASE                7
 #define DHCP_INFORM                 8
 
-/** DHCP hardware type, currently only ethernet is supported */
-#define DHCP_HTYPE_ETH              1
-
 #define DHCP_MAGIC_COOKIE           0x63825363UL
 
 /* This is a list of options for BOOTP and DHCP, see RFC 2132 for descriptions */
