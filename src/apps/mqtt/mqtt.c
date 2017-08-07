@@ -1214,6 +1214,16 @@ mqtt_client_new(void)
   return (mqtt_client_t *)mem_calloc(1, sizeof(mqtt_client_t));
 }
 
+/**
+ * @ingroup mqtt
+ * Free MQTT client instance
+ * @param client Pointer to instance to be freed
+ */
+void
+mqtt_client_free(mqtt_client_t* client)
+{
+  mem_free(client);
+}
 
 /**
  * @ingroup mqtt

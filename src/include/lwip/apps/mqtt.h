@@ -179,8 +179,8 @@ err_t mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ipaddr, u16_t 
 /** Disconnect from server */
 void mqtt_disconnect(mqtt_client_t *client);
 
-/** Create new client */
 mqtt_client_t *mqtt_client_new(void);
+void mqtt_client_free(mqtt_client_t* client);
 
 /** Check connection status */
 u8_t mqtt_client_is_connected(mqtt_client_t *client);
