@@ -73,9 +73,20 @@ struct altcp_tls_config *altcp_tls_create_config_server_privkey_cert(const u8_t 
 struct altcp_tls_config *altcp_tls_create_config_client(const u8_t *cert, size_t cert_len);
 
 /** @ingroup altcp_tls
+ * Free an ALTCP_TLS configuration handle
+ */
+void altcp_tls_free_config(struct altcp_tls_config *conf);
+
+/** @ingroup altcp_tls
  * Create new ALTCP_TLS layer
  */
 struct altcp_pcb *altcp_tls_new(struct altcp_tls_config* config, struct altcp_pcb *inner_pcb);
+
+/** @ingroup altcp_tls
+ * Return pointer to internal TLS context so application can tweak it.
+ * Real type depends on port (e.g. mbedtls)
+ */
+void *altcp_tls_context (struct altcp_pcb *conn);
 
 #ifdef __cplusplus
 }

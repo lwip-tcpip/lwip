@@ -537,10 +537,11 @@ altcp_mbedtls_lower_err(void *arg, err_t err)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn) {
-    /* @todo: deallocate/close this connection? */
+    conn->inner_conn = NULL; /* already freed */
     if (conn->err) {
       conn->err(conn->arg, err);
     }
+    altcp_free(conn);
   }
 }
 
@@ -604,6 +605,16 @@ altcp_tls_new(struct altcp_tls_config* config, struct altcp_pcb *inner_pcb)
     }
   }
   return ret;
+}
+
+void *
+altcp_tls_context (struct altcp_pcb *conn)
+{
+  if (conn && conn->state) {
+      altcp_mbedtls_state_t *state = conn->state;
+      return &state->ssl_context;
+  }
+  return NULL;
 }
 
 #if ALTCP_MBEDTLS_DEBUG != LWIP_DBG_OFF
@@ -754,6 +765,13 @@ altcp_tls_create_config_client(const u8_t *cert, size_t cert_len)
   mbedtls_ssl_conf_ca_chain(&conf->conf, &acc_cert, NULL);
   return conf;
 }
+
+void
+altcp_tls_free_config(struct altcp_tls_config *conf)
+{
+    altcp_mbedtls_free_config (conf);
+}
+
 
 /* "virtual" functions */
 static void
@@ -954,8 +972,12 @@ altcp_mbedtls_dealloc(struct altcp_pcb *conn)
       mbedtls_ssl_free(&state->ssl_context);
       state->flags = 0;
       altcp_mbedtls_free(state->conf, state);
+      conn->state = NULL;
     }
-    conn->state = NULL;
+    if (conn->inner_conn) {
+      altcp_free(conn->inner_conn);
+      conn->inner_conn = NULL;
+    }
   }
 }
 
