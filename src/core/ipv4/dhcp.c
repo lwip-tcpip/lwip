@@ -1938,8 +1938,6 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type, u16_t
  *
  * Adds the END option to the DHCP message, and if
  * necessary, up to three padding bytes.
- *
- * @param dhcp DHCP state structure
  */
 static void
 dhcp_option_trailer(u16_t options_out_len, u8_t *options, struct pbuf *p_out)
