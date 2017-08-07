@@ -1,6 +1,6 @@
 /**
  * @file
- * IANA assigned numbers
+ * IANA assigned numbers (RFC 1700 and successors)
  */
 
 /*
