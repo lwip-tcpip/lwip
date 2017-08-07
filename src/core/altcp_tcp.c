@@ -63,8 +63,6 @@
    since it contains pointers to static functions declared here */
 extern const struct altcp_functions altcp_tcp_functions;
 
-static void altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb);
-
 /* callback functions for TCP */
 static err_t
 altcp_tcp_accept(void *arg, struct tcp_pcb *new_tpcb, err_t err)
@@ -143,14 +141,24 @@ altcp_tcp_err(void *arg, err_t err)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn) {
-    conn->state = NULL;
+    conn->state = NULL; /* already freed */
     if (conn->err) {
       conn->err(conn->arg, err);
     }
+    altcp_free(conn);
   }
 }
 
 /* setup functions */
+
+static void
+altcp_tcp_remove_callbacks(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
+    tcp_arg(tpcb, NULL);
+    tcp_recv(tpcb, NULL);
+    tcp_sent(tpcb, NULL);
+    tcp_err(tpcb, NULL);
+}
+
 static void
 altcp_tcp_setup_callbacks(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
 {
@@ -162,7 +170,7 @@ altcp_tcp_setup_callbacks(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
   /* listen is set totally different :-) */
 }
 
-static void
+void
 altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
 {
   altcp_tcp_setup_callbacks(conn, tpcb);
@@ -260,7 +268,9 @@ altcp_tcp_abort(struct altcp_pcb *conn)
   if (conn != NULL) {
     struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
     ALTCP_TCP_ASSERT_CONN(conn);
-    tcp_abort(pcb);
+    if (pcb) {
+        tcp_abort(pcb);
+    }
   }
 }
 
@@ -273,7 +283,14 @@ altcp_tcp_close(struct altcp_pcb *conn)
   }
   ALTCP_TCP_ASSERT_CONN(conn);
   pcb = (struct tcp_pcb *)conn->state;
-  return tcp_close(pcb);
+  if (pcb) {
+    altcp_tcp_remove_callbacks(conn, pcb);
+    err_t res = tcp_close(pcb);
+    if (res != ERR_OK) return res;
+    conn->state = NULL; /* unsafe to reference pcb after tcp_close(). */
+    return ERR_OK;
+  }
+  return ERR_CLSD;
 }
 
 static err_t
