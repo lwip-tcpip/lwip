@@ -1173,8 +1173,8 @@ tcp_receive(struct tcp_pcb *pcb)
                 if ((tcpwnd_size_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
                   pcb->cwnd = (tcpwnd_size_t)(pcb->cwnd + pcb->mss);
                 }
-              } else if (pcb->dupacks == 3) {
-                /* Do fast retransmit */
+              } else if (pcb->dupacks >= 3) {
+                /* Do fast retransmit (checked via TF_INFR, not via dupacks count) */
                 tcp_rexmit_fast(pcb);
               }
             }
