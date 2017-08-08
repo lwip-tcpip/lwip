@@ -40,6 +40,7 @@
 #include "lwip/apps/mqtt_opts.h"
 #include "lwip/err.h"
 #include "lwip/ip_addr.h"
+#include "lwip/prot/iana.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,10 +54,10 @@ struct altcp_tls_config;
 
 /** @ingroup mqtt
  * Default MQTT port (non-TLS) */
-#define MQTT_PORT     1883
+#define MQTT_PORT     LWIP_IANA_PORT_MQTT
 /** @ingroup mqtt
  * Default MQTT TLS port */
-#define MQTT_TLS_PORT 8883
+#define MQTT_TLS_PORT LWIP_IANA_PORT_SEQURE_MQTT
 
 /*---------------------------------------------------------------------------------------------- */
 /* Connection with server */

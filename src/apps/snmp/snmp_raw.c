@@ -39,6 +39,7 @@
 
 #include "lwip/udp.h"
 #include "lwip/ip.h"
+#include "lwip/prot/iana.h"
 #include "snmp_msg.h"
 
 /* lwIP UDP receive callback function */
@@ -92,8 +93,8 @@ snmp_init(void)
 
   snmp_traps_handle = snmp_pcb;
 
-  udp_recv(snmp_pcb, snmp_recv, (void *)SNMP_IN_PORT);
-  err = udp_bind(snmp_pcb, IP_ANY_TYPE, SNMP_IN_PORT);
+  udp_recv(snmp_pcb, snmp_recv, NULL);
+  err = udp_bind(snmp_pcb, IP_ANY_TYPE, LWIP_IANA_PORT_SNMP);
   LWIP_ERROR("snmp_raw: Unable to bind PCB", (err == ERR_OK), return;);
 }
 

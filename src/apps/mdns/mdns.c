@@ -62,6 +62,7 @@
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
 #include "lwip/prot/dns.h"
+#include "lwip/prot/iana.h"
 
 #include <string.h>
 
@@ -89,7 +90,6 @@ static const ip_addr_t v4group = DNS_MQUERY_IPV4_GROUP_INIT;
 static const ip_addr_t v6group = DNS_MQUERY_IPV6_GROUP_INIT;
 #endif
 
-#define MDNS_PORT 5353
 #define MDNS_TTL  255
 
 /* Stored offsets to beginning of domain names
@@ -1251,7 +1251,7 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
   SMEMCPY(&out->dest_addr, &in->source_addr, sizeof(ip_addr_t));
   out->dest_port = in->source_port;
 
-  if (in->source_port != MDNS_PORT) {
+  if (in->source_port != LWIP_IANA_PORT_MDNS) {
     out->unicast_reply = 1;
     out->cache_flush = 0;
     if (in->questions == 1) {
@@ -1457,7 +1457,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     if (outpkt->unicast_reply) {
       udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
     } else {
-      udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, MDNS_PORT, outpkt->netif);
+      udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, LWIP_IANA_PORT_MDNS, outpkt->netif);
     }
   }
 
@@ -1504,7 +1504,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
     }
   }
 
-  announce.dest_port = MDNS_PORT;
+  announce.dest_port = LWIP_IANA_PORT_MDNS;
   SMEMCPY(&announce.dest_addr, destination, sizeof(announce.dest_addr));
   mdns_send_outpacket(&announce);
 }
@@ -2100,7 +2100,7 @@ mdns_resp_init(void)
 #else
   mdns_pcb->ttl = MDNS_TTL;
 #endif
-  res = udp_bind(mdns_pcb, IP_ANY_TYPE, MDNS_PORT);
+  res = udp_bind(mdns_pcb, IP_ANY_TYPE, LWIP_IANA_PORT_MDNS);
   LWIP_UNUSED_ARG(res); /* in case of LWIP_NOASSERT */
   LWIP_ASSERT("Failed to bind pcb", res == ERR_OK);
   udp_recv(mdns_pcb, mdns_recv, NULL);

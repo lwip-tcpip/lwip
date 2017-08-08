@@ -3,11 +3,12 @@
 
 #include "lwip/apps/smtp_opts.h"
 #include "lwip/err.h"
+#include "lwip/prot/iana.h"
 
 /** The default TCP port used for SMTP */
-#define SMTP_DEFAULT_PORT         25
+#define SMTP_DEFAULT_PORT         LWIP_IANA_PORT_SMTP
 /** The default TCP port used for SMTPS */
-#define SMTPS_DEFAULT_PORT        465
+#define SMTPS_DEFAULT_PORT        LWIP_IANA_PORT_SMTPS
 
 /** Email successfully sent */
 #define SMTP_RESULT_OK            0

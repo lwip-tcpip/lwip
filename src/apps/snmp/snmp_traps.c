@@ -46,6 +46,7 @@
 #include "lwip/sys.h"
 #include "lwip/apps/snmp.h"
 #include "lwip/apps/snmp_core.h"
+#include "lwip/prot/iana.h"
 #include "snmp_msg.h"
 #include "snmp_asn1.h"
 #include "snmp_core_priv.h"
@@ -216,7 +217,7 @@ snmp_send_trap(const struct snmp_obj_id* eoid, s32_t generic_trap, s32_t specifi
           snmp_stats.outpkts++;
 
           /** send to the TRAP destination */
-          snmp_sendto(snmp_traps_handle, p, &td->dip, SNMP_TRAP_PORT);
+          snmp_sendto(snmp_traps_handle, p, &td->dip, LWIP_IANA_PORT_SNMP_TRAP);
           pbuf_free(p);
         } else {
           err = ERR_MEM;

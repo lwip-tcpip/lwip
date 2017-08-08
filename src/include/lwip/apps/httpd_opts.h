@@ -42,6 +42,7 @@
 #define LWIP_HDR_APPS_HTTPD_OPTS_H
 
 #include "lwip/opt.h"
+#include "lwip/prot/iana.h"
 
 /**
  * @defgroup httpd_opts Options
@@ -129,12 +130,12 @@
 
 /** The server port for HTTPD to use */
 #if !defined HTTPD_SERVER_PORT || defined __DOXYGEN__
-#define HTTPD_SERVER_PORT                   80
+#define HTTPD_SERVER_PORT                   LWIP_IANA_PORT_HTTP
 #endif
 
 /** The https server port for HTTPD to use */
 #if !defined HTTPD_SERVER_PORT_HTTPS || defined __DOXYGEN__
-#define HTTPD_SERVER_PORT_HTTPS             443
+#define HTTPD_SERVER_PORT_HTTPS             LWIP_IANA_PORT_HTTPS
 #endif
 
 /** Enable https support? */

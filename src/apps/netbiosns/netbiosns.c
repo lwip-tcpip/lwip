@@ -49,11 +49,9 @@
 #include "lwip/def.h"
 #include "lwip/udp.h"
 #include "lwip/netif.h"
+#include "lwip/prot/iana.h"
 
 #include <string.h>
-
-/** default port number for "NetBIOS Name service */
-#define NETBIOS_PORT     137
 
 /** size of a NetBIOS name */
 #define NETBIOS_NAME_LEN 16
@@ -329,7 +327,7 @@ netbiosns_init(void)
   if (netbiosns_pcb != NULL) {
     /* we have to be allowed to send broadcast packets! */
     ip_set_option(netbiosns_pcb, SOF_BROADCAST);
-    udp_bind(netbiosns_pcb, IP_ANY_TYPE, NETBIOS_PORT);
+    udp_bind(netbiosns_pcb, IP_ANY_TYPE, LWIP_IANA_PORT_NETBIOS);
     udp_recv(netbiosns_pcb, netbiosns_recv, netbiosns_pcb);
   }
 }

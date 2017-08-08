@@ -43,7 +43,21 @@ extern "C" {
 #endif
 
 /** Hardware types */
-#define LWIP_IANA_HWTYPE_ETHERNET  1
+#define LWIP_IANA_HWTYPE_ETHERNET                     1
+
+/** Port numbers */
+#define LWIP_IANA_PORT_SMTP                           25
+#define LWIP_IANA_PORT_TFTP                           69
+#define LWIP_IANA_PORT_HTTP                           80
+#define LWIP_IANA_PORT_SNTP                           123
+#define LWIP_IANA_PORT_NETBIOS                        137
+#define LWIP_IANA_PORT_SNMP                           161
+#define LWIP_IANA_PORT_SNMP_TRAP                      162
+#define LWIP_IANA_PORT_HTTPS                          443
+#define LWIP_IANA_PORT_SMTPS                          465
+#define LWIP_IANA_PORT_MQTT                           1883
+#define LWIP_IANA_PORT_MDNS                           5353
+#define LWIP_IANA_PORT_SEQURE_MQTT                    8883
 
 #ifdef __cplusplus
 }

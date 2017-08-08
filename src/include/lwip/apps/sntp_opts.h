@@ -38,6 +38,7 @@
 #define LWIP_HDR_APPS_SNTP_OPTS_H
 
 #include "lwip/opt.h"
+#include "lwip/prot/iana.h"
 
 /**
  * @defgroup sntp_opts Options
@@ -83,7 +84,7 @@
 
 /** SNTP server port */
 #if !defined SNTP_PORT || defined __DOXYGEN__
-#define SNTP_PORT                   123
+#define SNTP_PORT                   LWIP_IANA_PORT_SNTP
 #endif
 
 /** Sanity check:
