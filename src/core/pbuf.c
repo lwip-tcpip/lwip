@@ -487,20 +487,16 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
   }
 
   type_internal = p->type_internal;
-  /* remember current payload pointer */
-  payload = p->payload;
 
   /* pbuf types containing payloads? */
   if (type_internal & PBUF_TYPE_FLAG_STRUCT_DATA_CONTIGUOUS) {
     /* set new payload pointer */
-    p->payload = (u8_t *)p->payload - header_size_increment;
+    payload = (u8_t *)p->payload - header_size_increment;
     /* boundary check fails? */
-    if ((u8_t *)p->payload < (u8_t *)p + SIZEOF_STRUCT_PBUF) {
+    if ((u8_t *)payload < (u8_t *)p + SIZEOF_STRUCT_PBUF) {
       LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE,
         ("pbuf_header: failed as %p < %p (not enough space for new header size)\n",
-        (void *)p->payload, (void *)((u8_t *)p + SIZEOF_STRUCT_PBUF)));
-      /* restore old payload pointer */
-      p->payload = payload;
+        (void *)payload, (void *)((u8_t *)p + SIZEOF_STRUCT_PBUF)));
       /* bail out unsuccessfully */
       return 1;
     }
@@ -508,19 +504,21 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
   } else {
     /* hide a header in the payload? */
     if (force) {
-      p->payload = (u8_t *)p->payload - header_size_increment;
+      payload = (u8_t *)p->payload - header_size_increment;
     } else {
       /* cannot expand payload to front (yet!)
        * bail out unsuccessfully */
       return 1;
     }
   }
-  /* modify pbuf length fields */
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_header: old %p new %p (%"U16_F")\n",
+    (void *)p->payload, (void *)payload, increment_magnitude));
+
+  /* modify pbuf fields */
+  p->payload = payload;
   p->len = (u16_t)(p->len + increment_magnitude);
   p->tot_len = (u16_t)(p->tot_len + increment_magnitude);
 
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_header: old %p new %p (%"U16_F")\n",
-    (void *)payload, (void *)p->payload, increment_magnitude));
 
   return 0;
 }
