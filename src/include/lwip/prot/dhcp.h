@@ -44,10 +44,6 @@
 extern "C" {
 #endif
 
-#define DHCP_CLIENT_PORT  68
-#define DHCP_SERVER_PORT  67
-
-
  /* DHCP message item offsets and length */
 #define DHCP_CHADDR_LEN   16U
 #define DHCP_SNAME_OFS    44U

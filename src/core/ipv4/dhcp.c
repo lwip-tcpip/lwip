@@ -238,8 +238,8 @@ dhcp_inc_pcb_refcount(void)
     ip_set_option(dhcp_pcb, SOF_BROADCAST);
 
     /* set up local and remote port for the pcb -> listen on all interfaces on all src/dest IPs */
-    udp_bind(dhcp_pcb, IP4_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp_pcb, IP4_ADDR_ANY, DHCP_SERVER_PORT);
+    udp_bind(dhcp_pcb, IP4_ADDR_ANY, LWIP_IANA_PORT_DHCP_CLIENT);
+    udp_connect(dhcp_pcb, IP4_ADDR_ANY, LWIP_IANA_PORT_DHCP_SERVER);
     udp_recv(dhcp_pcb, dhcp_recv, NULL);
   }
 
@@ -403,7 +403,7 @@ dhcp_select(struct netif *netif)
     dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
     /* send broadcast to any DHCP server */
-    result = udp_sendto_if_src(dhcp_pcb, p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
+    result = udp_sendto_if_src(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif, IP4_ADDR_ANY);
     pbuf_free(p_out);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_select: REQUESTING\n"));
   } else {
@@ -838,7 +838,7 @@ dhcp_inform(struct netif *netif)
 
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
 
-    udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
+    udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif);
 
     pbuf_free(p_out);
   } else {
@@ -952,7 +952,7 @@ dhcp_decline(struct netif *netif)
     dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
     /* per section 4.4.4, broadcast DECLINE messages */
-    result = udp_sendto_if_src(dhcp_pcb, p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
+    result = udp_sendto_if_src(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif, IP4_ADDR_ANY);
     pbuf_free(p_out);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_decline: BACKING OFF\n"));
   } else {
@@ -1006,8 +1006,8 @@ dhcp_discover(struct netif *netif)
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_SELECTING, msg_out, DHCP_DISCOVER, &options_out_len);
     dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
-    udp_sendto_if_src(dhcp_pcb, p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif, IP4_ADDR_ANY);
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER)\n"));
+    udp_sendto_if_src(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif, IP4_ADDR_ANY);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     pbuf_free(p_out);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover: SELECTING\n"));
@@ -1177,7 +1177,7 @@ dhcp_renew(struct netif *netif)
     LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_RENEWING, msg_out, DHCP_REQUEST, &options_out_len);
     dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
-    result = udp_sendto_if(dhcp_pcb, p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
+    result = udp_sendto_if(dhcp_pcb, p_out, &dhcp->server_ip_addr, LWIP_IANA_PORT_DHCP_SERVER, netif);
     pbuf_free(p_out);
 
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_renew: RENEWING\n"));
@@ -1233,7 +1233,7 @@ dhcp_rebind(struct netif *netif)
     dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
     /* broadcast to server */
-    result = udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
+    result = udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif);
     pbuf_free(p_out);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind: REBINDING\n"));
   } else {
@@ -1285,7 +1285,7 @@ dhcp_reboot(struct netif *netif)
     dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
     /* broadcast to server */
-    result = udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
+    result = udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif);
     pbuf_free(p_out);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot: REBOOTING\n"));
   } else {
@@ -1350,7 +1350,7 @@ dhcp_release_and_stop(struct netif *netif)
       LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, dhcp->state, msg_out, DHCP_RELEASE, &options_out_len);
       dhcp_option_trailer(options_out_len, msg_out->options, p_out);
 
-      udp_sendto_if(dhcp_pcb, p_out, &server_ip_addr, DHCP_SERVER_PORT, netif);
+      udp_sendto_if(dhcp_pcb, p_out, &server_ip_addr, LWIP_IANA_PORT_DHCP_SERVER, netif);
       pbuf_free(p_out);
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_STATE_OFF\n"));
     } else {

@@ -38,15 +38,13 @@
 #ifndef LWIP_HDR_PROT_IANA_H
 #define LWIP_HDR_PROT_IANA_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/** Hardware types */
+/* Hardware types */
 #define LWIP_IANA_HWTYPE_ETHERNET                     1
 
-/** Port numbers */
+/* Port numbers (https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt) */
 #define LWIP_IANA_PORT_SMTP                           25
+#define LWIP_IANA_PORT_DHCP_SERVER                    67
+#define LWIP_IANA_PORT_DHCP_CLIENT                    68
 #define LWIP_IANA_PORT_TFTP                           69
 #define LWIP_IANA_PORT_HTTP                           80
 #define LWIP_IANA_PORT_SNTP                           123
@@ -58,9 +56,5 @@ extern "C" {
 #define LWIP_IANA_PORT_MQTT                           1883
 #define LWIP_IANA_PORT_MDNS                           5353
 #define LWIP_IANA_PORT_SEQURE_MQTT                    8883
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_HDR_PROT_IANA_H */
