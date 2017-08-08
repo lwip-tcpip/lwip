@@ -90,7 +90,7 @@ create_arp_response(ip4_addr_t *adr)
   ethhdr->src = test_ethaddr2;
   ethhdr->type = htons(ETHTYPE_ARP);
 
-  etharphdr->hwtype = htons(IANA_HWTYPE_ETHERNET);
+  etharphdr->hwtype = htons(LWIP_IANA_HWTYPE_ETHERNET);
   etharphdr->proto = htons(ETHTYPE_IP);
   etharphdr->hwlen = ETHARP_HWADDR_LEN;
   etharphdr->protolen = sizeof(ip4_addr_t);
