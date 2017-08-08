@@ -2634,8 +2634,8 @@
  * Signature:
  *   struct netif *my_hook(const ip4_addr_t *src, const ip4_addr_t *dest);
  * Arguments:
- * - dest: destination IPv4 address
  * - src: local/source IPv4 address
+ * - dest: destination IPv4 address
  * Returns values:
  * - the destination netif
  * - NULL if no destination netif is found. In that case, ip_route() continues as normal.
