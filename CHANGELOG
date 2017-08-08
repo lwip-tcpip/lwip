@@ -71,6 +71,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-08-08: Dirk Ziegelmeier
+  * ip4_route_src: parameter order is reversed: ip4_route_src(dest, src) -> ip4_route_src(src, dest)
+    to make parameter order consistent with other ip*_route*() functions
+
+
   2017-07-26: Simon Goldschmidt
   * snmp_msg.c: fix bug #51578 (SNMP failed to decode some values on non 32bit platforms)
 

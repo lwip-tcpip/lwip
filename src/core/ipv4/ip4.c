@@ -126,11 +126,11 @@ ip4_set_default_multicast_netif(struct netif* default_multicast_netif)
  * LWIP_HOOK_IP4_ROUTE_SRC(). This function only provides the parameters.
  */
 struct netif *
-ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src)
+ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest)
 {
   if (src != NULL) {
     /* when src==NULL, the hook is called from ip4_route(dest) */
-    struct netif *netif = LWIP_HOOK_IP4_ROUTE_SRC(dest, src);
+    struct netif *netif = LWIP_HOOK_IP4_ROUTE_SRC(src, dest);
     if (netif != NULL) {
       return netif;
     }
@@ -196,7 +196,7 @@ ip4_route(const ip4_addr_t *dest)
 #endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
 
 #ifdef LWIP_HOOK_IP4_ROUTE_SRC
-  netif = LWIP_HOOK_IP4_ROUTE_SRC(dest, NULL);
+  netif = LWIP_HOOK_IP4_ROUTE_SRC(NULL, dest);
   if (netif != NULL) {
     return netif;
   }
@@ -287,7 +287,7 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   }
 
   /* Find network interface where to forward this IP packet to. */
-  netif = ip4_route_src(ip4_current_dest_addr(), ip4_current_src_addr());
+  netif = ip4_route_src(ip4_current_src_addr(), ip4_current_dest_addr());
   if (netif == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip4_forward: no forwarding route for %"U16_F".%"U16_F".%"U16_F".%"U16_F" found\n",
       ip4_addr1_16(ip4_current_dest_addr()), ip4_addr2_16(ip4_current_dest_addr()),
@@ -1006,7 +1006,7 @@ ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-  if ((netif = ip4_route_src(dest, src)) == NULL) {
+  if ((netif = ip4_route_src(src, dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip4_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
       ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);
@@ -1044,7 +1044,7 @@ ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
-  if ((netif = ip4_route_src(dest, src)) == NULL) {
+  if ((netif = ip4_route_src(src, dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip4_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
       ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);

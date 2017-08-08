@@ -10,6 +10,9 @@ with newer versions.
 
   ++ Application changes:
 
+  * ip4_route_src: parameter order is reversed: ip4_route_src(dest, src) -> ip4_route_src(src, dest)
+    to make parameter order consistent with other ip*_route*() functions
+
   * pbuf API: pbuf->type (an u8_t holding the enum 'pbuf_type') has changed to only hold a
     description of the pbuf (e.g. data following pbuf struct, data volatile, allocation
     source heap/pool/etc.). As a consequence, applications can't test pbuf->type any more.

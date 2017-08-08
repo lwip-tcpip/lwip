@@ -262,7 +262,7 @@ extern struct ip_globals ip_data;
 #define ip_route(src, dest) \
         (IP_IS_V6(dest) ? \
         ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) : \
-        ip4_route_src(ip_2_ip4(dest), ip_2_ip4(src)))
+        ip4_route_src(ip_2_ip4(src), ip_2_ip4(dest)))
 /**
  * @ingroup ip
  * Get netif for IP.
@@ -287,7 +287,7 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
 #define ip_output_if_hdrincl(p, src, dest, netif) \
         ip4_output_if(p, src, LWIP_IP_HDRINCL, 0, 0, 0, netif)
 #define ip_route(src, dest) \
-        ip4_route_src(dest, src)
+        ip4_route_src(src, dest)
 #define ip_netif_get_local_ip(netif, dest) \
         ip4_netif_get_local_ip(netif)
 #define ip_debug_print(is_ipv6, p) ip4_debug_print(p)

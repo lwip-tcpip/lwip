@@ -2629,10 +2629,10 @@
 #endif
 
 /**
- * LWIP_HOOK_IP4_ROUTE_SRC(dest, src):
+ * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
  * Source-based routing for IPv4 - called from ip_route() (IPv4)
  * Signature:
- *   struct netif *my_hook(const ip4_addr_t *dest, const ip4_addr_t *src);
+ *   struct netif *my_hook(const ip4_addr_t *src, const ip4_addr_t *dest);
  * Arguments:
  * - dest: destination IPv4 address
  * - src: local/source IPv4 address
@@ -2641,7 +2641,7 @@
  * - NULL if no destination netif is found. In that case, ip_route() continues as normal.
  */
 #ifdef __DOXYGEN__
-#define LWIP_HOOK_IP4_ROUTE_SRC(dest, src)
+#define LWIP_HOOK_IP4_ROUTE_SRC(src, dest)
 #endif
 
 /**

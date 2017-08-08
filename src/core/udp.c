@@ -539,7 +539,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
            fails, we try regular routing as though no override was set. */
         if (!ip4_addr_isany_val(pcb->mcast_ip4) &&
             !ip4_addr_cmp(&pcb->mcast_ip4, IP4_ADDR_BROADCAST)) {
-          netif = ip4_route_src(&pcb->mcast_ip4, ip_2_ip4(&pcb->local_ip));
+          netif = ip4_route_src(ip_2_ip4(&pcb->local_ip), &pcb->mcast_ip4);
         }
       }
 #endif /* LWIP_IPV4 */

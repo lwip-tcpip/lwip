@@ -64,9 +64,9 @@ extern "C" {
 #define ip_init() /* Compatibility define, no init needed. */
 struct netif *ip4_route(const ip4_addr_t *dest);
 #if LWIP_IPV4_SRC_ROUTING
-struct netif *ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src);
+struct netif *ip4_route_src(const ip4_addr_t *src, const ip4_addr_t *dest);
 #else /* LWIP_IPV4_SRC_ROUTING */
-#define ip4_route_src(dest, src) ip4_route(dest)
+#define ip4_route_src(src, dest) ip4_route(dest)
 #endif /* LWIP_IPV4_SRC_ROUTING */
 err_t ip4_input(struct pbuf *p, struct netif *inp);
 err_t ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
