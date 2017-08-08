@@ -63,6 +63,8 @@
    since it contains pointers to static functions declared here */
 extern const struct altcp_functions altcp_tcp_functions;
 
+static void altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb);
+
 /* callback functions for TCP */
 static err_t
 altcp_tcp_accept(void *arg, struct tcp_pcb *new_tpcb, err_t err)
@@ -150,15 +152,6 @@ altcp_tcp_err(void *arg, err_t err)
 }
 
 /* setup functions */
-
-static void
-altcp_tcp_remove_callbacks(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
-    tcp_arg(tpcb, NULL);
-    tcp_recv(tpcb, NULL);
-    tcp_sent(tpcb, NULL);
-    tcp_err(tpcb, NULL);
-}
-
 static void
 altcp_tcp_setup_callbacks(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
 {
@@ -170,7 +163,7 @@ altcp_tcp_setup_callbacks(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
   /* listen is set totally different :-) */
 }
 
-void
+static void
 altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
 {
   altcp_tcp_setup_callbacks(conn, tpcb);
@@ -181,7 +174,6 @@ altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
 struct altcp_pcb *
 altcp_tcp_new_ip_type(u8_t ip_type)
 {
-  /* FIXME: pool alloc */
   struct altcp_pcb *ret = altcp_alloc();
   if (ret != NULL) {
     struct tcp_pcb *tpcb = tcp_new_ip_type(ip_type);
@@ -194,6 +186,19 @@ altcp_tcp_new_ip_type(u8_t ip_type)
     }
   }
   return ret;
+}
+
+struct altcp_pcb *
+altcp_tcp_wrap(struct tcp_pcb *tpcb)
+{
+  if (tpcb != NULL) {
+    struct altcp_pcb *ret = altcp_alloc();
+    if (ret != NULL) {
+      altcp_tcp_setup(ret, tpcb);
+      return ret;
+    }
+  }
+  return NULL;
 }
 
 
@@ -269,7 +274,7 @@ altcp_tcp_abort(struct altcp_pcb *conn)
     struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
     ALTCP_TCP_ASSERT_CONN(conn);
     if (pcb) {
-        tcp_abort(pcb);
+      tcp_abort(pcb);
     }
   }
 }
@@ -283,14 +288,7 @@ altcp_tcp_close(struct altcp_pcb *conn)
   }
   ALTCP_TCP_ASSERT_CONN(conn);
   pcb = (struct tcp_pcb *)conn->state;
-  if (pcb) {
-    altcp_tcp_remove_callbacks(conn, pcb);
-    err_t res = tcp_close(pcb);
-    if (res != ERR_OK) return res;
-    conn->state = NULL; /* unsafe to reference pcb after tcp_close(). */
-    return ERR_OK;
-  }
-  return ERR_CLSD;
+  return tcp_close(pcb);
 }
 
 static err_t

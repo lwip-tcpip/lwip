@@ -291,14 +291,12 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
     if (conn->connected) {
       conn->connected(conn->arg, conn, ERR_OK);
     }
-    if (state->rx)
-        goto pbuf_left;
-    return ERR_OK;
-  } else {
-    /* handle application data */
-  pbuf_left:
-    return altcp_mbedtls_handle_rx_appldata(conn, state);
+    if (state->rx == NULL) {
+      return ERR_OK;
+    }
   }
+  /* handle application data */
+  return altcp_mbedtls_handle_rx_appldata(conn, state);
 }
 
 /* Pass queued decoded rx data to application */
@@ -610,11 +608,11 @@ altcp_tls_new(struct altcp_tls_config* config, struct altcp_pcb *inner_pcb)
 }
 
 void *
-altcp_tls_context (struct altcp_pcb *conn)
+altcp_tls_context(struct altcp_pcb *conn)
 {
   if (conn && conn->state) {
-      altcp_mbedtls_state_t *state = conn->state;
-      return &state->ssl_context;
+    altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
+    return &state->ssl_context;
   }
   return NULL;
 }
@@ -771,9 +769,8 @@ altcp_tls_create_config_client(const u8_t *cert, size_t cert_len)
 void
 altcp_tls_free_config(struct altcp_tls_config *conf)
 {
-    altcp_mbedtls_free_config (conf);
+  altcp_mbedtls_free_config(conf);
 }
-
 
 /* "virtual" functions */
 static void

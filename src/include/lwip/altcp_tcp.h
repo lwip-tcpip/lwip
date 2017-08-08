@@ -53,14 +53,13 @@
 extern "C" {
 #endif
 
-/* setup a newly allocated altcp_pcb with existing tcp_pcb */
-struct tcp_pcb;
-void altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb);
-
 struct altcp_pcb *altcp_tcp_new_ip_type(u8_t ip_type);
 
 #define altcp_tcp_new() altcp_tcp_new_ip_type(IPADDR_TYPE_V4)
 #define altcp_tcp_new_ip6() altcp_tcp_new_ip_type(IPADDR_TYPE_V6)
+
+struct tcp_pcb;
+struct altcp_pcb *altcp_tcp_wrap(struct tcp_pcb *tpcb);
 
 #ifdef __cplusplus
 }
