@@ -257,7 +257,7 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 	}
 
 	/* Reveal MPPE header */
-	pbuf_header(np, (s16_t)MPPE_OVHD);
+	pbuf_add_header(np, MPPE_OVHD);
 
 	return ERR_OK;
 }

@@ -409,7 +409,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
     hlen -= deltaS + 4;
     if (pbuf_remove_header(np, hlen)){
       /* Can we cope with this failing?  Just assert for now */
-      LWIP_ASSERT("pbuf_header failed\n", 0);
+      LWIP_ASSERT("pbuf_remove_header failed\n", 0);
     }
     cp = (u8_t*)np->payload;
     *cp++ = (u8_t)(changes | NEW_C);
@@ -418,7 +418,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
     hlen -= deltaS + 3;
     if (pbuf_remove_header(np, hlen)) {
       /* Can we cope with this failing?  Just assert for now */
-      LWIP_ASSERT("pbuf_header failed\n", 0);
+      LWIP_ASSERT("pbuf_remove_header failed\n", 0);
     }
     cp = (u8_t*)np->payload;
     *cp++ = (u8_t)changes;
@@ -621,7 +621,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
   /* Remove the compressed header and prepend the uncompressed header. */
   if (pbuf_remove_header(n0, vjlen)) {
     /* Can we cope with this failing?  Just assert for now */
-    LWIP_ASSERT("pbuf_header failed\n", 0);
+    LWIP_ASSERT("pbuf_remove_header failed\n", 0);
     goto bad;
   }
 
@@ -644,7 +644,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
 
     if (pbuf_remove_header(np, cs->cs_hlen)) {
       /* Can we cope with this failing?  Just assert for now */
-      LWIP_ASSERT("pbuf_header failed\n", 0);
+      LWIP_ASSERT("pbuf_remove_header failed\n", 0);
       goto bad;
     }
 

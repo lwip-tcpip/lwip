@@ -459,10 +459,8 @@ altcp_mbedtls_bio_recv(void *ctx, unsigned char *buf, size_t len)
     }
     return MBEDTLS_ERR_SSL_WANT_READ;
   }
-  /* limit number of bytes to copy to fit into an s16_t for pbuf_header */
-  copy_len = (u16_t)LWIP_MIN(len, 0x7FFF);
   /* limit number of bytes again to copy from first pbuf in a chain only */
-  copy_len = LWIP_MIN(copy_len, p->len);
+  copy_len = (u16_t)LWIP_MIN(len, p->len);
   /* copy the data */
   ret = pbuf_copy_partial(p, buf, copy_len, 0);
   LWIP_ASSERT("ret == copy_len", ret == copy_len);

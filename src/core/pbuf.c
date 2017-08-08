@@ -495,7 +495,7 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
     /* boundary check fails? */
     if ((u8_t *)payload < (u8_t *)p + SIZEOF_STRUCT_PBUF) {
       LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE,
-        ("pbuf_header: failed as %p < %p (not enough space for new header size)\n",
+        ("pbuf_add_header: failed as %p < %p (not enough space for new header size)\n",
         (void *)payload, (void *)((u8_t *)p + SIZEOF_STRUCT_PBUF)));
       /* bail out unsuccessfully */
       return 1;
@@ -511,7 +511,7 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
       return 1;
     }
   }
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_header: old %p new %p (%"U16_F")\n",
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_add_header: old %p new %p (%"U16_F")\n",
     (void *)p->payload, (void *)payload, increment_magnitude));
 
   /* modify pbuf fields */
@@ -605,7 +605,7 @@ pbuf_remove_header(struct pbuf *p, size_t header_size_decrement)
   p->len = (u16_t)(p->len - increment_magnitude);
   p->tot_len = (u16_t)(p->tot_len - increment_magnitude);
 
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_header: old %p new %p (%"U16_F")\n",
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_remove_header: old %p new %p (%"U16_F")\n",
     (void *)payload, (void *)p->payload, increment_magnitude));
 
   return 0;

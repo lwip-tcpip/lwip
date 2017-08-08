@@ -1108,7 +1108,7 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   u8_t *p;
 
   /* make room for L2TP header - should not fail */
-  if (pbuf_header(pb, (s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
+  if (pbuf_add_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
     LINK_STATS_INC(link.lenerr);

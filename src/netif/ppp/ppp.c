@@ -957,7 +957,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* PPP_PROTOCOLNAME */
         ppp_warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
-        pbuf_header(pb, (s16_t)sizeof(protocol));
+        pbuf_add_header(pb, sizeof(protocol));
         lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
       }
       break;
