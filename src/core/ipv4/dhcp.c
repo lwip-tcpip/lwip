@@ -1909,7 +1909,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type, u16_t
 
   msg_out->op = DHCP_BOOTREQUEST;
   /* @todo: make link layer independent */
-  msg_out->htype = IANA_HWTYPE_ETHERNET;
+  msg_out->htype = LWIP_IANA_HWTYPE_ETHERNET;
   msg_out->hlen = netif->hwaddr_len;
   msg_out->xid = lwip_htonl(dhcp->xid);
   /* we don't need the broadcast flag since we can receive unicast traffic

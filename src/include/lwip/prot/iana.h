@@ -42,7 +42,8 @@
 extern "C" {
 #endif
 
-#define IANA_HWTYPE_ETHERNET  1
+/** Hardware types */
+#define LWIP_IANA_HWTYPE_ETHERNET  1
 
 #ifdef __cplusplus
 }
