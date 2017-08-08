@@ -672,16 +672,15 @@ pbuf_free_header(struct pbuf *q, u16_t size)
   struct pbuf *p = q;
   u16_t free_left = size;
   while (free_left && p) {
-    s16_t free_len = (free_left > INT16_MAX ? INT16_MAX : (s16_t)free_left);
-    if (free_len >= p->len) {
+    if (free_left >= p->len) {
       struct pbuf *f = p;
       free_left = (u16_t)(free_left - p->len);
       p = p->next;
       f->next = 0;
       pbuf_free(f);
     } else {
-      pbuf_header(p, (s16_t)-free_len);
-      free_left = (u16_t)(free_left - free_len);
+      pbuf_remove_header(p, free_left);
+      free_left = 0;
     }
   }
   return p;

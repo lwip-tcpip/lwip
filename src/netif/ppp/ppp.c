@@ -784,7 +784,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   ppp_dump_packet(pcb, "rcvd", (unsigned char *)pb->payload, pb->len);
 #endif /* PRINTPKT_SUPPORT */
 
-  pbuf_header(pb, -(s16_t)sizeof(protocol));
+  pbuf_remove_header(pb, sizeof(protocol));
 
   LINK_STATS_INC(link.recv);
   MIB2_STATS_NETIF_INC(pcb->netif, ifinucastpkts);
@@ -860,10 +860,10 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
     pl = (u8_t*)pb->payload;
     if (pl[0] & 0x01) {
       protocol = pl[0];
-      pbuf_header(pb, -(s16_t)1);
+      pbuf_remove_header(pb, 1);
     } else {
       protocol = (pl[0] << 8) | pl[1];
-      pbuf_header(pb, -(s16_t)2);
+      pbuf_remove_header(pb, 2);
     }
   }
 #endif /* CCP_SUPPORT */

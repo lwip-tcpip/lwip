@@ -407,7 +407,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
   if (!comp->compressSlot || comp->last_xmit != cs->cs_id) {
     comp->last_xmit = cs->cs_id;
     hlen -= deltaS + 4;
-    if (pbuf_header(np, -(s16_t)hlen)){
+    if (pbuf_remove_header(np, hlen)){
       /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
     }
@@ -416,7 +416,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
     *cp++ = cs->cs_id;
   } else {
     hlen -= deltaS + 3;
-    if (pbuf_header(np, -(s16_t)hlen)) {
+    if (pbuf_remove_header(np, hlen)) {
       /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
     }
@@ -619,7 +619,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
   IPH_CHKSUM_SET(&cs->cs_ip,  (u16_t)(~tmp));
 
   /* Remove the compressed header and prepend the uncompressed header. */
-  if (pbuf_header(n0, -(s16_t)vjlen)) {
+  if (pbuf_remove_header(n0, vjlen)) {
     /* Can we cope with this failing?  Just assert for now */
     LWIP_ASSERT("pbuf_header failed\n", 0);
     goto bad;
@@ -642,7 +642,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
       goto bad;
     }
 
-    if (pbuf_header(np, -(s16_t)cs->cs_hlen)) {
+    if (pbuf_remove_header(np, cs->cs_hlen)) {
       /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
       goto bad;
@@ -658,7 +658,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     n0 = np;
   }
 
-  if (pbuf_header(n0, (s16_t)cs->cs_hlen)) {
+  if (pbuf_add_header(n0, cs->cs_hlen)) {
     struct pbuf *np;
 
     LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);

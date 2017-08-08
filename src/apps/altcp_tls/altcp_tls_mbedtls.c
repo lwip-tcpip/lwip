@@ -467,7 +467,7 @@ altcp_mbedtls_bio_recv(void *ctx, unsigned char *buf, size_t len)
   ret = pbuf_copy_partial(p, buf, copy_len, 0);
   LWIP_ASSERT("ret == copy_len", ret == copy_len);
   /* hide the copied bytes from the pbuf */
-  err = pbuf_header(p, -(s16_t)ret);
+  err = pbuf_remove_header(p, ret);
   LWIP_ASSERT("error", err == ERR_OK);
   if (p->len == 0) {
     /* the first pbuf has been fully read, free it */

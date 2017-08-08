@@ -207,7 +207,7 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 	}
 
 	/* Hide MPPE header + protocol */
-	pbuf_header(np, -(s16_t)(MPPE_OVHD + sizeof(protocol)));
+	pbuf_remove_header(np, MPPE_OVHD + sizeof(protocol));
 
 	if ((err = pbuf_copy(np, *pb)) != ERR_OK) {
 		pbuf_free(np);
@@ -215,7 +215,7 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 	}
 
 	/* Reveal MPPE header + protocol */
-	pbuf_header(np, (s16_t)(MPPE_OVHD + sizeof(protocol)));
+	pbuf_add_header(np, MPPE_OVHD + sizeof(protocol));
 
 	*pb = np;
 	pl = (u8_t*)np->payload;
@@ -246,7 +246,7 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 	pl[1] = protocol;
 
 	/* Hide MPPE header */
-	pbuf_header(np, -(s16_t)MPPE_OVHD);
+	pbuf_remove_header(np, MPPE_OVHD);
 
 	/* Encrypt packet */
 	for (n = np; n != NULL; n = n->next) {
@@ -382,7 +382,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	}
 
 	/* Hide MPPE header */
-	pbuf_header(n0, -(s16_t)(MPPE_OVHD));
+	pbuf_remove_header(n0, MPPE_OVHD);
 
 	/* Decrypt the packet. */
 	for (n = n0; n != NULL; n = n->next) {

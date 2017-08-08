@@ -547,7 +547,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
           pppos->in_tail = NULL;
 #if IP_FORWARD || LWIP_IPV6_FORWARD
           /* hide the room for Ethernet forwarding header */
-          pbuf_header(inp, -(s16_t)(PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN));
+          pbuf_remove_header(inp, PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN);
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
 #if PPP_INPROC_IRQ_SAFE
           if(tcpip_try_callback(pppos_input_callback, inp) != ERR_OK) {
@@ -704,7 +704,7 @@ static void pppos_input_callback(void *arg) {
   ppp_pcb *ppp;
 
   ppp = ((struct pppos_input_header*)pb->payload)->ppp;
-  if(pbuf_header(pb, -(s16_t)sizeof(struct pppos_input_header))) {
+  if(pbuf_remove_header(pb, sizeof(struct pppos_input_header))) {
     LWIP_ASSERT("pbuf_header failed\n", 0);
     goto drop;
   }
