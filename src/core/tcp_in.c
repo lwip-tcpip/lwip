@@ -708,7 +708,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
 
   if ((tcplen > 0)) {
     /* Acknowledge data, FIN or out-of-window SYN */
-    pcb->flags |= TF_ACK_NOW;
+    tcp_ack_now(pcb);
     tcp_output(pcb);
   }
   return;

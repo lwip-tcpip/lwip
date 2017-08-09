@@ -1921,7 +1921,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   if ((pcb->state != TIME_WAIT) &&
       (pcb->state != LISTEN) &&
       (pcb->flags & TF_ACK_DELAY)) {
-    pcb->flags |= TF_ACK_NOW;
+    tcp_ack_now(pcb);
     tcp_output(pcb);
   }
 
