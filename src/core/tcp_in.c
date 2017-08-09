@@ -1168,11 +1168,8 @@ tcp_receive(struct tcp_pcb *pcb)
                 ++pcb->dupacks;
               }
               if (pcb->dupacks > 3) {
-                /* Inflate the congestion window, but not if it means that
-                   the value overflows. */
-                if ((tcpwnd_size_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
-                  pcb->cwnd = (tcpwnd_size_t)(pcb->cwnd + pcb->mss);
-                }
+                /* Inflate the congestion window */
+                TCP_WND_INC(pcb->cwnd, pcb->mss);
               } else if (pcb->dupacks >= 3) {
                 /* Do fast retransmit (checked via TF_INFR, not via dupacks count) */
                 tcp_rexmit_fast(pcb);
