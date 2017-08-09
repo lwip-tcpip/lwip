@@ -160,7 +160,7 @@ tcp_send_fin(struct tcp_pcb *pcb)
     if ((TCPH_FLAGS(last_unsent->tcphdr) & (TCP_SYN | TCP_FIN | TCP_RST)) == 0) {
       /* no SYN/FIN/RST flag in the header, we can add the FIN flag */
       TCPH_SET_FLAG(last_unsent->tcphdr, TCP_FIN);
-      pcb->flags |= TF_FIN;
+      tcp_set_flags(pcb, TF_FIN);
       return ERR_OK;
     }
   }
@@ -334,7 +334,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
   if (len > pcb->snd_buf) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too much data (len=%"U16_F" > snd_buf=%"TCPWNDSIZE_F")\n",
       len, pcb->snd_buf));
-    pcb->flags |= TF_NAGLEMEMERR;
+    tcp_set_flags(pcb, TF_NAGLEMEMERR);
     return ERR_MEM;
   }
 
@@ -347,7 +347,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_write: too long queue %"U16_F" (max %"U16_F")\n",
       pcb->snd_queuelen, (u16_t)TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
-    pcb->flags |= TF_NAGLEMEMERR;
+    tcp_set_flags(pcb, TF_NAGLEMEMERR);
     return ERR_MEM;
   }
   if (pcb->snd_queuelen != 0) {
@@ -776,7 +776,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 
   return ERR_OK;
 memerr:
-  pcb->flags |= TF_NAGLEMEMERR;
+  tcp_set_flags(pcb, TF_NAGLEMEMERR);
   TCP_STATS_INC(tcp.memerr);
 
   if (concat_p != NULL) {
@@ -820,7 +820,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("tcp_enqueue_flags: too long queue %"U16_F" (max %"U16_F")\n",
                                        pcb->snd_queuelen, (u16_t)TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
-    pcb->flags |= TF_NAGLEMEMERR;
+    tcp_set_flags(pcb, TF_NAGLEMEMERR);
     return ERR_MEM;
   }
 
@@ -852,7 +852,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
 
   /* Allocate pbuf with room for TCP header + options */
   if ((p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
-    pcb->flags |= TF_NAGLEMEMERR;
+    tcp_set_flags(pcb, TF_NAGLEMEMERR);
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
@@ -861,7 +861,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
 
   /* Allocate memory for tcp_seg, and fill in fields. */
   if ((seg = tcp_create_segment(pcb, p, flags, pcb->snd_lbb, optflags)) == NULL) {
-    pcb->flags |= TF_NAGLEMEMERR;
+    tcp_set_flags(pcb, TF_NAGLEMEMERR);
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
@@ -893,7 +893,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
     /* optlen does not influence snd_buf */
   }
   if (flags & TCP_FIN) {
-    pcb->flags |= TF_FIN;
+    tcp_set_flags(pcb, TF_FIN);
   }
 
   /* update number of segments on the queues */
@@ -1030,7 +1030,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   p = tcp_output_alloc_header(pcb, optlen, 0, lwip_htonl(pcb->snd_nxt));
   if (p == NULL) {
     /* let tcp_fasttmr retry sending this ACK */
-    pcb->flags |= (TF_ACK_DELAY | TF_ACK_NOW);
+    tcp_set_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
     return ERR_BUF;
   }
@@ -1083,7 +1083,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
 
   if (err != ERR_OK) {
     /* let tcp_fasttmr retry sending this ACK */
-    pcb->flags |= (TF_ACK_DELAY | TF_ACK_NOW);
+    tcp_set_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
   } else {
     /* remove ACK flags from the PCB, as we sent an empty ACK now */
     tcp_clear_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
@@ -1230,7 +1230,7 @@ tcp_output(struct tcp_pcb *pcb)
     err = tcp_output_segment(seg, pcb, netif);
     if (err != ERR_OK) {
       /* segment could not be sent, for whatever reason */
-      pcb->flags |= TF_NAGLEMEMERR;
+      tcp_set_flags(pcb, TF_NAGLEMEMERR);
       return err;
     }
     pcb->unsent = seg->next;
@@ -1574,7 +1574,7 @@ tcp_rexmit_rto_prepare(struct tcp_pcb *pcb)
   pcb->unacked = NULL;
 
   /* Mark RTO in-progress */
-  pcb->flags |= TF_RTO;
+  tcp_set_flags(pcb, TF_RTO);
   /* Record the next byte following retransmit */
   pcb->rto_end = lwip_ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
   /* Don't take any RTT measurements after retransmitting. */
@@ -1705,7 +1705,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
       }
 
       pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
-      pcb->flags |= TF_INFR;
+      tcp_set_flags(pcb, TF_INFR);
 
       /* Reset the retransmission timer to prevent immediate rto retransmissions */
       pcb->rtime = 0;

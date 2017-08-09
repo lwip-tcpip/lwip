@@ -621,7 +621,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     }
 #if TCP_LISTEN_BACKLOG
     pcb->accepts_pending++;
-    npcb->flags |= TF_BACKLOGPEND;
+    tcp_set_flags(npcb, TF_BACKLOGPEND);
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
     ip_addr_copy(npcb->local_ip, *ip_current_dest_addr());
@@ -1911,7 +1911,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
             pcb->snd_scale = 14U;
           }
           pcb->rcv_scale = TCP_RCV_SCALE;
-          pcb->flags |= TF_WND_SCALE;
+          tcp_set_flags(pcb, TF_WND_SCALE);
           /* window scaling is enabled, we can use the full receive window */
           LWIP_ASSERT("window not at default value", pcb->rcv_wnd == TCPWND_MIN16(TCP_WND));
           LWIP_ASSERT("window not at default value", pcb->rcv_ann_wnd == TCPWND_MIN16(TCP_WND));
@@ -1936,7 +1936,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
           pcb->ts_recent = lwip_ntohl(tsval);
           /* Enable sending timestamps in every segment now that we know
              the remote host supports it. */
-          pcb->flags |= TF_TIMESTAMP;
+          tcp_set_flags(pcb, TF_TIMESTAMP);
         } else if (TCP_SEQ_BETWEEN(pcb->ts_lastacksent, seqno, seqno+tcplen)) {
           pcb->ts_recent = lwip_ntohl(tsval);
         }
@@ -1955,7 +1955,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
         /* TCP SACK_PERM option with valid length */
         if (flags & TCP_SYN) {
           /* We only set it if we receive it in a SYN (or SYN+ACK) packet */
-          pcb->flags |= TF_SACK;
+          tcp_set_flags(pcb, TF_SACK);
         }
         break;
 #endif /* LWIP_TCP_SACK_OUT */

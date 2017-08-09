@@ -449,7 +449,7 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
       tcp_ack_now(pcb);                            \
     }                                              \
     else {                                         \
-      (pcb)->flags |= TF_ACK_DELAY;                \
+      tcp_set_flags(pcb, TF_ACK_DELAY);            \
     }                                              \
   } while (0)
 

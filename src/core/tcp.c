@@ -217,7 +217,7 @@ tcp_backlog_delayed(struct tcp_pcb* pcb)
     if (pcb->listener != NULL) {
       pcb->listener->accepts_pending++;
       LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
-      pcb->flags |= TF_BACKLOGPEND;
+      tcp_set_flags(pcb, TF_BACKLOGPEND);
     }
   }
 }
@@ -369,7 +369,7 @@ tcp_close_shutdown_fin(struct tcp_pcb *pcb)
     tcp_output(pcb);
   } else if (err == ERR_MEM) {
     /* Mark this pcb for closing. Closing is retried from tcp_tmr. */
-    pcb->flags |= TF_CLOSEPEND;
+    tcp_set_flags(pcb, TF_CLOSEPEND);
   }
   return err;
 }
@@ -397,7 +397,7 @@ tcp_close(struct tcp_pcb *pcb)
 
   if (pcb->state != LISTEN) {
     /* Set a flag not to receive any more data... */
-    pcb->flags |= TF_RXCLOSED;
+    tcp_set_flags(pcb, TF_RXCLOSED);
   }
   /* ... and close */
   return tcp_close_shutdown(pcb, 1);
@@ -424,7 +424,7 @@ tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
   }
   if (shut_rx) {
     /* shut down the receive side: set a flag not to receive any more data... */
-    pcb->flags |= TF_RXCLOSED;
+    tcp_set_flags(pcb, TF_RXCLOSED);
     if (shut_tx) {
       /* shutting down the tx AND rx side is the same as closing for the raw API */
       return tcp_close_shutdown(pcb, 1);
