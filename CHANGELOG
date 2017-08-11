@@ -71,6 +71,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-08-11: Joel Cunningham
+  * lwip_itoa: fix converting the number 0 (previously converted to '\0') (bug #51729)
+
   2017-08-08: Dirk Ziegelmeier
   * ip4_route_src: parameter order is reversed: ip4_route_src(dest, src) -> ip4_route_src(src, dest)
     to make parameter order consistent with other ip*_route*() functions
