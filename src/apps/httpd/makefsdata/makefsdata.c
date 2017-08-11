@@ -13,16 +13,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include "windows.h"
-#else
-#include <dir.h>
-#endif
-#include <dos.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
+
+#include "tinydir.h"
 
 /** Makefsdata can generate *all* files deflate-compressed (where file size shrinks).
  * Since nearly all browsers support this, this is a good way to reduce ROM size.
@@ -65,40 +60,21 @@ int deflate_level = 10; /* default compression level, can be changed via command
 #define USAGE_ARG_DEFLATE ""
 #endif /* MAKEFS_SUPPORT_DEFLATE */
 
-/* Compatibility defines Win32 vs. DOS */
 #ifdef WIN32
-
-#define FIND_T                        WIN32_FIND_DATAA
-#define FIND_T_FILENAME(fInfo)        (fInfo.cFileName)
-#define FIND_T_IS_DIR(fInfo)          ((fInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-#define FIND_T_IS_FILE(fInfo)         ((fInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-#define FIND_RET_T                    HANDLE
-#define FINDFIRST_FILE(path, result)  FindFirstFileA(path, result)
-#define FINDFIRST_DIR(path, result)   FindFirstFileA(path, result)
-#define FINDNEXT(ff_res, result)      FindNextFileA(ff_res, result)
-#define FINDFIRST_SUCCEEDED(ret)      (ret != INVALID_HANDLE_VALUE)
-#define FINDNEXT_SUCCEEDED(ret)       (ret == TRUE)
 
 #define GETCWD(path, len)             GetCurrentDirectoryA(len, path)
 #define CHDIR(path)                   SetCurrentDirectoryA(path)
 #define CHDIR_SUCCEEDED(ret)          (ret == TRUE)
 
-#else
-
-#define FIND_T                        struct ffblk
-#define FIND_T_FILENAME(fInfo)        (fInfo.ff_name)
-#define FIND_T_IS_DIR(fInfo)          ((fInfo.ff_attrib & FA_DIREC) == FA_DIREC)
-#define FIND_T_IS_FILE(fInfo)         (1)
-#define FIND_RET_T                    int
-#define FINDFIRST_FILE(path, result)  findfirst(path, result, FA_ARCH)
-#define FINDFIRST_DIR(path, result)   findfirst(path, result, FA_DIREC)
-#define FINDNEXT(ff_res, result)      FindNextFileA(ff_res, result)
-#define FINDFIRST_SUCCEEDED(ret)      (ret == 0)
-#define FINDNEXT_SUCCEEDED(ret)       (ret == 0)
+#elif __linux__
 
 #define GETCWD(path, len)             getcwd(path, len)
 #define CHDIR(path)                   chdir(path)
 #define CHDIR_SUCCEEDED(ret)          (ret == 0)
+
+#else
+
+#error makefsdata not supported on this platform
 
 #endif
 
@@ -285,7 +261,7 @@ int main(int argc, char *argv[])
     (includeHttpHeader ? (useHttp11 ? "1.1 " : "1.0 ") : ""),
     (includeHttpHeader ? "be" : "not be"));
 
-  sprintf(curSubdir, "");  /* start off in web page's root directory - relative paths */
+  curSubdir[0] = '\0'; /* start off in web page's root directory - relative paths */
   printf("  Processing all files in directory %s", path);
   if (processSubs) {
     printf(" and subdirectories..." NEWLINE NEWLINE);
@@ -426,60 +402,87 @@ void concat_files(const char *file1, const char *file2, const char *targetfile)
 
 int process_sub(FILE *data_file, FILE *struct_file)
 {
-  FIND_T fInfo;
-  FIND_RET_T fret;
+  tinydir_dir dir;
   int filesProcessed = 0;
 
   if (processSubs) {
     /* process subs recursively */
     size_t sublen = strlen(curSubdir);
     size_t freelen = sizeof(curSubdir) - sublen - 1;
+    int ret;
     LWIP_ASSERT("sublen < sizeof(curSubdir)", sublen < sizeof(curSubdir));
-    fret = FINDFIRST_DIR("*", &fInfo);
-    if (FINDFIRST_SUCCEEDED(fret)) {
-      do {
-        const char *curName = FIND_T_FILENAME(fInfo);
-        if ((curName[0] == '.') || (strcmp(curName, "CVS") == 0)) {
-          continue;
+
+    ret = tinydir_open_sorted(&dir, ".");
+
+    if (ret == 0) {
+      unsigned int i;
+      for (i = 0; i < dir.n_files; i++) {
+        tinydir_file file;
+
+        ret = tinydir_readfile_n(&dir, &file, i);
+
+        if (ret == 0) {
+          const char *currName = file.name;
+
+          if (currName[0] == '.') {
+            continue;
+          }
+          if (!file.is_dir) {
+            continue;
+          }
+          if (freelen > 0) {
+            CHDIR(currName);
+            strncat(curSubdir, "/", freelen);
+            strncat(curSubdir, currName, freelen - 1);
+            curSubdir[sizeof(curSubdir) - 1] = 0;
+            printf("processing subdirectory %s/..." NEWLINE, curSubdir);
+            filesProcessed += process_sub(data_file, struct_file);
+            CHDIR("..");
+            curSubdir[sublen] = 0;
+          }
+          else {
+            printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, currName);
+          }
         }
-        if (!FIND_T_IS_DIR(fInfo)) {
-          continue;
+      }
+    }
+
+    ret = tinydir_open_sorted(&dir, ".");
+    if (ret == 0) {
+      unsigned int i;
+      for (i = 0; i < dir.n_files; i++) {
+        tinydir_file file;
+
+        ret = tinydir_readfile_n(&dir, &file, i);
+
+        if (ret == 0) {
+          if (!file.is_dir) {
+            const char *curName = file.name;
+
+            if (strcmp(curName, "fsdata.tmp") == 0) {
+              continue;
+            }
+            if (strcmp(curName, "fshdr.tmp") == 0) {
+              continue;
+            }
+
+            printf("processing %s/%s..." NEWLINE, curSubdir, curName);
+
+            if (process_file(data_file, struct_file, curName) < 0) {
+              printf(NEWLINE "Error... aborting" NEWLINE);
+              return -1;
+            }
+            filesProcessed++;
+          }
         }
-        if (freelen > 0) {
-           CHDIR(curName);
-           strncat(curSubdir, "/", freelen);
-           strncat(curSubdir, curName, freelen - 1);
-           curSubdir[sizeof(curSubdir) - 1] = 0;
-           printf("processing subdirectory %s/..." NEWLINE, curSubdir);
-           filesProcessed += process_sub(data_file, struct_file);
-           CHDIR("..");
-           curSubdir[sublen] = 0;
-        } else {
-           printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, curName);
-        }
-      } while (FINDNEXT_SUCCEEDED(FINDNEXT(fret, &fInfo)));
+      }
     }
   }
 
-  fret = FINDFIRST_FILE("*.*", &fInfo);
-  if (FINDFIRST_SUCCEEDED(fret)) {
-    /* at least one file in directory */
-    do {
-      if (FIND_T_IS_FILE(fInfo)) {
-        const char *curName = FIND_T_FILENAME(fInfo);
-        printf("processing %s/%s..." NEWLINE, curSubdir, curName);
-        if (process_file(data_file, struct_file, curName) < 0) {
-          printf(NEWLINE "Error... aborting" NEWLINE);
-          return -1;
-        }
-        filesProcessed++;
-      }
-    } while (FINDNEXT_SUCCEEDED(FINDNEXT(fret, &fInfo)));
-  }
   return filesProcessed;
 }
 
-u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed, int* is_compressed)
+static u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed, int* is_compressed)
 {
   FILE *inFile;
   size_t fsize = 0;
@@ -576,14 +579,14 @@ u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed,
   return buf;
 }
 
-void process_file_data(FILE* data_file, u8_t* file_data, size_t file_size)
+static void process_file_data(FILE* data_file, u8_t* file_data, size_t file_size)
 {
   size_t written, i, src_off=0;
 
   size_t off = 0;
   for (i = 0; i < file_size; i++) {
     LWIP_ASSERT("file_buffer_c overflow", off < sizeof(file_buffer_c) - 5);
-    sprintf(&file_buffer_c[off], "0x%02.2x,", file_data[i]);
+    sprintf(&file_buffer_c[off], "0x%02x,", file_data[i]);
     off += 5;
     if ((++src_off % HEX_BYTES_PER_LINE) == 0) {
       LWIP_ASSERT("file_buffer_c overflow", off < sizeof(file_buffer_c) - NEWLINE_LEN);
@@ -600,7 +603,7 @@ void process_file_data(FILE* data_file, u8_t* file_data, size_t file_size)
   LWIP_ASSERT("written == off", written == off);
 }
 
-int write_checksums(FILE *struct_file, const char *varname,
+static int write_checksums(FILE *struct_file, const char *varname,
                     u16_t hdr_len, u16_t hdr_chksum, const u8_t* file_data, size_t file_size)
 {
   int chunk_size = TCP_MSS;
@@ -623,14 +626,14 @@ int write_checksums(FILE *struct_file, const char *varname,
   src_offset = 0;
   for (offset = hdr_len; ; offset += len) {
     unsigned short chksum;
-    void* data = (void*)&file_data[src_offset];
+    const void* data = (const void*)&file_data[src_offset];
     len = LWIP_MIN(chunk_size, (int)file_size - src_offset);
     if (len == 0) {
       break;
     }
     chksum = ~inet_chksum(data, (u16_t)len);
     /* add checksum for data */
-    fprintf(struct_file, "{%d, 0x%04x, %d}," NEWLINE, offset, chksum, len);
+    fprintf(struct_file, "{%d, 0x%04x, "SZT_F"}," NEWLINE, offset, chksum, len);
     i++;
   }
   fprintf(struct_file, "};" NEWLINE);
@@ -700,7 +703,7 @@ static void register_filename(const char* qualifiedName)
    }
 }
 
-int is_ssi_file(const char* filename)
+static int is_ssi_file(const char* filename)
 {
   size_t loop;
   for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
@@ -741,12 +744,12 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
 #endif /* ALIGN_PAYLOAD */
   fprintf(data_file, "static const unsigned char FSDATA_ALIGN_PRE data_%s[] FSDATA_ALIGN_POST = {" NEWLINE, varname);
   /* encode source file name (used by file system, not returned to browser) */
-  fprintf(data_file, "/* %s (%d chars) */" NEWLINE, qualifiedName, strlen(qualifiedName)+1);
+  fprintf(data_file, "/* %s ("SZT_F" chars) */" NEWLINE, qualifiedName, strlen(qualifiedName)+1);
   file_put_ascii(data_file, qualifiedName, strlen(qualifiedName)+1, &i);
 #if ALIGN_PAYLOAD
   /* pad to even number of bytes to assure payload is on aligned boundary */
   while(i % PAYLOAD_ALIGNMENT != 0) {
-    fprintf(data_file, "0x%02.2x,", 0);
+    fprintf(data_file, "0x%02x,", 0);
     i++;
   }
 #endif /* ALIGN_PAYLOAD */
@@ -816,7 +819,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   size_t hdr_len = 0;
   u16_t acc;
   const char *file_ext;
-  int j;
+  size_t j;
   u8_t provide_last_modified = includeLastModified;
 
   memset(hdr_buf, 0, sizeof(hdr_buf));
@@ -844,7 +847,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   }
   cur_string = g_psHTTPHeaderStrings[response_type];
   cur_len = strlen(cur_string);
-  fprintf(data_file, NEWLINE "/* \"%s\" (%d bytes) */" NEWLINE, cur_string, cur_len);
+  fprintf(data_file, NEWLINE "/* \"%s\" ("SZT_F" bytes) */" NEWLINE, cur_string, cur_len);
   written += file_put_ascii(data_file, cur_string, cur_len, &i);
   i = 0;
   if (precalcChksum) {
@@ -854,7 +857,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 
   cur_string = serverID;
   cur_len = strlen(cur_string);
-  fprintf(data_file, NEWLINE "/* \"%s\" (%d bytes) */" NEWLINE, cur_string, cur_len);
+  fprintf(data_file, NEWLINE "/* \"%s\" ("SZT_F" bytes) */" NEWLINE, cur_string, cur_len);
   written += file_put_ascii(data_file, cur_string, cur_len, &i);
   i = 0;
   if (precalcChksum) {
@@ -895,14 +898,14 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     memset(intbuf, 0, sizeof(intbuf));
     cur_string = g_psHTTPHeaderStrings[HTTP_HDR_CONTENT_LENGTH];
     cur_len = strlen(cur_string);
-    fprintf(data_file, NEWLINE "/* \"%s%d\r\n\" (%d+ bytes) */" NEWLINE, cur_string, content_len, cur_len+2);
+    fprintf(data_file, NEWLINE "/* \"%s%d\r\n\" ("SZT_F"+ bytes) */" NEWLINE, cur_string, content_len, cur_len+2);
     written += file_put_ascii(data_file, cur_string, cur_len, &i);
     if (precalcChksum) {
       memcpy(&hdr_buf[hdr_len], cur_string, cur_len);
       hdr_len += cur_len;
     }
 
-    _itoa(content_len, intbuf, 10);
+    lwip_itoa(intbuf, content_len, 10);
     strcat(intbuf, "\r\n");
     cur_len = strlen(intbuf);
     written += file_put_ascii(data_file, intbuf, cur_len, &i);
@@ -931,7 +934,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     }
     strftime(&modbuf[15], sizeof(modbuf)-15, "%a, %d %b %Y %H:%M:%S GMT", t);
     cur_len = strlen(cur_string);
-    fprintf(data_file, NEWLINE "/* \"%s\"\r\n\" (%d+ bytes) */" NEWLINE, cur_string, cur_len+2);
+    fprintf(data_file, NEWLINE "/* \"%s\"\r\n\" ("SZT_F"+ bytes) */" NEWLINE, cur_string, cur_len+2);
     written += file_put_ascii(data_file, cur_string, cur_len, &i);
     if (precalcChksum) {
       memcpy(&hdr_buf[hdr_len], cur_string, cur_len);
@@ -959,7 +962,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
       cur_string = g_psHTTPHeaderStrings[HTTP_HDR_CONN_CLOSE];
     }
     cur_len = strlen(cur_string);
-    fprintf(data_file, NEWLINE "/* \"%s\" (%d bytes) */" NEWLINE, cur_string, cur_len);
+    fprintf(data_file, NEWLINE "/* \"%s\" ("SZT_F" bytes) */" NEWLINE, cur_string, cur_len);
     written += file_put_ascii(data_file, cur_string, cur_len, &i);
     i = 0;
     if (precalcChksum) {
@@ -985,7 +988,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   /* write content-type, ATTENTION: this includes the double-CRLF! */
   cur_string = file_type;
   cur_len = strlen(cur_string);
-  fprintf(data_file, NEWLINE "/* \"%s\" (%d bytes) */" NEWLINE, cur_string, cur_len);
+  fprintf(data_file, NEWLINE "/* \"%s\" ("SZT_F" bytes) */" NEWLINE, cur_string, cur_len);
   written += file_put_ascii(data_file, cur_string, cur_len, &i);
   i = 0;
 
@@ -1010,7 +1013,7 @@ int file_put_ascii(FILE *file, const char* ascii_string, int len, int *i)
   int x;
   for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
-    fprintf(file, "0x%02.2x,", cur);
+    fprintf(file, "0x%02x,", cur);
     if ((++(*i) % HEX_BYTES_PER_LINE) == 0) {
       fprintf(file, NEWLINE);
     }
@@ -1024,7 +1027,7 @@ int s_put_ascii(char *buf, const char *ascii_string, int len, int *i)
   int idx = 0;
   for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
-    sprintf(&buf[idx], "0x%02.2x,", cur);
+    sprintf(&buf[idx], "0x%02x,", cur);
     idx += 5;
     if ((++(*i) % HEX_BYTES_PER_LINE) == 0) {
       sprintf(&buf[idx], NEWLINE);
