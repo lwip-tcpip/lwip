@@ -412,7 +412,7 @@ int process_sub(FILE *data_file, FILE *struct_file)
     int ret;
     LWIP_ASSERT("sublen < sizeof(curSubdir)", sublen < sizeof(curSubdir));
 
-    ret = tinydir_open_sorted(&dir, ".");
+    ret = tinydir_open_sorted(&dir, TINYDIR_STRING("."));
 
     if (ret == 0) {
       unsigned int i;
@@ -422,7 +422,13 @@ int process_sub(FILE *data_file, FILE *struct_file)
         ret = tinydir_readfile_n(&dir, &file, i);
 
         if (ret == 0) {
+#if (defined _MSC_VER || defined __MINGW32__)
+          size_t   i;
+          char currName[256];
+          wcstombs_s(&i, currName, sizeof(currName), file.name, sizeof(currName));
+#else
           const char *currName = file.name;
+#endif
 
           if (currName[0] == '.') {
             continue;
@@ -447,7 +453,7 @@ int process_sub(FILE *data_file, FILE *struct_file)
       }
     }
 
-    ret = tinydir_open_sorted(&dir, ".");
+    ret = tinydir_open_sorted(&dir, TINYDIR_STRING("."));
     if (ret == 0) {
       unsigned int i;
       for (i = 0; i < dir.n_files; i++) {
@@ -457,7 +463,13 @@ int process_sub(FILE *data_file, FILE *struct_file)
 
         if (ret == 0) {
           if (!file.is_dir) {
-            const char *curName = file.name;
+#if (defined _MSC_VER || defined __MINGW32__)
+            size_t   i;
+            char curName[256];
+            wcstombs_s(&i, curName, sizeof(curName), file.name, sizeof(curName));
+#else
+            const char *currName = file.name;
+#endif
 
             if (strcmp(curName, "fsdata.tmp") == 0) {
               continue;
