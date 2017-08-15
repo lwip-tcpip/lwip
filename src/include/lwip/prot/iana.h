@@ -91,7 +91,7 @@ enum lwip_iana_port_number {
  * A list of often ethtypes (although lwIP does not use all of them).
  * https://www.iana.org/assignments/ieee-802-numbers/ieee-802-numbers.xhtml#ieee-802-numbers-1
  */
-enum eth_type {
+enum lwip_iana_eth_type {
   /** Internet protocol v4 */
   ETHTYPE_IP        = 0x0800U,
   /** Address resolution protocol */
