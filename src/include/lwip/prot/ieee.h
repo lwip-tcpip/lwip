@@ -1,8 +1,8 @@
 /**
  * @file
- * IANA assigned numbers (RFC 1700 and successors)
+ * IEEE assigned numbers
  *
- * @defgroup iana IANA assigned numbers
+ * @defgroup ieee IEEE assigned numbers
  * @ingroup infrastructure
  */
 
@@ -38,52 +38,46 @@
  *
  */
 
-#ifndef LWIP_HDR_PROT_IANA_H
-#define LWIP_HDR_PROT_IANA_H
+#ifndef LWIP_HDR_PROT_IEEE_H
+#define LWIP_HDR_PROT_IEEE_H
 
 /**
- * @ingroup iana
- * Hardware types
+ * @ingroup ieee
+ * A list of often ethtypes (although lwIP does not use all of them).
  */
-enum lwip_iana_hwtype {
-  /** Ethernet */
-  LWIP_IANA_HWTYPE_ETHERNET = 1
+enum lwip_ieee_eth_type {
+  /** Internet protocol v4 */
+  ETHTYPE_IP        = 0x0800U,
+  /** Address resolution protocol */
+  ETHTYPE_ARP       = 0x0806U, 
+  /** Wake on lan */
+  ETHTYPE_WOL       = 0x0842U,
+  /** RARP */
+  ETHTYPE_RARP      = 0x8035U,
+  /** Virtual local area network */
+  ETHTYPE_VLAN      = 0x8100U,
+  /** Internet protocol v6 */
+  ETHTYPE_IPV6      = 0x86DDU,
+  /** PPP Over Ethernet Discovery Stage */
+  ETHTYPE_PPPOEDISC = 0x8863U,
+  /** PPP Over Ethernet Session Stage */
+  ETHTYPE_PPPOE     = 0x8864U,
+  /** Jumbo Frames */
+  ETHTYPE_JUMBO     = 0x8870U,
+  /** Process field network */
+  ETHTYPE_PROFINET  = 0x8892U,
+  /** Ethernet for control automation technology */
+  ETHTYPE_ETHERCAT  = 0x88A4U,
+  /** Link layer discovery protocol */
+  ETHTYPE_LLDP      = 0x88CCU,
+  /** Serial real-time communication system */
+  ETHTYPE_SERCOS    = 0x88CDU,
+  /** Media redundancy protocol */
+  ETHTYPE_MRP       = 0x88E3U,
+  /** Precision time protocol */
+  ETHTYPE_PTP       = 0x88F7U,
+  /** Q-in-Q, 802.1ad */
+  ETHTYPE_QINQ      = 0x9100U
 };
 
-/**
- * @ingroup iana
- * Port numbers
- * https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
- */
-enum lwip_iana_port_number {
-  /** SMTP */
-  LWIP_IANA_PORT_SMTP        = 25,
-  /** DHCP server */
-  LWIP_IANA_PORT_DHCP_SERVER = 67,
-  /** DHCP client */
-  LWIP_IANA_PORT_DHCP_CLIENT = 68,
-  /** TFTP */
-  LWIP_IANA_PORT_TFTP        = 69,
-  /** HTTP */
-  LWIP_IANA_PORT_HTTP        = 80,
-  /** SNTP */
-  LWIP_IANA_PORT_SNTP        = 123,
-  /** NETBIOS */
-  LWIP_IANA_PORT_NETBIOS     = 137,
-  /** SNMP */
-  LWIP_IANA_PORT_SNMP        = 161,
-  /** SNMP traps */
-  LWIP_IANA_PORT_SNMP_TRAP   = 162,
-  /** HTTPS */
-  LWIP_IANA_PORT_HTTPS       = 443,
-  /** SMTPS */
-  LWIP_IANA_PORT_SMTPS       = 465,
-  /** MQTT */
-  LWIP_IANA_PORT_MQTT        = 1883,
-  /** MDNS */
-  LWIP_IANA_PORT_MDNS        = 5353,
-  /** Secure MQTT */
-  LWIP_IANA_PORT_SEQURE_MQTT = 8883
-};
-
-#endif /* LWIP_HDR_PROT_IANA_H */
+#endif /* LWIP_HDR_PROT_IEEE_H */

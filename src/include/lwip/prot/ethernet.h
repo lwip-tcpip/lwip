@@ -38,7 +38,7 @@
 #define LWIP_HDR_PROT_ETHERNET_H
 
 #include "lwip/arch.h"
-#include "lwip/prot/iana.h"
+#include "lwip/prot/ieee.h"
 
 #ifdef __cplusplus
 extern "C" {
