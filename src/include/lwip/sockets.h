@@ -327,6 +327,21 @@ struct in_pktinfo {
 };
 #endif /* LWIP_IPV4 */
 
+#if LWIP_IPV6_MLD
+/*
+ * Options and types related to IPv6 multicast membership
+ */
+#define IPV6_JOIN_GROUP      12
+#define IPV6_ADD_MEMBERSHIP  IPV6_JOIN_GROUP
+#define IPV6_LEAVE_GROUP     13
+#define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
+
+typedef struct ipv6_mreq {
+  struct in6_addr ipv6mr_multiaddr; /*  IPv6 multicast addr */
+  unsigned int    ipv6mr_interface; /*  interface index, or 0 */
+} ipv6_mreq;
+#endif /* LWIP_IPV6_MLD */
+
 /*
  * The Type of Service provides an indication of the abstract
  * parameters of the quality of service desired.  These parameters are

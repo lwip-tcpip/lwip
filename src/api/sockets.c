@@ -59,7 +59,9 @@
 #include "lwip/udp.h"
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
+#include "lwip/netif.h"
 #include "lwip/priv/tcpip_priv.h"
+#include "lwip/mld6.h"
 #if LWIP_CHECKSUM_ON_COPY
 #include "lwip/inet_chksum.h"
 #endif
@@ -234,12 +236,12 @@ union sockaddr_aligned {
 #endif /* LWIP_IPV4 */
 };
 
-#if LWIP_IGMP
 /* Define the number of IPv4 multicast memberships, default is one per socket */
 #ifndef LWIP_SOCKET_MAX_MEMBERSHIPS
 #define LWIP_SOCKET_MAX_MEMBERSHIPS NUM_SOCKETS
 #endif
 
+#if LWIP_IGMP
 /* This is to keep track of IP_ADD_MEMBERSHIP calls to drop the membership when
    a socket is closed */
 struct lwip_socket_multicast_pair {
@@ -256,6 +258,25 @@ struct lwip_socket_multicast_pair socket_ipv4_multicast_memberships[LWIP_SOCKET_
 static int  lwip_socket_register_membership(int s, const ip4_addr_t *if_addr, const ip4_addr_t *multi_addr);
 static void lwip_socket_unregister_membership(int s, const ip4_addr_t *if_addr, const ip4_addr_t *multi_addr);
 static void lwip_socket_drop_registered_memberships(int s);
+#endif /* LWIP_IGMP */
+
+#if LWIP_IPV6_MLD
+/* This is to keep track of IP_JOIN_GROUP calls to drop the membership when
+   a socket is closed */
+struct lwip_socket_multicast_mld6_pair {
+  /** the socket */
+  struct lwip_sock* sock;
+  /** the interface index */
+  unsigned int if_idx;
+  /** the group address */
+  ip6_addr_t multi_addr;
+};
+
+struct lwip_socket_multicast_mld6_pair socket_ipv6_multicast_memberships[LWIP_SOCKET_MAX_MEMBERSHIPS];
+
+static int  lwip_socket_register_mld6_membership(int s, unsigned int if_idx, const ip6_addr_t *multi_addr);
+static void lwip_socket_unregister_mld6_membership(int s, unsigned int if_idx, const ip6_addr_t *multi_addr);
+static void lwip_socket_drop_registered_mld6_memberships(int s);
 #endif /* LWIP_IGMP */
 
 /** The global array of available sockets */
@@ -709,6 +730,10 @@ lwip_close(int s)
   /* drop all possibly joined IGMP memberships */
   lwip_socket_drop_registered_memberships(s);
 #endif /* LWIP_IGMP */
+#if LWIP_IPV6_MLD
+  /* drop all possibly joined MLD6 memberships */
+  lwip_socket_drop_registered_mld6_memberships(s);
+#endif /* LWIP_IPV6_MLD */
 
   err = netconn_delete(sock->conn);
   if (err != ERR_OK) {
@@ -3053,7 +3078,6 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     case IP_DROP_MEMBERSHIP:
       {
         /* If this is a TCP or a RAW socket, ignore these options. */
-        /* @todo: assign membership to this socket so that it is dropped when closing the socket */
         err_t igmp_err;
         const struct ip_mreq *imr = (const struct ip_mreq *)optval;
         ip4_addr_t if_addr;
@@ -3159,6 +3183,41 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       break;
     }  /* switch (optname) */
     break;
+#if LWIP_IPV6_MLD
+    case IPV6_JOIN_GROUP:
+    case IPV6_LEAVE_GROUP:
+      {
+        /* If this is a TCP or a RAW socket, ignore these options. */
+        err_t mld6_err;
+        struct netif *netif;
+        ip6_addr_t multi_addr;
+        const struct ipv6_mreq *imr = (const struct ipv6_mreq *)optval;
+        LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct ipv6_mreq, NETCONN_UDP);
+        inet6_addr_to_ip6addr(&multi_addr, &imr->ipv6mr_multiaddr);
+        netif = netif_get_by_index(imr->ipv6mr_interface);
+        if (netif == NULL) {
+          err = EADDRNOTAVAIL;
+          break;
+        }
+
+        if (optname == IPV6_JOIN_GROUP) {
+          if (!lwip_socket_register_mld6_membership(s, imr->ipv6mr_interface, &multi_addr)) {
+            /* cannot track membership (out of memory) */
+            err = ENOMEM;
+            mld6_err = ERR_OK;
+          } else {
+            mld6_err = mld6_joingroup_netif(netif, &multi_addr);
+          }
+        } else {
+          mld6_err = mld6_leavegroup_netif(netif, &multi_addr);
+          lwip_socket_unregister_mld6_membership(s, imr->ipv6mr_interface, &multi_addr);
+        }
+        if (mld6_err != ERR_OK) {
+          err = EADDRNOTAVAIL;
+        }
+      }
+      break;
+#endif /* LWIP_IPV6_MLD */
 #endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
@@ -3558,4 +3617,98 @@ lwip_socket_drop_registered_memberships(int s)
   done_socket(sock);
 }
 #endif /* LWIP_IGMP */
+
+#if LWIP_IPV6_MLD
+/** Register a new MLD6 membership. On socket close, the membership is dropped automatically.
+ *
+ * ATTENTION: this function is called from tcpip_thread (or under CORE_LOCK).
+ *
+ * @return 1 on success, 0 on failure
+ */
+static int
+lwip_socket_register_mld6_membership(int s, unsigned int if_idx, const ip6_addr_t *multi_addr)
+{
+  struct lwip_sock *sock = get_socket(s);
+  int i;
+
+  if (!sock) {
+    return 0;
+  }
+
+  for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
+    if (socket_ipv6_multicast_memberships[i].sock == NULL) {
+      socket_ipv6_multicast_memberships[i].sock   = sock;
+      socket_ipv6_multicast_memberships[i].if_idx = if_idx;
+      ip6_addr_copy(socket_ipv6_multicast_memberships[i].multi_addr, *multi_addr);
+      done_socket(sock);
+      return 1;
+    }
+  }
+  done_socket(sock);
+  return 0;
+}
+
+/** Unregister a previously registered MLD6 membership. This prevents dropping the membership
+ * on socket close.
+ *
+ * ATTENTION: this function is called from tcpip_thread (or under CORE_LOCK).
+ */
+static void
+lwip_socket_unregister_mld6_membership(int s, unsigned int if_idx, const ip6_addr_t *multi_addr)
+{
+  struct lwip_sock *sock = get_socket(s);
+  int i;
+
+  if (!sock) {
+    return;
+  }
+
+  for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
+    if ((socket_ipv6_multicast_memberships[i].sock   == sock) &&
+        (socket_ipv6_multicast_memberships[i].if_idx == if_idx) &&
+        ip6_addr_cmp(&socket_ipv6_multicast_memberships[i].multi_addr, multi_addr)) {
+      socket_ipv6_multicast_memberships[i].sock   = NULL;
+      socket_ipv6_multicast_memberships[i].if_idx = NETIF_NO_INDEX;
+      ip6_addr_set_zero(&socket_ipv6_multicast_memberships[i].multi_addr);
+      break;
+    }
+  }
+  done_socket(sock);
+}
+
+/** Drop all MLD6 memberships of a socket that were not dropped explicitly via setsockopt.
+ *
+ * ATTENTION: this function is NOT called from tcpip_thread (or under CORE_LOCK).
+ */
+static void
+lwip_socket_drop_registered_mld6_memberships(int s)
+{
+  struct lwip_sock *sock = get_socket(s);
+  int i;
+
+  if (!sock) {
+    return;
+  }
+
+  for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
+    if (socket_ipv6_multicast_memberships[i].sock == sock) {
+      ip_addr_t multi_addr;
+      struct netif *netif;
+      ip_addr_copy_from_ip6(multi_addr, socket_ipv6_multicast_memberships[i].multi_addr);
+      netif = netif_get_by_index(socket_ipv6_multicast_memberships[i].if_idx);
+      if (netif == NULL) {
+        return;
+      }
+      socket_ipv6_multicast_memberships[i].sock   = NULL;
+      socket_ipv6_multicast_memberships[i].if_idx = NETIF_NO_INDEX;
+      ip6_addr_set_zero(&socket_ipv6_multicast_memberships[i].multi_addr);
+
+      /* fixme: need netconn_join_leave_group that takes netif as argument */
+      netconn_join_leave_group(sock->conn, &multi_addr, netif_ip_addr6(netif, 0), NETCONN_LEAVE);
+    }
+  }
+  done_socket(sock);
+}
+#endif /* LWIP_IPV6_MLD */
+
 #endif /* LWIP_SOCKET */
