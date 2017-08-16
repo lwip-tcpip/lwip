@@ -3176,13 +3176,6 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY, ..) -> %d\n",
                   s, (netconn_get_ipv6only(sock->conn) ? 1 : 0)));
       break;
-    default:
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
-                  s, optname));
-      err = ENOPROTOOPT;
-      break;
-    }  /* switch (optname) */
-    break;
 #if LWIP_IPV6_MLD
     case IPV6_JOIN_GROUP:
     case IPV6_LEAVE_GROUP:
@@ -3218,6 +3211,13 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       }
       break;
 #endif /* LWIP_IPV6_MLD */
+    default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
+                  s, optname));
+      err = ENOPROTOOPT;
+      break;
+    }  /* switch (optname) */
+    break;
 #endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
