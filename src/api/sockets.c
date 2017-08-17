@@ -3187,7 +3187,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         const struct ipv6_mreq *imr = (const struct ipv6_mreq *)optval;
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct ipv6_mreq, NETCONN_UDP);
         inet6_addr_to_ip6addr(&multi_addr, &imr->ipv6mr_multiaddr);
-        netif = netif_get_by_index(imr->ipv6mr_interface);
+        netif = netif_get_by_index((u8_t)imr->ipv6mr_interface);
         if (netif == NULL) {
           err = EADDRNOTAVAIL;
           break;
@@ -3695,7 +3695,7 @@ lwip_socket_drop_registered_mld6_memberships(int s)
       ip_addr_t multi_addr;
       struct netif *netif;
       ip_addr_copy_from_ip6(multi_addr, socket_ipv6_multicast_memberships[i].multi_addr);
-      netif = netif_get_by_index(socket_ipv6_multicast_memberships[i].if_idx);
+      netif = netif_get_by_index((u8_t)socket_ipv6_multicast_memberships[i].if_idx);
       if (netif == NULL) {
         return;
       }
