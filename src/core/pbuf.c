@@ -593,14 +593,8 @@ pbuf_remove_header(struct pbuf *p, size_t header_size_decrement)
   payload = p->payload;
   LWIP_UNUSED_ARG(payload); /* only used in LWIP_DEBUGF below */
 
-  if (increment_magnitude <= p->len) {
-    /* increase payload pointer */
-    p->payload = (u8_t *)p->payload + header_size_decrement;
-  } else {
-    /* cannot expand payload to front (yet!)
-      * bail out unsuccessfully */
-    return 1;
-  }
+  /* increase payload pointer (guarded by length check above) */
+  p->payload = (u8_t *)p->payload + header_size_decrement;
   /* modify pbuf length fields */
   p->len = (u16_t)(p->len - increment_magnitude);
   p->tot_len = (u16_t)(p->tot_len - increment_magnitude);
