@@ -341,6 +341,8 @@ err_t   netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx);
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 err_t   netconn_join_leave_group(struct netconn *conn, const ip_addr_t *multiaddr,
                              const ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
+err_t   netconn_join_leave_group_netif(struct netconn *conn, const ip_addr_t *multiaddr,
+                             u8_t if_idx, enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 #if LWIP_DNS
 #if LWIP_IPV4 && LWIP_IPV6

@@ -1995,6 +1995,67 @@ lwip_netconn_do_join_leave_group(void *m)
   }
   TCPIP_APIMSG_ACK(msg);
 }
+/**
+ * Join multicast groups for UDP netconns.
+ * Called from netconn_join_leave_group_netif
+ *
+ * @param m the api_msg pointing to the connection
+ */
+void
+lwip_netconn_do_join_leave_group_netif(void *m)
+{
+  struct api_msg *msg = (struct api_msg*)m;
+  struct netif *netif;
+
+  if (msg->msg.jl.if_idx == NETIF_NO_INDEX) {
+    msg->err = ERR_IF;
+    goto done;
+  }
+
+  netif = netif_get_by_index(msg->msg.jl.if_idx);
+  if (netif == NULL) {
+    msg->err = ERR_IF;
+    goto done;
+  }
+
+  msg->err = ERR_CONN;
+  if (msg->conn->pcb.tcp != NULL) {
+    if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
+#if LWIP_UDP
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+      if (NETCONNTYPE_ISIPV6(msg->conn->type)) {
+        if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
+          msg->err = mld6_joingroup_netif(netif,
+            ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
+        } else {
+          msg->err = mld6_leavegroup_netif(netif,
+            ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
+        }
+      }
+      else
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+      {
+#if LWIP_IGMP
+        if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
+          msg->err = igmp_joingroup_netif(netif,
+            ip_2_ip4(API_EXPR_REF(msg->msg.jl.multiaddr)));
+        } else {
+          msg->err = igmp_leavegroup_netif(netif,
+            ip_2_ip4(API_EXPR_REF(msg->msg.jl.multiaddr)));
+        }
+#endif /* LWIP_IGMP */
+      }
+#endif /* LWIP_UDP */
+#if (LWIP_TCP || LWIP_RAW)
+    } else {
+      msg->err = ERR_VAL;
+#endif /* (LWIP_TCP || LWIP_RAW) */
+    }
+  }
+
+done:
+  TCPIP_APIMSG_ACK(msg);
+}
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 #if LWIP_DNS

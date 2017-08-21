@@ -139,6 +139,7 @@ struct api_msg {
     struct {
       API_MSG_M_DEF_C(ip_addr_t, multiaddr);
       API_MSG_M_DEF_C(ip_addr_t, netif_addr);
+      u8_t if_idx;
       enum netconn_igmp join_or_leave;
     } jl;
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
@@ -205,6 +206,7 @@ void lwip_netconn_do_close           (void *m);
 void lwip_netconn_do_shutdown        (void *m);
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 void lwip_netconn_do_join_leave_group(void *m);
+void lwip_netconn_do_join_leave_group_netif(void *m);
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 #if LWIP_DNS

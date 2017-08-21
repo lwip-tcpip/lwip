@@ -1129,6 +1129,48 @@ netconn_join_leave_group(struct netconn *conn,
 
   return err;
 }
+/**
+ * @ingroup netconn_udp
+ * Join multicast groups for UDP netconns.
+ *
+ * @param conn the UDP netconn for which to change multicast addresses
+ * @param multiaddr IP address of the multicast group to join or leave
+ * @param if_idx the index of the netif
+ * @param join_or_leave flag whether to send a join- or leave-message
+ * @return ERR_OK if the action was taken, any err_t on error
+ */
+err_t
+netconn_join_leave_group_netif(struct netconn *conn,
+                               const ip_addr_t *multiaddr,
+                               u8_t if_idx,
+                               enum netconn_igmp join_or_leave)
+{
+  API_MSG_VAR_DECLARE(msg);
+  err_t err;
+
+  LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn != NULL), return ERR_ARG;);
+
+  API_MSG_VAR_ALLOC(msg);
+
+#if LWIP_IPV4
+  /* Don't propagate NULL pointer (IP_ADDR_ANY alias) to subsequent functions */
+  if (multiaddr == NULL) {
+    multiaddr = IP4_ADDR_ANY;
+  }
+  if (if_idx == NETIF_NO_INDEX) {
+    return ERR_IF;
+  }
+#endif /* LWIP_IPV4 */
+
+  API_MSG_VAR_REF(msg).conn = conn;
+  API_MSG_VAR_REF(msg).msg.jl.multiaddr = API_MSG_VAR_REF(multiaddr);
+  API_MSG_VAR_REF(msg).msg.jl.if_idx = if_idx;
+  API_MSG_VAR_REF(msg).msg.jl.join_or_leave = join_or_leave;
+  err = netconn_apimsg(lwip_netconn_do_join_leave_group_netif, &API_MSG_VAR_REF(msg));
+  API_MSG_VAR_FREE(msg);
+
+  return err;
+}
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 #if LWIP_DNS
