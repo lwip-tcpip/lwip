@@ -3696,13 +3696,12 @@ lwip_socket_drop_registered_mld6_memberships(int s)
       struct netif *netif;
       ip_addr_copy_from_ip6(multi_addr, socket_ipv6_multicast_memberships[i].multi_addr);
       netif = netif_get_by_index((u8_t)socket_ipv6_multicast_memberships[i].if_idx);
-      if (netif == NULL) {
-        return;
-      }
       socket_ipv6_multicast_memberships[i].sock   = NULL;
       socket_ipv6_multicast_memberships[i].if_idx = NETIF_NO_INDEX;
       ip6_addr_set_zero(&socket_ipv6_multicast_memberships[i].multi_addr);
-
+      if (netif == NULL) {
+        return;
+      }
       /* fixme: need netconn_join_leave_group that takes netif as argument */
       netconn_join_leave_group(sock->conn, &multi_addr, netif_ip_addr6(netif, 0), NETCONN_LEAVE);
     }
