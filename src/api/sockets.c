@@ -3187,6 +3187,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         const struct ipv6_mreq *imr = (const struct ipv6_mreq *)optval;
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct ipv6_mreq, NETCONN_UDP);
         inet6_addr_to_ip6addr(&multi_addr, &imr->ipv6mr_multiaddr);
+        LWIP_ASSERT("Invalid netif index", imr->ipv6mr_interface <= 0xFFu);
         netif = netif_get_by_index((u8_t)imr->ipv6mr_interface);
         if (netif == NULL) {
           err = EADDRNOTAVAIL;
