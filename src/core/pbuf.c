@@ -1122,7 +1122,7 @@ void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
     struct pbuf *r = p->next;
 
     /* continue until the total length (summed up as u16_t) overflows */
-    while ((r != NULL) && ((u16_t)(tot_len_front + r->len) > tot_len_front)) {
+    while ((r != NULL) && ((u16_t)(tot_len_front + r->len) >= tot_len_front)) {
       tot_len_front = (u16_t)(tot_len_front + r->len);
       i = r;
       r = r->next;
