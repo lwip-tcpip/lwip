@@ -139,6 +139,60 @@ START_TEST(test_tcp_recv_inseq)
 }
 END_TEST
 
+/** Create an ESTABLISHED pcb and check if receive callback is called if a segment
+ * overlapping rcv_nxt is received */
+START_TEST(test_tcp_recv_inseq_trim)
+{
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf* p;
+  char data[PBUF_POOL_BUFSIZE*2];
+  u16_t data_len;
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  const u32_t new_data_len = 40;
+  LWIP_UNUSED_ARG(_i);
+
+  /* initialize local vars */
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+  data_len = sizeof(data);
+  memset(data, 0, sizeof(data));
+  /* initialize counter struct */
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = data_len;
+  counters.expected_data = data;
+
+  /* create and initialize the pcb */
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT, TEST_REMOTE_PORT);
+
+  /* create a segment (with an overlapping/old seqno so that the new data begins in the 2nd pbuf) */
+  p = tcp_create_rx_segment(pcb, counters.expected_data, data_len, (u32_t)(0-(data_len-new_data_len)), 0, 0);
+  EXPECT(p != NULL);
+  if (p != NULL) {
+    EXPECT(p->next != NULL);
+    if (p->next != NULL) {
+      EXPECT(p->next->next != NULL);
+    }
+  }
+  if ((p != NULL) && (p->next != NULL) && (p->next->next != NULL)) {
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+    /* check if counters are as expected */
+    EXPECT(counters.close_calls == 0);
+    EXPECT(counters.recv_calls == 1);
+    EXPECT(counters.recved_bytes == new_data_len);
+    EXPECT(counters.err_calls == 0);
+  }
+
+  /* make sure the pcb is freed */
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
+  tcp_abort(pcb);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+}
+END_TEST
+
 /** Check that we handle malformed tcp headers, and discard the pbuf(s) */
 START_TEST(test_tcp_malformed_header)
 {
@@ -1004,6 +1058,7 @@ tcp_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_tcp_new_abort),
     TESTFUNC(test_tcp_recv_inseq),
+    TESTFUNC(test_tcp_recv_inseq_trim),
     TESTFUNC(test_tcp_malformed_header),
     TESTFUNC(test_tcp_fast_retx_recover),
     TESTFUNC(test_tcp_fast_rexmit_wraparound),
