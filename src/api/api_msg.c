@@ -2007,11 +2007,6 @@ lwip_netconn_do_join_leave_group_netif(void *m)
   struct api_msg *msg = (struct api_msg*)m;
   struct netif *netif;
 
-  if (msg->msg.jl.if_idx == NETIF_NO_INDEX) {
-    msg->err = ERR_IF;
-    goto done;
-  }
-
   netif = netif_get_by_index(msg->msg.jl.if_idx);
   if (netif == NULL) {
     msg->err = ERR_IF;
