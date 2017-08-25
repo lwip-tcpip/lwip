@@ -534,7 +534,7 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #undef lwip_close
 #define lwip_close        close
 #define closesocket(s)    close(s)
-#define lwip_fcntl        fcntl
+int fcntl(int s, int cmd, ...);
 #define lwip_ioctl        ioctl
 #endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
 #endif /* LWIP_COMPAT_SOCKETS == 2 */

@@ -66,6 +66,10 @@
 #include "lwip/inet_chksum.h"
 #endif
 
+#if LWIP_COMPAT_SOCKETS == 2 && LWIP_POSIX_SOCKETS_IO_NAMES
+#include <stdarg.h>
+#endif
+
 #include <string.h>
 
 /* If the netconn API is not required publicly, then we include the necessary
@@ -3466,6 +3470,20 @@ lwip_fcntl(int s, int cmd, int val)
   done_socket(sock);
   return ret;
 }
+
+#if LWIP_COMPAT_SOCKETS == 2 && LWIP_POSIX_SOCKETS_IO_NAMES
+int
+fcntl(int s, int cmd, ...)
+{
+  va_list ap;
+  int val;
+
+  va_start(ap, cmd);
+  val = va_arg(ap, int);
+  va_end(ap);
+  return lwip_fcntl(s, cmd, val);
+}
+#endif
 
 const char *
 lwip_inet_ntop(int af, const void *src, char *dst, socklen_t size)
