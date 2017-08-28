@@ -370,6 +370,12 @@ tcp_close_shutdown_fin(struct tcp_pcb *pcb)
   } else if (err == ERR_MEM) {
     /* Mark this pcb for closing. Closing is retried from tcp_tmr. */
     tcp_set_flags(pcb, TF_CLOSEPEND);
+    /* We have to return ERR_OK from here to indicate to the callers that this
+       pcb should not be used any more as it will be freed soon via tcp_tmr.
+       This is OK here since sending FIN does not guarantee a time frime for
+       actually freeing the pcb, either (it is left in closure states for
+       remote ACK or timeout) */
+    return ERR_OK;
   }
   return err;
 }
@@ -407,8 +413,8 @@ tcp_close(struct tcp_pcb *pcb)
  * @ingroup tcp_raw
  * Causes all or part of a full-duplex connection of this PCB to be shut down.
  * This doesn't deallocate the PCB unless shutting down both sides!
- * Shutting down both sides is the same as calling tcp_close, so if it succeds,
- * the PCB should not be referenced any more.
+ * Shutting down both sides is the same as calling tcp_close, so if it succeds
+ * (i.e. returns ER_OK), the PCB must not be referenced any more!
  *
  * @param pcb PCB to shutdown
  * @param shut_rx shut down receive side if this is != 0
