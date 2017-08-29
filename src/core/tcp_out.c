@@ -1151,12 +1151,6 @@ tcp_output(struct tcp_pcb *pcb)
                  lwip_ntohl(seg->tcphdr->seqno), pcb->lastack));
   }
 
-  /* useg should point to last segment on unacked queue */
-  useg = pcb->unacked;
-  if (useg != NULL) {
-    for (; useg->next != NULL; useg = useg->next);
-  }
-
   netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
   if (netif == NULL) {
     return ERR_RTE;
@@ -1192,6 +1186,12 @@ tcp_output(struct tcp_pcb *pcb)
   }
   /* Stop persist timer, above conditions are not active */
   pcb->persist_backoff = 0;
+  
+  /* useg should point to last segment on unacked queue */
+  useg = pcb->unacked;
+  if (useg != NULL) {
+    for (; useg->next != NULL; useg = useg->next);
+  }
   /* data available and window allows it to be sent? */
   while (seg != NULL &&
          lwip_ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
