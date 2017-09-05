@@ -33,6 +33,7 @@ void
 tcp_remove_all(void)
 {
   tcp_remove(tcp_listen_pcbs.pcbs);
+  tcp_remove(tcp_bound_pcbs);
   tcp_remove(tcp_active_pcbs);
   tcp_remove(tcp_tw_pcbs);
   fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
