@@ -252,6 +252,83 @@ START_TEST(test_tcp_recv_inseq_trim)
 }
 END_TEST
 
+static err_t test_tcp_recv_expect1byte(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err);
+
+static err_t
+test_tcp_recv_expectclose(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err)
+{
+  EXPECT_RETX(pcb != NULL, ERR_OK);
+  EXPECT_RETX(err == ERR_OK, ERR_OK);
+  LWIP_UNUSED_ARG(arg);
+
+  if (p != NULL) {
+    fail();
+    pbuf_free(p);
+  } else {
+    /* correct: FIN received; close our end, too */
+    err_t err = tcp_close(pcb);
+    fail_unless(err == ERR_OK);
+    /* set back to some other rx function, just to not get here again */
+    tcp_recv(pcb, test_tcp_recv_expect1byte);
+  }
+  return ERR_OK;
+}
+
+static err_t
+test_tcp_recv_expect1byte(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t err)
+{
+  EXPECT_RETX(pcb != NULL, ERR_OK);
+  EXPECT_RETX(err == ERR_OK, ERR_OK);
+  LWIP_UNUSED_ARG(arg);
+
+  if (p != NULL) {
+    if (p->len == p->tot_len == 1) {
+      tcp_recv(pcb, test_tcp_recv_expectclose);
+    } else {
+      fail();
+    }
+    pbuf_free(p);
+  } else {
+    fail();
+  }
+  return ERR_OK;
+}
+
+START_TEST(test_tcp_passive_close)
+{
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf* p;
+  char data = 0xaf;
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  LWIP_UNUSED_ARG(_i);
+
+  /* initialize local vars */
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+
+  /* initialize counter struct */
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = 1;
+  counters.expected_data = &data;
+
+  /* create and initialize the pcb */
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT, TEST_REMOTE_PORT);
+
+  /* create a segment without data */
+  p = tcp_create_rx_segment(pcb, &data, 1, 0, 0, TCP_FIN);
+  EXPECT(p != NULL);
+  if (p != NULL) {
+    tcp_recv(pcb, test_tcp_recv_expect1byte);
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+  }
+  /* don't free the pcb here (part of the test!) */
+}
+END_TEST
+
 /** Check that we handle malformed tcp headers, and discard the pbuf(s) */
 START_TEST(test_tcp_malformed_header)
 {
@@ -1269,6 +1346,7 @@ tcp_suite(void)
     TESTFUNC(test_tcp_listen_passive_open),
     TESTFUNC(test_tcp_recv_inseq),
     TESTFUNC(test_tcp_recv_inseq_trim),
+    TESTFUNC(test_tcp_passive_close),
     TESTFUNC(test_tcp_malformed_header),
     TESTFUNC(test_tcp_fast_retx_recover),
     TESTFUNC(test_tcp_fast_rexmit_wraparound),
