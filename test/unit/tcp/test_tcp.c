@@ -94,6 +94,75 @@ START_TEST(test_tcp_new_abort)
 }
 END_TEST
 
+/** Call tcp_new() and tcp_abort() and test memp stats */
+START_TEST(test_tcp_listen_passive_open)
+{
+  struct tcp_pcb *pcb, *pcbl;
+  struct tcp_pcb_listen *lpcb;
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct test_tcp_counters counters;
+  struct pbuf *p;
+  ip_addr_t src_addr;
+  err_t err;
+  LWIP_UNUSED_ARG(_i);
+
+  fail_unless(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+  /* initialize counter struct */
+  memset(&counters, 0, sizeof(counters));
+
+  pcb = tcp_new();
+  EXPECT_RET(pcb != NULL);
+  err = tcp_bind(pcb, &netif.ip_addr, 1234);
+  EXPECT(err == ERR_OK);
+  pcbl = tcp_listen(pcb);
+  EXPECT_RET(pcbl != NULL);
+  EXPECT_RET(pcbl != pcb);
+  lpcb = (struct tcp_pcb_listen *)pcbl;
+
+  ip_addr_set_ip4_u32_val(src_addr, lwip_htonl(lwip_ntohl(ip_addr_get_ip4_u32(&lpcb->local_ip)) + 1));
+
+  /* check correct syn packet */
+  p = tcp_create_segment(&src_addr, &lpcb->local_ip, 12345,
+    lpcb->local_port, NULL, 0, 12345, 54321, TCP_SYN);
+  EXPECT(p != NULL);
+  if (p != NULL) {
+    struct tcp_hdr* tcphdr;
+    pbuf_remove_header(p, sizeof(struct ip_hdr));
+    tcphdr = (struct tcp_hdr *)p->payload;
+    TCPH_FLAGS_SET(tcphdr, TCP_SYN);
+    pbuf_add_header(p, sizeof(struct ip_hdr));
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+    /* check if counters are as expected */
+    EXPECT(txcounters.num_tx_calls == 1);
+  }
+
+  /* chekc syn packet with short length */
+  p = tcp_create_segment(&src_addr, &lpcb->local_ip, 12345,
+    lpcb->local_port, NULL, 0, 12345, 54321, TCP_SYN);
+  EXPECT(p != NULL);
+  EXPECT(p->next == NULL);
+  if ((p != NULL) && (p->next == NULL)) {
+    struct tcp_hdr* tcphdr;
+    pbuf_remove_header(p, sizeof(struct ip_hdr));
+    tcphdr = (struct tcp_hdr *)p->payload;
+    TCPH_FLAGS_SET(tcphdr, TCP_SYN);
+    pbuf_add_header(p, sizeof(struct ip_hdr));
+    p->len -= 2;
+    p->tot_len -= 2;
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+    /* check if counters are as expected */
+    EXPECT(txcounters.num_tx_calls == 1);
+  }
+
+  tcp_close(pcbl);
+}
+END_TEST
+
 /** Create an ESTABLISHED pcb and check if receive callback is called */
 START_TEST(test_tcp_recv_inseq)
 {
@@ -1207,6 +1276,7 @@ tcp_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_tcp_new_abort),
+    TESTFUNC(test_tcp_listen_passive_open),
     TESTFUNC(test_tcp_recv_inseq),
     TESTFUNC(test_tcp_recv_inseq_trim),
     TESTFUNC(test_tcp_malformed_header),
