@@ -129,11 +129,6 @@ START_TEST(test_tcp_listen_passive_open)
     lpcb->local_port, NULL, 0, 12345, 54321, TCP_SYN);
   EXPECT(p != NULL);
   if (p != NULL) {
-    struct tcp_hdr* tcphdr;
-    pbuf_remove_header(p, sizeof(struct ip_hdr));
-    tcphdr = (struct tcp_hdr *)p->payload;
-    TCPH_FLAGS_SET(tcphdr, TCP_SYN);
-    pbuf_add_header(p, sizeof(struct ip_hdr));
     /* pass the segment to tcp_input */
     test_tcp_input(p, &netif);
     /* check if counters are as expected */
@@ -146,11 +141,6 @@ START_TEST(test_tcp_listen_passive_open)
   EXPECT(p != NULL);
   EXPECT(p->next == NULL);
   if ((p != NULL) && (p->next == NULL)) {
-    struct tcp_hdr* tcphdr;
-    pbuf_remove_header(p, sizeof(struct ip_hdr));
-    tcphdr = (struct tcp_hdr *)p->payload;
-    TCPH_FLAGS_SET(tcphdr, TCP_SYN);
-    pbuf_add_header(p, sizeof(struct ip_hdr));
     p->len -= 2;
     p->tot_len -= 2;
     /* pass the segment to tcp_input */
