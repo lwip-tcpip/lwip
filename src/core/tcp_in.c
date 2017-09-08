@@ -1501,19 +1501,6 @@ tcp_receive(struct tcp_pcb *pcb)
             }
             pcb->ooseq = next;
           }
-
-#if LWIP_TCP_SACK_OUT
-          if (pcb->flags & TF_SACK) {
-            if (pcb->ooseq != NULL) {
-              /* Some segments may have been removed from ooseq, let's remove all SACKs that
-                 describe anything before the new beginning of that list. */
-              tcp_remove_sacks_lt(pcb, pcb->ooseq->tcphdr->seqno);
-            } else {
-              /* ooseq has been cleared. Nothing to SACK */
-              memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
-            }
-          }
-#endif /* LWIP_TCP_SACK_OUT */
         }
 #endif /* TCP_QUEUE_OOSEQ */
 
@@ -1586,6 +1573,18 @@ tcp_receive(struct tcp_pcb *pcb)
           pcb->ooseq = cseg->next;
           tcp_seg_free(cseg);
         }
+#if LWIP_TCP_SACK_OUT
+        if (pcb->flags & TF_SACK) {
+          if (pcb->ooseq != NULL) {
+            /* Some segments may have been removed from ooseq, let's remove all SACKs that
+               describe anything before the new beginning of that list. */
+            tcp_remove_sacks_lt(pcb, pcb->ooseq->tcphdr->seqno);
+          } else if (LWIP_TCP_SACK_VALID(pcb, 0)) {
+            /* ooseq has been cleared. Nothing to SACK */
+            memset(pcb->rcv_sacks, 0, sizeof(pcb->rcv_sacks));
+          }
+        }
+#endif /* LWIP_TCP_SACK_OUT */
 #endif /* TCP_QUEUE_OOSEQ */
 
 
