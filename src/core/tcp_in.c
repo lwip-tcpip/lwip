@@ -521,6 +521,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 
         tcp_input_pcb = NULL;
+        if (tcp_input_delayed_close(pcb)) {
+          goto aborted;
+        }
         /* Try to send something out. */
         tcp_output(pcb);
 #if TCP_INPUT_DEBUG
