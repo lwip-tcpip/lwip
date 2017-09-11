@@ -71,6 +71,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-09-11: Simon Goldschmidt
+  * tcp_in.c: fix bug #51937 (leaking tcp_pcbs on passive close with unacked data)
+
   2017-08-11: Joel Cunningham
   * lwip_itoa: fix converting the number 0 (previously converted to '\0') (bug #51729)
 
