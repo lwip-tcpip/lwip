@@ -266,8 +266,8 @@ test_tcp_recv_expectclose(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t 
     pbuf_free(p);
   } else {
     /* correct: FIN received; close our end, too */
-    err_t err = tcp_close(pcb);
-    fail_unless(err == ERR_OK);
+    err_t err2 = tcp_close(pcb);
+    fail_unless(err2 == ERR_OK);
     /* set back to some other rx function, just to not get here again */
     tcp_recv(pcb, test_tcp_recv_expect1byte);
   }
@@ -282,7 +282,7 @@ test_tcp_recv_expect1byte(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t 
   LWIP_UNUSED_ARG(arg);
 
   if (p != NULL) {
-    if (p->len == p->tot_len == 1) {
+    if ((p->len == 1) && (p->tot_len == 1)) {
       tcp_recv(pcb, test_tcp_recv_expectclose);
     } else {
       fail();
@@ -299,7 +299,7 @@ START_TEST(test_tcp_passive_close)
   struct test_tcp_counters counters;
   struct tcp_pcb* pcb;
   struct pbuf* p;
-  char data = 0xaf;
+  char data = 0x0f;
   struct netif netif;
   struct test_tcp_txcounters txcounters;
   LWIP_UNUSED_ARG(_i);
