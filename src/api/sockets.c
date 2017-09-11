@@ -1205,6 +1205,23 @@ lwip_read(int s, void *mem, size_t len)
 }
 
 ssize_t
+lwip_readv(int s, const struct iovec *iov, int iovcnt)
+{
+  struct msghdr msg;
+
+  msg.msg_name = NULL;
+  msg.msg_namelen = 0;
+  /* Hack: we have to cast via number to cast from 'const' pointer to non-const.
+     Blame the opengroup standard for this inconsistency. */
+  msg.msg_iov = LWIP_CONST_CAST(struct iovec *, iov);
+  msg.msg_iovlen = iovcnt;
+  msg.msg_control = NULL;
+  msg.msg_controllen = 0;
+  msg.msg_flags = 0;
+  return lwip_recvmsg(s, &msg, 0);
+}
+
+ssize_t
 lwip_recv(int s, void *mem, size_t len, int flags)
 {
   return lwip_recvfrom(s, mem, len, flags, NULL, NULL);

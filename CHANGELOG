@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2017-09-10: Joel Cunningham
+  * sockets: add readv() implementation (task #14610)
+
   2017-08-04: Simon Goldschmidt
   * Clean up DHCP a bit: no need keep msg_out and msg_in as members in struct
     dhcp - they are used in a call stack only (p_out and options_out_len as well)

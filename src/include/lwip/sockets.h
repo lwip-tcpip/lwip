@@ -529,6 +529,7 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 
 #if LWIP_POSIX_SOCKETS_IO_NAMES
 #define lwip_read         read
+#define lwip_readv        readv
 #define lwip_write        write
 #define lwip_writev       writev
 #undef lwip_close
@@ -551,6 +552,7 @@ int lwip_connect(int s, const struct sockaddr *name, socklen_t namelen);
 int lwip_listen(int s, int backlog);
 ssize_t lwip_recv(int s, void *mem, size_t len, int flags);
 ssize_t lwip_read(int s, void *mem, size_t len);
+ssize_t lwip_readv(int s, const struct iovec *iov, int iovcnt);
 ssize_t lwip_recvfrom(int s, void *mem, size_t len, int flags,
       struct sockaddr *from, socklen_t *fromlen);
 ssize_t lwip_recvmsg(int s, struct msghdr *message, int flags);
@@ -618,6 +620,8 @@ int lwip_inet_pton(int af, const char *src, void *dst);
 #if LWIP_POSIX_SOCKETS_IO_NAMES
 /** @ingroup socket */
 #define read(s,mem,len)                           lwip_read(s,mem,len)
+/** @ingroup socket */
+#define readv(s,iov,iovcnt)                       lwip_readv(s,iov,iovcnt)
 /** @ingroup socket */
 #define write(s,dataptr,len)                      lwip_write(s,dataptr,len)
 /** @ingroup socket */
