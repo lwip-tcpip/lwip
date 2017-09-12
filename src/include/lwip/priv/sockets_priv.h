@@ -43,6 +43,7 @@
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
+#include "lwip/sys.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,6 +132,32 @@ struct lwip_setgetsockopt_data {
 #endif
 
 struct lwip_sock* lwip_socket_dbg_get_socket(int fd);
+
+#if LWIP_NETCONN_SEM_PER_THREAD
+#define SELECT_SEM_T        sys_sem_t*
+#define SELECT_SEM_PTR(sem) (sem)
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
+#define SELECT_SEM_T        sys_sem_t
+#define SELECT_SEM_PTR(sem) (&(sem))
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
+
+/** Description for a task waiting in select */
+struct lwip_select_cb {
+  /** Pointer to the next waiting task */
+  struct lwip_select_cb *next;
+  /** Pointer to the previous waiting task */
+  struct lwip_select_cb *prev;
+  /** readset passed to select */
+  fd_set *readset;
+  /** writeset passed to select */
+  fd_set *writeset;
+  /** unimplemented: exceptset passed to select */
+  fd_set *exceptset;
+  /** don't signal the same semaphore twice: set to 1 when signalled */
+  int sem_signalled;
+  /** semaphore to wake up a task waiting for select */
+  SELECT_SEM_T sem;
+};
 
 #endif /* LWIP_SOCKET */
 

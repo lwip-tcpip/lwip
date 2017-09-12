@@ -489,6 +489,15 @@
 #endif
 
 /**
+ * MEMP_NUM_SELECT_CB: the number of struct lwip_select_cb.
+ * (Only needed if you have LWIP_MPU_COMPATIBLE==1 and use the socket API.
+ * In that case, you need one per thread calling lwip_select.)
+ */
+#if !defined MEMP_NUM_SELECT_CB || defined __DOXYGEN__
+#define MEMP_NUM_SELECT_CB              4
+#endif
+
+/**
  * MEMP_NUM_TCPIP_MSG_API: the number of struct tcpip_msg, which are used
  * for callback/timeout API communication.
  * (only needed if you use tcpip.c)

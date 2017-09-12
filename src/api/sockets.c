@@ -51,7 +51,6 @@
 #include "lwip/sockets.h"
 #include "lwip/priv/sockets_priv.h"
 #include "lwip/api.h"
-#include "lwip/sys.h"
 #include "lwip/igmp.h"
 #include "lwip/inet.h"
 #include "lwip/tcp.h"
@@ -83,6 +82,11 @@
 #undef LWIP_NETCONN
 #define LWIP_NETCONN 0
 #endif
+
+#define API_SELECT_CB_VAR_REF(name)               API_VAR_REF(name)
+#define API_SELECT_CB_VAR_DECLARE(name)           API_VAR_DECLARE(struct lwip_select_cb, name)
+#define API_SELECT_CB_VAR_ALLOC(name, retblock)    API_VAR_ALLOC_EXT(struct lwip_select_cb, MEMP_SELECT_CB, name, retblock)
+#define API_SELECT_CB_VAR_FREE(name)              API_VAR_FREE(MEMP_SELECT_CB, name)
 
 #if LWIP_IPV4
 #define IP4ADDR_PORT_TO_SOCKADDR(sin, ipaddr, port) do { \
@@ -198,34 +202,6 @@ static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* 
 #define LWIP_SO_SNDRCVTIMEO_GET_MS(optval) ((((const struct timeval *)(optval))->tv_sec * 1000) + (((const struct timeval *)(optval))->tv_usec / 1000))
 #endif
 
-
-#if LWIP_NETCONN_SEM_PER_THREAD
-#define SELECT_SEM_T        sys_sem_t*
-#define SELECT_SEM_PTR(sem) (sem)
-#else /* LWIP_NETCONN_SEM_PER_THREAD */
-#define SELECT_SEM_T        sys_sem_t
-#define SELECT_SEM_PTR(sem) (&(sem))
-#endif /* LWIP_NETCONN_SEM_PER_THREAD */
-
-#if LWIP_SOCKET_SELECT
-/** Description for a task waiting in select */
-struct lwip_select_cb {
-  /** Pointer to the next waiting task */
-  struct lwip_select_cb *next;
-  /** Pointer to the previous waiting task */
-  struct lwip_select_cb *prev;
-  /** readset passed to select */
-  fd_set *readset;
-  /** writeset passed to select */
-  fd_set *writeset;
-  /** exceptset passed to select */
-  fd_set *exceptset;
-  /** don't signal the same semaphore twice: set to 1 when signalled */
-  int sem_signalled;
-  /** semaphore to wake up a task waiting for select */
-  SELECT_SEM_T sem;
-};
-#endif /* LWIP_SOCKET_SELECT */
 
 /** A struct sockaddr replacement that has the same alignment as sockaddr_in/
  *  sockaddr_in6 if instantiated.
@@ -1868,7 +1844,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   int nready;
   fd_set lreadset, lwriteset, lexceptset;
   u32_t msectimeout;
-  struct lwip_select_cb select_cb;
+  API_SELECT_CB_VAR_DECLARE(select_cb);
   int i;
   int maxfdp2;
 #if LWIP_NETCONN_SEM_PER_THREAD
@@ -1880,6 +1856,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   SYS_ARCH_DECL_PROTECT(lev);
   LWIP_SOCKET_SELECT_DECL_PROTECT(lev2);
 
+  API_SELECT_CB_VAR_ALLOC(select_cb, set_errno(ENOMEM); return -1);
+
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
                   maxfdp1, (void *)readset, (void *) writeset, (void *) exceptset,
                   timeout ? (s32_t)timeout->tv_sec : (s32_t)-1,
@@ -1887,6 +1865,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 
   if ((maxfdp1 < 0) || (maxfdp1 > (FD_SETSIZE + LWIP_SOCKET_OFFSET))) {
     set_errno(EINVAL);
+    API_SELECT_CB_VAR_FREE(select_cb);
     return -1;
   }
 
@@ -1899,6 +1878,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   if (nready < 0) {
     set_errno(EBADF);
     lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
+    API_SELECT_CB_VAR_FREE(select_cb);
     return -1;
   }
 
@@ -1916,19 +1896,20 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
        list is only valid while we are in this function, so it's ok
        to use local variables. */
 
-    select_cb.next = NULL;
-    select_cb.prev = NULL;
-    select_cb.readset = readset;
-    select_cb.writeset = writeset;
-    select_cb.exceptset = exceptset;
-    select_cb.sem_signalled = 0;
+    API_SELECT_CB_VAR_REF(select_cb).next = NULL;
+    API_SELECT_CB_VAR_REF(select_cb).prev = NULL;
+    API_SELECT_CB_VAR_REF(select_cb).readset = readset;
+    API_SELECT_CB_VAR_REF(select_cb).writeset = writeset;
+    API_SELECT_CB_VAR_REF(select_cb).exceptset = exceptset;
+    API_SELECT_CB_VAR_REF(select_cb).sem_signalled = 0;
 #if LWIP_NETCONN_SEM_PER_THREAD
-    select_cb.sem = LWIP_NETCONN_THREAD_SEM_GET();
+    API_SELECT_CB_VAR_REF(select_cb).sem = LWIP_NETCONN_THREAD_SEM_GET();
 #else /* LWIP_NETCONN_SEM_PER_THREAD */
-    if (sys_sem_new(&select_cb.sem, 0) != ERR_OK) {
+    if (sys_sem_new(&API_SELECT_CB_VAR_REF(select_cb).sem, 0) != ERR_OK) {
       /* failed to create semaphore */
       set_errno(ENOMEM);
       lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
+      API_SELECT_CB_VAR_FREE(select_cb);
       return -1;
     }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
@@ -1937,11 +1918,11 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     LWIP_SOCKET_SELECT_PROTECT(lev2);
 
     /* Put this select_cb on top of list */
-    select_cb.next = select_cb_list;
+    API_SELECT_CB_VAR_REF(select_cb).next = select_cb_list;
     if (select_cb_list != NULL) {
-      select_cb_list->prev = &select_cb;
+      select_cb_list->prev = &API_SELECT_CB_VAR_REF(select_cb);
     }
-    select_cb_list = &select_cb;
+    select_cb_list = &API_SELECT_CB_VAR_REF(select_cb);
 #if !LWIP_TCPIP_CORE_LOCKING
     /* Increasing this counter tells select_check_waiters that the list has changed. */
     select_cb_ctr++;
@@ -2003,7 +1984,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           }
         }
 
-        waitres = sys_arch_sem_wait(SELECT_SEM_PTR(select_cb.sem), msectimeout);
+        waitres = sys_arch_sem_wait(SELECT_SEM_PTR(API_SELECT_CB_VAR_REF(select_cb).sem), msectimeout);
 #if LWIP_NETCONN_SEM_PER_THREAD
         waited = 1;
 #endif
@@ -2035,15 +2016,15 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     }
     /* Take us off the list */
     LWIP_SOCKET_SELECT_PROTECT(lev2);
-    if (select_cb.next != NULL) {
-      select_cb.next->prev = select_cb.prev;
+    if (API_SELECT_CB_VAR_REF(select_cb).next != NULL) {
+      API_SELECT_CB_VAR_REF(select_cb).next->prev = API_SELECT_CB_VAR_REF(select_cb).prev;
     }
-    if (select_cb_list == &select_cb) {
-      LWIP_ASSERT("select_cb.prev == NULL", select_cb.prev == NULL);
-      select_cb_list = select_cb.next;
+    if (select_cb_list == &API_SELECT_CB_VAR_REF(select_cb)) {
+      LWIP_ASSERT("select_cb.prev == NULL", API_SELECT_CB_VAR_REF(select_cb).prev == NULL);
+      select_cb_list = API_SELECT_CB_VAR_REF(select_cb).next;
     } else {
-      LWIP_ASSERT("select_cb.prev != NULL", select_cb.prev != NULL);
-      select_cb.prev->next = select_cb.next;
+      LWIP_ASSERT("select_cb.prev != NULL", API_SELECT_CB_VAR_REF(select_cb).prev != NULL);
+      API_SELECT_CB_VAR_REF(select_cb).prev->next = API_SELECT_CB_VAR_REF(select_cb).next;
     }
 #if !LWIP_TCPIP_CORE_LOCKING
     /* Increasing this counter tells select_check_waiters that the list has changed. */
@@ -2052,17 +2033,18 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     LWIP_SOCKET_SELECT_UNPROTECT(lev2);
 
 #if LWIP_NETCONN_SEM_PER_THREAD
-    if (select_cb.sem_signalled && (!waited || (waitres == SYS_ARCH_TIMEOUT))) {
+    if (API_SELECT_CB_VAR_REF(select_cb).sem_signalled && (!waited || (waitres == SYS_ARCH_TIMEOUT))) {
       /* don't leave the thread-local semaphore signalled */
-      sys_arch_sem_wait(select_cb.sem, 1);
+      sys_arch_sem_wait(API_SELECT_CB_VAR_REF(select_cb).sem, 1);
     }
 #else /* LWIP_NETCONN_SEM_PER_THREAD */
-    sys_sem_free(&select_cb.sem);
+    sys_sem_free(&API_SELECT_CB_VAR_REF(select_cb).sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
     if (nready < 0) {
       /* This happens when a socket got closed while waiting */
       lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
+      API_SELECT_CB_VAR_FREE(select_cb);
       return -1;
     }
 
@@ -2091,6 +2073,7 @@ return_copy_fdsets:
   if (exceptset) {
     *exceptset = lexceptset;
   }
+  API_SELECT_CB_VAR_FREE(select_cb);
   return nready;
 }
 
