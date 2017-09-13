@@ -2043,7 +2043,6 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       if (nready < 0) {
         /* This happens when a socket got closed while waiting */
         lwip_select_dec_sockets_used(maxfdp1, &used_sockets);
-        API_SELECT_CB_VAR_FREE(select_cb);
         return -1;
       }
 
