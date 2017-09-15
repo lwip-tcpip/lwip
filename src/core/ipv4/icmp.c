@@ -105,6 +105,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
   type = *((u8_t *)p->payload);
 #ifdef LWIP_DEBUG
   code = *(((u8_t *)p->payload)+1);
+  /* if debug is enabled but debug statement below is somehow disabled: */
+  LWIP_UNUSED_ARG(code);
 #endif /* LWIP_DEBUG */
   switch (type) {
   case ICMP_ER:
