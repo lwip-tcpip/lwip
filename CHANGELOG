@@ -74,6 +74,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-09-12: David Lockyer
+  * select: allocate select_cb from memp for LWIP_MPU_COMPATIBLE = 1 (bug #51990)
+
   2017-09-11: Simon Goldschmidt
   * tcp_in.c: fix bug #51937 (leaking tcp_pcbs on passive close with unacked data)
 
