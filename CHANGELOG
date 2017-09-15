@@ -4,6 +4,22 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
+(STABLE-2.0.3)
+
+  ++ Bugfixes:
+
+  2017-09-11: Simon Goldschmidt
+  * tcp_in.c: fix bug #51937 (leaking tcp_pcbs on passive close with unacked data)
+
+  2017-08-02: Abroz Bizjak/Simon Goldschmidt
+  * multiple fixes in IPv4 reassembly (leading to corrupted datagrams received)
+  
+  2017-03-30: Simon Goldschmidt
+  * dhcp.c: return ERR_VAL instead of asserting on offset-out-of-pbuf
+
+  2017-03-23: Dirk Ziegelmeier
+  * dhcp.h: fix bug #50618 (dhcp_remove_struct() macro does not work)
+
 (STABLE-2.0.2)
 
   ++ New features:
@@ -12,6 +28,9 @@ HISTORY
   * Implement task #14367: Hooks need a better place to be defined:
     We now have a #define for a header file name that is #included in every .c
     file that provides hooks.
+
+  2017-02-10: Simon Goldschmidt
+  * tcp_close does not fail on memory error (instead, FIN is sent from tcp_tmr)
 
   ++ Bugfixes:
 
