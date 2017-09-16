@@ -2282,6 +2282,15 @@
 #endif
 
 /**
+ * IPV6_REASS_MAXAGE: Maximum time (in multiples of IP6_REASS_TMR_INTERVAL - so seconds, normally)
+ * a fragmented IP packet waits for all fragments to arrive. If not all fragments arrived
+ * in this time, the whole packet is discarded.
+ */
+#if !defined IPV6_REASS_MAXAGE || defined __DOXYGEN__
+#define IPV6_REASS_MAXAGE               60
+#endif
+
+/**
  * LWIP_IPV6_SCOPES==1: Enable support for IPv6 address scopes, ensuring that
  * e.g. link-local addresses are really treated as link-local. Disable this
  * setting only for single-interface configurations.

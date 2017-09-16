@@ -352,7 +352,7 @@ ip6_reass(struct pbuf *p)
     }
 
     memset(ipr, 0, sizeof(struct ip6_reassdata));
-    ipr->timer = IP_REASS_MAXAGE;
+    ipr->timer = IPV6_REASS_MAXAGE;
 
     /* enqueue the new structure to the front of the list */
     ipr->next = reassdatagrams;
