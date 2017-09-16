@@ -735,7 +735,7 @@
  * in this time, the whole packet is discarded.
  */
 #if !defined IP_REASS_MAXAGE || defined __DOXYGEN__
-#define IP_REASS_MAXAGE                 3
+#define IP_REASS_MAXAGE                 15
 #endif
 
 /**
