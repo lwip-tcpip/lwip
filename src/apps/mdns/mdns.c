@@ -7,9 +7,9 @@
  *
  * RFC 6762 - Multicast DNS\n
  * RFC 6763 - DNS-Based Service Discovery\n
- * 
+ *
  * @verbinclude mdns.txt
- * 
+ *
  * Things left to implement:
  * -------------------------
  *
@@ -69,13 +69,13 @@
 #if LWIP_MDNS_RESPONDER
 
 #if (LWIP_IPV4 && !LWIP_IGMP)
-  #error "If you want to use MDNS with IPv4, you have to define LWIP_IGMP=1 in your lwipopts.h"
+#error "If you want to use MDNS with IPv4, you have to define LWIP_IGMP=1 in your lwipopts.h"
 #endif
 #if (LWIP_IPV6 && !LWIP_IPV6_MLD)
 #error "If you want to use MDNS with IPv6, you have to define LWIP_IPV6_MLD=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP)
-  #error "If you want to use MDNS, you have to define LWIP_UDP=1 in your lwipopts.h"
+#error "If you want to use MDNS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 
 #if LWIP_IPV4
@@ -136,8 +136,8 @@ NETIF_DECLARE_EXT_CALLBACK(netif_callback)
 #define REPLY_SERVICE_TXT       0x80
 
 static const char *dnssd_protos[] = {
-    "_udp", /* DNSSD_PROTO_UDP */
-    "_tcp", /* DNSSD_PROTO_TCP */
+  "_udp", /* DNSSD_PROTO_UDP */
+  "_tcp", /* DNSSD_PROTO_TCP */
 };
 
 /** Description of a service */
@@ -340,7 +340,7 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
     offset++;
 
     /* is this a compressed label? */
-    if((c & 0xc0) == 0xc0) {
+    if ((c & 0xc0) == 0xc0) {
       u16_t jumpaddr;
       if (offset >= p->tot_len) {
         /* Make sure both jump bytes fit in the packet */
@@ -350,7 +350,7 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
       offset++;
       if (jumpaddr >= SIZEOF_DNS_HDR && jumpaddr < p->tot_len) {
         u16_t res;
-      /* Recursive call, maximum depth will be checked */
+        /* Recursive call, maximum depth will be checked */
         res = mdns_readname_loop(p, jumpaddr, domain, depth + 1);
         /* Dont return offset since new bytes were not read (jumped to somewhere in packet) */
         if (res == MDNS_READNAME_ERROR) {
@@ -498,9 +498,9 @@ mdns_build_reverse_v4_domain(struct mdns_domain *domain, const ip4_addr_t *addr)
     res = mdns_domain_add_label(domain, buf, (u8_t)strlen(buf));
     LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
   }
-  res = mdns_domain_add_label(domain, REVERSE_PTR_V4_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V4_DOMAIN)-1));
+  res = mdns_domain_add_label(domain, REVERSE_PTR_V4_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V4_DOMAIN) - 1));
   LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, REVERSE_PTR_TOPDOMAIN, (u8_t)(sizeof(REVERSE_PTR_TOPDOMAIN)-1));
+  res = mdns_domain_add_label(domain, REVERSE_PTR_TOPDOMAIN, (u8_t)(sizeof(REVERSE_PTR_TOPDOMAIN) - 1));
   LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
   res = mdns_domain_add_label(domain, NULL, 0);
   LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
@@ -543,9 +543,9 @@ mdns_build_reverse_v6_domain(struct mdns_domain *domain, const ip6_addr_t *addr)
       byte >>= 4;
     }
   }
-  res = mdns_domain_add_label(domain, REVERSE_PTR_V6_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V6_DOMAIN)-1));
+  res = mdns_domain_add_label(domain, REVERSE_PTR_V6_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V6_DOMAIN) - 1));
   LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, REVERSE_PTR_TOPDOMAIN, (u8_t)(sizeof(REVERSE_PTR_TOPDOMAIN)-1));
+  res = mdns_domain_add_label(domain, REVERSE_PTR_TOPDOMAIN, (u8_t)(sizeof(REVERSE_PTR_TOPDOMAIN) - 1));
   LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
   res = mdns_domain_add_label(domain, NULL, 0);
   LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
@@ -558,7 +558,7 @@ mdns_build_reverse_v6_domain(struct mdns_domain *domain, const ip6_addr_t *addr)
 static err_t
 mdns_add_dotlocal(struct mdns_domain *domain)
 {
-  err_t res = mdns_domain_add_label(domain, TOPDOMAIN_LOCAL, (u8_t)(sizeof(TOPDOMAIN_LOCAL)-1));
+  err_t res = mdns_domain_add_label(domain, TOPDOMAIN_LOCAL, (u8_t)(sizeof(TOPDOMAIN_LOCAL) - 1));
   LWIP_ERROR("mdns_add_dotlocal: Failed to add label", (res == ERR_OK), return res);
   return mdns_domain_add_label(domain, NULL, 0);
 }
@@ -590,9 +590,9 @@ mdns_build_dnssd_domain(struct mdns_domain *domain)
 {
   err_t res;
   memset(domain, 0, sizeof(struct mdns_domain));
-  res = mdns_domain_add_label(domain, "_services", (u8_t)(sizeof("_services")-1));
+  res = mdns_domain_add_label(domain, "_services", (u8_t)(sizeof("_services") - 1));
   LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, "_dns-sd", (u8_t)(sizeof("_dns-sd")-1));
+  res = mdns_domain_add_label(domain, "_dns-sd", (u8_t)(sizeof("_dns-sd") - 1));
   LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
   res = mdns_domain_add_label(domain, dnssd_protos[DNSSD_PROTO_UDP], (u8_t)strlen(dnssd_protos[DNSSD_PROTO_UDP]));
   LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
@@ -1278,7 +1278,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
   struct mdns_service *service;
   err_t res;
   int i;
-  struct mdns_host* mdns = NETIF_TO_HOST(outpkt->netif);
+  struct mdns_host *mdns = NETIF_TO_HOST(outpkt->netif);
 
   /* Write answers to host questions */
 #if LWIP_IPV4
@@ -1478,14 +1478,15 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 {
   struct mdns_outpacket announce;
   int i;
-  struct mdns_host* mdns = NETIF_TO_HOST(netif);
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
 
   memset(&announce, 0, sizeof(announce));
   announce.netif = netif;
   announce.cache_flush = 1;
 #if LWIP_IPV4
-  if (!ip4_addr_isany_val(*netif_ip4_addr(netif)))
+  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
     announce.host_replies = REPLY_HOST_A | REPLY_HOST_PTR_V4;
+  }
 #endif
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
@@ -1500,7 +1501,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
     struct mdns_service *serv = mdns->services[i];
     if (serv) {
       announce.serv_replies[i] = REPLY_SERVICE_TYPE_PTR | REPLY_SERVICE_NAME_PTR |
-          REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
+                                 REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
     }
   }
 
@@ -1523,7 +1524,7 @@ mdns_handle_question(struct mdns_packet *pkt)
   int replies = 0;
   int i;
   err_t res;
-  struct mdns_host* mdns = NETIF_TO_HOST(pkt->netif);
+  struct mdns_host *mdns = NETIF_TO_HOST(pkt->netif);
 
   mdns_init_outpacket(&reply, pkt);
 
@@ -1604,17 +1605,17 @@ mdns_handle_question(struct mdns_packet *pkt)
         if (len != MDNS_READNAME_ERROR && res == ERR_OK && mdns_domain_eq(&known_ans, &my_ans)) {
 #if LWIP_IPV4
           if (match & REPLY_HOST_PTR_V4) {
-              LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: v4 PTR\n"));
-              reply.host_replies &= ~REPLY_HOST_PTR_V4;
+            LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: v4 PTR\n"));
+            reply.host_replies &= ~REPLY_HOST_PTR_V4;
           }
 #endif
 #if LWIP_IPV6
           if (match & REPLY_HOST_PTR_V6) {
-              LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: v6 PTR\n"));
-              reply.host_reverse_v6_replies &= ~rev_v6;
-              if (reply.host_reverse_v6_replies == 0) {
-                reply.host_replies &= ~REPLY_HOST_PTR_V6;
-              }
+            LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: v6 PTR\n"));
+            reply.host_reverse_v6_replies &= ~rev_v6;
+            if (reply.host_reverse_v6_replies == 0) {
+              reply.host_replies &= ~REPLY_HOST_PTR_V6;
+            }
           }
 #endif
         }
@@ -1775,7 +1776,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(pcb);
 
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Received IPv%d MDNS packet, len %d\n", IP_IS_V6(addr)? 6 : 4, p->tot_len));
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Received IPv%d MDNS packet, len %d\n", IP_IS_V6(addr) ? 6 : 4, p->tot_len));
 
   if (NETIF_TO_HOST(recv_netif) == NULL) {
     /* From netif not configured for MDNS */
@@ -1856,7 +1857,7 @@ mdns_resp_netif_settings_changed(struct netif *netif)
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 static void
-mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
+mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t *args)
 {
   LWIP_UNUSED_ARG(args);
 
@@ -1865,29 +1866,28 @@ mdns_netif_ext_status_callback(struct netif* netif, netif_nsc_reason_t reason, c
     return;
   }
 
-  switch (reason)
-  {
-  case LWIP_NSC_STATUS_CHANGED:
-    if (args->status_changed.state != 0) {
+  switch (reason) {
+    case LWIP_NSC_STATUS_CHANGED:
+      if (args->status_changed.state != 0) {
+        mdns_resp_netif_settings_changed(netif);
+      }
+      /* TODO: send goodbye message */
+      break;
+    case LWIP_NSC_LINK_CHANGED:
+      if (args->link_changed.state != 0) {
+        mdns_resp_netif_settings_changed(netif);
+      }
+      break;
+    case LWIP_NSC_IPV4_ADDRESS_CHANGED:  /* fall through */
+    case LWIP_NSC_IPV4_GATEWAY_CHANGED:  /* fall through */
+    case LWIP_NSC_IPV4_NETMASK_CHANGED:  /* fall through */
+    case LWIP_NSC_IPV4_SETTINGS_CHANGED: /* fall through */
+    case LWIP_NSC_IPV6_SET:              /* fall through */
+    case LWIP_NSC_IPV6_ADDR_STATE_CHANGED:
       mdns_resp_netif_settings_changed(netif);
-    }
-    /* TODO: send goodbye message */
-    break;
-  case LWIP_NSC_LINK_CHANGED:
-    if (args->link_changed.state != 0) {
-      mdns_resp_netif_settings_changed(netif);
-    }
-    break;
-  case LWIP_NSC_IPV4_ADDRESS_CHANGED:  /* fall through */
-  case LWIP_NSC_IPV4_GATEWAY_CHANGED:  /* fall through */
-  case LWIP_NSC_IPV4_NETMASK_CHANGED:  /* fall through */
-  case LWIP_NSC_IPV4_SETTINGS_CHANGED: /* fall through */
-  case LWIP_NSC_IPV6_SET:              /* fall through */
-  case LWIP_NSC_IPV6_ADDR_STATE_CHANGED:
-    mdns_resp_netif_settings_changed(netif);
-    break;
-  default:
-    break;
+      break;
+    default:
+      break;
   }
 }
 #endif
@@ -1906,7 +1906,7 @@ err_t
 mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
 {
   err_t res;
-  struct mdns_host* mdns;
+  struct mdns_host *mdns;
 
   LWIP_ERROR("mdns_resp_add_netif: netif != NULL", (netif != NULL), return ERR_VAL);
   LWIP_ERROR("mdns_resp_add_netif: Hostname too long", (strlen(hostname) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
@@ -1914,7 +1914,7 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   LWIP_ASSERT("mdns_resp_add_netif: Double add", NETIF_TO_HOST(netif) == NULL);
   mdns = (struct mdns_host *) mem_calloc(1, sizeof(struct mdns_host));
   LWIP_ERROR("mdns_resp_add_netif: Alloc failed", (mdns != NULL), return ERR_MEM);
-  
+
   netif_set_client_data(netif, mdns_netif_client_id, mdns);
 
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
@@ -1954,7 +1954,7 @@ err_t
 mdns_resp_remove_netif(struct netif *netif)
 {
   int i;
-  struct mdns_host* mdns;
+  struct mdns_host *mdns;
 
   LWIP_ASSERT("mdns_resp_remove_netif: Null pointer", netif);
   mdns = NETIF_TO_HOST(netif);
@@ -2001,7 +2001,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   s8_t i;
   s8_t slot = -1;
   struct mdns_service *srv;
-  struct mdns_host* mdns;
+  struct mdns_host *mdns;
 
   LWIP_ASSERT("mdns_resp_add_service: netif != NULL", netif);
   mdns = NETIF_TO_HOST(netif);
@@ -2019,7 +2019,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   }
   LWIP_ERROR("mdns_resp_add_service: Service list full (increase MDNS_MAX_SERVICES)", (slot >= 0), return ERR_MEM);
 
-  srv = (struct mdns_service*)mem_calloc(1, sizeof(struct mdns_service));
+  srv = (struct mdns_service *)mem_calloc(1, sizeof(struct mdns_service));
   LWIP_ERROR("mdns_resp_add_service: Alloc failed", (srv != NULL), return ERR_MEM);
 
   MEMCPY(&srv->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(name)));
@@ -2052,7 +2052,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 err_t
 mdns_resp_del_service(struct netif *netif, s8_t slot)
 {
-  struct mdns_host* mdns;
+  struct mdns_host *mdns;
   struct mdns_service *srv;
   LWIP_ASSERT("mdns_resp_del_service: netif != NULL", netif);
   mdns = NETIF_TO_HOST(netif);
