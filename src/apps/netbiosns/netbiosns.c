@@ -105,7 +105,7 @@ PACK_STRUCT_END
 PACK_STRUCT_BEGIN
 struct netbios_name_hdr {
   PACK_STRUCT_FLD_8(u8_t  nametype);
-  PACK_STRUCT_FLD_8(u8_t  encname[(NETBIOS_NAME_LEN*2)+1]);
+  PACK_STRUCT_FLD_8(u8_t  encname[(NETBIOS_NAME_LEN * 2) + 1]);
   PACK_STRUCT_FIELD(u16_t type);
   PACK_STRUCT_FIELD(u16_t cls);
   PACK_STRUCT_FIELD(u32_t ttl);
@@ -123,8 +123,7 @@ PACK_STRUCT_END
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct netbios_resp
-{
+struct netbios_resp {
   struct netbios_hdr      resp_hdr;
   struct netbios_name_hdr resp_name;
 } PACK_STRUCT_STRUCT;
@@ -159,10 +158,12 @@ netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
     /* Every two characters of the first level-encoded name
      * turn into one character in the decoded name. */
     cname = *pname;
-    if (cname == '\0')
-      break;    /* no more characters */
-    if (cname == '.')
-      break;    /* scope ID follows */
+    if (cname == '\0') {
+      break;  /* no more characters */
+    }
+    if (cname == '.') {
+      break;  /* scope ID follows */
+    }
     if (cname < 'A' || cname > 'Z') {
       /* Not legal. */
       return -1;
@@ -188,7 +189,7 @@ netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
     /* Do we have room to store the character? */
     if (idx < NETBIOS_NAME_LEN) {
       /* Yes - store the character. */
-      name_dec[idx++] = (cnbname!=' '?cnbname:'\0');
+      name_dec[idx++] = (cnbname != ' ' ? cnbname : '\0');
     }
   }
 
@@ -213,10 +214,12 @@ netbiosns_name_encode(char *name_enc, char *name_dec, int name_dec_len)
     /* Every two characters of the first level-encoded name
      * turn into one character in the decoded name. */
     cname = *pname;
-    if (cname == '\0')
-      break;    /* no more characters */
-    if (cname == '.')
-      break;    /* scope ID follows */
+    if (cname == '\0') {
+      break;  /* no more characters */
+    }
+    if (cname == '.') {
+      break;  /* scope ID follows */
+    }
     if ((cname < 'A' || cname > 'Z') && (cname < '0' || cname > '9')) {
       /* Not legal. */
       return -1;
@@ -229,13 +232,13 @@ netbiosns_name_encode(char *name_enc, char *name_dec, int name_dec_len)
 
     /* Yes - store the character. */
     ucname = cname;
-    name_dec[idx++] = ('A'+((ucname>>4) & 0x0F));
-    name_dec[idx++] = ('A'+( ucname     & 0x0F));
+    name_dec[idx++] = ('A' + ((ucname >> 4) & 0x0F));
+    name_dec[idx++] = ('A' + ( ucname     & 0x0F));
     pname++;
   }
 
   /* Fill with "space" coding */
-  for (;idx < name_dec_len - 1;) {
+  for (; idx < name_dec_len - 1;) {
     name_dec[idx++] = 'C';
     name_dec[idx++] = 'A';
   }
@@ -255,9 +258,9 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
 
   /* if packet is valid */
   if (p != NULL) {
-    char   netbios_name[NETBIOS_NAME_LEN+1];
-    struct netbios_hdr*      netbios_hdr      = (struct netbios_hdr*)p->payload;
-    struct netbios_name_hdr* netbios_name_hdr = (struct netbios_name_hdr*)(netbios_hdr+1);
+    char   netbios_name[NETBIOS_NAME_LEN + 1];
+    struct netbios_hdr      *netbios_hdr      = (struct netbios_hdr *)p->payload;
+    struct netbios_name_hdr *netbios_name_hdr = (struct netbios_name_hdr *)(netbios_hdr + 1);
 
     /* we only answer if we got a default interface */
     if (netif_default != NULL) {
@@ -265,9 +268,9 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
       /* if the packet is a NetBIOS name query question */
       if (((netbios_hdr->flags & PP_NTOHS(NETB_HFLAG_OPCODE)) == PP_NTOHS(NETB_HFLAG_OPCODE_NAME_QUERY)) &&
           ((netbios_hdr->flags & PP_NTOHS(NETB_HFLAG_RESPONSE)) == 0) &&
-           (netbios_hdr->questions == PP_NTOHS(1))) {
+          (netbios_hdr->questions == PP_NTOHS(1))) {
         /* decode the NetBIOS name */
-        netbiosns_name_decode((char*)(netbios_name_hdr->encname), netbios_name, sizeof(netbios_name));
+        netbiosns_name_decode((char *)(netbios_name_hdr->encname), netbios_name, sizeof(netbios_name));
         /* if the packet is for us */
         if (lwip_strnicmp(netbios_name, NETBIOS_LOCAL_NAME, sizeof(NETBIOS_LOCAL_NAME)) == 0) {
           struct pbuf *q;
@@ -275,14 +278,14 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
 
           q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct netbios_resp), PBUF_RAM);
           if (q != NULL) {
-            resp = (struct netbios_resp*)q->payload;
+            resp = (struct netbios_resp *)q->payload;
 
             /* prepare NetBIOS header response */
             resp->resp_hdr.trans_id      = netbios_hdr->trans_id;
             resp->resp_hdr.flags         = PP_HTONS(NETB_HFLAG_RESPONSE |
-                                                 NETB_HFLAG_OPCODE_NAME_QUERY |
-                                                 NETB_HFLAG_AUTHORATIVE |
-                                                 NETB_HFLAG_RECURS_DESIRED);
+                                                    NETB_HFLAG_OPCODE_NAME_QUERY |
+                                                    NETB_HFLAG_AUTHORATIVE |
+                                                    NETB_HFLAG_RECURS_DESIRED);
             resp->resp_hdr.questions     = 0;
             resp->resp_hdr.answerRRs     = PP_HTONS(1);
             resp->resp_hdr.authorityRRs  = 0;
@@ -294,7 +297,7 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             resp->resp_name.type         = netbios_name_hdr->type;
             resp->resp_name.cls          = netbios_name_hdr->cls;
             resp->resp_name.ttl          = PP_HTONL(NETBIOS_NAME_TTL);
-            resp->resp_name.datalen      = PP_HTONS(sizeof(resp->resp_name.flags)+sizeof(resp->resp_name.addr));
+            resp->resp_name.datalen      = PP_HTONS(sizeof(resp->resp_name.flags) + sizeof(resp->resp_name.addr));
             resp->resp_name.flags        = PP_HTONS(NETB_NFLAG_NODETYPE_BNODE);
             ip4_addr_copy(resp->resp_name.addr, *netif_ip4_addr(netif_default));
 
@@ -313,7 +316,7 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
 }
 
 /**
- * @ingroup netbiosns 
+ * @ingroup netbiosns
  * Init netbios responder
  */
 void
@@ -334,11 +337,11 @@ netbiosns_init(void)
 
 #ifndef NETBIOS_LWIP_NAME
 /**
- * @ingroup netbiosns 
+ * @ingroup netbiosns
  * Set netbios name. ATTENTION: the hostname must be less than 15 characters!
  */
 void
-netbiosns_set_name(const char* hostname)
+netbiosns_set_name(const char *hostname)
 {
   size_t copy_len = strlen(hostname);
   LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
@@ -350,7 +353,7 @@ netbiosns_set_name(const char* hostname)
 #endif
 
 /**
- * @ingroup netbiosns 
+ * @ingroup netbiosns
  * Stop netbios responder
  */
 void
