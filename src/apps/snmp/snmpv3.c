@@ -101,7 +101,7 @@ snmpv3_get_engine_time_internal(void)
  * @todo: This is a potential thread safety issue.
  */
 err_t
-snmpv3_build_priv_param(u8_t* priv_param)
+snmpv3_build_priv_param(u8_t *priv_param)
 {
 #ifdef LWIP_RAND /* Based on RFC3826 */
   static u8_t init;

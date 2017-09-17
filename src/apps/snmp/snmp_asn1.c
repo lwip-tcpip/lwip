@@ -54,7 +54,7 @@
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
-snmp_ans1_enc_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tlv)
+snmp_ans1_enc_tlv(struct snmp_pbuf_stream *pbuf_stream, struct snmp_asn1_tlv *tlv)
 {
   u8_t data;
   u8_t length_bytes_required;
@@ -130,7 +130,7 @@ snmp_ans1_enc_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tl
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
-snmp_asn1_enc_raw(struct snmp_pbuf_stream* pbuf_stream, const u8_t *raw, u16_t raw_len)
+snmp_asn1_enc_raw(struct snmp_pbuf_stream *pbuf_stream, const u8_t *raw, u16_t raw_len)
 {
   PBUF_OP_EXEC(snmp_pbuf_stream_writebuf(pbuf_stream, raw, raw_len));
 
@@ -148,7 +148,7 @@ snmp_asn1_enc_raw(struct snmp_pbuf_stream* pbuf_stream, const u8_t *raw, u16_t r
  * @see snmp_asn1_enc_u32t_cnt()
  */
 err_t
-snmp_asn1_enc_u32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, u32_t value)
+snmp_asn1_enc_u32t(struct snmp_pbuf_stream *pbuf_stream, u16_t octets_needed, u32_t value)
 {
   if (octets_needed > 5) {
     return ERR_ARG;
@@ -180,7 +180,7 @@ snmp_asn1_enc_u32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, u3
  * @see snmp_asn1_enc_s32t_cnt()
  */
 err_t
-snmp_asn1_enc_s32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, s32_t value)
+snmp_asn1_enc_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t octets_needed, s32_t value)
 {
   while (octets_needed > 1) {
     octets_needed--;
@@ -203,7 +203,7 @@ snmp_asn1_enc_s32t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, s3
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
-snmp_asn1_enc_oid(struct snmp_pbuf_stream* pbuf_stream, const u32_t *oid, u16_t oid_len)
+snmp_asn1_enc_oid(struct snmp_pbuf_stream *pbuf_stream, const u32_t *oid, u16_t oid_len)
 {
   if (oid_len > 1) {
     /* write compressed first two sub id's */
@@ -353,7 +353,7 @@ snmp_asn1_enc_oid_cnt(const u32_t *oid, u16_t oid_len, u16_t *octets_needed)
  * @return ERR_OK if successful, ERR_VAL if we can't decode
  */
 err_t
-snmp_asn1_dec_tlv(struct snmp_pbuf_stream* pbuf_stream, struct snmp_asn1_tlv* tlv)
+snmp_asn1_dec_tlv(struct snmp_pbuf_stream *pbuf_stream, struct snmp_asn1_tlv *tlv)
 {
   u8_t data;
 
@@ -495,7 +495,7 @@ snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
-snmp_asn1_dec_oid(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t* oid, u8_t* oid_len, u8_t oid_max_len)
+snmp_asn1_dec_oid(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t *oid, u8_t *oid_len, u8_t oid_max_len)
 {
   u32_t *oid_ptr;
   u8_t data;
@@ -586,7 +586,7 @@ snmp_asn1_dec_oid(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u32_t* oid, u
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
-snmp_asn1_dec_raw(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u8_t *buf, u16_t* buf_len, u16_t buf_max_len)
+snmp_asn1_dec_raw(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u8_t *buf, u16_t *buf_len, u16_t buf_max_len)
 {
   if (len > buf_max_len) {
     /* not enough dst space */
@@ -678,7 +678,7 @@ snmp_asn1_dec_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, u64_t *value
  * @see snmp_asn1_enc_u64t_cnt()
  */
 err_t
-snmp_asn1_enc_u64t(struct snmp_pbuf_stream* pbuf_stream, u16_t octets_needed, u64_t value)
+snmp_asn1_enc_u64t(struct snmp_pbuf_stream *pbuf_stream, u16_t octets_needed, u64_t value)
 {
   if (octets_needed > 9) {
     return ERR_ARG;

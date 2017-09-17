@@ -46,22 +46,22 @@ static s16_t snmpengine_scalars_get_value(const struct snmp_scalar_array_node_de
   u8_t engineid_len;
 
   switch (node->oid) {
-  case 1: /* snmpEngineID */
-    snmpv3_get_engine_id(&engineid, &engineid_len);
-    MEMCPY(value, engineid, engineid_len);
-    return engineid_len;
-  case 2: /* snmpEngineBoots */
-    *(s32_t *)value = snmpv3_get_engine_boots_internal();
-    return sizeof(s32_t);
-  case 3: /* snmpEngineTime */
-    *(s32_t *)value = snmpv3_get_engine_time_internal();
-    return sizeof(s32_t);
-  case 4: /* snmpEngineMaxMessageSize */
-    *(s32_t *)value = SNMP_FRAMEWORKMIB_SNMPENGINEMAXMESSAGESIZE;
-    return sizeof(s32_t);
-  default:
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmpengine_scalars_get_value(): unknown id: %"S32_F"\n", node->oid));
-    return 0;
+    case 1: /* snmpEngineID */
+      snmpv3_get_engine_id(&engineid, &engineid_len);
+      MEMCPY(value, engineid, engineid_len);
+      return engineid_len;
+    case 2: /* snmpEngineBoots */
+      *(s32_t *)value = snmpv3_get_engine_boots_internal();
+      return sizeof(s32_t);
+    case 3: /* snmpEngineTime */
+      *(s32_t *)value = snmpv3_get_engine_time_internal();
+      return sizeof(s32_t);
+    case 4: /* snmpEngineMaxMessageSize */
+      *(s32_t *)value = SNMP_FRAMEWORKMIB_SNMPENGINEMAXMESSAGESIZE;
+      return sizeof(s32_t);
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("snmpengine_scalars_get_value(): unknown id: %"S32_F"\n", node->oid));
+      return 0;
   }
 }
 
@@ -83,7 +83,7 @@ static const struct snmp_node *const snmpframeworkmib_subnodes[] = {
   &snmpframeworkmibobjects_treenode.node
 };
 static const struct snmp_tree_node snmpframeworkmib_root = SNMP_CREATE_TREE_NODE(10, snmpframeworkmib_subnodes);
-static const u32_t snmpframeworkmib_base_oid[] = {1,3,6,1,6,3,10};
+static const u32_t snmpframeworkmib_base_oid[] = {1, 3, 6, 1, 6, 3, 10};
 const struct snmp_mib snmpframeworkmib = {snmpframeworkmib_base_oid, LWIP_ARRAYSIZE(snmpframeworkmib_base_oid), &snmpframeworkmib_root.node};
 
 /* --- snmpFrameworkMIB  ----------------------------------------------------- */

@@ -51,8 +51,7 @@
 #include "snmp_asn1.h"
 #include "snmp_core_priv.h"
 
-struct snmp_msg_trap
-{
+struct snmp_msg_trap {
   /* source enterprise ID (sysObjectID) */
   const struct snmp_obj_id *enterprise;
   /* source IP address, raw network order format */
@@ -91,10 +90,9 @@ static err_t snmp_trap_varbind_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_
 /** Agent community string for sending traps */
 extern const char *snmp_community_trap;
 
-void* snmp_traps_handle;
+void *snmp_traps_handle;
 
-struct snmp_trap_dst
-{
+struct snmp_trap_dst {
   /* destination IP address in network order */
   ip_addr_t dip;
   /* set to 0 when disabled, >0 when enabled */
@@ -170,7 +168,7 @@ snmp_get_auth_traps_enabled(void)
  * (sysObjectID) for specific traps.
  */
 err_t
-snmp_send_trap(const struct snmp_obj_id* eoid, s32_t generic_trap, s32_t specific_trap, struct snmp_varbind *varbinds)
+snmp_send_trap(const struct snmp_obj_id *eoid, s32_t generic_trap, s32_t specific_trap, struct snmp_varbind *varbinds)
 {
   struct snmp_msg_trap trap_msg;
   struct snmp_trap_dst *td;
@@ -235,7 +233,7 @@ snmp_send_trap(const struct snmp_obj_id* eoid, s32_t generic_trap, s32_t specifi
  * @ingroup snmp_traps
  * Send generic SNMP trap
  */
-err_t 
+err_t
 snmp_send_trap_generic(s32_t generic_trap)
 {
   static const struct snmp_obj_id oid = { 7, { 1, 3, 6, 1, 2, 1, 11 } };
@@ -264,7 +262,7 @@ snmp_coldstart_trap(void)
 
 /**
  * @ingroup snmp_traps
- * Send authentication failure trap (used internally by agent) 
+ * Send authentication failure trap (used internally by agent)
  */
 void
 snmp_authfail_trap(void)

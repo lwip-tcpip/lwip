@@ -61,8 +61,7 @@ static const struct snmp_obj_id *snmp_auth_algo_to_oid(snmpv3_auth_algo_t algo)
 {
   if (algo == SNMP_V3_AUTH_ALGO_MD5) {
     return &usmHMACMD5AuthProtocol;
-  }
-  else if (algo ==  SNMP_V3_AUTH_ALGO_SHA) {
+  } else if (algo ==  SNMP_V3_AUTH_ALGO_SHA) {
     return &usmHMACMD5AuthProtocol;
   }
 
@@ -73,8 +72,7 @@ static const struct snmp_obj_id *snmp_priv_algo_to_oid(snmpv3_priv_algo_t algo)
 {
   if (algo == SNMP_V3_PRIV_ALGO_DES) {
     return &usmDESPrivProtocol;
-  }
-  else if (algo == SNMP_V3_PRIV_ALGO_AES) {
+  } else if (algo == SNMP_V3_PRIV_ALGO_AES) {
     return &usmAESPrivProtocol;
   }
 
@@ -87,7 +85,7 @@ static snmp_err_t usmusertable_get_instance(const u32_t *column, const u32_t *ro
 {
   const char *engineid;
   u8_t eid_len;
-  
+
   u32_t engineid_oid[SNMP_V3_MAX_ENGINE_ID_LENGTH];
 
   u8_t name_len;
@@ -207,8 +205,7 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
       if (!snmp_oid_equal(&row_oid->id[engineid_start], row_oid->len - 1, engineid_oid, row_oid->len - 1)) {
         return SNMP_ERR_NOSUCHINSTANCE;
       }
-    }
-    else {
+    } else {
       /* Verify complete EngineID */
       snmp_engineid_to_oid(engineid, engineid_oid, engineid_len);
       if (!snmp_oid_equal(&row_oid->id[engineid_start], engineid_len, engineid_oid, engineid_len)) {
@@ -234,8 +231,7 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
         if (!snmp_oid_in_range(&row_oid->id[name_start], tmplen, usmUserTable_oid_ranges, tmplen)) {
           return SNMP_ERR_NOSUCHINSTANCE;
         }
-      }
-      else {
+      } else {
         /* Full name given according to oid. Also test for too much data.*/
         u8_t tmplen = row_oid->len - engineid_len - 2;
         if (!snmp_oid_in_range(&row_oid->id[name_start], name_len, usmUserTable_oid_ranges, tmplen)) {
@@ -262,7 +258,7 @@ static snmp_err_t usmusertable_get_next_instance(const u32_t *column, struct snm
     snmp_name_to_oid(username, &test_oid[2 + eid_len], strlen(username));
 
     /* check generated OID: is it a candidate for the next one? */
-    snmp_next_oid_check(&state, test_oid, (u8_t)(1 + eid_len + 1 + strlen(username)), LWIP_PTR_NUMERIC_CAST(void*, i));
+    snmp_next_oid_check(&state, test_oid, (u8_t)(1 + eid_len + 1 + strlen(username)), LWIP_PTR_NUMERIC_CAST(void *, i));
   }
 
   /* did we find a next one? */
@@ -285,80 +281,78 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
   snmpv3_user_storagetype_t storage_type;
 
   switch (SNMP_TABLE_GET_COLUMN_FROM_OID(cell_instance->instance_oid.id)) {
-  case 3: /* usmUserSecurityName */
-    MEMCPY(value, cell_instance->reference.ptr, cell_instance->reference_len);
-    return (s16_t)cell_instance->reference_len;
-  case 4: /* usmUserCloneFrom */
-    MEMCPY(value, snmp_zero_dot_zero.id, snmp_zero_dot_zero.len * sizeof(u32_t));
-    return snmp_zero_dot_zero.len * sizeof(u32_t);
-  case 5: /* usmUserAuthProtocol */
-    {
+    case 3: /* usmUserSecurityName */
+      MEMCPY(value, cell_instance->reference.ptr, cell_instance->reference_len);
+      return (s16_t)cell_instance->reference_len;
+    case 4: /* usmUserCloneFrom */
+      MEMCPY(value, snmp_zero_dot_zero.id, snmp_zero_dot_zero.len * sizeof(u32_t));
+      return snmp_zero_dot_zero.len * sizeof(u32_t);
+    case 5: { /* usmUserAuthProtocol */
       const struct snmp_obj_id *auth_algo;
       snmpv3_auth_algo_t auth_algo_val;
-      snmpv3_get_user((const char*)cell_instance->reference.ptr, &auth_algo_val, NULL, NULL, NULL);
+      snmpv3_get_user((const char *)cell_instance->reference.ptr, &auth_algo_val, NULL, NULL, NULL);
       auth_algo = snmp_auth_algo_to_oid(auth_algo_val);
       MEMCPY(value, auth_algo->id, auth_algo->len * sizeof(u32_t));
       return auth_algo->len * sizeof(u32_t);
     }
-  case 6: /* usmUserAuthKeyChange */
-    return 0;
-  case 7: /* usmUserOwnAuthKeyChange */
-    return 0;
-  case 8: /* usmUserPrivProtocol */
-    {
+    case 6: /* usmUserAuthKeyChange */
+      return 0;
+    case 7: /* usmUserOwnAuthKeyChange */
+      return 0;
+    case 8: { /* usmUserPrivProtocol */
       const struct snmp_obj_id *priv_algo;
       snmpv3_priv_algo_t priv_algo_val;
-      snmpv3_get_user((const char*)cell_instance->reference.ptr, NULL, NULL, &priv_algo_val, NULL);
+      snmpv3_get_user((const char *)cell_instance->reference.ptr, NULL, NULL, &priv_algo_val, NULL);
       priv_algo = snmp_priv_algo_to_oid(priv_algo_val);
       MEMCPY(value, priv_algo->id, priv_algo->len * sizeof(u32_t));
       return priv_algo->len * sizeof(u32_t);
     }
-  case 9: /* usmUserPrivKeyChange */
-    return 0;
-  case 10: /* usmUserOwnPrivKeyChange */
-    return 0;
-  case 11: /* usmUserPublic */
-    /* TODO: Implement usmUserPublic */
-    return 0;
-  case 12: /* usmUserStorageType */
-    snmpv3_get_user_storagetype((const char*)cell_instance->reference.ptr, &storage_type);
-    *(s32_t*)value = storage_type;
-    return sizeof(s32_t);
-  case 13: /* usmUserStatus */
-    *(s32_t*)value = 1; /* active */
-    return sizeof(s32_t);
-  default:
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("usmusertable_get_value(): unknown id: %"S32_F"\n", SNMP_TABLE_GET_COLUMN_FROM_OID(cell_instance->instance_oid.id)));
-    return 0;
+    case 9: /* usmUserPrivKeyChange */
+      return 0;
+    case 10: /* usmUserOwnPrivKeyChange */
+      return 0;
+    case 11: /* usmUserPublic */
+      /* TODO: Implement usmUserPublic */
+      return 0;
+    case 12: /* usmUserStorageType */
+      snmpv3_get_user_storagetype((const char *)cell_instance->reference.ptr, &storage_type);
+      *(s32_t *)value = storage_type;
+      return sizeof(s32_t);
+    case 13: /* usmUserStatus */
+      *(s32_t *)value = 1; /* active */
+      return sizeof(s32_t);
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmusertable_get_value(): unknown id: %"S32_F"\n", SNMP_TABLE_GET_COLUMN_FROM_OID(cell_instance->instance_oid.id)));
+      return 0;
   }
 }
 
 /* --- usmMIBObjects 1.3.6.1.6.3.15.1 ----------------------------------------------------- */
 static s16_t usmstats_scalars_get_value(const struct snmp_scalar_array_node_def *node, void *value)
 {
-  u32_t *uint_ptr = (u32_t*)value;
+  u32_t *uint_ptr = (u32_t *)value;
   switch (node->oid) {
-  case 1: /* usmStatsUnsupportedSecLevels */
-    *uint_ptr = snmp_stats.unsupportedseclevels;
-    break;
-  case 2: /* usmStatsNotInTimeWindows */
-    *uint_ptr = snmp_stats.notintimewindows;
-    break;
-  case 3: /* usmStatsUnknownUserNames */
-    *uint_ptr = snmp_stats.unknownusernames;
-    break;
-  case 4: /* usmStatsUnknownEngineIDs */
-    *uint_ptr = snmp_stats.unknownengineids;
-    break;
-  case 5: /* usmStatsWrongDigests */
-    *uint_ptr = snmp_stats.wrongdigests;
-    break;
-  case 6: /* usmStatsDecryptionErrors */
-    *uint_ptr = snmp_stats.decryptionerrors;
-    break;
-  default:
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("usmstats_scalars_get_value(): unknown id: %"S32_F"\n", node->oid));
-    return 0;
+    case 1: /* usmStatsUnsupportedSecLevels */
+      *uint_ptr = snmp_stats.unsupportedseclevels;
+      break;
+    case 2: /* usmStatsNotInTimeWindows */
+      *uint_ptr = snmp_stats.notintimewindows;
+      break;
+    case 3: /* usmStatsUnknownUserNames */
+      *uint_ptr = snmp_stats.unknownusernames;
+      break;
+    case 4: /* usmStatsUnknownEngineIDs */
+      *uint_ptr = snmp_stats.unknownengineids;
+      break;
+    case 5: /* usmStatsWrongDigests */
+      *uint_ptr = snmp_stats.wrongdigests;
+      break;
+    case 6: /* usmStatsDecryptionErrors */
+      *uint_ptr = snmp_stats.decryptionerrors;
+      break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmstats_scalars_get_value(): unknown id: %"S32_F"\n", node->oid));
+      return 0;
   }
 
   return sizeof(*uint_ptr);
@@ -410,7 +404,7 @@ static const struct snmp_node *const snmpusmmib_subnodes[] = {
   &usmmibobjects_treenode.node
 };
 static const struct snmp_tree_node snmpusmmib_root = SNMP_CREATE_TREE_NODE(15, snmpusmmib_subnodes);
-static const u32_t snmpusmmib_base_oid[] = {1,3,6,1,6,3,15};
+static const u32_t snmpusmmib_base_oid[] = {1, 3, 6, 1, 6, 3, 15};
 const struct snmp_mib snmpusmmib = {snmpusmmib_base_oid, LWIP_ARRAYSIZE(snmpusmmib_base_oid), &snmpusmmib_root.node};
 
 #endif /* LWIP_SNMP */
