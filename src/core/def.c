@@ -11,7 +11,7 @@
  * \#define lwip_htonl(x) your_htonl
  *
  * Note lwip_ntohs() and lwip_ntohl() are merely references to the htonx counterparts.
- * 
+ *
  * If you \#define them to htons() and htonl(), you should
  * \#define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS to prevent lwIP from
  * defining htonx/ntohx compatibility macros.
@@ -101,10 +101,10 @@ lwip_htonl(u32_t n)
  * lwIP default implementation for strnstr() non-standard function.
  * This can be \#defined to strnstr() depending on your platform port.
  */
-char*
-lwip_strnstr(const char* buffer, const char* token, size_t n)
+char *
+lwip_strnstr(const char *buffer, const char *token, size_t n)
 {
-  const char* p;
+  const char *p;
   size_t tokenlen = strlen(token);
   if (tokenlen == 0) {
     return LWIP_CONST_CAST(char *, buffer);
@@ -125,7 +125,7 @@ lwip_strnstr(const char* buffer, const char* token, size_t n)
  * This can be \#defined to stricmp() depending on your platform port.
  */
 int
-lwip_stricmp(const char* str1, const char* str2)
+lwip_stricmp(const char *str1, const char *str2)
 {
   char c1, c2;
 
@@ -160,7 +160,7 @@ lwip_stricmp(const char* str1, const char* str2)
  * This can be \#defined to strnicmp() depending on your platform port.
  */
 int
-lwip_strnicmp(const char* str1, const char* str2, size_t len)
+lwip_strnicmp(const char *str1, const char *str2, size_t len)
 {
   char c1, c2;
 
@@ -195,7 +195,7 @@ lwip_strnicmp(const char* str1, const char* str2, size_t len)
  * This can be \#defined to itoa() or snprintf(result, bufsize, "%d", number) depending on your platform port.
  */
 void
-lwip_itoa(char* result, size_t bufsize, int number)
+lwip_itoa(char *result, size_t bufsize, int number)
 {
   char *res = result;
   char *tmp = result;
@@ -212,11 +212,11 @@ lwip_itoa(char* result, size_t bufsize, int number)
   }
 
   /* ensure output string is zero terminated */
-  result[bufsize-1] = 0;
+  result[bufsize - 1] = 0;
   result_len = 1;
   /* create the string in a temporary buffer since we don't know how long
      it will get */
-  tmp = &result[bufsize-2];
+  tmp = &result[bufsize - 2];
   if (n == 0) {
     *tmp = '0';
     tmp--;
@@ -243,6 +243,6 @@ lwip_itoa(char* result, size_t bufsize, int number)
     return;
   }
   /* copy from temporary buffer to output buffer */
-  memmove(res, tmp+1, result_len);
+  memmove(res, tmp + 1, result_len);
 }
 #endif

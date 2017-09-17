@@ -494,7 +494,7 @@ const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_get_ip,
   altcp_tcp_get_port
 #ifdef LWIP_DEBUG
-  ,altcp_tcp_dbg_get_tcp_state
+  , altcp_tcp_dbg_get_tcp_state
 #endif
 };
 

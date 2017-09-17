@@ -4,7 +4,7 @@
  * different types of protocols besides (or overriding) those
  * already available in lwIP.\n
  * See also @ref raw_raw
- * 
+ *
  * @defgroup raw_raw RAW
  * @ingroup callbackstyle_api
  * Implementation of raw protocol PCBs for low-level handling of
@@ -68,7 +68,7 @@ static u8_t
 raw_input_local_match(struct raw_pcb *pcb, u8_t broadcast)
 {
   LWIP_UNUSED_ARG(broadcast); /* in IPv6 only case */
-  
+
   /* check if PCB is bound to specific netif */
   if ((pcb->netif_idx != NETIF_NO_INDEX) &&
       (pcb->netif_idx != netif_get_index(ip_data.current_input_netif))) {
@@ -103,11 +103,11 @@ raw_input_local_match(struct raw_pcb *pcb, u8_t broadcast)
       }
     } else
 #endif /* LWIP_IPV4 */
-    /* Handle IPv4 and IPv6: catch all or exact match */
-    if (ip_addr_isany(&pcb->local_ip) ||
-       ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
-      return 1;
-    }
+      /* Handle IPv4 and IPv6: catch all or exact match */
+      if (ip_addr_isany(&pcb->local_ip) ||
+          ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr())) {
+        return 1;
+      }
   }
 
   return 0;
@@ -165,11 +165,11 @@ raw_input(struct pbuf *p, struct netif *inp)
   while ((eaten == 0) && (pcb != NULL)) {
     if ((pcb->protocol == proto) && raw_input_local_match(pcb, broadcast) &&
         (((pcb->flags & RAW_FLAGS_CONNECTED) == 0) ||
-        ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
+         ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
       /* receive callback function available? */
       if (pcb->recv != NULL) {
 #ifndef LWIP_NOASSERT
-        void* old_payload = p->payload;
+        void *old_payload = p->payload;
 #endif
         /* the receive callback function did not eat the packet? */
         eaten = pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr());
@@ -178,8 +178,8 @@ raw_input(struct pbuf *p, struct netif *inp)
           p = NULL;
           eaten = 1;
           if (prev != NULL) {
-          /* move the pcb to the front of raw_pcbs so that is
-             found faster next time */
+            /* move the pcb to the front of raw_pcbs so that is
+               found faster next time */
             prev->next = pcb->next;
             pcb->next = raw_pcbs;
             raw_pcbs = pcb;
@@ -187,7 +187,7 @@ raw_input(struct pbuf *p, struct netif *inp)
         } else {
           /* sanity-check that the receive callback did not alter the pbuf */
           LWIP_ASSERT("raw pcb recv callback altered pbuf payload pointer without eating packet",
-            p->payload == old_payload);
+                      p->payload == old_payload);
         }
       }
       /* no receive callback function was set for this raw PCB */
@@ -410,7 +410,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
  */
 err_t
 raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
-    struct netif *netif, const ip_addr_t *src_ip)
+                  struct netif *netif, const ip_addr_t *src_ip)
 {
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
@@ -424,11 +424,11 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 
   header_size = (
 #if LWIP_IPV4 && LWIP_IPV6
-    IP_IS_V6(dst_ip) ? IP6_HLEN : IP_HLEN);
+                  IP_IS_V6(dst_ip) ? IP6_HLEN : IP_HLEN);
 #elif LWIP_IPV4
-    IP_HLEN);
+                  IP_HLEN);
 #else
-    IP6_HLEN);
+                  IP6_HLEN);
 #endif
 
   /* Handle the HDRINCL option as an exception: none of the code below applies
@@ -475,8 +475,7 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   }
 
 #if IP_SOF_BROADCAST
-  if (IP_IS_V4(dst_ip))
-  {
+  if (IP_IS_V4(dst_ip)) {
     /* broadcast filter? */
     if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(dst_ip, netif)) {
       LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
@@ -640,9 +639,9 @@ raw_new_ip_type(u8_t type, u8_t proto)
  * @param old_addr IP address of the netif before change
  * @param new_addr IP address of the netif after change
  */
-void raw_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr)
+void raw_netif_ip_addr_changed(const ip_addr_t *old_addr, const ip_addr_t *new_addr)
 {
-  struct raw_pcb* rpcb;
+  struct raw_pcb *rpcb;
 
   if (!ip_addr_isany(old_addr) && !ip_addr_isany(new_addr)) {
     for (rpcb = raw_pcbs; rpcb != NULL; rpcb = rpcb->next) {
