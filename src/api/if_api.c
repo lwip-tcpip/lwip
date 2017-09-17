@@ -3,7 +3,7 @@
  * Interface Identification APIs from:
  *              RFC 3493: Basic Socket Interface Extensions for IPv6
  *                  Section 4: Interface Identification
- * 
+ *
  * @defgroup if_api Interface Identification API
  * @ingroup socket
  */
@@ -51,7 +51,7 @@
 /**
  * @ingroup if_api
  * Maps an interface index to its corresponding name.
- * @param ifindex interface index 
+ * @param ifindex interface index
  * @param ifname shall point to a buffer of at least {IF_NAMESIZE} bytes
  * @return If ifindex is an interface index, then the function shall return the
  * value supplied in ifname, which points to a buffer now containing the interface name.
@@ -88,7 +88,7 @@ lwip_if_nametoindex(const char *ifname)
 #if LWIP_NETIF_API
   err_t err;
   u8_t idx;
-  
+
   err = netifapi_netif_name_to_index(ifname, &idx);
   if (!err) {
     return idx;
