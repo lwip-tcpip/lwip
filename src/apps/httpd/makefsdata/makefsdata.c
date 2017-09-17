@@ -107,10 +107,9 @@ static int payload_alingment_dummy_counter = 0;
 
 #define MAX_PATH_LEN 256
 
-struct file_entry
-{
-   struct file_entry* next;
-   const char* filename_c;
+struct file_entry {
+  struct file_entry *next;
+  const char *filename_c;
 };
 
 int process_sub(FILE *data_file, FILE *struct_file);
@@ -120,7 +119,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 int file_put_ascii(FILE *file, const char *ascii_string, int len, int *i);
 int s_put_ascii(char *buf, const char *ascii_string, int len, int *i);
 void concat_files(const char *file1, const char *file2, const char *targetfile);
-int check_path(char* path, size_t size);
+int check_path(char *path, size_t size);
 
 /* 5 bytes per char + 3 bytes per line */
 static char file_buffer_c[COPY_BUFSIZE * 5 + ((COPY_BUFSIZE / HEX_BYTES_PER_LINE) * 3)];
@@ -141,8 +140,8 @@ size_t deflatedBytesReduced = 0;
 size_t overallDataBytes = 0;
 #endif
 
-struct file_entry* first_file = NULL;
-struct file_entry* last_file = NULL;
+struct file_entry *first_file = NULL;
+struct file_entry *last_file = NULL;
 
 static void print_usage(void)
 {
@@ -212,7 +211,7 @@ int main(int argc, char *argv[])
         includeLastModified = 1;
       } else if (strstr(argv[i], "-defl") == argv[i]) {
 #if MAKEFS_SUPPORT_DEFLATE
-        char* colon = strstr(argv[i], ":");
+        char *colon = strstr(argv[i], ":");
         if (colon) {
           if (colon[1] != 0) {
             int defl_level = atoi(&colon[1]);
@@ -237,8 +236,8 @@ int main(int argc, char *argv[])
       print_usage();
       exit(0);
     } else {
-      strncpy(path, argv[i], sizeof(path)-1);
-      path[sizeof(path)-1] = 0;
+      strncpy(path, argv[i], sizeof(path) - 1);
+      path[sizeof(path) - 1] = 0;
     }
   }
 
@@ -258,8 +257,8 @@ int main(int argc, char *argv[])
   CHDIR(appPath);
 
   printf("HTTP %sheader will %s statically included." NEWLINE,
-    (includeHttpHeader ? (useHttp11 ? "1.1 " : "1.0 ") : ""),
-    (includeHttpHeader ? "be" : "not be"));
+         (includeHttpHeader ? (useHttp11 ? "1.1 " : "1.0 ") : ""),
+         (includeHttpHeader ? "be" : "not be"));
 
   curSubdir[0] = '\0'; /* start off in web page's root directory - relative paths */
   printf("  Processing all files in directory %s", path);
@@ -332,21 +331,21 @@ int main(int argc, char *argv[])
 #if MAKEFS_SUPPORT_DEFLATE
   if (deflateNonSsiFiles) {
     printf("(Deflated total byte reduction: %d bytes -> %d bytes (%.02f%%)" NEWLINE,
-      (int)overallDataBytes, (int)deflatedBytesReduced, (float)((deflatedBytesReduced*100.0)/overallDataBytes));
+           (int)overallDataBytes, (int)deflatedBytesReduced, (float)((deflatedBytesReduced * 100.0) / overallDataBytes));
   }
 #endif
   printf(NEWLINE);
 
   while (first_file != NULL) {
-     struct file_entry* fe = first_file;
-     first_file = fe->next;
-     free(fe);
+    struct file_entry *fe = first_file;
+    first_file = fe->next;
+    free(fe);
   }
 
   return 0;
 }
 
-int check_path(char* path, size_t size)
+int check_path(char *path, size_t size)
 {
   size_t slen;
   if (path[0] == 0) {
@@ -373,7 +372,7 @@ static void copy_file(const char *filename_in, FILE *fout)
 {
   FILE *fin;
   size_t len;
-  void* buf;
+  void *buf;
   fin = fopen(filename_in, "rb");
   if (fin == NULL) {
     printf("Failed to open file \"%s\"\n", filename_in);
@@ -445,8 +444,7 @@ int process_sub(FILE *data_file, FILE *struct_file)
             filesProcessed += process_sub(data_file, struct_file);
             CHDIR("..");
             curSubdir[sublen] = 0;
-          }
-          else {
+          } else {
             printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, currName);
           }
         }
@@ -494,11 +492,11 @@ int process_sub(FILE *data_file, FILE *struct_file)
   return filesProcessed;
 }
 
-static u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed, int* is_compressed)
+static u8_t *get_file_data(const char *filename, int *file_size, int can_be_compressed, int *is_compressed)
 {
   FILE *inFile;
   size_t fsize = 0;
-  u8_t* buf;
+  u8_t *buf;
   size_t r;
   int rs;
   inFile = fopen(filename, "rb");
@@ -509,12 +507,12 @@ static u8_t* get_file_data(const char* filename, int* file_size, int can_be_comp
   fseek(inFile, 0, SEEK_END);
   rs = ftell(inFile);
   if (rs < 0) {
-     printf("ftell failed with %d\n", errno);
-     exit(-1);
+    printf("ftell failed with %d\n", errno);
+    exit(-1);
   }
   fsize = (size_t)rs;
   fseek(inFile, 0, SEEK_SET);
-  buf = (u8_t*)malloc(fsize);
+  buf = (u8_t *)malloc(fsize);
   LWIP_ASSERT("buf != NULL", buf != NULL);
   r = fread(buf, 1, fsize, inFile);
   LWIP_ASSERT("r == fsize", r == fsize);
@@ -525,7 +523,7 @@ static u8_t* get_file_data(const char* filename, int* file_size, int can_be_comp
   if (deflateNonSsiFiles) {
     if (can_be_compressed) {
       if (fsize < OUT_BUF_SIZE) {
-        u8_t* ret_buf;
+        u8_t *ret_buf;
         tdefl_status status;
         size_t in_bytes = fsize;
         size_t out_bytes = OUT_BUF_SIZE;
@@ -549,7 +547,7 @@ static u8_t* get_file_data(const char* filename, int* file_size, int can_be_comp
         }
         LWIP_ASSERT("out_bytes <= COPY_BUFSIZE", out_bytes <= OUT_BUF_SIZE);
         if (out_bytes < fsize) {
-          ret_buf = (u8_t*)malloc(out_bytes);
+          ret_buf = (u8_t *)malloc(out_bytes);
           LWIP_ASSERT("ret_buf != NULL", ret_buf != NULL);
           memcpy(ret_buf, s_outbuf, out_bytes);
           {
@@ -571,7 +569,7 @@ static u8_t* get_file_data(const char* filename, int* file_size, int can_be_comp
           free(buf);
           buf = ret_buf;
           *file_size = out_bytes;
-          printf(" - deflate: %d bytes -> %d bytes (%.02f%%)" NEWLINE, (int)fsize, (int)out_bytes, (float)((out_bytes*100.0)/fsize));
+          printf(" - deflate: %d bytes -> %d bytes (%.02f%%)" NEWLINE, (int)fsize, (int)out_bytes, (float)((out_bytes * 100.0) / fsize));
           deflatedBytesReduced += (size_t)(fsize - out_bytes);
           *is_compressed = 1;
         } else {
@@ -591,9 +589,9 @@ static u8_t* get_file_data(const char* filename, int* file_size, int can_be_comp
   return buf;
 }
 
-static void process_file_data(FILE* data_file, u8_t* file_data, size_t file_size)
+static void process_file_data(FILE *data_file, u8_t *file_data, size_t file_size)
 {
-  size_t written, i, src_off=0;
+  size_t written, i, src_off = 0;
 
   size_t off = 0;
   for (i = 0; i < file_size; i++) {
@@ -616,7 +614,7 @@ static void process_file_data(FILE* data_file, u8_t* file_data, size_t file_size
 }
 
 static int write_checksums(FILE *struct_file, const char *varname,
-                    u16_t hdr_len, u16_t hdr_chksum, const u8_t* file_data, size_t file_size)
+                           u16_t hdr_len, u16_t hdr_chksum, const u8_t *file_data, size_t file_size)
 {
   int chunk_size = TCP_MSS;
   int offset, src_offset;
@@ -638,7 +636,7 @@ static int write_checksums(FILE *struct_file, const char *varname,
   src_offset = 0;
   for (offset = hdr_len; ; offset += len) {
     unsigned short chksum;
-    const void* data = (const void*)&file_data[src_offset];
+    const void *data = (const void *)&file_data[src_offset];
     len = LWIP_MIN(chunk_size, (int)file_size - src_offset);
     if (len == 0) {
       break;
@@ -655,67 +653,67 @@ static int write_checksums(FILE *struct_file, const char *varname,
 
 static int is_valid_char_for_c_var(char x)
 {
-   if (((x >= 'A') && (x <= 'Z')) ||
-       ((x >= 'a') && (x <= 'z')) ||
-       ((x >= '0') && (x <= '9')) ||
-        (x == '_')) {
-      return 1;
-   }
-   return 0;
+  if (((x >= 'A') && (x <= 'Z')) ||
+      ((x >= 'a') && (x <= 'z')) ||
+      ((x >= '0') && (x <= '9')) ||
+      (x == '_')) {
+    return 1;
+  }
+  return 0;
 }
 
-static void fix_filename_for_c(char* qualifiedName, size_t max_len)
+static void fix_filename_for_c(char *qualifiedName, size_t max_len)
 {
-   struct file_entry* f;
-   size_t len = strlen(qualifiedName);
-   char *new_name = (char*)malloc(len + 2);
-   int filename_ok;
-   int cnt = 0;
-   size_t i;
-   if (len + 3 == max_len) {
-      printf("File name too long: \"%s\"\n", qualifiedName);
-      exit(-1);
-   }
-   strcpy(new_name, qualifiedName);
-   for (i = 0; i < len; i++) {
-      if (!is_valid_char_for_c_var(new_name[i])) {
-         new_name[i] = '_';
+  struct file_entry *f;
+  size_t len = strlen(qualifiedName);
+  char *new_name = (char *)malloc(len + 2);
+  int filename_ok;
+  int cnt = 0;
+  size_t i;
+  if (len + 3 == max_len) {
+    printf("File name too long: \"%s\"\n", qualifiedName);
+    exit(-1);
+  }
+  strcpy(new_name, qualifiedName);
+  for (i = 0; i < len; i++) {
+    if (!is_valid_char_for_c_var(new_name[i])) {
+      new_name[i] = '_';
+    }
+  }
+  do {
+    filename_ok = 1;
+    for (f = first_file; f != NULL; f = f->next) {
+      if (!strcmp(f->filename_c, new_name)) {
+        filename_ok = 0;
+        cnt++;
+        /* try next unique file name */
+        sprintf(&new_name[len], "%d", cnt);
+        break;
       }
-   }
-   do {
-      filename_ok = 1;
-      for (f = first_file; f != NULL; f = f->next) {
-         if (!strcmp(f->filename_c, new_name)) {
-            filename_ok = 0;
-            cnt++;
-            /* try next unique file name */
-            sprintf(&new_name[len], "%d", cnt);
-            break;
-         }
-      }
-   } while (!filename_ok && (cnt < 999));
-   if (!filename_ok) {
-      printf("Failed to get unique file name: \"%s\"\n", qualifiedName);
-      exit(-1);
-   }
-   strcpy(qualifiedName, new_name);
-   free(new_name);
+    }
+  } while (!filename_ok && (cnt < 999));
+  if (!filename_ok) {
+    printf("Failed to get unique file name: \"%s\"\n", qualifiedName);
+    exit(-1);
+  }
+  strcpy(qualifiedName, new_name);
+  free(new_name);
 }
 
-static void register_filename(const char* qualifiedName)
+static void register_filename(const char *qualifiedName)
 {
-   struct file_entry* fe = (struct file_entry*)malloc(sizeof(struct file_entry));
-   fe->filename_c = strdup(qualifiedName);
-   fe->next = NULL;
-   if (first_file == NULL) {
-      first_file = last_file = fe;
-   } else {
-      last_file->next = fe;
-      last_file = fe;
-   }
+  struct file_entry *fe = (struct file_entry *)malloc(sizeof(struct file_entry));
+  fe->filename_c = strdup(qualifiedName);
+  fe->next = NULL;
+  if (first_file == NULL) {
+    first_file = last_file = fe;
+  } else {
+    last_file->next = fe;
+    last_file = fe;
+  }
 }
 
-static int is_ssi_file(const char* filename)
+static int is_ssi_file(const char *filename)
 {
   size_t loop;
   for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
@@ -736,13 +734,13 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   u16_t http_hdr_len = 0;
   int chksum_count = 0;
   u8_t flags = 0;
-  const char* flags_str;
+  const char *flags_str;
   u8_t has_content_len;
-  u8_t* file_data;
+  u8_t *file_data;
   int is_compressed = 0;
 
   /* create qualified name (@todo: prepend slash or not?) */
-  sprintf(qualifiedName,"%s/%s", curSubdir, filename);
+  sprintf(qualifiedName, "%s/%s", curSubdir, filename);
   /* create C variable name */
   strcpy(varname, qualifiedName);
   /* convert slashes & dots to underscores */
@@ -756,11 +754,11 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
 #endif /* ALIGN_PAYLOAD */
   fprintf(data_file, "static const unsigned char FSDATA_ALIGN_PRE data_%s[] FSDATA_ALIGN_POST = {" NEWLINE, varname);
   /* encode source file name (used by file system, not returned to browser) */
-  fprintf(data_file, "/* %s (%"SZT_F" chars) */" NEWLINE, qualifiedName, strlen(qualifiedName)+1);
-  file_put_ascii(data_file, qualifiedName, strlen(qualifiedName)+1, &i);
+  fprintf(data_file, "/* %s (%"SZT_F" chars) */" NEWLINE, qualifiedName, strlen(qualifiedName) + 1);
+  file_put_ascii(data_file, qualifiedName, strlen(qualifiedName) + 1, &i);
 #if ALIGN_PAYLOAD
   /* pad to even number of bytes to assure payload is on aligned boundary */
-  while(i % PAYLOAD_ALIGNMENT != 0) {
+  while (i % PAYLOAD_ALIGNMENT != 0) {
     fprintf(data_file, "0x%02x,", 0);
     i++;
   }
@@ -786,20 +784,19 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   fprintf(struct_file, "data_%s," NEWLINE, varname);
   fprintf(struct_file, "data_%s + %d," NEWLINE, varname, i);
   fprintf(struct_file, "sizeof(data_%s) - %d," NEWLINE, varname, i);
-  switch(flags)
-  {
-  case(FS_FILE_FLAGS_HEADER_INCLUDED):
-     flags_str = "FS_FILE_FLAGS_HEADER_INCLUDED";
-     break;
-  case(FS_FILE_FLAGS_HEADER_PERSISTENT):
-     flags_str = "FS_FILE_FLAGS_HEADER_PERSISTENT";
-     break;
-  case(FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT):
-     flags_str = "FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT";
-     break;
-  default:
-     flags_str = "0";
-     break;
+  switch (flags) {
+    case (FS_FILE_FLAGS_HEADER_INCLUDED):
+      flags_str = "FS_FILE_FLAGS_HEADER_INCLUDED";
+      break;
+    case (FS_FILE_FLAGS_HEADER_PERSISTENT):
+      flags_str = "FS_FILE_FLAGS_HEADER_PERSISTENT";
+      break;
+    case (FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT):
+      flags_str = "FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT";
+      break;
+    default:
+      flags_str = "0";
+      break;
   }
   fprintf(struct_file, "%s," NEWLINE, flags_str);
   if (precalcChksum) {
@@ -824,7 +821,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 {
   int i = 0;
   int response_type = HTTP_HDR_OK;
-  const char* file_type;
+  const char *file_type;
   const char *cur_string;
   size_t cur_len;
   int written = 0;
@@ -879,7 +876,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 
   file_ext = filename;
   if (file_ext != NULL) {
-    while(strstr(file_ext, ".") != NULL) {
+    while (strstr(file_ext, ".") != NULL) {
       file_ext = strstr(file_ext, ".");
       file_ext++;
     }
@@ -910,7 +907,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
     memset(intbuf, 0, sizeof(intbuf));
     cur_string = g_psHTTPHeaderStrings[HTTP_HDR_CONTENT_LENGTH];
     cur_len = strlen(cur_string);
-    fprintf(data_file, NEWLINE "/* \"%s%d\r\n\" (%"SZT_F"+ bytes) */" NEWLINE, cur_string, content_len, cur_len+2);
+    fprintf(data_file, NEWLINE "/* \"%s%d\r\n\" (%"SZT_F"+ bytes) */" NEWLINE, cur_string, content_len, cur_len + 2);
     written += file_put_ascii(data_file, cur_string, cur_len, &i);
     if (precalcChksum) {
       memcpy(&hdr_buf[hdr_len], cur_string, cur_len);
@@ -930,23 +927,23 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   if (provide_last_modified) {
     char modbuf[256];
     struct stat stat_data;
-    struct tm* t;
+    struct tm *t;
     memset(modbuf, 0, sizeof(modbuf));
     memset(&stat_data, 0, sizeof(stat_data));
     cur_string = modbuf;
     strcpy(modbuf, "Last-Modified: ");
     if (stat(filename, &stat_data) != 0) {
-       printf("stat(%s) failed with error %d\n", filename, errno);
-       exit(-1);
+      printf("stat(%s) failed with error %d\n", filename, errno);
+      exit(-1);
     }
     t = gmtime(&stat_data.st_mtime);
     if (t == NULL) {
-       printf("gmtime() failed with error %d\n", errno);
-       exit(-1);
+      printf("gmtime() failed with error %d\n", errno);
+      exit(-1);
     }
-    strftime(&modbuf[15], sizeof(modbuf)-15, "%a, %d %b %Y %H:%M:%S GMT", t);
+    strftime(&modbuf[15], sizeof(modbuf) - 15, "%a, %d %b %Y %H:%M:%S GMT", t);
     cur_len = strlen(cur_string);
-    fprintf(data_file, NEWLINE "/* \"%s\"\r\n\" (%"SZT_F"+ bytes) */" NEWLINE, cur_string, cur_len+2);
+    fprintf(data_file, NEWLINE "/* \"%s\"\r\n\" (%"SZT_F"+ bytes) */" NEWLINE, cur_string, cur_len + 2);
     written += file_put_ascii(data_file, cur_string, cur_len, &i);
     if (precalcChksum) {
       memcpy(&hdr_buf[hdr_len], cur_string, cur_len);
@@ -1020,7 +1017,7 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   return written;
 }
 
-int file_put_ascii(FILE *file, const char* ascii_string, int len, int *i)
+int file_put_ascii(FILE *file, const char *ascii_string, int len, int *i)
 {
   int x;
   for (x = 0; x < len; x++) {
