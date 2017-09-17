@@ -5,10 +5,10 @@
  * @defgroup netifapi NETIF API
  * @ingroup sequential_api
  * Thread-safe functions to be called from non-TCPIP threads
- * 
+ *
  * @defgroup netifapi_netif NETIF related
  * @ingroup netifapi
- * To be called from non-TCPIP threads 
+ * To be called from non-TCPIP threads
  */
 
 /*
@@ -59,10 +59,10 @@
 static err_t
 netifapi_do_netif_add(struct tcpip_api_call_data *m)
 {
-  /* cast through void* to silence alignment warnings. 
+  /* cast through void* to silence alignment warnings.
    * We know it works because the structs have been instantiated as struct netifapi_msg */
-  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
-  
+  struct netifapi_msg *msg = (struct netifapi_msg *)(void *)m;
+
   if (!netif_add( msg->netif,
 #if LWIP_IPV4
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -85,9 +85,9 @@ netifapi_do_netif_add(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 {
-  /* cast through void* to silence alignment warnings. 
+  /* cast through void* to silence alignment warnings.
    * We know it works because the structs have been instantiated as struct netifapi_msg */
-  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg *)(void *)m;
 
   netif_set_addr( msg->netif,
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -105,7 +105,7 @@ netifapi_do_name_to_index(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings.
    * We know it works because the structs have been instantiated as struct netifapi_msg */
-  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg *)(void *)m;
 
   msg->msg.ifs.index = netif_name_to_index(msg->msg.ifs.name);
   return ERR_OK;
@@ -119,7 +119,7 @@ netifapi_do_index_to_name(struct tcpip_api_call_data *m)
 {
   /* cast through void* to silence alignment warnings.
    * We know it works because the structs have been instantiated as struct netifapi_msg */
-  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg *)(void *)m;
 
   if (!netif_index_to_name(msg->msg.ifs.index, msg->msg.ifs.name)) {
     /* return failure via empty name */
@@ -135,9 +135,9 @@ netifapi_do_index_to_name(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_common(struct tcpip_api_call_data *m)
 {
-  /* cast through void* to silence alignment warnings. 
+  /* cast through void* to silence alignment warnings.
    * We know it works because the structs have been instantiated as struct netifapi_msg */
-  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
+  struct netifapi_msg *msg = (struct netifapi_msg *)(void *)m;
 
   if (msg->msg.common.errtfunc != NULL) {
     return msg->msg.common.errtfunc(msg->netif);
@@ -237,7 +237,7 @@ netifapi_netif_set_addr(struct netif *netif,
  */
 err_t
 netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
-                       netifapi_errt_fn errtfunc)
+                      netifapi_errt_fn errtfunc)
 {
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
@@ -272,7 +272,7 @@ netifapi_netif_name_to_index(const char *name, u8_t *idx)
   strncpy(NETIFAPI_VAR_REF(msg).msg.ifs.name, name, NETIF_NAMESIZE - 1);
   NETIFAPI_VAR_REF(msg).msg.ifs.name[NETIF_NAMESIZE - 1] = '\0';
 #else
-  NETIFAPI_VAR_REF(msg).msg.ifs.name = LWIP_CONST_CAST(char*, name);
+  NETIFAPI_VAR_REF(msg).msg.ifs.name = LWIP_CONST_CAST(char *, name);
 #endif /* LWIP_MPU_COMPATIBLE */
   err = tcpip_api_call(netifapi_do_name_to_index, &API_VAR_REF(msg).call);
   if (!err) {
