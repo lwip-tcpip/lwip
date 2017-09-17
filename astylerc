@@ -6,10 +6,10 @@
 style=otbs
 indent=spaces=2
 attach-extern-c
-attach-closing-while
+#attach-closing-while
 # indentation
 indent-switches
-max-continuation-indent=40
+#max-continuation-indent=40
 # padding
 pad-oper
 pad-comma
