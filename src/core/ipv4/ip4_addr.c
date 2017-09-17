@@ -64,19 +64,19 @@ ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
   if ((~addr == IPADDR_ANY) ||
       (addr == IPADDR_ANY)) {
     return 1;
-  /* no broadcast support on this network interface? */
+    /* no broadcast support on this network interface? */
   } else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0) {
     /* the given address cannot be a broadcast address
      * nor can we check against any broadcast addresses */
     return 0;
-  /* address matches network interface address exactly? => no broadcast */
+    /* address matches network interface address exactly? => no broadcast */
   } else if (addr == ip4_addr_get_u32(netif_ip4_addr(netif))) {
     return 0;
-  /*  on the same (sub) network... */
+    /*  on the same (sub) network... */
   } else if (ip4_addr_netcmp(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
-         /* ...and host identifier bits are all ones? =>... */
-          && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
-           (IPADDR_BROADCAST & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
+             /* ...and host identifier bits are all ones? =>... */
+             && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
+                 (IPADDR_BROADCAST & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
     /* => network broadcast address */
     return 1;
   } else {
@@ -220,44 +220,44 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
    */
   switch (pp - parts + 1) {
 
-  case 0:
-    return 0;       /* initial nondigit */
+    case 0:
+      return 0;       /* initial nondigit */
 
-  case 1:             /* a -- 32 bits */
-    break;
+    case 1:             /* a -- 32 bits */
+      break;
 
-  case 2:             /* a.b -- 8.24 bits */
-    if (val > 0xffffffUL) {
-      return 0;
-    }
-    if (parts[0] > 0xff) {
-      return 0;
-    }
-    val |= parts[0] << 24;
-    break;
+    case 2:             /* a.b -- 8.24 bits */
+      if (val > 0xffffffUL) {
+        return 0;
+      }
+      if (parts[0] > 0xff) {
+        return 0;
+      }
+      val |= parts[0] << 24;
+      break;
 
-  case 3:             /* a.b.c -- 8.8.16 bits */
-    if (val > 0xffff) {
-      return 0;
-    }
-    if ((parts[0] > 0xff) || (parts[1] > 0xff)) {
-      return 0;
-    }
-    val |= (parts[0] << 24) | (parts[1] << 16);
-    break;
+    case 3:             /* a.b.c -- 8.8.16 bits */
+      if (val > 0xffff) {
+        return 0;
+      }
+      if ((parts[0] > 0xff) || (parts[1] > 0xff)) {
+        return 0;
+      }
+      val |= (parts[0] << 24) | (parts[1] << 16);
+      break;
 
-  case 4:             /* a.b.c.d -- 8.8.8.8 bits */
-    if (val > 0xff) {
-      return 0;
-    }
-    if ((parts[0] > 0xff) || (parts[1] > 0xff) || (parts[2] > 0xff)) {
-      return 0;
-    }
-    val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
-    break;
-  default:
-    LWIP_ASSERT("unhandled", 0);
-    break;
+    case 4:             /* a.b.c.d -- 8.8.8.8 bits */
+      if (val > 0xff) {
+        return 0;
+      }
+      if ((parts[0] > 0xff) || (parts[1] > 0xff) || (parts[2] > 0xff)) {
+        return 0;
+      }
+      val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+      break;
+    default:
+      LWIP_ASSERT("unhandled", 0);
+      break;
   }
   if (addr) {
     ip4_addr_set_u32(addr, lwip_htonl(val));
@@ -273,7 +273,7 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
  * @return pointer to a global static (!) buffer that holds the ASCII
  *         representation of addr
  */
-char*
+char *
 ip4addr_ntoa(const ip4_addr_t *addr)
 {
   static char str[IP4ADDR_STRLEN_MAX];
@@ -289,7 +289,7 @@ ip4addr_ntoa(const ip4_addr_t *addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-char*
+char *
 ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen)
 {
   u32_t s_addr;
