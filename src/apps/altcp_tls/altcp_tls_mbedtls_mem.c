@@ -102,8 +102,8 @@ volatile int altcp_mbedtls_malloc_clear_stats;
 static void *
 tls_malloc(size_t c, size_t len)
 {
-  altcp_mbedtls_malloc_helper_t* hlpr;
-  void* ret;
+  altcp_mbedtls_malloc_helper_t *hlpr;
+  void *ret;
   size_t alloc_size;
 #if ALTCP_MBEDTLS_PLATFORM_ALLOC_STATS
   if (altcp_mbedtls_malloc_clear_stats) {
@@ -113,46 +113,46 @@ tls_malloc(size_t c, size_t len)
     }
   }
 #endif
-  alloc_size = sizeof(altcp_mbedtls_malloc_helper_t) + (c*len);
+  alloc_size = sizeof(altcp_mbedtls_malloc_helper_t) + (c * len);
   /* check for maximum allocation size, mainly to prevent mem_size_t overflow */
   if (alloc_size > MEM_SIZE) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_MEM_DEBUG, ("mbedtls allocation too big: %c * %d bytes vs MEM_SIZE=%d",
-      (int)c, (int)len, (int)MEM_SIZE));
+                                          (int)c, (int)len, (int)MEM_SIZE));
     return NULL;
   }
-  hlpr = (altcp_mbedtls_malloc_helper_t*)mem_malloc((mem_size_t)alloc_size);
+  hlpr = (altcp_mbedtls_malloc_helper_t *)mem_malloc((mem_size_t)alloc_size);
   if (hlpr == NULL) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_MEM_DEBUG, ("mbedtls alloc callback failed for %c * %d bytes", (int)c, (int)len));
     return NULL;
   }
 #if ALTCP_MBEDTLS_PLATFORM_ALLOC_STATS
   altcp_mbedtls_malloc_stats.allocCnt++;
-  altcp_mbedtls_malloc_stats.allocedBytes += c*len;
+  altcp_mbedtls_malloc_stats.allocedBytes += c * len;
   if (altcp_mbedtls_malloc_stats.allocedBytes > altcp_mbedtls_malloc_stats.maxBytes) {
     altcp_mbedtls_malloc_stats.maxBytes = altcp_mbedtls_malloc_stats.allocedBytes;
   }
-  altcp_mbedtls_malloc_stats.totalBytes += c*len;
+  altcp_mbedtls_malloc_stats.totalBytes += c * len;
 #endif
   hlpr->c = c;
   hlpr->len = len;
   ret = hlpr + 1;
   /* zeroing the allocated chunk is required by mbedTLS! */
-  memset(ret, 0, c*len);
+  memset(ret, 0, c * len);
   return ret;
 }
 
 static void
-tls_free(void * ptr)
+tls_free(void *ptr)
 {
   altcp_mbedtls_malloc_helper_t *hlpr;
   if (ptr == NULL) {
     /* this obviously happened in mbedtls... */
     return;
   }
-  hlpr = ((altcp_mbedtls_malloc_helper_t *)ptr)-1;
+  hlpr = ((altcp_mbedtls_malloc_helper_t *)ptr) - 1;
 #if ALTCP_MBEDTLS_PLATFORM_ALLOC_STATS
   if (!altcp_mbedtls_malloc_clear_stats) {
-    altcp_mbedtls_malloc_stats.allocedBytes -= hlpr->c*hlpr->len;
+    altcp_mbedtls_malloc_stats.allocedBytes -= hlpr->c * hlpr->len;
   }
 #endif
   mem_free(hlpr);
