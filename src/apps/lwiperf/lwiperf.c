@@ -95,18 +95,18 @@ struct _lwiperf_state_base {
   u8_t tcp;
   /* 1=server, 0=client */
   u8_t server;
-  lwiperf_state_base_t* next;
-  lwiperf_state_base_t* related_server_state;
+  lwiperf_state_base_t *next;
+  lwiperf_state_base_t *related_server_state;
 };
 
 /** Connection handle for a TCP iperf session */
 typedef struct _lwiperf_state_tcp {
   lwiperf_state_base_t base;
-  struct tcp_pcb* server_pcb;
-  struct tcp_pcb* conn_pcb;
+  struct tcp_pcb *server_pcb;
+  struct tcp_pcb *conn_pcb;
   u32_t time_started;
   lwiperf_report_fn report_fn;
-  void* report_arg;
+  void *report_arg;
   u8_t poll_count;
   u8_t next_num;
   u32_t bytes_transferred;
@@ -115,49 +115,49 @@ typedef struct _lwiperf_state_tcp {
 } lwiperf_state_tcp_t;
 
 /** List of active iperf sessions */
-static lwiperf_state_base_t* lwiperf_all_connections;
+static lwiperf_state_base_t *lwiperf_all_connections;
 /** A const buffer to send from: we want to measure sending, not copying! */
 static const u8_t lwiperf_txbuf_const[1600] = {
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
-  '0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9','0','1','2','3','4','5','6','7','8','9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+  '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 };
 
 static err_t lwiperf_tcp_poll(void *arg, struct tcp_pcb *tpcb);
@@ -165,7 +165,7 @@ static void lwiperf_tcp_err(void *arg, err_t err);
 
 /** Add an iperf session to the 'active' list */
 static void
-lwiperf_list_add(lwiperf_state_base_t* item)
+lwiperf_list_add(lwiperf_state_base_t *item)
 {
   if (lwiperf_all_connections == NULL) {
     lwiperf_all_connections = item;
@@ -176,10 +176,10 @@ lwiperf_list_add(lwiperf_state_base_t* item)
 
 /** Remove an iperf session from the 'active' list */
 static void
-lwiperf_list_remove(lwiperf_state_base_t* item)
+lwiperf_list_remove(lwiperf_state_base_t *item)
 {
-  lwiperf_state_base_t* prev = NULL;
-  lwiperf_state_base_t* iter;
+  lwiperf_state_base_t *prev = NULL;
+  lwiperf_state_base_t *iter;
   for (iter = lwiperf_all_connections; iter != NULL; prev = iter, iter = iter->next) {
     if (iter == item) {
       if (prev == NULL) {
@@ -198,7 +198,7 @@ lwiperf_list_remove(lwiperf_state_base_t* item)
 
 /** Call the report function of an iperf tcp session */
 static void
-lwip_tcp_conn_report(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_type)
+lwip_tcp_conn_report(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_type)
 {
   if ((conn != NULL) && (conn->report_fn != NULL)) {
     u32_t now, duration_ms, bandwidth_kbitpsec;
@@ -210,15 +210,15 @@ lwip_tcp_conn_report(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_
       bandwidth_kbitpsec = (conn->bytes_transferred / duration_ms) * 8U;
     }
     conn->report_fn(conn->report_arg, report_type,
-      &conn->conn_pcb->local_ip, conn->conn_pcb->local_port,
-      &conn->conn_pcb->remote_ip, conn->conn_pcb->remote_port,
-      conn->bytes_transferred, duration_ms, bandwidth_kbitpsec);
+                    &conn->conn_pcb->local_ip, conn->conn_pcb->local_port,
+                    &conn->conn_pcb->remote_ip, conn->conn_pcb->remote_port,
+                    conn->bytes_transferred, duration_ms, bandwidth_kbitpsec);
   }
 }
 
 /** Close an iperf tcp session */
 static void
-lwiperf_tcp_close(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_type)
+lwiperf_tcp_close(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_type)
 {
   err_t err;
 
@@ -245,13 +245,13 @@ lwiperf_tcp_close(lwiperf_state_tcp_t* conn, enum lwiperf_report_type report_typ
 
 /** Try to send more data on an iperf tcp session */
 static err_t
-lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
+lwiperf_tcp_client_send_more(lwiperf_state_tcp_t *conn)
 {
   int send_more;
   err_t err;
   u16_t txlen;
   u16_t txlen_max;
-  void* txptr;
+  void *txptr;
   u8_t apiflags;
 
   LWIP_ASSERT("conn invalid", (conn != NULL) && conn->base.tcp && (conn->base.server == 0));
@@ -262,7 +262,7 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
       /* this session is time-limited */
       u32_t now = sys_now();
       u32_t diff_ms = now - conn->time_started;
-      u32_t time = (u32_t)-(s32_t)lwip_htonl(conn->settings.amount);
+      u32_t time = (u32_t) - (s32_t)lwip_htonl(conn->settings.amount);
       u32_t time_ms = time * 10;
       if (diff_ms >= time_ms) {
         /* time specified by the client is over -> close the connection */
@@ -282,19 +282,19 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
 
     if (conn->bytes_transferred < 24) {
       /* transmit the settings a first time */
-      txptr = &((u8_t*)&conn->settings)[conn->bytes_transferred];
+      txptr = &((u8_t *)&conn->settings)[conn->bytes_transferred];
       txlen_max = (u16_t)(24 - conn->bytes_transferred);
       apiflags = TCP_WRITE_FLAG_COPY;
     } else if (conn->bytes_transferred < 48) {
       /* transmit the settings a second time */
-      txptr = &((u8_t*)&conn->settings)[conn->bytes_transferred - 24];
+      txptr = &((u8_t *)&conn->settings)[conn->bytes_transferred - 24];
       txlen_max = (u16_t)(48 - conn->bytes_transferred);
       apiflags = TCP_WRITE_FLAG_COPY | TCP_WRITE_FLAG_MORE;
       send_more = 1;
     } else {
       /* transmit data */
       /* @todo: every x bytes, transmit the settings again */
-      txptr = LWIP_CONST_CAST(void*, &lwiperf_txbuf_const[conn->bytes_transferred % 10]);
+      txptr = LWIP_CONST_CAST(void *, &lwiperf_txbuf_const[conn->bytes_transferred % 10]);
       txlen_max = TCP_MSS;
       if (conn->bytes_transferred == 48) { /* @todo: fix this for intermediate settings, too */
         txlen_max = TCP_MSS - 24;
@@ -308,14 +308,14 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
       if (err ==  ERR_MEM) {
         txlen /= 2;
       }
-    } while ((err == ERR_MEM) && (txlen >= (TCP_MSS/2)));
+    } while ((err == ERR_MEM) && (txlen >= (TCP_MSS / 2)));
 
     if (err == ERR_OK) {
       conn->bytes_transferred += txlen;
     } else {
       send_more = 0;
     }
-  } while(send_more);
+  } while (send_more);
 
   tcp_output(conn->conn_pcb);
   return ERR_OK;
@@ -325,7 +325,7 @@ lwiperf_tcp_client_send_more(lwiperf_state_tcp_t* conn)
 static err_t
 lwiperf_tcp_client_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 {
-  lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)arg;
+  lwiperf_state_tcp_t *conn = (lwiperf_state_tcp_t *)arg;
   /* @todo: check 'len' (e.g. to time ACK of all data)? for now, we just send more... */
   LWIP_ASSERT("invalid conn", conn->conn_pcb == tpcb);
   LWIP_UNUSED_ARG(tpcb);
@@ -340,7 +340,7 @@ lwiperf_tcp_client_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
 static err_t
 lwiperf_tcp_client_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
 {
-  lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)arg;
+  lwiperf_state_tcp_t *conn = (lwiperf_state_tcp_t *)arg;
   LWIP_ASSERT("invalid conn", conn->conn_pcb == tpcb);
   LWIP_UNUSED_ARG(tpcb);
   if (err != ERR_OK) {
@@ -356,15 +356,15 @@ lwiperf_tcp_client_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
  * receive test has finished.
  */
 static err_t
-lwiperf_tx_start(lwiperf_state_tcp_t* conn)
+lwiperf_tx_start(lwiperf_state_tcp_t *conn)
 {
   err_t err;
-  lwiperf_state_tcp_t* client_conn;
-  struct tcp_pcb* newpcb;
+  lwiperf_state_tcp_t *client_conn;
+  struct tcp_pcb *newpcb;
   ip_addr_t remote_addr;
   u16_t remote_port;
 
-  client_conn = (lwiperf_state_tcp_t*)LWIPERF_ALLOC(lwiperf_state_tcp_t);
+  client_conn = (lwiperf_state_tcp_t *)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (client_conn == NULL) {
     return ERR_MEM;
   }
@@ -408,8 +408,8 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
   u8_t tmp;
   u16_t tot_len;
   u32_t packet_idx;
-  struct pbuf* q;
-  lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)arg;
+  struct pbuf *q;
+  lwiperf_state_tcp_t *conn = (lwiperf_state_tcp_t *)arg;
 
   LWIP_ASSERT("pcb mismatch", conn->conn_pcb == tpcb);
   LWIP_UNUSED_ARG(tpcb);
@@ -420,7 +420,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
   }
   if (p == NULL) {
     /* connection closed -> test done */
-    if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST|LWIPERF_FLAGS_ANSWER_NOW)) ==
+    if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW)) ==
         PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
       /* client requested transmission after end of test */
       lwiperf_tx_start(conn);
@@ -432,7 +432,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 
   conn->poll_count = 0;
 
-  if ((!conn->have_settings_buf) || ((conn->bytes_transferred -24) % (1024*128) == 0)) {
+  if ((!conn->have_settings_buf) || ((conn->bytes_transferred - 24) % (1024 * 128) == 0)) {
     /* wait for 24-byte header */
     if (p->tot_len < sizeof(lwiperf_settings_t)) {
       lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_DATAERROR);
@@ -446,15 +446,15 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
         return ERR_VAL;
       }
       conn->have_settings_buf = 1;
-      if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST|LWIPERF_FLAGS_ANSWER_NOW)) ==
-        PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST|LWIPERF_FLAGS_ANSWER_NOW)) {
-          /* client requested parallel transmission test */
-          err_t err2 = lwiperf_tx_start(conn);
-          if (err2 != ERR_OK) {
-            lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_TXERROR);
-            pbuf_free(p);
-            return err2;
-          }
+      if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW)) ==
+          PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW)) {
+        /* client requested parallel transmission test */
+        err_t err2 = lwiperf_tx_start(conn);
+        if (err2 != ERR_OK) {
+          lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_TXERROR);
+          pbuf_free(p);
+          return err2;
+        }
       }
     } else {
       if (pbuf_memcmp(p, 0, &conn->settings, sizeof(lwiperf_settings_t)) != 0) {
@@ -478,7 +478,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
   packet_idx = 0;
   for (q = p; q != NULL; q = q->next) {
 #if LWIPERF_CHECK_RX_DATA
-    const u8_t* payload = (const u8_t*)q->payload;
+    const u8_t *payload = (const u8_t *)q->payload;
     u16_t i;
     for (i = 0; i < q->len; i++) {
       u8_t val = payload[i];
@@ -508,7 +508,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 static void
 lwiperf_tcp_err(void *arg, err_t err)
 {
-  lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)arg;
+  lwiperf_state_tcp_t *conn = (lwiperf_state_tcp_t *)arg;
   LWIP_UNUSED_ARG(err);
   lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_REMOTE);
 }
@@ -517,7 +517,7 @@ lwiperf_tcp_err(void *arg, err_t err)
 static err_t
 lwiperf_tcp_poll(void *arg, struct tcp_pcb *tpcb)
 {
-  lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)arg;
+  lwiperf_state_tcp_t *conn = (lwiperf_state_tcp_t *)arg;
   LWIP_ASSERT("pcb mismatch", conn->conn_pcb == tpcb);
   LWIP_UNUSED_ARG(tpcb);
   if (++conn->poll_count >= LWIPERF_TCP_MAX_IDLE_SEC) {
@@ -541,8 +541,8 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
     return ERR_VAL;
   }
 
-  s = (lwiperf_state_tcp_t*)arg;
-  conn = (lwiperf_state_tcp_t*)LWIPERF_ALLOC(lwiperf_state_tcp_t);
+  s = (lwiperf_state_tcp_t *)arg;
+  conn = (lwiperf_state_tcp_t *)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (conn == NULL) {
     return ERR_MEM;
   }
@@ -566,7 +566,7 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   return ERR_OK;
 }
 
-/** 
+/**
  * @ingroup iperf
  * Start a TCP iperf server on the default TCP port (5001) and listen for
  * incoming connections from iperf clients.
@@ -574,11 +574,11 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
  * @returns a connection handle that can be used to abort the server
  *          by calling @ref lwiperf_abort()
  */
-void*
-lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void* report_arg)
+void *
+lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void *report_arg)
 {
   return lwiperf_start_tcp_server(IP_ADDR_ANY, LWIPERF_TCP_PORT_DEFAULT,
-    report_fn, report_arg);
+                                  report_fn, report_arg);
 }
 
 /**
@@ -589,19 +589,19 @@ lwiperf_start_tcp_server_default(lwiperf_report_fn report_fn, void* report_arg)
  * @returns a connection handle that can be used to abort the server
  *          by calling @ref lwiperf_abort()
  */
-void*
-lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
-  lwiperf_report_fn report_fn, void* report_arg)
+void *
+lwiperf_start_tcp_server(const ip_addr_t *local_addr, u16_t local_port,
+                         lwiperf_report_fn report_fn, void *report_arg)
 {
   err_t err;
-  struct tcp_pcb* pcb;
-  lwiperf_state_tcp_t* s;
+  struct tcp_pcb *pcb;
+  lwiperf_state_tcp_t *s;
 
   if (local_addr == NULL) {
     return NULL;
   }
 
-  s = (lwiperf_state_tcp_t*)LWIPERF_ALLOC(lwiperf_state_tcp_t);
+  s = (lwiperf_state_tcp_t *)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (s == NULL) {
     return NULL;
   }
@@ -639,9 +639,9 @@ lwiperf_start_tcp_server(const ip_addr_t* local_addr, u16_t local_port,
  * Abort an iperf session (handle returned by lwiperf_start_tcp_server*())
  */
 void
-lwiperf_abort(void* lwiperf_session)
+lwiperf_abort(void *lwiperf_session)
 {
-  lwiperf_state_base_t* i, *dealloc, *last = NULL;
+  lwiperf_state_base_t *i, *dealloc, *last = NULL;
 
   for (i = lwiperf_all_connections; i != NULL; ) {
     if ((i == lwiperf_session) || (i->related_server_state == lwiperf_session)) {
