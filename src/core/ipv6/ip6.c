@@ -1201,25 +1201,42 @@ ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 err_t
 ip6_options_add_hbh_ra(struct pbuf *p, u8_t nexth, u8_t value)
 {
+  u8_t *opt_data;
+  u32_t offset = 0;
   struct ip6_hbh_hdr *hbh_hdr;
+  struct ip6_opt_hdr *opt_hdr;
 
+  /* fixed 4 bytes for router alert option and 2 bytes padding */
+  const u8_t hlen = (sizeof(struct ip6_opt_hdr) * 2) + IP6_ROUTER_ALERT_DLEN;
   /* Move pointer to make room for hop-by-hop options header. */
-  if (pbuf_add_header(p, sizeof(struct ip6_hbh_hdr))) {
+  if (pbuf_add_header(p, sizeof(struct ip6_hbh_hdr) + hlen)) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_options: no space for options header\n"));
     IP6_STATS_INC(ip6.err);
     return ERR_BUF;
   }
 
+  /* Set fields of Hop-by-Hop header */
   hbh_hdr = (struct ip6_hbh_hdr *)p->payload;
-
-  /* Set fields. */
-  hbh_hdr->_nexth = nexth;
+  IP6_HBH_NEXTH(hbh_hdr) = nexth;
   hbh_hdr->_hlen = 0;
-  hbh_hdr->_ra_opt_type = IP6_ROUTER_ALERT_OPTION;
-  hbh_hdr->_ra_opt_dlen = 2;
-  hbh_hdr->_ra_opt_data = value;
-  hbh_hdr->_padn_opt_type = IP6_PADN_ALERT_OPTION;
-  hbh_hdr->_padn_opt_dlen = 0;
+  offset = IP6_HBH_HLEN;
+
+  /* Set router alert options to Hop-by-Hop extended option header */
+  opt_hdr = (struct ip6_opt_hdr *)((u8_t *)hbh_hdr + offset);
+  IP6_OPT_TYPE(opt_hdr) = IP6_ROUTER_ALERT_OPTION;
+  IP6_OPT_DLEN(opt_hdr) = IP6_ROUTER_ALERT_DLEN;
+  offset += IP6_OPT_HLEN;
+
+  /* Set router alert option data */
+  opt_data = (u8_t *)hbh_hdr + offset;
+  opt_data[0] = value;
+  opt_data[1] = 0;
+  offset += IP6_OPT_DLEN(opt_hdr);
+
+  /* add 2 bytes padding to make 8 bytes Hop-by-Hop header length */
+  opt_hdr = (struct ip6_opt_hdr *)((u8_t *)hbh_hdr + offset);
+  IP6_OPT_TYPE(opt_hdr) = IP6_PADN_OPTION;
+  IP6_OPT_DLEN(opt_hdr) = 0;
 
   return ERR_OK;
 }
