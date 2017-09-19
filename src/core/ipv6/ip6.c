@@ -951,6 +951,11 @@ netif_found:
       struct ip6_frag_hdr *frag_hdr;
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Fragment header\n"));
 
+      frag_hdr = (struct ip6_frag_hdr *)p->payload;
+
+      /* Get next header type. */
+      nexth = &IP6_FRAG_NEXTH(frag_hdr);
+
       /* Fragment Header length. */
       hlen = 8;
 
@@ -968,10 +973,15 @@ netif_found:
 
       hlen_tot = (u16_t)(hlen_tot + hlen);
 
-      frag_hdr = (struct ip6_frag_hdr *)p->payload;
-
-      /* Get next header type. */
-      nexth = &frag_hdr->_nexth;
+      /* check payload length is multiple of 8 octets when mbit is set */
+      if (IP6_FRAG_MBIT(frag_hdr) && (IP6H_PLEN(ip6hdr) & 0x7)) {
+        /* ipv6 payload length is not multiple of 8 octets */
+        icmp6_param_problem(p, ICMP6_PP_FIELD, &ip6hdr->_plen);
+        LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with invalid payload length dropped\n"));
+        pbuf_free(p);
+        IP6_STATS_INC(ip6.drop);
+        goto ip6_input_cleanup;
+      }
 
       /* Offset == 0 and more_fragments == 0? */
       if ((frag_hdr->_fragment_offset &
@@ -980,7 +990,6 @@ netif_found:
         pbuf_remove_header(p, hlen);
       } else {
 #if LWIP_IPV6_REASS
-
         /* reassemble the packet */
         ip_data.current_ip_header_tot_len = hlen_tot;
         p = ip6_reass(p);
