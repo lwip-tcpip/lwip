@@ -888,10 +888,18 @@ netif_found:
       break;
     }
     case IP6_NEXTH_ROUTING:
+    {
+      struct ip6_rout_hdr *rout_hdr;
       LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Routing header\n"));
 
-      /* Get and check the header length, while staying in packet bounds. */
-      hlen = (u16_t)(8 * (1 + *((u8_t *)p->payload + 1)));
+      rout_hdr = (struct ip6_rout_hdr *)p->payload;
+
+      /* Get next header type. */
+      nexth = &IP6_ROUT_NEXTH(rout_hdr);
+
+      /* Get the header length. */
+      hlen = 8 * (1 + rout_hdr->_hlen);
+
       if ((p->len < 8) || (hlen > p->len)) {
         LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
           ("IPv6 options header (hlen %"U16_F") does not fit in first pbuf (len %"U16_F"), IPv6 packet dropped.\n",
@@ -903,15 +911,41 @@ netif_found:
         goto ip6_input_cleanup;
       }
 
-      /* Get next header type. */
-      nexth = ((u8_t *)p->payload);
-
       /* Skip over this header. */
       hlen_tot = (u16_t)(hlen_tot + hlen);
 
+      /* if segment left value is 0 in routing header, ignore the option */
+      if (IP6_ROUT_SEG_LEFT(rout_hdr)) {
+        /* The length field of routing option header must be even */
+        if (rout_hdr->_hlen & 0x1) {
+          /* Discard and send parameter field error */
+          icmp6_param_problem(p, ICMP6_PP_FIELD, &rout_hdr->_hlen);
+          LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with invalid routing type dropped\n"));
+          pbuf_free(p);
+          IP6_STATS_INC(ip6.drop);
+          goto ip6_input_cleanup;
+        }
+
+        switch (IP6_ROUT_TYPE(rout_hdr))
+        {
+        /* TODO: process routing by the type */
+        case IP6_ROUT_TYPE2:
+          break;
+        case IP6_ROUT_RPL:
+          break;
+        default:
+          /* Discard unrecognized routing type and send parameter field error */
+          icmp6_param_problem(p, ICMP6_PP_FIELD, &IP6_ROUT_TYPE(rout_hdr));
+          LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with invalid routing type dropped\n"));
+          pbuf_free(p);
+          IP6_STATS_INC(ip6.drop);
+          goto ip6_input_cleanup;
+        }
+      }
+
       pbuf_remove_header(p, hlen);
       break;
-
+    }
     case IP6_NEXTH_FRAGMENT:
     {
       struct ip6_frag_hdr *frag_hdr;
