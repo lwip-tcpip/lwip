@@ -837,9 +837,18 @@ netif_found:
     default:
       goto options_done;
     }
-  }
-options_done:
 
+    if (*nexth == IP6_NEXTH_HOPBYHOP) {
+      /* Hop-by-Hop header comes only as a first option */
+      icmp6_param_problem(p, ICMP6_PP_HEADER, nexth);
+      LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet with Hop-by-Hop options header dropped (only valid as a first option)\n"));
+      pbuf_free(p);
+      IP6_STATS_INC(ip6.drop);
+      goto ip6_input_cleanup;
+    }
+  }
+
+options_done:
   if (hlen_tot >= 0x8000) {
     /* s16_t overflow */
     LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: header length overflow: %"U16_F"\n", hlen_tot));
