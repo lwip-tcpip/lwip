@@ -1786,8 +1786,12 @@ tcp_receive(struct tcp_pcb *pcb)
           prev = NULL;
           for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
             struct pbuf *p = next->p;
+#if TCP_OOSEQ_MAX_BYTES
             ooseq_blen += p->tot_len;
+#endif
+#if TCP_OOSEQ_MAX_PBUFS
             ooseq_qlen += pbuf_clen(p);
+#endif
             if ((ooseq_blen > TCP_OOSEQ_MAX_BYTES) ||
                 (ooseq_qlen > TCP_OOSEQ_MAX_PBUFS)) {
 #if LWIP_TCP_SACK_OUT
