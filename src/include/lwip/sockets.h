@@ -522,7 +522,9 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #define lwip_sendmsg      sendmsg
 #define lwip_sendto       sendto
 #define lwip_socket       socket
+#if LWIP_SOCKET_SELECT
 #define lwip_select       select
+#endif
 #define lwip_ioctlsocket  ioctl
 #define lwip_inet_ntop    inet_ntop
 #define lwip_inet_pton    inet_pton
@@ -608,8 +610,10 @@ int lwip_inet_pton(int af, const char *src, void *dst);
 #define sendto(s,dataptr,size,flags,to,tolen)     lwip_sendto(s,dataptr,size,flags,to,tolen)
 /** @ingroup socket */
 #define socket(domain,type,protocol)              lwip_socket(domain,type,protocol)
+#if LWIP_SOCKET_SELECT
 /** @ingroup socket */
 #define select(maxfdp1,readset,writeset,exceptset,timeout)     lwip_select(maxfdp1,readset,writeset,exceptset,timeout)
+#endif
 /** @ingroup socket */
 #define ioctlsocket(s,cmd,argp)                   lwip_ioctl(s,cmd,argp)
 /** @ingroup socket */
