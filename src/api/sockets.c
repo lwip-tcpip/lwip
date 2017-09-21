@@ -262,7 +262,7 @@ static void lwip_socket_drop_registered_mld6_memberships(int s);
 /** The global array of available sockets */
 static struct lwip_sock sockets[NUM_SOCKETS];
 
-#if LWIP_SOCKET_SELECT
+#if LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL
 #if LWIP_TCPIP_CORE_LOCKING
 /* protect the select_cb_list using core lock */
 #define LWIP_SOCKET_SELECT_DECL_PROTECT(lev)
@@ -279,7 +279,7 @@ static volatile int select_cb_ctr;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
-#endif /* LWIP_SOCKET_SELECT */
+#endif /* LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL */
 
 #define sock_set_errno(sk, e) do { \
   const int sockerr = (e); \
@@ -287,7 +287,7 @@ static struct lwip_select_cb *select_cb_list;
 } while (0)
 
 /* Forward declaration of some functions */
-#if LWIP_SOCKET_SELECT
+#if LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL
 static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
 #define DEFAULT_SOCKET_EVENTCB event_callback
 static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent, struct lwip_sock *sock);
@@ -1692,7 +1692,7 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
   return lwip_sendmsg(s, &msg, 0);
 }
 
-#if LWIP_SOCKET_SELECT
+#if LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL
 /* Add select_cb to select_cb_list. */
 static void
 lwip_link_select_cb(struct lwip_select_cb *select_cb)
@@ -1741,8 +1741,9 @@ lwip_unlink_select_cb(struct lwip_select_cb *select_cb)
 #endif
   LWIP_SOCKET_SELECT_UNPROTECT(lev);
 }
+#endif /* LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL */
 
-
+#if LWIP_SOCKET_SELECT
 /**
  * Go through the readset and writeset lists and see which socket of the sockets
  * set in the sets has events. On return, readset, writeset and exceptset have
@@ -1941,18 +1942,12 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
          to use local variables (unless we're running in MPU compatible
          mode). */
       API_SELECT_CB_VAR_DECLARE(select_cb);
-      API_SELECT_CB_VAR_ALLOC(select_cb, set_errno(ENOMEM); return -1);
+      API_SELECT_CB_VAR_ALLOC(select_cb, set_errno(ENOMEM); lwip_select_dec_sockets_used(maxfdp1, &used_sockets); return -1);
+      memset(&API_SELECT_CB_VAR_REF(select_cb), 0, sizeof(struct lwip_select_cb));
 
-      API_SELECT_CB_VAR_REF(select_cb).next = NULL;
-      API_SELECT_CB_VAR_REF(select_cb).prev = NULL;
       API_SELECT_CB_VAR_REF(select_cb).readset = readset;
       API_SELECT_CB_VAR_REF(select_cb).writeset = writeset;
       API_SELECT_CB_VAR_REF(select_cb).exceptset = exceptset;
-#if LWIP_SOCKET_POLL
-      API_SELECT_CB_VAR_REF(select_cb).poll_fds = NULL;
-      API_SELECT_CB_VAR_REF(select_cb).poll_nfds = 0;
-#endif
-      API_SELECT_CB_VAR_REF(select_cb).sem_signalled = 0;
 #if LWIP_NETCONN_SEM_PER_THREAD
       API_SELECT_CB_VAR_REF(select_cb).sem = LWIP_NETCONN_THREAD_SEM_GET();
 #else /* LWIP_NETCONN_SEM_PER_THREAD */
@@ -2095,9 +2090,9 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   }
   return nready;
 }
+#endif /* LWIP_SOCKET_SELECT */
 
 #if LWIP_SOCKET_POLL
-
 /** Options for the lwip_pollscan function. */
 enum lwip_pollscan_opts
 {
@@ -2260,7 +2255,6 @@ lwip_poll(struct pollfd *fds, nfds_t nfds, int timeout)
   u32_t waitres = 0;
   int nready;
   u32_t msectimeout;
-  struct lwip_select_cb select_cb;
 #if LWIP_NETCONN_SEM_PER_THREAD
   int waited = 0;
 #endif
@@ -2281,36 +2275,35 @@ lwip_poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
   /* If we don't have any current events, then suspend if we are supposed to */
   if (!nready) {
+    API_SELECT_CB_VAR_DECLARE(select_cb);
+
     if (timeout == 0) {
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_poll: no timeout, returning 0\n"));
       goto return_success;
     }
+    API_SELECT_CB_VAR_ALLOC(select_cb, set_errno(EAGAIN); lwip_poll_dec_sockets_used(fds, nfds); return -1);
+    memset(&API_SELECT_CB_VAR_REF(select_cb), 0, sizeof(struct lwip_select_cb));
 
     /* None ready: add our semaphore to list:
        We don't actually need any dynamic memory. Our entry on the
        list is only valid while we are in this function, so it's ok
        to use local variables. */
 
-    select_cb.next = NULL;
-    select_cb.prev = NULL;
-    select_cb.readset = NULL;
-    select_cb.writeset = NULL;
-    select_cb.exceptset = NULL;
-    select_cb.poll_fds = fds;
-    select_cb.poll_nfds = nfds;
-    select_cb.sem_signalled = 0;
+    API_SELECT_CB_VAR_REF(select_cb).poll_fds = fds;
+    API_SELECT_CB_VAR_REF(select_cb).poll_nfds = nfds;
 #if LWIP_NETCONN_SEM_PER_THREAD
-    select_cb.sem = LWIP_NETCONN_THREAD_SEM_GET();
+    API_SELECT_CB_VAR_REF(select_cb).sem = LWIP_NETCONN_THREAD_SEM_GET();
 #else /* LWIP_NETCONN_SEM_PER_THREAD */
-    if (sys_sem_new(&select_cb.sem, 0) != ERR_OK) {
+    if (sys_sem_new(&API_SELECT_CB_VAR_REF(select_cb).sem, 0) != ERR_OK) {
       /* failed to create semaphore */
-      set_errno(ENOMEM);
+      set_errno(EAGAIN);
       lwip_poll_dec_sockets_used(fds, nfds);
+      API_SELECT_CB_VAR_FREE(select_cb);
       return -1;
     }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-    lwip_link_select_cb(&select_cb);
+    lwip_link_select_cb(&API_SELECT_CB_VAR_REF(select_cb));
 
     /* Increase select_waiting for each socket we are interested in.
        Also, check for events again: there could have been events between
@@ -2327,7 +2320,7 @@ lwip_poll(struct pollfd *fds, nfds_t nfds, int timeout)
         LWIP_ASSERT("timeout > 0", timeout > 0);
         msectimeout = timeout;
       }
-      waitres = sys_arch_sem_wait(SELECT_SEM_PTR(select_cb.sem), msectimeout);
+      waitres = sys_arch_sem_wait(SELECT_SEM_PTR(API_SELECT_CB_VAR_REF(select_cb).sem), msectimeout);
 #if LWIP_NETCONN_SEM_PER_THREAD
       waited = 1;
 #endif
@@ -2337,16 +2330,17 @@ lwip_poll(struct pollfd *fds, nfds_t nfds, int timeout)
        and check which events occurred while we waited. */
     nready = lwip_pollscan(fds, nfds, LWIP_POLLSCAN_DEC_WAIT);
 
-    lwip_unlink_select_cb(&select_cb);
+    lwip_unlink_select_cb(&API_SELECT_CB_VAR_REF(select_cb));
 
 #if LWIP_NETCONN_SEM_PER_THREAD
     if (select_cb.sem_signalled && (!waited || (waitres == SYS_ARCH_TIMEOUT))) {
       /* don't leave the thread-local semaphore signalled */
-      sys_arch_sem_wait(select_cb.sem, 1);
+      sys_arch_sem_wait(API_SELECT_CB_VAR_REF(select_cb).sem, 1);
     }
 #else /* LWIP_NETCONN_SEM_PER_THREAD */
-    sys_sem_free(&select_cb.sem);
+    sys_sem_free(&API_SELECT_CB_VAR_REF(select_cb).sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
+    API_SELECT_CB_VAR_FREE(select_cb);
 
     if (nready < 0) {
       /* This happens when a socket got closed while waiting */
@@ -2396,9 +2390,9 @@ lwip_poll_should_wake(const struct lwip_select_cb *scb, int fd, struct lwip_sock
   }
   return 0;
 }
-
 #endif /* LWIP_SOCKET_POLL */
 
+#if LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL
 /**
  * Callback registered in the netconn layer for each socket-netconn.
  * Processes recvevent (data available) and wakes up tasks waiting for select.
@@ -2528,9 +2522,16 @@ again:
       int do_signal = 0;
 #if LWIP_SOCKET_POLL
       if (scb->poll_fds != NULL) {
+        LWIP_UNUSED_ARG(has_recvevent);
+        LWIP_UNUSED_ARG(has_sendevent);
+        LWIP_UNUSED_ARG(has_errevent);
         do_signal = lwip_poll_should_wake(scb, s, sock);
-      } else
+      }
 #endif /* LWIP_SOCKET_POLL */
+#if LWIP_SOCKET_SELECT && LWIP_SOCKET_POLL
+      else
+#endif /* LWIP_SOCKET_SELECT && LWIP_SOCKET_POLL */
+#if LWIP_SOCKET_SELECT
       {
         LWIP_UNUSED_ARG(sock);
         /* Test this select call for our socket */
@@ -2550,6 +2551,7 @@ again:
           }
         }
       }
+#endif /* LWIP_SOCKET_SELECT */
       if (do_signal) {
         scb->sem_signalled = 1;
         /* For !LWIP_TCPIP_CORE_LOCKING, we don't call SYS_ARCH_UNPROTECT() before signaling
@@ -2575,7 +2577,7 @@ again:
   SYS_ARCH_UNPROTECT(lev);
 #endif
 }
-#endif /* LWIP_SOCKET_SELECT */
+#endif /* LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL */
 
 /**
  * Close one end of a full-duplex connection.
