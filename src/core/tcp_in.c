@@ -1097,12 +1097,6 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
 static void
 tcp_receive(struct tcp_pcb *pcb)
 {
-#if TCP_QUEUE_OOSEQ
-  struct tcp_seg *next;
-#endif
-#if TCP_QUEUE_OOSEQ
-  struct tcp_seg *prev, *cseg;
-#endif /* TCP_QUEUE_OOSEQ */
   s16_t m;
   u32_t right_wnd_edge;
   int found_dupack = 0;
@@ -1462,21 +1456,22 @@ tcp_receive(struct tcp_pcb *pcb)
               tcp_seg_free(old_ooseq);
             }
           } else {
-            next = pcb->ooseq;
+            struct tcp_seg *next = pcb->ooseq;
             /* Remove all segments on ooseq that are covered by inseg already.
              * FIN is copied from ooseq to inseg if present. */
             while (next &&
                    TCP_SEQ_GEQ(seqno + tcplen,
                                next->tcphdr->seqno + next->len)) {
+              struct tcp_seg *tmp;
               /* inseg cannot have FIN here (already processed above) */
               if ((TCPH_FLAGS(next->tcphdr) & TCP_FIN) != 0 &&
                   (TCPH_FLAGS(inseg.tcphdr) & TCP_SYN) == 0) {
                 TCPH_SET_FLAG(inseg.tcphdr, TCP_FIN);
                 tcplen = TCP_TCPLEN(&inseg);
               }
-              prev = next;
+              tmp = next;
               next = next->next;
-              tcp_seg_free(prev);
+              tcp_seg_free(tmp);
             }
             /* Now trim right side of inseg if it overlaps with the first
              * segment on ooseq */
@@ -1533,7 +1528,7 @@ tcp_receive(struct tcp_pcb *pcb)
         while (pcb->ooseq != NULL &&
                pcb->ooseq->tcphdr->seqno == pcb->rcv_nxt) {
 
-          cseg = pcb->ooseq;
+          struct tcp_seg *cseg = pcb->ooseq;
           seqno = pcb->ooseq->tcphdr->seqno;
 
           pcb->rcv_nxt += TCP_TCPLEN(cseg);
@@ -1634,7 +1629,7 @@ tcp_receive(struct tcp_pcb *pcb)
              It may start before the newly received segment (possibly adjusted below). */
           u32_t sackbeg = TCP_SEQ_LT(seqno, pcb->ooseq->tcphdr->seqno) ? seqno : pcb->ooseq->tcphdr->seqno;
 #endif /* LWIP_TCP_SACK_OUT */
-          prev = NULL;
+          struct tcp_seg *next, *prev = NULL;
           for (next = pcb->ooseq; next != NULL; next = next->next) {
             if (seqno == next->tcphdr->seqno) {
               /* The sequence number of the incoming segment is the
@@ -1645,7 +1640,7 @@ tcp_receive(struct tcp_pcb *pcb)
                 /* The incoming segment is larger than the old
                    segment. We replace some segments with the new
                    one. */
-                cseg = tcp_seg_copy(&inseg);
+                struct tcp_seg *cseg = tcp_seg_copy(&inseg);
                 if (cseg != NULL) {
                   if (prev != NULL) {
                     prev->next = cseg;
@@ -1668,7 +1663,7 @@ tcp_receive(struct tcp_pcb *pcb)
                      than the sequence number of the first segment on the
                      queue. We put the incoming segment first on the
                      queue. */
-                  cseg = tcp_seg_copy(&inseg);
+                  struct tcp_seg *cseg = tcp_seg_copy(&inseg);
                   if (cseg != NULL) {
                     pcb->ooseq = cseg;
                     tcp_oos_insert_segment(cseg, next);
@@ -1684,7 +1679,7 @@ tcp_receive(struct tcp_pcb *pcb)
                      the next segment on ->ooseq. We trim trim the previous
                      segment, delete next segments that included in received segment
                      and trim received, if needed. */
-                  cseg = tcp_seg_copy(&inseg);
+                  struct tcp_seg *cseg = tcp_seg_copy(&inseg);
                   if (cseg != NULL) {
                     if (TCP_SEQ_GT(prev->tcphdr->seqno + prev->len, seqno)) {
                       /* We need to trim the prev segment. */
@@ -1783,7 +1778,7 @@ tcp_receive(struct tcp_pcb *pcb)
              and throw away everything above that limit. */
           u32_t ooseq_blen = 0;
           u16_t ooseq_qlen = 0;
-          prev = NULL;
+          struct tcp_seg *next, *prev = NULL;
           for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
             struct pbuf *p = next->p;
 #if TCP_OOSEQ_MAX_BYTES
