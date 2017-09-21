@@ -1097,7 +1097,7 @@ tcp_free_acked_segments(struct tcp_pcb *pcb, struct tcp_seg *seg_list, const cha
 static void
 tcp_receive(struct tcp_pcb *pcb)
 {
-#if TCP_QUEUE_OOSEQ || TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
+#if TCP_QUEUE_OOSEQ
   struct tcp_seg *next;
 #endif
 #if TCP_QUEUE_OOSEQ
@@ -1106,10 +1106,6 @@ tcp_receive(struct tcp_pcb *pcb)
   s16_t m;
   u32_t right_wnd_edge;
   int found_dupack = 0;
-#if TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
-  u32_t ooseq_blen;
-  u16_t ooseq_qlen;
-#endif /* TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS */
 
   LWIP_ASSERT("tcp_receive: wrong state", pcb->state >= ESTABLISHED);
 
@@ -1782,33 +1778,35 @@ tcp_receive(struct tcp_pcb *pcb)
 #endif /* LWIP_TCP_SACK_OUT */
         }
 #if TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
-        /* Check that the data on ooseq doesn't exceed one of the limits
-           and throw away everything above that limit. */
-        ooseq_blen = 0;
-        ooseq_qlen = 0;
-        prev = NULL;
-        for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
-          struct pbuf *p = next->p;
-          ooseq_blen += p->tot_len;
-          ooseq_qlen += pbuf_clen(p);
-          if ((ooseq_blen > TCP_OOSEQ_MAX_BYTES) ||
-              (ooseq_qlen > TCP_OOSEQ_MAX_PBUFS)) {
+        {
+          /* Check that the data on ooseq doesn't exceed one of the limits
+             and throw away everything above that limit. */
+          u32_t ooseq_blen = 0;
+          u16_t ooseq_qlen = 0;
+          prev = NULL;
+          for (next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
+            struct pbuf *p = next->p;
+            ooseq_blen += p->tot_len;
+            ooseq_qlen += pbuf_clen(p);
+            if ((ooseq_blen > TCP_OOSEQ_MAX_BYTES) ||
+                (ooseq_qlen > TCP_OOSEQ_MAX_PBUFS)) {
 #if LWIP_TCP_SACK_OUT
-            if (pcb->flags & TF_SACK) {
-              /* Let's remove all SACKs from next's seqno up. */
-              tcp_remove_sacks_gt(pcb, next->tcphdr->seqno);
-            }
+              if (pcb->flags & TF_SACK) {
+                /* Let's remove all SACKs from next's seqno up. */
+                tcp_remove_sacks_gt(pcb, next->tcphdr->seqno);
+              }
 #endif /* LWIP_TCP_SACK_OUT */
-            /* too much ooseq data, dump this and everything after it */
-            tcp_segs_free(next);
-            if (prev == NULL) {
-              /* first ooseq segment is too much, dump the whole queue */
-              pcb->ooseq = NULL;
-            } else {
-              /* just dump 'next' and everything after it */
-              prev->next = NULL;
+              /* too much ooseq data, dump this and everything after it */
+              tcp_segs_free(next);
+              if (prev == NULL) {
+                /* first ooseq segment is too much, dump the whole queue */
+                pcb->ooseq = NULL;
+              } else {
+                /* just dump 'next' and everything after it */
+                prev->next = NULL;
+              }
+              break;
             }
-            break;
           }
         }
 #endif /* TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS */
