@@ -1692,6 +1692,7 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
   return lwip_sendmsg(s, &msg, 0);
 }
 
+#if LWIP_SOCKET_SELECT
 /* Add select_cb to select_cb_list. */
 static void
 lwip_link_select_cb(struct lwip_select_cb *select_cb)
@@ -1741,7 +1742,7 @@ lwip_unlink_select_cb(struct lwip_select_cb *select_cb)
   LWIP_SOCKET_SELECT_UNPROTECT(lev);
 }
 
-#if LWIP_SOCKET_SELECT
+
 /**
  * Go through the readset and writeset lists and see which socket of the sockets
  * set in the sets has events. On return, readset, writeset and exceptset have
