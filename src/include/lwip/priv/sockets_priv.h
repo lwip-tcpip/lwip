@@ -133,6 +133,8 @@ struct lwip_setgetsockopt_data {
 
 struct lwip_sock* lwip_socket_dbg_get_socket(int fd);
 
+#if LWIP_SOCKET_SELECT
+
 #if LWIP_NETCONN_SEM_PER_THREAD
 #define SELECT_SEM_T        sys_sem_t*
 #define SELECT_SEM_PTR(sem) (sem)
@@ -158,6 +160,7 @@ struct lwip_select_cb {
   /** semaphore to wake up a task waiting for select */
   SELECT_SEM_T sem;
 };
+#endif /* LWIP_SOCKET_SELECT */
 
 #endif /* LWIP_SOCKET */
 
