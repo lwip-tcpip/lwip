@@ -545,7 +545,7 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #if LWIP_SOCKET_POLL
 #define lwip_poll         poll
 #endif
-#define lwip_ioctlsocket  ioctl
+#define lwip_ioctl        ioctlsocket
 #define lwip_inet_ntop    inet_ntop
 #define lwip_inet_pton    inet_pton
 
@@ -558,7 +558,9 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #define lwip_close        close
 #define closesocket(s)    close(s)
 int fcntl(int s, int cmd, ...);
+#undef lwip_ioctl
 #define lwip_ioctl        ioctl
+#define ioctlsocket       ioctl
 #endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
 #endif /* LWIP_COMPAT_SOCKETS == 2 */
 
