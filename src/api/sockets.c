@@ -1692,6 +1692,55 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
   return lwip_sendmsg(s, &msg, 0);
 }
 
+/* Add select_cb to select_cb_list. */
+static void
+lwip_link_select_cb(struct lwip_select_cb *select_cb)
+{
+  LWIP_SOCKET_SELECT_DECL_PROTECT(lev);
+
+  /* Protect the select_cb_list */
+  LWIP_SOCKET_SELECT_PROTECT(lev);
+
+  /* Put this select_cb on top of list */
+  select_cb->next = select_cb_list;
+  if (select_cb_list != NULL) {
+    select_cb_list->prev = select_cb;
+  }
+  select_cb_list = select_cb;
+#if !LWIP_TCPIP_CORE_LOCKING
+  /* Increasing this counter tells select_check_waiters that the list has changed. */
+  select_cb_ctr++;
+#endif
+
+  /* Now we can safely unprotect */
+  LWIP_SOCKET_SELECT_UNPROTECT(lev);
+}
+
+/* Remove select_cb from select_cb_list. */
+static void
+lwip_unlink_select_cb(struct lwip_select_cb *select_cb)
+{
+  LWIP_SOCKET_SELECT_DECL_PROTECT(lev);
+
+  /* Take us off the list */
+  LWIP_SOCKET_SELECT_PROTECT(lev);
+  if (select_cb->next != NULL) {
+    select_cb->next->prev = select_cb->prev;
+  }
+  if (select_cb_list == select_cb) {
+    LWIP_ASSERT("select_cb->prev == NULL", select_cb->prev == NULL);
+    select_cb_list = select_cb->next;
+  } else {
+    LWIP_ASSERT("select_cb->prev != NULL", select_cb->prev != NULL);
+    select_cb->prev->next = select_cb->next;
+  }
+#if !LWIP_TCPIP_CORE_LOCKING
+  /* Increasing this counter tells select_check_waiters that the list has changed. */
+  select_cb_ctr++;
+#endif
+  LWIP_SOCKET_SELECT_UNPROTECT(lev);
+}
+
 #if LWIP_SOCKET_SELECT
 /**
  * Go through the readset and writeset lists and see which socket of the sockets
@@ -1853,7 +1902,6 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   fd_set used_sockets;
 #endif
   SYS_ARCH_DECL_PROTECT(lev);
-  LWIP_SOCKET_SELECT_DECL_PROTECT(lev2);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
                               maxfdp1, (void *)readset, (void *) writeset, (void *) exceptset,
@@ -1912,22 +1960,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-      /* Protect the select_cb_list */
-      LWIP_SOCKET_SELECT_PROTECT(lev2);
-
-      /* Put this select_cb on top of list */
-      API_SELECT_CB_VAR_REF(select_cb).next = select_cb_list;
-      if (select_cb_list != NULL) {
-        select_cb_list->prev = &API_SELECT_CB_VAR_REF(select_cb);
-      }
-      select_cb_list = &API_SELECT_CB_VAR_REF(select_cb);
-#if !LWIP_TCPIP_CORE_LOCKING
-      /* Increasing this counter tells select_check_waiters that the list has changed. */
-      select_cb_ctr++;
-#endif
-
-      /* Now we can safely unprotect */
-      LWIP_SOCKET_SELECT_UNPROTECT(lev2);
+      lwip_link_select_cb(&API_SELECT_CB_VAR_REF(select_cb));
 
       /* Increase select_waiting for each socket we are interested in */
       maxfdp2 = maxfdp1;
@@ -2012,23 +2045,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           SYS_ARCH_UNPROTECT(lev);
         }
       }
-      /* Take us off the list */
-      LWIP_SOCKET_SELECT_PROTECT(lev2);
-      if (API_SELECT_CB_VAR_REF(select_cb).next != NULL) {
-        API_SELECT_CB_VAR_REF(select_cb).next->prev = API_SELECT_CB_VAR_REF(select_cb).prev;
-      }
-      if (select_cb_list == &API_SELECT_CB_VAR_REF(select_cb)) {
-        LWIP_ASSERT("select_cb.prev == NULL", API_SELECT_CB_VAR_REF(select_cb).prev == NULL);
-        select_cb_list = API_SELECT_CB_VAR_REF(select_cb).next;
-      } else {
-        LWIP_ASSERT("select_cb.prev != NULL", API_SELECT_CB_VAR_REF(select_cb).prev != NULL);
-        API_SELECT_CB_VAR_REF(select_cb).prev->next = API_SELECT_CB_VAR_REF(select_cb).next;
-      }
-#if !LWIP_TCPIP_CORE_LOCKING
-      /* Increasing this counter tells select_check_waiters that the list has changed. */
-      select_cb_ctr++;
-#endif
-      LWIP_SOCKET_SELECT_UNPROTECT(lev2);
+
+      lwip_unlink_select_cb(&API_SELECT_CB_VAR_REF(select_cb));
 
 #if LWIP_NETCONN_SEM_PER_THREAD
       if (API_SELECT_CB_VAR_REF(select_cb).sem_signalled && (!waited || (waitres == SYS_ARCH_TIMEOUT))) {
