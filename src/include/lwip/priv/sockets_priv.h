@@ -155,6 +155,12 @@ struct lwip_select_cb {
   fd_set *writeset;
   /** unimplemented: exceptset passed to select */
   fd_set *exceptset;
+#if LWIP_SOCKET_POLL
+  /** fds passed to poll; NULL if select */
+  struct pollfd *poll_fds;
+  /** nfds passed to poll; 0 if select */
+  nfds_t poll_nfds;
+#endif
   /** don't signal the same semaphore twice: set to 1 when signalled */
   int sem_signalled;
   /** semaphore to wake up a task waiting for select */

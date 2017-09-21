@@ -486,6 +486,23 @@ typedef struct fd_set
 #error "external FD_SETSIZE too small for number of sockets"
 #endif /* FD_SET */
 
+/* poll-related defines and types */
+/* @todo: find a better way to guard the definition of these defines and types if already defined */
+#if !defined(POLLIN) && !defined(POLLOUT)
+#define POLLIN   1
+#define POLLOUT  2
+#define POLLERR  4
+#define POLLNVAL 8
+/* No support for POLLPRI, POLLHUP, POLLMSG, POLLRDBAND, POLLWRBAND. */
+typedef int nfds_t;
+struct pollfd
+{
+  int fd;
+  short events;
+  short revents;
+};
+#endif
+
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
  * by your system, set this to 0 and include <sys/time.h> in cc.h */
 #ifndef LWIP_TIMEVAL_PRIVATE
@@ -524,6 +541,9 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #define lwip_socket       socket
 #if LWIP_SOCKET_SELECT
 #define lwip_select       select
+#endif
+#if LWIP_SOCKET_POLL
+#define lwip_poll         poll
 #endif
 #define lwip_ioctlsocket  ioctl
 #define lwip_inet_ntop    inet_ntop
@@ -569,6 +589,9 @@ ssize_t lwip_writev(int s, const struct iovec *iov, int iovcnt);
 int lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                 struct timeval *timeout);
 #endif
+#if LWIP_SOCKET_POLL
+int lwip_poll(struct pollfd *fds, nfds_t nfds, int timeout);
+#endif
 int lwip_ioctl(int s, long cmd, void *argp);
 int lwip_fcntl(int s, int cmd, int val);
 const char *lwip_inet_ntop(int af, const void *src, char *dst, socklen_t size);
@@ -613,6 +636,10 @@ int lwip_inet_pton(int af, const char *src, void *dst);
 #if LWIP_SOCKET_SELECT
 /** @ingroup socket */
 #define select(maxfdp1,readset,writeset,exceptset,timeout)     lwip_select(maxfdp1,readset,writeset,exceptset,timeout)
+#endif
+#if LWIP_SOCKET_POLL
+/** @ingroup socket */
+#define poll(fds,nfds,timeout)                    lwip_poll(fds,nfds,timeout)
 #endif
 /** @ingroup socket */
 #define ioctlsocket(s,cmd,argp)                   lwip_ioctl(s,cmd,argp)

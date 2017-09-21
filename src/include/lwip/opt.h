@@ -2016,6 +2016,14 @@
 #if !defined LWIP_SOCKET_SELECT || defined __DOXYGEN__
 #define LWIP_SOCKET_SELECT              1
 #endif
+
+/**
+ * LWIP_SOCKET_POLL==1 (default): enable poll() for sockets (including
+ * struct pollfd, nfds_t, and constants)
+ */
+#if !defined LWIP_SOCKET_POLL || defined __DOXYGEN__
+#define LWIP_SOCKET_POLL                1
+#endif
 /**
  * @}
  */
