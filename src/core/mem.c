@@ -66,6 +66,11 @@
 #include <stdlib.h> /* for malloc()/free() */
 #endif
 
+/* This is overridable for tests only... */
+#ifndef LWIP_MEM_ILLEGAL_FREE
+#define LWIP_MEM_ILLEGAL_FREE(msg)         LWIP_ASSERT(msg, 0)
+#endif
+
 #define MEM_STATS_INC_LOCKED(x)         SYS_ARCH_LOCKED(MEM_STATS_INC(x))
 #define MEM_STATS_INC_USED_LOCKED(x, y) SYS_ARCH_LOCKED(MEM_STATS_INC_USED(x, y))
 #define MEM_STATS_DEC_USED_LOCKED(x, y) SYS_ARCH_LOCKED(MEM_STATS_DEC_USED(x, y))
@@ -429,12 +434,20 @@ mem_free(void *rmem)
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("mem_free(p == NULL) was called.\n"));
     return;
   }
-  LWIP_ASSERT("mem_free: sanity check alignment", (((mem_ptr_t)rmem) & (MEM_ALIGNMENT - 1)) == 0);
+  if ((((mem_ptr_t)rmem) & (MEM_ALIGNMENT - 1)) != 0) {
+    LWIP_MEM_ILLEGAL_FREE("mem_free: sanity check alignment");
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: sanity check alignment\n"));
+    /* protect mem stats from concurrent access */
+    MEM_STATS_INC_LOCKED(illegal);
+    return;
+  }
 
-  LWIP_ASSERT("mem_free: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
-              (u8_t *)rmem < (u8_t *)ram_end);
+  /* Get the corresponding struct mem: */
+  /* cast through void* to get rid of alignment warnings */
+  mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
 
-  if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
+  if ((u8_t *)mem < ram || (u8_t *)rmem + MIN_SIZE_ALIGNED > (u8_t *)ram_end) {
+    LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory");
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory\n"));
     /* protect mem stats from concurrent access */
     MEM_STATS_INC_LOCKED(illegal);
@@ -442,11 +455,15 @@ mem_free(void *rmem)
   }
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
-  /* Get the corresponding struct mem ... */
-  /* cast through void* to get rid of alignment warnings */
-  mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
-  /* ... which has to be in a used state ... */
-  LWIP_ASSERT("mem_free: mem->used", mem->used);
+  /* mem has to be in a used state ... */
+  if (!mem->used) {
+    LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: double free");
+    LWIP_MEM_FREE_UNPROTECT();
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: double free?\n"));
+    /* protect mem stats from concurrent access */
+    MEM_STATS_INC_LOCKED(illegal);
+    return;
+  }
   /* ... and is now unused. */
   mem->used = 0;
 
