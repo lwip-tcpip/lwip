@@ -121,6 +121,7 @@ START_TEST(test_mem_invalid_free)
 
   ptr = (u8_t *)mem_malloc(1);
   fail_unless(ptr != NULL);
+  fail_unless(lwip_stats.mem.used != 0);
 
   ptr_low = ptr - 0x10;
   mem_free(ptr_low);
@@ -140,20 +141,71 @@ END_TEST
 
 START_TEST(test_mem_double_free)
 {
-  u8_t *ptr;
+  u8_t *ptr1b, *ptr1, *ptr2, *ptr3;
   LWIP_UNUSED_ARG(_i);
 
   fail_unless(lwip_stats.mem.used == 0);
+  fail_unless(lwip_stats.mem.illegal == 0);
 
-  ptr = (u8_t *)mem_malloc(1);
-  fail_unless(ptr != NULL);
+  ptr1 = (u8_t *)mem_malloc(1);
+  fail_unless(ptr1 != NULL);
+  fail_unless(lwip_stats.mem.used != 0);
 
-  mem_free(ptr);
+  ptr2 = (u8_t *)mem_malloc(1);
+  fail_unless(ptr2 != NULL);
+  fail_unless(lwip_stats.mem.used != 0);
+
+  ptr3 = (u8_t *)mem_malloc(1);
+  fail_unless(ptr3 != NULL);
+  fail_unless(lwip_stats.mem.used != 0);
+
+  /* free the middle mem */
+  mem_free(ptr2);
+  fail_unless(lwip_stats.mem.illegal == 0);
+
+  /* double-free of middle mem: should fail */
+  mem_free(ptr2);
+  fail_unless(lwip_stats.mem.illegal == 1);
+  lwip_stats.mem.illegal = 0;
+
+  /* free upper memory and try again */
+  mem_free(ptr3);
+  fail_unless(lwip_stats.mem.illegal == 0);
+
+  mem_free(ptr2);
+  fail_unless(lwip_stats.mem.illegal == 1);
+  lwip_stats.mem.illegal = 0;
+
+  /* free lower memory and try again */
+  mem_free(ptr1);
   fail_unless(lwip_stats.mem.illegal == 0);
   fail_unless(lwip_stats.mem.used == 0);
 
-  mem_free(ptr);
+  mem_free(ptr2);
   fail_unless(lwip_stats.mem.illegal == 1);
+  fail_unless(lwip_stats.mem.used == 0);
+  lwip_stats.mem.illegal = 0;
+
+  /* reallocate lowest memory, now overlapping already freed ptr2 */
+#ifndef MIN_SIZE
+#define MIN_SIZE 12
+#endif
+  ptr1b = (u8_t *)mem_malloc(MIN_SIZE * 2);
+  fail_unless(ptr1b != NULL);
+  fail_unless(lwip_stats.mem.used != 0);
+
+  mem_free(ptr2);
+  fail_unless(lwip_stats.mem.illegal == 1);
+  lwip_stats.mem.illegal = 0;
+
+  memset(ptr1b, 1, MIN_SIZE * 2);
+
+  mem_free(ptr2);
+  fail_unless(lwip_stats.mem.illegal == 1);
+  lwip_stats.mem.illegal = 0;
+
+  mem_free(ptr1b);
+  fail_unless(lwip_stats.mem.illegal == 0);
   fail_unless(lwip_stats.mem.used == 0);
 }
 END_TEST

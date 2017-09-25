@@ -418,6 +418,25 @@ mem_init(void)
   }
 }
 
+/* Check if a struct mem is correctly linked.
+ * If not, double-free is a possible reason.
+ */
+static int
+mem_link_valid(struct mem *mem)
+{
+  struct mem *nmem, *pmem;
+  mem_size_t rmem_idx;
+  rmem_idx = (mem_size_t)((u8_t *)mem - ram);
+  nmem = (struct mem *)(void *)&ram[mem->next];
+  pmem = (struct mem *)(void *)&ram[mem->prev];
+  if ((mem->next > MEM_SIZE_ALIGNED) || (mem->prev > MEM_SIZE_ALIGNED) ||
+      ((mem->prev != rmem_idx) && (pmem->next != rmem_idx)) ||
+      ((nmem != ram_end) && (nmem->prev != rmem_idx))) {
+    return 0;
+  }
+  return 1;
+}
+
 /**
  * Put a struct mem back on the heap
  *
@@ -455,7 +474,7 @@ mem_free(void *rmem)
   }
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
-  /* mem has to be in a used state ... */
+  /* mem has to be in a used state */
   if (!mem->used) {
     LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: double free");
     LWIP_MEM_FREE_UNPROTECT();
@@ -464,7 +483,17 @@ mem_free(void *rmem)
     MEM_STATS_INC_LOCKED(illegal);
     return;
   }
-  /* ... and is now unused. */
+
+  if (!mem_link_valid(mem)) {
+    LWIP_MEM_ILLEGAL_FREE("mem_free: illegal memory: non-linked: double free");
+    LWIP_MEM_FREE_UNPROTECT();
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_free: illegal memory: non-linked: double free?\n"));
+    /* protect mem stats from concurrent access */
+    MEM_STATS_INC_LOCKED(illegal);
+    return;
+  }
+
+  /* mem is now unused. */
   mem->used = 0;
 
   if (mem < lfree) {
