@@ -380,7 +380,9 @@ plug_holes(struct mem *mem)
       lfree = mem;
     }
     mem->next = nmem->next;
-    ptr_to_mem(nmem->next)->prev = mem_to_ptr(mem);
+    if (nmem->next != MEM_SIZE_ALIGNED) {
+      ptr_to_mem(nmem->next)->prev = mem_to_ptr(mem);
+    }
   }
 
   /* plug hole backward */
@@ -391,7 +393,9 @@ plug_holes(struct mem *mem)
       lfree = pmem;
     }
     pmem->next = mem->next;
-    ptr_to_mem(mem->next)->prev = mem_to_ptr(pmem);
+    if (nmem->next != MEM_SIZE_ALIGNED) {
+      ptr_to_mem(mem->next)->prev = mem_to_ptr(pmem);
+    }
   }
 }
 
@@ -447,6 +451,50 @@ mem_link_valid(struct mem *mem)
   }
   return 1;
 }
+
+#if MEM_SANITY_CHECK
+void
+mem_sanity(void)
+{
+  struct mem *mem;
+  u8_t last_used;
+
+  /* begin with first element here */
+  mem = (struct mem *)ram;
+  LWIP_ASSERT("heap element used valid", (mem->used == 0) || (mem->used == 1));
+  last_used = mem->used;
+  LWIP_ASSERT("heap element prev ptr valid", mem->prev == 0);
+  LWIP_ASSERT("heap element next ptr valid", mem->next <= MEM_SIZE_ALIGNED);
+  LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next) == ptr_to_mem(mem->next)));
+
+  /* check all elements before the end of the heap */
+  for (mem = ptr_to_mem(mem->next);
+       ((u8_t *)mem > ram) && (mem < ram_end);
+       mem = ptr_to_mem(mem->next)) {
+    LWIP_ASSERT("heap element aligned", LWIP_MEM_ALIGN(mem) == mem);
+    LWIP_ASSERT("heap element prev ptr valid", mem->prev <= MEM_SIZE_ALIGNED);
+    LWIP_ASSERT("heap element next ptr valid", mem->next <= MEM_SIZE_ALIGNED);
+    LWIP_ASSERT("heap element prev ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->prev) == ptr_to_mem(mem->prev)));
+    LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next) == ptr_to_mem(mem->next)));
+
+    if (last_used == 0) {
+      /* 2 unused elements in a row? */
+      LWIP_ASSERT("heap element unused?", mem->used == 1);
+    } else {
+      LWIP_ASSERT("heap element unused member", (mem->used == 0) || (mem->used == 1));
+    }
+
+    LWIP_ASSERT("heap element link valid", mem_link_valid(mem));
+
+    /* used/unused altering */
+    last_used = mem->used;
+  }
+  LWIP_ASSERT("heap end ptr sanity", mem == ptr_to_mem(MEM_SIZE_ALIGNED));
+  LWIP_ASSERT("heap element used valid", mem->used == 1);
+  LWIP_ASSERT("heap element prev ptr valid", mem->prev == MEM_SIZE_ALIGNED);
+  LWIP_ASSERT("heap element next ptr valid", mem->next == MEM_SIZE_ALIGNED);
+}
+#endif /* MEM_SANITY_CHECK */
 
 /**
  * Put a struct mem back on the heap
@@ -516,6 +564,9 @@ mem_free(void *rmem)
 
   /* finally, see if prev or next are free also */
   plug_holes(mem);
+#if MEM_SANITY_CHECK
+  mem_sanity();
+#endif /* MEM_SANITY_CHECK */
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
   mem_free_count = 1;
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
