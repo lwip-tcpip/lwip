@@ -261,7 +261,7 @@ free_and_return:
  * @param p the packet to send. pbuf layer must be @ref PBUF_LINK.
  * @param src the source MAC address to be copied into the ethernet header
  * @param dst the destination MAC address to be copied into the ethernet header
- * @param eth_type ethernet type (@ref eth_type)
+ * @param eth_type ethernet type (@ref lwip_ieee_eth_type)
  * @return ERR_OK if the packet was sent, any other err_t on failure
  */
 err_t

@@ -2897,7 +2897,7 @@
  * - option: option value (u8_t)
  * - len: option data length (u8_t)
  * - pbuf: pbuf where option data is contained
- * - option_value_offset: offset in pbuf where option *data* begins
+ * - option_value_offset: offset in pbuf where option data begins
  *
  * A nice way to get the option contents is pbuf_get_contiguous():
  *  u8_t buf[32];
