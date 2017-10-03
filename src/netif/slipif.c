@@ -88,8 +88,8 @@
 #endif
 
 enum slipif_recv_state {
-    SLIP_RECV_NORMAL,
-    SLIP_RECV_ESCAPE
+  SLIP_RECV_NORMAL,
+  SLIP_RECV_ESCAPE
 };
 
 struct slipif_priv {
@@ -135,20 +135,20 @@ slipif_output(struct netif *netif, struct pbuf *p)
     for (i = 0; i < q->len; i++) {
       c = ((u8_t *)q->payload)[i];
       switch (c) {
-      case SLIP_END:
-        /* need to escape this byte (0xC0 -> 0xDB, 0xDC) */
-        sio_send(SLIP_ESC, priv->sd);
-        sio_send(SLIP_ESC_END, priv->sd);
-        break;
-      case SLIP_ESC:
-        /* need to escape this byte (0xDB -> 0xDB, 0xDD) */
-        sio_send(SLIP_ESC, priv->sd);
-        sio_send(SLIP_ESC_ESC, priv->sd);
-        break;
-      default:
-        /* normal byte - no need for escaping */
-        sio_send(c, priv->sd);
-        break;
+        case SLIP_END:
+          /* need to escape this byte (0xC0 -> 0xDB, 0xDC) */
+          sio_send(SLIP_ESC, priv->sd);
+          sio_send(SLIP_ESC_END, priv->sd);
+          break;
+        case SLIP_ESC:
+          /* need to escape this byte (0xDB -> 0xDB, 0xDD) */
+          sio_send(SLIP_ESC, priv->sd);
+          sio_send(SLIP_ESC_ESC, priv->sd);
+          break;
+        default:
+          /* normal byte - no need for escaping */
+          sio_send(c, priv->sd);
+          break;
       }
     }
   }
@@ -203,7 +203,7 @@ slipif_output_v6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr)
  *        return a complete packet, NULL is returned before - used for polling)
  * @return The IP packet when SLIP_END is received
  */
-static struct pbuf*
+static struct pbuf *
 slipif_rxbyte(struct netif *netif, u8_t c)
 {
   struct slipif_priv *priv;
@@ -215,47 +215,47 @@ slipif_rxbyte(struct netif *netif, u8_t c)
   priv = (struct slipif_priv *)netif->state;
 
   switch (priv->state) {
-  case SLIP_RECV_NORMAL:
-    switch (c) {
-    case SLIP_END:
-      if (priv->recved > 0) {
-        /* Received whole packet. */
-        /* Trim the pbuf to the size of the received packet. */
-        pbuf_realloc(priv->q, priv->recved);
+    case SLIP_RECV_NORMAL:
+      switch (c) {
+        case SLIP_END:
+          if (priv->recved > 0) {
+            /* Received whole packet. */
+            /* Trim the pbuf to the size of the received packet. */
+            pbuf_realloc(priv->q, priv->recved);
 
-        LINK_STATS_INC(link.recv);
+            LINK_STATS_INC(link.recv);
 
-        LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
-        t = priv->q;
-        priv->p = priv->q = NULL;
-        priv->i = priv->recved = 0;
-        return t;
+            LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet (%"U16_F" bytes)\n", priv->recved));
+            t = priv->q;
+            priv->p = priv->q = NULL;
+            priv->i = priv->recved = 0;
+            return t;
+          }
+          return NULL;
+        case SLIP_ESC:
+          priv->state = SLIP_RECV_ESCAPE;
+          return NULL;
+        default:
+          break;
+      } /* end switch (c) */
+      break;
+    case SLIP_RECV_ESCAPE:
+      /* un-escape END or ESC bytes, leave other bytes
+         (although that would be a protocol error) */
+      switch (c) {
+        case SLIP_ESC_END:
+          c = SLIP_END;
+          break;
+        case SLIP_ESC_ESC:
+          c = SLIP_ESC;
+          break;
+        default:
+          break;
       }
-      return NULL;
-    case SLIP_ESC:
-      priv->state = SLIP_RECV_ESCAPE;
-      return NULL;
-    default:
-      break;
-    } /* end switch (c) */
-    break;
-  case SLIP_RECV_ESCAPE:
-    /* un-escape END or ESC bytes, leave other bytes
-       (although that would be a protocol error) */
-    switch (c) {
-    case SLIP_ESC_END:
-      c = SLIP_END;
-      break;
-    case SLIP_ESC_ESC:
-      c = SLIP_ESC;
+      priv->state = SLIP_RECV_NORMAL;
       break;
     default:
       break;
-    }
-    priv->state = SLIP_RECV_NORMAL;
-    break;
-  default:
-    break;
   } /* end switch (priv->state) */
 
   /* byte received, packet not yet completely received */
@@ -290,11 +290,11 @@ slipif_rxbyte(struct netif *netif, u8_t c)
       priv->i = 0;
       if (priv->p->next != NULL && priv->p->next->len > 0) {
         /* p is a chain, on to the next in the chain */
-          priv->p = priv->p->next;
+        priv->p = priv->p->next;
       } else {
         /* p is a single pbuf, set it to NULL so next time a new
          * pbuf is allocated */
-          priv->p = NULL;
+        priv->p = NULL;
       }
     }
   }
@@ -408,7 +408,7 @@ slipif_init(struct netif *netif)
 #if SLIP_USE_RX_THREAD
   /* Create a thread to poll the serial line. */
   sys_thread_new(SLIPIF_THREAD_NAME, slipif_loop_thread, netif,
-    SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO);
+                 SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO);
 #endif /* SLIP_USE_RX_THREAD */
   return ERR_OK;
 }

@@ -155,7 +155,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   signal that packet should be sent();
 
   MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p->tot_len);
-  if (((u8_t*)p->payload)[0] & 1) {
+  if (((u8_t *)p->payload)[0] & 1) {
     /* broadcast or multicast packet*/
     MIB2_STATS_NETIF_INC(netif, ifoutnucastpkts);
   } else {
@@ -221,7 +221,7 @@ low_level_input(struct netif *netif)
     acknowledge that packet has been read();
 
     MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
-    if (((u8_t*)p->payload)[0] & 1) {
+    if (((u8_t *)p->payload)[0] & 1) {
       /* broadcast or multicast packet*/
       MIB2_STATS_NETIF_INC(netif, ifinnucastpkts);
     } else {
@@ -326,7 +326,7 @@ ethernetif_init(struct netif *netif)
 #endif /* LWIP_IPV6 */
   netif->linkoutput = low_level_output;
 
-  ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
+  ethernetif->ethaddr = (struct eth_addr *) & (netif->hwaddr[0]);
 
   /* initialize the hardware */
   low_level_init(netif);
