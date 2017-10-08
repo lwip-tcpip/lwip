@@ -290,7 +290,7 @@ static struct lwip_select_cb *select_cb_list;
 #if LWIP_SOCKET_SELECT || LWIP_SOCKET_POLL
 static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
 #define DEFAULT_SOCKET_EVENTCB event_callback
-static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent, struct lwip_sock *sock);
+static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent);
 #else
 #define DEFAULT_SOCKET_EVENTCB NULL
 #endif
@@ -2261,6 +2261,8 @@ lwip_poll(struct pollfd *fds, nfds_t nfds, int timeout)
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_poll(%p, %d, %d)\n",
                   (void*)fds, (int)nfds, timeout));
+  LWIP_ERROR("lwip_poll: invalid fds", ((fds != NULL && nfds > 0) || (fds == NULL && nfds == 0)),
+             set_errno(EINVAL); return -1;);
 
   lwip_poll_inc_sockets_used(fds, nfds);
 
@@ -2367,7 +2369,7 @@ return_success:
  * lwip_poll.
  */
 static int
-lwip_poll_should_wake(const struct lwip_select_cb *scb, int fd, struct lwip_sock *sock)
+lwip_poll_should_wake(const struct lwip_select_cb *scb, int fd, int has_recvevent, int has_sendevent, int has_errevent)
 {
   nfds_t fdi;
   for (fdi = 0; fdi < scb->poll_nfds; fdi++) {
@@ -2376,13 +2378,13 @@ lwip_poll_should_wake(const struct lwip_select_cb *scb, int fd, struct lwip_sock
       /* Do not update pollfd->revents right here;
          that would be a data race because lwip_pollscan
          accesses revents without protecting. */
-      if (sock->rcvevent > 0 && (pollfd->events & POLLIN) != 0) {
+      if (has_recvevent && (pollfd->events & POLLIN) != 0) {
         return 1;
       }
-      if (sock->sendevent != 0 && (pollfd->events & POLLOUT) != 0) {
+      if (has_sendevent && (pollfd->events & POLLOUT) != 0) {
         return 1;
       }
-      if (sock->errevent != 0) {
+      if (has_errevent) {
         /* POLLERR is output only. */
         return 1;
       }
@@ -2482,7 +2484,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     has_errevent = sock->errevent != 0;
     SYS_ARCH_UNPROTECT(lev);
     /* Check any select calls waiting on this socket */
-    select_check_waiters(s, has_recvevent, has_sendevent, has_errevent, sock);
+    select_check_waiters(s, has_recvevent, has_sendevent, has_errevent);
   } else {
     SYS_ARCH_UNPROTECT(lev);
   }
@@ -2502,7 +2504,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
  * select_cb_list during our UNPROTECT/PROTECT. We use a generational counter to
  * detect this change and restart the list walk. The list is expected to be small
  */
-static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent, struct lwip_sock *sock)
+static void select_check_waiters(int s, int has_recvevent, int has_sendevent, int has_errevent)
 {
   struct lwip_select_cb *scb;
 #if !LWIP_TCPIP_CORE_LOCKING
@@ -2522,10 +2524,7 @@ again:
       int do_signal = 0;
 #if LWIP_SOCKET_POLL
       if (scb->poll_fds != NULL) {
-        LWIP_UNUSED_ARG(has_recvevent);
-        LWIP_UNUSED_ARG(has_sendevent);
-        LWIP_UNUSED_ARG(has_errevent);
-        do_signal = lwip_poll_should_wake(scb, s, sock);
+        do_signal = lwip_poll_should_wake(scb, s, has_recvevent, has_sendevent, has_errevent);
       }
 #endif /* LWIP_SOCKET_POLL */
 #if LWIP_SOCKET_SELECT && LWIP_SOCKET_POLL
@@ -2533,7 +2532,6 @@ again:
 #endif /* LWIP_SOCKET_SELECT && LWIP_SOCKET_POLL */
 #if LWIP_SOCKET_SELECT
       {
-        LWIP_UNUSED_ARG(sock);
         /* Test this select call for our socket */
         if (has_recvevent) {
           if (scb->readset && FD_ISSET(s, scb->readset)) {
