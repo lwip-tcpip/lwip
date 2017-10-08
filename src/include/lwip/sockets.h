@@ -442,7 +442,7 @@ typedef struct ipv6_mreq {
 #define O_NONBLOCK  1 /* nonblocking I/O */
 #endif
 #ifndef O_NDELAY
-#define O_NDELAY    1 /* same as O_NONBLOCK, for compatibility */
+#define O_NDELAY    O_NONBLOCK /* same as O_NONBLOCK, for compatibility */
 #endif
 #ifndef O_RDONLY
 #define O_RDONLY    2
