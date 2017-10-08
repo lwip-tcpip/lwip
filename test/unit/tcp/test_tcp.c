@@ -263,7 +263,6 @@ test_tcp_recv_expectclose(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err_t 
 
   if (p != NULL) {
     fail();
-    pbuf_free(p);
   } else {
     /* correct: FIN received; close our end, too */
     err_t err2 = tcp_close(pcb);

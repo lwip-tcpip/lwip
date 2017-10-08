@@ -780,7 +780,7 @@ pbuf_free(struct pbuf *p)
       /* p->ref > 0, this pbuf is still referenced to */
       /* (and so the remaining pbufs in chain as well) */
     } else {
-      LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free: %p has ref %"U16_F", ending here.\n", (void *)p, ref));
+      LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free: %p has ref %"U16_F", ending here.\n", (void *)p, (u16_t)ref));
       /* stop walking through the chain */
       p = NULL;
     }
