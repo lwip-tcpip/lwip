@@ -167,11 +167,8 @@ static void lwiperf_tcp_err(void *arg, err_t err);
 static void
 lwiperf_list_add(lwiperf_state_base_t *item)
 {
-  if (lwiperf_all_connections == NULL) {
-    lwiperf_all_connections = item;
-  } else {
-    item = lwiperf_all_connections;
-  }
+  item->next = lwiperf_all_connections;
+  lwiperf_all_connections = item;
 }
 
 /** Remove an iperf session from the 'active' list */
@@ -185,7 +182,7 @@ lwiperf_list_remove(lwiperf_state_base_t *item)
       if (prev == NULL) {
         lwiperf_all_connections = iter->next;
       } else {
-        prev->next = item;
+        prev->next = iter->next;
       }
       /* @debug: ensure this item is listed only once */
       for (iter = iter->next; iter != NULL; iter = iter->next) {
