@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2017-09-21: Kalle Olavi Niemitalo
+  * sockets: add poll() implementation (patch #9450)
+
   2017-09-10: Joel Cunningham
   * sockets: add readv() implementation (task #14610)
 
