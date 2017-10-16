@@ -1,20 +1,32 @@
 ﻿/**
- * @defgroup lwip lwIP
- *
- * @defgroup infrastructure Infrastructure
- *
- * @defgroup callbackstyle_api Callback-style APIs
- * Non thread-safe APIs, callback style for maximum performance and minimum
- * memory footprint.
- * 
- * @defgroup sequential_api Sequential-style APIs
- * Sequential-style APIs, blocking functions. More overhead, but can be called
- * from any thread except TCPIP thread.
- * 
- * @defgroup netifs NETIFs
- * 
- * @defgroup apps Applications
- */
+  * @defgroup lwip lwIP
+  *
+  * @defgroup infrastructure Infrastructure
+  *
+  * @defgroup callbackstyle_api Callback-style APIs
+  * Non thread-safe APIs, callback style for maximum performance and minimum
+  * memory footprint.
+  * Program execution is driven by callbacks functions, which are then
+  * invoked by the lwIP core when activity related to that application
+  * occurs. A particular application may register to be notified via a
+  * callback function for events such as incoming data available, outgoing
+  * data sent, error notifications, poll timer expiration, connection
+  * closed, etc. An application can provide a callback function to perform
+  * processing for any or all of these events. Each callback is an ordinary
+  * C function that is called from within the TCP/IP code. Every callback
+  * function is passed the current TCP or UDP connection state as an
+  * argument. Also, in order to be able to keep program specific state,
+  * the callback functions are called with a program specified argument
+  * that is independent of the TCP/IP state.
+  * 
+  * @defgroup sequential_api Sequential-style APIs
+  * Sequential-style APIs, blocking functions. More overhead, but can be called
+  * from any thread except TCPIP thread.
+  * 
+  * @defgroup netifs NETIFs
+  * 
+  * @defgroup apps Applications
+  */
 
 /**
  * @mainpage Overview

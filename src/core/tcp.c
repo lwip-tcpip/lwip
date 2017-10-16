@@ -11,6 +11,59 @@
  * Common functions for the TCP implementation, such as functinos
  * for manipulating the data structures and the TCP timer functions. TCP functions
  * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
+ * 
+ * TCP connection setup
+ * --------------------
+ * 
+ * The functions used for setting up connections is similar to that of
+ * the sequential API and of the BSD socket API. A new TCP connection
+ * identifier (i.e., a protocol control block - PCB) is created with the
+ * tcp_new() function. This PCB can then be either set to listen for new
+ * incoming connections or be explicitly connected to another host.
+ * - tcp_new()
+ * - tcp_bind()
+ * - tcp_listen() and tcp_listen_with_backlog()
+ * - tcp_accept()
+ * - tcp_connect()
+ * 
+ * Sending TCP data
+ * ----------------
+ * TCP data is sent by enqueueing the data with a call to
+ * tcp_write(). When the data is successfully transmitted to the remote
+ * host, the application will be notified with a call to a specified
+ * callback function.
+ * - tcp_write()
+ * - tcp_sent()
+ * 
+ * Receiving TCP data
+ * ------------------
+ * 
+ * TCP data reception is callback based - an application specified
+ * callback function is called when new data arrives. When the
+ * application has taken the data, it has to call the tcp_recved()
+ * function to indicate that TCP can advertise increase the receive
+ * window.
+ * - tcp_recv()
+ * - tcp_recved()
+ * 
+ * Application polling
+ * -------------------
+ * When a connection is idle (i.e., no data is either transmitted or
+ * received), lwIP will repeatedly poll the application by calling a
+ * specified callback function. This can be used either as a watchdog
+ * timer for killing connections that have stayed idle for too long, or
+ * as a method of waiting for memory to become available. For instance,
+ * if a call to tcp_write() has failed because memory wasn't available,
+ * the application may use the polling functionality to call tcp_write()
+ * again when the connection has been idle for a while.
+ * - tcp_poll()
+ *
+ * Closing and aborting connections
+ * --------------------------------
+ * - tcp_close()
+ * - tcp_abort()
+ * - tcp_err()
+ * 
  */
 
 /*
