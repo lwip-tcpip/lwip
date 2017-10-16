@@ -368,6 +368,28 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
  * it can send them more efficiently by combining them together).
  * To prompt the system to send data now, call tcp_output() after
  * calling tcp_write().
+ * 
+ * This function enqueues the data pointed to by the argument dataptr. The length of
+ * the data is passed as the len parameter. The apiflags can be one or more of:
+ * - TCP_WRITE_FLAG_COPY: indicates whether the new memory should be allocated
+ *   for the data to be copied into. If this flag is not given, no new memory
+ *   should be allocated and the data should only be referenced by pointer. This
+ *   also means that the memory behind dataptr must not change until the data is
+ *   ACKed by the remote host
+ * - TCP_WRITE_FLAG_MORE: indicates that more data follows. If this is omitted,
+ *   the PSH flag is set in the last segment created by this call to tcp_write.
+ *   If this flag is given, the PSH flag is not set.
+ *
+ * The tcp_write() function will fail and return ERR_MEM if the length
+ * of the data exceeds the current send buffer size or if the length of
+ * the queue of outgoing segment is larger than the upper limit defined
+ * in lwipopts.h. The number of bytes available in the output queue can
+ * be retrieved with the tcp_sndbuf() function.
+ *
+ * The proper way to use this function is to call the function with at
+ * most tcp_sndbuf() bytes of data. If the function returns ERR_MEM,
+ * the application should wait until some of the currently enqueued
+ * data has been successfully received by the other host and try again.
  *
  * @param pcb Protocol control block for the TCP connection to enqueue data for.
  * @param arg Pointer to the data to be enqueued for sending.

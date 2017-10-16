@@ -391,6 +391,12 @@ tcp_close_shutdown_fin(struct tcp_pcb *pcb)
  * a closing state), the connection is closed, and put in a closing state.
  * The pcb is then automatically freed in tcp_slowtmr(). It is therefore
  * unsafe to reference it (unless an error is returned).
+ * 
+ * The function may return ERR_MEM if no memory
+ * was available for closing the connection. If so, the application
+ * should wait and try again either by using the acknowledgment
+ * callback or the polling functionality. If the close succeeds, the
+ * function returns ERR_OK.
  *
  * @param pcb the tcp_pcb to close
  * @return ERR_OK if connection has been closed
@@ -547,8 +553,10 @@ tcp_abort(struct tcp_pcb *pcb)
 /**
  * @ingroup tcp_raw
  * Binds the connection to a local port number and IP address. If the
- * IP address is not given (i.e., ipaddr == NULL), the IP address of
- * the outgoing network interface is used instead.
+ * IP address is not given (i.e., ipaddr == NULL), the connection is
+ * bound to all local IP addresses.
+ * If another connection is bound to the same port, the function will
+ * return ERR_USE, otherwise ERR_OK is returned.
  *
  * @param pcb the tcp_pcb to bind (no check is done whether this pcb is
  *        already bound!)
@@ -688,7 +696,25 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  * is able to accept incoming connections. The protocol control block
  * is reallocated in order to consume less memory. Setting the
  * connection to LISTEN is an irreversible process.
+ * When an incoming connection is accepted, the function specified with
+ * the tcp_accept() function will be called. The pcb has to be bound
+ * to a local port with the tcp_bind() function.
+ * 
+ * The tcp_listen() function returns a new connection identifier, and
+ * the one passed as an argument to the function will be
+ * deallocated. The reason for this behavior is that less memory is
+ * needed for a connection that is listening, so tcp_listen() will
+ * reclaim the memory needed for the original connection and allocate a
+ * new smaller memory block for the listening connection.
  *
+ * tcp_listen() may return NULL if no memory was available for the
+ * listening connection. If so, the memory associated with the pcb
+ * passed as an argument to tcp_listen() will not be deallocated.
+ *
+ * The backlog limits the number of outstanding connections
+ * in the listen queue to the value specified by the backlog argument.
+ * To use it, your need to set TCP_LISTEN_BACKLOG=1 in your lwipopts.h.
+ * 
  * @param pcb the original tcp_pcb
  * @param backlog the incoming connections queue limit
  * @return tcp_pcb used for listening, consumes less memory.
@@ -903,6 +929,21 @@ again:
  * @ingroup tcp_raw
  * Connects to another host. The function given as the "connected"
  * argument will be called when the connection has been established.
+ *  Sets up the pcb to connect to the remote host and sends the
+ * initial SYN segment which opens the connection. 
+ *
+ * The tcp_connect() function returns immediately; it does not wait for
+ * the connection to be properly setup. Instead, it will call the
+ * function specified as the fourth argument (the "connected" argument)
+ * when the connection is established. If the connection could not be
+ * properly established, either because the other host refused the
+ * connection or because the other host didn't answer, the "err"
+ * callback function of this pcb (registered with tcp_err, see below)
+ * will be called.
+ *
+ * The tcp_connect() function can return ERR_MEM if no memory is
+ * available for enqueueing the SYN segment. If the SYN indeed was
+ * enqueued successfully, the tcp_connect() function returns ERR_OK.
  *
  * @param pcb the tcp_pcb used to establish the connection
  * @param ipaddr the remote ip address to connect to
@@ -1722,6 +1763,7 @@ tcp_alloc(u8_t prio)
  * Creates a new TCP protocol control block but doesn't place it on
  * any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
+ * If memory is not available for creating the new pcb, NULL is returned.
  *
  * @internal: Maybe there should be a idle TCP PCB list where these
  * PCBs are put on. Port reservation using tcp_bind() is implemented but
@@ -1765,8 +1807,10 @@ tcp_new_ip_type(u8_t type)
 
 /**
  * @ingroup tcp_raw
- * Used to specify the argument that should be passed callback
- * functions.
+ * Specifies the program specific state that should be passed to all
+ * other callback functions. The "pcb" argument is the current TCP
+ * connection control block, and the "arg" argument is the argument
+ * that will be passed to the callbacks.
  *
  * @param pcb tcp_pcb to set the callback argument
  * @param arg void pointer argument to pass to callback functions
@@ -1784,8 +1828,11 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 
 /**
  * @ingroup tcp_raw
- * Used to specify the function that should be called when a TCP
- * connection receives data.
+ * Sets the callback function that will be called when new data
+ * arrives. The callback function will be passed a NULL pbuf to
+ * indicate that the remote host has closed the connection. If the
+ * callback function returns ERR_OK or ERR_ABRT it must have
+ * freed the pbuf, otherwise it must not have freed it.
  *
  * @param pcb tcp_pcb to set the recv callback
  * @param recv callback function to call for this pcb when data is received
@@ -1801,8 +1848,10 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 
 /**
  * @ingroup tcp_raw
- * Used to specify the function that should be called when TCP data
- * has been successfully delivered to the remote host.
+ * Specifies the callback function that should be called when data has
+ * successfully been received (i.e., acknowledged) by the remote
+ * host. The len argument passed to the callback function gives the
+ * amount bytes that was acknowledged by the last acknowledgment.
  *
  * @param pcb tcp_pcb to set the sent callback
  * @param sent callback function to call for this pcb when data is successfully sent
@@ -1820,6 +1869,11 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
  * @ingroup tcp_raw
  * Used to specify the function that should be called when a fatal error
  * has occurred on the connection.
+ * 
+ * If a connection is aborted because of an error, the application is
+ * alerted of this event by the err callback. Errors that might abort a
+ * connection are when there is a shortage of memory. The callback
+ * function to be called is set using the tcp_err() function.
  *
  * @note The corresponding pcb is already freed when this callback is called!
  *
@@ -1858,10 +1912,20 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 
 /**
  * @ingroup tcp_raw
- * Used to specify the function that should be called periodically
- * from TCP. The interval is specified in terms of the TCP coarse
- * timer interval, which is called twice a second.
- *
+ * Specifies the polling interval and the callback function that should
+ * be called to poll the application. The interval is specified in
+ * number of TCP coarse grained timer shots, which typically occurs
+ * twice a second. An interval of 10 means that the application would
+ * be polled every 5 seconds.
+ * 
+ * When a connection is idle (i.e., no data is either transmitted or
+ * received), lwIP will repeatedly poll the application by calling a
+ * specified callback function. This can be used either as a watchdog
+ * timer for killing connections that have stayed idle for too long, or
+ * as a method of waiting for memory to become available. For instance,
+ * if a call to tcp_write() has failed because memory wasn't available,
+ * the application may use the polling functionality to call tcp_write()
+ * again when the connection has been idle for a while.
  */
 void
 tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
