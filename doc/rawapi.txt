@@ -256,10 +256,9 @@ window.
 
   Sets the callback function that will be called when new data
   arrives. The callback function will be passed a NULL pbuf to
-  indicate that the remote host has closed the connection. If
-  there are no errors and the callback function is to return
-  ERR_OK, then it must free the pbuf. Otherwise, it must not
-  free the pbuf so that lwIP core code can store it.
+  indicate that the remote host has closed the connection. If the
+  callback function returns ERR_OK or ERR_ABRT it must have
+  freed the pbuf, otherwise it must not have freed it.
 
 - void tcp_recved(struct tcp_pcb *pcb, u16_t len)
 
