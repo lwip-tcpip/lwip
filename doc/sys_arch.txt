@@ -21,24 +21,14 @@ the OS emulation layer must provide several header files defining
 macros used throughout lwip.  The files required and the macros they
 must define are listed below the sys_arch description.
 
-Semaphores can be either counting or binary - lwIP works with both
-kinds. Mailboxes should be implemented as a queue which allows multiple messages
-to be posted (implementing as a rendez-vous point where only one message can be
-posted at a time can have a highly negative impact on performance). A message
-in a mailbox is just a pointer, nothing more. 
-
-Semaphores are represented by the type "sys_sem_t" which is typedef'd
-in the sys_arch.h file. Mailboxes are equivalently represented by the
-type "sys_mbox_t". Mutexes are represented by the type "sys_mutex_t".
-lwIP does not place any restrictions on how these types are represented
-internally.
-
 Since lwIP 1.4.0, semaphore, mutexes and mailbox functions are prototyped in a way that
 allows both using pointers or actual OS structures to be used. This way, memory
 required for such types can be either allocated in place (globally or on the
 stack) or on the heap (allocated internally in the "*_new()" functions).
 
+-------------------------------------------------------------------------------
 Note:
+-------------------------------------------------------------------------------
 
 Be careful with using mem_malloc() in sys_arch. When malloc() refers to
 mem_malloc() you can run into a circular function call problem. In mem.c

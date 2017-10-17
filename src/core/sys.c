@@ -47,6 +47,13 @@
  *
  * @defgroup sys_sem Semaphores
  * @ingroup sys_os
+ * Semaphores can be either counting or binary - lwIP works with both
+ * kinds.
+ * Semaphores are represented by the type "sys_sem_t" which is typedef'd
+ * in the sys_arch.h file. Mailboxes are equivalently represented by the
+ * type "sys_mbox_t". Mutexes are represented by the type "sys_mutex_t".
+ * lwIP does not place any restrictions on how these types are represented
+ * internally.
  *
  * @defgroup sys_mutex Mutexes
  * @ingroup sys_os
@@ -55,6 +62,10 @@
  *
  * @defgroup sys_mbox Mailboxes
  * @ingroup sys_os
+ * Mailboxes should be implemented as a queue which allows multiple messages
+ * to be posted (implementing as a rendez-vous point where only one message can be
+ * posted at a time can have a highly negative impact on performance). A message
+ * in a mailbox is just a pointer, nothing more. 
  *
  * @defgroup sys_time Time
  * @ingroup sys_layer
