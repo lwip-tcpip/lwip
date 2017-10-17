@@ -606,7 +606,7 @@ tcp_abort(struct tcp_pcb *pcb)
 /**
  * @ingroup tcp_raw
  * Binds the connection to a local port number and IP address. If the
- * IP address is not given (i.e., ipaddr == NULL), the connection is
+ * IP address is not given (i.e., ipaddr == IP_ANY_TYPE), the connection is
  * bound to all local IP addresses.
  * If another connection is bound to the same port, the function will
  * return ERR_USE, otherwise ERR_OK is returned.

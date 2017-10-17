@@ -423,7 +423,8 @@ chkerr:
 
 /**
  * @ingroup udp_raw
- * Send data using UDP.
+ * Sends the pbuf p using UDP. The pbuf is not deallocated.
+ *
  *
  * @param pcb UDP PCB used to send the data.
  * @param p chain of pbuf's to be sent.
@@ -866,9 +867,9 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
 /**
  * @ingroup udp_raw
  * Bind an UDP PCB.
- *
+ * 
  * @param pcb UDP PCB to be bound with a local address ipaddr and port.
- * @param ipaddr local IP address to bind with. Use IP4_ADDR_ANY to
+ * @param ipaddr local IP address to bind with. Use IP_ANY_TYPE to
  * bind to all local interfaces.
  * @param port local UDP port to bind with. Use 0 to automatically bind
  * to a random port between UDP_LOCAL_PORT_RANGE_START and
@@ -1003,9 +1004,8 @@ udp_bind_netif(struct udp_pcb *pcb, const struct netif *netif)
 
 /**
  * @ingroup udp_raw
- * Connect an UDP PCB.
- *
- * This will associate the UDP PCB with the remote address.
+ * Sets the remote end of the pcb. This function does not generate any
+ * network traffic, but only sets the remote address of the pcb.
  *
  * @param pcb UDP PCB to be connected with remote address ipaddr and port.
  * @param ipaddr remote IP address to connect with.
@@ -1068,7 +1068,8 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 
 /**
  * @ingroup udp_raw
- * Disconnect a UDP PCB
+ * Remove the remote end of the pcb. This function does not generate
+ * any network traffic, but only removes the remote address of the pcb.
  *
  * @param pcb the udp pcb to disconnect.
  */
@@ -1093,8 +1094,7 @@ udp_disconnect(struct udp_pcb *pcb)
 
 /**
  * @ingroup udp_raw
- * Set a receive callback for a UDP PCB
- *
+ * Set a receive callback for a UDP PCB.
  * This callback will be called when receiving a datagram for the pcb.
  *
  * @param pcb the pcb for which to set the recv callback
@@ -1111,8 +1111,8 @@ udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
 
 /**
  * @ingroup udp_raw
- * Remove an UDP PCB.
- *
+ * Removes and deallocates the pcb.  
+ * 
  * @param pcb UDP PCB to be removed. The PCB is removed from the list of
  * UDP PCB's and the data structure is freed from memory.
  *
@@ -1144,7 +1144,9 @@ udp_remove(struct udp_pcb *pcb)
 
 /**
  * @ingroup udp_raw
- * Create a UDP PCB.
+ * Creates a new UDP pcb which can be used for UDP communication. The
+ * pcb is not active until it has either been bound to a local address
+ * or connected to a remote address.
  *
  * @return The UDP PCB which was created. NULL if the PCB data structure
  * could not be allocated.
@@ -1174,7 +1176,9 @@ udp_new(void)
 /**
  * @ingroup udp_raw
  * Create a UDP PCB for specific IP type.
- *
+ * The pcb is not active until it has either been bound to a local address
+ * or connected to a remote address.
+ * 
  * @param type IP address type, see @ref lwip_ip_addr_type definitions.
  * If you want to listen to IPv4 and IPv6 (dual-stack) packets,
  * supply @ref IPADDR_TYPE_ANY as argument and bind to @ref IP_ANY_TYPE.
