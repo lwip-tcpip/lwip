@@ -8,12 +8,14 @@ LWIP_MEMPOOL_DECLARE(RX_POOL, 10, sizeof(my_custom_pbuf_t), "Zero-copy RX PBUF p
 
 void my_pbuf_free_custom(void* p)
 {
+  SYS_ARCH_DECL_PROTECT(old_level);
+
   my_custom_pbuf_t* my_puf = (my_custom_pbuf_t*)p;
 
-  LOCK_INTERRUPTS();
+  SYS_ARCH_PROTECT(old_level);
   free_rx_dma_descriptor(my_pbuf->dma_descriptor);
   LWIP_MEMPOOL_FREE(RX_POOL, my_pbuf);
-  UNLOCK_INTERRUPTS();
+  SYS_ARCH_UNPROTECT(old_level);
 }
 
 void eth_rx_irq()
