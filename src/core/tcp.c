@@ -14,7 +14,6 @@
  * 
  * TCP connection setup
  * --------------------
- * 
  * The functions used for setting up connections is similar to that of
  * the sequential API and of the BSD socket API. A new TCP connection
  * identifier (i.e., a protocol control block - PCB) is created with the
@@ -37,7 +36,6 @@
  * 
  * Receiving TCP data
  * ------------------
- * 
  * TCP data reception is callback based - an application specified
  * callback function is called when new data arrives. When the
  * application has taken the data, it has to call the tcp_recved()
