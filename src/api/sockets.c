@@ -257,7 +257,7 @@ struct lwip_socket_multicast_mld6_pair socket_ipv6_multicast_memberships[LWIP_SO
 static int  lwip_socket_register_mld6_membership(int s, unsigned int if_idx, const ip6_addr_t *multi_addr);
 static void lwip_socket_unregister_mld6_membership(int s, unsigned int if_idx, const ip6_addr_t *multi_addr);
 static void lwip_socket_drop_registered_mld6_memberships(int s);
-#endif /* LWIP_IGMP */
+#endif /* LWIP_IPV6_MLD */
 
 /** The global array of available sockets */
 static struct lwip_sock sockets[NUM_SOCKETS];
