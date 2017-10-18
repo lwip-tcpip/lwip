@@ -92,4 +92,28 @@ err_t bridgeif_add_port(struct netif *bridgeif, struct netif *portif);
 err_t bridgeif_fdb_add(struct netif *bridgeif, const struct eth_addr *addr, bridgeif_portmask_t ports);
 err_t bridgeif_fdb_remove(struct netif *bridgeif, const struct eth_addr *addr);
 
+/* FDB interface, can be replaced by own implementation */
+void                bridgeif_fdb_update_src(void *fdb_ptr, struct eth_addr *src_addr, u8_t port_idx);
+bridgeif_portmask_t bridgeif_fdb_get_dst_ports(void *fdb_ptr, struct eth_addr *dst_addr);
+void*               bridgeif_fdb_init(u16_t max_fdb_entries);
+
+#if BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT
+#ifndef BRIDGEIF_DECL_PROTECT
+/* define bridgeif protection to sys_arch_protect... */
+#include "lwip/sys.h"
+#define BRIDGEIF_DECL_PROTECT(lev)    SYS_ARCH_DECL_PROTECT(lev)
+#define BRIDGEIF_READ_PROTECT(lev)    SYS_ARCH_PROTECT(lev)
+#define BRIDGEIF_READ_UNPROTECT(lev)  SYS_ARCH_UNPROTECT(lev)
+#define BRIDGEIF_WRITE_PROTECT(lev)
+#define BRIDGEIF_WRITE_UNPROTECT(lev)
+#endif
+#else /* BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT */
+#include "lwip/tcpip.h"
+#define BRIDGEIF_DECL_PROTECT(lev)
+#define BRIDGEIF_READ_PROTECT(lev)
+#define BRIDGEIF_READ_UNPROTECT(lev)
+#define BRIDGEIF_WRITE_PROTECT(lev)
+#define BRIDGEIF_WRITE_UNPROTECT(lev)
+#endif /* BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT */
+
 #endif /* LWIP_HDR_NETIF_BRIDGEIF_H */

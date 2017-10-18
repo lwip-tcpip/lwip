@@ -58,14 +58,6 @@
 #define BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT  NO_SYS
 #endif
 
-/** BRIDGEIF_EXTERNAL_FDB==1: use an external implementation for the forwarding
- * database which is possibly faster than our example implementation.
- * (Watch out for concurrent access!)
- */
-#ifndef BRIDGEIF_EXTERNAL_FDB
-#define BRIDGEIF_EXTERNAL_FDB               0
-#endif
-
 /** BRIDGEIF_MAX_PORTS: this is used to create a typedef used for forwarding
  * bit-fields: the number of bits required is this + 1 (for the internal/cpu port)
  * (63 is the maximum, resulting in an u64_t for the bit mask)
