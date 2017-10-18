@@ -1212,7 +1212,7 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvmsg(%d, message=%p, flags=0x%x)\n", s, (void *)message, flags));
   LWIP_ERROR("lwip_recvmsg: invalid message pointer", message != NULL, return ERR_ARG;);
-  LWIP_ERROR("lwip_recvmsg: unsupported flags", ((flags == 0) || (flags == MSG_PEEK)),
+  LWIP_ERROR("lwip_recvmsg: unsupported flags", (flags & ~(MSG_PEEK|MSG_DONTWAIT)) == 0,
              set_errno(EOPNOTSUPP); return -1;);
 
   if ((message->msg_iovlen <= 0) || (message->msg_iovlen > IOV_MAX)) {
@@ -1260,8 +1260,7 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
         }
         break;
       }
-      /* while MSG_DONTWAIT is not supported for this function, we pass it to
-          lwip_recv_tcp() to prevent waiting for more data */
+      /* pass MSG_DONTWAIT to lwip_recv_tcp() to prevent waiting for more data */
       recv_flags |= MSG_DONTWAIT;
     }
     if (buflen > 0) {
