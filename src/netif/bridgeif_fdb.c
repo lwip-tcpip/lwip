@@ -43,6 +43,7 @@
 
 #include "netif/bridgeif.h"
 #include "lwip/sys.h"
+#include "lwip/mem.h"
 #include "lwip/timeouts.h"
 #include <string.h>
 
