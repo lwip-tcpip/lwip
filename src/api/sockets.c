@@ -1,13 +1,6 @@
 /**
  * @file
  * Sockets BSD-Like API module
- *
- * @defgroup socket Socket API
- * @ingroup sequential_api
- * BSD-style socket API.\n
- * Thread-safe, to be called from non-TCPIP threads only.\n
- * Can be activated by defining @ref LWIP_SOCKET to 1.\n
- * Header is in posix/sys/socket.h\b
  */
 
 /*
