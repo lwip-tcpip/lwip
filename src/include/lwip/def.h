@@ -34,6 +34,17 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
+
+/**
+ * @defgroup perf Performance measurement
+ * @ingroup sys_layer
+ * All defines related to this section must not be placed in lwipopts.h,
+ * but in arch/perf.h!
+ * Measurement calls made throughout lwip, these can be defined to nothing.
+ * - PERF_START: start measuring something.
+ * - PERF_STOP(x): stop measuring something, and record the result.
+ */
+
 #ifndef LWIP_HDR_DEF_H
 #define LWIP_HDR_DEF_H
 

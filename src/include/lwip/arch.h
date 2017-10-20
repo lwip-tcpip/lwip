@@ -52,6 +52,8 @@
  * @ingroup sys_layer
  * All defines related to this section must not be placed in lwipopts.h,
  * but in arch/cc.h!
+ * If the compiler does not provide memset() this file must include a
+ * definition of it, or include a file which defines it.
  * These options cannot be \#defined in lwipopts.h since they are not options
  * of lwIP itself, but options of the lwIP port to your system.
  * @{
