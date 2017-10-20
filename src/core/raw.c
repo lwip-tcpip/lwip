@@ -10,7 +10,7 @@
  * Implementation of raw protocol PCBs for low-level handling of
  * different types of protocols besides (or overriding) those
  * already available in lwIP.\n
- * @see @ref raw_api
+ * @see @ref api
  */
 
 /*

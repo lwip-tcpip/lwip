@@ -37,46 +37,6 @@
  * Raw API applications may never block since all packet processing
  * (input and output) as well as timer processing (TCP mainly) is done
  * in a single execution context.
- * 
- * Multithreading
- * --------------
- * lwIP started targeting single-threaded environments. When adding multi-
- * threading support, instead of making the core thread-safe, another
- * approach was chosen: there is one main thread running the lwIP core
- * (also known as the "tcpip_thread"). When running in a multithreaded
- * environment, raw API functions MUST only be called from the core thread
- * since raw API functions are not protected from concurrent access (aside
- * from pbuf- and memory management functions). Application threads using
- * the sequential- or socket API communicate with this main thread through
- * message passing.
- * 
- * As such, the list of functions that may be called from
- * other threads or an ISR is very limited! Only functions
- * from these API header files are thread-safe:
- * - api.h
- * - netbuf.h
- * - netdb.h
- * - netifapi.h
- * - pppapi.h
- * - sockets.h
- * - sys.h
- * 
- * Additionaly, memory (de-)allocation functions may be
- * called from multiple threads (not ISR!) with NO_SYS=0
- * since they are protected by SYS_LIGHTWEIGHT_PROT and/or
- * semaphores.
- * 
- * Netconn or Socket API functions are thread safe against the
- * core thread but they are not reentrant at the control block
- * granularity level. That is, a UDP or TCP control block must
- * not be shared among multiple threads without proper locking.
- * 
- * If SYS_LIGHTWEIGHT_PROT is set to 1 and
- * LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT is set to 1,
- * pbuf_free() may also be called from another thread or
- * an ISR (since only then, mem_free - for PBUF_RAM - may
- * be called from an ISR: otherwise, the HEAP is only
- * protected by semaphores).
  *
  * @defgroup callbackstyle_api "raw" APIs
  * @ingroup api
@@ -246,6 +206,140 @@
  */
 
 /**
- * @page raw_api lwIP API
- * @verbinclude "rawapi.txt"
+ * @page sys_init System initalization
+A truly complete and generic sequence for initializing the lwIP stack
+cannot be given because it depends on additional initializations for
+your runtime environment (e.g. timers).
+
+We can give you some idea on how to proceed when using the raw API.
+We assume a configuration using a single Ethernet netif and the
+UDP and TCP transport layers, IPv4 and the DHCP client.
+
+Call these functions in the order of appearance:
+
+- lwip_init(): Initialize the lwIP stack and all of its subsystems.
+
+- netif_add(struct netif *netif, ...):
+  Adds your network interface to the netif_list. Allocate a struct
+  netif and pass a pointer to this structure as the first argument.
+  Give pointers to cleared ip_addr structures when using DHCP,
+  or fill them with sane numbers otherwise. The state pointer may be NULL.
+
+  The init function pointer must point to a initialization function for
+  your Ethernet netif interface. The following code illustrates its use.
+  
+@code{.c}
+  err_t netif_if_init(struct netif *netif)
+  {
+    u8_t i;
+    
+    for (i = 0; i < ETHARP_HWADDR_LEN; i++) {
+      netif->hwaddr[i] = some_eth_addr[i];
+    }
+    init_my_eth_device();
+    return ERR_OK;
+  }
+@endcode
+  
+  For Ethernet drivers, the input function pointer must point to the lwIP
+  function ethernet_input() declared in "netif/etharp.h". Other drivers
+  must use ip_input() declared in "lwip/ip.h".
+  
+- netif_set_default(struct netif *netif)
+  Registers the default network interface.
+
+- netif_set_link_up(struct netif *netif)
+  This is the hardware link state; e.g. whether cable is plugged for wired
+  Ethernet interface. This function must be called even if you don't know
+  the current state. Having link up and link down events is optional but
+  DHCP and IPv6 discover benefit well from those events.
+
+- netif_set_up(struct netif *netif)
+  This is the administrative (= software) state of the netif, when the
+  netif is fully configured this function must be called.
+
+- dhcp_start(struct netif *netif)
+  Creates a new DHCP client for this interface on the first call.
+  You can peek in the netif->dhcp struct for the actual DHCP status.
+
+- sys_check_timeouts()
+  When the system is running, you have to periodically call
+  sys_check_timeouts() which will handle all timers for all protocols in
+  the stack; add this to your main loop or equivalent.
+ */
+
+/**
+ * @page multithreading Multithreading
+ * lwIP started targeting single-threaded environments. When adding multi-
+ * threading support, instead of making the core thread-safe, another
+ * approach was chosen: there is one main thread running the lwIP core
+ * (also known as the "tcpip_thread"). When running in a multithreaded
+ * environment, raw API functions MUST only be called from the core thread
+ * since raw API functions are not protected from concurrent access (aside
+ * from pbuf- and memory management functions). Application threads using
+ * the sequential- or socket API communicate with this main thread through
+ * message passing.
+ * 
+ * As such, the list of functions that may be called from
+ * other threads or an ISR is very limited! Only functions
+ * from these API header files are thread-safe:
+ * - api.h
+ * - netbuf.h
+ * - netdb.h
+ * - netifapi.h
+ * - pppapi.h
+ * - sockets.h
+ * - sys.h
+ * 
+ * Additionaly, memory (de-)allocation functions may be
+ * called from multiple threads (not ISR!) with NO_SYS=0
+ * since they are protected by SYS_LIGHTWEIGHT_PROT and/or
+ * semaphores.
+ * 
+ * Netconn or Socket API functions are thread safe against the
+ * core thread but they are not reentrant at the control block
+ * granularity level. That is, a UDP or TCP control block must
+ * not be shared among multiple threads without proper locking.
+ * 
+ * If SYS_LIGHTWEIGHT_PROT is set to 1 and
+ * LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT is set to 1,
+ * pbuf_free() may also be called from another thread or
+ * an ISR (since only then, mem_free - for PBUF_RAM - may
+ * be called from an ISR: otherwise, the HEAP is only
+ * protected by semaphores).
+ */
+
+/**
+ * @page optimization Optimization hints
+The first thing you want to optimize is the lwip_standard_checksum()
+routine from src/core/inet.c. You can override this standard
+function with the \#define LWIP_CHKSUM your_checksum_routine().
+
+There are C examples given in inet.c or you might want to
+craft an assembly function for this. RFC1071 is a good
+introduction to this subject.
+
+Other significant improvements can be made by supplying
+assembly or inline replacements for htons() and htonl()
+if you're using a little-endian architecture.
+\#define lwip_htons(x) your_htons()
+\#define lwip_htonl(x) your_htonl()
+If you \#define them to htons() and htonl(), you should
+\#define LWIP_DONT_PROVIDE_BYTEORDER_FUNCTIONS to prevent lwIP from
+defining htonx / ntohx compatibility macros.
+
+Check your network interface driver if it reads at
+a higher speed than the maximum wire-speed. If the
+hardware isn't serviced frequently and fast enough
+buffer overflows are likely to occur.
+
+E.g. when using the cs8900 driver, call cs8900if_service(ethif)
+as frequently as possible. When using an RTOS let the cs8900 interrupt
+wake a high priority task that services your driver using a binary
+semaphore or event flag. Some drivers might allow additional tuning
+to match your application and network.
+
+For a production release it is recommended to set LWIP_STATS to 0.
+Note that speed performance isn't influenced much by simply setting
+high values to the memory options.
  */
