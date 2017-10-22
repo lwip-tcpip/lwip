@@ -605,6 +605,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 
           /* Else assume compressed address and control fields so
            * fall through to get the protocol... */
+          /* Fall through */
         case PDCONTROL:                 /* Process control field. */
           /* If we don't get a valid control code, restart. */
           if (cur_char == PPP_UI) {
@@ -620,7 +621,9 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
             pppos->in_state = PDSTART;
           }
 #endif
-        case PDPROTOCOL1:               /* Process protocol field 1. */
+          /* Fall through */
+
+      case PDPROTOCOL1:               /* Process protocol field 1. */
           /* If the lower bit is set, this is the end of the protocol
            * field. */
           if (cur_char & 1) {
