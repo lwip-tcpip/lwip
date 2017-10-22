@@ -2449,6 +2449,8 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     case NETCONN_EVT_RCVMINUS:
       sock->rcvevent--;
       check_waiters = 0;
+      sock->sendevent = 1;
+      break;
     case NETCONN_EVT_SENDPLUS:
       if (sock->sendevent) {
         check_waiters = 0;
@@ -2458,6 +2460,8 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     case NETCONN_EVT_SENDMINUS:
       sock->sendevent = 0;
       check_waiters = 0;
+      sock->errevent = 1;
+      break;
     case NETCONN_EVT_ERROR:
       sock->errevent = 1;
       break;
