@@ -1,7 +1,7 @@
 /**
  *
- * @file tftp_server.h
- * TFTP server header
+ * @file tftp_client.h
+ * TFTP client header
  *
  */
 
@@ -32,9 +32,9 @@
  *
  */
 
-#ifndef LWIP_HDR_APPS_TFTP_SERVER_H
-#define LWIP_HDR_APPS_TFTP_SERVER_H
+#ifndef LWIP_HDR_APPS_TFTP_CLIENT_H
+#define LWIP_HDR_APPS_TFTP_CLIENT_H
 
 #include "lwip/apps/tftp_common.h"
 
-#endif /* LWIP_HDR_APPS_TFTP_SERVER_H */
+#endif /* LWIP_HDR_APPS_TFTP_CLIENT_H */
