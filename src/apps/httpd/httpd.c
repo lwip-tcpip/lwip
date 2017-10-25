@@ -1598,8 +1598,7 @@ http_send(struct altcp_pcb *pcb, struct http_state *hs)
 static err_t
 http_find_error_file(struct http_state *hs, u16_t error_nr)
 {
-  const char *uri1, *uri2, *uri3;
-  err_t err;
+  const char *uri, *uri1, *uri2, *uri3;
 
   if (error_nr == 501) {
     uri1 = "/501.html";
@@ -1611,19 +1610,18 @@ http_find_error_file(struct http_state *hs, u16_t error_nr)
     uri2 = "/400.htm";
     uri3 = "/400.shtml";
   }
-  err = fs_open(&hs->file_handle, uri1);
-  if (err != ERR_OK) {
-    err = fs_open(&hs->file_handle, uri2);
-    if (err != ERR_OK) {
-      err = fs_open(&hs->file_handle, uri3);
-      if (err != ERR_OK) {
-        LWIP_DEBUGF(HTTPD_DEBUG, ("Error page for error %"U16_F" not found\n",
-                                  error_nr));
-        return ERR_ARG;
-      }
-    }
+  if (fs_open(&hs->file_handle, uri1) == ERR_OK) {
+    uri = uri1;
+  } else if (fs_open(&hs->file_handle, uri2) == ERR_OK) {
+    uri = uri2;
+  } else if (fs_open(&hs->file_handle, uri3) == ERR_OK) {
+    uri = uri2;
+  } else {
+    LWIP_DEBUGF(HTTPD_DEBUG, ("Error page for error %"U16_F" not found\n",
+                              error_nr));
+    return ERR_ARG;
   }
-  return http_init_file(hs, &hs->file_handle, 0, NULL, 0, NULL);
+  return http_init_file(hs, &hs->file_handle, 0, uri, 0, NULL);
 }
 #else /* LWIP_HTTPD_SUPPORT_EXTSTATUS */
 #define http_find_error_file(hs, error_nr) ERR_ARG
