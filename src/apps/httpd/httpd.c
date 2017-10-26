@@ -1615,7 +1615,7 @@ http_find_error_file(struct http_state *hs, u16_t error_nr)
   } else if (fs_open(&hs->file_handle, uri2) == ERR_OK) {
     uri = uri2;
   } else if (fs_open(&hs->file_handle, uri3) == ERR_OK) {
-    uri = uri2;
+    uri = uri3;
   } else {
     LWIP_DEBUGF(HTTPD_DEBUG, ("Error page for error %"U16_F" not found\n",
                               error_nr));
