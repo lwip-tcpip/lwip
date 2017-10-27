@@ -73,7 +73,7 @@
  * -----
  * Be careful with using mem_malloc() in sys_arch. When malloc() refers to
  * mem_malloc() you can run into a circular function call problem. In mem.c
- * mem_init() tries to allcate a semaphore using mem_malloc, which of course
+ * mem_init() tries to allocate a semaphore using mem_malloc, which of course
  * can't be performed when sys_arch uses mem_malloc.
  *
  * @defgroup sys_sem Semaphores
