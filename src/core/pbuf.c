@@ -110,6 +110,9 @@
 volatile u8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
 
+static const struct pbuf *
+pbuf_skip_const(const struct pbuf *in, u16_t in_offset, u16_t *out_offset);
+
 /**
  * Attempt to reclaim some memory from queued out-of-sequence TCP segments
  * if we run out of pool pbufs. It's better to give priority to new packets
@@ -1071,27 +1074,24 @@ void *
 pbuf_get_contiguous(const struct pbuf *p, void *buffer, size_t bufsize, u16_t len, u16_t offset)
 {
   const struct pbuf *q;
+  uint16_t out_offset;
 
   LWIP_ERROR("pbuf_get_contiguous: invalid buf", (p != NULL), return NULL;);
   LWIP_ERROR("pbuf_get_contiguous: invalid dataptr", (buffer != NULL), return NULL;);
   LWIP_ERROR("pbuf_get_contiguous: invalid dataptr", (bufsize >= len), return NULL;);
 
-  for (q = p; q != NULL; q = q->next) {
-    if ((offset != 0) && (offset >= q->len)) {
-      /* don't copy from this buffer -> on to the next */
-      offset = (u16_t)(offset - q->len);
-    } else {
-      if (q->len >= (offset + len)) {
-        /* all data in this pbuf, return zero-copy */
-        return (u8_t *)q->payload + offset;
-      }
-      /* need to copy */
-      if (pbuf_copy_partial(q, buffer, len, offset) != len) {
-        /* copying failed: pbuf is too short */
-        return NULL;
-      }
-      return buffer;
+  q = pbuf_skip_const(p, offset, &out_offset);
+  if (q != NULL) {
+    if (q->len >= (out_offset + len)) {
+      /* all data in this pbuf, return zero-copy */
+      return (u8_t *)q->payload + out_offset;
     }
+    /* need to copy */
+    if (pbuf_copy_partial(q, buffer, len, out_offset) != len) {
+      /* copying failed: pbuf is too short */
+      return NULL;
+    }
+    return buffer;
   }
   /* pbuf is too short (offset does not fit in) */
   return NULL;
