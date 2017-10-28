@@ -821,7 +821,7 @@ pbuf_ref(struct pbuf *p)
 {
   /* pbuf given? */
   if (p != NULL) {
-    SYS_ARCH_SET(p->ref, (u8_t)(p->ref + 1));
+    SYS_ARCH_SET(p->ref, (LWIP_PBUF_REF_T)(p->ref + 1));
     LWIP_ASSERT("pbuf ref overflow", p->ref > 0);
   }
 }
