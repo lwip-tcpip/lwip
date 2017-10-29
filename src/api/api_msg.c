@@ -1357,7 +1357,7 @@ lwip_netconn_do_connect(void *m)
     }
   }
   msg->err = err;
-  /* For all other protocols, netconn_connect() calls TCPIP_APIMSG(),
+  /* For all other protocols, netconn_connect() calls netconn_apimsg(),
      so use TCPIP_APIMSG_ACK() here. */
   TCPIP_APIMSG_ACK(msg);
 }
