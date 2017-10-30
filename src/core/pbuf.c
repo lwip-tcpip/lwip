@@ -474,7 +474,10 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
   u16_t increment_magnitude;
 
   LWIP_ASSERT("p != NULL", p != NULL);
-  if ((header_size_increment == 0) || (p == NULL) || (header_size_increment > 0xFFFF)) {
+  if ((p == NULL) || (header_size_increment > 0xFFFF)) {
+    return 1;
+  }
+  if (header_size_increment == 0) {
     return 0;
   }
 
@@ -532,7 +535,7 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
  * @param p pbuf to change the header size.
  * @param header_size_increment Number of bytes to increment header size which
  *          increases the size of the pbuf. New space is on the front.
- *          If hdr_size_inc is 0, this function does nothing and returns successful.
+ *          If header_size_increment is 0, this function does nothing and returns successful.
  *
  * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
  * the call will fail. A check is made that the increase in header size does
@@ -568,7 +571,7 @@ pbuf_add_header_force(struct pbuf *p, size_t header_size_increment)
  * @param p pbuf to change the header size.
  * @param header_size_decrement Number of bytes to decrement header size which
  *          decreases the size of the pbuf.
- *          If hdr_size_inc is 0, this function does nothing and returns successful.
+ *          If header_size_decrement is 0, this function does nothing and returns successful.
  * @return non-zero on failure, zero on success.
  *
  */
@@ -579,7 +582,10 @@ pbuf_remove_header(struct pbuf *p, size_t header_size_decrement)
   u16_t increment_magnitude;
 
   LWIP_ASSERT("p != NULL", p != NULL);
-  if ((header_size_decrement == 0) || (p == NULL) || (header_size_decrement > 0xFFFF)) {
+  if ((p == NULL) || (header_size_decrement > 0xFFFF)) {
+    return 1;
+  }
+  if (header_size_decrement == 0) {
     return 0;
   }
 
@@ -625,7 +631,7 @@ pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
  * @param header_size_increment Number of bytes to increment header size which
  * increases the size of the pbuf. New space is on the front.
  * (Using a negative value decreases the header size.)
- * If hdr_size_inc is 0, this function does nothing and returns successful.
+ * If header_size_increment is 0, this function does nothing and returns successful.
  *
  * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
  * the call will fail. A check is made that the increase in header size does
