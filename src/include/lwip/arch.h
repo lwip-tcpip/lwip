@@ -220,6 +220,11 @@ typedef int ssize_t;
 #define LWIP_PTR_NUMERIC_CAST(target_type, val) LWIP_CONST_CAST(target_type, val)
 #endif
 
+/** Avoid warnings/errors related to implicitly casting away packed attributes by doing a explicit cast */
+#ifndef LWIP_PACKED_CAST
+#define LWIP_PACKED_CAST(target_type, val) LWIP_CONST_CAST(target_type, val)
+#endif
+
 /** Allocates a memory buffer of specified size that is of sufficient size to align
  * its start address using LWIP_MEM_ALIGN.
  * You can declare your own version here e.g. to enforce alignment without adding
