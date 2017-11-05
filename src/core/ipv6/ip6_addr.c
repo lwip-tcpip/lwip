@@ -50,14 +50,12 @@
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
 const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
-#ifndef isprint
-#define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
-#define isprint(c)           in_range(c, 0x20, 0x7f)
-#define isdigit(c)           in_range(c, '0', '9')
-#define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
-#define islower(c)           in_range(c, 'a', 'z')
-#define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-#endif
+#define lwip_in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
+#define lwip_isprint(c)           lwip_in_range(c, 0x20, 0x7f)
+#define lwip_isdigit(c)           lwip_in_range(c, '0', '9')
+#define lwip_isxdigit(c)          (lwip_isdigit(c) || lwip_in_range(c, 'a', 'f') || lwip_in_range(c, 'A', 'F'))
+#define lwip_islower(c)           lwip_in_range(c, 'a', 'z')
+#define lwip_isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
 
 #define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
@@ -82,7 +80,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
       zero_blocks--;
-    } else if (!isxdigit(*s)) {
+    } else if (!lwip_isxdigit(*s)) {
       break;
     }
   }
@@ -130,11 +128,11 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
           }
         }
       }
-    } else if (isxdigit(*s)) {
+    } else if (lwip_isxdigit(*s)) {
       /* add current digit */
       current_block_value = (current_block_value << 4) +
-          (isdigit(*s) ? (u32_t)(*s - '0') :
-          (u32_t)(10 + (islower(*s) ? *s - 'a' : *s - 'A')));
+          (lwip_isdigit(*s) ? (u32_t)(*s - '0') :
+          (u32_t)(10 + (lwip_islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
       break;
