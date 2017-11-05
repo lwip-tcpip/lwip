@@ -203,6 +203,29 @@ typedef int ssize_t;
 #define SSIZE_MAX INT_MAX
 #endif /* SSIZE_MAX */
 
+/** Define this to 1 in arch/cc.h of your port if your compiler does not provide
+ * the cytype.h header. If ctype.h is available, a few few character functions
+ * are mapped to the appropriate functions (lwip_islower, lwip_isdigit...), if
+ * not, a private implementation is provided.
+ */
+#ifndef LWIP_NO_CTYPE_H
+#define LWIP_NO_CTYPE_H 0
+#endif
+
+#if LWIP_NO_CTYPE_H
+#define lwip_in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
+#define lwip_isdigit(c)           lwip_in_range(c, '0', '9')
+#define lwip_isxdigit(c)          (lwip_isdigit(c) || lwip_in_range(c, 'a', 'f') || lwip_in_range(c, 'A', 'F'))
+#define lwip_islower(c)           lwip_in_range(c, 'a', 'z')
+#define lwip_isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
+#else
+#include <ctype.h>
+#define lwip_isdigit(c)           isdigit(c)
+#define lwip_isxdigit(c)          isxdigit(c)
+#define lwip_islower(c)           islower(c)
+#define lwip_isspace(c)           isspace(c)
+#endif
+
 /** C++ const_cast<target_type>(val) equivalent to remove constness from a value (GCC -Wcast-qual) */
 #ifndef LWIP_CONST_CAST
 #define LWIP_CONST_CAST(target_type, val) ((target_type)((ptrdiff_t)val))

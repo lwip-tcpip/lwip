@@ -50,13 +50,6 @@
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
 const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
-#define lwip_in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
-#define lwip_isprint(c)           lwip_in_range(c, 0x20, 0x7f)
-#define lwip_isdigit(c)           lwip_in_range(c, '0', '9')
-#define lwip_isxdigit(c)          (lwip_isdigit(c) || lwip_in_range(c, 'a', 'f') || lwip_in_range(c, 'A', 'F'))
-#define lwip_islower(c)           lwip_in_range(c, 'a', 'z')
-#define lwip_isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-
 #define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
 /**
