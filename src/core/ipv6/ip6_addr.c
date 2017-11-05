@@ -57,8 +57,9 @@ const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 #define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
 #define islower(c)           in_range(c, 'a', 'z')
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-#define xchar(i)             ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 #endif
+
+#define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
 /**
  * Check whether "cp" is a valid ascii representation
@@ -252,7 +253,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
     if ((current_block_value & 0xf000) == 0) {
       zero_flag = 1;
     } else {
-      buf[i++] = xchar(((current_block_value & 0xf000) >> 12));
+      buf[i++] = lwip_xchar(((current_block_value & 0xf000) >> 12));
       zero_flag = 0;
       if (i >= buflen) {
         return NULL;
@@ -262,7 +263,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
     if (((current_block_value & 0xf00) == 0) && (zero_flag)) {
       /* do nothing */
     } else {
-      buf[i++] = xchar(((current_block_value & 0xf00) >> 8));
+      buf[i++] = lwip_xchar(((current_block_value & 0xf00) >> 8));
       zero_flag = 0;
       if (i >= buflen) {
         return NULL;
@@ -273,14 +274,14 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
       /* do nothing */
     }
     else {
-      buf[i++] = xchar(((current_block_value & 0xf0) >> 4));
+      buf[i++] = lwip_xchar(((current_block_value & 0xf0) >> 4));
       zero_flag = 0;
       if (i >= buflen) {
         return NULL;
       }
     }
 
-    buf[i++] = xchar((current_block_value & 0xf));
+    buf[i++] = lwip_xchar((current_block_value & 0xf));
     if (i >= buflen) {
       return NULL;
     }
