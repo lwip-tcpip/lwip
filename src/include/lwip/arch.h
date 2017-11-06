@@ -204,7 +204,7 @@ typedef int ssize_t;
 #endif /* SSIZE_MAX */
 
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
- * the cytype.h header. If ctype.h is available, a few few character functions
+ * the ctype.h header. If ctype.h is available, a few character functions
  * are mapped to the appropriate functions (lwip_islower, lwip_isdigit...), if
  * not, a private implementation is provided.
  */
