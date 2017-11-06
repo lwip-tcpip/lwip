@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2017-11-06: Axel Lin
+  * TCP: kill existing connections with a LOWER priority than the one currently being opened.
+    Previous implementations also kill existing connections of the SAME priority.
+
   2017-09-21: Kalle Olavi Niemitalo
   * sockets: add poll() implementation (patch #9450)
 

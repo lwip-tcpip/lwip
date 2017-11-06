@@ -10,6 +10,9 @@ with newer versions.
 
   ++ Application changes:
 
+  * TCP only kills existing connections with a LOWER priority than the one currently being opened.
+    Previous implementations also kill existing connections of the SAME priority.
+
   * ip4_route_src: parameter order is reversed: ip4_route_src(dest, src) -> ip4_route_src(src, dest)
     to make parameter order consistent with other ip*_route*() functions.
     Same also applies to LWIP_HOOK_IP4_ROUTE_SRC() parameter order.

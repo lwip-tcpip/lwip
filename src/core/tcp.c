@@ -1621,8 +1621,7 @@ tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 #endif /* LWIP_CALLBACK_API */
 
 /**
- * Kills the oldest active connection that has the same or lower priority than
- * 'prio'.
+ * Kills the oldest active connection that has a lower priority than 'prio'.
  *
  * @param prio minimum priority
  */
@@ -1635,7 +1634,18 @@ tcp_kill_prio(u8_t prio)
 
   mprio = LWIP_MIN(TCP_PRIO_MAX, prio);
 
-  /* We kill the oldest active connection that has the same or lower priority than prio. */
+  /* We want to kill connections with a lower prio, so bail out if 
+   * supplied prio is 0 - there cannot be a no lower prio
+   */
+  if (mprio == 0) {
+    return;
+  }
+
+  /* We want kill connections with a lower prio, so decrement prio by one 
+   * and start searching for oldest connection with same or lower prio than mprio.
+   */
+  mprio--;
+
   inactivity = 0;
   inactive = NULL;
   for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
