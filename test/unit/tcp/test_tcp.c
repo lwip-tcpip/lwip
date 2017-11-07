@@ -135,7 +135,7 @@ START_TEST(test_tcp_listen_passive_open)
     EXPECT(txcounters.num_tx_calls == 1);
   }
 
-  /* chekc syn packet with short length */
+  /* check syn packet with short length */
   p = tcp_create_segment(&src_addr, &lpcb->local_ip, 12345,
     lpcb->local_port, NULL, 0, 12345, 54321, TCP_SYN);
   EXPECT(p != NULL);

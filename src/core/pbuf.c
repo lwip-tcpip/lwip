@@ -1248,7 +1248,7 @@ pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset)
     const u8_t *src_ptr = (const u8_t *)dataptr;
     /* copy the part that goes into the first pbuf */
     u16_t first_copy_len;
-    LWIP_ASSERT("chekc pbuf_skip result", target_offset < q->len);
+    LWIP_ASSERT("check pbuf_skip result", target_offset < q->len);
     first_copy_len = (u16_t)LWIP_MIN(q->len - target_offset, len);
     MEMCPY(((u8_t *)q->payload) + target_offset, dataptr, first_copy_len);
     remaining_len = (u16_t)(remaining_len - first_copy_len);
