@@ -81,6 +81,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2017-11-08: Joel Cunningham
+  * netif: ensure link and admin states are up in issue reports (bug #52353)
+
   2017-09-12: David Lockyer
   * select: allocate select_cb from memp for LWIP_MPU_COMPATIBLE = 1 (bug #51990)
 

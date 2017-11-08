@@ -742,9 +742,7 @@ netif_set_up(struct netif *netif)
     }
 #endif
 
-    if (netif->flags & NETIF_FLAG_LINK_UP) {
-      netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
-    }
+    netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
   }
 }
 
@@ -753,6 +751,12 @@ netif_set_up(struct netif *netif)
 static void
 netif_issue_reports(struct netif *netif, u8_t report_type)
 {
+  /* Only send reports when both link and admin states are up */
+  if (!(netif->flags & NETIF_FLAG_LINK_UP) ||
+      !(netif->flags & NETIF_FLAG_UP)) {
+    return;
+  }
+
 #if LWIP_IPV4
   if ((report_type & NETIF_REPORT_TYPE_IPV4) &&
       !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
@@ -865,9 +869,8 @@ netif_set_link_up(struct netif *netif)
     autoip_network_changed(netif);
 #endif /* LWIP_AUTOIP */
 
-    if (netif->flags & NETIF_FLAG_UP) {
-      netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
-    }
+    netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
+
     NETIF_LINK_CALLBACK(netif);
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
     {
