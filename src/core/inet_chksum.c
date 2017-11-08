@@ -1,6 +1,6 @@
 /**
  * @file
- * Incluse internet checksum functions.\n
+ * Internet checksum functions.\n
  *
  * These are some reference implementations of the checksum algorithm, with the
  * aim of being simple, correct and fully portable. Checksumming is the
