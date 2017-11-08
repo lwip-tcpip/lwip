@@ -448,6 +448,7 @@ START_TEST(test_dhcp)
   IP4_ADDR(&gw, 0, 0, 0, 0);
 
   netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
   netif_set_up(&net_test);
 
   dhcp_start(&net_test);
@@ -520,6 +521,7 @@ START_TEST(test_dhcp_nak)
   IP4_ADDR(&gw, 0, 0, 0, 0);
 
   netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
   netif_set_up(&net_test);
 
   dhcp_start(&net_test);
@@ -741,6 +743,7 @@ START_TEST(test_dhcp_relayed)
   IP4_ADDR(&gw, 0, 0, 0, 0);
 
   netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
   netif_set_up(&net_test);
 
   dhcp_start(&net_test);
@@ -882,6 +885,7 @@ START_TEST(test_dhcp_nak_no_endmarker)
   IP4_ADDR(&gw, 0, 0, 0, 0);
 
   netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
   netif_set_up(&net_test);
 
   dhcp_start(&net_test);
@@ -981,6 +985,7 @@ START_TEST(test_dhcp_invalid_overload)
   IP4_ADDR(&gw, 0, 0, 0, 0);
 
   netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
   netif_set_up(&net_test);
 
   dhcp_start(&net_test);
