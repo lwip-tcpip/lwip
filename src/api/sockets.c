@@ -2776,6 +2776,26 @@ lwip_getsockopt_callback(void *arg)
 }
 #endif  /* LWIP_TCPIP_CORE_LOCKING */
 
+static int
+lwip_sockopt_to_ipopt(int optname)
+{
+  /* Map SO_* values to our internal SOF_* values
+   * We should not rely on #defines in socket.h
+   * being in sync with ip.h.
+   */
+  switch (optname) {
+  case SO_BROADCAST:
+    return SOF_BROADCAST;
+  case SO_KEEPALIVE:
+    return SOF_KEEPALIVE;
+  case SO_REUSEADDR:
+    return SOF_REUSEADDR;
+  default:
+    LWIP_ASSERT("Unknown socket option", 0);
+    return 0;
+  }
+}
+
 /** lwip_getsockopt_impl: the actual implementation of getsockopt:
  * same argument as lwip_getsockopt, either called directly or through callback
  */
@@ -2820,6 +2840,9 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
             done_socket(sock);
             return ENOPROTOOPT;
           }
+
+          optname = lwip_sockopt_to_ipopt(optname);
+
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, int);
           *(int *)optval = ip_get_option(sock->conn->pcb.ip, optname);
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, optname=0x%x, ..) = %s\n",
@@ -3219,6 +3242,9 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
             done_socket(sock);
             return ENOPROTOOPT;
           }
+
+          optname = lwip_sockopt_to_ipopt(optname);
+
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, int);
           if (*(const int *)optval) {
             ip_set_option(sock->conn->pcb.ip, optname);
