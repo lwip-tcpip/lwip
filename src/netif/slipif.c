@@ -471,6 +471,7 @@ slipif_process_rxqueue(struct netif *netif)
     }
     SYS_ARCH_PROTECT(old_level);
   }
+  SYS_ARCH_UNPROTECT(old_level);
 }
 
 /** Like slipif_rxbyte, but queues completed packets.
