@@ -1085,6 +1085,11 @@
 #define DNS_MAX_SERVERS                 2
 #endif
 
+/** DNS maximum number of retries when asking for a name, before "timeout". */
+#ifndef DNS_MAX_RETRIES || defined __DOXYGEN__
+#define DNS_MAX_RETRIES           4
+#endif
+
 /** DNS do a name checking between the query and the response. */
 #if !defined DNS_DOES_NAME_CHECK || defined __DOXYGEN__
 #define DNS_DOES_NAME_CHECK             1

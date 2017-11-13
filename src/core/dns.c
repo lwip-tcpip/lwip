@@ -110,11 +110,6 @@ static u16_t dns_txid;
 #define DNS_PORT_ALLOWED(port) ((port) >= 1024)
 #endif
 
-/** DNS maximum number of retries when asking for a name, before "timeout". */
-#ifndef DNS_MAX_RETRIES
-#define DNS_MAX_RETRIES           4
-#endif
-
 /** DNS resource record max. TTL (one week as default) */
 #ifndef DNS_MAX_TTL
 #define DNS_MAX_TTL               604800
