@@ -138,6 +138,7 @@
 #endif
 
 /* Return values for http_send_*() */
+#define HTTP_DATA_TO_SEND_FREED    3
 #define HTTP_DATA_TO_SEND_BREAK    2
 #define HTTP_DATA_TO_SEND_CONTINUE 1
 #define HTTP_NO_DATA_TO_SEND       0
@@ -972,6 +973,7 @@ get_http_headers(struct http_state *hs, const char *uri)
  *           - HTTP_DATA_TO_SEND_CONTINUE: continue with sending HTTP body
  *           - HTTP_DATA_TO_SEND_BREAK: data has been enqueued, headers pending,
  *                                      so don't send HTTP body yet
+ *           - HTTP_DATA_TO_SEND_FREED: htt_state and pcb are already freed
  */
 static u8_t
 http_send_headers(struct altcp_pcb *pcb, struct http_state *hs)
@@ -1038,7 +1040,11 @@ http_send_headers(struct altcp_pcb *pcb, struct http_state *hs)
      * instead of waiting for ACK from remote side to continue
      * (which would happen when sending files from async read). */
     if (http_check_eof(pcb, hs)) {
-      data_to_send = HTTP_DATA_TO_SEND_CONTINUE;
+      data_to_send = HTTP_DATA_TO_SEND_BREAK;
+    } else {
+      /* At this point, for non-keepalive connections, hs is deallocated an
+         pcb is closed. */
+      return HTTP_DATA_TO_SEND_FREED;
     }
   }
   /* If we get here and there are still header bytes to send, we send
@@ -1552,8 +1558,9 @@ http_send(struct altcp_pcb *pcb, struct http_state *hs)
   /* Do we have any more header data to send for this file? */
   if (hs->hdr_index < NUM_FILE_HDR_STRINGS) {
     data_to_send = http_send_headers(pcb, hs);
-    if ((data_to_send != HTTP_DATA_TO_SEND_CONTINUE) &&
-        (hs->hdr_index < NUM_FILE_HDR_STRINGS)) {
+    if ((data_to_send == HTTP_DATA_TO_SEND_FREED) ||
+        ((data_to_send != HTTP_DATA_TO_SEND_CONTINUE) &&
+         (hs->hdr_index < NUM_FILE_HDR_STRINGS))) {
       return data_to_send;
     }
   }
