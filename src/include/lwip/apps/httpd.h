@@ -102,7 +102,9 @@ void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
 #if LWIP_HTTPD_CGI_SSI
 /** Define this generic CGI handler in your application.
  * It is called once for every URI with parameters.
- * The parameters can be stored to 
+ * The parameters can be stored to the object passed as connection_state, which
+ * is allocated to file->state via fs_state_init() from fs_open() or fs_open_custom().
+ * Content creation via SSI or complete dynamic files can retrieve the CGI params from there.
  */
 extern void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, char **pcValue
 #if defined(LWIP_HTTPD_FILE_STATE) && LWIP_HTTPD_FILE_STATE
