@@ -1635,25 +1635,29 @@ tcp_kill_prio(u8_t prio)
   mprio = LWIP_MIN(TCP_PRIO_MAX, prio);
 
   /* We want to kill connections with a lower prio, so bail out if 
-   * supplied prio is 0 - there cannot be a no lower prio
+   * supplied prio is 0 - there can never be a lower prio
    */
   if (mprio == 0) {
     return;
   }
 
-  /* We want kill connections with a lower prio, so decrement prio by one 
-   * and start searching for oldest connection with same or lower prio than mprio.
+  /* We only want kill connections with a lower prio, so decrement prio by one 
+   * and start searching for oldest connection with same or lower priority than mprio.
+   * We want to find the connections with the lowest possible prio, and among
+   * these the one with the longest inactivity time.
    */
   mprio--;
 
   inactivity = 0;
   inactive = NULL;
   for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    if (pcb->prio <= mprio &&
-        (u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
+        /* lower prio is always a kill candidate */
+    if ((pcb->prio < mprio) ||
+        /* longer inactivity is also a kill candidate */
+        ((pcb->prio == mprio) && ((u32_t)(tcp_ticks - pcb->tmr) >= inactivity))) {
       inactivity = tcp_ticks - pcb->tmr;
-      inactive = pcb;
-      mprio = pcb->prio;
+      inactive   = pcb;
+      mprio      = pcb->prio;
     }
   }
   if (inactive != NULL) {
