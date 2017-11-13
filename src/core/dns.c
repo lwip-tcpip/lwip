@@ -1161,7 +1161,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
   if (p->tot_len < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY)) {
     LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\n"));
     /* free pbuf and return */
-    goto memerr;
+    goto ignore_packet;
   }
 
   /* copy dns payload inside static buffer for processing */
@@ -1181,11 +1181,11 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         /* Check for correct response. */
         if ((hdr.flags1 & DNS_FLAG1_RESPONSE) == 0) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": not a response\n", entry->name));
-          goto memerr; /* ignore this packet */
+          goto ignore_packet; /* ignore this packet */
         }
         if (nquestions != 1) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
-          goto memerr; /* ignore this packet */
+          goto ignore_packet; /* ignore this packet */
         }
 
 #if LWIP_DNS_SUPPORT_MDNS_QUERIES
@@ -1195,7 +1195,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
           /* Check whether response comes from the same network address to which the
              question was sent. (RFC 5452) */
           if (!ip_addr_cmp(addr, &dns_servers[entry->server_idx])) {
-            goto memerr; /* ignore this packet */
+            goto ignore_packet; /* ignore this packet */
           }
         }
 
@@ -1204,22 +1204,22 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         res_idx = dns_compare_name(entry->name, p, SIZEOF_DNS_HDR);
         if (res_idx == 0xFFFF) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
-          goto memerr; /* ignore this packet */
+          goto ignore_packet; /* ignore this packet */
         }
 
         /* check if "question" part matches the request */
         if (pbuf_copy_partial(p, &qry, SIZEOF_DNS_QUERY, res_idx) != SIZEOF_DNS_QUERY) {
-          goto memerr; /* ignore this packet */
+          goto ignore_packet; /* ignore this packet */
         }
         if ((qry.cls != PP_HTONS(DNS_RRCLASS_IN)) ||
             (LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_AAAA))) ||
             (!LWIP_DNS_ADDRTYPE_IS_IPV6(entry->reqaddrtype) && (qry.type != PP_HTONS(DNS_RRTYPE_A)))) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", entry->name));
-          goto memerr; /* ignore this packet */
+          goto ignore_packet; /* ignore this packet */
         }
         /* skip the rest of the "question" part */
         if (res_idx + SIZEOF_DNS_QUERY > 0xFFFF) {
-          goto memerr;
+          goto ignore_packet;
         }
         res_idx = (u16_t)(res_idx + SIZEOF_DNS_QUERY);
 
@@ -1231,15 +1231,15 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             /* skip answer resource record's host name */
             res_idx = dns_skip_name(p, res_idx);
             if (res_idx == 0xFFFF) {
-              goto memerr; /* ignore this packet */
+              goto ignore_packet; /* ignore this packet */
             }
 
             /* Check for IP address type and Internet class. Others are discarded. */
             if (pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx) != SIZEOF_DNS_ANSWER) {
-              goto memerr; /* ignore this packet */
+              goto ignore_packet; /* ignore this packet */
             }
             if (res_idx + SIZEOF_DNS_ANSWER > 0xFFFF) {
-              goto memerr;
+              goto ignore_packet;
             }
             res_idx = (u16_t)(res_idx + SIZEOF_DNS_ANSWER);
 
@@ -1253,7 +1253,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
                   ip4_addr_t ip4addr;
                   /* read the IP address after answer resource record's header */
                   if (pbuf_copy_partial(p, &ip4addr, sizeof(ip4_addr_t), res_idx) != sizeof(ip4_addr_t)) {
-                    goto memerr; /* ignore this packet */
+                    goto ignore_packet; /* ignore this packet */
                   }
                   ip_addr_copy_from_ip4(dns_table[i].ipaddr, ip4addr);
                   pbuf_free(p);
@@ -1272,7 +1272,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
                   ip6_addr_p_t ip6addr;
                   /* read the IP address after answer resource record's header */
                   if (pbuf_copy_partial(p, &ip6addr, sizeof(ip6_addr_p_t), res_idx) != sizeof(ip6_addr_p_t)) {
-                    goto memerr; /* ignore this packet */
+                    goto ignore_packet; /* ignore this packet */
                   }
                   /* @todo: scope ip6addr? Might be required for link-local addresses at least? */
                   ip_addr_copy_from_ip6_packed(dns_table[i].ipaddr, ip6addr);
@@ -1286,7 +1286,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             }
             /* skip this answer */
             if ((int)(res_idx + lwip_htons(ans.len)) > 0xFFFF) {
-              goto memerr; /* ignore this packet */
+              goto ignore_packet; /* ignore this packet */
             }
             res_idx = (u16_t)(res_idx + lwip_htons(ans.len));
             --nanswers;
@@ -1318,7 +1318,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
     }
   }
 
-memerr:
+ignore_packet:
   /* deallocate memory and return */
   pbuf_free(p);
   return;
