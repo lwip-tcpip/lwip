@@ -1139,6 +1139,24 @@ dns_correct_response(u8_t idx, u32_t ttl)
     }
   }
 }
+
+/**
+ * Check whether there are other backup DNS servers available to try
+ */
+static u8_t
+dns_backupserver_available(struct dns_table_entry *pentry)
+{
+  u8_t ret = 0;
+
+  if (pentry) {
+    if ((pentry->server_idx + 1 < DNS_MAX_SERVERS) && !ip_addr_isany_val(dns_servers[pentry->server_idx + 1])) {
+      ret = 1;
+    }
+  }
+
+  return ret;
+}
+
 /**
  * Receive input function for DNS response packets arriving for the dns UDP pcb.
  */
@@ -1169,7 +1187,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
     /* Match the ID in the DNS header with the name table. */
     txid = lwip_htons(hdr.id);
     for (i = 0; i < DNS_TABLE_SIZE; i++) {
-      const struct dns_table_entry *entry = &dns_table[i];
+      struct dns_table_entry *entry = &dns_table[i];
       if ((entry->state == DNS_STATE_ASKING) &&
           (entry->txid == txid)) {
 
@@ -1226,6 +1244,20 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
         /* Check for error. If so, call callback to inform. */
         if (hdr.flags2 & DNS_FLAG2_ERR_MASK) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", entry->name));
+
+          /* if there is another backup DNS server to try
+           * then don't stop the DNS request
+           */
+          if (dns_backupserver_available(entry)) {
+            /* avoid retrying the same server */
+            entry->retries = DNS_MAX_RETRIES-1;
+            entry->tmr     = 1;
+
+            /* contact next available server for this entry */
+            dns_check_entry(i);
+
+            goto ignore_packet;
+          }
         } else {
           while ((nanswers > 0) && (res_idx < p->tot_len)) {
             /* skip answer resource record's host name */
