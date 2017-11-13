@@ -1086,7 +1086,7 @@
 #endif
 
 /** DNS maximum number of retries when asking for a name, before "timeout". */
-#ifndef DNS_MAX_RETRIES || defined __DOXYGEN__
+#if !defined DNS_MAX_RETRIES || defined __DOXYGEN__
 #define DNS_MAX_RETRIES           4
 #endif
 
