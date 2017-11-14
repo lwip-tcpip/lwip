@@ -42,6 +42,7 @@
 
 #if LWIP_NETIF_API /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/etharp.h"
 #include "lwip/netifapi.h"
 #include "lwip/memp.h"
 #include "lwip/priv/tcpip_priv.h"
@@ -146,6 +147,69 @@ netifapi_do_netif_common(struct tcpip_api_call_data *m)
     return ERR_OK;
   }
 }
+
+#if LWIP_ARP && LWIP_IPV4
+/**
+ * @ingroup netifapi_arp
+ * Add or update an entry in the ARP cache.
+ * For an update, ipaddr is used to find the cache entry.
+ *
+ * @param ipaddr IPv4 address of cache entry
+ * @param ethaddr hardware address mapped to ipaddr
+ * @param type type of ARP cache entry
+ * @return ERR_OK: entry added/updated, else error from err_t
+ */
+err_t
+netifapi_arp_add(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr, enum netifapi_arp_entry type)
+{
+  err_t err;
+
+  /* We only support permanent entries currently */
+  LWIP_UNUSED_ARG(type);
+
+#if ETHARP_SUPPORT_STATIC_ENTRIES && LWIP_TCPIP_CORE_LOCKING
+  LOCK_TCPIP_CORE();
+  err = etharp_add_static_entry(ipaddr, ethaddr);
+  UNLOCK_TCPIP_CORE();
+#else
+  /* @todo add new vars to struct netifapi_msg and create a 'do' func */
+  LWIP_UNUSED_ARG(ipaddr);
+  LWIP_UNUSED_ARG(ethaddr);
+  err = ERR_VAL;
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES && LWIP_TCPIP_CORE_LOCKING */
+
+  return err;
+}
+
+/**
+ * @ingroup netifapi_arp
+ * Remove an entry in the ARP cache identified by ipaddr
+ *
+ * @param ipaddr IPv4 address of cache entry
+ * @param type type of ARP cache entry
+ * @return ERR_OK: entry removed, else error from err_t
+ */
+err_t
+netifapi_arp_remove(const ip4_addr_t *ipaddr, enum netifapi_arp_entry type)
+{
+  err_t err;
+
+  /* We only support permanent entries currently */
+  LWIP_UNUSED_ARG(type);
+
+#if ETHARP_SUPPORT_STATIC_ENTRIES && LWIP_TCPIP_CORE_LOCKING
+  LOCK_TCPIP_CORE();
+  err = etharp_remove_static_entry(ipaddr);
+  UNLOCK_TCPIP_CORE();
+#else
+  /* @todo add new vars to struct netifapi_msg and create a 'do' func */
+  LWIP_UNUSED_ARG(ipaddr);
+  err = ERR_VAL;
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES && LWIP_TCPIP_CORE_LOCKING */
+
+  return err;
+}
+#endif /* LWIP_ARP && LWIP_IPV4 */
 
 /**
  * @ingroup netifapi_netif

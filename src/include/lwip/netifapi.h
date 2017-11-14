@@ -42,12 +42,26 @@
 #include "lwip/autoip.h"
 #include "lwip/priv/tcpip_priv.h"
 #include "lwip/priv/api_msg.h"
+#include "lwip/prot/ethernet.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* API for application */
+#if LWIP_ARP && LWIP_IPV4
+/* Used for netfiapi_arp_* APIs */
+enum netifapi_arp_entry {
+  NETIFAPI_ARP_PERM /* Permanent entry */
+  /* Other entry types can be added here */
+};
+
+/** @ingroup netifapi_arp */
+err_t netifapi_arp_add(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr, enum netifapi_arp_entry type);
+/** @ingroup netifapi_arp */
+err_t netifapi_arp_remove(const ip4_addr_t *ipaddr, enum netifapi_arp_entry type);
+#endif /* LWIP_ARP && LWIP_IPV4 */
+
 err_t netifapi_netif_add(struct netif *netif,
 #if LWIP_IPV4
                          const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, const ip4_addr_t *gw,
