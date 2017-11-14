@@ -1007,6 +1007,23 @@ again:
 }
 
 /**
+ * Check whether there are other backup DNS servers available to try
+ */
+static u8_t
+dns_backupserver_available(struct dns_table_entry *pentry)
+{
+  u8_t ret = 0;
+
+  if (pentry) {
+    if ((pentry->server_idx + 1 < DNS_MAX_SERVERS) && !ip_addr_isany_val(dns_servers[pentry->server_idx + 1])) {
+      ret = 1;
+    }
+  }
+
+  return ret;
+}
+
+/**
  * dns_check_entry() - see if entry has not yet been queried and, if so, sends out a query.
  * Check an entry in the dns_table:
  * - send out query for new entries
@@ -1042,7 +1059,7 @@ dns_check_entry(u8_t i)
     case DNS_STATE_ASKING:
       if (--entry->tmr == 0) {
         if (++entry->retries == DNS_MAX_RETRIES) {
-          if ((entry->server_idx + 1 < DNS_MAX_SERVERS) && !ip_addr_isany_val(dns_servers[entry->server_idx + 1])
+          if (dns_backupserver_available(entry)
 #if LWIP_DNS_SUPPORT_MDNS_QUERIES
               && !entry->is_mdns
 #endif /* LWIP_DNS_SUPPORT_MDNS_QUERIES */
@@ -1133,23 +1150,6 @@ dns_correct_response(u8_t idx, u32_t ttl)
       entry->state = DNS_STATE_UNUSED;
     }
   }
-}
-
-/**
- * Check whether there are other backup DNS servers available to try
- */
-static u8_t
-dns_backupserver_available(struct dns_table_entry *pentry)
-{
-  u8_t ret = 0;
-
-  if (pentry) {
-    if ((pentry->server_idx + 1 < DNS_MAX_SERVERS) && !ip_addr_isany_val(dns_servers[pentry->server_idx + 1])) {
-      ret = 1;
-    }
-  }
-
-  return ret;
 }
 
 /**
