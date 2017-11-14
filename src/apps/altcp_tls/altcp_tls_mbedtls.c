@@ -563,6 +563,8 @@ altcp_mbedtls_setup(void *conf, struct altcp_pcb *conn, struct altcp_pcb *inner_
   if (!conf) {
     return ERR_ARG;
   }
+  LWIP_ASSERT("invalid inner_conn", conn != inner_conn);
+
   /* allocate mbedtls context */
   state = altcp_mbedtls_alloc(conf);
   if (state == NULL) {
@@ -969,10 +971,6 @@ altcp_mbedtls_dealloc(struct altcp_pcb *conn)
       state->flags = 0;
       altcp_mbedtls_free(state->conf, state);
       conn->state = NULL;
-    }
-    if (conn->inner_conn) {
-      altcp_free(conn->inner_conn);
-      conn->inner_conn = NULL;
     }
   }
 }
