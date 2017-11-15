@@ -210,7 +210,7 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
     return ERR_CLSD;
   }
 
-  /* handle NULL pbuf (connection closed) */
+  /* handle NULL pbuf (inner connection closed) */
   if (p == NULL) {
     /* remote host sent FIN, remember this (SSL state is destroyed
         when both sides are closed only!) */
@@ -276,9 +276,12 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
     if (ret != 0) {
       LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_handshake failed: %d\n", ret));
       /* handshake failed, connection has to be closed */
-      conn->recv(conn->arg, conn, NULL, ERR_OK);
-      if (altcp_close(conn->inner_conn) != ERR_OK) {
-        altcp_abort(conn->inner_conn);
+      if (conn->err) {
+        conn->err(conn->arg, ERR_CLSD);
+      }
+
+      if (altcp_close(conn) != ERR_OK) {
+        altcp_abort(conn); 
       }
       return ERR_OK;
     }
@@ -543,6 +546,17 @@ altcp_mbedtls_lower_err(void *arg, err_t err)
 }
 
 /* setup functions */
+
+static void
+altcp_tcp_remove_callbacks(struct altcp_pcb *inner_conn)
+{
+  altcp_arg(inner_conn, NULL);
+  altcp_recv(inner_conn, NULL);
+  altcp_sent(inner_conn, NULL);
+  altcp_err(inner_conn, NULL);
+  altcp_poll(inner_conn, NULL, inner_conn->pollinterval);
+}
+
 static void
 altcp_mbedtls_setup_callbacks(struct altcp_pcb *conn, struct altcp_pcb *inner_conn)
 {
@@ -844,8 +858,24 @@ static err_t
 altcp_mbedtls_close(struct altcp_pcb *conn)
 {
   altcp_mbedtls_state_t *state;
+  struct altcp_pcb *inner_conn;
   if (conn == NULL) {
     return ERR_VAL;
+  }
+  inner_conn = conn->inner_conn;
+  if (inner_conn) {
+    err_t err;
+    altcp_poll_fn oldpoll = inner_conn->poll;
+    altcp_tcp_remove_callbacks(conn->inner_conn);
+    err = altcp_close(conn->inner_conn);
+    if (err != ERR_OK) {
+      /* not closed, set up all callbacks again */
+      altcp_mbedtls_setup_callbacks(conn, inner_conn);
+      /* poll callback is not included in the above */
+      altcp_poll(inner_conn, oldpoll, inner_conn->pollinterval);
+      return err;
+    }
+    conn->inner_conn = NULL;
   }
   state = (altcp_mbedtls_state_t *)conn->state;
   if (state != NULL) {
@@ -854,7 +884,8 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
       altcp_mbedtls_dealloc(conn);
     }
   }
-  return altcp_close(conn->inner_conn);
+  altcp_free(conn);
+  return ERR_OK;
 }
 
 /** Write data to a TLS connection. Calls into mbedTLS, which in turn calls into
