@@ -1189,7 +1189,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
     IP_ADDR6(&new_ipaddr, i0, i1, i2, i3);
     ip6_addr_assign_zone(ip_2_ip6(&new_ipaddr), IP6_UNICAST, netif);
 
-    if (netif_ip6_addr_state(netif, addr_idx) & IP6_ADDR_VALID) {
+    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addr_idx))) {
 #if LWIP_TCP
       tcp_netif_ip_addr_changed(netif_ip_addr6(netif, addr_idx), &new_ipaddr);
 #endif /* LWIP_TCP */
@@ -1204,7 +1204,7 @@ netif_ip6_addr_set_parts(struct netif *netif, s8_t addr_idx, u32_t i0, u32_t i1,
 
     ip_addr_copy(netif->ip6_addr[addr_idx], new_ipaddr);
 
-    if (netif_ip6_addr_state(netif, addr_idx) & IP6_ADDR_VALID) {
+    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addr_idx))) {
       netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV6);
       NETIF_STATUS_CALLBACK(netif);
     }
