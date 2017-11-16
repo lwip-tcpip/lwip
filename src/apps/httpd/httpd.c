@@ -2234,8 +2234,16 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
     } else {
       file = http_get_404_file(hs, &uri);
     }
-#if LWIP_HTTPD_SSI && LWIP_HTTPD_SSI_BY_FILE_EXTENSION
-    tag_check = http_uri_is_ssi(file, uri);
+#if LWIP_HTTPD_SSI
+    if (file != NULL) {
+      if (file->flags & FS_FILE_FLAGS_SSI) {
+        tag_check = 1;
+      } else {
+#if LWIP_HTTPD_SSI_BY_FILE_EXTENSION
+        tag_check = http_uri_is_ssi(file, uri);
+#endif /* LWIP_HTTPD_SSI_BY_FILE_EXTENSION */
+      }
+    }
 #endif /* LWIP_HTTPD_SSI */
   }
   if (file == NULL) {

@@ -52,6 +52,8 @@ struct fsdata_chksum {
 
 #define FS_FILE_FLAGS_HEADER_INCLUDED     0x01
 #define FS_FILE_FLAGS_HEADER_PERSISTENT   0x02
+#define FS_FILE_FLAGS_HEADER_KEEPALIVE    0x04
+#define FS_FILE_FLAGS_SSI                 0x08
 
 /** Define FS_FILE_EXTENSION_T_DEFINED if you have typedef'ed to your private
  * pointer type (defaults to 'void' so the default usage is 'void*')
