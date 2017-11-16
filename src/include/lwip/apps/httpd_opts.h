@@ -109,6 +109,18 @@
 #define LWIP_HTTPD_SSI_RAW        0
 #endif
 
+/** Set this to 0 to prevent parsing the file extension at runtime to decide
+ * if a file should be scanned for SSI tags or not.
+ * Default is 1 (file extensions are checked using the g_pcSSIExtensions array)
+ * Set to 2 to override this runtime test function.
+ *
+ * This is enabled by default, but if you only use a newer version of makefsdata
+ * supporting the "-ssi" option, this info is already present in
+ */
+#if !defined LWIP_HTTPD_SSI_BY_FILE_EXTENSION || defined __DOXYGEN__
+#define LWIP_HTTPD_SSI_BY_FILE_EXTENSION  1
+#endif
+
 /** Set this to 1 to support HTTP POST */
 #if !defined LWIP_HTTPD_SUPPORT_POST || defined __DOXYGEN__
 #define LWIP_HTTPD_SUPPORT_POST   0

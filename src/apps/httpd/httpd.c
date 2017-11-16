@@ -2087,6 +2087,47 @@ badrequest:
   }
 }
 
+#if LWIP_HTTPD_SSI && (LWIP_HTTPD_SSI_BY_FILE_EXTENSION == 1)
+/* Check if SSI should be parsed for this file/URL
+ * (With LWIP_HTTPD_SSI_BY_FILE_EXTENSION == 2, this function can be
+ * overridden by an external implementation.)
+ *
+ * @return 1 for SSI, 0 for standard files
+ */
+static u8_t
+http_uri_is_ssi(struct fs_file *file, const char *uri)
+{
+  size_t loop;
+  u8_t tag_check = 0;
+  if (file != NULL) {
+    /* See if we have been asked for an shtml file and, if so,
+        enable tag checking. */
+    const char *ext = NULL, *sub;
+    char *param = (char *)strstr(uri, "?");
+    if (param != NULL) {
+      /* separate uri from parameters for now, set back later */
+      *param = 0;
+    }
+    sub = uri;
+    ext = uri;
+    for (sub = strstr(sub, "."); sub != NULL; sub = strstr(sub, ".")) {
+      ext = sub;
+      sub++;
+    }
+    for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
+      if (!lwip_stricmp(ext, g_pcSSIExtensions[loop])) {
+        tag_check = 1;
+        break;
+      }
+    }
+    if (param != NULL) {
+      *param = '?';
+    }
+  }
+  return tag_check;
+}
+#endif /* LWIP_HTTPD_SSI */
+
 /** Try to find the file specified by uri and, if found, initialize hs
  * accordingly.
  *
@@ -2193,33 +2234,8 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
     } else {
       file = http_get_404_file(hs, &uri);
     }
-#if LWIP_HTTPD_SSI
-    if (file != NULL) {
-      /* See if we have been asked for an shtml file and, if so,
-         enable tag checking. */
-      const char *ext = NULL, *sub;
-      char *param = (char *)strstr(uri, "?");
-      if (param != NULL) {
-        /* separate uri from parameters for now, set back later */
-        *param = 0;
-      }
-      sub = uri;
-      ext = uri;
-      for (sub = strstr(sub, "."); sub != NULL; sub = strstr(sub, ".")) {
-        ext = sub;
-        sub++;
-      }
-      tag_check = 0;
-      for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
-        if (!lwip_stricmp(ext, g_pcSSIExtensions[loop])) {
-          tag_check = 1;
-          break;
-        }
-      }
-      if (param != NULL) {
-        *param = '?';
-      }
-    }
+#if LWIP_HTTPD_SSI && LWIP_HTTPD_SSI_BY_FILE_EXTENSION
+    tag_check = http_uri_is_ssi(file, uri);
 #endif /* LWIP_HTTPD_SSI */
   }
   if (file == NULL) {
