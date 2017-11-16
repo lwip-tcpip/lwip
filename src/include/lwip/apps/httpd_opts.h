@@ -50,23 +50,61 @@
  * @{
  */
 
-/** Set this to 1 to support CGI (old style) */
+/** Set this to 1 to support CGI (old style).
+ *
+ * This old style CGI support works by registering an array of URLs and
+ * associated CGI handler functions (@ref http_set_cgi_handlers).
+ * This list is scanned just before fs_open is called from request handling.
+ * The handler can return a new URL that is used internally by the httpd to
+ * load the returned page (passed to fs_open).
+ *
+ * Use this CGI type e.g. to execute specific actions and return a page that
+ * does not depend on the CGI parameters.
+ */
 #if !defined LWIP_HTTPD_CGI || defined __DOXYGEN__
 #define LWIP_HTTPD_CGI            0
 #endif
 
-/** Set this to 1 to support CGI (new style) */
+/** Set this to 1 to support CGI (new style).
+ *
+ * This new style CGI support works by calling a global function
+ * (@ref httpd_cgi_handler) for all URLs that are found. fs_open is called first
+ * and the URL can not be written by the CGI handler. Instead, this handler gets
+ * passed the http file state, an object where it can store information derived
+ * from the CGI URL or parameters. This file state is later passed to SSI, so
+ * the SSI code can return data depending on CGI input.
+ *
+ * Use this CGI handler if you want CGI information passed on to SSI.
+ */
 #if !defined LWIP_HTTPD_CGI_SSI || defined __DOXYGEN__
 #define LWIP_HTTPD_CGI_SSI        0
 #endif
 
-/** Set this to 1 to support SSI (Server-Side-Includes) */
+/** Set this to 1 to support SSI (Server-Side-Includes)
+ *
+ * In contrast to other http servers, this only calls a preregistered callback
+ * function (@see http_set_ssi_handler) for each tag (in the format of
+ * <!--#tag-->) encountered in SSI-enabled pages.
+ * SSI-enabled pages must have one of the predefined SSI-enabled file extensions.
+ * All files with one of these extensions are parsed when sent.
+ *
+ * A downside of the current SSI implementation is that persistent connections
+ * don't work, as the file length is not known in advance (and httpd currently
+ * relies on the Content-Length header for persistent connections).
+ *
+ * To save memory, the maximum tag length is limited (@see LWIP_HTTPD_MAX_TAG_NAME_LEN).
+ * To save memory, the maximum insertion string length is limited (@see
+ * LWIP_HTTPD_MAX_TAG_INSERT_LEN). If this is not enought, @ref LWIP_HTTPD_SSI_MULTIPART
+ * can be used.
+ */
 #if !defined LWIP_HTTPD_SSI || defined __DOXYGEN__
 #define LWIP_HTTPD_SSI            0
 #endif
 
 /** Set this to 1 to implement an SSI tag handler callback that gets a const char*
- * to the tag (instead of an index into a pre-registered array of known tags) */
+ * to the tag (instead of an index into a pre-registered array of known tags)
+ * If this is 0, the SSI handler callback function is only called pre-registered tags.
+ */
 #if !defined LWIP_HTTPD_SSI_RAW || defined __DOXYGEN__
 #define LWIP_HTTPD_SSI_RAW        0
 #endif
@@ -89,12 +127,16 @@
 #define LWIP_HTTPD_SSI_MULTIPART    0
 #endif
 
-/* The maximum length of the string comprising the tag name */
+/* The maximum length of the string comprising the SSI tag name
+ * ATTENTION: tags longer than this are ignored, not truncated!
+ */
 #if !defined LWIP_HTTPD_MAX_TAG_NAME_LEN || defined __DOXYGEN__
 #define LWIP_HTTPD_MAX_TAG_NAME_LEN 8
 #endif
 
-/* The maximum length of string that can be returned to replace any given tag */
+/* The maximum length of string that can be returned to replace any given tag
+ * If this buffer is not long enough, use LWIP_HTTPD_SSI_MULTIPART.
+ */
 #if !defined LWIP_HTTPD_MAX_TAG_INSERT_LEN || defined __DOXYGEN__
 #define LWIP_HTTPD_MAX_TAG_INSERT_LEN 192
 #endif
@@ -123,6 +165,9 @@
 
 /** Set this to 1 to use a memp pool for allocating 
  * struct http_state instead of the heap.
+ * If enabled, you'll need to define MEMP_NUM_PARALLEL_HTTPD_CONNS
+ * (and MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS for SSI) to set the size of
+ * the pool(s).
  */
 #if !defined HTTPD_USE_MEM_POOL || defined __DOXYGEN__
 #define HTTPD_USE_MEM_POOL  0
