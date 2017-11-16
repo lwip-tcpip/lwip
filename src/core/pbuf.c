@@ -91,6 +91,9 @@
    aligned there. Therefore, PBUF_POOL_BUFSIZE_ALIGNED can be used here. */
 #define PBUF_POOL_BUFSIZE_ALIGNED LWIP_MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE)
 
+static const struct pbuf *
+pbuf_skip_const(const struct pbuf *in, u16_t in_offset, u16_t *out_offset);
+
 #if !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ
 #define PBUF_POOL_IS_EMPTY()
 #else /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
@@ -109,9 +112,6 @@
 
 volatile u8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
-
-static const struct pbuf *
-pbuf_skip_const(const struct pbuf *in, u16_t in_offset, u16_t *out_offset);
 
 /**
  * Attempt to reclaim some memory from queued out-of-sequence TCP segments
