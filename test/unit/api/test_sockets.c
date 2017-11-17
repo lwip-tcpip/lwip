@@ -109,6 +109,7 @@ static void test_sockets_allfunctions_basic_domain(int domain)
   int s, s2, s3, ret;
   struct sockaddr_storage addr, addr2;
   socklen_t addrlen, addr2len;
+  char buf[4];
   /* listen socket */
   s = lwip_socket(domain, SOCK_STREAM, 0);
   fail_unless(s >= 0);
@@ -151,9 +152,44 @@ static void test_sockets_allfunctions_basic_domain(int domain)
   fail_unless(ret == -1);
   fail_unless(errno == EISCONN);
 
-  ret = lwip_close(s);
+  /* write from server to client */
+  ret = write(s3, "test", 4);
+  fail_unless(ret == 4);
+
+  ret = lwip_shutdown(s3, SHUT_WR);
   fail_unless(ret == 0);
+
+  while(tcpip_thread_poll_one());
+
+  ret = lwip_read(s2, buf, 4);
+  fail_unless(ret == 4);
+
+  ret = lwip_read(s2, buf, 1);
+  fail_unless(ret == 0);
+
+  ret = lwip_read(s2, buf, 1);
+  fail_unless(ret == -1);
+
+  ret = lwip_write(s2, "foo", 3);
+  fail_unless(ret == 3);
+
   ret = lwip_close(s2);
+  fail_unless(ret == 0);
+
+  while(tcpip_thread_poll_one());
+
+  ret = lwip_read(s3, buf, 3);
+  fail_unless(ret == 3);
+
+  ret = lwip_read(s3, buf, 1);
+  fail_unless(ret == 0);
+
+  ret = lwip_read(s3, buf, 1);
+  fail_unless(ret == -1);
+
+  while(tcpip_thread_poll_one());
+
+  ret = lwip_close(s);
   fail_unless(ret == 0);
   ret = lwip_close(s3);
   fail_unless(ret == 0);
