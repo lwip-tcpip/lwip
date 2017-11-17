@@ -919,7 +919,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
     pcb->rcv_wnd = TCP_WND_MAX(pcb);
   } else if (pcb->rcv_wnd == 0) {
     /* rcv_wnd overflowed */
-    if ((pcb->state == CLOSE_WAIT) || (pcb->state == LAST_ACK)) {
+    if (TCP_STATE_IS_CLOSING(pcb->state)) {
       /* In passive close, we allow this, since the FIN bit is added to rcv_wnd
          by the stack itself, since it is not mandatory for an application
          to call tcp_recved() for the FIN bit, but e.g. the netconn API does so. */

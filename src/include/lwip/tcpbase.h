@@ -66,6 +66,8 @@ enum tcp_state {
   LAST_ACK    = 9,
   TIME_WAIT   = 10
 };
+/* ATTENTION: this depends on state number ordering! */
+#define TCP_STATE_IS_CLOSING(state) ((state) >= FIN_WAIT_1)
 
 /* Flags for "apiflags" parameter in tcp_write */
 #define TCP_WRITE_FLAG_COPY 0x01
