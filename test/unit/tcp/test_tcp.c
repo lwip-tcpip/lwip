@@ -583,7 +583,8 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   struct tcp_pcb* pcb;
   struct pbuf* p;
   err_t err;
-  u16_t i, sent_total = 0;
+  size_t i;
+  u16_t sent_total = 0;
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
@@ -669,7 +670,8 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   struct test_tcp_counters counters;
   struct tcp_pcb* pcb;
   err_t err;
-  u16_t i, sent_total = 0;
+  size_t i;
+  u16_t sent_total = 0;
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
@@ -744,7 +746,8 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   struct tcp_pcb* pcb;
   struct pbuf *p;
   err_t err;
-  u16_t sent_total, i;
+  size_t i;
+  u16_t sent_total;
   u8_t expected = 0xFE;
 
   for (i = 0; i < sizeof(tx_data); i++) {
@@ -896,7 +899,8 @@ START_TEST(test_tcp_rto_tracking)
   struct tcp_pcb* pcb;
   struct pbuf* p;
   err_t err;
-  u16_t i, sent_total = 0;
+  size_t i;
+  u16_t sent_total = 0;
   LWIP_UNUSED_ARG(_i);
 
   for (i = 0; i < sizeof(tx_data); i++) {
@@ -1016,7 +1020,7 @@ START_TEST(test_tcp_rto_timeout)
   struct test_tcp_counters counters;
   struct tcp_pcb *pcb, *cur;
   err_t err;
-  u16_t i;
+  size_t i;
   LWIP_UNUSED_ARG(_i);
 
   /* Setup data for a single segment */
@@ -1090,7 +1094,7 @@ START_TEST(test_tcp_zwp_timeout)
   struct tcp_pcb *pcb, *cur;
   struct pbuf* p;
   err_t err;
-  u16_t i;
+  size_t i;
   LWIP_UNUSED_ARG(_i);
 
   /* Setup data for two segments */
@@ -1198,7 +1202,7 @@ START_TEST(test_tcp_persist_split)
   struct tcp_pcb *pcb;
   struct pbuf* p;
   err_t err;
-  u16_t i;
+  size_t i;
   LWIP_UNUSED_ARG(_i);
 
   /* Setup data for four segments */
