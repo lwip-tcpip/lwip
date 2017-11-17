@@ -329,18 +329,12 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
 
       tcp_pcb_purge(pcb);
       TCP_RMV_ACTIVE(pcb);
-      if (pcb->state == ESTABLISHED) {
-        /* move to TIME_WAIT since we close actively */
-        pcb->state = TIME_WAIT;
-        TCP_REG(&tcp_tw_pcbs, pcb);
+      /* Deallocate the pcb since we already sent a RST for it */
+      if (tcp_input_pcb == pcb) {
+        /* prevent using a deallocated pcb: free it from tcp_input later */
+        tcp_trigger_input_pcb_close();
       } else {
-        /* CLOSE_WAIT: deallocate the pcb since we already sent a RST for it */
-        if (tcp_input_pcb == pcb) {
-          /* prevent using a deallocated pcb: free it from tcp_input later */
-          tcp_trigger_input_pcb_close();
-        } else {
-          memp_free(MEMP_TCP_PCB, pcb);
-        }
+        memp_free(MEMP_TCP_PCB, pcb);
       }
       return ERR_OK;
     }
