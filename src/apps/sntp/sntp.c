@@ -112,7 +112,7 @@
 #define SNTP_OFFSET_TRANSMIT_TIME   40
 
 /* Number of seconds between 1970 and Feb 7, 2036 06:28:16 UTC (epoch 1) */
-#define DIFF_SEC_1970_2036          ((s32_t)2085978496L)
+#define DIFF_SEC_1970_2036          ((u32_t)2085978496L)
 
 /** Convert NTP timestamp fraction to microseconds.
  */
@@ -270,7 +270,7 @@ static const char *
 sntp_format_time(s32_t sec)
 {
   time_t ut;
-  ut = (time_t)((time_t)sec + (time_t)DIFF_SEC_1970_2036);
+  ut = (u32_t)((u32_t)sec + DIFF_SEC_1970_2036);
   return ctime(&ut);
 }
 #endif /* LWIP_DEBUG && !sntp_format_time */
