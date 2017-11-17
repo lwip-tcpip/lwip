@@ -540,7 +540,7 @@ netif_remove(struct netif *netif)
   } else {
     /*  look for netif further down the list */
     struct netif *tmp_netif;
-    for (tmp_netif = netif_list; tmp_netif != NULL; tmp_netif = tmp_netif->next) {
+    NETIF_FOREACH(tmp_netif) {
       if (tmp_netif->next == netif) {
         tmp_netif->next = netif->next;
         break;

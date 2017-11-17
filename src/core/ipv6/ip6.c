@@ -111,7 +111,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
     IP6_ADDR_ZONECHECK(dest);
     /* Find a netif based on the zone. For custom mappings, one zone may map
      * to multiple netifs, so find one that can actually send a packet. */
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
+    NETIF_FOREACH(netif) {
       if (ip6_addr_test_zone(dest, netif) &&
           netif_is_up(netif) && netif_is_link_up(netif)) {
         return netif;
@@ -148,7 +148,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
 #if LWIP_IPV6_SCOPES
     if (ip6_addr_has_zone(src)) {
       /* Find a netif matching the source zone (relatively cheap). */
-      for (netif = netif_list; netif != NULL; netif = netif->next) {
+      NETIF_FOREACH(netif) {
         if (netif_is_up(netif) && netif_is_link_up(netif) &&
             ip6_addr_test_zone(src, netif)) {
           return netif;
@@ -158,7 +158,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
 #endif /* LWIP_IPV6_SCOPES */
     {
       /* Find a netif matching the source address (relatively expensive). */
-      for (netif = netif_list; netif != NULL; netif = netif->next) {
+      NETIF_FOREACH(netif) {
         if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
           continue;
         }
@@ -191,7 +191,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
    * such, the destination address may still match a local address, and so we
    * still need to check for exact matches here. By (lwIP) policy, statically
    * configured addresses do always have an implied local /64 subnet. */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
+  NETIF_FOREACH(netif) {
     if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
       continue;
     }
@@ -214,7 +214,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   /* Try with the netif that matches the source address. Given the earlier rule
    * for scoped source addresses, this applies to unscoped addresses only. */
   if (!ip6_addr_isany(src)) {
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
+    NETIF_FOREACH(netif) {
       if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
         continue;
       }
@@ -235,7 +235,7 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
+    NETIF_FOREACH(netif) {
       if (netif_is_up(netif)) {
         return netif;
       }

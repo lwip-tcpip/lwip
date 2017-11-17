@@ -162,7 +162,7 @@ ip4_route(const ip4_addr_t *dest)
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
   /* iterate through netifs */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
+  NETIF_FOREACH(netif) {
     /* is the netif up, does it have a link and a valid address? */
     if (netif_is_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
       /* network mask matches? */
@@ -186,7 +186,7 @@ ip4_route(const ip4_addr_t *dest)
       return netif_default;
     }
     /* default netif is not up, just use any netif for loopback traffic */
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
+    NETIF_FOREACH(netif) {
       if (netif_is_up(netif)) {
         return netif;
       }
