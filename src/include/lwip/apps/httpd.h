@@ -51,7 +51,8 @@ extern "C" {
 
 #if LWIP_HTTPD_CGI
 
-/*
+/**
+ * @ingroup httpd
  * Function pointer for a CGI script handler.
  *
  * This function is called each time the HTTPD server is asked for a file
@@ -83,7 +84,8 @@ extern "C" {
 typedef const char *(*tCGIHandler)(int iIndex, int iNumParams, char *pcParam[],
                              char *pcValue[]);
 
-/*
+/**
+ * @ingroup httpd
  * Structure defining the base filename (URL) of a CGI and the associated
  * function which is to be called when that URL is requested.
  */
@@ -117,7 +119,8 @@ extern void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, c
 
 #if LWIP_HTTPD_SSI
 
-/*
+/**
+ * @ingroup httpd
  * Function pointer for the SSI tag handler callback.
  *
  * This function will be called each time the HTTPD server detects a tag of the
@@ -144,7 +147,7 @@ extern void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, c
  * within JavaScript and, hence, leaving the tag in place will result in
  * problems in these cases.  To work around this, any SSI tag which needs to
  * output JavaScript code must do so in an encapsulated way, sending the whole
- * HTML <script>...</script> section as a single include.
+ * HTML &lt;script&gt;...&lt;/script&gt; section as a single include.
  */
 typedef u16_t (*tSSIHandler)(
 #if LWIP_HTTPD_SSI_RAW
@@ -179,7 +182,9 @@ void http_set_ssi_handler(tSSIHandler pfnSSIHandler,
 
 /* These functions must be implemented by the application */
 
-/** Called when a POST request has been received. The application can decide
+/** 
+ * @ingroup httpd
+ * Called when a POST request has been received. The application can decide
  * whether to accept it or not.
  *
  * @param connection Unique connection identifier, valid until httpd_post_end
@@ -201,7 +206,9 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
                        u16_t http_request_len, int content_len, char *response_uri,
                        u16_t response_uri_len, u8_t *post_auto_wnd);
 
-/** Called for each pbuf of data that has been received for a POST.
+/**
+ * @ingroup httpd
+ * Called for each pbuf of data that has been received for a POST.
  * ATTENTION: The application is responsible for freeing the pbufs passed in!
  *
  * @param connection Unique connection identifier.
@@ -211,7 +218,9 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
  */
 err_t httpd_post_receive_data(void *connection, struct pbuf *p);
 
-/** Called when all data is received or when the connection is closed.
+/**
+ * @ingroup httpd
+ * Called when all data is received or when the connection is closed.
  * The application must return the filename/URI of a file to send in response
  * to this POST request. If the response_uri buffer is untouched, a 404
  * response is returned.

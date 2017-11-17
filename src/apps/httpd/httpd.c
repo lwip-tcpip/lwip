@@ -1844,7 +1844,9 @@ http_post_request(struct pbuf *inp, struct http_state *hs,
 }
 
 #if LWIP_HTTPD_POST_MANUAL_WND
-/** A POST implementation can call this function to update the TCP window.
+/**
+ * @ingroup httpd
+ * A POST implementation can call this function to update the TCP window.
  * This can be used to throttle data reception (e.g. when received data is
  * programmed to flash and data is received faster than programmed).
  *
@@ -2653,6 +2655,7 @@ httpd_inits(struct altcp_tls_config *conf)
 
 #if LWIP_HTTPD_SSI
 /**
+ * @ingroup httpd
  * Set the SSI handler function.
  *
  * @param ssi_handler the SSI handler function
@@ -2682,6 +2685,7 @@ http_set_ssi_handler(tSSIHandler ssi_handler, const char **tags, int num_tags)
 
 #if LWIP_HTTPD_CGI
 /**
+ * @ingroup httpd
  * Set an array of CGI filenames/handler functions
  *
  * @param cgis an array of CGI filenames/handler functions

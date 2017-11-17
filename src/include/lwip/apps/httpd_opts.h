@@ -68,7 +68,7 @@
 /** Set this to 1 to support CGI (new style).
  *
  * This new style CGI support works by calling a global function
- * (@ref httpd_cgi_handler) for all URLs that are found. fs_open is called first
+ * (@ref tCGIHandler) for all URLs that are found. fs_open is called first
  * and the URL can not be written by the CGI handler. Instead, this handler gets
  * passed the http file state, an object where it can store information derived
  * from the CGI URL or parameters. This file state is later passed to SSI, so
