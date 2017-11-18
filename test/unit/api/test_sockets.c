@@ -161,6 +161,12 @@ static void test_sockets_allfunctions_basic_domain(int domain)
 
   while(tcpip_thread_poll_one());
 
+  ret = lwip_recv(s2, buf, 3, MSG_PEEK);
+  fail_unless(ret == 3);
+
+  ret = lwip_recv(s2, buf, 3, MSG_PEEK);
+  fail_unless(ret == 3);
+
   ret = lwip_read(s2, buf, 4);
   fail_unless(ret == 4);
 
