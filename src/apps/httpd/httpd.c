@@ -104,6 +104,9 @@
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
 #endif
+#if LWIP_HTTPD_TIMING
+#include "lwip/sys.h"
+#endif /* LWIP_HTTPD_TIMING */
 
 #include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
