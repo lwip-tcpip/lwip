@@ -69,6 +69,10 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/priv/tcpip_priv.h"
 
+#ifdef LWIP_HOOK_FILENAME
+#include LWIP_HOOK_FILENAME
+#endif
+
 #include <string.h>
 
 #define API_MSG_VAR_REF(name)               API_VAR_REF(name)
@@ -1208,6 +1212,16 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
     return ERR_ARG;
   }
 #endif
+
+#ifdef LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE
+#if LWIP_IPV4 && LWIP_IPV6
+  if (LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, dns_addrtype, &err)) {
+#else
+  if (LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, NETCONN_DNS_DEFAULT, &err)) {
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+    return err;
+  }
+#endif /* LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE */
 
   API_VAR_ALLOC(struct dns_api_msg, MEMP_DNS_API_MSG, msg, ERR_MEM);
 #if LWIP_MPU_COMPATIBLE

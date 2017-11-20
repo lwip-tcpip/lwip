@@ -5,6 +5,8 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+  2017-11-20: Joel Cunningham
+  * netconn: add LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE to use external DNS resolver (patch #9427)
 
   2017-11-14: Joel Cunningham
   * netifapi: Add thread safe ARP cache APIs (task #14724)

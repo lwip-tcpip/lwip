@@ -2911,6 +2911,28 @@
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset)
 #endif
+
+/**
+ * LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, addrtype, err)
+ * Called from netconn APIs (not usable with callback apps) allowing an
+ * external DNS resolver (which uses sequential API) to handle the query.
+ * Signature:
+ *   int my_hook(const char *name, ip_addr_t *addr, u8_t addrtype, err_t *err)
+ * Arguments:
+ * - name: hostname to resolve
+ * - addr: output host address
+ * - addrtype: type of address to query
+ * - err: output error
+ * Return values:
+ * - 0: Hook has not consumed hostname query, query continues into DNS module
+ * - != 0: Hook has consumed the query
+ *
+ * err must also be checked to determine if the hook consumed the query, but
+ * the query failed
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, addrtype, err)
+#endif
 /**
  * @}
  */
