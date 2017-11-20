@@ -83,22 +83,20 @@ static u8_t v3_enabled = 1;
 static u8_t
 snmp_version_enabled(u8_t version)
 {
-  LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
-#if LWIP_SNMP_V3
-              || (version == SNMP_VERSION_3)
-#endif
-             );
-
   if (version == SNMP_VERSION_1) {
     return v1_enabled;
   } else if (version == SNMP_VERSION_2c) {
     return v2c_enabled;
   }
 #if LWIP_SNMP_V3
-  else { /* version == SNMP_VERSION_3 */
+  else if (version == SNMP_VERSION_3) {
     return v3_enabled;
   }
 #endif
+  else {
+    LWIP_ASSERT("Invalid SNMP version", 0);
+    return 0;
+  }
 }
 
 u8_t
@@ -122,22 +120,19 @@ snmp_v3_enabled(void)
 static void
 snmp_version_enable(u8_t version, u8_t enable)
 {
-  LWIP_ASSERT("Invalid SNMP version", (version == SNMP_VERSION_1) || (version == SNMP_VERSION_2c)
-#if LWIP_SNMP_V3
-              || (version == SNMP_VERSION_3)
-#endif
-             );
-
   if (version == SNMP_VERSION_1) {
     v1_enabled = enable;
   } else if (version == SNMP_VERSION_2c) {
     v2c_enabled = enable;
   }
 #if LWIP_SNMP_V3
-  else { /* version == SNMP_VERSION_3 */
+  else if (version == SNMP_VERSION_3) {
     v3_enabled = enable;
   }
 #endif
+  else {
+    LWIP_ASSERT("Invalid SNMP version", 0);
+  }
 }
 
 void
