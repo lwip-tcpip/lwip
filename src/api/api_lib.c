@@ -646,8 +646,8 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
 #endif /* LWIP_TCP */
 
   if (!sys_mbox_valid(&conn->recvmbox)) {
-    /* This only happens when calling this function more than once *after* receiving FIN */
-    return ERR_CONN;
+    /* This happens when calling this function after receiving FIN */
+    return sys_mbox_valid(&conn->acceptmbox) ? ERR_CONN : ERR_CLSD;
   }
 
   if (!(apiflags & NETCONN_NOAUTORCVD)) {
