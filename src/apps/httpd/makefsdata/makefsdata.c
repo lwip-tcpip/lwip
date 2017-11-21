@@ -120,6 +120,7 @@ int file_put_ascii(FILE *file, const char *ascii_string, int len, int *i);
 int s_put_ascii(char *buf, const char *ascii_string, int len, int *i);
 void concat_files(const char *file1, const char *file2, const char *targetfile);
 int check_path(char *path, size_t size);
+static int checkSsiByFilelist(const char* filename_listfile);
 
 /* 5 bytes per char + 3 bytes per line */
 static char file_buffer_c[COPY_BUFSIZE * 5 + ((COPY_BUFSIZE / HEX_BYTES_PER_LINE) * 3)];
@@ -143,9 +144,13 @@ size_t overallDataBytes = 0;
 struct file_entry *first_file = NULL;
 struct file_entry *last_file = NULL;
 
+static char *ssi_file_buffer;
+static char **ssi_file_lines;
+static size_t ssi_file_num_lines;
+
 static void print_usage(void)
 {
-  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-i] [-11] [-nossi] [-c] [-f:<filename>] [-m] [-svr:<name>]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
+  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-i] [-11] [-nossi] [-ssi:<filename>] [-c] [-f:<filename>] [-m] [-svr:<name>]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
   printf("   targetdir: relative or absolute path to files to convert" NEWLINE);
   printf("   switch -s: toggle processing of subdirectories (default is on)" NEWLINE);
   printf("   switch -e: exclude HTTP header from file (header is created at runtime, default is off)" NEWLINE);
@@ -201,6 +206,13 @@ int main(int argc, char *argv[])
         useHttp11 = 1;
       } else if (!strcmp(argv[i], "-nossi")) {
         supportSsi = 0;
+      } else if (strstr(argv[i], "-ssi:") == argv[i]) {
+        const char* ssi_list_filename = &argv[i][5];
+        if (checkSsiByFilelist(ssi_list_filename)) {
+          printf("Reading list of SSI files from \"%s\"\n", ssi_list_filename);
+        } else {
+          printf("Failed to load list of SSI files from \"%s\"\n", ssi_list_filename);
+        }
       } else if (!strcmp(argv[i], "-c")) {
         precalcChksum = 1;
       } else if (strstr(argv[i], "-f:") == argv[i]) {
@@ -340,6 +352,13 @@ int main(int argc, char *argv[])
     struct file_entry *fe = first_file;
     first_file = fe->next;
     free(fe);
+  }
+
+  if (ssi_file_buffer) {
+    free(ssi_file_buffer);
+  }
+  if (ssi_file_lines) {
+    free(ssi_file_lines);
   }
 
   return 0;
@@ -713,12 +732,114 @@ static void register_filename(const char *qualifiedName)
   }
 }
 
+static int checkSsiByFilelist(const char* filename_listfile)
+{
+  FILE *f = fopen(filename_listfile, "r");
+  if (f != NULL) {
+    char *buf;
+    long rs;
+    size_t fsize, readcount;
+    size_t i, l, num_lines;
+    char **lines;
+    int state;
+
+    fseek(f, 0, SEEK_END);
+    rs = ftell(f);
+    if (rs < 0) {
+      printf("ftell failed with %d\n", errno);
+      fclose(f);
+      return 0;
+    }
+    fsize = (size_t)rs;
+    fseek(f, 0, SEEK_SET);
+    buf = (char*)malloc(fsize);
+    if (!buf) {
+      printf("failed to allocate ssi file buffer\n", errno);
+      fclose(f);
+      return 0;
+    }
+    memset(buf, 0, fsize);
+    readcount = fread(buf, 1, fsize, f);
+    fclose(f);
+    if ((readcount > fsize) || !readcount) {
+      printf("failed to read data from ssi file\n", errno);
+      return 0;
+    }
+
+    /* first pass: get the number of lines (and convert newlines to '0') */
+    num_lines = 1;
+    for (i = 0; i < readcount; i++) {
+      if (buf[i] == '\n') {
+        num_lines++;
+        buf[i] = 0;
+      } else if (buf[i] == '\r') {
+        buf[i] = 0;
+      }
+    }
+    /* allocate the line pointer array */
+    lines = (char**)malloc(sizeof(char*) * num_lines);
+    if (!lines) {
+      printf("failed to allocate ssi line buffer\n", errno);
+      return 0;
+    }
+    memset(lines, 0, sizeof(char*) * num_lines);
+    l = 0;
+    state = 0;
+    for (i = 0; i < readcount; i++) {
+      if (state) {
+        /* waiting for null */
+        if (buf[i] == 0) {
+          state = 0;
+        }
+      } else {
+        /* waiting for beginning of new string */
+        if (buf[i] != 0) {
+          LWIP_ASSERT("lines array overflow", l < num_lines);
+          lines[l] = &buf[i];
+          state = 1;
+          l++;
+        }
+      }
+    }
+    LWIP_ASSERT("lines array overflow", l < num_lines);
+
+    ssi_file_buffer = buf;
+    ssi_file_lines = lines;
+    ssi_file_num_lines = l;
+  }
+  return 0;
+}
+
 static int is_ssi_file(const char *filename)
 {
-  size_t loop;
-  for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
-    if (strstr(filename, g_pcSSIExtensions[loop])) {
-      return 1;
+  if (supportSsi) {
+    if (ssi_file_buffer) {
+      /* compare by list */
+      size_t i;
+      int ret = 0;
+      /* build up the relative path to this file */
+      size_t sublen = strlen(curSubdir);
+      size_t freelen = sizeof(curSubdir) - sublen - 1;
+      strncat(curSubdir, "/", freelen);
+      strncat(curSubdir, filename, freelen - 1);
+      curSubdir[sizeof(curSubdir) - 1] = 0;
+      for (i = 0; i < ssi_file_num_lines; i++) {
+        const char *listed_file = ssi_file_lines[i];
+        /* compare without the leading '/' */
+        if (!strcmp(&curSubdir[1], listed_file)) {
+          ret = 1;
+        }
+      }
+      curSubdir[sublen] = 0;
+      return ret;
+    } else {
+      /* check file extension */
+      size_t loop;
+      for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
+        if (strstr(filename, g_pcSSIExtensions[loop])) {
+          return 1;
+        }
+      }
     }
   }
   return 0;
