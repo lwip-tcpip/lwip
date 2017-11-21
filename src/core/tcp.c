@@ -1733,7 +1733,7 @@ tcp_handle_closepend(void)
     struct tcp_pcb *next = pcb->next;
     /* send pending FIN */
     if (pcb->flags & TF_CLOSEPEND) {
-      LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: pending FIN\n"));
+      LWIP_DEBUGF(TCP_DEBUG, ("tcp_handle_closepend: pending FIN\n"));
       tcp_clear_flags(pcb, TF_CLOSEPEND);
       tcp_close_shutdown_fin(pcb);
     }
