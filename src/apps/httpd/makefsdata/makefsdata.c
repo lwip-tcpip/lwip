@@ -754,7 +754,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     fseek(f, 0, SEEK_SET);
     buf = (char*)malloc(fsize);
     if (!buf) {
-      printf("failed to allocate ssi file buffer\n", errno);
+      printf("failed to allocate ssi file buffer\n");
       fclose(f);
       return 0;
     }
@@ -762,7 +762,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     readcount = fread(buf, 1, fsize, f);
     fclose(f);
     if ((readcount > fsize) || !readcount) {
-      printf("failed to read data from ssi file\n", errno);
+      printf("failed to read data from ssi file\n");
       return 0;
     }
 
@@ -779,7 +779,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     /* allocate the line pointer array */
     lines = (char**)malloc(sizeof(char*) * num_lines);
     if (!lines) {
-      printf("failed to allocate ssi line buffer\n", errno);
+      printf("failed to allocate ssi line buffer\n");
       return 0;
     }
     memset(lines, 0, sizeof(char*) * num_lines);
