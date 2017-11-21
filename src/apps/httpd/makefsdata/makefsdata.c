@@ -193,23 +193,23 @@ int main(int argc, char *argv[])
         snprintf(serverIDBuffer, sizeof(serverIDBuffer), "Server: %s\r\n", &argv[i][5]);
         serverID = serverIDBuffer;
         printf("Using Server-ID: \"%s\"\n", serverID);
-      } else if (strstr(argv[i], "-s") == argv[i]) {
+      } else if (!strcmp(argv[i], "-s")) {
         processSubs = 0;
-      } else if (strstr(argv[i], "-e") == argv[i]) {
+      } else if (!strcmp(argv[i], "-e")) {
         includeHttpHeader = 0;
-      } else if (strstr(argv[i], "-11") == argv[i]) {
+      } else if (!strcmp(argv[i], "-11")) {
         useHttp11 = 1;
-      } else if (strstr(argv[i], "-nossi") == argv[i]) {
+      } else if (!strcmp(argv[i], "-nossi")) {
         supportSsi = 0;
-      } else if (strstr(argv[i], "-c") == argv[i]) {
+      } else if (!strcmp(argv[i], "-c")) {
         precalcChksum = 1;
       } else if (strstr(argv[i], "-f:") == argv[i]) {
         strncpy(targetfile, &argv[i][3], sizeof(targetfile) - 1);
         targetfile[sizeof(targetfile) - 1] = 0;
         printf("Writing to file \"%s\"\n", targetfile);
-      } else if (strstr(argv[i], "-m") == argv[i]) {
+      } else if (!strcmp(argv[i], "-m")) {
         includeLastModified = 1;
-      } else if (strstr(argv[i], "-defl") == argv[i]) {
+      } else if (!strcmp(argv[i], "-defl")) {
 #if MAKEFS_SUPPORT_DEFLATE
         char *colon = strstr(argv[i], ":");
         if (colon) {
@@ -734,10 +734,12 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   u16_t http_hdr_len = 0;
   int chksum_count = 0;
   u8_t flags = 0;
-  const char *flags_str;
   u8_t has_content_len;
   u8_t *file_data;
+  int is_ssi;
+  int can_be_compressed;
   int is_compressed = 0;
+  int flags_printed;
 
   /* create qualified name (@todo: prepend slash or not?) */
   sprintf(qualifiedName, "%s/%s", curSubdir, filename);
@@ -765,11 +767,13 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
 #endif /* ALIGN_PAYLOAD */
   fprintf(data_file, NEWLINE);
 
-  has_content_len = !is_ssi_file(filename);
-  file_data = get_file_data(filename, &file_size, includeHttpHeader && has_content_len, &is_compressed);
+  is_ssi = is_ssi_file(filename);
+  has_content_len = !is_ssi;
+  can_be_compressed = includeHttpHeader && !is_ssi;
+  file_data = get_file_data(filename, &file_size, can_be_compressed, &is_compressed);
   if (includeHttpHeader) {
     file_write_http_header(data_file, filename, file_size, &http_hdr_len, &http_hdr_chksum, has_content_len, is_compressed);
-    flags = FS_FILE_FLAGS_HEADER_INCLUDED;
+    flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
     if (has_content_len) {
       flags |= FS_FILE_FLAGS_HEADER_PERSISTENT;
     }
@@ -784,21 +788,23 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   fprintf(struct_file, "data_%s," NEWLINE, varname);
   fprintf(struct_file, "data_%s + %d," NEWLINE, varname, i);
   fprintf(struct_file, "sizeof(data_%s) - %d," NEWLINE, varname, i);
-  switch (flags) {
-    case (FS_FILE_FLAGS_HEADER_INCLUDED):
-      flags_str = "FS_FILE_FLAGS_HEADER_INCLUDED";
-      break;
-    case (FS_FILE_FLAGS_HEADER_PERSISTENT):
-      flags_str = "FS_FILE_FLAGS_HEADER_PERSISTENT";
-      break;
-    case (FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT):
-      flags_str = "FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT";
-      break;
-    default:
-      flags_str = "0";
-      break;
+
+  flags_printed = 0;
+  if (flags & FS_FILE_FLAGS_HEADER_INCLUDED) {
+    fputs("FS_FILE_FLAGS_HEADER_INCLUDED", struct_file);
+    flags_printed = 1;
   }
-  fprintf(struct_file, "%s," NEWLINE, flags_str);
+  if (flags & FS_FILE_FLAGS_HEADER_PERSISTENT) {
+    if (flags_printed) {
+      fputs(" | ", struct_file);
+    }
+    fputs("FS_FILE_FLAGS_HEADER_PERSISTENT", struct_file);
+    flags_printed = 1;
+  }
+  if (!flags_printed) {
+    fputs("0", struct_file);
+  }
+  fputs("," NEWLINE, struct_file);
   if (precalcChksum) {
     fprintf(struct_file, "#if HTTPD_PRECALCULATED_CHECKSUM" NEWLINE);
     fprintf(struct_file, "%d, chksums_%s," NEWLINE, chksum_count, varname);
