@@ -768,6 +768,9 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   fprintf(data_file, NEWLINE);
 
   is_ssi = is_ssi_file(filename);
+  if (is_ssi) {
+    flags |= FS_FILE_FLAGS_SSI;
+  }
   has_content_len = !is_ssi;
   can_be_compressed = includeHttpHeader && !is_ssi;
   file_data = get_file_data(filename, &file_size, can_be_compressed, &is_compressed);
@@ -776,6 +779,9 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
     flags |= FS_FILE_FLAGS_HEADER_INCLUDED;
     if (has_content_len) {
       flags |= FS_FILE_FLAGS_HEADER_PERSISTENT;
+      if (useHttp11) {
+        flags |= FS_FILE_FLAGS_HEADER_HTTPVER_1_1;
+      }
     }
   }
   if (precalcChksum) {
@@ -799,6 +805,20 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
       fputs(" | ", struct_file);
     }
     fputs("FS_FILE_FLAGS_HEADER_PERSISTENT", struct_file);
+    flags_printed = 1;
+  }
+  if (flags & FS_FILE_FLAGS_HEADER_HTTPVER_1_1) {
+    if (flags_printed) {
+      fputs(" | ", struct_file);
+    }
+    fputs("FS_FILE_FLAGS_HEADER_HTTPVER_1_1", struct_file);
+    flags_printed = 1;
+  }
+  if (flags & FS_FILE_FLAGS_SSI) {
+    if (flags_printed) {
+      fputs(" | ", struct_file);
+    }
+    fputs("FS_FILE_FLAGS_SSI", struct_file);
     flags_printed = 1;
   }
   if (!flags_printed) {
