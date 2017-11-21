@@ -1719,6 +1719,28 @@ tcp_kill_timewait(void)
   }
 }
 
+/* Called when allocating a pcb fails.
+ * In this case, we want to handle all pcbs that want to close first: if we can
+ * now send the FIN (which failed before), the pcb might be in a state that is
+ * OK for us to now free it.
+ */
+static void
+tcp_handle_closepend(void)
+{
+  struct tcp_pcb *pcb = tcp_active_pcbs;
+
+  while (pcb != NULL) {
+    struct tcp_pcb *next = pcb->next;
+    /* send pending FIN */
+    if (pcb->flags & TF_CLOSEPEND) {
+      LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: pending FIN\n"));
+      tcp_clear_flags(pcb, TF_CLOSEPEND);
+      tcp_close_shutdown_fin(pcb);
+    }
+    pcb = next;
+  }
+}
+
 /**
  * Allocate a new tcp_pcb structure.
  *
@@ -1732,6 +1754,9 @@ tcp_alloc(u8_t prio)
 
   pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
   if (pcb == NULL) {
+    /* Try to send FIN for all pcbs stuck in TF_CLOSEPEND first */
+    tcp_handle_closepend();
+
     /* Try killing oldest connection in TIME-WAIT. */
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing off oldest TIME-WAIT connection\n"));
     tcp_kill_timewait();
