@@ -10,7 +10,11 @@
  * - all enabled functions shall be used
  * - parallelism of the tests depend on enough resources being available
  *   (configure your lwipopts.h settings high enough)
- * - test should also be able to run in your target, to test your 
+ * - test should also be able to run in a real target
+ *
+ * TODO:
+ * - full duplex
+ * - add asserts about internal socket/netconn/pcb state?
  */
  
  /*
@@ -51,21 +55,32 @@
 #include "lwip/sockets.h"
 #include "lwip/sys.h"
 
+#include "lwip/mem.h"
+
 #include <stdio.h>
 #include <string.h>
 
 #define TEST_TIME_SECONDS     10
 #define TEST_TXRX_BUFSIZE     (TCP_MSS * 2)
-#define TEST_MAX_RXWAIT_MS    500
-#define TEST_MAX_CONNECTIONS  1
+#define TEST_MAX_RXWAIT_MS    50
+#define TEST_MAX_CONNECTIONS  50
+
+#define TEST_SOCK_READABLE    0x01
+#define TEST_SOCK_WRITABLE    0x02
+#define TEST_SOCK_ERR         0x04
 
 #define TEST_MODE_SELECT      0x01
 #define TEST_MODE_POLL        0x02
 #define TEST_MODE_NONBLOCKING 0x04
-#define TEST_MODE_RECVTIMEO   0x08
+#define TEST_MODE_WAIT        0x08
+#define TEST_MODE_RECVTIMEO   0x10
 
 static int sockets_stresstest_numthreads;
 
+struct test_settings {
+  struct sockaddr_storage addr;
+  int start_client;
+};
 
 
 static void
@@ -74,7 +89,7 @@ fill_test_data(void *buf, size_t buf_len_bytes)
   u8_t *p = (u8_t*)buf;
   u16_t i, chk;
 
-  LWIP_ASSERT("buffer too short", buf_len_bytes > 4);
+  LWIP_ASSERT("buffer too short", buf_len_bytes >= 4);
   LWIP_ASSERT("buffer too big", buf_len_bytes <= 0xFFFF);
   /* store the total number of bytes */
   p[0] = (u8_t)(buf_len_bytes >> 8);
@@ -98,9 +113,9 @@ check_test_data(const void *buf, size_t buf_len_bytes)
   u8_t *p = (u8_t*)buf;
   u16_t i, chk, chk_rx, len_rx;
 
-  LWIP_ASSERT("buffer too short", buf_len_bytes > 4);
+  LWIP_ASSERT("buffer too short", buf_len_bytes >= 4);
   len_rx = (((u16_t)p[0]) << 8) | p[1];
-  LWIP_ASSERT("len too short", len_rx > 4);
+  LWIP_ASSERT("len too short", len_rx >= 4);
   if (len_rx > buf_len_bytes) {
     /* not all data received in this segment */
     printf("check-\n");
@@ -139,6 +154,221 @@ recv_and_check_data_return_offset(int s, char *rxbuf, size_t rxbufsize, size_t r
   return check_test_data(rxbuf, rxoff + ret);
 }
 
+#if LWIP_SOCKET_SELECT
+static int
+sockets_stresstest_wait_readable_select(int s, int timeout_ms)
+{
+  int ret;
+  struct timeval tv;
+  fd_set fs_r;
+  fd_set fs_w;
+  fd_set fs_e;
+
+  FD_ZERO(&fs_r);
+  FD_ZERO(&fs_w);
+  FD_ZERO(&fs_e);
+
+  FD_SET(s, &fs_r);
+  FD_SET(s, &fs_e);
+
+  tv.tv_sec = timeout_ms / 1000;
+  tv.tv_usec = (timeout_ms - (tv.tv_sec * 1000)) * 1000;
+  ret = lwip_select(s + 1, &fs_r, &fs_w, &fs_e, &tv);
+  LWIP_ASSERT("select error", ret >= 0);
+  if (ret) {
+    /* convert poll flags to our flags */
+    ret = 0;
+    if (FD_ISSET(s, &fs_r)) {
+      ret |= TEST_SOCK_READABLE;
+    }
+    if (FD_ISSET(s, &fs_w)) {
+      ret |= TEST_SOCK_WRITABLE;
+    }
+    if (FD_ISSET(s, &fs_e)) {
+      ret |= TEST_SOCK_ERR;
+    }
+    return ret;
+  }
+  return 0;
+}
+#endif
+
+#if LWIP_SOCKET_POLL
+static int
+sockets_stresstest_wait_readable_poll(int s, int timeout_ms)
+{
+  int ret;
+  struct pollfd pfd;
+
+  pfd.fd = s;
+  pfd.revents = 0;
+  pfd.events = POLLIN | POLLERR;
+
+  ret = lwip_poll(&pfd, 1, timeout_ms);
+  if (ret) {
+    /* convert poll flags to our flags */
+    ret = 0;
+    if (pfd.revents & POLLIN) {
+      ret |= TEST_SOCK_READABLE;
+    }
+    if (pfd.revents & POLLOUT) {
+      ret |= TEST_SOCK_WRITABLE;
+    }
+    if (pfd.revents & POLLERR) {
+      ret |= TEST_SOCK_ERR;
+    }
+    return ret;
+  }
+  return 0;
+}
+#endif
+
+#if LWIP_SO_RCVTIMEO
+static int
+sockets_stresstest_wait_readable_recvtimeo(int s, int timeout_ms)
+{
+  int ret;
+  char buf;
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+  int opt_on = timeout_ms;
+  int opt_off = 0;
+#else
+  struct timeval opt_on, opt_off;
+  opt_on.tv_sec = timeout_ms / 1000;
+  opt_on.tv_usec = (timeout_ms - (opt_on.tv_sec * 1000)) * 1000;
+  opt_off.tv_sec = 0;
+  opt_off.tv_usec = 0;
+#endif
+
+  /* enable receive timeout */
+  ret = lwip_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &opt_on, sizeof(opt_on));
+  LWIP_ASSERT("setsockopt error", ret == 0);
+
+  /* peek for one byte with timeout */
+  ret = lwip_recv(s, &buf, 1, MSG_PEEK);
+
+  /* disable receive timeout */
+  ret = lwip_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &opt_off, sizeof(opt_off));
+  LWIP_ASSERT("setsockopt error", ret == 0);
+
+  if (ret == 1) {
+    return TEST_SOCK_READABLE;
+  }
+  if (ret == 0) {
+    return 0;
+  }
+  if (ret == -1) {
+    return TEST_SOCK_ERR;
+  }
+  LWIP_ASSERT("invalid return value", 0);
+  return TEST_SOCK_ERR;
+}
+#endif
+
+static int
+sockets_stresstest_wait_readable_wait_peek(int s, int timeout_ms)
+{
+  int ret;
+  char buf;
+
+  LWIP_UNUSED_ARG(timeout_ms); /* cannot time out here */
+
+  /* peek for one byte */
+  ret = lwip_recv(s, &buf, 1, MSG_PEEK);
+
+  if (ret == 1) {
+    return TEST_SOCK_READABLE;
+  }
+  if (ret == 0) {
+    return 0;
+  }
+  if (ret == -1) {
+    return TEST_SOCK_ERR;
+  }
+  LWIP_ASSERT("invalid return value", 0);
+  return TEST_SOCK_ERR;
+}
+
+static int
+sockets_stresstest_wait_readable_nonblock(int s, int timeout_ms)
+{
+  int ret;
+  char buf;
+  u32_t wait_until = sys_now() + timeout_ms;
+
+  while(sys_now() < wait_until) {
+    /* peek for one byte */
+    ret = lwip_recv(s, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
+
+    if (ret == 1) {
+      return TEST_SOCK_READABLE;
+    }
+    if (ret == -1) {
+      /* TODO: for this to work, 'errno' has to support multithreading... */
+      int err = errno;
+      if (err != EWOULDBLOCK) {
+        return TEST_SOCK_ERR;
+      }
+    }
+    /* TODO: sleep? */
+  }
+  return 0;
+}
+
+static int sockets_stresstest_rand_mode(int allow_wait)
+{
+  u32_t random_value = LWIP_RAND();
+#if LWIP_SOCKET_SELECT
+  if (random_value & TEST_MODE_SELECT) {
+    return TEST_MODE_SELECT;
+  }
+#endif
+#if LWIP_SOCKET_POLL
+  if (random_value & TEST_MODE_POLL) {
+    return TEST_MODE_POLL;
+  }
+#endif
+#if LWIP_SO_RCVTIMEO
+  if (random_value & TEST_MODE_RECVTIMEO) {
+    return TEST_MODE_RECVTIMEO;
+  }
+#endif
+  if (allow_wait) {
+    if (random_value & TEST_MODE_RECVTIMEO) {
+      return TEST_MODE_RECVTIMEO;
+    }
+  }
+  return TEST_MODE_NONBLOCKING;
+}
+
+static int
+sockets_stresstest_wait_readable(int mode, int s, int timeout_ms)
+{
+  switch(mode)
+  {
+#if LWIP_SOCKET_SELECT
+  case TEST_MODE_SELECT:
+    return sockets_stresstest_wait_readable_select(s, timeout_ms);
+#endif
+#if LWIP_SOCKET_POLL
+  case TEST_MODE_POLL:
+    return sockets_stresstest_wait_readable_poll(s, timeout_ms);
+#endif
+#if LWIP_SO_RCVTIMEO
+  case TEST_MODE_RECVTIMEO:
+    return sockets_stresstest_wait_readable_recvtimeo(s, timeout_ms);
+#endif
+  case TEST_MODE_WAIT:
+    return sockets_stresstest_wait_readable_wait_peek(s, timeout_ms);
+  case TEST_MODE_NONBLOCKING:
+    return sockets_stresstest_wait_readable_nonblock(s, timeout_ms);
+  default:
+    LWIP_ASSERT("invalid mode", 0);
+    break;
+  }
+  return 0;
+}
+
 static void
 sockets_stresstest_conn_client(void *arg)
 {
@@ -166,14 +396,12 @@ sockets_stresstest_conn_client(void *arg)
 
   while (sys_now() < max_time) {
     int closed;
-    struct pollfd pfd;
-    pfd.fd = s;
-    pfd.revents = 0;
-    pfd.events = POLLIN;
-    ret = lwip_poll(&pfd, 1, LWIP_RAND() % TEST_MAX_RXWAIT_MS);
+    int mode = sockets_stresstest_rand_mode(0);
+    int timeout_ms = LWIP_RAND() % TEST_MAX_RXWAIT_MS;
+    ret = sockets_stresstest_wait_readable(mode, s, timeout_ms);
     if (ret) {
       /* read some */
-      LWIP_ASSERT("pfd.revents == POLLIN", pfd.revents == POLLIN);
+      LWIP_ASSERT("readable", ret == TEST_SOCK_READABLE);
       rxoff = recv_and_check_data_return_offset(s, rxbuf, sizeof(rxbuf), rxoff, &closed, "cli");
       LWIP_ASSERT("client got closed", !closed);
     } else {
@@ -208,19 +436,17 @@ sockets_stresstest_conn_server(void *arg)
 
   while (1) {
     int closed;
-    struct pollfd pfd;
-    pfd.fd = s;
-    pfd.revents = 0;
-    pfd.events = POLLIN;
-    ret = lwip_poll(&pfd, 1, LWIP_RAND() % TEST_MAX_RXWAIT_MS);
+    int mode = sockets_stresstest_rand_mode(1);
+    int timeout_ms = LWIP_RAND() % TEST_MAX_RXWAIT_MS;
+    ret = sockets_stresstest_wait_readable(mode, s, timeout_ms);
     if (ret) {
-      if (pfd.revents & POLLERR) {
+      if (ret & TEST_SOCK_ERR) {
         /* closed? */
         lwip_close(s);
         break;
       }
       /* read some */
-      LWIP_ASSERT("pfd.revents == POLLIN", pfd.revents == POLLIN);
+      LWIP_ASSERT("readable", ret == TEST_SOCK_READABLE);
       rxoff = recv_and_check_data_return_offset(s, rxbuf, sizeof(rxbuf), rxoff, &closed, "srv");
       if (closed) {
         break;
@@ -246,23 +472,33 @@ sockets_stresstest_conn_server(void *arg)
 }
 
 static void
+sockets_stresstest_start_clients(const struct sockaddr_storage *remote_addr)
+{
+  /* limit the number of connections */
+  const int max_connections = LWIP_MIN(TEST_MAX_CONNECTIONS, MEMP_NUM_TCP_PCB/3);
+  int i;
+
+  for (i = 0; i < max_connections; i++) {
+    sys_thread_t t;
+    sockets_stresstest_numthreads++;
+    t = sys_thread_new("sockets_stresstest_conn_client", sockets_stresstest_conn_client, (void*)remote_addr, 0, 0);
+    LWIP_ASSERT("thread != NULL", t != 0);
+  }
+}
+
+static void
 sockets_stresstest_listener(void *arg)
 {
   int slisten;
   int ret;
-  int i;
-  /* limit the number of connections */
-  const int max_connections = LWIP_MIN(TEST_MAX_CONNECTIONS, MEMP_NUM_TCP_PCB/3);
   struct sockaddr_storage addr;
   socklen_t addr_len;
-
-  LWIP_UNUSED_ARG(arg);
+  struct test_settings *settings = (struct test_settings *)arg;
 
   slisten = lwip_socket(AF_INET, SOCK_STREAM, 0);
   LWIP_ASSERT("slisten >= 0", slisten >= 0);
 
-  memset(&addr, 0, sizeof(addr));
-  addr.ss_family = AF_INET;
+  memcpy(&addr, &settings->addr, sizeof(struct sockaddr_storage));
   ret = lwip_bind(slisten, (struct sockaddr *)&addr, sizeof(addr));
 
   ret = lwip_listen(slisten, 0);
@@ -272,12 +508,7 @@ sockets_stresstest_listener(void *arg)
   ret = lwip_getsockname(slisten, (struct sockaddr *)&addr, &addr_len);
   LWIP_ASSERT("ret == 0", ret == 0);
 
-  for (i = 0; i < max_connections; i++) {
-    sys_thread_t t;
-    sockets_stresstest_numthreads++;
-    t = sys_thread_new("sockets_stresstest_conn_client", sockets_stresstest_conn_client, (void*)&addr, 0, 0);
-    LWIP_ASSERT("thread != NULL", t != 0);
-  }
+  sockets_stresstest_start_clients(&addr);
 
   while(1) {
     struct sockaddr_storage aclient;
@@ -298,9 +529,70 @@ sockets_stresstest_listener(void *arg)
 }
 
 void
-sockets_stresstest_init(void)
+sockets_stresstest_init_loopback(int addr_family)
 {
   sys_thread_t t;
-  t = sys_thread_new("sockets_stresstest_listener", sockets_stresstest_listener, NULL, 0, 0);
+  struct test_settings *settings = (struct test_settings *)mem_malloc(sizeof(struct test_settings));
+
+  LWIP_ASSERT("OOM", settings != NULL);
+  memset(settings, 0, sizeof(struct test_settings));
+#if LWIP_IPV4 && LWIP_IPV6
+  LWIP_ASSERT("invalid addr_family", (addr_family == AF_INET) || (addr_family == AF_INET6));
+  settings->addr.ss_family = addr_family;
+#endif
+  LWIP_UNUSED_ARG(addr_family);
+  settings->start_client = 1;
+
+  t = sys_thread_new("sockets_stresstest_listener", sockets_stresstest_listener, settings, 0, 0);
   LWIP_ASSERT("thread != NULL", t != 0);
+}
+
+void
+sockets_stresstest_init_server(u16_t server_port)
+{
+  sys_thread_t t;
+  struct test_settings *settings = (struct test_settings *)mem_malloc(sizeof(struct test_settings));
+
+  LWIP_ASSERT("OOM", settings != NULL);
+  memset(settings, 0, sizeof(struct test_settings));
+#if LWIP_IPV4 && LWIP_IPV6
+  LWIP_ASSERT("invalid addr_family", (addr_family == AF_INET) || (addr_family == AF_INET6));
+  settings->addr.ss_family = addr_family;
+#endif
+  ((struct sockaddr_in *)(&settings->addr))->sin_port = server_port;
+
+  t = sys_thread_new("sockets_stresstest_listener", sockets_stresstest_listener, settings, 0, 0);
+  LWIP_ASSERT("thread != NULL", t != 0);
+}
+
+void
+sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port)
+{
+#if LWIP_IPV4
+  ip4_addr_t ip4;
+#endif
+#if LWIP_IPV6
+  ip6_addr_t ip6;
+#endif
+  struct sockaddr_storage *addr = (struct sockaddr_storage *)mem_malloc(sizeof(struct sockaddr_storage));
+
+  LWIP_ASSERT("OOM", addr != NULL);
+  memset(addr, 0, sizeof(struct test_settings));
+#if LWIP_IPV4
+  if (ip4addr_aton(remote_ip, &ip4)) {
+    addr->ss_family = AF_INET;
+    ((struct sockaddr_in *)addr)->sin_addr.s_addr = ip4_addr_get_u32(&ip4);
+  }
+#endif
+#if LWIP_IPV4 && LWIP_IPV6
+  else
+#endif
+#if LWIP_IPV6
+  if (ip6addr_aton(remote_ip, &ip6)) {
+    addr->ss_family = AF_INET6;
+    /* todo: copy ipv6 address */
+  }
+#endif
+  ((struct sockaddr_in *)addr)->sin_port = remote_port;
+  sockets_stresstest_start_clients(addr);
 }
