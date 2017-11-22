@@ -109,7 +109,7 @@ static const tHTTPHeader g_psHTTPHeaders[] = {
 #endif
 };
 
-#define NUM_HTTP_HEADERS (sizeof(g_psHTTPHeaders) / sizeof(tHTTPHeader))
+#define NUM_HTTP_HEADERS LWIP_ARRAYSIZE(g_psHTTPHeaders)
 
 #endif /* LWIP_HTTPD_DYNAMIC_HEADERS */
 
@@ -117,7 +117,7 @@ static const tHTTPHeader g_psHTTPHeaders[] = {
 static const char *const g_pcSSIExtensions[] = {
   ".shtml", ".shtm", ".ssi", ".xml"
 };
-#define NUM_SHTML_EXTENSIONS (sizeof(g_pcSSIExtensions) / sizeof(const char *))
+#define NUM_SHTML_EXTENSIONS LWIP_ARRAYSIZE(g_pcSSIExtensions)
 #endif /* LWIP_HTTPD_SSI */
 
 #endif /* LWIP_HTTPD_STRUCTS_H */

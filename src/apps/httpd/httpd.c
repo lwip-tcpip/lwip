@@ -159,8 +159,7 @@ const default_filename g_psDefaultFilenames[] = {
   {"/index.htm",   0 }
 };
 
-#define NUM_DEFAULT_FILENAMES (sizeof(g_psDefaultFilenames) /   \
-                               sizeof(default_filename))
+#define NUM_DEFAULT_FILENAMES LWIP_ARRAYSIZE(g_psDefaultFilenames)
 
 #if LWIP_HTTPD_SUPPORT_REQUESTLIST
 /** HTTP request is copied here from pbufs for simple parsing */
