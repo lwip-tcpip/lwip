@@ -2941,13 +2941,13 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
         case SO_NO_CHECK:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, int, NETCONN_UDP);
 #if LWIP_UDPLITE
-          if ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0) {
+          if (udp_is_flag_set(sock->conn->pcb.udp, UDP_FLAGS_UDPLITE)) {
             /* this flag is only available for UDP, not for UDP lite */
             done_socket(sock);
             return EAFNOSUPPORT;
           }
 #endif /* LWIP_UDPLITE */
-          *(int *)optval = (udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_NOCHKSUM) ? 1 : 0;
+          *(int *)optval = udp_is_flag_set(sock->conn->pcb.udp, UDP_FLAGS_NOCHKSUM) ? 1 : 0;
           break;
 #endif /* LWIP_UDP*/
         default:
@@ -3339,7 +3339,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         case SO_NO_CHECK:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);
 #if LWIP_UDPLITE
-          if ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0) {
+          if (udp_is_flag_set(sock->conn->pcb.udp, UDP_FLAGS_UDPLITE)) {
             /* this flag is only available for UDP, not for UDP lite */
             done_socket(sock);
             return EAFNOSUPPORT;
