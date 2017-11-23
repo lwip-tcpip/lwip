@@ -34,7 +34,7 @@
 #define LWIP_HDR_TEST_SOCKETS_STRESSTEST
 
 void sockets_stresstest_init_loopback(int addr_family);
-void sockets_stresstest_init_server(u16_t server_port);
+void sockets_stresstest_init_server(int addr_family, u16_t server_port);
 void sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port);
 
 #endif /* LWIP_HDR_TEST_SOCKETS_STRESSTEST */

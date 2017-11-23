@@ -410,7 +410,7 @@ sockets_stresstest_conn_client(void *arg)
       fill_test_data(txbuf, send_len);
       printf("cli %d tx %d\n", s, (int)send_len);
       ret = lwip_write(s, txbuf, send_len);
-      LWIP_ASSERT("ret >= 0", ret >= 0);
+      LWIP_ASSERT("ret == send_len", ret == (int)send_len);
     }
   }
   ret = lwip_close(s);
@@ -442,7 +442,6 @@ sockets_stresstest_conn_server(void *arg)
     if (ret) {
       if (ret & TEST_SOCK_ERR) {
         /* closed? */
-        lwip_close(s);
         break;
       }
       /* read some */
@@ -457,7 +456,14 @@ sockets_stresstest_conn_server(void *arg)
       fill_test_data(txbuf, send_len);
       printf("srv %d tx %d\n", s, (int)send_len);
       ret = lwip_write(s, txbuf, send_len);
-      LWIP_ASSERT("ret >= 0", ret >= 0);
+      if (ret == -1) {
+        /* TODO: for this to work, 'errno' has to support multithreading... */
+        int err = errno;
+        if (err == ECONNRESET) {
+          break;
+        }
+      }
+      LWIP_ASSERT("ret == send_len", ret == (int)send_len);
     }
   }
   ret = lwip_close(s);
@@ -538,7 +544,7 @@ sockets_stresstest_init_loopback(int addr_family)
   memset(settings, 0, sizeof(struct test_settings));
 #if LWIP_IPV4 && LWIP_IPV6
   LWIP_ASSERT("invalid addr_family", (addr_family == AF_INET) || (addr_family == AF_INET6));
-  settings->addr.ss_family = addr_family;
+  settings->addr.ss_family = (sa_family_t)addr_family;
 #endif
   LWIP_UNUSED_ARG(addr_family);
   settings->start_client = 1;
@@ -548,7 +554,7 @@ sockets_stresstest_init_loopback(int addr_family)
 }
 
 void
-sockets_stresstest_init_server(u16_t server_port)
+sockets_stresstest_init_server(int addr_family, u16_t server_port)
 {
   sys_thread_t t;
   struct test_settings *settings = (struct test_settings *)mem_malloc(sizeof(struct test_settings));
@@ -557,7 +563,7 @@ sockets_stresstest_init_server(u16_t server_port)
   memset(settings, 0, sizeof(struct test_settings));
 #if LWIP_IPV4 && LWIP_IPV6
   LWIP_ASSERT("invalid addr_family", (addr_family == AF_INET) || (addr_family == AF_INET6));
-  settings->addr.ss_family = addr_family;
+  settings->addr.ss_family = (sa_family_t)addr_family;
 #endif
   ((struct sockaddr_in *)(&settings->addr))->sin_port = server_port;
 
