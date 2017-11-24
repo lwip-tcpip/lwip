@@ -252,14 +252,12 @@ bridgeif_send_to_port(bridgeif_private_t *br, struct pbuf *p, u8_t dstport_idx)
     /* possibly an external port */
     if (dstport_idx < br->max_ports) {
       struct netif *portif = br->ports[dstport_idx].port_netif;
-      if (br->ports[dstport_idx].port_netif != NULL) {
-        if ((portif != NULL) && (portif->linkoutput != NULL)) {
-          /* prevent sending out to rx port */
-          if (netif_get_index(portif) != p->if_idx) {
-            if (netif_is_link_up(portif)) {
-              LWIP_DEBUGF(BRIDGEIF_FW_DEBUG, ("br -> flood(%p:%d) -> %d\n", (void *)p, p->if_idx, netif_get_index(portif)));
-              return portif->linkoutput(portif, p);
-            }
+      if ((portif != NULL) && (portif->linkoutput != NULL)) {
+        /* prevent sending out to rx port */
+        if (netif_get_index(portif) != p->if_idx) {
+          if (netif_is_link_up(portif)) {
+            LWIP_DEBUGF(BRIDGEIF_FW_DEBUG, ("br -> flood(%p:%d) -> %d\n", (void *)p, p->if_idx, netif_get_index(portif)));
+            return portif->linkoutput(portif, p);
           }
         }
       }
