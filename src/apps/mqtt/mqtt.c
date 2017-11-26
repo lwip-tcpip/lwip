@@ -705,7 +705,7 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
     u16_t payload_length = length;
     u8_t qos = MQTT_CTL_PACKET_QOS(client->rx_buffer[0]);
 
-    if (client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) {
+    if ((client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) && (length > 0)) {
       /* Should have topic and pkt id*/
       u8_t *topic;
       u16_t after_topic;
