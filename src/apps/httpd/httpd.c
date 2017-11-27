@@ -2292,6 +2292,27 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
     LWIP_UNUSED_ARG(tag_check);
 #endif /* LWIP_HTTPD_SSI */
     hs->handle = file;
+#if LWIP_HTTPD_CGI_SSI
+    if (params != NULL) {
+      /* URI contains parameters, call generic CGI handler */
+      int count;
+#if LWIP_HTTPD_CGI
+      if (http_cgi_paramcount >= 0) {
+        count = http_cgi_paramcount;
+      } else
+#endif
+      {
+        count = extract_uri_parameters(hs, params);
+      }
+      httpd_cgi_handler(uri, count, http_cgi_params, http_cgi_param_vals
+#if defined(LWIP_HTTPD_FILE_STATE) && LWIP_HTTPD_FILE_STATE
+                        , hs->handle->state
+#endif /* LWIP_HTTPD_FILE_STATE */
+                       );
+    }
+#else /* LWIP_HTTPD_CGI_SSI */
+    LWIP_UNUSED_ARG(params);
+#endif /* LWIP_HTTPD_CGI_SSI */
     hs->file = file->data;
     LWIP_ASSERT("File length must be positive!", (file->len >= 0));
 #if LWIP_HTTPD_CUSTOM_FILES
@@ -2323,27 +2344,6 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
       }
     }
 #endif /* LWIP_HTTPD_SUPPORT_V09*/
-#if LWIP_HTTPD_CGI_SSI
-    if (params != NULL) {
-      /* URI contains parameters, call generic CGI handler */
-      int count;
-#if LWIP_HTTPD_CGI
-      if (http_cgi_paramcount >= 0) {
-        count = http_cgi_paramcount;
-      } else
-#endif
-      {
-        count = extract_uri_parameters(hs, params);
-      }
-      httpd_cgi_handler(uri, count, http_cgi_params, http_cgi_param_vals
-#if defined(LWIP_HTTPD_FILE_STATE) && LWIP_HTTPD_FILE_STATE
-                        , hs->handle->state
-#endif /* LWIP_HTTPD_FILE_STATE */
-                       );
-    }
-#else /* LWIP_HTTPD_CGI_SSI */
-    LWIP_UNUSED_ARG(params);
-#endif /* LWIP_HTTPD_CGI_SSI */
   } else {
     hs->handle = NULL;
     hs->file = NULL;
