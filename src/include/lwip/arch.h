@@ -220,10 +220,10 @@ typedef int ssize_t;
 #define lwip_isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
 #else
 #include <ctype.h>
-#define lwip_isdigit(c)           isdigit(c)
-#define lwip_isxdigit(c)          isxdigit(c)
-#define lwip_islower(c)           islower(c)
-#define lwip_isspace(c)           isspace(c)
+#define lwip_isdigit(c)           isdigit((int)c)
+#define lwip_isxdigit(c)          isxdigit((int)c)
+#define lwip_islower(c)           islower((int)c)
+#define lwip_isspace(c)           isspace((int)c)
 #endif
 
 /** C++ const_cast<target_type>(val) equivalent to remove constness from a value (GCC -Wcast-qual) */
