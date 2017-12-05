@@ -107,10 +107,8 @@ tls_malloc(size_t c, size_t len)
   size_t alloc_size;
 #if ALTCP_MBEDTLS_PLATFORM_ALLOC_STATS
   if (altcp_mbedtls_malloc_clear_stats) {
-    if (altcp_mbedtls_malloc_clear_stats) {
-      altcp_mbedtls_malloc_clear_stats = 0;
-      memset(&altcp_mbedtls_malloc_stats, 0, sizeof(altcp_mbedtls_malloc_stats));
-    }
+    altcp_mbedtls_malloc_clear_stats = 0;
+    memset(&altcp_mbedtls_malloc_stats, 0, sizeof(altcp_mbedtls_malloc_stats));
   }
 #endif
   alloc_size = sizeof(altcp_mbedtls_malloc_helper_t) + (c * len);
