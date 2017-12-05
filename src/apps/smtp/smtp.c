@@ -1496,9 +1496,10 @@ smtp_send_mail_bodycback(const char *from, const char* to, const char* subject,
 static void
 smtp_send_body_data_handler(struct smtp_session *s, struct altcp_pcb *pcb)
 {
-  struct smtp_bodydh_state *bdh = s->bodydh;
+  struct smtp_bodydh_state *bdh;
   int res = 0, ret;
   LWIP_ASSERT("s != NULL", s != NULL);
+  bdh = s->bodydh;
   LWIP_ASSERT("bodydh != NULL", bdh != NULL);
 
   /* resume any leftovers from prior memory constraints */
