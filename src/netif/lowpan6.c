@@ -139,6 +139,7 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh)
   return ERR_OK;
 }
 
+#if LWIP_6LOWPAN_IPHC
 static s8_t
 lowpan6_context_lookup(const ip6_addr_t *ip6addr)
 {
@@ -152,7 +153,9 @@ lowpan6_context_lookup(const ip6_addr_t *ip6addr)
 
   return -1;
 }
+#endif /* LWIP_6LOWPAN_IPHC */
 
+#if LWIP_6LOWPAN_IPHC || LWIP_6LOWPAN_INFER_SHORT_ADDRESS
 /* Determine compression mode for unicast address. */
 static s8_t
 lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct ieee_802154_addr *mac_addr)
@@ -178,7 +181,9 @@ lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct ieee_802154_add
 
   return 1;
 }
+#endif /* LWIP_6LOWPAN_IPHC || LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
+#if LWIP_6LOWPAN_IPHC
 /* Determine compression mode for multicast address. */
 static s8_t
 lowpan6_get_address_mode_mc(const ip6_addr_t *ip6addr)
@@ -200,6 +205,7 @@ lowpan6_get_address_mode_mc(const ip6_addr_t *ip6addr)
 
   return 0;
 }
+#endif /* LWIP_6LOWPAN_IPHC */
 
 /*
  * Encapsulates data into IEEE 802.15.4 frames.
@@ -456,11 +462,11 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 #endif /* LWIP_UDP */
   }
 
-#else /* LWIP_6LOWPAN_HC */
+#else /* LWIP_6LOWPAN_IPHC */
   /* Send uncompressed IPv6 header with appropriate dispatch byte. */
   lowpan6_header_len = 1;
   buffer[ieee_header_len] = 0x41; /* IPv6 dispatch */
-#endif /* LWIP_6LOWPAN_HC */
+#endif /* LWIP_6LOWPAN_IPHC */
 
   /* Calculate remaining packet length */
   remaining_len = p->tot_len;
