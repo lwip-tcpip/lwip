@@ -522,7 +522,7 @@ ip4_reass(struct pbuf *p)
 
   fraghdr = (struct ip_hdr *)p->payload;
 
-  if ((IPH_HL(fraghdr) * 4) != IP_HLEN) {
+  if (IPH_HL_BYTES(fraghdr) != IP_HLEN) {
     LWIP_DEBUGF(IP_REASS_DEBUG, ("ip4_reass: IP options currently not supported!\n"));
     IPFRAG_STATS_INC(ip_frag.err);
     goto nullreturn;
