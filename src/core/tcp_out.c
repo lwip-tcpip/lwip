@@ -1902,6 +1902,10 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
   pbuf_realloc(useg->p, useg->p->tot_len - remainder);
   useg->len -= remainder;
   TCPH_SET_FLAG(useg->tcphdr, split_flags);
+#if TCP_OVERSIZE_DBGCHECK
+  /* By trimming, realloc may have actually shrunk the pbuf, so clear oversize_left */
+  useg->oversize_left = 0;
+#endif /* TCP_OVERSIZE_DBGCHECK */
 
 #if TCP_CHECKSUM_ON_COPY
   /* The checksum on the split segment is now incorrect. We need to re-run it over the split */
@@ -1931,6 +1935,14 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
   /* Finally insert remainder into queue after split (which stays head) */
   seg->next = useg->next;
   useg->next = seg;
+
+#if TCP_OVERSIZE
+  /* If remainder is last segment on the unsent, ensure we clear the oversize amount
+   * because the remainder is always sized to the exact remaining amount */
+  if (seg->next == NULL) {
+    pcb->unsent_oversize = 0;
+  }
+#endif /* TCP_OVERSIZE */
 
   return ERR_OK;
 memerr:
