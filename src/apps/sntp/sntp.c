@@ -546,7 +546,7 @@ sntp_send_request(const ip_addr_t *server_addr)
     sys_timeout((u32_t)SNTP_RECV_TIMEOUT, sntp_try_next_server, NULL);
 #if SNTP_CHECK_RESPONSE >= 1
     /* save server address to verify it in sntp_recv */
-    ip_addr_set(&sntp_last_server_address, server_addr);
+    ip_addr_copy(sntp_last_server_address, *server_addr);
 #endif /* SNTP_CHECK_RESPONSE >= 1 */
   } else {
     LWIP_DEBUGF(SNTP_DEBUG_SERIOUS, ("sntp_send_request: Out of memory, trying again in %"U32_F" ms\n",
