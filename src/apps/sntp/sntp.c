@@ -532,6 +532,9 @@ static void
 sntp_send_request(const ip_addr_t *server_addr)
 {
   struct pbuf *p;
+
+  LWIP_ASSERT("server_addr != NULL", server_addr != NULL);
+
   p = pbuf_alloc(PBUF_TRANSPORT, SNTP_MSG_LEN, PBUF_RAM);
   if (p != NULL) {
     struct sntp_msg *sntpmsg = (struct sntp_msg *)p->payload;
