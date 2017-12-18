@@ -151,7 +151,7 @@ typedef struct {
   u8_t shtml;
 } default_filename;
 
-const default_filename g_psDefaultFilenames[] = {
+static const default_filename g_psDefaultFilenames[] = {
   {"/index.shtml", 1 },
   {"/index.ssi",   1 },
   {"/index.shtm",  1 },
@@ -310,29 +310,29 @@ static void http_continue(void *connection);
 
 #if LWIP_HTTPD_SSI
 /* SSI insert handler function pointer. */
-tSSIHandler g_pfnSSIHandler;
+static tSSIHandler g_pfnSSIHandler;
 #if !LWIP_HTTPD_SSI_RAW
-int g_iNumTags;
-const char **g_ppcTags;
+static int g_iNumTags;
+static const char **g_ppcTags;
 #endif /* !LWIP_HTTPD_SSI_RAW */
 
 #define LEN_TAG_LEAD_IN 5
-const char *const g_pcTagLeadIn = "<!--#";
+static const char *const g_pcTagLeadIn = "<!--#";
 
 #define LEN_TAG_LEAD_OUT 3
-const char *const g_pcTagLeadOut = "-->";
+static const char *const g_pcTagLeadOut = "-->";
 #endif /* LWIP_HTTPD_SSI */
 
 #if LWIP_HTTPD_CGI
 /* CGI handler information */
-const tCGI *g_pCGIs;
-int g_iNumCGIs;
-int http_cgi_paramcount;
+static const tCGI *g_pCGIs;
+static int g_iNumCGIs;
+static int http_cgi_paramcount;
 #define http_cgi_params     hs->params
 #define http_cgi_param_vals hs->param_vals
 #elif LWIP_HTTPD_CGI_SSI
-char *http_cgi_params[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Params extracted from the request URI */
-char *http_cgi_param_vals[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Values for each extracted param */
+static char *http_cgi_params[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Params extracted from the request URI */
+static char *http_cgi_param_vals[LWIP_HTTPD_MAX_CGI_PARAMETERS]; /* Values for each extracted param */
 #endif /* LWIP_HTTPD_CGI */
 
 #if LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED
