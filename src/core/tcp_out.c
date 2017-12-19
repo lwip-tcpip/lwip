@@ -1900,6 +1900,9 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
   seg->flags |= TF_SEG_DATA_CHECKSUMMED;
 #endif /* TCP_CHECKSUM_ON_COPY */
 
+  /* Remove this segment from the queue since trimming it may free pbufs */
+  pcb->snd_queuelen -= pbuf_clen(useg->p);
+
   /* Trim the original pbuf into our split size.  At this point our remainder segment must be setup
   successfully because we are modifying the original segment */
   pbuf_realloc(useg->p, useg->p->tot_len - remainder);
@@ -1909,6 +1912,9 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
   /* By trimming, realloc may have actually shrunk the pbuf, so clear oversize_left */
   useg->oversize_left = 0;
 #endif /* TCP_OVERSIZE_DBGCHECK */
+
+  /* Add back to the queue with new trimmed pbuf */
+  pcb->snd_queuelen += pbuf_clen(useg->p);
 
 #if TCP_CHECKSUM_ON_COPY
   /* The checksum on the split segment is now incorrect. We need to re-run it over the split */
@@ -1933,7 +1939,7 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
   /* Update number of segments on the queues. Note that length now may
    * exceed TCP_SND_QUEUELEN! We don't have to touch pcb->snd_buf
    * because the total amount of data is constant when packet is split */
-  pcb->snd_queuelen++;
+  pcb->snd_queuelen += pbuf_clen(seg->p);
 
   /* Finally insert remainder into queue after split (which stays head) */
   seg->next = useg->next;
