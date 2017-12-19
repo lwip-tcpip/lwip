@@ -2046,7 +2046,7 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
   }
   if (copy_needed) {
     /* copy the whole packet into new pbufs */
-    p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
+    p = pbuf_clone(PBUF_LINK, PBUF_RAM, q);
     while ((p == NULL) && (neighbor_cache[neighbor_index].q != NULL)) {
       /* Free oldest packet (as per RFC recommendation) */
 #if LWIP_ND6_QUEUEING
@@ -2058,13 +2058,7 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
       pbuf_free(neighbor_cache[neighbor_index].q);
       neighbor_cache[neighbor_index].q = NULL;
 #endif /* LWIP_ND6_QUEUEING */
-      p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
-    }
-    if (p != NULL) {
-      if (pbuf_copy(p, q) != ERR_OK) {
-        pbuf_free(p);
-        p = NULL;
-      }
+      p = pbuf_clone(PBUF_LINK, PBUF_RAM, q);
     }
   } else {
     /* referencing the old pbuf is enough */

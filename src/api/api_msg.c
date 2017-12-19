@@ -154,14 +154,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     }
 #endif /* LWIP_SO_RCVBUF */
     /* copy the whole packet into new pbufs */
-    q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-    if (q != NULL) {
-      if (pbuf_copy(q, p) != ERR_OK) {
-        pbuf_free(q);
-        q = NULL;
-      }
-    }
-
+    q = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
     if (q != NULL) {
       u16_t len;
       buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);

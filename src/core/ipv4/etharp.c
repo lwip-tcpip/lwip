@@ -1012,13 +1012,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     }
     if (copy_needed) {
       /* copy the whole packet into new pbufs */
-      p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
-      if (p != NULL) {
-        if (pbuf_copy(p, q) != ERR_OK) {
-          pbuf_free(p);
-          p = NULL;
-        }
-      }
+      p = pbuf_clone(PBUF_LINK, PBUF_RAM, q);
     } else {
       /* referencing the old pbuf is enough */
       p = q;
