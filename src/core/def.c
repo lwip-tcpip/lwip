@@ -201,7 +201,8 @@ lwip_itoa(char *result, size_t bufsize, int number)
   char *tmp = result;
   size_t res_left = bufsize;
   size_t result_len;
-  int n = (number > 0) ? number : -number;
+  int pos = number >= 0;
+  int n = pos ? number : -number;
 
   /* handle invalid bufsize */
   if (bufsize < 2) {
@@ -217,21 +218,16 @@ lwip_itoa(char *result, size_t bufsize, int number)
   /* create the string in a temporary buffer since we don't know how long
      it will get */
   tmp = &result[bufsize - 2];
-  if (n == 0) {
-    *tmp = '0';
-    tmp--;
-    result_len++;
-  }
-  while ((n != 0) && (result_len < (bufsize - 1))) {
+  do {
     char val = (char)('0' + (n % 10));
     *tmp = val;
     tmp--;
     n = n / 10;
     result_len++;
-  }
+  } while ((n != 0) && (result_len <= bufsize));
 
   /* output sign first */
-  if (number < 0) {
+  if (!pos) {
     *res = '-';
     res++;
     res_left--;

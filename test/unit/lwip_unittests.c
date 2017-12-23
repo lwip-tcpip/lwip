@@ -4,6 +4,7 @@
 #include "udp/test_udp.h"
 #include "tcp/test_tcp.h"
 #include "tcp/test_tcp_oos.h"
+#include "core/test_def.h"
 #include "core/test_mem.h"
 #include "core/test_pbuf.h"
 #include "etharp/test_etharp.h"
@@ -62,6 +63,7 @@ int main(void)
     udp_suite,
     tcp_suite,
     tcp_oos_suite,
+    def_suite,
     mem_suite,
     pbuf_suite,
     etharp_suite,
