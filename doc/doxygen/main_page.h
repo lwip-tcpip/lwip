@@ -164,6 +164,19 @@
  *    @ref LOCK_TCPIP_CORE() and @ref UNLOCK_TCPIP_CORE().
  *    These macros cannot be used in an interrupt context!
  *    Note the OS must correctly handle priority inversion for this.
+ *
+ * Cache issues
+ * ========================================
+ *
+ * DMA-capable ethernet hardware and zero-copy RX
+ * ----------------------------------------------
+ * 
+ * lwIP changes the content of RECEIVED pbufs in the TCP code path.
+ * This implies one or more cacheline(s) of the RX pbuf become dirty
+ * and need to be flushed before the memory is handed over to the
+ * DMA ethernet hardware for the next telegram to be received.
+ * See http://lwip.100.n7.nabble.com/in-place-overwriting-of-payload-via-static-quot-tcphdr-quot-pointer-td31434.html
+ * for a more detailed explanation.
  */
 
 /**
