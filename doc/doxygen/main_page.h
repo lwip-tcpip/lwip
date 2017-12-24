@@ -166,7 +166,7 @@
  *    Note the OS must correctly handle priority inversion for this.
  *
  * Cache issues
- * ========================================
+ * ============
  *
  * DMA-capable ethernet hardware and zero-copy RX
  * ----------------------------------------------
@@ -177,6 +177,9 @@
  * DMA ethernet hardware for the next telegram to be received.
  * See http://lwip.100.n7.nabble.com/in-place-overwriting-of-payload-via-static-quot-tcphdr-quot-pointer-td31434.html
  * for a more detailed explanation.
+ * Also keep in mind the user application may also write into pbufs,
+ * so it is generally a bug not to flush the data cache before handing
+ * a buffer to DMA hardware.
  */
 
 /**
