@@ -1421,7 +1421,8 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
       }
 #endif
 #if LWIP_IPV4
-      if (!(outpkt->host_replies & REPLY_HOST_A)) {
+      if (!(outpkt->host_replies & REPLY_HOST_A) &&
+          !ip4_addr_isany_val(*netif_ip4_addr(outpkt->netif))) {
         res = mdns_add_a_answer(outpkt, outpkt->cache_flush, outpkt->netif);
         if (res != ERR_OK) {
           goto cleanup;
@@ -1858,7 +1859,9 @@ mdns_resp_netif_settings_changed(struct netif *netif)
   mdns_announce(netif, IP6_ADDR_ANY);
 #endif
 #if LWIP_IPV4
-  mdns_announce(netif, IP4_ADDR_ANY);
+  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
+    mdns_announce(netif, IP4_ADDR_ANY);
+  }
 #endif
 }
 
@@ -2044,7 +2047,9 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   mdns_announce(netif, IP6_ADDR_ANY);
 #endif
 #if LWIP_IPV4
-  mdns_announce(netif, IP4_ADDR_ANY);
+  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
+    mdns_announce(netif, IP4_ADDR_ANY);
+  }
 #endif
   return slot;
 }
