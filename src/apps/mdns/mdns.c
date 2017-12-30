@@ -1837,34 +1837,6 @@ dealloc:
   pbuf_free(p);
 }
 
-/**
- * @ingroup mdns
- * Announce IP settings have changed on netif.
- * Call this in your callback registered by netif_set_status_callback().
- * No need to call this function when LWIP_NETIF_EXT_STATUS_CALLBACK==1,
- * this handled automatically for you.
- * @param netif The network interface where settings have changed.
- */
-void
-mdns_resp_netif_settings_changed(struct netif *netif)
-{
-  LWIP_ERROR("mdns_resp_netif_ip_changed: netif != NULL", (netif != NULL), return);
-
-  if (NETIF_TO_HOST(netif) == NULL) {
-    return;
-  }
-
-  /* Announce on IPv6 and IPv4 */
-#if LWIP_IPV6
-  mdns_announce(netif, IP6_ADDR_ANY);
-#endif
-#if LWIP_IPV4
-  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-    mdns_announce(netif, IP4_ADDR_ANY);
-  }
-#endif
-}
-
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
 static void
 mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t *args)
@@ -1879,13 +1851,13 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
   switch (reason) {
     case LWIP_NSC_STATUS_CHANGED:
       if (args->status_changed.state != 0) {
-        mdns_resp_netif_settings_changed(netif);
+        mdns_resp_announce(netif);
       }
       /* TODO: send goodbye message */
       break;
     case LWIP_NSC_LINK_CHANGED:
       if (args->link_changed.state != 0) {
-        mdns_resp_netif_settings_changed(netif);
+        mdns_resp_announce(netif);
       }
       break;
     case LWIP_NSC_IPV4_ADDRESS_CHANGED:  /* fall through */
@@ -1894,7 +1866,7 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
     case LWIP_NSC_IPV4_SETTINGS_CHANGED: /* fall through */
     case LWIP_NSC_IPV6_SET:              /* fall through */
     case LWIP_NSC_IPV6_ADDR_STATE_CHANGED:
-      mdns_resp_netif_settings_changed(netif);
+      mdns_resp_announce(netif);
       break;
     default:
       break;
@@ -1944,7 +1916,7 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   }
 #endif
 
-  mdns_resp_netif_settings_changed(netif);
+  mdns_resp_announce(netif);
   return ERR_OK;
 
 cleanup:
@@ -2042,15 +2014,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 
   mdns->services[slot] = srv;
 
-  /* Announce on IPv6 and IPv4 */
-#if LWIP_IPV6
-  mdns_announce(netif, IP6_ADDR_ANY);
-#endif
-#if LWIP_IPV4
-  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-    mdns_announce(netif, IP4_ADDR_ANY);
-  }
-#endif
+  mdns_resp_announce(netif);
   return slot;
 }
 
@@ -2094,6 +2058,31 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
 
   /* Use a mdns_domain struct to store txt chunks since it is the same encoding */
   return mdns_domain_add_label(&service->txtdata, txt, txt_len);
+}
+
+/**
+ * @ingroup mdns
+ * Send unsolicited answer containing all our known data
+ * @param netif The network interface to send on
+ */
+void
+mdns_resp_announce(struct netif *netif)
+{
+  LWIP_ERROR("mdns_resp_netif_ip_changed: netif != NULL", (netif != NULL), return);
+
+  if (NETIF_TO_HOST(netif) == NULL) {
+    return;
+  }
+
+  /* Announce on IPv6 and IPv4 */
+#if LWIP_IPV6
+  mdns_announce(netif, IP6_ADDR_ANY);
+#endif
+#if LWIP_IPV4
+  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
+    mdns_announce(netif, IP4_ADDR_ANY);
+  }
+#endif
 }
 
 /**
