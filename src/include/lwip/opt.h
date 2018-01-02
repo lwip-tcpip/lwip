@@ -212,6 +212,27 @@
 #if !defined SYS_LIGHTWEIGHT_PROT || defined __DOXYGEN__
 #define SYS_LIGHTWEIGHT_PROT            1
 #endif
+
+/**
+ * LWIP_ASSERT_CORE_LOCKED: Macro to check whether lwIP's threading/locking
+ * requirements are satisfied during current function call.
+ * This macro usually calls a function that is implemented in the OS-dependent
+ * sys layer and performs the following checks:
+ * - Not in ISR
+ * - If LWIP_TCPIP_CORE_LOCKING=1: TCPIP core lock is held
+ * - If LWIP_TCPIP_CORE_LOCKING=0: function is called from TCPIP thread
+ */
+#if !defined LWIP_ASSERT_CORE_LOCKED || defined __DOXYGEN__
+#define LWIP_ASSERT_CORE_LOCKED()
+#endif
+
+/**
+ * Called as first thing in the lwIP TCPIP thread. Can be used in conjunction
+ * with LWIP_ASSERT_CORE_LOCKED to check core locking.
+ */
+#if !defined LWIP_MARK_TCPIP_THREAD || defined __DOXYGEN__
+#define LWIP_MARK_TCPIP_THREAD()
+#endif
 /**
  * @}
  */

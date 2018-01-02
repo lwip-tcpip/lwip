@@ -422,6 +422,8 @@ ip4_input(struct pbuf *p, struct netif *inp)
   int check_ip_src = 1;
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP */
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   IP_STATS_INC(ip.recv);
   MIB2_STATS_INC(mib2.ipinreceives);
 

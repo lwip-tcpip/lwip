@@ -198,6 +198,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   u8_t for_us = 0;
 
   LWIP_UNUSED_ARG(inp);
+  LWIP_ASSERT_CORE_LOCKED();
 
   PERF_START;
 
@@ -680,6 +681,8 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   u8_t ip_proto;
   u8_t ttl;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   if ((pcb == NULL) || (dst_ip == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) ||
       !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
@@ -893,6 +896,8 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   ip_addr_t zoned_ipaddr;
 #endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
+  LWIP_ASSERT_CORE_LOCKED();
+
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
@@ -995,6 +1000,8 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 void
 udp_bind_netif(struct udp_pcb *pcb, const struct netif *netif)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (netif != NULL) {
     pcb->netif_idx = netif_get_index(netif);
   } else {
@@ -1023,6 +1030,8 @@ err_t
 udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   if ((pcb == NULL) || (ipaddr == NULL)) {
     return ERR_VAL;
@@ -1076,6 +1085,8 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 void
 udp_disconnect(struct udp_pcb *pcb)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* reset remote address association */
 #if LWIP_IPV4 && LWIP_IPV6
   if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
@@ -1104,6 +1115,8 @@ udp_disconnect(struct udp_pcb *pcb)
 void
 udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* remember recv() callback and user data */
   pcb->recv = recv;
   pcb->recv_arg = recv_arg;
@@ -1122,6 +1135,8 @@ void
 udp_remove(struct udp_pcb *pcb)
 {
   struct udp_pcb *pcb2;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   mib2_udp_unbind(pcb);
   /* pcb to be removed is first in list? */
@@ -1157,6 +1172,9 @@ struct udp_pcb *
 udp_new(void)
 {
   struct udp_pcb *pcb;
+
+  LWIP_ASSERT_CORE_LOCKED();
+
   pcb = (struct udp_pcb *)memp_malloc(MEMP_UDP_PCB);
   /* could allocate UDP PCB? */
   if (pcb != NULL) {
@@ -1191,6 +1209,9 @@ struct udp_pcb *
 udp_new_ip_type(u8_t type)
 {
   struct udp_pcb *pcb;
+
+  LWIP_ASSERT_CORE_LOCKED();
+
   pcb = udp_new();
 #if LWIP_IPV4 && LWIP_IPV6
   if (pcb != NULL) {

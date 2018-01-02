@@ -515,6 +515,8 @@ ip6_input(struct pbuf *p, struct netif *inp)
   int check_ip_src=1;
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   IP6_STATS_INC(ip6.recv);
 
   /* identify the IP header */

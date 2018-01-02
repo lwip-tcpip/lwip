@@ -208,6 +208,8 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   struct sys_timeo *timeout, *t;
   u32_t now, diff;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
   if (timeout == NULL) {
     LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != NULL);
@@ -275,6 +277,8 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
 {
   struct sys_timeo *prev_t, *t;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (next_timeout == NULL) {
     return;
   }
@@ -313,6 +317,8 @@ static
 void
 sys_check_timeouts(void)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (next_timeout) {
     struct sys_timeo *tmptimeout;
     u32_t diff;
@@ -369,6 +375,8 @@ sys_check_timeouts(void)
 void
 sys_restart_timeouts(void)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   timeouts_last_time = sys_now();
 }
 
@@ -382,6 +390,9 @@ u32_t
 sys_timeouts_sleeptime(void)
 {
   u32_t diff;
+
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (next_timeout == NULL) {
     return 0xffffffff;
   }
