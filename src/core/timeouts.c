@@ -350,15 +350,7 @@ sys_check_timeouts(void)
 #endif /* LWIP_DEBUG_TIMERNAMES */
         memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
         if (handler != NULL) {
-#if !NO_SYS
-          /* For LWIP_TCPIP_CORE_LOCKING, lock the core before calling the
-             timeout handler function. */
-          LOCK_TCPIP_CORE();
-#endif /* !NO_SYS */
           handler(arg);
-#if !NO_SYS
-          UNLOCK_TCPIP_CORE();
-#endif /* !NO_SYS */
         }
         LWIP_TCPIP_THREAD_ALIVE();
       }
@@ -416,16 +408,29 @@ sys_timeouts_sleeptime(void)
 void
 sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 {
-  u32_t sleeptime;
+  u32_t sleeptime, res;
 
 again:
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (!next_timeout) {
+    UNLOCK_TCPIP_CORE();
     sys_arch_mbox_fetch(mbox, msg, 0);
+    LOCK_TCPIP_CORE();
     return;
   }
 
   sleeptime = sys_timeouts_sleeptime();
-  if (sleeptime == 0 || sys_arch_mbox_fetch(mbox, msg, sleeptime) == SYS_ARCH_TIMEOUT) {
+  if (sleeptime == 0) {
+    sys_check_timeouts();
+    /* We try again to fetch a message from the mbox. */
+    goto again;
+  }
+
+  UNLOCK_TCPIP_CORE();
+  res = sys_arch_mbox_fetch(mbox, msg, sleeptime);
+  LOCK_TCPIP_CORE();
+  if (res == SYS_ARCH_TIMEOUT) {
     /* If a SYS_ARCH_TIMEOUT value is returned, a timeout occurred
        before a message could be fetched. */
     sys_check_timeouts();
