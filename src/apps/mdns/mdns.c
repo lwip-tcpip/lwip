@@ -1877,6 +1877,7 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
 /**
  * @ingroup mdns
  * Activate MDNS responder for a network interface and send announce packets.
+ * Don't forget to call mdns_resp_announce() after you added all netifs and services.
  * @param netif The network interface to activate.
  * @param hostname Name to use. Queries for &lt;hostname&gt;.local will be answered
  *                 with the IP addresses of the netif. The hostname will be copied, the
@@ -1916,7 +1917,6 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   }
 #endif
 
-  mdns_resp_announce(netif);
   return ERR_OK;
 
 cleanup:
@@ -1965,6 +1965,7 @@ mdns_resp_remove_netif(struct netif *netif)
 /**
  * @ingroup mdns
  * Add a service to the selected network interface.
+ * Don't forget to call mdns_resp_announce() after you added all services.
  * @param netif The network interface to publish this service on
  * @param name The name of the service
  * @param service The service type, like "_http"
@@ -2014,7 +2015,6 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 
   mdns->services[slot] = srv;
 
-  mdns_resp_announce(netif);
   return slot;
 }
 
@@ -2068,7 +2068,7 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
 void
 mdns_resp_announce(struct netif *netif)
 {
-  LWIP_ERROR("mdns_resp_netif_ip_changed: netif != NULL", (netif != NULL), return);
+  LWIP_ERROR("mdns_resp_announce: netif != NULL", (netif != NULL), return);
 
   if (NETIF_TO_HOST(netif) == NULL) {
     return;

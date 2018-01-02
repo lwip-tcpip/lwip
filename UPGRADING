@@ -10,6 +10,9 @@ with newer versions.
 
   ++ Application changes:
 
+  * MDNS: Functions mdns_resp_add_netif() and mdns_resp_add_service() do not automatically announce
+    any more. Users need to call mdns_resp_announce() after adding netifs or services.
+
   * TCP only kills existing connections with a LOWER priority than the one currently being opened.
     Previous implementations also kill existing connections of the SAME priority.
 
