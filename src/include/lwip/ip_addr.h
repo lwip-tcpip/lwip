@@ -201,6 +201,10 @@ extern const ip_addr_t ip_addr_any_type;
   ip6_addr_cmp(ip_2_ip6(addr1), ip_2_ip6(addr2)) : \
   ip4_addr_cmp(ip_2_ip4(addr1), ip_2_ip4(addr2))))
 /** @ingroup ipaddr */
+#define ip_addr_cmp_zoneless(addr1, addr2)    ((IP_GET_TYPE(addr1) != IP_GET_TYPE(addr2)) ? 0 : (IP_IS_V6_VAL(*(addr1)) ? \
+  ip6_addr_cmp_zoneless(ip_2_ip6(addr1), ip_2_ip6(addr2)) : \
+  ip4_addr_cmp(ip_2_ip4(addr1), ip_2_ip4(addr2))))
+/** @ingroup ipaddr */
 #define ip_addr_isany(ipaddr)        (((ipaddr) == NULL) ? 1 : ((IP_IS_V6(ipaddr)) ? \
   ip6_addr_isany(ip_2_ip6(ipaddr)) : \
   ip4_addr_isany(ip_2_ip4(ipaddr))))

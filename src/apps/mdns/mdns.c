@@ -1814,7 +1814,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 
 #if LWIP_IPV6
   if (IP_IS_V6(ip_current_dest_addr())) {
-    if (!ip_addr_cmp(ip_current_dest_addr(), &v6group)) {
+    if (!ip_addr_cmp_zoneless(ip_current_dest_addr(), &v6group)) {
       packet.recv_unicast = 1;
     }
   }
