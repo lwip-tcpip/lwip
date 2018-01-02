@@ -12,8 +12,9 @@ void my_pbuf_free_custom(void* p)
 
   my_custom_pbuf_t* my_puf = (my_custom_pbuf_t*)p;
 
-  // flush data cache here - lwIP and/or application may have written into buffer!
-  flush_cpu_cache(p->payload, p->tot_len);
+  // invalidate data cache here - lwIP and/or application may have written into buffer!
+  // (invalidate is faster than flushing, and noone needs the correct data in the buffer)
+  invalidate_cpu_cache(p->payload, p->tot_len);
 
   SYS_ARCH_PROTECT(old_level);
   free_rx_dma_descriptor(my_pbuf->dma_descriptor);
