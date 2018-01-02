@@ -77,13 +77,6 @@ void mdns_resp_announce(struct netif *netif);
  * @param netif The network interface where settings have changed.
  */
 #define mdns_resp_netif_settings_changed(netif) mdns_resp_announce(netif)
- 
-/** @ingroup mdns
- * To trigger announces from non-TCPIP threads
- * Be sure to \#include lwip/netifapi.h when using this macro
- * @see mdns_resp_announce()
- */
-#define mdnsapi_mdns_resp_announce(netif)   netifapi_netif_common(netif, mdns_resp_announce, NULL)
 
 #endif /* LWIP_MDNS_RESPONDER */
 
