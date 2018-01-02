@@ -217,6 +217,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 err_t
 raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if ((pcb == NULL) || (ipaddr == NULL)) {
     return ERR_VAL;
   }
@@ -248,6 +249,7 @@ raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 void
 raw_bind_netif(struct raw_pcb *pcb, const struct netif *netif)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (netif != NULL) {
     pcb->netif_idx = netif_get_index(netif);
   } else {
@@ -272,6 +274,7 @@ raw_bind_netif(struct raw_pcb *pcb, const struct netif *netif)
 err_t
 raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if ((pcb == NULL) || (ipaddr == NULL)) {
     return ERR_VAL;
   }
@@ -297,6 +300,7 @@ raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 void
 raw_disconnect(struct raw_pcb *pcb)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   /* reset remote address association */
 #if LWIP_IPV4 && LWIP_IPV6
   if (IP_IS_ANY_TYPE_VAL(pcb->local_ip)) {
@@ -326,6 +330,7 @@ raw_disconnect(struct raw_pcb *pcb)
 void
 raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   /* remember recv() callback and user data */
   pcb->recv = recv;
   pcb->recv_arg = recv_arg;
@@ -416,6 +421,8 @@ raw_sendto_if_src(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
   struct pbuf *q; /* q will be sent down the stack */
   u16_t header_size;
   u8_t ttl;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   if ((pcb == NULL) || (dst_ip == NULL) || (netif == NULL) || (src_ip == NULL) ||
       !IP_ADDR_PCB_VERSION_MATCH(pcb, src_ip) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
@@ -551,6 +558,7 @@ void
 raw_remove(struct raw_pcb *pcb)
 {
   struct raw_pcb *pcb2;
+  LWIP_ASSERT_CORE_LOCKED();
   /* pcb to be removed is first in list? */
   if (raw_pcbs == pcb) {
     /* make list start at 2nd pcb */
@@ -586,6 +594,7 @@ raw_new(u8_t proto)
   struct raw_pcb *pcb;
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
+  LWIP_ASSERT_CORE_LOCKED();
 
   pcb = (struct raw_pcb *)memp_malloc(MEMP_RAW_PCB);
   /* could allocate RAW PCB? */
@@ -622,6 +631,7 @@ struct raw_pcb *
 raw_new_ip_type(u8_t type, u8_t proto)
 {
   struct raw_pcb *pcb;
+  LWIP_ASSERT_CORE_LOCKED();
   pcb = raw_new(proto);
 #if LWIP_IPV4 && LWIP_IPV6
   if (pcb != NULL) {

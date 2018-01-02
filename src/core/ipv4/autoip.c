@@ -105,6 +105,7 @@ static void autoip_start_probing(struct netif *netif);
 void
 autoip_set_struct(struct netif *netif, struct autoip *autoip)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("autoip != NULL", autoip != NULL);
   LWIP_ASSERT("netif already has a struct autoip set",
@@ -256,6 +257,7 @@ autoip_start(struct netif *netif)
   struct autoip *autoip = netif_autoip_data(netif);
   err_t result = ERR_OK;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
 
   /* Set IP-Address, Netmask and Gateway to 0 to make sure that
@@ -348,6 +350,7 @@ autoip_stop(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
 
+  LWIP_ASSERT_CORE_LOCKED();
   if (autoip != NULL) {
     autoip->state = AUTOIP_STATE_OFF;
     if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {

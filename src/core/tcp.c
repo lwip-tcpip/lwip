@@ -265,6 +265,7 @@ void
 tcp_backlog_delayed(struct tcp_pcb *pcb)
 {
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  LWIP_ASSERT_CORE_LOCKED();
   if ((pcb->flags & TF_BACKLOGPEND) == 0) {
     if (pcb->listener != NULL) {
       pcb->listener->accepts_pending++;
@@ -287,6 +288,7 @@ void
 tcp_backlog_accepted(struct tcp_pcb *pcb)
 {
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  LWIP_ASSERT_CORE_LOCKED();
   if ((pcb->flags & TF_BACKLOGPEND) != 0) {
     if (pcb->listener != NULL) {
       LWIP_ASSERT("accepts_pending != 0", pcb->listener->accepts_pending != 0);
@@ -451,6 +453,7 @@ err_t
 tcp_close(struct tcp_pcb *pcb)
 {
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in "));
+  LWIP_ASSERT_CORE_LOCKED();
   tcp_debug_print_state(pcb->state);
 
   if (pcb->state != LISTEN) {
@@ -477,6 +480,7 @@ tcp_close(struct tcp_pcb *pcb)
 err_t
 tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb->state == LISTEN) {
     return ERR_CONN;
   }
@@ -527,6 +531,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 #endif /* LWIP_CALLBACK_API */
   void *errf_arg;
 
+  LWIP_ASSERT_CORE_LOCKED();
   /* pcb->state LISTEN not allowed here */
   LWIP_ASSERT("don't call tcp_abort/tcp_abandon for listen-pcbs",
               pcb->state != LISTEN);
@@ -622,6 +627,8 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
   ip_addr_t zoned_ipaddr;
 #endif /* LWIP_IPV6 && LWIP_IPV6_SCOPES */
 
+  LWIP_ASSERT_CORE_LOCKED();
+
 #if LWIP_IPV4
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
@@ -712,6 +719,7 @@ tcp_bind(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 void
 tcp_bind_netif(struct tcp_pcb *pcb, const struct netif *netif)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (netif != NULL) {
     pcb->netif_idx = netif_get_index(netif);
   } else {
@@ -771,6 +779,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 struct tcp_pcb *
 tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   return tcp_listen_with_backlog_and_err(pcb, backlog, NULL);
 }
 
@@ -797,6 +806,7 @@ tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err)
   err_t res;
 
   LWIP_UNUSED_ARG(backlog);
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, res = ERR_CLSD; goto done);
 
   /* already listening? */
@@ -904,6 +914,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
   u32_t wnd_inflation;
 
+  LWIP_ASSERT_CORE_LOCKED();
   /* pcb->state LISTEN not allowed here */
   LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
               pcb->state != LISTEN);
@@ -1007,6 +1018,8 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   err_t ret;
   u32_t iss;
   u16_t old_local_port;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   if ((pcb == NULL) || (ipaddr == NULL)) {
     return ERR_VAL;
@@ -1569,6 +1582,7 @@ tcp_seg_free(struct tcp_seg *seg)
 void
 tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   pcb->prio = prio;
 }
 
@@ -1752,6 +1766,8 @@ tcp_alloc(u8_t prio)
 {
   struct tcp_pcb *pcb;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
   if (pcb == NULL) {
     /* Try to send FIN for all pcbs stuck in TF_CLOSEPEND first */
@@ -1902,6 +1918,7 @@ tcp_new_ip_type(u8_t type)
 void
 tcp_arg(struct tcp_pcb *pcb, void *arg)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   /* This function is allowed to be called for both listen pcbs and
      connection pcbs. */
   if (pcb != NULL) {
@@ -1924,6 +1941,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 void
 tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb != NULL) {
     LWIP_ASSERT("invalid socket state for recv callback", pcb->state != LISTEN);
     pcb->recv = recv;
@@ -1943,6 +1961,7 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 void
 tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb != NULL) {
     LWIP_ASSERT("invalid socket state for sent callback", pcb->state != LISTEN);
     pcb->sent = sent;
@@ -1968,6 +1987,7 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 void
 tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb != NULL) {
     LWIP_ASSERT("invalid socket state for err callback", pcb->state != LISTEN);
     pcb->errf = err;
@@ -1986,6 +2006,7 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 void
 tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if ((pcb != NULL) && (pcb->state == LISTEN)) {
     struct tcp_pcb_listen *lpcb = (struct tcp_pcb_listen *)pcb;
     lpcb->accept = accept;
@@ -2014,6 +2035,7 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 void
 tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("invalid socket state for poll", pcb->state != LISTEN);
 #if LWIP_CALLBACK_API
   pcb->poll = poll;

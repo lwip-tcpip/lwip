@@ -123,6 +123,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   err_t err;
 
   LWIP_UNUSED_ARG(inp);
+  LWIP_ASSERT_CORE_LOCKED();
 
   PERF_START;
 

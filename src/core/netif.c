@@ -770,8 +770,6 @@ netif_set_up(struct netif *netif)
 static void
 netif_issue_reports(struct netif *netif, u8_t report_type)
 {
-  LWIP_ASSERT_CORE_LOCKED();
-
   /* Only send reports when both link and admin states are up */
   if (!(netif->flags & NETIF_FLAG_LINK_UP) ||
       !(netif->flags & NETIF_FLAG_UP)) {
