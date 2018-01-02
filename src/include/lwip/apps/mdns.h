@@ -83,7 +83,7 @@ void mdns_resp_announce(struct netif *netif);
  * Be sure to \#include lwip/netifapi.h when using this macro
  * @see mdns_resp_announce()
  */
-#define mdnsapi_mdns_resp_announce(netif)   netifapi_netif_common(netif, NULL, mdns_resp_announce)
+#define mdnsapi_mdns_resp_announce(netif)   netifapi_netif_common(netif, mdns_resp_announce, NULL)
 
 #endif /* LWIP_MDNS_RESPONDER */
 
