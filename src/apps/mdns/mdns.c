@@ -61,6 +61,7 @@
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
+#include "lwip/timeouts.h"
 #include "lwip/prot/dns.h"
 #include "lwip/prot/iana.h"
 
@@ -241,6 +242,18 @@ struct mdns_rr_info {
   struct mdns_domain domain;
   u16_t type;
   u16_t klass;
+};
+
+/** Information about outgoing packet */
+struct mdns_async_outpacket {
+  /** Netif to send the packet on */
+  struct netif *netif;
+  /** Packet data */
+  struct pbuf *pbuf;
+  /** Destination IP */
+  ip_addr_t dest_addr;
+  /** Destination port */
+  u16_t dest_port;
 };
 
 struct mdns_question {
@@ -1255,7 +1268,7 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
   /* Copy source IP/port to use when responding unicast, or to choose
    * which pcb to use for multicast (IPv4/IPv6)
    */
-  SMEMCPY(&out->dest_addr, &in->source_addr, sizeof(ip_addr_t));
+  ip_addr_copy(out->dest_addr, in->source_addr);
   out->dest_port = in->source_port;
 
   if (in->source_port != LWIP_IANA_PORT_MDNS) {
@@ -1270,6 +1283,33 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
   if (in->recv_unicast) {
     out->unicast_reply = 1;
   }
+}
+
+/**
+ * Send delayed response
+ * @param arg An allocated mdns_async_outpacket structure
+ */
+static void
+mdns_async_send_outpacket(void *arg)
+{
+  const ip_addr_t *mcast_destaddr;
+  struct mdns_async_outpacket *outpkt = (struct mdns_async_outpacket *)arg;
+  struct pbuf *p = outpkt->pbuf;
+  /* Send delayed packet */
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Async sending packet len=%"U16_F"\n", p->tot_len));
+  if (IP_IS_V6_VAL(outpkt->dest_addr)) {
+#if LWIP_IPV6
+    mcast_destaddr = &v6group;
+#endif
+  } else {
+#if LWIP_IPV4
+    mcast_destaddr = &v4group;
+#endif
+  }
+  udp_sendto_if(mdns_pcb, p, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
+  pbuf_free(p);
+  outpkt->pbuf = NULL;
+  mem_free(arg);
 }
 
 /**
@@ -1434,7 +1474,6 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
   }
 
   if (outpkt->pbuf) {
-    const ip_addr_t *mcast_destaddr;
     struct dns_hdr hdr;
 
     /* Write header */
@@ -1451,21 +1490,46 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     /* Shrink packet */
     pbuf_realloc(outpkt->pbuf, outpkt->write_offset);
 
-    if (IP_IS_V6_VAL(outpkt->dest_addr)) {
+    if (outpkt->unicast_reply == 0) {
+      outpkt->dest_port = LWIP_IANA_PORT_MDNS;
+
+      if (IP_IS_V6_VAL(outpkt->dest_addr)) {
 #if LWIP_IPV6
-      mcast_destaddr = &v6group;
+        ip_addr_copy(outpkt->dest_addr, v6group);
 #endif
-    } else {
+      } else {
 #if LWIP_IPV4
-      mcast_destaddr = &v4group;
+        ip_addr_copy(outpkt->dest_addr, v4group);
 #endif
+      }
     }
-    /* Send created packet */
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d, unicast=%d\n", outpkt->write_offset, outpkt->unicast_reply));
-    if (outpkt->unicast_reply) {
-      udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
+
+    /* Delayed answer? See 6.3 in RFC 6762. */
+    if (outpkt->answers > 1) {
+      struct mdns_async_outpacket *async_outpkt;
+
+      async_outpkt = mem_malloc(sizeof(struct mdns_async_outpacket));
+      if (async_outpkt) {
+        struct pbuf *p = outpkt->pbuf;
+        u32_t msecs = 0;
+
+        while (msecs < 20) {
+          msecs = LWIP_RAND() & 127;
+        }
+
+        outpkt->pbuf = NULL;
+        async_outpkt->pbuf = p;
+        async_outpkt->netif = outpkt->netif;
+        async_outpkt->dest_port = outpkt->dest_port;
+        ip_addr_copy(async_outpkt->dest_addr, outpkt->dest_addr);
+
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Wait sending packet wait=%"U32_F", len=%"U16_F"\n", msecs, p->tot_len));
+        sys_timeout(msecs, mdns_async_send_outpacket, async_outpkt);
+      }
     } else {
-      udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, LWIP_IANA_PORT_MDNS, outpkt->netif);
+      /* Immediately send created packet */
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%"U16_F", unicast=%"U16_F"\n", outpkt->write_offset, outpkt->unicast_reply));
+      udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
     }
   }
 
@@ -1514,7 +1578,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   }
 
   announce.dest_port = LWIP_IANA_PORT_MDNS;
-  SMEMCPY(&announce.dest_addr, destination, sizeof(announce.dest_addr));
+  ip_addr_copy(announce.dest_addr, *destination);
   mdns_send_outpacket(&announce);
 }
 
@@ -1803,7 +1867,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   }
 
   memset(&packet, 0, sizeof(packet));
-  SMEMCPY(&packet.source_addr, addr, sizeof(packet.source_addr));
+  ip_addr_copy(packet.source_addr, *addr);
   packet.source_port = port;
   packet.netif = recv_netif;
   packet.pbuf = p;
