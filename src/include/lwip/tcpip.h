@@ -52,10 +52,12 @@ extern "C" {
 #if LWIP_TCPIP_CORE_LOCKING
 /** The global semaphore to lock the stack. */
 extern sys_mutex_t lock_tcpip_core;
+#if !defined LOCK_TCPIP_CORE || defined __DOXYGEN__
 /** Lock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
 #define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
 /** Unlock lwIP core mutex (needs @ref LWIP_TCPIP_CORE_LOCKING 1) */
 #define UNLOCK_TCPIP_CORE()   sys_mutex_unlock(&lock_tcpip_core)
+#endif /* LOCK_TCPIP_CORE */
 #else /* LWIP_TCPIP_CORE_LOCKING */
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
