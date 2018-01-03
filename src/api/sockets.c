@@ -2526,9 +2526,7 @@ static void select_check_waiters(int s, int has_recvevent, int has_sendevent, in
 #if !LWIP_TCPIP_CORE_LOCKING
   int last_select_cb_ctr;
   SYS_ARCH_DECL_PROTECT(lev);
-#endif
 
-#if !LWIP_TCPIP_CORE_LOCKING
   SYS_ARCH_PROTECT(lev);
 again:
   /* remember the state of select_cb_list to detect changes */
