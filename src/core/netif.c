@@ -426,8 +426,6 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback
 {
   ip_addr_t new_addr;
 
-  LWIP_ASSERT_CORE_LOCKED();
-
   *ip_2_ip4(&new_addr) = (ipaddr ? *ipaddr : *IP4_ADDR_ANY4);
   IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
 
@@ -481,6 +479,8 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback
 void
 netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   netif_do_set_ipaddr(netif, ipaddr, 1);
 }
 
@@ -494,8 +494,6 @@ netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, u8_t callba
   ip_addr_copy(old_addr, *netif_ip_netmask4(netif));
   args.ipv4_nm_changed.old_address = &old_addr;
 #endif
-
-  LWIP_ASSERT_CORE_LOCKED();
 
   /* address is actually being changed? */
   if (ip4_addr_cmp(safe_netmask, netif_ip4_netmask(netif)) == 0) {
@@ -530,6 +528,8 @@ netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, u8_t callba
 void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   netif_do_set_netmask(netif, netmask, 1);
 }
 
@@ -543,8 +543,6 @@ netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, u8_t callback)
   ip_addr_copy(old_addr, *netif_ip_gw4(netif));
   args.ipv4_gw_changed.old_address = &old_addr;
 #endif
-
-  LWIP_ASSERT_CORE_LOCKED();
 
   /* address is actually being changed? */
   if (ip4_addr_cmp(safe_gw, netif_ip4_gw(netif)) == 0) {
@@ -575,6 +573,8 @@ netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, u8_t callback)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   netif_do_set_gw(netif, gw, 1);
 }
 
