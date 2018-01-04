@@ -3217,6 +3217,13 @@
  * @}
  */
 
+/**
+ * LWIP_TESTMODE: Changes to make unit test possible
+ */
+#if !defined LWIP_TESTMODE
+#define LWIP_TESTMODE                   0
+#endif
+
 /*
    --------------------------------------------------
    ---------- Performance tracking options ----------
