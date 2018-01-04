@@ -42,14 +42,16 @@
 
 #include <string.h>
 
+u32_t lwip_sys_now;
+
 u32_t sys_jiffies(void)
 {
-  return (u32_t)0; /* todo */
+  return lwip_sys_now;
 }
 
 u32_t sys_now(void)
 {
-  return (u32_t)0; /* todo */
+  return lwip_sys_now;
 }
 
 void sys_init(void)

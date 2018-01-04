@@ -113,6 +113,14 @@ const int lwip_num_cyclic_timers = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 static struct sys_timeo *next_timeout;
 static u32_t timeouts_last_time;
 
+#if LWIP_TESTMODE
+struct sys_timeo**
+lwip_sys_timers_get_next_timout(void)
+{
+  return &next_timeout;
+}
+#endif
+
 #if LWIP_TCP
 /** global variable that shows if the tcp timer is currently scheduled or not */
 static int tcpip_tcp_timer_active;
@@ -313,7 +321,7 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  *
  * Must be called periodically from your main loop.
  */
-#if !NO_SYS && !defined __DOXYGEN__
+#if !LWIP_TESTMODE && !NO_SYS && !defined __DOXYGEN__
 static
 #endif /* !NO_SYS */
 void
@@ -377,7 +385,7 @@ sys_restart_timeouts(void)
 /** Return the time left before the next timeout is due. If no timeouts are
  * enqueued, returns 0xffffffff
  */
-#if !NO_SYS
+#if !LWIP_TESTMODE && !NO_SYS
 static
 #endif /* !NO_SYS */
 u32_t

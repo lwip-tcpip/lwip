@@ -7,6 +7,7 @@
 #include "core/test_def.h"
 #include "core/test_mem.h"
 #include "core/test_pbuf.h"
+#include "core/test_timers.h"
 #include "etharp/test_etharp.h"
 #include "dhcp/test_dhcp.h"
 #include "mdns/test_mdns.h"
@@ -66,6 +67,7 @@ int main(void)
     def_suite,
     mem_suite,
     pbuf_suite,
+    timers_suite,
     etharp_suite,
     dhcp_suite,
     mdns_suite,

@@ -65,5 +65,8 @@ typedef u32_t sys_thread_t;
 typedef int (*test_sys_arch_waiting_fn)(sys_sem_t* wait_sem, sys_mbox_t* wait_mbox);
 void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn);
 
+/* current time */
+extern u32_t lwip_sys_now;
+
 #endif /* LWIP_HDR_TEST_SYS_ARCH_H */
 
