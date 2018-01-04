@@ -185,11 +185,11 @@ static char http_uri_buf[LWIP_HTTPD_URI_BUF_LEN + 1];
  * requested file.
  */
 #define NUM_FILE_HDR_STRINGS 5
-#define HDR_STRINGS_IDX_HTTP_STATUS          0 /* e.g. "HTTP/1.0 200 OK\r\n" */
-#define HDR_STRINGS_IDX_SERVER_NAME          1 /* e.g. "Server: "HTTPD_SERVER_AGENT"\r\n" */
-#define HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE 2 /* e.g. "Content-Length: xy\r\n" and/or "Connection: keep-alive\r\n" */
-#define HDR_STRINGS_IDX_CONTENT_LEN_NR       3 /* the byte count, when content-length is used */
-#define HDR_STRINGS_IDX_CONTENT_TYPE         4 /* the content type (or default answer content type including default document) */
+#define HDR_STRINGS_IDX_HTTP_STATUS           0 /* e.g. "HTTP/1.0 200 OK\r\n" */
+#define HDR_STRINGS_IDX_SERVER_NAME           1 /* e.g. "Server: "HTTPD_SERVER_AGENT"\r\n" */
+#define HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE 2 /* e.g. "Content-Length: xy\r\n" and/or "Connection: keep-alive\r\n" */
+#define HDR_STRINGS_IDX_CONTENT_LEN_NR        3 /* the byte count, when content-length is used */
+#define HDR_STRINGS_IDX_CONTENT_TYPE          4 /* the content type (or default answer content type including default document) */
 
 /* The dynamically generated Content-Length buffer needs space for CRLF + NULL */
 #define LWIP_HTTPD_MAX_CONTENT_LEN_OFFSET 3
@@ -840,7 +840,7 @@ get_http_headers(struct http_state *hs, const char *uri)
   /* In all cases, the second header we send is the server identification
      so set it here. */
   hs->hdrs[HDR_STRINGS_IDX_SERVER_NAME] = g_psHTTPHeaderStrings[HTTP_HDR_SERVER];
-  hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = NULL;
+  hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = NULL;
   hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_NR] = NULL;
 
   /* Is this a normal file or the special case we use to send back the
@@ -954,13 +954,13 @@ get_http_headers(struct http_state *hs, const char *uri)
   }
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
   if (add_content_len) {
-    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_KEEPALIVE_LEN];
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_KEEPALIVE_LEN];
   } else {
-    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONN_CLOSE];
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONN_CLOSE];
   }
 #else /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
   if (add_content_len) {
-    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONTENT_LENGTH];
+    hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONTENT_LENGTH];
   }
 #endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
 
