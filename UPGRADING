@@ -10,6 +10,9 @@ with newer versions.
 
   ++ Application changes:
 
+  * tcpip_trycallback() was renamed to tcpip_callbackmsg_trycallback() to avoid confusion
+    with tcpip_try_callback()
+
   * MDNS: Functions mdns_resp_add_netif() and mdns_resp_add_service() do not automatically announce
     any more. Users need to call mdns_resp_announce() after adding netifs or services.
 

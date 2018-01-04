@@ -473,12 +473,20 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
 }
 
 /**
+ * @ingroup lwip_os
  * Allocate a structure for a static callback message and initialize it.
- * This is intended to be used to send "static" messages from interrupt context.
- *
+ * The message has a special type such that lwIP never frees it.
+ * This is intended to be used to send "static" messages from interrupt context,
+ * e.g. the message is allocated once and posted several times from an IRQ
+ * using tcpip_callbackmsg_trycallback().
+ * Example usage: Trigger execution of an ethernet IRQ DPC routine in lwIP thread context.
+ * 
  * @param function the function to call
  * @param ctx parameter passed to function
- * @return a struct pointer to pass to tcpip_trycallback().
+ * @return a struct pointer to pass to tcpip_callbackmsg_trycallback().
+ *
+ * @see tcpip_callbackmsg_trycallback()
+ * @see tcpip_callbackmsg_delete()
  */
 struct tcpip_callback_msg *
 tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx)
@@ -494,9 +502,12 @@ tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx)
 }
 
 /**
+ * @ingroup lwip_os
  * Free a callback message allocated by tcpip_callbackmsg_new().
  *
  * @param msg the message to free
+ *
+ * @see tcpip_callbackmsg_new()
  */
 void
 tcpip_callbackmsg_delete(struct tcpip_callback_msg *msg)
@@ -505,14 +516,16 @@ tcpip_callbackmsg_delete(struct tcpip_callback_msg *msg)
 }
 
 /**
- * Try to post a callback-message to the tcpip_thread mbox
- * This is intended to be used to send "static" messages from interrupt context.
+ * @ingroup lwip_os
+ * Try to post a callback-message to the tcpip_thread mbox.
  *
  * @param msg pointer to the message to post
  * @return sys_mbox_trypost() return code
+ *
+ * @see tcpip_callbackmsg_new()
  */
 err_t
-tcpip_trycallback(struct tcpip_callback_msg *msg)
+tcpip_callbackmsg_trycallback(struct tcpip_callback_msg *msg)
 {
   LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
   return sys_mbox_trypost(&mbox, msg);
