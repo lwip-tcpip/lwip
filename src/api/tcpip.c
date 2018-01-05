@@ -533,6 +533,25 @@ tcpip_callbackmsg_trycallback(struct tcpip_callback_msg *msg)
 
 /**
  * @ingroup lwip_os
+ * Try to post a callback-message to the tcpip_thread mbox.
+ * Same as @ref tcpip_callbackmsg_trycallback but calls sys_mbox_trypost_fromisr(),
+ * mainly to help FreeRTOS, where calls differ between task level and ISR level.
+ *
+ * @param msg pointer to the message to post
+ * @return sys_mbox_trypost_fromisr() return code (without change, so this
+ *         knowledge can be used to e.g. propagate "bool needs_scheduling")
+ *
+ * @see tcpip_callbackmsg_new()
+ */
+err_t
+tcpip_callbackmsg_trycallback_fromisr(struct tcpip_callback_msg *msg)
+{
+  LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(mbox));
+  return sys_mbox_trypost_fromisr(&mbox, msg);
+}
+
+/**
+ * @ingroup lwip_os
  * Initialize this module:
  * - initialize all sub modules
  * - start the tcpip_thread

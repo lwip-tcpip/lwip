@@ -89,6 +89,7 @@ err_t  tcpip_callback(tcpip_callback_fn function, void *ctx);
 struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, void *ctx);
 void   tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg);
 err_t  tcpip_callbackmsg_trycallback(struct tcpip_callback_msg* msg);
+err_t  tcpip_callbackmsg_trycallback_fromisr(struct tcpip_callback_msg* msg);
 
 /* free pbufs or heap memory from another context without blocking */
 err_t  pbuf_free_callback(struct pbuf *p);

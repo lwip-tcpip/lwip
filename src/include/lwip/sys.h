@@ -295,13 +295,23 @@ void sys_mbox_post(sys_mbox_t *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Try to post a message to an mbox - may fail if full.
- * Can be used from ISR.
+ * Can be used from ISR (if the sys arch layer allows this).
  * Returns ERR_MEM if it is full, else, ERR_OK if the "msg" is posted.
  * 
  * @param mbox mbox to posts the message
  * @param msg message to post (ATTENTION: can be NULL)
  */
 err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
+/**
+ * @ingroup sys_mbox
+ * Try to post a message to an mbox - may fail if full.
+ * To be be used from ISR.
+ * Returns ERR_MEM if it is full, else, ERR_OK if the "msg" is posted.
+ * 
+ * @param mbox mbox to posts the message
+ * @param msg message to post (ATTENTION: can be NULL)
+ */
+err_t sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg);
 /**
  * @ingroup sys_mbox
  * Blocks the thread until a message arrives in the mailbox, but does
