@@ -31,8 +31,42 @@ static void dummy_handler(void* arg)
   fired[index] = 1;
 }
 
-static void test_timers(void)
+/* reproduce bug bug #52748: the bug in timeouts.c */
+START_TEST(test_bug52748)
 {
+  LWIP_UNUSED_ARG(_i);
+
+  memset(&fired, 0, sizeof(fired));
+
+  lwip_sys_now = 50;
+  sys_timeout(20, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
+  sys_timeout( 5, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 2));
+
+  lwip_sys_now = 55;
+  sys_check_timeouts();
+  fail_unless(fired[0] == 0);
+  fail_unless(fired[1] == 0);
+  fail_unless(fired[2] == 1);
+
+  lwip_sys_now = 60;
+  sys_timeout(10, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 1));
+  sys_check_timeouts();
+  fail_unless(fired[0] == 0);
+  fail_unless(fired[1] == 0);
+  fail_unless(fired[2] == 1);
+
+  lwip_sys_now = 70;
+  sys_check_timeouts();
+  fail_unless(fired[0] == 1);
+  fail_unless(fired[1] == 1);
+  fail_unless(fired[2] == 1);
+}
+END_TEST
+
+START_TEST(test_timers)
+{
+  LWIP_UNUSED_ARG(_i);
+
   /* struct sys_timeo** list_head = lwip_sys_timers_get_next_timout(); */
 
   /* check without u32_t wraparound */
@@ -133,13 +167,6 @@ static void test_timers(void)
   sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 1));
   sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 2));
 }
-
-START_TEST(test_lwip_timers)
-{
-  LWIP_UNUSED_ARG(_i);
-
-  test_timers();
-}
 END_TEST
 
 /** Create the suite including all tests for this module */
@@ -147,7 +174,8 @@ Suite *
 timers_suite(void)
 {
   testfunc tests[] = {
-    TESTFUNC(test_lwip_timers)
+    /* TESTFUNC(test_bug52748), */
+    TESTFUNC(test_timers)
   };
   return create_suite("TIMERS", tests, LWIP_ARRAYSIZE(tests), timers_setup, timers_teardown);
 }
