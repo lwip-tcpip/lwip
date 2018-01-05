@@ -65,9 +65,9 @@ END_TEST
 
 START_TEST(test_timers)
 {
-  LWIP_UNUSED_ARG(_i);
+  struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
 
-  /* struct sys_timeo** list_head = lwip_sys_timers_get_next_timout(); */
+  LWIP_UNUSED_ARG(_i);
 
   /* check without u32_t wraparound */
 
@@ -81,11 +81,9 @@ START_TEST(test_timers)
   fail_unless(sys_timeouts_sleeptime() == 5);
 
   /* linked list correctly sorted? */
-  /*
   fail_unless((*list_head)->time             == (u32_t)(lwip_sys_now + 5));
   fail_unless((*list_head)->next->time       == (u32_t)(lwip_sys_now + 10));
   fail_unless((*list_head)->next->next->time == (u32_t)(lwip_sys_now + 20));
-  */
   
   /* check timers expire in correct order */
   memset(&fired, 0, sizeof(fired));
@@ -130,11 +128,9 @@ START_TEST(test_timers)
   fail_unless(sys_timeouts_sleeptime() == 5);
 
   /* linked list correctly sorted? */
-  /*
   fail_unless((*list_head)->time             == (u32_t)(lwip_sys_now + 5));
   fail_unless((*list_head)->next->time       == (u32_t)(lwip_sys_now + 10));
   fail_unless((*list_head)->next->next->time == (u32_t)(lwip_sys_now + 20));
-  */
 
   /* check timers expire in correct order */
   memset(&fired, 0, sizeof(fired));
@@ -174,7 +170,7 @@ Suite *
 timers_suite(void)
 {
   testfunc tests[] = {
-    /* TESTFUNC(test_bug52748), */
+    TESTFUNC(test_bug52748),
     TESTFUNC(test_timers)
   };
   testfunc tests_unused[] = {

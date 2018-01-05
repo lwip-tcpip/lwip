@@ -66,6 +66,9 @@
 #define HANDLER(x) x
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
+/* Check if timer's expiry time is greater than time and care about u32_t wraparounds */
+#define TIMER_LESS_THAN(timer, t) ( (((timer)->time == (t)) || (((u32_t)((timer)->time-(t))) > 0x7fffffff)) ? 1 : 0 )
+
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
 const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
@@ -111,7 +114,6 @@ const int lwip_num_cyclic_timers = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
-static u32_t timeouts_last_time;
 
 #if LWIP_TESTMODE
 struct sys_timeo**
@@ -192,9 +194,6 @@ void sys_timeouts_init(void)
       (this is OK as cyclic_timer() casts back to const* */
     sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, LWIP_CONST_CAST(void *, &lwip_cyclic_timers[i]));
   }
-
-  /* Initialise timestamp for sys_check_timeouts */
-  timeouts_last_time = sys_now();
 }
 
 /**
@@ -216,7 +215,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 #endif /* LWIP_DEBUG_TIMERNAMES */
 {
   struct sys_timeo *timeout, *t;
-  u32_t now, diff;
+  u32_t now;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -227,17 +226,11 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   }
 
   now = sys_now();
-  if (next_timeout == NULL) {
-    diff = 0;
-    timeouts_last_time = now;
-  } else {
-    diff = now - timeouts_last_time;
-  }
 
   timeout->next = NULL;
   timeout->h = handler;
   timeout->arg = arg;
-  timeout->time = msecs + diff;
+  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIMER_LESS_THAN macro */
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
   LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
@@ -248,24 +241,12 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     next_timeout = timeout;
     return;
   }
-
-  if (next_timeout->time > msecs) {
-    next_timeout->time -= msecs;
+  if (TIMER_LESS_THAN(timeout, next_timeout->time)) {
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
     for (t = next_timeout; t != NULL; t = t->next) {
-      timeout->time -= t->time;
-      if (t->next == NULL || t->next->time > timeout->time) {
-        if (t->next != NULL) {
-          t->next->time -= timeout->time;
-        } else if (timeout->time > msecs) {
-          /* If this is the case, 'timeouts_last_time' and 'now' differs too much.
-             This can be due to sys_check_timeouts() not being called at the right
-             times, but also when stopping in a breakpoint. Anyway, let's assume
-             this is not wanted, so add the first timer's time instead of 'diff' */
-          timeout->time = msecs + next_timeout->time;
-        }
+      if ((t->next == NULL) || TIMER_LESS_THAN(timeout, t->next->time)) {
         timeout->next = t->next;
         t->next = timeout;
         break;
@@ -331,24 +312,19 @@ sys_check_timeouts(void)
 
   if (next_timeout) {
     struct sys_timeo *tmptimeout;
-    u32_t diff;
     sys_timeout_handler handler;
     void *arg;
     u8_t had_one;
     u32_t now;
 
     now = sys_now();
-    /* this cares for wraparounds */
-    diff = now - timeouts_last_time;
     do {
       PBUF_CHECK_FREE_OOSEQ();
       had_one = 0;
       tmptimeout = next_timeout;
-      if (tmptimeout && (tmptimeout->time <= diff)) {
+      if (tmptimeout && TIMER_LESS_THAN(tmptimeout, now)) {
         /* timeout has expired */
         had_one = 1;
-        timeouts_last_time += tmptimeout->time;
-        diff -= tmptimeout->time;
         next_timeout = tmptimeout->next;
         handler = tmptimeout->h;
         arg = tmptimeout->arg;
@@ -369,17 +345,12 @@ sys_check_timeouts(void)
   }
 }
 
-/** Set back the timestamp of the last call to sys_check_timeouts()
- * This is necessary if sys_check_timeouts() hasn't been called for a long
- * time (e.g. while saving energy) to prevent all timer functions of that
- * period being called.
+/** 
+ * @deprecated Just delete your call to this function
  */
 void
 sys_restart_timeouts(void)
 {
-  LWIP_ASSERT_CORE_LOCKED();
-
-  timeouts_last_time = sys_now();
 }
 
 /** Return the time left before the next timeout is due. If no timeouts are
@@ -391,18 +362,18 @@ static
 u32_t
 sys_timeouts_sleeptime(void)
 {
-  u32_t diff;
+  u32_t now;
 
   LWIP_ASSERT_CORE_LOCKED();
 
   if (next_timeout == NULL) {
     return 0xffffffff;
   }
-  diff = sys_now() - timeouts_last_time;
-  if (diff > next_timeout->time) {
+  now = sys_now();
+  if (TIMER_LESS_THAN(next_timeout, now)) {
     return 0;
   } else {
-    return next_timeout->time - diff;
+    return (u32_t)(next_timeout->time - now);
   }
 }
 
