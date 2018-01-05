@@ -909,6 +909,8 @@ netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_c
 void
 netif_set_remove_callback(struct netif *netif, netif_status_callback_fn remove_callback)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (netif) {
     netif->remove_callback = remove_callback;
   }
