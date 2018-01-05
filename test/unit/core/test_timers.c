@@ -31,7 +31,65 @@ static void dummy_handler(void* arg)
   fired[index] = 1;
 }
 
-/* reproduce bug bug #52748: the bug in timeouts.c */
+#define HANDLER_EXECUTION_TIME 5
+static int cyclic_fired;
+static void dummy_cyclic_handler(void)
+{
+   cyclic_fired = 1;
+   lwip_sys_now += HANDLER_EXECUTION_TIME;
+}
+
+struct lwip_cyclic_timer test_cyclic = {10, dummy_cyclic_handler};
+
+void do_test_cyclic_timers(u32_t offset)
+{
+  struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
+
+  /* verify normal timer expiration */
+  lwip_sys_now = offset + 0;
+  sys_timeout(test_cyclic.interval_ms, lwip_cyclic_timer, &test_cyclic);
+
+  cyclic_fired = 0;
+  sys_check_timeouts();
+  fail_unless(cyclic_fired == 0);
+
+  lwip_sys_now = offset + test_cyclic.interval_ms;
+  sys_check_timeouts();
+  fail_unless(cyclic_fired == 1);
+
+  fail_unless((*list_head)->time == (u32_t)(lwip_sys_now + test_cyclic.interval_ms - HANDLER_EXECUTION_TIME));
+  
+  sys_untimeout(lwip_cyclic_timer, &test_cyclic);
+
+
+  /* verify "overload" - next cyclic timer execution is already overdue twice */
+  lwip_sys_now = offset + 0;
+  sys_timeout(test_cyclic.interval_ms, lwip_cyclic_timer, &test_cyclic);
+
+  cyclic_fired = 0;
+  sys_check_timeouts();
+  fail_unless(cyclic_fired == 0);
+
+  lwip_sys_now = offset + 2*test_cyclic.interval_ms;
+  sys_check_timeouts();
+  fail_unless(cyclic_fired == 1);
+
+  fail_unless((*list_head)->time == (u32_t)(lwip_sys_now + test_cyclic.interval_ms));
+}
+
+START_TEST(test_cyclic_timers)
+{
+  LWIP_UNUSED_ARG(_i);
+
+  /* check without u32_t wraparound */
+  do_test_cyclic_timers(0);
+
+  /* check with u32_t wraparound */
+  do_test_cyclic_timers(0xfffffff0);
+}
+END_TEST
+
+/* reproduce bug #52748: the bug in timeouts.c */
 START_TEST(test_bug52748)
 {
   LWIP_UNUSED_ARG(_i);
@@ -63,15 +121,11 @@ START_TEST(test_bug52748)
 }
 END_TEST
 
-START_TEST(test_timers)
+void do_test_timers(u32_t offset)
 {
   struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
-
-  LWIP_UNUSED_ARG(_i);
-
-  /* check without u32_t wraparound */
-
-  lwip_sys_now = 100;
+  
+  lwip_sys_now = offset + 0;
 
   sys_timeout(10, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
   fail_unless(sys_timeouts_sleeptime() == 10);
@@ -115,53 +169,17 @@ START_TEST(test_timers)
   sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
   sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 1));
   sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 2));
+}
 
-  /* check u32_t wraparound */
+START_TEST(test_timers)
+{
+  LWIP_UNUSED_ARG(_i);
 
-  lwip_sys_now = 0xfffffff5;
+  /* check without u32_t wraparound */
+  do_test_timers(0);
 
-  sys_timeout(10, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
-  fail_unless(sys_timeouts_sleeptime() == 10);
-  sys_timeout(20, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 1));
-  fail_unless(sys_timeouts_sleeptime() == 10);
-  sys_timeout( 5, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 2));
-  fail_unless(sys_timeouts_sleeptime() == 5);
-
-  /* linked list correctly sorted? */
-  fail_unless((*list_head)->time             == (u32_t)(lwip_sys_now + 5));
-  fail_unless((*list_head)->next->time       == (u32_t)(lwip_sys_now + 10));
-  fail_unless((*list_head)->next->next->time == (u32_t)(lwip_sys_now + 20));
-
-  /* check timers expire in correct order */
-  memset(&fired, 0, sizeof(fired));
-
-  lwip_sys_now += 4;
-  sys_check_timeouts();
-  fail_unless(fired[2] == 0);
-
-  lwip_sys_now += 1;
-  sys_check_timeouts();
-  fail_unless(fired[2] == 1);
-
-  lwip_sys_now += 4;
-  sys_check_timeouts();
-  fail_unless(fired[0] == 0);
-
-  lwip_sys_now += 1;
-  sys_check_timeouts();
-  fail_unless(fired[0] == 1);
-
-  lwip_sys_now += 9;
-  sys_check_timeouts();
-  fail_unless(fired[1] == 0);
-
-  lwip_sys_now += 1;
-  sys_check_timeouts();
-  fail_unless(fired[1] == 1);
-
-  sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
-  sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 1));
-  sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 2));
+  /* check with u32_t wraparound */
+  do_test_timers(0xfffffff0);
 }
 END_TEST
 
@@ -171,6 +189,7 @@ timers_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_bug52748),
+    TESTFUNC(test_cyclic_timers),
     TESTFUNC(test_timers)
   };
   testfunc tests_unused[] = {

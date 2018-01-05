@@ -67,7 +67,7 @@
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
 /* Check if timer's expiry time is greater than time and care about u32_t wraparounds */
-#define TIMER_LESS_THAN(timer, t) ( (((timer)->time == (t)) || (((u32_t)((timer)->time-(t))) > 0x7fffffff)) ? 1 : 0 )
+#define TIME_LESS_THAN(t, compare_to) ( (((t) == (compare_to)) || (((u32_t)((t)-(compare_to))) > 0x7fffffff)) ? 1 : 0 )
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
@@ -114,6 +114,8 @@ const int lwip_num_cyclic_timers = LWIP_ARRAYSIZE(lwip_cyclic_timers);
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
+
+static u32_t current_timeout_due_time;
 
 #if LWIP_TESTMODE
 struct sys_timeo**
@@ -173,15 +175,30 @@ tcp_timer_needed(void)
  *
  * @param arg unused argument
  */
-static void
-cyclic_timer(void *arg)
+#if !LWIP_TESTMODE
+static
+#endif
+void
+lwip_cyclic_timer(void *arg)
 {
+  u32_t now;
+  u32_t next_timeout;
   const struct lwip_cyclic_timer *cyclic = (const struct lwip_cyclic_timer *)arg;
+
 #if LWIP_DEBUG_TIMERNAMES
   LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: %s()\n", cyclic->handler_name));
 #endif
   cyclic->handler();
-  sys_timeout(cyclic->interval_ms, cyclic_timer, arg);
+
+  now = sys_now();
+  next_timeout = (u32_t)(current_timeout_due_time + cyclic->interval_ms);
+  if (TIME_LESS_THAN(next_timeout, now)) {
+    /* timer would immediately expire again -> "overload" -> restart without any correction */
+    sys_timeout(cyclic->interval_ms, lwip_cyclic_timer, arg);
+  } else {
+    /* correct cyclic interval with handler execution delay and sys_check_timeouts jitter */
+    sys_timeout((u32_t)(next_timeout - now), lwip_cyclic_timer, arg);
+  }
 }
 
 /** Initialize this module */
@@ -192,7 +209,7 @@ void sys_timeouts_init(void)
   for (i = (LWIP_TCP ? 1 : 0); i < LWIP_ARRAYSIZE(lwip_cyclic_timers); i++) {
     /* we have to cast via size_t to get rid of const warning
       (this is OK as cyclic_timer() casts back to const* */
-    sys_timeout(lwip_cyclic_timers[i].interval_ms, cyclic_timer, LWIP_CONST_CAST(void *, &lwip_cyclic_timers[i]));
+    sys_timeout(lwip_cyclic_timers[i].interval_ms, lwip_cyclic_timer, LWIP_CONST_CAST(void *, &lwip_cyclic_timers[i]));
   }
 }
 
@@ -230,7 +247,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   timeout->next = NULL;
   timeout->h = handler;
   timeout->arg = arg;
-  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIMER_LESS_THAN macro */
+  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIME_LESS_THAN macro */
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
   LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
@@ -241,12 +258,12 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     next_timeout = timeout;
     return;
   }
-  if (TIMER_LESS_THAN(timeout, next_timeout->time)) {
+  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) {
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
     for (t = next_timeout; t != NULL; t = t->next) {
-      if ((t->next == NULL) || TIMER_LESS_THAN(timeout, t->next->time)) {
+      if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
         timeout->next = t->next;
         t->next = timeout;
         break;
@@ -322,12 +339,13 @@ sys_check_timeouts(void)
       had_one = 0;
       tmptimeout = next_timeout;
       now = sys_now();
-      if (tmptimeout && TIMER_LESS_THAN(tmptimeout, now)) {
+      if (tmptimeout && TIME_LESS_THAN(tmptimeout->time, now)) {
         /* timeout has expired */
         had_one = 1;
         next_timeout = tmptimeout->next;
         handler = tmptimeout->h;
         arg = tmptimeout->arg;
+        current_timeout_due_time = tmptimeout->time;
 #if LWIP_DEBUG_TIMERNAMES
         if (handler != NULL) {
           LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%s arg=%p\n",
@@ -373,7 +391,7 @@ sys_timeouts_sleeptime(void)
     return 0xffffffff;
   }
   now = sys_now();
-  if (TIMER_LESS_THAN(next_timeout, now)) {
+  if (TIME_LESS_THAN(next_timeout->time, now)) {
     return 0;
   } else {
     return (u32_t)(next_timeout->time - now);

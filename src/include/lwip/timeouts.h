@@ -116,6 +116,7 @@ void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 
 #if LWIP_TESTMODE
 struct sys_timeo** lwip_sys_timers_get_next_timout(void);
+void lwip_cyclic_timer(void *arg);
 #endif
 
 #endif /* LWIP_TIMERS */
