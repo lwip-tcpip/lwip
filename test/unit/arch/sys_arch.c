@@ -44,17 +44,20 @@
 
 u32_t lwip_sys_now;
 
-u32_t sys_jiffies(void)
+u32_t
+sys_jiffies(void)
 {
   return lwip_sys_now;
 }
 
-u32_t sys_now(void)
+u32_t
+sys_now(void)
 {
   return lwip_sys_now;
 }
 
-void sys_init(void)
+void
+sys_init(void)
 {
 }
 
@@ -62,32 +65,37 @@ void sys_init(void)
 
 test_sys_arch_waiting_fn the_waiting_fn;
 
-void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn)
+void
+test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn)
 {
   the_waiting_fn = waiting_fn;
 }
 
-err_t sys_sem_new(sys_sem_t *sem, u8_t count)
+err_t
+sys_sem_new(sys_sem_t *sem, u8_t count)
 {
   LWIP_ASSERT("sem != NULL", sem != NULL);
   *sem = count + 1;
   return ERR_OK;
 }
 
-void sys_sem_free(sys_sem_t *sem)
+void
+sys_sem_free(sys_sem_t *sem)
 {
   LWIP_ASSERT("sem != NULL", sem != NULL);
   *sem = 0;
 }
 
-void sys_sem_set_invalid(sys_sem_t *sem)
+void
+sys_sem_set_invalid(sys_sem_t *sem)
 {
   LWIP_ASSERT("sem != NULL", sem != NULL);
   *sem = 0;
 }
 
 /* semaphores are 1-based because RAM is initialized as 0, which would be valid */
-u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
+u32_t
+sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 {
   u32_t ret = 0;
   LWIP_ASSERT("sem != NULL", sem != NULL);
@@ -128,7 +136,8 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
   return ret;
 }
 
-void sys_sem_signal(sys_sem_t *sem)
+void
+sys_sem_signal(sys_sem_t *sem)
 {
   LWIP_ASSERT("sem != NULL", sem != NULL);
   LWIP_ASSERT("*sem > 0", *sem > 0);
@@ -136,14 +145,16 @@ void sys_sem_signal(sys_sem_t *sem)
   LWIP_ASSERT("*sem > 0", *sem > 0);
 }
 
-err_t sys_mutex_new(sys_mutex_t *mutex)
+err_t
+sys_mutex_new(sys_mutex_t *mutex)
 {
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
   *mutex = 1; /* 1 allocated */
   return ERR_OK;
 }
 
-void sys_mutex_free(sys_mutex_t *mutex)
+void
+sys_mutex_free(sys_mutex_t *mutex)
 {
   /* parameter check */
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
@@ -151,13 +162,15 @@ void sys_mutex_free(sys_mutex_t *mutex)
   *mutex = 0;
 }
 
-void sys_mutex_set_invalid(sys_mutex_t *mutex)
+void
+sys_mutex_set_invalid(sys_mutex_t *mutex)
 {
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
   *mutex = 0;
 }
 
-void sys_mutex_lock(sys_mutex_t *mutex)
+void
+sys_mutex_lock(sys_mutex_t *mutex)
 {
   /* nothing to do, no multithreading supported */
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
@@ -168,7 +181,8 @@ void sys_mutex_lock(sys_mutex_t *mutex)
   LWIP_ASSERT("*mutex >= 1", *mutex >= 1);
 }
 
-void sys_mutex_unlock(sys_mutex_t *mutex)
+void
+sys_mutex_unlock(sys_mutex_t *mutex)
 {
   /* nothing to do, no multithreading supported */
   LWIP_ASSERT("mutex != NULL", mutex != NULL);
@@ -179,7 +193,8 @@ void sys_mutex_unlock(sys_mutex_t *mutex)
 }
 
 
-sys_thread_t sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksize, int prio)
+sys_thread_t
+sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksize, int prio)
 {
   LWIP_UNUSED_ARG(name);
   LWIP_UNUSED_ARG(function);
@@ -190,7 +205,8 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn function, void *arg
   return 0;
 }
 
-err_t sys_mbox_new(sys_mbox_t *mbox, int size)
+err_t
+sys_mbox_new(sys_mbox_t *mbox, int size)
 {
   int mboxsize = size;
   LWIP_ASSERT("mbox != NULL", mbox != NULL);
@@ -208,7 +224,8 @@ err_t sys_mbox_new(sys_mbox_t *mbox, int size)
   return ERR_OK;
 }
 
-void sys_mbox_free(sys_mbox_t *mbox)
+void
+sys_mbox_free(sys_mbox_t *mbox)
 {
   /* parameter check */
   LWIP_ASSERT("mbox != NULL", mbox != NULL);
@@ -220,7 +237,8 @@ void sys_mbox_free(sys_mbox_t *mbox)
   mbox->q_mem = NULL;
 }
 
-void sys_mbox_set_invalid(sys_mbox_t *mbox)
+void
+sys_mbox_set_invalid(sys_mbox_t *mbox)
 {
   LWIP_ASSERT("mbox != NULL", mbox != NULL);
   LWIP_ASSERT("mbox->q_mem == NULL", mbox->q_mem == NULL);
@@ -228,7 +246,8 @@ void sys_mbox_set_invalid(sys_mbox_t *mbox)
   mbox->q_mem = NULL;
 }
 
-void sys_mbox_post(sys_mbox_t *q, void *msg)
+void
+sys_mbox_post(sys_mbox_t *q, void *msg)
 {
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
   LWIP_ASSERT("q->sem == q", q->sem == q);
@@ -247,7 +266,8 @@ void sys_mbox_post(sys_mbox_t *q, void *msg)
   q->used++;
 }
 
-err_t sys_mbox_trypost(sys_mbox_t *q, void *msg)
+err_t
+sys_mbox_trypost(sys_mbox_t *q, void *msg)
 {
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
   LWIP_ASSERT("q->sem == q", q->sem == q);
@@ -263,12 +283,14 @@ err_t sys_mbox_trypost(sys_mbox_t *q, void *msg)
   return ERR_OK;
 }
 
-err_t sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
+err_t
+sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
 {
   return sys_mbox_trypost(q, msg);
 }
 
-u32_t sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
+u32_t
+sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
 {
   u32_t ret = 0;
   u32_t ret2;
@@ -317,7 +339,8 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *q, void **msg, u32_t timeout)
   return ret;
 }
 
-u32_t sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
+u32_t
+sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
 {
   LWIP_ASSERT("q != SYS_MBOX_NULL", q != SYS_MBOX_NULL);
   LWIP_ASSERT("q->sem == q", q->sem == q);
