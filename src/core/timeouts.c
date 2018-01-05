@@ -317,11 +317,11 @@ sys_check_timeouts(void)
     u8_t had_one;
     u32_t now;
 
-    now = sys_now();
     do {
       PBUF_CHECK_FREE_OOSEQ();
       had_one = 0;
       tmptimeout = next_timeout;
+      now = sys_now();
       if (tmptimeout && TIMER_LESS_THAN(tmptimeout, now)) {
         /* timeout has expired */
         had_one = 1;
@@ -342,6 +342,9 @@ sys_check_timeouts(void)
       }
       /* repeat until all expired timers have been called */
     } while (had_one);
+  } else {
+    PBUF_CHECK_FREE_OOSEQ();
+    LWIP_TCPIP_THREAD_ALIVE();
   }
 }
 
