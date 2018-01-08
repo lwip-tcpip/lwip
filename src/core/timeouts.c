@@ -182,7 +182,7 @@ void
 lwip_cyclic_timer(void *arg)
 {
   u32_t now;
-  u32_t next_timeout;
+  u32_t next_timeout_time;
   const struct lwip_cyclic_timer *cyclic = (const struct lwip_cyclic_timer *)arg;
 
 #if LWIP_DEBUG_TIMERNAMES
@@ -191,13 +191,13 @@ lwip_cyclic_timer(void *arg)
   cyclic->handler();
 
   now = sys_now();
-  next_timeout = (u32_t)(current_timeout_due_time + cyclic->interval_ms);
-  if (TIME_LESS_OR_EQUAL_THAN(next_timeout, now)) {
+  next_timeout_time = (u32_t)(current_timeout_due_time + cyclic->interval_ms);
+  if (TIME_LESS_OR_EQUAL_THAN(next_timeout_time, now)) {
     /* timer would immediately expire again -> "overload" -> restart without any correction */
     sys_timeout(cyclic->interval_ms, lwip_cyclic_timer, arg);
   } else {
     /* correct cyclic interval with handler execution delay and sys_check_timeouts jitter */
-    sys_timeout((u32_t)(next_timeout - now), lwip_cyclic_timer, arg);
+    sys_timeout((u32_t)(next_timeout_time - now), lwip_cyclic_timer, arg);
   }
 }
 
