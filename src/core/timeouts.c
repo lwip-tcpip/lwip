@@ -67,7 +67,7 @@
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
 /* Check if timer's expiry time is greater than time and care about u32_t wraparounds */
-#define TIME_LESS_THAN(t, compare_to) ( (((t) == (compare_to)) || (((u32_t)((t)-(compare_to))) > 0x7fffffff)) ? 1 : 0 )
+#define TIME_LESS_OR_EQUAL_THAN(t, compare_to) ( (((t) == (compare_to)) || (((u32_t)((t)-(compare_to))) > 0x7fffffff)) ? 1 : 0 )
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
@@ -192,7 +192,7 @@ lwip_cyclic_timer(void *arg)
 
   now = sys_now();
   next_timeout = (u32_t)(current_timeout_due_time + cyclic->interval_ms);
-  if (TIME_LESS_THAN(next_timeout, now)) {
+  if (TIME_LESS_OR_EQUAL_THAN(next_timeout, now)) {
     /* timer would immediately expire again -> "overload" -> restart without any correction */
     sys_timeout(cyclic->interval_ms, lwip_cyclic_timer, arg);
   } else {
@@ -247,7 +247,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   timeout->next = NULL;
   timeout->h = handler;
   timeout->arg = arg;
-  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIME_LESS_THAN macro */
+  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIME_LESS_OR_EQUAL_THAN macro */
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
   LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
@@ -258,12 +258,12 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     next_timeout = timeout;
     return;
   }
-  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) {
+  if (TIME_LESS_OR_EQUAL_THAN(timeout->time, next_timeout->time)) {
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
     for (t = next_timeout; t != NULL; t = t->next) {
-      if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
+      if ((t->next == NULL) || TIME_LESS_OR_EQUAL_THAN(timeout->time, t->next->time)) {
         timeout->next = t->next;
         t->next = timeout;
         break;
@@ -300,10 +300,6 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
       } else {
         prev_t->next = t->next;
       }
-      /* If not the last one, add time of this one back to next */
-      if (t->next != NULL) {
-        t->next->time += t->time;
-      }
       memp_free(MEMP_SYS_TIMEOUT, t);
       return;
     }
@@ -325,53 +321,72 @@ static
 void
 sys_check_timeouts(void)
 {
+  u32_t now;
+
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (next_timeout) {
+  /* Process only timers expired at the start of the function. */
+  now = sys_now();
+
+  do {
     struct sys_timeo *tmptimeout;
     sys_timeout_handler handler;
     void *arg;
-    u8_t had_one;
-    u32_t now;
 
-    do {
-      PBUF_CHECK_FREE_OOSEQ();
-      had_one = 0;
-      tmptimeout = next_timeout;
-      now = sys_now();
-      if (tmptimeout && TIME_LESS_THAN(tmptimeout->time, now)) {
-        /* timeout has expired */
-        had_one = 1;
-        next_timeout = tmptimeout->next;
-        handler = tmptimeout->h;
-        arg = tmptimeout->arg;
-        current_timeout_due_time = tmptimeout->time;
-#if LWIP_DEBUG_TIMERNAMES
-        if (handler != NULL) {
-          LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%s arg=%p\n",
-                                     tmptimeout->handler_name, arg));
-        }
-#endif /* LWIP_DEBUG_TIMERNAMES */
-        memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
-        if (handler != NULL) {
-          handler(arg);
-        }
-        LWIP_TCPIP_THREAD_ALIVE();
-      }
-      /* repeat until all expired timers have been called */
-    } while (had_one);
-  } else {
     PBUF_CHECK_FREE_OOSEQ();
+
+    tmptimeout = next_timeout;
+    if (tmptimeout == NULL) {
+      return;
+    }
+
+    if (TIME_LESS_OR_EQUAL_THAN(now, tmptimeout->time)) {
+      return;
+    }
+
+    /* Timeout has expired */
+    next_timeout = tmptimeout->next;
+    handler = tmptimeout->h;
+    arg = tmptimeout->arg;
+    current_timeout_due_time = tmptimeout->time;
+#if LWIP_DEBUG_TIMERNAMES
+    if (handler != NULL) {
+      LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%s t=%"U32_F" arg=%p\n",
+                                 tmptimeout->handler_name, sys_now() - tmptimeout->time, arg));
+    }
+#endif /* LWIP_DEBUG_TIMERNAMES */
+    memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
+    if (handler != NULL) {
+      handler(arg);
+    }
     LWIP_TCPIP_THREAD_ALIVE();
-  }
+
+    /* Repeat until all expired timers have been called */
+  } while (1);
 }
 
-/** 
- * @deprecated Just delete your call to this function
+/** Rebase the timeout times to the current time.
+ * This is necessary if sys_check_timeouts() hasn't been called for a long
+ * time (e.g. while saving energy) to prevent all timer functions of that
+ * period being called.
  */
 void
 sys_restart_timeouts(void)
 {
+  u32_t now;
+  u32_t base;
+  struct sys_timeo *t;
+
+  if (next_timeout == NULL) {
+    return;
+  }
+
+  now = sys_now();
+  base = next_timeout->time;
+
+  for (t = next_timeout; t != NULL; t = t->next) {
+    t->time = (t->time - base) + now;
+  }
 }
 
 /** Return the time left before the next timeout is due. If no timeouts are
@@ -391,7 +406,7 @@ sys_timeouts_sleeptime(void)
     return 0xffffffff;
   }
   now = sys_now();
-  if (TIME_LESS_THAN(next_timeout->time, now)) {
+  if (TIME_LESS_OR_EQUAL_THAN(next_timeout->time, now)) {
     return 0;
   } else {
     return (u32_t)(next_timeout->time - now);
