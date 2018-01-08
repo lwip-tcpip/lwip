@@ -340,7 +340,7 @@ sys_check_timeouts(void)
       return;
     }
 
-    if (TIME_LESS_OR_EQUAL_THAN(now, tmptimeout->time)) {
+    if (TIME_LESS_OR_EQUAL_THAN(tmptimeout->time, now) == 0) {
       return;
     }
 
