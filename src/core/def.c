@@ -199,11 +199,8 @@ void
 lwip_itoa(char *result, size_t bufsize, int number)
 {
   char *res = result;
-  char *tmp = result;
-  size_t res_left = bufsize;
-  size_t result_len;
-  int pos = number >= 0;
-  int n = pos ? number : -number;
+  char *tmp = result + bufsize - 1;
+  int n = (number >= 0) ? number : -number;
 
   /* handle invalid bufsize */
   if (bufsize < 2) {
@@ -213,33 +210,31 @@ lwip_itoa(char *result, size_t bufsize, int number)
     return;
   }
 
-  /* ensure output string is zero terminated */
-  result[bufsize - 1] = 0;
-  result_len = 1;
-  /* create the string in a temporary buffer since we don't know how long
-     it will get */
-  tmp = &result[bufsize - 2];
-  do {
-    char val = (char)('0' + (n % 10));
-    *tmp = val;
-    tmp--;
-    n = n / 10;
-    result_len++;
-  } while ((n != 0) && (result_len <= bufsize));
-
-  /* output sign first */
-  if (!pos) {
-    *res = '-';
-    res++;
-    res_left--;
+  /* First, add sign */
+  if (number < 0) {
+    *res++ = '-';
   }
-  if (result_len > res_left) {
+  /* Then create the string from the end and stop if buffer full,
+     and ensure output string is zero terminated */
+  *tmp = 0;
+  while ((n != 0) && (tmp > res)) {
+    char val = (char)('0' + (n % 10));
+    tmp--;
+    *tmp = val;
+    n = n / 10;
+  }
+  if (n) {
     /* buffer is too small */
-    result[0] = '.';
-    result[1] = 0;
+    *result = 0;
     return;
   }
-  /* copy from temporary buffer to output buffer */
-  memmove(res, tmp + 1, result_len);
+  if (*tmp == 0) {
+    /* Nothing added? */
+    *res++ = '0';
+    *res++ = 0;
+    return;
+  }
+  /* move from temporary buffer to output buffer (sign is not moved) */
+  memmove(res, tmp, (result + bufsize) - tmp);
 }
 #endif
