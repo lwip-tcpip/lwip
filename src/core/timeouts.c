@@ -67,7 +67,7 @@
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
 /* Check if timer's expiry time is greater than time and care about u32_t wraparounds */
-#define TIME_LESS_OR_EQUAL_THAN(t, compare_to) ( (((t) == (compare_to)) || (((u32_t)((t)-(compare_to))) > 0x7fffffff)) ? 1 : 0 )
+#define TIME_LESS_THAN(t, compare_to) ( (((u32_t)((t)-(compare_to))) > 0x7fffffff) ? 1 : 0 )
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
@@ -192,7 +192,7 @@ lwip_cyclic_timer(void *arg)
 
   now = sys_now();
   next_timeout_time = (u32_t)(current_timeout_due_time + cyclic->interval_ms);
-  if (TIME_LESS_OR_EQUAL_THAN(next_timeout_time, now)) {
+  if (TIME_LESS_THAN(next_timeout_time, now)) {
     /* timer would immediately expire again -> "overload" -> restart without any correction */
     sys_timeout(cyclic->interval_ms, lwip_cyclic_timer, arg);
   } else {
@@ -247,7 +247,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
   timeout->next = NULL;
   timeout->h = handler;
   timeout->arg = arg;
-  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIME_LESS_OR_EQUAL_THAN macro */
+  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIME_LESS_THAN macro */
 #if LWIP_DEBUG_TIMERNAMES
   timeout->handler_name = handler_name;
   LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
@@ -258,12 +258,12 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
     next_timeout = timeout;
     return;
   }
-  if (TIME_LESS_OR_EQUAL_THAN(timeout->time, next_timeout->time)) {
+  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) {
     timeout->next = next_timeout;
     next_timeout = timeout;
   } else {
     for (t = next_timeout; t != NULL; t = t->next) {
-      if ((t->next == NULL) || TIME_LESS_OR_EQUAL_THAN(timeout->time, t->next->time)) {
+      if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
         timeout->next = t->next;
         t->next = timeout;
         break;
@@ -340,7 +340,7 @@ sys_check_timeouts(void)
       return;
     }
 
-    if (TIME_LESS_OR_EQUAL_THAN(tmptimeout->time, now) == 0) {
+    if (TIME_LESS_THAN(now, tmptimeout->time)) {
       return;
     }
 
@@ -406,7 +406,7 @@ sys_timeouts_sleeptime(void)
     return 0xffffffff;
   }
   now = sys_now();
-  if (TIME_LESS_OR_EQUAL_THAN(next_timeout->time, now)) {
+  if (TIME_LESS_THAN(next_timeout->time, now)) {
     return 0;
   } else {
     return (u32_t)(next_timeout->time - now);
