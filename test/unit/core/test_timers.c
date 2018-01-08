@@ -196,9 +196,5 @@ timers_suite(void)
     TESTFUNC(test_cyclic_timers),
     TESTFUNC(test_timers)
   };
-  testfunc tests_unused[] = {
-    TESTFUNC(test_bug52748)
-  };
-  LWIP_UNUSED_ARG(tests_unused);
   return create_suite("TIMERS", tests, LWIP_ARRAYSIZE(tests), timers_setup, timers_teardown);
 }
