@@ -170,6 +170,50 @@ tcp_timer_needed(void)
 }
 #endif /* LWIP_TCP */
 
+static void
+#if LWIP_DEBUG_TIMERNAMES
+sys_timeout_abs(u32_t abs_time, sys_timeout_handler handler, void *arg, const char *handler_name)
+#else /* LWIP_DEBUG_TIMERNAMES */
+sys_timeout_abs(u32_t abs_time, sys_timeout_handler handler, void *arg)
+#endif
+{
+  struct sys_timeo *timeout, *t;
+
+  timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
+  if (timeout == NULL) {
+    LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != NULL);
+    return;
+  }
+
+  timeout->next = NULL;
+  timeout->h = handler;
+  timeout->arg = arg;
+  timeout->time = abs_time;
+
+#if LWIP_DEBUG_TIMERNAMES
+  timeout->handler_name = handler_name;
+  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p abs_time=%"U32_F" handler=%s arg=%p\n",
+                             (void *)timeout, abs_time, handler_name, (void *)arg));
+#endif /* LWIP_DEBUG_TIMERNAMES */
+
+  if (next_timeout == NULL) {
+    next_timeout = timeout;
+    return;
+  }
+  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) {
+    timeout->next = next_timeout;
+    next_timeout = timeout;
+  } else {
+    for (t = next_timeout; t != NULL; t = t->next) {
+      if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
+        timeout->next = t->next;
+        t->next = timeout;
+        break;
+      }
+    }
+  }
+}
+
 /**
  * Timer callback function that calls cyclic->handler() and reschedules itself.
  *
@@ -191,13 +235,22 @@ lwip_cyclic_timer(void *arg)
   cyclic->handler();
 
   now = sys_now();
-  next_timeout_time = (u32_t)(current_timeout_due_time + cyclic->interval_ms);
+  next_timeout_time = (u32_t)(current_timeout_due_time + cyclic->interval_ms);  /* overflow handled by TIME_LESS_THAN macro */ 
   if (TIME_LESS_THAN(next_timeout_time, now)) {
     /* timer would immediately expire again -> "overload" -> restart without any correction */
-    sys_timeout(cyclic->interval_ms, lwip_cyclic_timer, arg);
+#if LWIP_DEBUG_TIMERNAMES
+    sys_timeout_abs((u32_t)(now + cyclic->interval_ms), lwip_cyclic_timer, arg, cyclic->handler_name);
+#else
+    sys_timeout_abs((u32_t)(now + cyclic->interval_ms), lwip_cyclic_timer, arg);
+#endif
+
   } else {
     /* correct cyclic interval with handler execution delay and sys_check_timeouts jitter */
-    sys_timeout((u32_t)(next_timeout_time - now), lwip_cyclic_timer, arg);
+#if LWIP_DEBUG_TIMERNAMES
+    sys_timeout_abs(next_timeout_time, lwip_cyclic_timer, arg, cyclic->handler_name);
+#else
+    sys_timeout_abs(next_timeout_time, lwip_cyclic_timer, arg);
+#endif
   }
 }
 
@@ -231,45 +284,17 @@ void
 sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 #endif /* LWIP_DEBUG_TIMERNAMES */
 {
-  struct sys_timeo *timeout, *t;
-  u32_t now;
+  u32_t next_timeout_time;
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  timeout = (struct sys_timeo *)memp_malloc(MEMP_SYS_TIMEOUT);
-  if (timeout == NULL) {
-    LWIP_ASSERT("sys_timeout: timeout != NULL, pool MEMP_SYS_TIMEOUT is empty", timeout != NULL);
-    return;
-  }
+  next_timeout_time = (u32_t)(sys_now() + msecs); /* overflow handled by TIME_LESS_THAN macro */ 
 
-  now = sys_now();
-
-  timeout->next = NULL;
-  timeout->h = handler;
-  timeout->arg = arg;
-  timeout->time = (u32_t)(now + msecs); /* overflow handled by TIME_LESS_THAN macro */
 #if LWIP_DEBUG_TIMERNAMES
-  timeout->handler_name = handler_name;
-  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" handler=%s arg=%p\n",
-                             (void *)timeout, msecs, handler_name, (void *)arg));
-#endif /* LWIP_DEBUG_TIMERNAMES */
-
-  if (next_timeout == NULL) {
-    next_timeout = timeout;
-    return;
-  }
-  if (TIME_LESS_THAN(timeout->time, next_timeout->time)) {
-    timeout->next = next_timeout;
-    next_timeout = timeout;
-  } else {
-    for (t = next_timeout; t != NULL; t = t->next) {
-      if ((t->next == NULL) || TIME_LESS_THAN(timeout->time, t->next->time)) {
-        timeout->next = t->next;
-        t->next = timeout;
-        break;
-      }
-    }
-  }
+  sys_timeout_abs(next_timeout_time, handler, arg, handler_name);
+#else
+  sys_timeout_abs(next_timeout_time, handler, arg);
+#endif
 }
 
 /**
