@@ -34,7 +34,7 @@ static void test_def_itoa(int number, const char *expected)
   char *test_buf = &buf[GUARD_SIZE];
 
   size_t exp_len = strlen(expected);
-  fail_unless(exp_len + 1 < (TEST_BUFSIZE - (2 * GUARD_SIZE)));
+  fail_unless(exp_len + 4 < (TEST_BUFSIZE - (2 * GUARD_SIZE)));
 
   memset(buf, MAGIC_UNTOUCHED_BYTE, sizeof(buf));
   lwip_itoa(test_buf, exp_len + 1, number);
@@ -46,6 +46,8 @@ static void test_def_itoa(int number, const char *expected)
   /* check with too small buffer */
   memset(buf, MAGIC_UNTOUCHED_BYTE, sizeof(buf));
   lwip_itoa(test_buf, exp_len, number);
+  def_check_range_untouched(buf, GUARD_SIZE);
+  def_check_range_untouched(&test_buf[exp_len + 1], TEST_BUFSIZE - GUARD_SIZE - exp_len - 1);
 
   /* check with too large buffer */
   memset(buf, MAGIC_UNTOUCHED_BYTE, sizeof(buf));
@@ -66,6 +68,7 @@ START_TEST(test_def_lwip_itoa)
   test_def_itoa(15, "15");
   test_def_itoa(-15, "-15");
   test_def_itoa(156, "156");
+  test_def_itoa(1192, "1192");
   test_def_itoa(-156, "-156");
 }
 END_TEST
