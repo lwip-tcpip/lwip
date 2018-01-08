@@ -25,7 +25,8 @@ timers_teardown(void)
 }
 
 static int fired[3];
-static void dummy_handler(void* arg)
+static void
+dummy_handler(void* arg)
 {
   int index = LWIP_PTR_NUMERIC_CAST(int, arg);
   fired[index] = 1;
@@ -33,7 +34,8 @@ static void dummy_handler(void* arg)
 
 #define HANDLER_EXECUTION_TIME 5
 static int cyclic_fired;
-static void dummy_cyclic_handler(void)
+static void
+dummy_cyclic_handler(void)
 {
    cyclic_fired = 1;
    lwip_sys_now += HANDLER_EXECUTION_TIME;
@@ -41,7 +43,8 @@ static void dummy_cyclic_handler(void)
 
 struct lwip_cyclic_timer test_cyclic = {10, dummy_cyclic_handler};
 
-void do_test_cyclic_timers(u32_t offset)
+static void
+do_test_cyclic_timers(u32_t offset)
 {
   struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
 
@@ -121,7 +124,8 @@ START_TEST(test_bug52748)
 }
 END_TEST
 
-void do_test_timers(u32_t offset)
+static void
+do_test_timers(u32_t offset)
 {
   struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
   
