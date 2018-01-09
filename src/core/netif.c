@@ -479,6 +479,11 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback
 void
 netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
+  /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+  if (ipaddr == NULL) {
+    ipaddr = IP4_ADDR_ANY4;
+  }
+
   LWIP_ASSERT_CORE_LOCKED();
 
   netif_do_set_ipaddr(netif, ipaddr, 1);
@@ -530,6 +535,11 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
+  /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+  if (netmask == NULL) {
+    netmask = IP4_ADDR_ANY4;
+  }
+
   netif_do_set_netmask(netif, netmask, 1);
 }
 
@@ -575,6 +585,11 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
+  /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+  if (gw == NULL) {
+    gw = IP4_ADDR_ANY4;
+  }
+
   netif_do_set_gw(netif, gw, 1);
 }
 
@@ -594,15 +609,28 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
   u8_t something_changed = 0;
+#endif
 
+  LWIP_ASSERT_CORE_LOCKED();
+
+  /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
+  if (ipaddr == NULL) {
+    ipaddr = IP4_ADDR_ANY4;
+  }
+  if (netmask == NULL) {
+    netmask = IP4_ADDR_ANY4;
+  }
+  if (gw == NULL) {
+    gw = IP4_ADDR_ANY4;
+  }
+
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
   if ((ip4_addr_cmp(ipaddr,  netif_ip4_addr(netif))    == 0) ||
       (ip4_addr_cmp(gw,      netif_ip4_gw(netif))      == 0) ||
       (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0))   {
     something_changed = 1;
   }
 #endif
-
-  LWIP_ASSERT_CORE_LOCKED();
 
   if (ip4_addr_isany(ipaddr)) {
     /* when removing an address, we have to remove it *before* changing netmask/gw
