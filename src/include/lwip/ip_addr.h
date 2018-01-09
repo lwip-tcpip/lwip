@@ -340,6 +340,7 @@ typedef ip6_addr_t ip_addr_t;
 #define ip_addr_get_network(target, host, mask) ip6_addr_set_zero(target)
 #define ip_addr_netcmp(addr1, addr2, mask)      0
 #define ip_addr_cmp(addr1, addr2)               ip6_addr_cmp(addr1, addr2)
+#define ip_addr_cmp_zoneless(addr1, addr2)      ip6_addr_cmp_zoneless(addr1, addr2)
 #define ip_addr_isany(ipaddr)                   ip6_addr_isany(ipaddr)
 #define ip_addr_isany_val(ipaddr)               ip6_addr_isany_val(ipaddr)
 #define ip_addr_isloopback(ipaddr)              ip6_addr_isloopback(ipaddr)
