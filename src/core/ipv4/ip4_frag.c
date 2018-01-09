@@ -748,7 +748,10 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 
   original_iphdr = (struct ip_hdr *)p->payload;
   iphdr = original_iphdr;
-  LWIP_ERROR("ip4_frag() does not support IP options", IPH_HL_BYTES(iphdr) == IP_HLEN, return ERR_VAL);
+  if (IPH_HL_BYTES(iphdr) != IP_HLEN) {
+    /* ip4_frag() does not support IP options */
+    return ERR_VAL;
+  }
   LWIP_ERROR("ip4_frag(): pbuf too short", p->len >= IP_HLEN, return ERR_VAL);
 
   /* Save original offset */
