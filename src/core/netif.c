@@ -426,7 +426,7 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback
 {
   ip_addr_t new_addr;
 
-  *ip_2_ip4(&new_addr) = (ipaddr ? *ipaddr : *IP4_ADDR_ANY4);
+  *ip_2_ip4(&new_addr) = *ipaddr;
   IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
 
   /* address is actually being changed? */
@@ -492,16 +492,15 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 static void
 netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, u8_t callback)
 {
-  const ip4_addr_t *safe_netmask = netmask ? netmask : IP4_ADDR_ANY4;
+  /* address is actually being changed? */
+  if (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-  netif_ext_callback_args_t args;
-  ip_addr_t old_addr;
-  ip_addr_copy(old_addr, *netif_ip_netmask4(netif));
-  args.ipv4_nm_changed.old_address = &old_addr;
+    netif_ext_callback_args_t args;
+    ip_addr_t old_addr;
+    ip_addr_copy(old_addr, *netif_ip_netmask4(netif));
+    args.ipv4_nm_changed.old_address = &old_addr;
 #endif
 
-  /* address is actually being changed? */
-  if (ip4_addr_cmp(safe_netmask, netif_ip4_netmask(netif)) == 0) {
     mib2_remove_route_ip4(0, netif);
     /* set new netmask to netif */
     ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
@@ -546,16 +545,15 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 static void
 netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, u8_t callback)
 {
-  const ip4_addr_t *safe_gw = gw ? gw : IP4_ADDR_ANY4;
+  /* address is actually being changed? */
+  if (ip4_addr_cmp(gw, netif_ip4_gw(netif)) == 0) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-  netif_ext_callback_args_t args;
-  ip_addr_t old_addr;
-  ip_addr_copy(old_addr, *netif_ip_gw4(netif));
-  args.ipv4_gw_changed.old_address = &old_addr;
+    netif_ext_callback_args_t args;
+    ip_addr_t old_addr;
+    ip_addr_copy(old_addr, *netif_ip_gw4(netif));
+    args.ipv4_gw_changed.old_address = &old_addr;
 #endif
 
-  /* address is actually being changed? */
-  if (ip4_addr_cmp(safe_gw, netif_ip4_gw(netif)) == 0) {
     ip4_addr_set(ip_2_ip4(&netif->gw), gw);
     IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
