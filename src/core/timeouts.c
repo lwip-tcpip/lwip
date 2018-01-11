@@ -66,8 +66,10 @@
 #define HANDLER(x) x
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
+#define LWIP_MAX_TIMEOUT  0x7fffffff
+
 /* Check if timer's expiry time is greater than time and care about u32_t wraparounds */
-#define TIME_LESS_THAN(t, compare_to) ( (((u32_t)((t)-(compare_to))) > 0x7fffffff) ? 1 : 0 )
+#define TIME_LESS_THAN(t, compare_to) ( (((u32_t)((t)-(compare_to))) > LWIP_MAX_TIMEOUT) ? 1 : 0 )
 
 /** This array contains all stack-internal cyclic timers. To get the number of
  * timers, use LWIP_ARRAYSIZE() */
@@ -340,9 +342,6 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  *
  * Must be called periodically from your main loop.
  */
-#if !LWIP_TESTMODE && !NO_SYS && !defined __DOXYGEN__
-static
-#endif /* !NO_SYS */
 void
 sys_check_timeouts(void)
 {
@@ -417,9 +416,6 @@ sys_restart_timeouts(void)
 /** Return the time left before the next timeout is due. If no timeouts are
  * enqueued, returns 0xffffffff
  */
-#if !LWIP_TESTMODE && !NO_SYS
-static
-#endif /* !NO_SYS */
 u32_t
 sys_timeouts_sleeptime(void)
 {
@@ -428,60 +424,17 @@ sys_timeouts_sleeptime(void)
   LWIP_ASSERT_CORE_LOCKED();
 
   if (next_timeout == NULL) {
-    return 0xffffffff;
+    return SYS_TIMEOUTS_SLEEPTIME_INFINITE;
   }
   now = sys_now();
   if (TIME_LESS_THAN(next_timeout->time, now)) {
     return 0;
   } else {
-    return (u32_t)(next_timeout->time - now);
+    u32_t ret = (u32_t)(next_timeout->time - now);
+    LWIP_ASSERT("invalid sleeptime", ret <= LWIP_MAX_TIMEOUT);
+    return ret;
   }
 }
-
-#if !NO_SYS
-
-/**
- * Wait (forever) for a message to arrive in an mbox.
- * While waiting, timeouts are processed.
- *
- * @param mbox the mbox to fetch the message from
- * @param msg the place to store the message
- */
-void
-sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
-{
-  u32_t sleeptime, res;
-
-again:
-  LWIP_ASSERT_CORE_LOCKED();
-
-  if (!next_timeout) {
-    UNLOCK_TCPIP_CORE();
-    sys_arch_mbox_fetch(mbox, msg, 0);
-    LOCK_TCPIP_CORE();
-    return;
-  }
-
-  sleeptime = sys_timeouts_sleeptime();
-  if (sleeptime == 0) {
-    sys_check_timeouts();
-    /* We try again to fetch a message from the mbox. */
-    goto again;
-  }
-
-  UNLOCK_TCPIP_CORE();
-  res = sys_arch_mbox_fetch(mbox, msg, sleeptime);
-  LOCK_TCPIP_CORE();
-  if (res == SYS_ARCH_TIMEOUT) {
-    /* If a SYS_ARCH_TIMEOUT value is returned, a timeout occurred
-       before a message could be fetched. */
-    sys_check_timeouts();
-    /* We try again to fetch a message from the mbox. */
-    goto again;
-  }
-}
-
-#endif /* NO_SYS */
 
 #else /* LWIP_TIMERS && !LWIP_TIMERS_CUSTOM */
 /* Satisfy the TCP code which calls this function */

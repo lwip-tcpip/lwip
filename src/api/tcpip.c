@@ -65,15 +65,53 @@ static sys_mbox_t mbox;
 sys_mutex_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-#if LWIP_TIMERS
-/* wait for a message, timeouts are processed while waiting */
-#define TCPIP_MBOX_FETCH(mbox, msg) sys_timeouts_mbox_fetch(mbox, msg)
-#else /* LWIP_TIMERS */
+static void tcpip_thread_handle_msg(struct tcpip_msg *msg);
+
+#if !LWIP_TIMERS
 /* wait for a message with timers disabled (e.g. pass a timer-check trigger into tcpip_thread) */
 #define TCPIP_MBOX_FETCH(mbox, msg) sys_mbox_fetch(mbox, msg)
-#endif /* LWIP_TIMERS */
+#else /* !LWIP_TIMERS */
+/* wait for a message, timeouts are processed while waiting */
+#define TCPIP_MBOX_FETCH(mbox, msg) tcpip_timeouts_mbox_fetch(mbox, msg)
+/**
+ * Wait (forever) for a message to arrive in an mbox.
+ * While waiting, timeouts are processed.
+ *
+ * @param mbox the mbox to fetch the message from
+ * @param msg the place to store the message
+ */
+static void
+tcpip_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
+{
+  u32_t sleeptime, res;
 
-static void tcpip_thread_handle_msg(struct tcpip_msg *msg);
+again:
+  LWIP_ASSERT_CORE_LOCKED();
+
+  sleeptime = sys_timeouts_sleeptime();
+  if (sleeptime == SYS_TIMEOUTS_SLEEPTIME_INFINITE) {
+    UNLOCK_TCPIP_CORE();
+    sys_arch_mbox_fetch(mbox, msg, 0);
+    LOCK_TCPIP_CORE();
+    return;
+  } else if (sleeptime == 0) {
+    sys_check_timeouts();
+    /* We try again to fetch a message from the mbox. */
+    goto again;
+  }
+
+  UNLOCK_TCPIP_CORE();
+  res = sys_arch_mbox_fetch(mbox, msg, sleeptime);
+  LOCK_TCPIP_CORE();
+  if (res == SYS_ARCH_TIMEOUT) {
+    /* If a SYS_ARCH_TIMEOUT value is returned, a timeout occurred
+       before a message could be fetched. */
+    sys_check_timeouts();
+    /* We try again to fetch a message from the mbox. */
+    goto again;
+  }
+}
+#endif /* !LWIP_TIMERS */
 
 /**
  * The main lwIP thread. This thread has exclusive access to lwIP core functions
