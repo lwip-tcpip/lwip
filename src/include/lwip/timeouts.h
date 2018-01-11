@@ -115,7 +115,7 @@ void sys_check_timeouts(void);
 u32_t sys_timeouts_sleeptime(void);
 
 #if LWIP_TESTMODE
-struct sys_timeo** lwip_sys_timers_get_next_timout(void);
+struct sys_timeo** sys_timeouts_get_next_timeout(void);
 void lwip_cyclic_timer(void *arg);
 #endif
 

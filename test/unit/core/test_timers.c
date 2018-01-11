@@ -11,7 +11,7 @@ static struct sys_timeo* old_list_head;
 static void
 timers_setup(void)
 {
-  struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
+  struct sys_timeo** list_head = sys_timeouts_get_next_timeout();
   old_list_head = *list_head;
   *list_head = NULL;
 }
@@ -19,7 +19,7 @@ timers_setup(void)
 static void
 timers_teardown(void)
 {
-  struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
+  struct sys_timeo** list_head = sys_timeouts_get_next_timeout();
   *list_head = old_list_head;
   lwip_sys_now = 0;
 }
@@ -46,7 +46,7 @@ struct lwip_cyclic_timer test_cyclic = {10, dummy_cyclic_handler};
 static void
 do_test_cyclic_timers(u32_t offset)
 {
-  struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
+  struct sys_timeo** list_head = sys_timeouts_get_next_timeout();
 
   /* verify normal timer expiration */
   lwip_sys_now = offset + 0;
@@ -127,7 +127,7 @@ END_TEST
 static void
 do_test_timers(u32_t offset)
 {
-  struct sys_timeo** list_head = lwip_sys_timers_get_next_timout();
+  struct sys_timeo** list_head = sys_timeouts_get_next_timeout();
   
   lwip_sys_now = offset + 0;
 

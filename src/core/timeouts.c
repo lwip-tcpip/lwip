@@ -121,7 +121,7 @@ static u32_t current_timeout_due_time;
 
 #if LWIP_TESTMODE
 struct sys_timeo**
-lwip_sys_timers_get_next_timout(void)
+sys_timeouts_get_next_timeout(void)
 {
   return &next_timeout;
 }
