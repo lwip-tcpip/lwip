@@ -92,6 +92,21 @@
 #define ALTCP_MBEDTLS_ENTROPY_LEN   0
 #endif
 
+/** Define this to whatever overhead is suitable.
+ * Defaults to take care of record header, IV, AuthTag.
+ * The last '+16' is for alignment & security.
+ */
+#ifndef ALTCP_MBEDTLS_SNDBUF_OVERHEAD
+#define ALTCP_MBEDTLS_SNDBUF_OVERHEAD   (5 + 8 + 16 + (MEM_ALIGNMENT - 1) + 16)
+#endif
+
+/** When this is 1 and ALTCP_MBEDTLS_SNDBUF_OVERHEAD==1, the sndbuf
+ * is limited to the (negotiated) maximum fragment length.
+ */
+#ifndef ALTCP_MBEDTLS_SNDBUF_OVERHEAD_LIMIT_TO_MAX_FRAG_LEN
+#define ALTCP_MBEDTLS_SNDBUF_OVERHEAD_LIMIT_TO_MAX_FRAG_LEN   1
+#endif
+
 /* Variable prototype, the actual declaration is at the end of this file
    since it contains pointers to static functions declared here */
 extern const struct altcp_functions altcp_mbedtls_functions;
@@ -888,6 +903,46 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
   return ERR_OK;
 }
 
+/** Allow caller of altcp_write() to limit to negotiated chunk size
+ *  or remaining sndbuf space of inner_conn.
+ */
+static u16_t
+altcp_mbedtls_sndbuf(struct altcp_pcb *conn)
+{
+  /* Take care of record header, IV, AuthTag */
+#if ALTCP_MBEDTLS_SNDBUF_OVERHEAD
+  size_t ssl_added = ALTCP_MBEDTLS_SNDBUF_OVERHEAD;
+
+  if (conn) {
+    altcp_mbedtls_state_t *state;
+    state = (altcp_mbedtls_state_t*)conn->state;
+    if (!state || !(state->flags & ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE)) {
+      return 0;
+    }
+    if (conn->inner_conn) {
+      u16_t sndbuf = altcp_sndbuf(conn->inner_conn);
+      /* internal sndbuf smaller than our offset */
+      if (ssl_added < sndbuf) {
+        size_t max_len = 0xFFFF;
+        size_t ret;
+#if defined(MBEDTLS_SSL_MAX_FRAGMENT_LENGTH) && ALTCP_MBEDTLS_SNDBUF_OVERHEAD_LIMIT_TO_MAX_FRAG_LEN
+        /* @todo: adjust ssl_added to real value related to negociated cipher */
+        size_t max_frag_len = mbedtls_ssl_get_max_frag_len(&state->ssl_context);
+        max_len = LWIP_MIN(max_frag_len, max_len);
+#endif
+        /* Adjust sndbuf of inner_conn with what added by SSL */
+        ret = LWIP_MIN(sndbuf - ssl_added, max_len);
+        LWIP_ASSERT("sndbuf overflow", ret <= 0xFFFF);
+        return (u16_t)ret;
+      }
+    }
+  }
+  return 0;
+#else /* ALTCP_MBEDTLS_SNDBUF_OVERHEAD */
+  return altcp_default_sndbuf(conn);
+#endif
+}
+
 /** Write data to a TLS connection. Calls into mbedTLS, which in turn calls into
  * @ref altcp_mbedtls_bio_send() to send the encrypted data
  */
@@ -1018,7 +1073,7 @@ const struct altcp_functions altcp_mbedtls_functions = {
   altcp_mbedtls_write,
   altcp_default_output,
   altcp_mbedtls_mss,
-  altcp_default_sndbuf,
+  altcp_mbedtls_sndbuf,
   altcp_default_sndqueuelen,
   altcp_default_nagle_disable,
   altcp_default_nagle_enable,
