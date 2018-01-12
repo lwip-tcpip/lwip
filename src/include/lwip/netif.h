@@ -534,28 +534,30 @@ struct netif* netif_get_by_index(u8_t idx);
  */
 typedef enum
 {
+  /* used for initialization only */
+  LWIP_NSC_NONE = 0,
   /** netif was added. arg: NULL. Called AFTER netif was added. */
-  LWIP_NSC_NETIF_ADDED,
+  LWIP_NSC_NETIF_ADDED = 0x1,
   /** netif was removed. arg: NULL. Called BEFORE netif is removed. */
-  LWIP_NSC_NETIF_REMOVED,
+  LWIP_NSC_NETIF_REMOVED = 0x2,
   /** link changed */
-  LWIP_NSC_LINK_CHANGED,
+  LWIP_NSC_LINK_CHANGED = 0x4,
   /** netif administrative status changed.\n
    * up is called AFTER netif is set up.\n
    * down is called BEFORE the netif is actually set down. */
-  LWIP_NSC_STATUS_CHANGED,
+  LWIP_NSC_STATUS_CHANGED = 0x8,
   /** IPv4 address has changed */
-  LWIP_NSC_IPV4_ADDRESS_CHANGED,
+  LWIP_NSC_IPV4_ADDRESS_CHANGED = 0x10,
   /** IPv4 gateway has changed */
-  LWIP_NSC_IPV4_GATEWAY_CHANGED,
+  LWIP_NSC_IPV4_GATEWAY_CHANGED = 0x20,
   /** IPv4 netmask has changed */
-  LWIP_NSC_IPV4_NETMASK_CHANGED,
-  /** called AFTER IPv4 address/gateway/netmask changes have been applied. arg: NULL */
-  LWIP_NSC_IPV4_SETTINGS_CHANGED,
+  LWIP_NSC_IPV4_NETMASK_CHANGED = 0x40,
+  /** called AFTER IPv4 address/gateway/netmask changes have been applied */
+  LWIP_NSC_IPV4_SETTINGS_CHANGED = 0x80,
   /** IPv6 address was added */
-  LWIP_NSC_IPV6_SET,
+  LWIP_NSC_IPV6_SET = 0x100,
   /** IPv6 address state has changed */
-  LWIP_NSC_IPV6_ADDR_STATE_CHANGED
+  LWIP_NSC_IPV6_ADDR_STATE_CHANGED = 0x200
 } netif_nsc_reason_t;
 
 /** @ingroup netif
