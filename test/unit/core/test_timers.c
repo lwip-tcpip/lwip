@@ -187,6 +187,38 @@ START_TEST(test_timers)
 }
 END_TEST
 
+START_TEST(test_long_timer)
+{
+  LWIP_UNUSED_ARG(_i);
+
+  memset(&fired, 0, sizeof(fired));
+  lwip_sys_now = 0;
+
+  sys_timeout(LWIP_UINT32_MAX / 4, dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
+  fail_unless(sys_timeouts_sleeptime() == LWIP_UINT32_MAX / 4);
+
+  sys_check_timeouts();
+  fail_unless(fired[0] == 0);
+
+  lwip_sys_now += LWIP_UINT32_MAX / 8;
+
+  sys_check_timeouts();
+  fail_unless(fired[0] == 0);
+
+  lwip_sys_now += LWIP_UINT32_MAX / 8;
+
+  sys_check_timeouts();
+  fail_unless(fired[0] == 0);
+
+  lwip_sys_now += 1;
+
+  sys_check_timeouts();
+  fail_unless(fired[0] == 1);
+
+  sys_untimeout(dummy_handler, LWIP_PTR_NUMERIC_CAST(void*, 0));
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 timers_suite(void)
@@ -194,7 +226,8 @@ timers_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_bug52748),
     TESTFUNC(test_cyclic_timers),
-    TESTFUNC(test_timers)
+    TESTFUNC(test_timers),
+    TESTFUNC(test_long_timer),
   };
   return create_suite("TIMERS", tests, LWIP_ARRAYSIZE(tests), timers_setup, timers_teardown);
 }

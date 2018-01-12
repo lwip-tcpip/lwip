@@ -203,6 +203,9 @@ typedef int ssize_t;
 #define SSIZE_MAX INT_MAX
 #endif /* SSIZE_MAX */
 
+/* some maximum values needed in lwip code */
+#define LWIP_UINT32_MAX 0xffffffff
+
 /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
  * the ctype.h header. If ctype.h is available, a few character functions
  * are mapped to the appropriate functions (lwip_islower, lwip_isdigit...), if
