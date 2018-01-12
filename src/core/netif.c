@@ -1637,7 +1637,8 @@ netif_find(const char *name)
  * @param callback pointer to listener structure
  * @param fn callback function
  */
-void netif_add_ext_callback(netif_ext_callback_t *callback, netif_ext_callback_fn fn)
+void
+netif_add_ext_callback(netif_ext_callback_t *callback, netif_ext_callback_fn fn)
 {
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("callback must be != NULL", callback != NULL);
@@ -1649,12 +1650,45 @@ void netif_add_ext_callback(netif_ext_callback_t *callback, netif_ext_callback_f
 }
 
 /**
+ * @ingroup netif
+ * Remove extended netif events listener
+ * @param callback pointer to listener structure
+ */
+void
+netif_remove_ext_callback(netif_ext_callback_t* callback)
+{
+  netif_ext_callback_t *last, *iter;
+
+  LWIP_ASSERT_CORE_LOCKED();
+  LWIP_ASSERT("callback must be != NULL", callback != NULL);
+
+  if (ext_callback == NULL) {
+    return;
+  }
+
+  if (callback == ext_callback) {
+    ext_callback = ext_callback->next;
+  } else {
+    last = ext_callback;
+    for (iter = ext_callback->next; iter != NULL; last = iter, iter = iter->next) {
+      if (iter == callback) {
+        LWIP_ASSERT("last != NULL", last != NULL);
+        last->next = callback->next;
+        callback->next = NULL;
+        return;
+      }
+    }
+  }
+}
+
+/**
  * Invoke extended netif status event
  * @param netif netif that is affected by change
  * @param reason change reason
  * @param args depends on reason, see reason description
  */
-void netif_invoke_ext_callback(struct netif *netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t *args)
+void
+netif_invoke_ext_callback(struct netif *netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t *args)
 {
   netif_ext_callback_t *callback = ext_callback;
 

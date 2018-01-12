@@ -633,10 +633,12 @@ typedef struct netif_ext_callback
 
 #define NETIF_DECLARE_EXT_CALLBACK(name) static netif_ext_callback_t name;
 void netif_add_ext_callback(netif_ext_callback_t* callback, netif_ext_callback_fn fn);
+void netif_remove_ext_callback(netif_ext_callback_t* callback);
 void netif_invoke_ext_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args);
 #else
 #define NETIF_DECLARE_EXT_CALLBACK(name)
 #define netif_add_ext_callback(callback, fn)
+#define netif_remove_ext_callback(callback)
 #define netif_invoke_ext_callback(netif, reason, args)
 #endif
 
