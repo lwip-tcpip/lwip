@@ -6,6 +6,7 @@
 #include "tcp/test_tcp_oos.h"
 #include "core/test_def.h"
 #include "core/test_mem.h"
+#include "core/test_netif.h"
 #include "core/test_pbuf.h"
 #include "core/test_timers.h"
 #include "etharp/test_etharp.h"
@@ -66,6 +67,7 @@ int main(void)
     tcp_oos_suite,
     def_suite,
     mem_suite,
+    netif_suite,
     pbuf_suite,
     timers_suite,
     etharp_suite,

@@ -72,6 +72,9 @@
 /* MIB2 stats are required to check IPv4 reassembly results */
 #define MIB2_STATS                      1
 
+/* netif tests want to test this, so enable: */
+#define LWIP_NETIF_EXT_STATUS_CALLBACK  1
+
 /* Check lwip_stats.mem.illegal instead of asserting */
 #define LWIP_MEM_ILLEGAL_FREE(msg)      /* to nothing */
 
