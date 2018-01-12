@@ -290,6 +290,8 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 
   LWIP_ASSERT_CORE_LOCKED();
 
+  LWIP_ASSERT("Timeout time too long, max is LWIP_UINT32_MAX/4 msecs", msecs <= (LWIP_UINT32_MAX / 4));
+
   next_timeout_time = (u32_t)(sys_now() + msecs); /* overflow handled by TIME_LESS_THAN macro */ 
 
 #if LWIP_DEBUG_TIMERNAMES
