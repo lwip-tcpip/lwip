@@ -1894,6 +1894,7 @@ static void
 http_continue(void *connection)
 {
   struct http_state *hs = (struct http_state *)connection;
+  LWIP_ASSERT_CORE_LOCKED();
   if (hs && (hs->pcb) && (hs->handle)) {
     LWIP_ASSERT("hs->pcb != NULL", hs->pcb != NULL);
     LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("httpd_continue: try to send more data\n"));
