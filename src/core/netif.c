@@ -421,28 +421,29 @@ netif_add(struct netif *netif,
 }
 
 #if LWIP_IPV4
-static void
-netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback)
+static int
+netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, ip_addr_t *old_addr)
 {
-  ip_addr_t new_addr;
-
-  *ip_2_ip4(&new_addr) = *ipaddr;
-  IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
+  LWIP_ASSERT("invalid pointer", ipaddr != NULL);
+  LWIP_ASSERT("invalid pointer", old_addr != NULL);
 
   /* address is actually being changed? */
-  if (ip4_addr_cmp(ip_2_ip4(&new_addr), netif_ip4_addr(netif)) == 0) {
-    ip_addr_t old_addr;
-    ip_addr_copy(old_addr, *netif_ip_addr4(netif));
+  if (ip4_addr_cmp(ipaddr, netif_ip4_addr(netif)) == 0) {
+    ip_addr_t new_addr;
+    *ip_2_ip4(&new_addr) = *ipaddr;
+    IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
+
+    ip_addr_copy(*old_addr, *netif_ip_addr4(netif));
 
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
 #if LWIP_TCP
-    tcp_netif_ip_addr_changed(&old_addr, &new_addr);
+    tcp_netif_ip_addr_changed(old_addr, &new_addr);
 #endif /* LWIP_TCP */
 #if LWIP_UDP
-    udp_netif_ip_addr_changed(&old_addr, &new_addr);
+    udp_netif_ip_addr_changed(old_addr, &new_addr);
 #endif /* LWIP_UDP */
 #if LWIP_RAW
-    raw_netif_ip_addr_changed(&old_addr, &new_addr);
+    raw_netif_ip_addr_changed(old_addr, &new_addr);
 #endif /* LWIP_RAW */
 
     mib2_remove_ip4(netif);
@@ -456,14 +457,9 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4);
 
     NETIF_STATUS_CALLBACK(netif);
-    if (callback) {
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-      netif_ext_callback_args_t args;
-      args.ipv4_changed.old_address = &old_addr;
-      netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_ADDRESS_CHANGED, &args);
-#endif
-    }
+    return 1; /* address changed */
   }
+  return 0; /* address unchanged */
 }
 
 /**
@@ -479,6 +475,7 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, u8_t callback
 void
 netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
+  ip_addr_t old_addr;
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
     ipaddr = IP4_ADDR_ANY4;
@@ -486,21 +483,26 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  netif_do_set_ipaddr(netif, ipaddr, 1);
+  if (netif_do_set_ipaddr(netif, ipaddr, &old_addr)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    netif_ext_callback_args_t args;
+    args.ipv4_changed.old_address = &old_addr;
+    netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_ADDRESS_CHANGED, &args);
+#endif
+  }
 }
 
-static void
-netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, u8_t callback)
+static int
+netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, ip_addr_t *old_nm)
 {
   /* address is actually being changed? */
   if (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-    netif_ext_callback_args_t args;
-    ip_addr_t old_addr;
-    ip_addr_copy(old_addr, *netif_ip_netmask4(netif));
-    args.ipv4_nm_changed.old_address = &old_addr;
+    LWIP_ASSERT("invalid pointer", old_nm != NULL);
+    ip_addr_copy(*old_nm, *netif_ip_netmask4(netif));
+#else
+    LWIP_UNUSED_ARG(old_nm);
 #endif
-
     mib2_remove_route_ip4(0, netif);
     /* set new netmask to netif */
     ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
@@ -512,11 +514,9 @@ netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, u8_t callba
                 ip4_addr2_16(netif_ip4_netmask(netif)),
                 ip4_addr3_16(netif_ip4_netmask(netif)),
                 ip4_addr4_16(netif_ip4_netmask(netif))));
-
-    if (callback) {
-      netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_NETMASK_CHANGED, &args);
-    }
+    return 1; /* netmask changed */
   }
+  return 0; /* netmask unchanged */
 }
 
 /**
@@ -532,6 +532,12 @@ netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, u8_t callba
 void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+  ip_addr_t old_nm_val;
+  ip_addr_t *old_nm = &old_nm_val;
+#else
+  ip_addr_t *old_nm = NULL;
+#endif
   LWIP_ASSERT_CORE_LOCKED();
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
@@ -539,19 +545,25 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
     netmask = IP4_ADDR_ANY4;
   }
 
-  netif_do_set_netmask(netif, netmask, 1);
+  if (netif_do_set_netmask(netif, netmask, old_nm)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    netif_ext_callback_args_t args;
+    args.ipv4_changed.old_netmask = old_nm;
+    netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_NETMASK_CHANGED, &args);
+#endif
+  }
 }
 
-static void
-netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, u8_t callback)
+static int
+netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, ip_addr_t *old_gw)
 {
   /* address is actually being changed? */
   if (ip4_addr_cmp(gw, netif_ip4_gw(netif)) == 0) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-    netif_ext_callback_args_t args;
-    ip_addr_t old_addr;
-    ip_addr_copy(old_addr, *netif_ip_gw4(netif));
-    args.ipv4_gw_changed.old_address = &old_addr;
+    LWIP_ASSERT("invalid pointer", old_gw != NULL);
+    ip_addr_copy(*old_gw, *netif_ip_gw4(netif));
+#else
+    LWIP_UNUSED_ARG(old_gw);
 #endif
 
     ip4_addr_set(ip_2_ip4(&netif->gw), gw);
@@ -562,11 +574,9 @@ netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, u8_t callback)
                 ip4_addr2_16(netif_ip4_gw(netif)),
                 ip4_addr3_16(netif_ip4_gw(netif)),
                 ip4_addr4_16(netif_ip4_gw(netif))));
-
-    if (callback) {
-      netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_GATEWAY_CHANGED, &args);
-    }
+    return 1; /* gateway changed */
   }
+  return 0; /* gateway unchanged */
 }
 
 /**
@@ -581,6 +591,12 @@ netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, u8_t callback)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+  ip_addr_t old_gw_val;
+  ip_addr_t *old_gw = &old_gw_val;
+#else
+  ip_addr_t *old_gw = NULL;
+#endif
   LWIP_ASSERT_CORE_LOCKED();
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
@@ -588,7 +604,13 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
     gw = IP4_ADDR_ANY4;
   }
 
-  netif_do_set_gw(netif, gw, 1);
+  if (netif_do_set_gw(netif, gw, old_gw)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    netif_ext_callback_args_t args;
+    args.ipv4_changed.old_gw = old_gw;
+    netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_GATEWAY_CHANGED, &args);
+#endif
+  }
 }
 
 /**
@@ -606,8 +628,18 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
                const ip4_addr_t *gw)
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-  u8_t something_changed = 0;
+  netif_nsc_reason_t change_reason = LWIP_NSC_NONE;
+  netif_ext_callback_args_t cb_args;
+  ip_addr_t old_nm_val;
+  ip_addr_t old_gw_val;
+  ip_addr_t *old_nm = &old_nm_val;
+  ip_addr_t *old_gw = &old_gw_val;
+#else
+  ip_addr_t *old_nm = NULL;
+  ip_addr_t *old_gw = NULL;
 #endif
+  ip_addr_t old_addr;
+  int remove;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -622,30 +654,43 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
     gw = IP4_ADDR_ANY4;
   }
 
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
-  if ((ip4_addr_cmp(ipaddr,  netif_ip4_addr(netif))    == 0) ||
-      (ip4_addr_cmp(gw,      netif_ip4_gw(netif))      == 0) ||
-      (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0))   {
-    something_changed = 1;
-  }
-#endif
-
-  if (ip4_addr_isany(ipaddr)) {
+  remove = ip4_addr_isany(ipaddr);
+  if (remove) {
     /* when removing an address, we have to remove it *before* changing netmask/gw
        to ensure that tcp RST segment can be sent correctly */
-    netif_do_set_ipaddr(netif, ipaddr, 0);
-    netif_do_set_netmask(netif, netmask, 0);
-    netif_do_set_gw(netif, gw, 0);
-  } else {
+    if (netif_do_set_ipaddr(netif, ipaddr, &old_addr)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+      change_reason |= LWIP_NSC_IPV4_ADDRESS_CHANGED;
+      cb_args.ipv4_changed.old_address = &old_addr;
+#endif
+    }
+  }
+  if (netif_do_set_netmask(netif, netmask, old_nm)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    change_reason |= LWIP_NSC_IPV4_NETMASK_CHANGED;
+    cb_args.ipv4_changed.old_netmask = old_nm;
+#endif
+  }
+  if (netif_do_set_gw(netif, gw, old_gw)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+    change_reason |= LWIP_NSC_IPV4_GATEWAY_CHANGED;
+    cb_args.ipv4_changed.old_gw = old_gw;
+#endif
+  }
+  if (!remove) {
     /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
-    netif_do_set_netmask(netif, netmask, 0);
-    netif_do_set_gw(netif, gw, 0);
-    netif_do_set_ipaddr(netif, ipaddr, 0);
+    if (netif_do_set_ipaddr(netif, ipaddr, &old_addr)) {
+#if LWIP_NETIF_EXT_STATUS_CALLBACK
+      change_reason |= LWIP_NSC_IPV4_ADDRESS_CHANGED;
+      cb_args.ipv4_changed.old_address = &old_addr;
+#endif
+    }
   }
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-  if (something_changed != 0) {
-    netif_invoke_ext_callback(netif, LWIP_NSC_IPV4_SETTINGS_CHANGED, NULL);
+  if (change_reason != LWIP_NSC_NONE) {
+    change_reason |= LWIP_NSC_IPV4_SETTINGS_CHANGED;
+    netif_invoke_ext_callback(netif, change_reason, &cb_args);
   }
 #endif
 }

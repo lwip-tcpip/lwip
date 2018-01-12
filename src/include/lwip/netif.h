@@ -577,24 +577,14 @@ typedef union
     /** 1: up; 0: down */
     u8_t state;
   } status_changed;
-  /** Args to LWIP_NSC_IPV4_ADDRESS_CHANGED callback */
+  /** Args to LWIP_NSC_IPV4_ADDRESS_CHANGED|LWIP_NSC_IPV4_GATEWAY_CHANGED|LWIP_NSC_IPV4_NETMASK_CHANGED|LWIP_NSC_IPV4_SETTINGS_CHANGED callback */
   struct ipv4_changed_s
   {
     /** Old IPv4 address */
     const ip_addr_t* old_address;
+    const ip_addr_t* old_netmask;
+    const ip_addr_t* old_gw;
   } ipv4_changed;
-  /** Args to LWIP_NSC_IPV4_GATEWAY_CHANGED callback */
-  struct ipv4_gw_changed_s
-  {
-    /** Old IPv4 gateway */
-    const ip_addr_t* old_address;
-  } ipv4_gw_changed;
-  /** Args to LWIP_NSC_IPV4_NETMASK_CHANGED callback */
-  struct ipv4_nm_changed_s
-  {
-    /** Old IPv4 netmask */
-    const ip_addr_t* old_address;
-  } ipv4_nm_changed;
   /** Args to LWIP_NSC_IPV6_SET callback */
   struct ipv6_set_s
   {

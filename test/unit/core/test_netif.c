@@ -58,10 +58,7 @@ testif_init(struct netif *netif)
 }
 
 #define MAX_NSC_REASON_IDX 10
-static int ext_cb_counters[MAX_NSC_REASON_IDX];
-static netif_nsc_reason_t reasons;
-
-static netif_ext_callback_args_t *expected_args;
+static netif_nsc_reason_t expected_reasons;
 
 static int dummy_active;
 
@@ -78,46 +75,11 @@ test_netif_ext_callback_dummy(struct netif* netif, netif_nsc_reason_t reason, co
 static void
 test_netif_ext_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
 {
-  int i;
-  u32_t reason_flags = (u32_t)reason;
-  u32_t mask;
-
-  reasons = reasons | reason;
+  LWIP_UNUSED_ARG(args); /* @todo */
 
   fail_unless(netif == &net_test);
-  fail_unless(reason != 0);
-  fail_unless((((u32_t)reason) & ~((1U << MAX_NSC_REASON_IDX) - 1U)) == 0);
 
-  LWIP_UNUSED_ARG(args);
-
-  for (i = 0, mask = 1U; i < MAX_NSC_REASON_IDX; i++, mask <<= 1) {
-    if (reason_flags & mask) {
-      ext_cb_counters[i]++;
-    }
-  }
-  if (expected_args != NULL) {
-    fail_unless(memcmp(expected_args, args, sizeof(netif_ext_callback_args_t)) == 0);
-  }
-}
-
-static void
-test_netif_ext_callback_assert_flag_count(netif_nsc_reason_t reason, int expected_count)
-{
-  int i;
-  u32_t reason_flags = (u32_t)reason;
-  u32_t mask;
-  for (i = 0, mask = 1U; i < MAX_NSC_REASON_IDX; i++, mask <<= 1) {
-    if (reason_flags & mask) {
-      fail_unless(ext_cb_counters[i] == expected_count);
-    }
-  }
-}
-
-static void
-test_netif_ext_callback_reset(void)
-{
-  memset(ext_cb_counters, 0, sizeof(ext_cb_counters));
-  reasons = 0;
+  fail_unless(expected_reasons == reason);
 }
 
 /* Test functions */
@@ -143,32 +105,63 @@ START_TEST(test_netif_extcallbacks)
 
   dummy_active = 1;
 
-  reasons = 0;
-  netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
-  fail_unless(reasons == LWIP_NSC_NETIF_ADDED);
-  test_netif_ext_callback_assert_flag_count(LWIP_NSC_NETIF_ADDED, 1);
-  test_netif_ext_callback_reset();
+  /* positive tests: check that single events come as expected */
 
+  expected_reasons = LWIP_NSC_NETIF_ADDED;
+  netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+
+  expected_reasons = LWIP_NSC_LINK_CHANGED;
   netif_set_link_up(&net_test);
-  fail_unless(reasons == LWIP_NSC_LINK_CHANGED);
-  test_netif_ext_callback_assert_flag_count(LWIP_NSC_LINK_CHANGED, 1);
-  test_netif_ext_callback_reset();
+
+  expected_reasons = LWIP_NSC_STATUS_CHANGED;
   netif_set_up(&net_test);
-  fail_unless(reasons == LWIP_NSC_STATUS_CHANGED);
-  test_netif_ext_callback_assert_flag_count(LWIP_NSC_STATUS_CHANGED, 1);
-  test_netif_ext_callback_reset();
 
   IP4_ADDR(&addr, 1, 2, 3, 4);
+  expected_reasons = LWIP_NSC_IPV4_ADDRESS_CHANGED;
   netif_set_ipaddr(&net_test, &addr);
-  fail_unless(reasons == LWIP_NSC_IPV4_ADDRESS_CHANGED);
-  test_netif_ext_callback_assert_flag_count(LWIP_NSC_IPV4_ADDRESS_CHANGED, 1);
-  test_netif_ext_callback_reset();
 
+  IP4_ADDR(&netmask, 255, 255, 255, 0);
+  expected_reasons = LWIP_NSC_IPV4_NETMASK_CHANGED;
+  netif_set_netmask(&net_test, &netmask);
+
+  IP4_ADDR(&gw, 1, 2, 3, 254);
+  expected_reasons = LWIP_NSC_IPV4_GATEWAY_CHANGED;
+  netif_set_gw(&net_test, &gw);
+
+  IP4_ADDR(&addr, 0, 0, 0, 0);
+  expected_reasons = LWIP_NSC_IPV4_ADDRESS_CHANGED;
+  netif_set_ipaddr(&net_test, &addr);
+
+  IP4_ADDR(&netmask, 0, 0, 0, 0);
+  expected_reasons = LWIP_NSC_IPV4_NETMASK_CHANGED;
+  netif_set_netmask(&net_test, &netmask);
+
+  IP4_ADDR(&gw, 0, 0, 0, 0);
+  expected_reasons = LWIP_NSC_IPV4_GATEWAY_CHANGED;
+  netif_set_gw(&net_test, &gw);
+
+  /* check that for multi-events (only one combined callback expected) */
+
+  IP4_ADDR(&addr, 1, 2, 3, 4);
+  IP4_ADDR(&netmask, 255, 255, 255, 0);
+  IP4_ADDR(&gw, 1, 2, 3, 254);
+  expected_reasons = LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED | LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED;
+  netif_set_addr(&net_test, &addr, &netmask, &gw);
+
+  /* check that for no-change, no callback is expected */
+  expected_reasons = 0;
+  netif_set_ipaddr(&net_test, &addr);
+  netif_set_netmask(&net_test, &netmask);
+  netif_set_gw(&net_test, &gw);
+  netif_set_addr(&net_test, &addr, &netmask, &gw);
+
+  expected_reasons = LWIP_NSC_STATUS_CHANGED;
+  netif_set_down(&net_test);
+
+  expected_reasons = LWIP_NSC_NETIF_REMOVED;
   netif_remove(&net_test);
-  fail_unless(reasons == (LWIP_NSC_NETIF_REMOVED | LWIP_NSC_STATUS_CHANGED));
-  test_netif_ext_callback_assert_flag_count(LWIP_NSC_NETIF_REMOVED, 1);
-  test_netif_ext_callback_assert_flag_count(LWIP_NSC_STATUS_CHANGED, 1);
-  test_netif_ext_callback_reset();
+
+  expected_reasons = 0;
 
   netif_remove_ext_callback(&netif_callback_2);
   netif_remove_ext_callback(&netif_callback_3);
