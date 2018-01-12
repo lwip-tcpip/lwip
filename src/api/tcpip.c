@@ -215,7 +215,6 @@ tcpip_thread_poll_one(void)
   int ret = 0;
   struct tcpip_msg *msg;
 
-  /* wait for a message, timeouts are processed while waiting */
   if (sys_arch_mbox_tryfetch(&tcpip_mbox, (void **)&msg) != SYS_ARCH_TIMEOUT) {
     LOCK_TCPIP_CORE();
     if (msg != NULL) {
