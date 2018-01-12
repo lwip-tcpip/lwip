@@ -451,6 +451,8 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   err_t err = ERR_VAL; /* no matching interface */
   struct netif *netif;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_joingroup: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
   LWIP_ERROR("igmp_joingroup: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
@@ -483,6 +485,8 @@ err_t
 igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 {
   struct igmp_group *group;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_joingroup_netif: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
@@ -544,6 +548,8 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   err_t err = ERR_VAL; /* no matching interface */
   struct netif *netif;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_leavegroup: attempt to leave non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
   LWIP_ERROR("igmp_leavegroup: attempt to leave allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
@@ -575,6 +581,8 @@ err_t
 igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 {
   struct igmp_group *group;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_leavegroup_netif: attempt to leave non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);

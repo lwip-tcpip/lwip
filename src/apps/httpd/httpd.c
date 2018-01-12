@@ -2628,6 +2628,8 @@ httpd_init(void)
 #endif
   LWIP_DEBUGF(HTTPD_DEBUG, ("httpd_init\n"));
 
+  /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
+
   pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
   httpd_init_pcb(pcb, HTTPD_SERVER_PORT);

@@ -111,6 +111,7 @@ static u8_t snmp_auth_traps_enabled = 0;
 void
 snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (dst_idx < SNMP_TRAP_DESTINATIONS) {
     trap_dst[dst_idx].enable = enable;
   }
@@ -125,6 +126,7 @@ snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
 void
 snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (dst_idx < SNMP_TRAP_DESTINATIONS) {
     ip_addr_set(&trap_dst[dst_idx].dip, dst);
   }
@@ -175,6 +177,8 @@ snmp_send_trap(const struct snmp_obj_id *eoid, s32_t generic_trap, s32_t specifi
   struct pbuf *p;
   u16_t i, tot_len;
   err_t err = ERR_OK;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   trap_msg.snmp_version = 0;
 

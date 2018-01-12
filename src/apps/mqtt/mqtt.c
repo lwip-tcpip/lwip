@@ -1064,6 +1064,7 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
   u16_t topic_len;
   u16_t remaining_length;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mqtt_publish: client != NULL", client);
   LWIP_ASSERT("mqtt_publish: topic != NULL", topic);
   LWIP_ERROR("mqtt_publish: TCP disconnected", (client->conn_state != TCP_DISCONNECTED), return ERR_CONN);
@@ -1138,6 +1139,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
   u16_t pkt_id;
   struct mqtt_request_t *r;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mqtt_sub_unsub: client != NULL", client);
   LWIP_ASSERT("mqtt_sub_unsub: topic != NULL", topic);
 
@@ -1196,6 +1198,7 @@ void
 mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb,
                         mqtt_incoming_data_cb_t data_cb, void *arg)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mqtt_set_inpub_callback: client != NULL", client != NULL);
   client->data_cb = data_cb;
   client->pub_cb = pub_cb;
@@ -1210,6 +1213,7 @@ mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb
 mqtt_client_t *
 mqtt_client_new(void)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   return (mqtt_client_t *)mem_calloc(1, sizeof(mqtt_client_t));
 }
 
@@ -1247,6 +1251,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   u8_t flags = 0, will_topic_len = 0, will_msg_len = 0;
   u8_t client_user_len = 0, client_pass_len = 0;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mqtt_client_connect: client != NULL", client != NULL);
   LWIP_ASSERT("mqtt_client_connect: ip_addr != NULL", ip_addr != NULL);
   LWIP_ASSERT("mqtt_client_connect: client_info != NULL", client_info != NULL);
@@ -1394,6 +1399,7 @@ tcp_fail:
 void
 mqtt_disconnect(mqtt_client_t *client)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mqtt_disconnect: client != NULL", client);
   /* If connection in not already closed */
   if (client->conn_state != TCP_DISCONNECTED) {
@@ -1412,6 +1418,7 @@ mqtt_disconnect(mqtt_client_t *client)
 u8_t
 mqtt_client_is_connected(mqtt_client_t *client)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mqtt_client_is_connected: client != NULL", client);
   return client->conn_state == MQTT_CONNECTED;
 }

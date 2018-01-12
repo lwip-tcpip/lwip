@@ -506,6 +506,7 @@ err_t
 etharp_add_static_entry(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr)
 {
   struct netif *netif;
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_add_static_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
               ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
               (u16_t)ethaddr->addr[0], (u16_t)ethaddr->addr[1], (u16_t)ethaddr->addr[2],
@@ -531,6 +532,7 @@ err_t
 etharp_remove_static_entry(const ip4_addr_t *ipaddr)
 {
   s8_t i;
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_remove_static_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
               ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr)));
 
@@ -645,6 +647,8 @@ etharp_input(struct pbuf *p, struct netif *netif)
   /* these are aligned properly, whereas the ARP header fields might not be */
   ip4_addr_t sipaddr, dipaddr;
   u8_t for_us;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
@@ -793,6 +797,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
   struct eth_addr mcastaddr;
   const ip4_addr_t *dst_addr = ipaddr;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_ASSERT("q != NULL", q != NULL);
   LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);

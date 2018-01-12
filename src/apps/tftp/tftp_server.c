@@ -388,6 +388,7 @@ tftp_init(const struct tftp_context *ctx)
 {
   err_t ret;
 
+  /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
   struct udp_pcb *pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   if (pcb == NULL) {
     return ERR_MEM;

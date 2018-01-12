@@ -312,6 +312,8 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
   err_t         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* loop through netif's */
   NETIF_FOREACH(netif) {
     /* Should we join this interface ? */
@@ -352,6 +354,8 @@ mld6_joingroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
   }
   IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
 #endif /* LWIP_IPV6_SCOPES */
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   /* find group or create a new one if not found */
   group = mld6_lookfor_group(netif, groupaddr);
@@ -397,6 +401,8 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
   err_t         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* loop through netif's */
   NETIF_FOREACH(netif) {
     /* Should we leave this interface ? */
@@ -436,6 +442,8 @@ mld6_leavegroup_netif(struct netif *netif, const ip6_addr_t *groupaddr)
   }
   IP6_ADDR_ZONECHECK_NETIF(groupaddr, netif);
 #endif /* LWIP_IPV6_SCOPES */
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   /* find group */
   group = mld6_lookfor_group(netif, groupaddr);

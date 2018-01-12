@@ -322,6 +322,7 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
 void
 netbiosns_init(void)
 {
+  /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
 #ifdef NETBIOS_LWIP_NAME
   LWIP_ASSERT("NetBIOS name is too long!", strlen(NETBIOS_LWIP_NAME) < NETBIOS_NAME_LEN);
 #endif
@@ -344,6 +345,7 @@ void
 netbiosns_set_name(const char *hostname)
 {
   size_t copy_len = strlen(hostname);
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
   if (copy_len >= NETBIOS_NAME_LEN) {
     copy_len = NETBIOS_NAME_LEN - 1;
@@ -359,6 +361,7 @@ netbiosns_set_name(const char *hostname)
 void
 netbiosns_stop(void)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (netbiosns_pcb != NULL) {
     udp_remove(netbiosns_pcb);
     netbiosns_pcb = NULL;

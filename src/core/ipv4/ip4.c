@@ -154,6 +154,8 @@ ip4_route(const ip4_addr_t *dest)
 #if !LWIP_SINGLE_NETIF
   struct netif *netif;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
 #if LWIP_MULTICAST_TX_OPTIONS
   /* Use administratively selected interface for multicast by default */
   if (ip4_addr_ismulticast(dest) && ip4_default_multicast_netif) {
@@ -825,6 +827,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
   u32_t chk_sum = 0;
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
   MIB2_STATS_INC(mib2.ipoutrequests);

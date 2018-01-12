@@ -634,6 +634,8 @@ sntp_request(void *arg)
 void
 sntp_init(void)
 {
+  /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
+
 #ifdef SNTP_SERVER_ADDRESS
 #if SNTP_SERVER_DNS
   sntp_setservername(0, SNTP_SERVER_ADDRESS);
@@ -670,6 +672,7 @@ sntp_init(void)
 void
 sntp_stop(void)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (sntp_pcb != NULL) {
     sys_untimeout(sntp_request, NULL);
     sys_untimeout(sntp_try_next_server, NULL);
@@ -695,6 +698,7 @@ u8_t sntp_enabled(void)
 void
 sntp_setoperatingmode(u8_t operating_mode)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("Invalid operating mode", operating_mode <= SNTP_OPMODE_LISTENONLY);
   LWIP_ASSERT("Operating mode must not be set while SNTP client is running", sntp_pcb == NULL);
   sntp_opmode = operating_mode;
@@ -718,6 +722,7 @@ sntp_getoperatingmode(void)
 void
 sntp_servermode_dhcp(int set_servers_from_dhcp)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   u8_t new_mode = set_servers_from_dhcp ? 1 : 0;
   if (sntp_set_servers_from_dhcp != new_mode) {
     sntp_set_servers_from_dhcp = new_mode;
@@ -735,6 +740,7 @@ sntp_servermode_dhcp(int set_servers_from_dhcp)
 void
 sntp_setserver(u8_t idx, const ip_addr_t *server)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (idx < SNTP_MAX_SERVERS) {
     if (server != NULL) {
       sntp_servers[idx].addr = (*server);
@@ -801,6 +807,7 @@ sntp_getserver(u8_t idx)
 void
 sntp_setservername(u8_t idx, const char *server)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (idx < SNTP_MAX_SERVERS) {
     sntp_servers[idx].name = server;
   }

@@ -92,6 +92,8 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
   struct netif *netif;
   s8_t i;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   /* If single netif configuration, fast return. */
   if ((netif_list != NULL) && (netif_list->next == NULL)) {
     if (!netif_is_up(netif_list) || !netif_is_link_up(netif_list) ||
@@ -1170,6 +1172,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
   struct ip6_hdr *ip6hdr;
   ip6_addr_t dest_addr;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
   /* Should the IPv6 header be generated or is it already included in p? */

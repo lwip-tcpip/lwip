@@ -1891,6 +1891,7 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   err_t res;
   struct mdns_host *mdns;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("mdns_resp_add_netif: netif != NULL", (netif != NULL), return ERR_VAL);
   LWIP_ERROR("mdns_resp_add_netif: Hostname too long", (strlen(hostname) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
 
@@ -1938,6 +1939,7 @@ mdns_resp_remove_netif(struct netif *netif)
   int i;
   struct mdns_host *mdns;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mdns_resp_remove_netif: Null pointer", netif);
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_remove_netif: Not an active netif", (mdns != NULL), return ERR_VAL);
@@ -1986,6 +1988,7 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   struct mdns_service *srv;
   struct mdns_host *mdns;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mdns_resp_add_service: netif != NULL", netif);
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_add_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
@@ -2054,6 +2057,7 @@ mdns_resp_del_service(struct netif *netif, s8_t slot)
 err_t
 mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_t txt_len)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("mdns_resp_add_service_txtitem: service != NULL", service);
 
   /* Use a mdns_domain struct to store txt chunks since it is the same encoding */
@@ -2068,6 +2072,7 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
 void
 mdns_resp_announce(struct netif *netif)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("mdns_resp_announce: netif != NULL", (netif != NULL), return);
 
   if (NETIF_TO_HOST(netif) == NULL) {
@@ -2093,6 +2098,8 @@ void
 mdns_resp_init(void)
 {
   err_t res;
+
+  /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
 
   mdns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("Failed to allocate pcb", mdns_pcb != NULL);

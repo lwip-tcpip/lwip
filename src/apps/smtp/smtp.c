@@ -345,6 +345,9 @@ err_t
 smtp_set_server_addr(const char* server)
 {
   size_t len = 0;
+
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (server != NULL) {
     /* strnlen: returns length WITHOUT terminating 0 byte OR
      * SMTP_MAX_SERVERNAME_LEN+1 when string is too long */
@@ -368,6 +371,7 @@ smtp_set_server_addr(const char* server)
 void
 smtp_set_server_port(u16_t port)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   smtp_server_port = port;
 }
 
@@ -380,6 +384,7 @@ smtp_set_server_port(u16_t port)
 void
 smtp_set_tls_config(struct altcp_tls_config *tls_config)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   smtp_server_tls_config = tls_config;
 }
 #endif
@@ -395,6 +400,8 @@ smtp_set_auth(const char* username, const char* pass)
 {
   size_t uname_len = 0;
   size_t pass_len = 0;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   memset(smtp_auth_plain, 0xfa, 64);
   if (username != NULL) {
@@ -586,6 +593,8 @@ smtp_send_mail(const char* from, const char* to, const char* subject, const char
   size_t mem_len = sizeof(struct smtp_session);
   char *sfrom, *sto, *ssubject, *sbody;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   mem_len += from_len + to_len + subject_len + body_len + 4;
   if (mem_len > 0xffff) {
     /* too long! */
@@ -633,6 +642,8 @@ smtp_send_mail_static(const char *from, const char* to, const char* subject,
 {
   struct smtp_session* s;
   size_t len;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   s = (struct smtp_session*)SMTP_STATE_MALLOC(sizeof(struct smtp_session));
   if (s == NULL) {
@@ -686,6 +697,7 @@ smtp_send_mail_int(void *arg)
   struct smtp_send_request *req = (struct smtp_send_request*)arg;
   err_t err;
 
+  LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("smtp_send_mail_int: no argument given", arg != NULL);
 
   if (req->static_data) {
@@ -1458,6 +1470,8 @@ smtp_send_mail_bodycback(const char *from, const char* to, const char* subject,
 {
   struct smtp_session* s;
   size_t len;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   s = (struct smtp_session*)SMTP_STATE_MALLOC(sizeof(struct smtp_session));
   if (s == NULL) {

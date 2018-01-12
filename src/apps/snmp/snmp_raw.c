@@ -91,6 +91,8 @@ snmp_init(void)
   struct udp_pcb *snmp_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ERROR("snmp_raw: no PCB", (snmp_pcb != NULL), return;);
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   snmp_traps_handle = snmp_pcb;
 
   udp_recv(snmp_pcb, snmp_recv, NULL);

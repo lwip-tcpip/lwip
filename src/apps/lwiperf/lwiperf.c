@@ -594,6 +594,8 @@ lwiperf_start_tcp_server(const ip_addr_t *local_addr, u16_t local_port,
   struct tcp_pcb *pcb;
   lwiperf_state_tcp_t *s;
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (local_addr == NULL) {
     return NULL;
   }
@@ -639,6 +641,8 @@ void
 lwiperf_abort(void *lwiperf_session)
 {
   lwiperf_state_base_t *i, *dealloc, *last = NULL;
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   for (i = lwiperf_all_connections; i != NULL; ) {
     if ((i == lwiperf_session) || (i->related_server_state == lwiperf_session)) {

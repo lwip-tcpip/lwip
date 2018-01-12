@@ -86,6 +86,8 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   u16_t next_hdr_offset = SIZEOF_ETH_HDR;
 #endif /* LWIP_ARP || ETHARP_SUPPORT_VLAN */
 
+  LWIP_ASSERT_CORE_LOCKED();
+
   if (p->len <= SIZEOF_ETH_HDR) {
     /* a packet with only an ethernet header (or less) is not valid for us */
     ETHARP_STATS_INC(etharp.proterr);
@@ -270,6 +272,8 @@ ethernet_output(struct netif * netif, struct pbuf * p,
                 u16_t eth_type) {
   struct eth_hdr *ethhdr;
   u16_t eth_type_be = lwip_htons(eth_type);
+
+  LWIP_ASSERT_CORE_LOCKED();
 
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
   s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
