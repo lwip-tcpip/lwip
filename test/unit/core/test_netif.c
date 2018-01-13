@@ -59,6 +59,7 @@ testif_init(struct netif *netif)
 
 #define MAX_NSC_REASON_IDX 10
 static netif_nsc_reason_t expected_reasons;
+static int callback_ctr;
 
 static int dummy_active;
 
@@ -76,6 +77,7 @@ static void
 test_netif_ext_callback(struct netif* netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t* args)
 {
   LWIP_UNUSED_ARG(args); /* @todo */
+  callback_ctr++;
 
   fail_unless(netif == &net_test);
 
@@ -108,59 +110,101 @@ START_TEST(test_netif_extcallbacks)
   /* positive tests: check that single events come as expected */
 
   expected_reasons = LWIP_NSC_NETIF_ADDED;
+  callback_ctr = 0;
   netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  fail_unless(callback_ctr == 1);
 
   expected_reasons = LWIP_NSC_LINK_CHANGED;
+  callback_ctr = 0;
   netif_set_link_up(&net_test);
+  fail_unless(callback_ctr == 1);
 
   expected_reasons = LWIP_NSC_STATUS_CHANGED;
+  callback_ctr = 0;
   netif_set_up(&net_test);
+  fail_unless(callback_ctr == 1);
 
   IP4_ADDR(&addr, 1, 2, 3, 4);
   expected_reasons = LWIP_NSC_IPV4_ADDRESS_CHANGED;
+  callback_ctr = 0;
   netif_set_ipaddr(&net_test, &addr);
+  fail_unless(callback_ctr == 1);
 
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   expected_reasons = LWIP_NSC_IPV4_NETMASK_CHANGED;
+  callback_ctr = 0;
   netif_set_netmask(&net_test, &netmask);
+  fail_unless(callback_ctr == 1);
 
   IP4_ADDR(&gw, 1, 2, 3, 254);
   expected_reasons = LWIP_NSC_IPV4_GATEWAY_CHANGED;
+  callback_ctr = 0;
   netif_set_gw(&net_test, &gw);
+  fail_unless(callback_ctr == 1);
 
   IP4_ADDR(&addr, 0, 0, 0, 0);
   expected_reasons = LWIP_NSC_IPV4_ADDRESS_CHANGED;
+  callback_ctr = 0;
   netif_set_ipaddr(&net_test, &addr);
+  fail_unless(callback_ctr == 1);
 
   IP4_ADDR(&netmask, 0, 0, 0, 0);
   expected_reasons = LWIP_NSC_IPV4_NETMASK_CHANGED;
+  callback_ctr = 0;
   netif_set_netmask(&net_test, &netmask);
+  fail_unless(callback_ctr == 1);
 
   IP4_ADDR(&gw, 0, 0, 0, 0);
   expected_reasons = LWIP_NSC_IPV4_GATEWAY_CHANGED;
+  callback_ctr = 0;
   netif_set_gw(&net_test, &gw);
+  fail_unless(callback_ctr == 1);
 
-  /* check that for multi-events (only one combined callback expected) */
+  /* check for multi-events (only one combined callback expected) */
 
   IP4_ADDR(&addr, 1, 2, 3, 4);
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   IP4_ADDR(&gw, 1, 2, 3, 254);
   expected_reasons = (netif_nsc_reason_t)(LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED |
                                           LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED);
+  callback_ctr = 0;
   netif_set_addr(&net_test, &addr, &netmask, &gw);
+  fail_unless(callback_ctr == 1);
 
   /* check that for no-change, no callback is expected */
   expected_reasons = LWIP_NSC_NONE;
+  callback_ctr = 0;
   netif_set_ipaddr(&net_test, &addr);
+  fail_unless(callback_ctr == 0);
+
   netif_set_netmask(&net_test, &netmask);
+  callback_ctr = 0;
+  fail_unless(callback_ctr == 0);
+
+  callback_ctr = 0;
   netif_set_gw(&net_test, &gw);
+  fail_unless(callback_ctr == 0);
+
+  callback_ctr = 0;
   netif_set_addr(&net_test, &addr, &netmask, &gw);
+  fail_unless(callback_ctr == 0);
+
+  /* check for single-events */
+  IP4_ADDR(&addr, 1, 2, 3, 5);
+  expected_reasons = (netif_nsc_reason_t)(LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED);
+  callback_ctr = 0;
+  netif_set_addr(&net_test, &addr, &netmask, &gw);
+  fail_unless(callback_ctr == 1);
 
   expected_reasons = LWIP_NSC_STATUS_CHANGED;
+  callback_ctr = 0;
   netif_set_down(&net_test);
+  fail_unless(callback_ctr == 1);
 
   expected_reasons = LWIP_NSC_NETIF_REMOVED;
+  callback_ctr = 0;
   netif_remove(&net_test);
+  fail_unless(callback_ctr == 1);
 
   expected_reasons = LWIP_NSC_NONE;
 
