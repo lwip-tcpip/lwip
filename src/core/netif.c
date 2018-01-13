@@ -628,7 +628,7 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
                const ip4_addr_t *gw)
 {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-  netif_nsc_reason_t change_reason = LWIP_NSC_NONE;
+  int change_reason = LWIP_NSC_NONE;
   netif_ext_callback_args_t cb_args;
   ip_addr_t old_nm_val;
   ip_addr_t old_gw_val;
@@ -690,7 +690,7 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
   if (change_reason != LWIP_NSC_NONE) {
     change_reason |= LWIP_NSC_IPV4_SETTINGS_CHANGED;
-    netif_invoke_ext_callback(netif, change_reason, &cb_args);
+    netif_invoke_ext_callback(netif, (netif_nsc_reason_t)change_reason, &cb_args);
   }
 #endif
 }
