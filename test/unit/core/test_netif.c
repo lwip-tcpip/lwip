@@ -145,11 +145,12 @@ START_TEST(test_netif_extcallbacks)
   IP4_ADDR(&addr, 1, 2, 3, 4);
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   IP4_ADDR(&gw, 1, 2, 3, 254);
-  expected_reasons = LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED | LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED;
+  expected_reasons = (netif_nsc_reason_t)(LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED |
+                                          LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED);
   netif_set_addr(&net_test, &addr, &netmask, &gw);
 
   /* check that for no-change, no callback is expected */
-  expected_reasons = 0;
+  expected_reasons = LWIP_NSC_NONE;
   netif_set_ipaddr(&net_test, &addr);
   netif_set_netmask(&net_test, &netmask);
   netif_set_gw(&net_test, &gw);
@@ -161,7 +162,7 @@ START_TEST(test_netif_extcallbacks)
   expected_reasons = LWIP_NSC_NETIF_REMOVED;
   netif_remove(&net_test);
 
-  expected_reasons = 0;
+  expected_reasons = LWIP_NSC_NONE;
 
   netif_remove_ext_callback(&netif_callback_2);
   netif_remove_ext_callback(&netif_callback_3);
