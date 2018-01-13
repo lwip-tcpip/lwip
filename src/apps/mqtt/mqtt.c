@@ -1044,7 +1044,7 @@ mqtt_tcp_connect_cb(void *arg, struct altcp_pcb *tpcb, err_t err)
  * @param client MQTT client
  * @param topic Publish topic string
  * @param payload Data to publish (NULL is allowed)
- * @param payload_length: Length of payload (0 is allowed)
+ * @param payload_length Length of payload (0 is allowed)
  * @param qos Quality of service, 0 1 or 2
  * @param retain MQTT retain flag
  * @param cb Callback to call when publish is complete or has timed out
