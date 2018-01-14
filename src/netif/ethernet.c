@@ -273,8 +273,6 @@ ethernet_output(struct netif * netif, struct pbuf * p,
   struct eth_hdr *ethhdr;
   u16_t eth_type_be = lwip_htons(eth_type);
 
-  LWIP_ASSERT_CORE_LOCKED();
-
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
   s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
   if (vlan_prio_vid >= 0) {
@@ -297,6 +295,8 @@ ethernet_output(struct netif * netif, struct pbuf * p,
       goto pbuf_header_failed;
     }
   }
+
+  LWIP_ASSERT_CORE_LOCKED();
 
   ethhdr = (struct eth_hdr *)p->payload;
   ethhdr->type = eth_type_be;
