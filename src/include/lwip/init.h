@@ -81,8 +81,8 @@ extern "C" {
 #endif
 
 /** Provides the version of the stack */
-#define LWIP_VERSION   (((u32_t)LWIP_VERSION_MAJOR) << 24   | ((u32_t)LWIP_VERSION_MINOR) << 16 | \
-                        ((u32_t)LWIP_VERSION_REVISION) << 8 | ((u32_t)LWIP_VERSION_RC))
+#define LWIP_VERSION   ((LWIP_VERSION_MAJOR) << 24   | (LWIP_VERSION_MINOR) << 16 | \
+                        (LWIP_VERSION_REVISION) << 8 | (LWIP_VERSION_RC))
 /** Provides the version of the stack as string */
 #define LWIP_VERSION_STRING     LWIP_VERSTR(LWIP_VERSION_MAJOR) "." LWIP_VERSTR(LWIP_VERSION_MINOR) "." LWIP_VERSTR(LWIP_VERSION_REVISION) LWIP_VERSION_STRING_SUFFIX
 
