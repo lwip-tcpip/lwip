@@ -1051,13 +1051,13 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       }
       {
         s32_t time = snmpv3_get_engine_time_internal();
-        if (request->msg_authoritative_engine_time > time) {
+        if (request->msg_authoritative_engine_time > (time + 150)) {
           snmp_stats.notintimewindows++;
           request->msg_flags = SNMP_V3_AUTHNOPRIV;
           request->error_status = SNMP_ERR_NOTINTIMEWINDOW;
           return ERR_OK;
         } else if (time > 150) {
-          if (request->msg_authoritative_engine_time < time - 150) {
+          if (request->msg_authoritative_engine_time < (time - 150)) {
             snmp_stats.notintimewindows++;
             request->msg_flags = SNMP_V3_AUTHNOPRIV;
             request->error_status = SNMP_ERR_NOTINTIMEWINDOW;
