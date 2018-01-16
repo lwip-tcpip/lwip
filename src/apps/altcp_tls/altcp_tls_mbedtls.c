@@ -116,6 +116,8 @@ struct altcp_tls_config {
   mbedtls_ssl_config conf;
   mbedtls_entropy_context entropy;
   mbedtls_ctr_drbg_context ctr_drbg;
+  mbedtls_x509_crt *cert;
+  mbedtls_pk_context *pkey;
 #if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
   /** Inter-connection cache for fast connection startup */
   struct mbedtls_ssl_cache_context cache;
@@ -687,12 +689,17 @@ altcp_tls_create_config(int is_server)
   altcp_mbedtls_mem_init();
 
   sz = sizeof(struct altcp_tls_config) + sizeof(mbedtls_x509_crt);
-  if (is_server)
+  if (is_server) {
     sz += sizeof(mbedtls_pk_context);
+  }
 
   conf = (struct altcp_tls_config *)altcp_mbedtls_alloc_config(sz);
   if (conf == NULL) {
     return NULL;
+  }
+  conf->cert = (mbedtls_x509_crt *)(conf + 1);
+  if (is_server) {
+    conf->pkey = (mbedtls_pk_context *)((conf->cert) + 1);
   }
 
   mbedtls_ssl_config_init(&conf->conf);
@@ -747,10 +754,10 @@ altcp_tls_create_config_server_privkey_cert(const u8_t *privkey, size_t privkey_
     return NULL;
   }
 
-  srvcert = (mbedtls_x509_crt *)(conf+1);
+  srvcert = conf->cert;
   mbedtls_x509_crt_init(srvcert);
 
-  pkey = (mbedtls_pk_context *)(srvcert+1);
+  pkey = conf->pkey;
   mbedtls_pk_init(pkey);
 
   /* Load the certificates and private key */
@@ -792,7 +799,7 @@ altcp_tls_create_config_client(const u8_t *cert, size_t cert_len)
   }
 
   /* Initialise certificates, allocated with conf */
-  acc_cert = (mbedtls_x509_crt *)(conf+1);
+  acc_cert = conf->cert;
   mbedtls_x509_crt_init(acc_cert);
 
   /* Load the certificates */
@@ -810,13 +817,10 @@ altcp_tls_create_config_client(const u8_t *cert, size_t cert_len)
 void
 altcp_tls_free_config(struct altcp_tls_config *conf)
 {
-  mbedtls_x509_crt *cert = (mbedtls_x509_crt *)(conf+1);
-  int endpoint = conf->conf.endpoint;
-  if (endpoint == MBEDTLS_SSL_IS_SERVER) {
-    mbedtls_pk_context *pkey = (mbedtls_pk_context *)(cert+1);
-    mbedtls_pk_free(pkey);
+  if (conf->pkey) {
+    mbedtls_pk_free(conf->pkey);
   }
-  mbedtls_x509_crt_free(cert);
+  mbedtls_x509_crt_free(conf->cert);
   altcp_mbedtls_free_config(conf);
 }
 
