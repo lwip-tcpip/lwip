@@ -167,8 +167,8 @@
  *    These macros cannot be used in an interrupt context!
  *    Note the OS must correctly handle priority inversion for this.
  *
- * Cache issues
- * ============
+ * Cache / DMA issues
+ * ==================
  *
  * DMA-capable ethernet hardware and zero-copy RX
  * ----------------------------------------------
@@ -182,6 +182,12 @@
  * Also keep in mind the user application may also write into pbufs,
  * so it is generally a bug not to flush the data cache before handing
  * a buffer to DMA hardware.
+ *
+ * DMA-capable ethernet hardware and cacheline alignment
+ * -----------------------------------------------------
+ * Nice description about DMA capable hardware and buffer handling:
+ * http://www.pebblebay.com/a-guide-to-using-direct-memory-access-in-embedded-systems-part-two/
+ * Read especially sections "Cache coherency" and "Buffer alignment".
  */
 
 /**
