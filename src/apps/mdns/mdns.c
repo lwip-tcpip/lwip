@@ -13,7 +13,7 @@
  * Things left to implement:
  * -------------------------
  *
- * - Probing/conflict resolution
+ * - Tiebreaking for simultaneous probing
  * - Sending goodbye messages (zero ttl) - shutdown, DHCP lease about to expire, DHCP turned off...
  * - Checking that source address of unicast requests are on the same network
  * - Limiting multicast responses to 1 per second per resource record
@@ -63,6 +63,7 @@
 #include "lwip/mem.h"
 #include "lwip/prot/dns.h"
 #include "lwip/prot/iana.h"
+#include "lwip/timeouts.h"
 
 #include <string.h>
 
@@ -135,6 +136,12 @@ NETIF_DECLARE_EXT_CALLBACK(netif_callback)
 /* Lookup for text info on service instance */
 #define REPLY_SERVICE_TXT       0x80
 
+typedef enum {
+  MDNS_PROBING_NOT_STARTED,
+  MDNS_PROBING_ONGOING,
+  MDNS_PROBING_COMPLETE,
+} mdns_probing_state;
+
 static const char *dnssd_protos[] = {
   "_udp", /* DNSSD_PROTO_UDP */
   "_tcp", /* DNSSD_PROTO_TCP */
@@ -168,6 +175,10 @@ struct mdns_host {
   struct mdns_service *services[MDNS_MAX_SERVICES];
   /** TTL in seconds of A/AAAA/PTR replies */
   u32_t dns_ttl;
+  /** Number of probes sent for the current name */
+  u8_t probes_sent;
+  /** State in probing sequence */
+  mdns_probing_state probing_state;
 };
 
 /** Information about received packet */
@@ -191,7 +202,7 @@ struct mdns_packet {
   /** Number of unparsed questions */
   u16_t questions_left;
   /** Number of answers in packet,
-   *  (sum of normal, authorative and additional answers)
+   *  (sum of normal, authoritative and additional answers)
    *  read from packet header */
   u16_t answers;
   /** Number of unparsed answers */
@@ -215,6 +226,8 @@ struct mdns_outpacket {
   u16_t questions;
   /** Number of normal answers written */
   u16_t answers;
+  /** Number of authoritative answers written */
+  u16_t authoritative;
   /** Number of additional answers written */
   u16_t additional;
   /** Offsets for written domain names in packet.
@@ -260,6 +273,9 @@ struct mdns_answer {
   /** Offset of start of variable answer in packet */
   u16_t rd_offset;
 };
+
+static err_t mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags);
+static void mdns_probe(void* arg);
 
 static err_t
 mdns_domain_add_label_base(struct mdns_domain *domain, u8_t len)
@@ -1279,11 +1295,11 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
  * Add additional answers based on the selected answers
  * Send the packet
  */
-static void
-mdns_send_outpacket(struct mdns_outpacket *outpkt)
+static err_t
+mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags)
 {
   struct mdns_service *service;
-  err_t res;
+  err_t res = ERR_ARG;
   int i;
   struct mdns_host *mdns = NETIF_TO_HOST(outpkt->netif);
 
@@ -1439,13 +1455,12 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
 
     /* Write header */
     memset(&hdr, 0, sizeof(hdr));
-    hdr.flags1 = DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
+    hdr.flags1 = flags;
+    hdr.numquestions = lwip_htons(outpkt->questions);
     hdr.numanswers = lwip_htons(outpkt->answers);
+    hdr.numauthrr = lwip_htons(outpkt->authoritative);
     hdr.numextrarr = lwip_htons(outpkt->additional);
-    if (outpkt->legacy_query) {
-      hdr.numquestions = lwip_htons(1);
-      hdr.id = lwip_htons(outpkt->tx_id);
-    }
+    hdr.id = lwip_htons(outpkt->tx_id);
     pbuf_take(outpkt->pbuf, &hdr, sizeof(hdr));
 
     /* Shrink packet */
@@ -1463,9 +1478,9 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt)
     /* Send created packet */
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d, unicast=%d\n", outpkt->write_offset, outpkt->unicast_reply));
     if (outpkt->unicast_reply) {
-      udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
+      res = udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
     } else {
-      udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, LWIP_IANA_PORT_MDNS, outpkt->netif);
+      res = udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, LWIP_IANA_PORT_MDNS, outpkt->netif);
     }
   }
 
@@ -1474,7 +1489,9 @@ cleanup:
     pbuf_free(outpkt->pbuf);
     outpkt->pbuf = NULL;
   }
+  return res;
 }
+
 
 /**
  * Send unsolicited answer containing all our known data
@@ -1515,7 +1532,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 
   announce.dest_port = LWIP_IANA_PORT_MDNS;
   SMEMCPY(&announce.dest_addr, destination, sizeof(announce.dest_addr));
-  mdns_send_outpacket(&announce);
+  mdns_send_outpacket(&announce, DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE);
 }
 
 /**
@@ -1533,6 +1550,12 @@ mdns_handle_question(struct mdns_packet *pkt)
   int i;
   err_t res;
   struct mdns_host *mdns = NETIF_TO_HOST(pkt->netif);
+
+  if (mdns->probing_state != MDNS_PROBING_COMPLETE) {
+    /* Don't answer questions until we've verified our domains via probing */
+    /* todo we should check incoming questions during probing for tiebreaking */
+    return;
+  }
 
   mdns_init_outpacket(&reply, pkt);
 
@@ -1569,6 +1592,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     if (replies && reply.legacy_query) {
       /* Add question to reply packet (legacy packet only has 1 question) */
       res = mdns_add_question(&reply, &q.info.domain, q.info.type, q.info.klass, 0);
+      reply.questions = 1;
       if (res != ERR_OK) {
         goto cleanup;
       }
@@ -1724,7 +1748,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
   }
 
-  mdns_send_outpacket(&reply);
+  mdns_send_outpacket(&reply, DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE);
 
 cleanup:
   if (reply.pbuf) {
@@ -1741,6 +1765,8 @@ cleanup:
 static void
 mdns_handle_response(struct mdns_packet *pkt)
 {
+  struct mdns_host* mdns = NETIF_TO_HOST(pkt->netif);
+
   /* Ignore all questions */
   while (pkt->questions_left) {
     struct mdns_question q;
@@ -1766,6 +1792,36 @@ mdns_handle_response(struct mdns_packet *pkt)
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Answer for domain "));
     mdns_domain_debug_print(&ans.info.domain);
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", ans.info.type, ans.info.klass));
+
+    /*"Apparently conflicting Multicast DNS responses received *before* the first probe packet is sent MUST
+      be silently ignored" so drop answer if we haven't started probing yet*/
+    if (mdns->probing_state == MDNS_PROBING_ONGOING && mdns->probes_sent > 0) {
+      struct mdns_domain domain;
+      u8_t i;
+      u8_t conflict = 0;
+
+      res = mdns_build_host_domain(&domain, mdns);
+      if (res == ERR_OK && mdns_domain_eq(&ans.info.domain, &domain)) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe response matches host domain!"));
+        conflict = 1;
+      }
+
+      for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+        struct mdns_service* service = mdns->services[i];
+        if (!service) {
+          continue;
+        }
+        res = mdns_build_service_domain(&domain, service, 1);
+        if (res == ERR_OK && mdns_domain_eq(&ans.info.domain, &domain)) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe response matches service domain!"));
+          conflict = 1;
+        }
+      }
+
+      if (conflict != 0) {
+        sys_untimeout(mdns_probe, pkt->netif);
+      }
+    }
   }
 }
 
@@ -1852,13 +1908,13 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
   switch (reason) {
     case LWIP_NSC_STATUS_CHANGED:
       if (args->status_changed.state != 0) {
-        mdns_resp_announce(netif);
+        mdns_resp_restart(netif);
       }
       /* TODO: send goodbye message */
       break;
     case LWIP_NSC_LINK_CHANGED:
       if (args->link_changed.state != 0) {
-        mdns_resp_announce(netif);
+        mdns_resp_restart(netif);
       }
       break;
     case LWIP_NSC_IPV4_ADDRESS_CHANGED:  /* fall through */
@@ -1874,6 +1930,83 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
   }
 }
 #endif
+
+static err_t
+mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
+{
+  struct mdns_host* mdns;
+  struct mdns_outpacket pkt;
+  struct mdns_domain domain;
+  u8_t i;
+  err_t res;
+
+  mdns = NETIF_TO_HOST(netif);
+
+  memset(&pkt, 0, sizeof(pkt));
+  pkt.netif = netif;
+
+  /* Add unicast questions with rtype ANY for all our desired records */
+  mdns_build_host_domain(&domain, mdns);
+  res = mdns_add_question(&pkt, &domain, DNS_RRTYPE_ANY, DNS_RRCLASS_IN, 1);
+  if (res != ERR_OK) {
+    goto cleanup;
+  }
+  pkt.questions++;
+  for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+    struct mdns_service* service = mdns->services[i];
+    if (!service) {
+      continue;
+    }
+    mdns_build_service_domain(&domain, service, 1);
+    res = mdns_add_question(&pkt, &domain, DNS_RRTYPE_ANY, DNS_RRCLASS_IN, 1);
+    if (res != ERR_OK) {
+      goto cleanup;
+    }
+    pkt.questions++;
+  }
+
+  pkt.tx_id = 0;
+  SMEMCPY(&pkt.dest_addr, destination, sizeof(pkt.dest_addr));
+  res = mdns_send_outpacket(&pkt, 0);
+
+cleanup:
+  if (pkt.pbuf) {
+    pbuf_free(pkt.pbuf);
+    pkt.pbuf = NULL;
+  }
+  return res;
+}
+
+/**
+ * Timer callback for probing network.
+ */
+static void
+mdns_probe(void* arg)
+{
+  struct netif *netif = (struct netif *)arg;
+  struct mdns_host* mdns = NETIF_TO_HOST(netif);
+
+  if(mdns->probes_sent >= 3) {
+    /* probing successful, announce the new name */
+    mdns->probing_state = MDNS_PROBING_COMPLETE;
+    mdns_resp_announce(netif);
+  } else {
+#if LWIP_IPV4
+    /*if ipv4 wait with probing until address is set*/
+    if (!ip4_addr_isany_val(*netif_ip4_addr(netif)) &&
+        mdns_send_probe(netif, IP4_ADDR_ANY) == ERR_OK)
+#endif
+    {
+#if LWIP_IPV6
+      if (mdns_send_probe(netif, IP6_ADDR_ANY) == ERR_OK)
+#endif
+      {
+        mdns->probes_sent++;
+      }
+    }
+    sys_timeout(250, mdns_probe, netif);
+  }
+}
 
 /**
  * @ingroup mdns
@@ -1904,6 +2037,8 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
 
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
   mdns->dns_ttl = dns_ttl;
+  mdns->probes_sent = 0;
+  mdns->probing_state = MDNS_PROBING_NOT_STARTED;
 
   /* Join multicast groups */
 #if LWIP_IPV4
@@ -1944,6 +2079,10 @@ mdns_resp_remove_netif(struct netif *netif)
   LWIP_ASSERT("mdns_resp_remove_netif: Null pointer", netif);
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_remove_netif: Not an active netif", (mdns != NULL), return ERR_VAL);
+
+  if (mdns->probing_state == MDNS_PROBING_ONGOING) {
+    sys_untimeout(mdns_probe, netif);
+  }
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service *service = mdns->services[i];
@@ -2073,22 +2212,76 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
 void
 mdns_resp_announce(struct netif *netif)
 {
+  struct mdns_host* mdns = NETIF_TO_HOST(netif);
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("mdns_resp_announce: netif != NULL", (netif != NULL), return);
 
-  if (NETIF_TO_HOST(netif) == NULL) {
+  if (mdns == NULL) {
     return;
   }
 
-  /* Announce on IPv6 and IPv4 */
+  if (mdns->probing_state == MDNS_PROBING_COMPLETE)
+  {
+    /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
-  mdns_announce(netif, IP6_ADDR_ANY);
+    mdns_announce(netif, IP6_ADDR_ANY);
 #endif
 #if LWIP_IPV4
-  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-    mdns_announce(netif, IP4_ADDR_ANY);
-  }
+    if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
+      mdns_announce(netif, IP4_ADDR_ANY);
+    }
 #endif
+  } /* else: ip address changed while probing was ongoing? todo reset counter to restart? */
+}
+
+/**
+ * @ingroup mdns
+ * Start mdns responder. Call this when netif and all services are set up, and when cable is
+ * connected after being disconnected or administrative interface is set up after being down
+ * @param netif The network interface to send on
+ */
+void
+mdns_resp_start(struct netif *netif)
+{
+  struct mdns_host* mdns = NETIF_TO_HOST(netif);
+  LWIP_ASSERT_CORE_LOCKED();
+  LWIP_ERROR("mdns_resp_start: netif != NULL", (netif != NULL), return);
+
+  if (mdns == NULL) {
+    return;
+  }
+
+  /*todo first probe timeout should be random 0-250 ms*/
+  /*todo if we've failed 15 times within a 10 second period we should wait 5 seconds (or wait 5 seconds every time except first)*/
+  mdns->probes_sent = 0;
+  mdns->probing_state = MDNS_PROBING_ONGOING;
+  sys_timeout(250, mdns_probe, netif);
+}
+
+/**
+ * @ingroup mdns
+ * Restart mdns responder. Call this when cable is connected after being disconnected or
+ * administrative interface is set up after being down
+ * @param netif The network interface to send on
+ */
+void
+mdns_resp_restart(struct netif *netif)
+{
+  struct mdns_host* mdns = NETIF_TO_HOST(netif);
+  LWIP_ASSERT_CORE_LOCKED();
+  LWIP_ERROR("mdns_resp_start: netif != NULL", (netif != NULL), return);
+
+  if (mdns == NULL) {
+    return;
+  }
+
+  /* don't restart unless user called mdns_resp_start already */
+  if (mdns->probing_state != MDNS_PROBING_NOT_STARTED) {
+    if (mdns->probing_state == MDNS_PROBING_ONGOING) {
+      sys_untimeout(mdns_probe, netif);
+    }
+    mdns_resp_start(netif);
+  }
 }
 
 /**
