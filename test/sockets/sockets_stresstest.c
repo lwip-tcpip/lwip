@@ -60,6 +60,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef TEST_SOCKETS_STRESS
+#define TEST_SOCKETS_STRESS   LWIP_DBG_OFF
+#endif
+
 #define TEST_TIME_SECONDS     10
 #define TEST_TXRX_BUFSIZE     (TCP_MSS * 2)
 #define TEST_MAX_RXWAIT_MS    50
@@ -118,7 +122,7 @@ check_test_data(const void *buf, size_t buf_len_bytes)
   LWIP_ASSERT("len too short", len_rx >= 4);
   if (len_rx > buf_len_bytes) {
     /* not all data received in this segment */
-    printf("check-\n");
+    LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("check-\n"));
     return buf_len_bytes;
   }
   chk_rx = (((u16_t)p[2]) << 8) | p[3];
@@ -149,7 +153,7 @@ recv_and_check_data_return_offset(int s, char *rxbuf, size_t rxbufsize, size_t r
     return rxoff;
   }
   *closed = 0;
-  printf("%s %d rx %d\n", dbg, s, (int)ret);
+  LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("%s %d rx %d\n", dbg, s, (int)ret));
   LWIP_ASSERT("ret > 0", ret > 0);
   return check_test_data(rxbuf, rxoff + ret);
 }
@@ -408,7 +412,7 @@ sockets_stresstest_conn_client(void *arg)
       /* timeout, send some */
       size_t send_len = (LWIP_RAND() % (sizeof(txbuf) - 4)) + 4;
       fill_test_data(txbuf, send_len);
-      printf("cli %d tx %d\n", s, (int)send_len);
+      LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("cli %d tx %d\n", s, (int)send_len));
       ret = lwip_write(s, txbuf, send_len);
       LWIP_ASSERT("ret == send_len", ret == (int)send_len);
     }
@@ -454,7 +458,7 @@ sockets_stresstest_conn_server(void *arg)
       /* timeout, send some */
       size_t send_len = (LWIP_RAND() % (sizeof(txbuf) - 4)) + 4;
       fill_test_data(txbuf, send_len);
-      printf("srv %d tx %d\n", s, (int)send_len);
+      LWIP_DEBUGF(TEST_SOCKETS_STRESS | LWIP_DBG_TRACE, ("srv %d tx %d\n", s, (int)send_len));
       ret = lwip_write(s, txbuf, send_len);
       if (ret == -1) {
         /* TODO: for this to work, 'errno' has to support multithreading... */
@@ -565,6 +569,7 @@ sockets_stresstest_init_server(int addr_family, u16_t server_port)
   LWIP_ASSERT("invalid addr_family", (addr_family == AF_INET) || (addr_family == AF_INET6));
   settings->addr.ss_family = (sa_family_t)addr_family;
 #endif
+  LWIP_UNUSED_ARG(addr_family);
   ((struct sockaddr_in *)(&settings->addr))->sin_port = server_port;
 
   t = sys_thread_new("sockets_stresstest_listener", sockets_stresstest_listener, settings, 0, 0);
