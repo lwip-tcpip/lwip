@@ -417,10 +417,11 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
   }
   if (p == NULL) {
     /* connection closed -> test done */
-    if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW)) ==
-        PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
-      /* client requested transmission after end of test */
-      lwiperf_tx_start(conn);
+    if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
+      if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_NOW)) == 0) {
+        /* client requested transmission after end of test */
+        lwiperf_tx_start(conn);
+      }
     }
     lwiperf_tcp_close(conn, LWIPERF_TCP_DONE_SERVER);
     return ERR_OK;
@@ -443,21 +444,24 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
         return ERR_OK;
       }
       conn->have_settings_buf = 1;
-      if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW)) ==
-          PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW)) {
-        /* client requested parallel transmission test */
-        err_t err2 = lwiperf_tx_start(conn);
-        if (err2 != ERR_OK) {
-          lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_TXERROR);
-          pbuf_free(p);
-          return ERR_OK;
+      if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
+        if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_NOW)) {
+          /* client requested parallel transmission test */
+          err_t err2 = lwiperf_tx_start(conn);
+          if (err2 != ERR_OK) {
+            lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_TXERROR);
+            pbuf_free(p);
+            return ERR_OK;
+          }
         }
       }
     } else {
-      if (pbuf_memcmp(p, 0, &conn->settings, sizeof(lwiperf_settings_t)) != 0) {
-        lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_DATAERROR);
-        pbuf_free(p);
-        return ERR_OK;
+      if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
+        if (pbuf_memcmp(p, 0, &conn->settings, sizeof(lwiperf_settings_t)) != 0) {
+          lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_DATAERROR);
+          pbuf_free(p);
+          return ERR_OK;
+        }
       }
     }
     conn->bytes_transferred += sizeof(lwiperf_settings_t);
