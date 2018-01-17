@@ -2419,6 +2419,7 @@ lwip_poll_should_wake(const struct lwip_select_cb *scb, int fd, int has_recveven
  *   NETCONN_EVT_RCVPLUS
  *   NETCONN_EVT_SENDPLUS
  *   NETCONN_EVT_ERROR
+ * This requirement will be asserted in select_check_waiters()
  */
 static void
 event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
@@ -2526,12 +2527,16 @@ static void select_check_waiters(int s, int has_recvevent, int has_sendevent, in
 #if !LWIP_TCPIP_CORE_LOCKING
   int last_select_cb_ctr;
   SYS_ARCH_DECL_PROTECT(lev);
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
+  LWIP_ASSERT_CORE_LOCKED();
+
+#if !LWIP_TCPIP_CORE_LOCKING
   SYS_ARCH_PROTECT(lev);
 again:
   /* remember the state of select_cb_list to detect changes */
   last_select_cb_ctr = select_cb_ctr;
-#endif
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
   for (scb = select_cb_list; scb != NULL; scb = scb->next) {
     if (scb->sem_signalled == 0) {
       /* semaphore not signalled yet */
