@@ -52,8 +52,8 @@
 
 #include <string.h>
 
-/* Currently, only TCP-over-IPv4 is implemented (does iperf support IPv6 anyway?) */
-#if LWIP_IPV4 && LWIP_TCP && LWIP_CALLBACK_API
+/* Currently, only TCP is implemented (does iperf support IPv6 anyway?) */
+#if LWIP_TCP && LWIP_CALLBACK_API
 
 /** Specify the idle timeout (in seconds) after that the test fails */
 #ifndef LWIPERF_TCP_MAX_IDLE_SEC
@@ -61,6 +61,11 @@
 #endif
 #if LWIPERF_TCP_MAX_IDLE_SEC > 255
 #error LWIPERF_TCP_MAX_IDLE_SEC must fit into an u8_t
+#endif
+
+/** Change this if you don't want to lwiperf to listen to any IP version */
+#ifndef LWIPERF_SERVER_IP_TYPE
+#define LWIPERF_SERVER_IP_TYPE      IPADDR_TYPE_ANY
 #endif
 
 /* File internal memory allocation (struct lwiperf_*): this defaults to
@@ -365,7 +370,7 @@ lwiperf_tx_start(lwiperf_state_tcp_t *conn)
   if (client_conn == NULL) {
     return ERR_MEM;
   }
-  newpcb = tcp_new();
+  newpcb = tcp_new_ip_type(IP_GET_TYPE(&conn->conn_pcb->remote_ip));
   if (newpcb == NULL) {
     LWIPERF_FREE(lwiperf_state_tcp_t, client_conn);
     return ERR_MEM;
@@ -614,7 +619,7 @@ lwiperf_start_tcp_server(const ip_addr_t *local_addr, u16_t local_port,
   s->report_fn = report_fn;
   s->report_arg = report_arg;
 
-  pcb = tcp_new();
+  pcb = tcp_new_ip_type(LWIPERF_SERVER_IP_TYPE);
   if (pcb != NULL) {
     err = tcp_bind(pcb, local_addr, local_port);
     if (err == ERR_OK) {
@@ -663,4 +668,4 @@ lwiperf_abort(void *lwiperf_session)
   }
 }
 
-#endif /* LWIP_IPV4 && LWIP_TCP && LWIP_CALLBACK_API */
+#endif /* LWIP_TCP && LWIP_CALLBACK_API */
