@@ -125,7 +125,7 @@ extern void httpd_cgi_handler(const char* uri, int iNumParams, char **pcParam, c
  *
  * This function will be called each time the HTTPD server detects a tag of the
  * form <!--#name--> in files with extensions mentioned in the g_pcSSIExtensions
- * array (currently .shtml, .shtm, .ssi, .xml) where "name" appears as
+ * array (currently .shtml, .shtm, .ssi, .xml, .json) where "name" appears as
  * one of the tags supplied to http_set_ssi_handler in the tags array.  The
  * returned insert string, which will be appended after the the string
  * "<!--#name-->" in file sent back to the client, should be written to pointer
