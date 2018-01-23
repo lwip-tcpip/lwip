@@ -105,6 +105,8 @@ extern const ip_addr_t ip_addr_any_type;
 #define IP_SET_TYPE(ipaddr, iptype)     do { if((ipaddr) != NULL) { IP_SET_TYPE_VAL(*(ipaddr), iptype); }}while(0)
 #define IP_GET_TYPE(ipaddr)           ((ipaddr)->type)
 
+#define IP_ADDR_RAW_SIZE(ipaddr)      (IP_GET_TYPE(&ipaddr) == IPADDR_TYPE_V4 ? sizeof(ip4_addr_t) : sizeof(ip6_addr_t))
+
 #define IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr) (IP_GET_TYPE(&pcb->local_ip) == IP_GET_TYPE(ipaddr))
 #define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (IP_IS_ANY_TYPE_VAL(pcb->local_ip) || IP_ADDR_PCB_VERSION_MATCH_EXACT(pcb, ipaddr))
 
@@ -276,6 +278,7 @@ typedef ip4_addr_t ip_addr_t;
 #define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V4
+#define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(ip4_addr_t)
 #define ip_2_ip4(ipaddr)                        (ipaddr)
 #define IP_ADDR4(ipaddr,a,b,c,d)                IP4_ADDR(ipaddr,a,b,c,d)
 
@@ -323,6 +326,7 @@ typedef ip6_addr_t ip_addr_t;
 #define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define IP_GET_TYPE(ipaddr)                     IPADDR_TYPE_V6
+#define IP_ADDR_RAW_SIZE(ipaddr)                sizeof(ip6_addr_t)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
 #define IP_ADDR6(ipaddr,i0,i1,i2,i3)            IP6_ADDR(ipaddr,i0,i1,i2,i3)
 #define IP_ADDR6_HOST(ipaddr,i0,i1,i2,i3)       IP_ADDR6(ipaddr,PP_HTONL(i0),PP_HTONL(i1),PP_HTONL(i2),PP_HTONL(i3))
