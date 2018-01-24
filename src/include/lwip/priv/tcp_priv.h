@@ -508,6 +508,10 @@ void tcp_netif_ip_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_a
 void tcp_free_ooseq(struct tcp_pcb *pcb);
 #endif
 
+#if LWIP_TCP_PCB_NUM_EXT_ARGS
+err_t tcp_ext_arg_invoke_callbacks_passive_open(struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

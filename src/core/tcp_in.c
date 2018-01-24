@@ -680,6 +680,13 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
     MIB2_STATS_INC(mib2.tcppassiveopens);
 
+#if LWIP_TCP_PCB_NUM_EXT_ARGS
+    if (tcp_ext_arg_invoke_callbacks_passive_open(pcb, npcb) != ERR_OK) {
+      tcp_abandon(npcb, 0);
+      return;
+    }
+#endif
+
     /* Send a SYN|ACK together with the MSS option. */
     rc = tcp_enqueue_flags(npcb, TCP_SYN | TCP_ACK);
     if (rc != ERR_OK) {

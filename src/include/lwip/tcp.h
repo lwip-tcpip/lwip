@@ -56,6 +56,7 @@ extern "C" {
 #endif
 
 struct tcp_pcb;
+struct tcp_pcb_listen;
 
 /** Function prototype for tcp accept callback functions. Called when a new
  * connection can be accepted on a listening pcb.
@@ -163,6 +164,45 @@ struct tcp_sack_range {
 };
 #endif /* LWIP_TCP_SACK_OUT */
 
+/** Function prototype for deallocation of arguments. Called *just before* the
+ * pcb is freed, so don't expect to be able to do anything with this pcb!
+ *
+ * @param id ext arg id (allocated via @ref tcp_ext_arg_alloc_id)
+ * @param data pointer to the data (set via @ref tcp_ext_arg_set before)
+ */
+typedef void (*tcp_extarg_callback_pcb_destroyed_fn)(u8_t id, void *data);
+
+/** Function prototype to transition arguments from a listening pcb to an accepted pcb
+ *
+ * @param id ext arg id (allocated via @ref tcp_ext_arg_alloc_id)
+ * @param lpcb the listening pcb accepting a connection
+ * @param cpcb the newly allocated connection pcb
+ * @param ERR_OK if OK, any error if connection should be dropped
+ */
+typedef err_t (*tcp_extarg_callback_passive_open_fn)(u8_t id, struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
+
+/** A table of callback functions that is invoked for ext arguments */
+struct tcp_ext_arg_callbacks {
+  /** @ref tcp_extarg_callback_pcb_destroyed_fn */
+  tcp_extarg_callback_pcb_destroyed_fn destroy;
+  /** @ref tcp_extarg_callback_passive_open_fn */
+  tcp_extarg_callback_passive_open_fn passive_open;
+};
+
+#define LWIP_TCP_PCB_NUM_EXT_ARG_ID_INVALID 0xFF
+
+#if LWIP_TCP_PCB_NUM_EXT_ARGS
+/* This is the structure for ext args in tcp pcbs (used as array) */
+struct tcp_pcb_ext_args {
+  const struct tcp_ext_arg_callbacks *callbacks;
+  void *data;
+};
+/* This is a helper define to prevent zero size arrays if disabled */
+#define TCP_PCB_EXTARGS struct tcp_pcb_ext_args ext_args[LWIP_TCP_PCB_NUM_EXT_ARGS];
+#else
+#define TCP_PCB_EXTARGS
+#endif
+
 typedef u16_t tcpflags_t;
 
 /**
@@ -171,6 +211,7 @@ typedef u16_t tcpflags_t;
 #define TCP_PCB_COMMON(type) \
   type *next; /* for the linked list */ \
   void *callback_arg; \
+  TCP_PCB_EXTARGS \
   enum tcp_state state; /* TCP state */ \
   u8_t prio; \
   /* ports are in host byte order */ \
@@ -441,6 +482,13 @@ err_t            tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_add
 
 /* for compatibility with older implementation */
 #define tcp_new_ip6() tcp_new_ip_type(IPADDR_TYPE_V6)
+
+#if LWIP_TCP_PCB_NUM_EXT_ARGS
+u8_t tcp_ext_arg_alloc_id(void);
+void tcp_ext_arg_set_callbacks(struct tcp_pcb *pcb, uint8_t id, const struct tcp_ext_arg_callbacks * const callbacks);
+void tcp_ext_arg_set(struct tcp_pcb *pcb, uint8_t id, void *arg);
+void *tcp_ext_arg_get(const struct tcp_pcb *pcb, uint8_t id);
+#endif
 
 #ifdef __cplusplus
 }

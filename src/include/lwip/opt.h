@@ -1465,6 +1465,15 @@
 #define TCP_RCV_SCALE                   0
 #endif
 
+/**
+ * LWIP_TCP_PCB_NUM_EXT_ARGS:
+ * When this is > 0, every tcp pcb (including listen pcb) includes a number of
+ * additional argument entries in an array (see tcp_ext_arg_alloc_id)
+ */
+#if !defined LWIP_TCP_PCB_NUM_EXT_ARGS || defined __DOXYGEN__
+#define LWIP_TCP_PCB_NUM_EXT_ARGS       0
+#endif
+
 /** LWIP_ALTCP==1: enable the altcp API
  * altcp is an abstraction layer that prevents applications linking against the
  * tcp.h functions but provides the same functionality. It is used to e.g. add
