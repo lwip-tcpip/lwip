@@ -2936,6 +2936,50 @@
 #endif
 
 /**
+ * LWIP_HOOK_SOCKETS_SETSOCKOPT(s, sock, level, optname, optval, optlen, err)
+ * Called from socket API to implement setsockopt() for options not provided by lwIP.
+ * Core lock is held when this hook is called.
+ * Signature:
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const void *optval, socklen_t optlen, int *err)
+ * Arguments:
+ * - s: socket file descriptor
+ * - sock: internal socket descriptor (see lwip/priv/sockets_priv.h)
+ * - level: protocol level at which the option resides
+ * - optname: option to set
+ * - optval: value to set
+ * - optlen: size of optval
+ * - err: output error
+ * Return values:
+ * - 0: Hook has not consumed the option, code continues as normal (to internal options)
+ * - != 0: Hook has consumed the option, 'err' is returned
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_SOCKETS_SETSOCKOPT(s, sock, level, optname, optval, optlen, err)
+#endif
+
+/**
+ * LWIP_HOOK_SOCKETS_GETSOCKOPT(s, sock, level, optname, optval, optlen, err)
+ * Called from socket API to implement getsockopt() for options not provided by lwIP.
+ * Core lock is held when this hook is called.
+ * Signature:
+ *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, void *optval, socklen_t *optlen, int *err)
+ * Arguments:
+ * - s: socket file descriptor
+ * - sock: internal socket descriptor (see lwip/priv/sockets_priv.h)
+ * - level: protocol level at which the option resides
+ * - optname: option to get
+ * - optval: value to get
+ * - optlen: size of optval
+ * - err: output error
+ * Return values:
+ * - 0: Hook has not consumed the option, code continues as normal (to internal options)
+ * - != 0: Hook has consumed the option, 'err' is returned
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_SOCKETS_GETSOCKOPT(s, sock, level, optname, optval, optlen, err)
+#endif
+
+/**
  * LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, addrtype, err)
  * Called from netconn APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.

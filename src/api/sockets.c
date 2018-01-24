@@ -64,6 +64,10 @@
 
 #include <string.h>
 
+#ifdef LWIP_HOOK_FILENAME
+#include LWIP_HOOK_FILENAME
+#endif
+
 /* If the netconn API is not required publicly, then we include the necessary
    files here to get the implementation */
 #if !LWIP_NETCONN
@@ -2835,6 +2839,12 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     return EBADF;
   }
 
+#ifdef LWIP_HOOK_SOCKETS_GETSOCKOPT
+  if (LWIP_HOOK_SOCKETS_GETSOCKOPT(s, sock, level, optname, optval, optlen, &err)) {
+    return err;
+  }
+#endif
+
   switch (level) {
 
     /* Level: SOL_SOCKET */
@@ -3249,6 +3259,12 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
   if (!sock) {
     return EBADF;
   }
+
+#ifdef LWIP_HOOK_SOCKETS_SETSOCKOPT
+  if (LWIP_HOOK_SOCKETS_SETSOCKOPT(s, sock, level, optname, optval, optlen, &err)) {
+    return err;
+  }
+#endif
 
   switch (level) {
 
