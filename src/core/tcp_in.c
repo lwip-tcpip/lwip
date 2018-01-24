@@ -422,7 +422,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
            deallocate the PCB. */
         TCP_EVENT_ERR(pcb->state, pcb->errf, pcb->callback_arg, ERR_RST);
         tcp_pcb_remove(&tcp_active_pcbs, pcb);
-        memp_free(MEMP_TCP_PCB, pcb);
+        tcp_free(pcb);
       } else {
         err = ERR_OK;
         /* If the application has registered a "sent" function to be
@@ -585,7 +585,7 @@ tcp_input_delayed_close(struct tcp_pcb *pcb)
       TCP_EVENT_ERR(pcb->state, pcb->errf, pcb->callback_arg, ERR_CLSD);
     }
     tcp_pcb_remove(&tcp_active_pcbs, pcb);
-    memp_free(MEMP_TCP_PCB, pcb);
+    tcp_free(pcb);
     return 1;
   }
   return 0;

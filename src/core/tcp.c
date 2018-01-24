@@ -202,6 +202,22 @@ tcp_init(void)
 #endif /* LWIP_RAND */
 }
 
+/** Free a tcp pcb */
+void
+tcp_free(struct tcp_pcb *pcb)
+{
+  LWIP_ASSERT("tcp_free: LISTEN", pcb->state != LISTEN);
+  memp_free(MEMP_TCP_PCB, pcb);
+}
+
+/** Free a tcp listen pcb */
+static void
+tcp_free_listen(struct tcp_pcb *pcb)
+{
+  LWIP_ASSERT("tcp_free_listen: !LISTEN", pcb->state != LISTEN);
+  memp_free(MEMP_TCP_PCB_LISTEN, pcb);
+}
+
 /**
  * Called periodically to dispatch TCP timers.
  */
@@ -337,7 +353,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
         /* prevent using a deallocated pcb: free it from tcp_input later */
         tcp_trigger_input_pcb_close();
       } else {
-        memp_free(MEMP_TCP_PCB, pcb);
+        tcp_free(pcb);
       }
       return ERR_OK;
     }
@@ -357,16 +373,16 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       if (pcb->local_port != 0) {
         TCP_RMV(&tcp_bound_pcbs, pcb);
       }
-      memp_free(MEMP_TCP_PCB, pcb);
+      tcp_free(pcb);
       break;
     case LISTEN:
       tcp_listen_closed(pcb);
       tcp_pcb_remove(&tcp_listen_pcbs.pcbs, pcb);
-      memp_free(MEMP_TCP_PCB_LISTEN, pcb);
+      tcp_free_listen(pcb);
       break;
     case SYN_SENT:
       TCP_PCB_REMOVE_ACTIVE(pcb);
-      memp_free(MEMP_TCP_PCB, pcb);
+      tcp_free(pcb);
       MIB2_STATS_INC(mib2.tcpattemptfails);
       break;
     default:
@@ -541,7 +557,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
      the PCB with a NULL argument, and send an RST to the remote end. */
   if (pcb->state == TIME_WAIT) {
     tcp_pcb_remove(&tcp_tw_pcbs, pcb);
-    memp_free(MEMP_TCP_PCB, pcb);
+    tcp_free(pcb);
   } else {
     int send_rst = 0;
     enum tcp_state last_state;
@@ -577,7 +593,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
       tcp_rst(pcb, seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port);
     }
     last_state = pcb->state;
-    memp_free(MEMP_TCP_PCB, pcb);
+    tcp_free(pcb);
     TCP_EVENT_ERR(last_state, errf, errf_arg, ERR_ABRT);
   }
 }
@@ -850,7 +866,7 @@ tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err)
   if (pcb->local_port != 0) {
     TCP_RMV(&tcp_bound_pcbs, pcb);
   }
-  memp_free(MEMP_TCP_PCB, pcb);
+  tcp_free(pcb);
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
 #endif /* LWIP_CALLBACK_API */
@@ -1346,7 +1362,7 @@ tcp_slowtmr_start:
       last_state = pcb->state;
       pcb2 = pcb;
       pcb = pcb->next;
-      memp_free(MEMP_TCP_PCB, pcb2);
+      tcp_free(pcb2);
 
       tcp_active_pcbs_changed = 0;
       TCP_EVENT_ERR(last_state, err_fn, err_arg, ERR_ABRT);
@@ -1404,7 +1420,7 @@ tcp_slowtmr_start:
       }
       pcb2 = pcb;
       pcb = pcb->next;
-      memp_free(MEMP_TCP_PCB, pcb2);
+      tcp_free(pcb2);
     } else {
       prev = pcb;
       pcb = pcb->next;
