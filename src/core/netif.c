@@ -1404,17 +1404,17 @@ netif_ip6_addr_set_state(struct netif *netif, s8_t addr_idx, u8_t state)
       /* address state has changed -> call the callback function */
       NETIF_STATUS_CALLBACK(netif);
     }
-  }
 
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
-  {
-    netif_ext_callback_args_t args;
-    args.ipv6_addr_state_changed.addr_index = addr_idx;
-    args.ipv6_addr_state_changed.address    = netif_ip_addr6(netif, addr_idx);
-    netif_invoke_ext_callback(netif, LWIP_NSC_IPV6_ADDR_STATE_CHANGED, &args);
-  }
+    {
+      netif_ext_callback_args_t args;
+      args.ipv6_addr_state_changed.addr_index = addr_idx;
+      args.ipv6_addr_state_changed.old_state  = old_state;
+      args.ipv6_addr_state_changed.address    = netif_ip_addr6(netif, addr_idx);
+      netif_invoke_ext_callback(netif, LWIP_NSC_IPV6_ADDR_STATE_CHANGED, &args);
+    }
 #endif
-
+  }
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IPv6 address %d of interface %c%c set to %s/0x%"X8_F"\n",
               addr_idx, netif->name[0], netif->name[1], ip6addr_ntoa(netif_ip6_addr(netif, addr_idx)),
               netif_ip6_addr_state(netif, addr_idx)));

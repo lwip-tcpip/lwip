@@ -598,6 +598,8 @@ typedef union
   {
     /** Index of affected IPv6 address */
     s8_t addr_index;
+    /** Old IPv6 address state */
+    u8_t old_state;
     /** Affected IPv6 address */
     const ip_addr_t* address;
   } ipv6_addr_state_changed;
