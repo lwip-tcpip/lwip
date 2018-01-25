@@ -51,7 +51,7 @@
 #include "lwip/ip6_addr.h"
 #include "lwip/ip6_frag.h"
 #include "lwip/icmp6.h"
-#include "lwip/raw.h"
+#include "lwip/priv/raw_priv.h"
 #include "lwip/udp.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/dhcp6.h"
@@ -516,6 +516,9 @@ ip6_input(struct pbuf *p, struct netif *inp)
   @todo
   int check_ip_src=1;
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
+#if LWIP_RAW
+  raw_input_state_t raw_status;
+#endif /* LWIP_RAW */
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -1055,7 +1058,8 @@ options_done:
   /* p points to IPv6 header again for raw_input. */
   pbuf_header_force(p, (s16_t)hlen_tot);
   /* raw input did not eat the packet? */
-  if (raw_input(p, inp) == 0)
+  raw_status = raw_input(p, inp);
+  if (raw_status != RAW_INPUT_EATEN)
   {
     /* Point to payload. */
     pbuf_remove_header(p, hlen_tot);
@@ -1085,19 +1089,26 @@ options_done:
       break;
 #endif /* LWIP_ICMP */
     default:
+#if LWIP_RAW
+        if (raw_status == RAW_INPUT_DELIVERED) {
+          /* @todo: ipv6 mib in-delivers? */
+        } else
+#endif /* LWIP_RAW */
+        {
 #if LWIP_ICMP6
-      /* p points to IPv6 header again for raw_input. */
-      pbuf_header_force(p, (s16_t)hlen_tot);
-      /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
-      if ((!ip6_addr_ismulticast(ip6_current_dest_addr())) &&
-          (IP6H_NEXTH(ip6hdr) != IP6_NEXTH_ICMP6)) {
-        icmp6_param_problem(p, ICMP6_PP_HEADER, nexth);
-      }
+        /* p points to IPv6 header again for raw_input. */
+        pbuf_header_force(p, (s16_t)hlen_tot);
+        /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
+        if ((!ip6_addr_ismulticast(ip6_current_dest_addr())) &&
+            (IP6H_NEXTH(ip6hdr) != IP6_NEXTH_ICMP6)) {
+          icmp6_param_problem(p, ICMP6_PP_HEADER, nexth);
+        }
 #endif /* LWIP_ICMP */
-      LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %"U16_F"\n", (u16_t)IP6H_NEXTH(ip6hdr)));
+        LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %"U16_F"\n", (u16_t)IP6H_NEXTH(ip6hdr)));
+        IP6_STATS_INC(ip6.proterr);
+        IP6_STATS_INC(ip6.drop);
+      }
       pbuf_free(p);
-      IP6_STATS_INC(ip6.proterr);
-      IP6_STATS_INC(ip6.drop);
       break;
     }
   }

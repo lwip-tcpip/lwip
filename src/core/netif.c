@@ -59,7 +59,7 @@
 #include "lwip/netif.h"
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/udp.h"
-#include "lwip/raw.h"
+#include "lwip/priv/raw_priv.h"
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
 #include "lwip/etharp.h"
