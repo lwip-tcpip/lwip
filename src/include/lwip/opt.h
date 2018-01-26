@@ -2697,6 +2697,35 @@
 #endif
 
 /**
+ * LWIP_HOOK_TCP_INPACKET_PCB:
+ * Hook for intercepting incoming packets before they are passed to a pcb. This
+ * allows updating some state or even dropping a packet.
+ * Signature:
+ * err_t my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, u16_t optlen, u16_t opt1len, u8_t *opt2, struct pbuf *p);
+ * Arguments:
+ * - pcb: tcp_pcb selected for input of this packet (ATTENTION: this may be
+ *        struct tcp_pcb_listen if pcb->state == LISTEN)
+ * - hdr: pointer to tcp header (ATTENTION: tcp options may not be in one piece!)
+ * - optlen: tcp option length
+ * - opt1len: tcp option length 1st part
+ * - opt2: if this is != NULL, tcp options are split among 2 pbufs. In that case,
+ *         options start at right after the tcp header ('(u8_t*)(hdr + 1)') for
+ *         the first 'opt1len' bytes and the rest starts at 'opt2'. opt2len can
+ *         be simply calculated: 'opt2len = optlen - opt1len;'
+ * - p: input packet, p->payload points to application data (that's why tcp hdr
+ *      and options are passed in seperately)
+ * Return value:
+ * - ERR_OK: continue input of this packet as normal
+ * - != ERR_OK: drop this packet for input (don't continue input processing)
+ *
+ * ATTENTION: don't call any tcp api functions that might change tcp state (pcb
+ * state or any pcb lists) from this callback!
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_TCP_INPACKET_PCB(pcb, hdr, optlen, opt1len, opt2, p)
+#endif
+
+/**
  * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
  * Called from ip_input() (IPv4)
  * Signature:
