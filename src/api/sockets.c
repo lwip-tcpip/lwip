@@ -3726,7 +3726,7 @@ lwip_ioctl(int s, long cmd, void *argp)
 
       /* Check if there is data left from the last recv operation. /maq 041215 */
       if (sock->lastdata.netbuf) {
-        if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
+        if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
           recv_avail += sock->lastdata.pbuf->tot_len;
         } else {
           recv_avail += sock->lastdata.netbuf->p->tot_len;
