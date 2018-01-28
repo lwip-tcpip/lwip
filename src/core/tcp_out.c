@@ -144,6 +144,8 @@ tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen, u16_t datalen,
 
 /**
  * Called by tcp_close() to send a segment including FIN flag but not data.
+ * This FIN may be added to an existing segment or a new, otherwise empty
+ * segment is enqueued.
  *
  * @param pcb the tcp_pcb over which to send a segment
  * @return ERR_OK if sent, another err_t otherwise
@@ -1626,7 +1628,8 @@ tcp_rexmit_rto_commit(struct tcp_pcb *pcb)
 /**
  * Requeue all unacked segments for retransmission
  *
- * Called by tcp_slowtmr() for slow retransmission.
+ * Called by tcp_process() only, tcp_slowtmr() needs to do some things between
+ * "prepare" and "commit".
  *
  * @param pcb the tcp_pcb for which to re-enqueue all unacked segments
  */
