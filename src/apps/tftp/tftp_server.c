@@ -412,4 +412,14 @@ tftp_init(const struct tftp_context *ctx)
   return ERR_OK;
 }
 
+/** @ingroup tftp
+ * Deinitialize ("turn off") TFTP server.
+ */
+void tftp_cleanup(void)
+{
+  LWIP_ASSERT("Cleanup called on non-initialized TFTP", tftp_state.upcb != NULL);
+  udp_remove(tftp_state.upcb);
+  memset(&tftp_state, 0, sizeof(tftp_state));
+}
+
 #endif /* LWIP_UDP */

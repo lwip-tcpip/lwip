@@ -86,6 +86,7 @@ struct tftp_context {
 };
 
 err_t tftp_init(const struct tftp_context* ctx);
+void tftp_cleanup(void);
 
 #ifdef __cplusplus
 }
