@@ -1880,15 +1880,13 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   err_t err;
   struct pbuf *p;
   u8_t optlen = 0;
-#if CHECKSUM_GEN_TCP || LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT
-  struct tcp_hdr *tcphdr;
 #if LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT
+  struct tcp_hdr *tcphdr;
   u32_t *opts;
 #if LWIP_TCP_SACK_OUT
   u8_t num_sacks;
 #endif /* LWIP_TCP_SACK_OUT */
 #endif /* LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT */
-#endif /* CHECKSUM_GEN_TCP || LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT */
 
 #if LWIP_TCP_TIMESTAMPS
   if (pcb->flags & TF_TIMESTAMP) {
@@ -1911,13 +1909,11 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
     return ERR_BUF;
   }
 
-#if CHECKSUM_GEN_TCP || LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT
-  tcphdr = (struct tcp_hdr *)p->payload;
 #if LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT
+  tcphdr = (struct tcp_hdr *)p->payload;
   /* cast through void* to get rid of alignment warnings */
   opts = (u32_t *)(void *)(tcphdr + 1);
 #endif /* LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT */
-#endif /* CHECKSUM_GEN_TCP || LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT */
 
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG,
               ("tcp_output: sending ACK for %"U32_F"\n", pcb->rcv_nxt));
