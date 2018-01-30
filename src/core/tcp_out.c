@@ -1734,6 +1734,29 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
   }
 }
 
+static struct pbuf *
+tcp_output_alloc_header_common(u32_t ackno, u16_t optlen, u16_t datalen,
+                        u32_t seqno_be /* already in network byte order */,
+                        u16_t src_port, u16_t dst_port, u8_t flags, u16_t wnd)
+{
+  struct tcp_hdr *tcphdr;
+  struct pbuf *p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen + datalen, PBUF_RAM);
+  if (p != NULL) {
+    LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
+                (p->len >= TCP_HLEN + optlen));
+    tcphdr = (struct tcp_hdr *)p->payload;
+    tcphdr->src = lwip_htons(src_port);
+    tcphdr->dest = lwip_htons(dst_port);
+    tcphdr->seqno = seqno_be;
+    tcphdr->ackno = lwip_htonl(ackno);
+    TCPH_HDRLEN_FLAGS_SET(tcphdr, (5 + optlen / 4), flags);
+    tcphdr->wnd = lwip_htons(wnd);
+    tcphdr->chksum = 0;
+    tcphdr->urgp = 0;
+  }
+  return p;
+}
+
 /** Allocate a pbuf and create a tcphdr at p->payload, used for output
  * functions other than the default tcp_output -> tcp_output_segment
  * (e.g. tcp_send_empty_ack, etc.)
@@ -1748,21 +1771,10 @@ static struct pbuf *
 tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen, u16_t datalen,
                         u32_t seqno_be /* already in network byte order */)
 {
-  struct tcp_hdr *tcphdr;
-  struct pbuf *p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen + datalen, PBUF_RAM);
+  struct pbuf *p = tcp_output_alloc_header_common(pcb->rcv_nxt, optlen, datalen,
+    seqno_be, pcb->local_port, pcb->remote_port, TCP_ACK,
+    TCPWND_MIN16(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd)));
   if (p != NULL) {
-    LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
-                (p->len >= TCP_HLEN + optlen));
-    tcphdr = (struct tcp_hdr *)p->payload;
-    tcphdr->src = lwip_htons(pcb->local_port);
-    tcphdr->dest = lwip_htons(pcb->remote_port);
-    tcphdr->seqno = seqno_be;
-    tcphdr->ackno = lwip_htonl(pcb->rcv_nxt);
-    TCPH_HDRLEN_FLAGS_SET(tcphdr, (5 + optlen / 4), TCP_ACK);
-    tcphdr->wnd = lwip_htons(TCPWND_MIN16(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd)));
-    tcphdr->chksum = 0;
-    tcphdr->urgp = 0;
-
     /* If we're sending a packet, update the announced right window edge */
     pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;
   }
@@ -1796,29 +1808,21 @@ tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
         u16_t local_port, u16_t remote_port)
 {
   struct pbuf *p;
-  struct tcp_hdr *tcphdr;
   struct netif *netif;
-  p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
+  u16_t wnd;
+
+#if LWIP_WND_SCALE
+  wnd = PP_HTONS(((TCP_WND >> TCP_RCV_SCALE) & 0xFFFF));
+#else
+  wnd = PP_HTONS(TCP_WND);
+#endif
+
+  p = tcp_output_alloc_header_common(ackno, 0, 0, lwip_htonl(seqno), local_port,
+    remote_port, TCP_RST | TCP_ACK, wnd);
   if (p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_rst: could not allocate memory for pbuf\n"));
     return;
   }
-  LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
-              (p->len >= sizeof(struct tcp_hdr)));
-
-  tcphdr = (struct tcp_hdr *)p->payload;
-  tcphdr->src = lwip_htons(local_port);
-  tcphdr->dest = lwip_htons(remote_port);
-  tcphdr->seqno = lwip_htonl(seqno);
-  tcphdr->ackno = lwip_htonl(ackno);
-  TCPH_HDRLEN_FLAGS_SET(tcphdr, TCP_HLEN / 4, TCP_RST | TCP_ACK);
-#if LWIP_WND_SCALE
-  tcphdr->wnd = PP_HTONS(((TCP_WND >> TCP_RCV_SCALE) & 0xFFFF));
-#else
-  tcphdr->wnd = PP_HTONS(TCP_WND);
-#endif
-  tcphdr->chksum = 0;
-  tcphdr->urgp = 0;
 
   TCP_STATS_INC(tcp.xmit);
   MIB2_STATS_INC(mib2.tcpoutrsts);
@@ -1827,6 +1831,7 @@ tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
   if (netif != NULL) {
 #if CHECKSUM_GEN_TCP
     IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
+      struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
       tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
                                         local_ip, remote_ip);
     }
@@ -2020,7 +2025,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
                "   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n",
                tcp_ticks, pcb->tmr, (u16_t)pcb->keep_cnt_sent));
 
-  /* Only consider unsent, persist timer should be off when there data is in-flight */
+  /* Only consider unsent, persist timer should be off when there is data in-flight */
   seg = pcb->unsent;
   if (seg == NULL) {
     /* Not expected, persist timer should be off when the send buffer is empty */
