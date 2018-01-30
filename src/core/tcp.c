@@ -544,7 +544,6 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     memp_free(MEMP_TCP_PCB, pcb);
   } else {
     int send_rst = 0;
-    u16_t local_port = 0;
     enum tcp_state last_state;
     seqno = pcb->snd_nxt;
     ackno = pcb->rcv_nxt;
@@ -559,7 +558,6 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
       }
     } else {
       send_rst = reset;
-      local_port = pcb->local_port;
       TCP_PCB_REMOVE_ACTIVE(pcb);
     }
     if (pcb->unacked != NULL) {
@@ -576,7 +574,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     tcp_backlog_accepted(pcb);
     if (send_rst) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
-      tcp_rst(pcb, seqno, ackno, &pcb->local_ip, &pcb->remote_ip, local_port, pcb->remote_port);
+      tcp_rst(pcb, seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port);
     }
     last_state = pcb->state;
     memp_free(MEMP_TCP_PCB, pcb);
