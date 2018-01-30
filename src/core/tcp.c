@@ -27,11 +27,12 @@
  * 
  * Sending TCP data
  * ----------------
- * TCP data is sent by enqueueing the data with a call to
- * tcp_write(). When the data is successfully transmitted to the remote
- * host, the application will be notified with a call to a specified
- * callback function.
+ * TCP data is sent by enqueueing the data with a call to tcp_write() and
+ * triggering to send by calling tcp_output(). When the data is successfully
+ * transmitted to the remote host, the application will be notified with a
+ * call to a specified callback function.
  * - tcp_write()
+ * - tcp_output()
  * - tcp_sent()
  * 
  * Receiving TCP data
