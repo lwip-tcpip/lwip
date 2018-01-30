@@ -1781,6 +1781,46 @@ tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen, u16_t datalen,
   return p;
 }
 
+/** Output a control segment pbuf to IP.
+ *
+ * Called from tcp_rst, tcp_send_empty_ack, tcp_keepalive and tcp_zero_window_probe,
+ * this function combines selecting a netif for transmission, generating the tcp
+ * header checksum and calling ip_output_if while handling netif hints and stats.
+ */
+static err_t
+tcp_output_control_segment(const struct tcp_pcb *pcb, struct pbuf *p,
+                           const ip_addr_t *src, const ip_addr_t *dst)
+{
+  err_t err;
+  struct netif *netif = tcp_route(pcb, src, dst);
+  if (netif == NULL) {
+    err = ERR_RTE;
+  } else {
+    u8_t ttl, tos;
+#if CHECKSUM_GEN_TCP
+    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
+      struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
+      tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
+                                        src, dst);
+    }
+#endif
+    if (pcb != NULL) {
+      NETIF_SET_HINTS(netif, &(pcb->netif_hints));
+      ttl = pcb->ttl;
+      tos = pcb->tos;
+    } else {
+      /* Send output with hardcoded TTL/HL since we have no access to the pcb */
+      ttl = TCP_TTL;
+      tos = 0;
+    }
+    TCP_STATS_INC(tcp.xmit);
+    err = ip_output_if(p, src, dst, ttl, tos, IP_PROTO_TCP, netif);
+    NETIF_RESET_HINTS(netif);
+  }
+  pbuf_free(p);
+  return err;
+}
+
 /**
  * Send a TCP RESET packet (empty segment with RST flag set) either to
  * abort a connection or to show that there is no matching local connection
@@ -1808,7 +1848,6 @@ tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
         u16_t local_port, u16_t remote_port)
 {
   struct pbuf *p;
-  struct netif *netif;
   u16_t wnd;
 
 #if LWIP_WND_SCALE
@@ -1824,22 +1863,9 @@ tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
     return;
   }
 
-  TCP_STATS_INC(tcp.xmit);
   MIB2_STATS_INC(mib2.tcpoutrsts);
 
-  netif = tcp_route(pcb, local_ip, remote_ip);
-  if (netif != NULL) {
-#if CHECKSUM_GEN_TCP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
-      struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
-      tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
-                                        local_ip, remote_ip);
-    }
-#endif
-    /* Send output with hardcoded TTL/HL since we have no access to the pcb */
-    ip_output_if(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP, netif);
-  }
-  pbuf_free(p);
+  tcp_output_control_segment(pcb, p, local_ip, remote_ip);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));
 }
 
@@ -1854,7 +1880,6 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   err_t err;
   struct pbuf *p;
   u8_t optlen = 0;
-  struct netif *netif;
 #if CHECKSUM_GEN_TCP || LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT
   struct tcp_hdr *tcphdr;
 #if LWIP_TCP_TIMESTAMPS || LWIP_TCP_SACK_OUT
@@ -1915,23 +1940,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   }
 #endif
 
-  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
-  if (netif == NULL) {
-    err = ERR_RTE;
-  } else {
-#if CHECKSUM_GEN_TCP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
-      tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
-                                        &pcb->local_ip, &pcb->remote_ip);
-    }
-#endif
-    NETIF_SET_HINTS(netif, &(pcb->netif_hints));
-    err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip,
-                       pcb->ttl, pcb->tos, IP_PROTO_TCP, netif);
-    NETIF_RESET_HINTS(netif);
-  }
-  pbuf_free(p);
-
+  err = tcp_output_control_segment(pcb, p, &pcb->local_ip, &pcb->remote_ip);
   if (err != ERR_OK) {
     /* let tcp_fasttmr retry sending this ACK */
     tcp_set_flags(pcb, TF_ACK_DELAY | TF_ACK_NOW);
@@ -1956,7 +1965,6 @@ tcp_keepalive(struct tcp_pcb *pcb)
 {
   err_t err;
   struct pbuf *p;
-  struct netif *netif;
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to "));
   ip_addr_debug_print_val(TCP_DEBUG, pcb->remote_ip);
@@ -1971,25 +1979,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
                 ("tcp_keepalive: could not allocate memory for pbuf\n"));
     return ERR_MEM;
   }
-  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
-  if (netif == NULL) {
-    err = ERR_RTE;
-  } else {
-#if CHECKSUM_GEN_TCP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
-      struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
-      tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
-                                        &pcb->local_ip, &pcb->remote_ip);
-    }
-#endif /* CHECKSUM_GEN_TCP */
-    TCP_STATS_INC(tcp.xmit);
-
-    /* Send output to IP */
-    NETIF_SET_HINTS(netif, &(pcb->netif_hints));
-    err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP, netif);
-    NETIF_RESET_HINTS(netif);
-  }
-  pbuf_free(p);
+  err = tcp_output_control_segment(pcb, p, &pcb->local_ip, &pcb->remote_ip);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: seqno %"U32_F" ackno %"U32_F" err %d.\n",
                           pcb->snd_nxt - 1, pcb->rcv_nxt, (int)err));
@@ -2014,7 +2004,6 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   u16_t len;
   u8_t is_fin;
   u32_t snd_nxt;
-  struct netif *netif;
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: sending ZERO WINDOW probe to "));
   ip_addr_debug_print_val(TCP_DEBUG, pcb->remote_ip);
@@ -2069,26 +2058,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     pcb->snd_nxt = snd_nxt;
   }
 
-  netif = tcp_route(pcb, &pcb->local_ip, &pcb->remote_ip);
-  if (netif == NULL) {
-    err = ERR_RTE;
-  } else {
-#if CHECKSUM_GEN_TCP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
-      tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
-                                        &pcb->local_ip, &pcb->remote_ip);
-    }
-#endif
-    TCP_STATS_INC(tcp.xmit);
-
-    /* Send output to IP */
-    NETIF_SET_HINTS(netif, &(pcb->netif_hints));
-    err = ip_output_if(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
-                       0, IP_PROTO_TCP, netif);
-    NETIF_RESET_HINTS(netif);
-  }
-
-  pbuf_free(p);
+  err = tcp_output_control_segment(pcb, p, &pcb->local_ip, &pcb->remote_ip);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: seqno %"U32_F
                           " ackno %"U32_F" err %d.\n",
