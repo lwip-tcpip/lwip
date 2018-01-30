@@ -4,6 +4,23 @@
  *
  * The output functions of TCP.
  *
+ * There are two distinct ways for TCP segments to get sent:
+ * - queued data: these are segments transferring data or segments containing
+ *   SYN or FIN (which both count as one sequence number). They are created as
+ *   struct @ref pbuf together with a struct tcp_seg and enqueue to the
+ *   unsent list of the pcb. They are sent by tcp_output:
+ *   - @ref tcp_write : creates data segments
+ *   - @ref tcp_split_unsent_seg : splits a data segment
+ *   - @ref tcp_enqueue_flags : creates SYN-only or FIN-only segments
+ *   - @ref tcp_output / tcp_output_segment : finalize the tcp header
+ *      (e.g. sequence numbers, options, checksum) and output to IP
+ * - direct send: these segments don't contain data but control the connection
+ *   behaviour. They are created as pbuf only and sent directly without
+ *   enqueueing them:
+ *   - @ref tcp_send_empty_ack
+ *   - @ref tcp_rst
+ *   - @ref tcp_keepalive
+ *   - @ref tcp_zero_window_probe
  */
 
 /*
@@ -173,7 +190,7 @@ tcp_send_fin(struct tcp_pcb *pcb)
 /**
  * Create a TCP segment with prefilled header.
  *
- * Called by tcp_write and tcp_enqueue_flags.
+ * Called by @ref tcp_write, @ref tcp_enqueue_flags and @ref tcp_split_unsent_seg
  *
  * @param pcb Protocol control block for the TCP connection.
  * @param p pbuf that is used to hold the TCP header.
@@ -235,6 +252,8 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t hdrflags, u32_t seq
  * This function is like pbuf_alloc(layer, length, PBUF_RAM) except
  * there may be extra bytes available at the end.
  *
+ * Called by @ref tcp_write
+ *
  * @param layer flag to define header size.
  * @param length size of the pbuf's payload.
  * @param max_length maximum usable size of payload+oversize.
@@ -295,7 +314,10 @@ tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
 #endif /* TCP_OVERSIZE */
 
 #if TCP_CHECKSUM_ON_COPY
-/** Add a checksum of newly added data to the segment */
+/** Add a checksum of newly added data to the segment.
+ *
+ * Called by tcp_write and tcp_split_unsent_seg.
+ */
 static void
 tcp_seg_add_chksum(u16_t chksum, u16_t len, u16_t *seg_chksum,
                    u8_t *seg_chksum_swapped)
@@ -820,9 +842,10 @@ memerr:
 }
 
 /**
- * Enqueue TCP options for transmission.
+ * Enqueue SYN or FIN for transmission.
  *
- * Called by tcp_connect(), tcp_listen_input(), and tcp_send_ctrl().
+ * Called by @ref tcp_connect, tcp_listen_input, and @ref tcp_close
+ * (via @ref tcp_send_fin)
  *
  * @param pcb Protocol control block for the TCP connection.
  * @param flags TCP header flags to set in the outgoing segment.
@@ -841,6 +864,8 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
               (flags & (TCP_SYN | TCP_FIN)) != 0);
   /* No need to check pcb->snd_queuelen if only SYN or FIN are allowed! */
 
+  /* Get options for this segment. This is a special case since this is the
+     only place where a SYN can be sent. */
   if (flags & TCP_SYN) {
     optflags = TF_SEG_OPTS_MSS;
 #if LWIP_WND_SCALE
@@ -1039,6 +1064,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
 #endif
 
 #if LWIP_TCP_SACK_OUT
+  /* For now, SACKs are only sent with empty ACKs */
   if ((num_sacks = tcp_get_num_sacks(pcb, optlen)) > 0) {
     optlen += 4 + num_sacks * 8; /* 4 bytes for header (including 2*NOP), plus 8B for each SACK */
   }
@@ -1489,7 +1515,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
  * tcp_rst() has a number of arguments that are taken from a tcp_pcb for
  * most other segment output functions.
  *
- * @param pcb TCP pcb
+ * @param pcb TCP pcb (may be NULL if no pcb is available)
  * @param seqno the sequence number to use for the outgoing segment
  * @param ackno the acknowledge number to use for the outgoing segment
  * @param local_ip the local IP address to send the segment from
