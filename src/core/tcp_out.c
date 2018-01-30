@@ -177,7 +177,7 @@ tcp_send_fin(struct tcp_pcb *pcb)
  *
  * @param pcb Protocol control block for the TCP connection.
  * @param p pbuf that is used to hold the TCP header.
- * @param flags TCP flags for header.
+ * @param hdrflags TCP flags for header.
  * @param seqno TCP sequence number of this packet
  * @param optflags options to include in TCP header
  * @return a new tcp_seg pointing to p, or NULL.
@@ -185,7 +185,7 @@ tcp_send_fin(struct tcp_pcb *pcb)
  * p is freed on failure.
  */
 static struct tcp_seg *
-tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno, u8_t optflags)
+tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t hdrflags, u32_t seqno, u8_t optflags)
 {
   struct tcp_seg *seg;
   u8_t optlen = LWIP_TCP_OPT_LENGTH(optflags);
@@ -223,7 +223,7 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno,
   seg->tcphdr->dest = lwip_htons(pcb->remote_port);
   seg->tcphdr->seqno = lwip_htonl(seqno);
   /* ackno is set in tcp_output */
-  TCPH_HDRLEN_FLAGS_SET(seg->tcphdr, (5 + optlen / 4), flags);
+  TCPH_HDRLEN_FLAGS_SET(seg->tcphdr, (5 + optlen / 4), hdrflags);
   /* wnd and chksum are set in tcp_output */
   seg->tcphdr->urgp = 0;
   return seg;
