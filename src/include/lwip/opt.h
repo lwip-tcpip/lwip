@@ -2726,6 +2726,50 @@
 #endif
 
 /**
+ * LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH:
+ * Hook for increasing the size of the options allocated with a tcp header.
+ * Together with LWIP_HOOK_TCP_OUT_ADD_TCPOPTS, this can be used to add custom
+ * options to outgoing tcp segments.
+ * Signature:
+ * u8_t my_hook_tcp_out_tcpopt_length(const struct tcp_pcb *pcb, u8_t internal_option_length);
+ * Arguments:
+ * - pcb: tcp_pcb that transmits (ATTENTION: this may be NULL or
+ *        struct tcp_pcb_listen if pcb->state == LISTEN)
+ * - internal_option_length: tcp option length used by the stack internally
+ * Return value:
+ * - a number of bytes to allocate for tcp options (internal_option_length <= ret <= 40)
+ *
+ * ATTENTION: don't call any tcp api functions that might change tcp state (pcb
+ * state or any pcb lists) from this callback!
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH(pcb, internal_len)
+#endif
+
+/**
+ * LWIP_HOOK_TCP_OUT_ADD_TCPOPTS:
+ * Hook for adding custom options to outgoing tcp segments.
+ * Space for these custom options has to be reserved via LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH.
+ * Signature:
+ * u32_t *my_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, u32_t *opts);
+ * Arguments:
+ * - p: output packet, p->payload pointing to tcp header, data follows
+ * - hdr: tcp header
+ * - pcb: tcp_pcb that transmits (ATTENTION: this may be NULL or
+ *        struct tcp_pcb_listen if pcb->state == LISTEN)
+ * - opts: pointer where to add the custom options (there may already be options
+ *         between the header and these)
+ * Return value:
+ * - pointer pointing directly after the inserted options
+ *
+ * ATTENTION: don't call any tcp api functions that might change tcp state (pcb
+ * state or any pcb lists) from this callback!
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_TCP_OUT_ADD_TCPOPTS(p, hdr, pcb, opts)
+#endif
+
+/**
  * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
  * Called from ip_input() (IPv4)
  * Signature:
