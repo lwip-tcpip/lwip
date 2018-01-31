@@ -1483,7 +1483,7 @@ smtp_send_mail_bodycback(const char *from, const char* to, const char* subject,
     SMTP_STATE_FREE(s);
     return ERR_MEM;
   }
-  memset(s->bodydh, 0, sizeof(struct smtp_bodydh));
+  memset(s->bodydh, 0, sizeof(struct smtp_bodydh_state));
   /* initialize the structure */
   s->from = from;
   len = strlen(from);
