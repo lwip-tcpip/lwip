@@ -1137,7 +1137,7 @@ tcp_get_num_sacks(struct tcp_pcb *pcb, u8_t optlen)
     optlen += 12;
 
     /* Max options size = 40, number of SACK array entries = LWIP_TCP_MAX_SACK_NUM */
-    for (i = 0; (i < LWIP_TCP_MAX_SACK_NUM) && (optlen <= 40) && LWIP_TCP_SACK_VALID(pcb, i); ++i) {
+    for (i = 0; (i < LWIP_TCP_MAX_SACK_NUM) && (optlen <= TCP_MAX_OPTION_BYTES) && LWIP_TCP_SACK_VALID(pcb, i); ++i) {
       ++num_sacks;
       optlen += 8;
     }
