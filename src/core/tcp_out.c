@@ -144,7 +144,7 @@ tcp_route(const struct tcp_pcb *pcb, const ip_addr_t *src, const ip_addr_t *dst)
  * p is freed on failure.
  */
 static struct tcp_seg *
-tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t hdrflags, u32_t seqno, u8_t optflags)
+tcp_create_segment(const struct tcp_pcb *pcb, struct pbuf *p, u8_t hdrflags, u32_t seqno, u8_t optflags)
 {
   struct tcp_seg *seg;
   u8_t optlen = LWIP_TCP_OPT_LENGTH(optflags);
@@ -207,7 +207,7 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t hdrflags, u32_t seq
 #if TCP_OVERSIZE
 static struct pbuf *
 tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
-                  u16_t *oversize, struct tcp_pcb *pcb, u8_t apiflags,
+                  u16_t *oversize, const struct tcp_pcb *pcb, u8_t apiflags,
                   u8_t first_seg)
 {
   struct pbuf *p;
@@ -1104,7 +1104,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
  * @param opts option pointer where to store the timestamp option
  */
 static void
-tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
+tcp_build_timestamp_option(const struct tcp_pcb *pcb, u32_t *opts)
 {
   /* Pad with two NOP options to make everything nicely aligned */
   opts[0] = PP_HTONL(0x0101080A);
@@ -1125,7 +1125,7 @@ tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
  * @return the number of SACK ranges that can be used
  */
 static u8_t
-tcp_get_num_sacks(struct tcp_pcb *pcb, u8_t optlen)
+tcp_get_num_sacks(const struct tcp_pcb *pcb, u8_t optlen)
 {
   u8_t num_sacks = 0;
 
@@ -1153,7 +1153,7 @@ tcp_get_num_sacks(struct tcp_pcb *pcb, u8_t optlen)
  * @param num_sacks the number of SACKs to store
  */
 static void
-tcp_build_sack_option(struct tcp_pcb *pcb, u32_t *opts, u8_t num_sacks)
+tcp_build_sack_option(const struct tcp_pcb *pcb, u32_t *opts, u8_t num_sacks)
 {
   u8_t i;
 
@@ -1385,7 +1385,7 @@ output_done:
  * @return 1 if ref != 1, 0 if ref == 1
  */
 static int
-tcp_output_segment_busy(struct tcp_seg *seg)
+tcp_output_segment_busy(const struct tcp_seg *seg)
 {
   /* We only need to check the first pbuf here:
      If a pbuf is queued for transmission, a driver calls pbuf_ref(),
