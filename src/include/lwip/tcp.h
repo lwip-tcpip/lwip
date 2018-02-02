@@ -177,7 +177,7 @@ typedef void (*tcp_extarg_callback_pcb_destroyed_fn)(u8_t id, void *data);
  * @param id ext arg id (allocated via @ref tcp_ext_arg_alloc_id)
  * @param lpcb the listening pcb accepting a connection
  * @param cpcb the newly allocated connection pcb
- * @param ERR_OK if OK, any error if connection should be dropped
+ * @return ERR_OK if OK, any error if connection should be dropped
  */
 typedef err_t (*tcp_extarg_callback_passive_open_fn)(u8_t id, struct tcp_pcb_listen *lpcb, struct tcp_pcb *cpcb);
 
