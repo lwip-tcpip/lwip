@@ -1832,6 +1832,7 @@ tcp_output_fill_options(const struct tcp_pcb *pcb, struct pbuf *p, u8_t optflags
   opts = LWIP_HOOK_TCP_OUT_ADD_TCPOPTS(p, tcphdr, pcb, opts);
 #endif
 
+  LWIP_UNUSED_ARG(pcb);
   LWIP_ASSERT("options not filled", (u8_t *)opts == ((u8_t *)(tcphdr + 1)) + LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb));
 }
 
