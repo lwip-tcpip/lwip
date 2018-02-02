@@ -2304,9 +2304,9 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
       {
         count = extract_uri_parameters(hs, params);
       }
-      httpd_cgi_handler(uri, count, http_cgi_params, http_cgi_param_vals
+      httpd_cgi_handler(file, uri, count, http_cgi_params, http_cgi_param_vals
 #if defined(LWIP_HTTPD_FILE_STATE) && LWIP_HTTPD_FILE_STATE
-                        , hs->handle->state
+                        , file->state
 #endif /* LWIP_HTTPD_FILE_STATE */
                        );
     }

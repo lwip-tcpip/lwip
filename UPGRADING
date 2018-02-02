@@ -49,6 +49,8 @@ with newer versions.
   * LWIP_HOOK_DHCP_APPEND_OPTIONS() has changed, see description in opt.h (options_out_len is not
     available in struct dhcp any more)
 
+  * httpd LWIP_HTTPD_CGI_SSI: httpd_cgi_handler() has an additional parameter "struct fs_file *"
+
 (2.0.2)
 
   ++ Application changes:
