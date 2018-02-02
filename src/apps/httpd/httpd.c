@@ -2276,6 +2276,11 @@ http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const cha
 {
   if (file != NULL) {
     /* file opened, initialise struct http_state */
+#if !LWIP_HTTPD_DYNAMIC_FILE_READ
+    /* If dynamic read is disabled, file data must be in one piece and available now */
+    LWIP_ASSERT("file->data != NULL", file->data != NULL);
+#endif
+
 #if LWIP_HTTPD_SSI
     if (tag_check) {
       struct http_ssi_state *ssi = http_ssi_state_alloc();
