@@ -957,6 +957,7 @@ get_http_headers(struct http_state *hs, const char *uri)
     hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_KEEPALIVE_LEN];
   } else {
     hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONN_CLOSE];
+    hs->keepalive = 0;
   }
 #else /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
   if (add_content_len) {
