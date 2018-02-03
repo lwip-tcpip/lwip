@@ -176,6 +176,7 @@ ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
 {
   pppos_pcb *pppos;
   ppp_pcb *ppp;
+  LWIP_ASSERT_CORE_LOCKED();
 
   pppos = (pppos_pcb *)LWIP_MEMPOOL_ALLOC(PPPOS_PCB);
   if (pppos == NULL) {
@@ -408,6 +409,8 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE
 /** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
  *
+ * This is one of the only functions that may be called outside of the TCPIP thread!
+ *
  * @param ppp PPP descriptor index, returned by pppos_create()
  * @param s received data
  * @param l length of received data
@@ -435,6 +438,7 @@ pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
 err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
   ppp_pcb *ppp = (ppp_pcb*)inp->state;
   struct pbuf *n;
+  LWIP_ASSERT_CORE_LOCKED();
 
   for (n = p; n; n = n->next) {
     pppos_input(ppp, (u8_t*)n->payload, n->len);
@@ -474,6 +478,9 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
   u8_t cur_char;
   u8_t escaped;
   PPPOS_DECL_PROTECT(lev);
+#if PPP_INPROC_IRQ_SAFE
+  LWIP_ASSERT_CORE_LOCKED();
+#endif
 
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {

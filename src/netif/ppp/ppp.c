@@ -216,6 +216,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
 /***********************************/
 #if PPP_AUTH_SUPPORT
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
+  LWIP_ASSERT_CORE_LOCKED();
 #if PAP_SUPPORT
   pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
 #endif /* PAP_SUPPORT */
@@ -268,6 +269,7 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  * established before calling this.
  */
 err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_ALREADY;
   }
@@ -294,6 +296,7 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
  * established before calling this.
  */
 err_t ppp_listen(ppp_pcb *pcb) {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_ALREADY;
   }
@@ -323,6 +326,8 @@ err_t ppp_listen(ppp_pcb *pcb) {
 err_t
 ppp_close(ppp_pcb *pcb, u8_t nocarrier)
 {
+  LWIP_ASSERT_CORE_LOCKED();
+
   pcb->err_code = PPPERR_USER;
 
   /* holdoff phase, cancel the reconnection */
@@ -383,6 +388,7 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
  */
 err_t ppp_free(ppp_pcb *pcb) {
   err_t err;
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_CONN;
   }
@@ -402,6 +408,7 @@ err_t ppp_free(ppp_pcb *pcb) {
 err_t
 ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
 {
+  LWIP_ASSERT_CORE_LOCKED();
   if (pcb == NULL) {
     return ERR_VAL;
   }

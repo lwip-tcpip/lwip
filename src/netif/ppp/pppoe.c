@@ -177,6 +177,7 @@ ppp_pcb *pppoe_create(struct netif *pppif,
   struct pppoe_softc *sc;
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
+  LWIP_ASSERT_CORE_LOCKED();
 
   sc = (struct pppoe_softc *)LWIP_MEMPOOL_ALLOC(PPPOE_IF);
   if (sc == NULL) {
