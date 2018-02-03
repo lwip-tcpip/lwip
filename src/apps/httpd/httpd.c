@@ -918,7 +918,6 @@ get_http_headers(struct http_state *hs, const char *uri)
     return;
   }
 #endif /* LWIP_HTTPD_OMIT_HEADER_FOR_EXTENSIONLESS_URI */
-  add_content_len = 1;
   /* Did we find a matching extension? */
   if (content_type < NUM_HTTP_HEADERS) {
     /* yes, store it */
@@ -931,15 +930,15 @@ get_http_headers(struct http_state *hs, const char *uri)
     hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = HTTP_HDR_DEFAULT_TYPE;
   }
   /* Add content-length header? */
+  add_content_len = 0;
 #if LWIP_HTTPD_SSI
-  if (hs->ssi != NULL) {
-    add_content_len = 0; /* @todo: get maximum file length from SSI */
-  } else
+  if (hs->ssi == NULL) /* @todo: get maximum file length from SSI */
 #endif /* LWIP_HTTPD_SSI */
-    if ((hs->handle == NULL) ||
-        ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
-      add_content_len = 0;
+  {
+    if ((hs->handle != NULL) && (hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT)) {
+      add_content_len = 1;
     }
+  }
   if (add_content_len) {
     size_t len;
     lwip_itoa(hs->hdr_content_len, (size_t)LWIP_HTTPD_MAX_CONTENT_LEN_SIZE,
