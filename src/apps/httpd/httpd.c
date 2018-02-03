@@ -937,7 +937,7 @@ get_http_headers(struct http_state *hs, const char *uri)
   } else
 #endif /* LWIP_HTTPD_SSI */
     if ((hs->handle == NULL) ||
-        ((hs->handle->flags & (FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT)) == FS_FILE_FLAGS_HEADER_INCLUDED)) {
+        ((hs->handle->flags & FS_FILE_FLAGS_HEADER_PERSISTENT) == 0)) {
       add_content_len = 0;
     }
   if (add_content_len) {
