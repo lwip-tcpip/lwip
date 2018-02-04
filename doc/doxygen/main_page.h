@@ -122,7 +122,7 @@
  * running on target system) or @ref lwip_os (there is an OS running
  * on the target system).
  * 
- * See also: @ref multithreading
+ * See also: @ref multithreading (especially the part about @ref LWIP_ASSERT_CORE_LOCKED()!)
  *
  * Mainloop Mode
  * -------------
