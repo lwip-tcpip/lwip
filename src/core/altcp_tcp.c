@@ -185,18 +185,20 @@ altcp_tcp_setup(struct altcp_pcb *conn, struct tcp_pcb *tpcb)
 struct altcp_pcb *
 altcp_tcp_new_ip_type(u8_t ip_type)
 {
-  struct altcp_pcb *ret = altcp_alloc();
-  if (ret != NULL) {
-    struct tcp_pcb *tpcb = tcp_new_ip_type(ip_type);
-    if (tpcb != NULL) {
+  /* Allocate the tcp pcb first to invoke the priority handling code
+     if we're out of pcbs */
+  struct tcp_pcb *tpcb = tcp_new_ip_type(ip_type);
+  if (tpcb != NULL) {
+    struct altcp_pcb *ret = altcp_alloc();
+    if (ret != NULL) {
       altcp_tcp_setup(ret, tpcb);
+      return ret;
     } else {
-      /* tcp_pcb allocation failed -> free the altcp_pcb too */
-      altcp_free(ret);
-      ret = NULL;
+      /* altcp_pcb allocation failed -> free the tcp_pcb too */
+      tcp_close(tpcb);
     }
   }
-  return ret;
+  return NULL;
 }
 
 struct altcp_pcb *
