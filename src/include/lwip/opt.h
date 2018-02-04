@@ -2681,8 +2681,9 @@
  * or any other desired algorithm as a replacement.
  * Called from tcp_connect() and tcp_listen_input() when an ISN is needed for
  * a new TCP connection, if TCP support (@ref LWIP_TCP) is enabled.\n
- * Signature:
+ * Signature:\code{.c}
  * u32_t my_hook_tcp_isn(const ip_addr_t* local_ip, u16_t local_port, const ip_addr_t* remote_ip, u16_t remote_port);
+ * \endcode
  * - it may be necessary to use "struct ip_addr" (ip4_addr, ip6_addr) instead of "ip_addr_t" in function declarations\n
  * Arguments:
  * - local_ip: pointer to the local IP address of the connection
@@ -2700,8 +2701,9 @@
  * LWIP_HOOK_TCP_INPACKET_PCB:
  * Hook for intercepting incoming packets before they are passed to a pcb. This
  * allows updating some state or even dropping a packet.
- * Signature:
+ * Signature:\code{.c}
  * err_t my_hook_tcp_inpkt(struct tcp_pcb *pcb, struct tcp_hdr *hdr, u16_t optlen, u16_t opt1len, u8_t *opt2, struct pbuf *p);
+ * \endcode
  * Arguments:
  * - pcb: tcp_pcb selected for input of this packet (ATTENTION: this may be
  *        struct tcp_pcb_listen if pcb->state == LISTEN)
@@ -2730,8 +2732,9 @@
  * Hook for increasing the size of the options allocated with a tcp header.
  * Together with LWIP_HOOK_TCP_OUT_ADD_TCPOPTS, this can be used to add custom
  * options to outgoing tcp segments.
- * Signature:
+ * Signature:\code{.c}
  * u8_t my_hook_tcp_out_tcpopt_length(const struct tcp_pcb *pcb, u8_t internal_option_length);
+ * \endcode
  * Arguments:
  * - pcb: tcp_pcb that transmits (ATTENTION: this may be NULL or
  *        struct tcp_pcb_listen if pcb->state == LISTEN)
@@ -2750,8 +2753,9 @@
  * LWIP_HOOK_TCP_OUT_ADD_TCPOPTS:
  * Hook for adding custom options to outgoing tcp segments.
  * Space for these custom options has to be reserved via LWIP_HOOK_TCP_OUT_TCPOPT_LENGTH.
- * Signature:
+ * Signature:\code{.c}
  * u32_t *my_hook_tcp_out_add_tcpopts(struct pbuf *p, struct tcp_hdr *hdr, const struct tcp_pcb *pcb, u32_t *opts);
+ * \endcode
  * Arguments:
  * - p: output packet, p->payload pointing to tcp header, data follows
  * - hdr: tcp header
@@ -2772,8 +2776,9 @@
 /**
  * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
  * Called from ip_input() (IPv4)
- * Signature:
+ * Signature:\code{.c}
  *   int my_hook(struct pbuf *pbuf, struct netif *input_netif);
+ * \endcode
  * Arguments:
  * - pbuf: received struct pbuf passed to ip_input()
  * - input_netif: struct netif on which the packet has been received
@@ -2790,8 +2795,9 @@
 /**
  * LWIP_HOOK_IP4_ROUTE(dest):
  * Called from ip_route() (IPv4)
- * Signature:
+ * Signature:\code{.c}
  *   struct netif *my_hook(const ip4_addr_t *dest);
+ * \endcode
  * Arguments:
  * - dest: destination IPv4 address
  * Returns values:
@@ -2805,8 +2811,9 @@
 /**
  * LWIP_HOOK_IP4_ROUTE_SRC(src, dest):
  * Source-based routing for IPv4 - called from ip_route() (IPv4)
- * Signature:
+ * Signature:\code{.c}
  *   struct netif *my_hook(const ip4_addr_t *src, const ip4_addr_t *dest);
+ * \endcode
  * Arguments:
  * - src: local/source IPv4 address
  * - dest: destination IPv4 address
@@ -2821,8 +2828,9 @@
 /**
  * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
  * Called from etharp_output() (IPv4)
- * Signature:
+ * Signature:\code{.c}
  *   const ip4_addr_t *my_hook(struct netif *netif, const ip4_addr_t *dest);
+ * \endcode
  * Arguments:
  * - netif: the netif used for sending
  * - dest: the destination IPv4 address
@@ -2842,8 +2850,9 @@
 /**
  * LWIP_HOOK_IP6_INPUT(pbuf, input_netif):
  * Called from ip6_input() (IPv6)
- * Signature:
+ * Signature:\code{.c}
  *   int my_hook(struct pbuf *pbuf, struct netif *input_netif);
+ * \endcode
  * Arguments:
  * - pbuf: received struct pbuf passed to ip6_input()
  * - input_netif: struct netif on which the packet has been received
@@ -2860,8 +2869,9 @@
 /**
  * LWIP_HOOK_IP6_ROUTE(src, dest):
  * Called from ip_route() (IPv6)
- * Signature:
+ * Signature:\code{.c}
  *   struct netif *my_hook(const ip6_addr_t *dest, const ip6_addr_t *src);
+ * \endcode
  * Arguments:
  * - src: source IPv6 address
  * - dest: destination IPv6 address
@@ -2876,8 +2886,9 @@
 /**
  * LWIP_HOOK_ND6_GET_GW(netif, dest):
  * Called from nd6_get_next_hop_entry() (IPv6)
- * Signature:
+ * Signature:\code{.c}
  *   const ip6_addr_t *my_hook(struct netif *netif, const ip6_addr_t *dest);
+ * \endcode
  * Arguments:
  * - netif: the netif used for sending
  * - dest: the destination IPv6 address
@@ -2897,8 +2908,9 @@
 /**
  * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
  * Called from ethernet_input() if VLAN support is enabled
- * Signature:
+ * Signature:\code{.c}
  *   int my_hook(struct netif *netif, struct eth_hdr *eth_hdr, struct eth_vlan_hdr *vlan_hdr);
+ * \endcode
  * Arguments:
  * - netif: struct netif on which the packet has been received
  * - eth_hdr: struct eth_hdr of the packet
@@ -2916,8 +2928,9 @@
  * Hook can be used to set prio_vid field of vlan_hdr. If you need to store data
  * on per-netif basis to implement this callback, see @ref netif_cd.
  * Called from ethernet_output() if VLAN support (@ref ETHARP_SUPPORT_VLAN) is enabled.\n
- * Signature:
+ * Signature:\code{.c}
  *   s32_t my_hook_vlan_set(struct netif* netif, struct pbuf* pbuf, const struct eth_addr* src, const struct eth_addr* dst, u16_t eth_type);\n
+ * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - p: struct pbuf packet to be sent
@@ -2937,8 +2950,9 @@
 /**
  * LWIP_HOOK_MEMP_AVAILABLE(memp_t_type):
  * Called from memp_free() when a memp pool was empty and an item is now available
- * Signature:
+ * Signature:\code{.c}
  *   void my_hook(memp_t type);
+ * \endcode
  */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_MEMP_AVAILABLE(memp_t_type)
@@ -2947,8 +2961,9 @@
 /**
  * LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf, netif):
  * Called from ethernet_input() when an unknown eth type is encountered.
- * Signature:
+ * Signature:\code{.c}
  *   err_t my_hook(struct pbuf* pbuf, struct netif* netif);
+ * \endcode
  * Arguments:
  * - p: rx packet with unknown eth type
  * - netif: netif on which the packet has been received
@@ -2967,9 +2982,10 @@
  * Called from various dhcp functions when sending a DHCP message.
  * This hook is called just before the DHCP message trailer is added, so the
  * options are at the end of a DHCP message.
- * Signature:
+ * Signature:\code{.c}
  *   void my_hook(struct netif *netif, struct dhcp *dhcp, u8_t state, struct dhcp_msg *msg,
  *                u8_t msg_type, u16_t *options_len_ptr);
+ * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - dhcp: struct dhcp on that netif
@@ -2994,9 +3010,10 @@
  * LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, option_value_offset):
  * Called from dhcp_parse_reply when receiving a DHCP message.
  * This hook is called for every option in the received message that is not handled internally.
- * Signature:
+ * Signature:\code{.c}
  *   void my_hook(struct netif *netif, struct dhcp *dhcp, u8_t state, struct dhcp_msg *msg,
  *                u8_t msg_type, u8_t option, u8_t option_len, struct pbuf *pbuf, u16_t option_value_offset);
+ * \endcode
  * Arguments:
  * - netif: struct netif that the packet will be sent through
  * - dhcp: struct dhcp on that netif
@@ -3021,8 +3038,9 @@
  * LWIP_HOOK_SOCKETS_SETSOCKOPT(s, sock, level, optname, optval, optlen, err)
  * Called from socket API to implement setsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
- * Signature:
+ * Signature:\code{.c}
  *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, const void *optval, socklen_t optlen, int *err)
+ * \endcode
  * Arguments:
  * - s: socket file descriptor
  * - sock: internal socket descriptor (see lwip/priv/sockets_priv.h)
@@ -3043,8 +3061,9 @@
  * LWIP_HOOK_SOCKETS_GETSOCKOPT(s, sock, level, optname, optval, optlen, err)
  * Called from socket API to implement getsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
- * Signature:
+ * Signature:\code{.c}
  *   int my_hook(int s, struct lwip_sock *sock, int level, int optname, void *optval, socklen_t *optlen, int *err)
+ * \endcode
  * Arguments:
  * - s: socket file descriptor
  * - sock: internal socket descriptor (see lwip/priv/sockets_priv.h)
@@ -3065,8 +3084,9 @@
  * LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE(name, addr, addrtype, err)
  * Called from netconn APIs (not usable with callback apps) allowing an
  * external DNS resolver (which uses sequential API) to handle the query.
- * Signature:
+ * Signature:\code{.c}
  *   int my_hook(const char *name, ip_addr_t *addr, u8_t addrtype, err_t *err)
+ * \endcode
  * Arguments:
  * - name: hostname to resolve
  * - addr: output host address
