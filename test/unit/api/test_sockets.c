@@ -185,7 +185,8 @@ static void test_sockets_allfunctions_basic_domain(int domain)
 
   while(tcpip_thread_poll_one());
 
-  ret = lwip_read(s3, buf, 3);
+  /* read one byte more than available to check handling FIN */
+  ret = lwip_read(s3, buf, 4);
   fail_unless(ret == 3);
 
   ret = lwip_read(s3, buf, 1);
