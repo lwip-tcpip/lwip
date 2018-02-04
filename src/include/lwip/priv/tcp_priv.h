@@ -177,6 +177,8 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
                 ret = lwip_tcp_event((pcb)->callback_arg, (pcb), LWIP_EVENT_POLL, NULL, 0, ERR_OK); \
                 } else {                                                                            \
                 ret = ERR_ARG; } } while(0)
+/* For event API, last state SYN_RCVD must be excluded here: the application
+   has not seen this pcb, yet! */
 #define TCP_EVENT_ERR(last_state,errf,arg,err)  do { if (last_state != SYN_RCVD) {                \
                 lwip_tcp_event((arg), NULL, LWIP_EVENT_ERR, NULL, 0, (err)); } } while(0)
 
