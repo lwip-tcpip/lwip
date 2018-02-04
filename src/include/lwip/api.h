@@ -64,6 +64,7 @@ extern "C" {
 #define NETCONN_MORE        0x02
 #define NETCONN_DONTBLOCK   0x04
 #define NETCONN_NOAUTORCVD  0x08 /* prevent netconn_recv_data_tcp() from updating the tcp window - must be done manually via netconn_tcp_recvd() */
+#define NETCONN_NOFIN       0x10 /* upper layer already received data, leave FIN in queue until called again */
 
 /* Flags for struct netconn.flags (u8_t) */
 /** This netconn had an error, don't block on recvmbox/acceptmbox any more */
@@ -85,7 +86,8 @@ extern "C" {
 /** Received packet info will be recorded for this netconn */
 #define NETCONN_FLAG_PKTINFO                  0x40
 #endif /* LWIP_NETBUF_RECVINFO */
-
+/** A FIN has been received but not passed to the application yet */
+#define NETCONN_FIN_RX_PENDING                0x80
 
 /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)         ((t)&0xF0)

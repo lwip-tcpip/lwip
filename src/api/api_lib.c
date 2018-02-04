@@ -646,8 +646,12 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
 #endif /* LWIP_TCP */
 
   if (!sys_mbox_valid(&conn->recvmbox)) {
-    /* This happens when calling this function after receiving FIN */
-    return sys_mbox_valid(&conn->acceptmbox) ? ERR_CONN : ERR_CLSD;
+    /* This only happens when calling this function more than once *after* receiving FIN */
+    return ERR_CONN;
+  }
+  if (netconn_is_flag_set(conn, NETCONN_FIN_RX_PENDING)) {
+    netconn_clear_flags(conn, NETCONN_FIN_RX_PENDING);
+    goto handle_fin;
   }
 
   if (!(apiflags & NETCONN_NOAUTORCVD)) {
@@ -675,19 +679,27 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
 
   /* If we are closed, we indicate that we no longer wish to use the socket */
   if (buf == NULL) {
-    API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
-    if (conn->pcb.ip == NULL) {
-      /* race condition: RST during recv */
-      err = netconn_err(conn);
-      if (err != ERR_OK) {
-        return err;
+    if (apiflags & NETCONN_NOFIN) {
+      /* received a FIN but the caller cannot handle it right now:
+         re-enqueue it and return "no data" */
+      netconn_set_flags(conn, NETCONN_FIN_RX_PENDING);
+      return ERR_WOULDBLOCK;
+    } else {
+handle_fin:
+      API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
+      if (conn->pcb.ip == NULL) {
+        /* race condition: RST during recv */
+        err = netconn_err(conn);
+        if (err != ERR_OK) {
+          return err;
+        }
+        return ERR_RST;
       }
-      return ERR_RST;
+      /* RX side is closed, so deallocate the recvmbox */
+      netconn_close_shutdown(conn, NETCONN_SHUT_RD);
+      /* Don' store ERR_CLSD as conn->err since we are only half-closed */
+      return ERR_CLSD;
     }
-    /* RX side is closed, so deallocate the recvmbox */
-    netconn_close_shutdown(conn, NETCONN_SHUT_RD);
-    /* Don' store ERR_CLSD as conn->err since we are only half-closed */
-    return ERR_CLSD;
   }
   return err;
 }

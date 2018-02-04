@@ -956,7 +956,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
       }
     }
     /* once we have some data to return, only add more if we don't need to wait */
-    apiflags |= NETCONN_DONTBLOCK;
+    apiflags |= NETCONN_DONTBLOCK | NETCONN_NOFIN;
     /* @todo: do we need to support peeking more than one pbuf? */
   } while ((recv_left > 0) && !(flags & MSG_PEEK));
 lwip_recv_tcp_done:
