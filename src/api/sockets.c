@@ -893,14 +893,6 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
         if (recvd > 0) {
           /* already received data, return that (this trusts in getting the same error from
              netconn layer again next time netconn_recv is called) */
-          if (err == ERR_CLSD) {
-            /* closed but already received data, ensure select gets the FIN, too */
-            if (sock->conn->callback != NULL) {
-              LOCK_TCPIP_CORE();
-              sock->conn->callback(sock->conn, NETCONN_EVT_RCVPLUS, 0);
-              UNLOCK_TCPIP_CORE();
-            }
-          }
           goto lwip_recv_tcp_done;
         }
         /* We should really do some error checking here. */
