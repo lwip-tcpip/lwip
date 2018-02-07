@@ -835,7 +835,6 @@ get_http_headers(struct http_state *hs, const char *uri)
   char *tmp;
   char *ext;
   char *vars;
-  u8_t add_content_len;
 
   /* In all cases, the second header we send is the server identification
      so set it here. */
@@ -929,7 +928,19 @@ get_http_headers(struct http_state *hs, const char *uri)
     /* No - use the default, plain text file type. */
     hs->hdrs[HDR_STRINGS_IDX_CONTENT_TYPE] = HTTP_HDR_DEFAULT_TYPE;
   }
-  /* Add content-length header? */
+  /* Set up to send the first header string. */
+  hs->hdr_index = 0;
+  hs->hdr_pos = 0;
+}
+
+/* Add content-length header? */
+static void
+get_http_content_length(struct http_state *hs)
+{
+  u8_t add_content_len = 0;
+
+  LWIP_ASSERT("already been here?", hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] == NULL);
+
   add_content_len = 0;
 #if LWIP_HTTPD_SSI
   if (hs->ssi == NULL) /* @todo: get maximum file length from SSI */
@@ -963,10 +974,6 @@ get_http_headers(struct http_state *hs, const char *uri)
     hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] = g_psHTTPHeaderStrings[HTTP_HDR_CONTENT_LENGTH];
   }
 #endif /* LWIP_HTTPD_SUPPORT_11_KEEPALIVE */
-
-  /* Set up to send the first header string. */
-  hs->hdr_index = 0;
-  hs->hdr_pos = 0;
 }
 
 /** Sub-function of http_send(): send dynamic headers
@@ -984,6 +991,11 @@ http_send_headers(struct altcp_pcb *pcb, struct http_state *hs)
   u16_t len;
   u8_t data_to_send = HTTP_NO_DATA_TO_SEND;
   u16_t hdrlen, sendlen;
+
+  if (hs->hdrs[HDR_STRINGS_IDX_CONTENT_LEN_KEEPALIVE] == NULL) {
+    /* set up "content-length" and "connection:" headers */
+    get_http_content_length(hs);
+  }
 
   /* How much data can we send? */
   len = altcp_sndbuf(pcb);
