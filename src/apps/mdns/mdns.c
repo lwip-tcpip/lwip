@@ -1905,28 +1905,21 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
     return;
   }
 
-  switch (reason) {
-    case LWIP_NSC_STATUS_CHANGED:
-      if (args->status_changed.state != 0) {
-        mdns_resp_restart(netif);
-      }
-      /* TODO: send goodbye message */
-      break;
-    case LWIP_NSC_LINK_CHANGED:
-      if (args->link_changed.state != 0) {
-        mdns_resp_restart(netif);
-      }
-      break;
-    case LWIP_NSC_IPV4_ADDRESS_CHANGED:  /* fall through */
-    case LWIP_NSC_IPV4_GATEWAY_CHANGED:  /* fall through */
-    case LWIP_NSC_IPV4_NETMASK_CHANGED:  /* fall through */
-    case LWIP_NSC_IPV4_SETTINGS_CHANGED: /* fall through */
-    case LWIP_NSC_IPV6_SET:              /* fall through */
-    case LWIP_NSC_IPV6_ADDR_STATE_CHANGED:
-      mdns_resp_announce(netif);
-      break;
-    default:
-      break;
+  if (reason & LWIP_NSC_STATUS_CHANGED) {
+    if (args->status_changed.state != 0) {
+      mdns_resp_restart(netif);
+    }
+    /* TODO: send goodbye message */
+  }
+  if (reason & LWIP_NSC_LINK_CHANGED) {
+    if (args->link_changed.state != 0) {
+      mdns_resp_restart(netif);
+    }
+  }
+  if (reason & (LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_GATEWAY_CHANGED |
+      LWIP_NSC_IPV4_NETMASK_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED |
+      LWIP_NSC_IPV6_SET | LWIP_NSC_IPV6_ADDR_STATE_CHANGED)) {
+    mdns_resp_announce(netif);
   }
 }
 #endif
