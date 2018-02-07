@@ -975,7 +975,7 @@ get_http_headers(struct http_state *hs, const char *uri)
  *           - HTTP_DATA_TO_SEND_CONTINUE: continue with sending HTTP body
  *           - HTTP_DATA_TO_SEND_BREAK: data has been enqueued, headers pending,
  *                                      so don't send HTTP body yet
- *           - HTTP_DATA_TO_SEND_FREED: htt_state and pcb are already freed
+ *           - HTTP_DATA_TO_SEND_FREED: http_state and pcb are already freed
  */
 static u8_t
 http_send_headers(struct altcp_pcb *pcb, struct http_state *hs)
