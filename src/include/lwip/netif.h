@@ -529,35 +529,36 @@ struct netif* netif_get_by_index(u8_t idx);
 
 /**
  * @ingroup netif
- * Extended netif status callback (NSC) reasons flags.
+ * Extended netif status callback (NSC) reasons enumeration.
  * May be extended in the future!
  */
-typedef u16_t netif_nsc_reason_t;
-
-/* used for initialization only */
-#define LWIP_NSC_NONE                     0x0000
-/** netif was added. arg: NULL. Called AFTER netif was added. */
-#define LWIP_NSC_NETIF_ADDED              0x0001
-/** netif was removed. arg: NULL. Called BEFORE netif is removed. */
-#define LWIP_NSC_NETIF_REMOVED            0x0002
-/** link changed */
-#define LWIP_NSC_LINK_CHANGED             0x0004
-/** netif administrative status changed.\n
-  * up is called AFTER netif is set up.\n
-  * down is called BEFORE the netif is actually set down. */
-#define LWIP_NSC_STATUS_CHANGED           0x0008
-/** IPv4 address has changed */
-#define LWIP_NSC_IPV4_ADDRESS_CHANGED     0x0010
-/** IPv4 gateway has changed */
-#define LWIP_NSC_IPV4_GATEWAY_CHANGED     0x0020
-/** IPv4 netmask has changed */
-#define LWIP_NSC_IPV4_NETMASK_CHANGED     0x0040
-/** called AFTER IPv4 address/gateway/netmask changes have been applied */
-#define LWIP_NSC_IPV4_SETTINGS_CHANGED    0x0080
-/** IPv6 address was added */
-#define LWIP_NSC_IPV6_SET                 0x0100
-/** IPv6 address state has changed */
-#define LWIP_NSC_IPV6_ADDR_STATE_CHANGED  0x0200
+typedef enum
+{
+  /* used for initialization only */
+  LWIP_NSC_NONE = 0,
+  /** netif was added. arg: NULL. Called AFTER netif was added. */
+  LWIP_NSC_NETIF_ADDED = 0x1,
+  /** netif was removed. arg: NULL. Called BEFORE netif is removed. */
+  LWIP_NSC_NETIF_REMOVED = 0x2,
+  /** link changed */
+  LWIP_NSC_LINK_CHANGED = 0x4,
+  /** netif administrative status changed.\n
+   * up is called AFTER netif is set up.\n
+   * down is called BEFORE the netif is actually set down. */
+  LWIP_NSC_STATUS_CHANGED = 0x8,
+  /** IPv4 address has changed */
+  LWIP_NSC_IPV4_ADDRESS_CHANGED = 0x10,
+  /** IPv4 gateway has changed */
+  LWIP_NSC_IPV4_GATEWAY_CHANGED = 0x20,
+  /** IPv4 netmask has changed */
+  LWIP_NSC_IPV4_NETMASK_CHANGED = 0x40,
+  /** called AFTER IPv4 address/gateway/netmask changes have been applied */
+  LWIP_NSC_IPV4_SETTINGS_CHANGED = 0x80,
+  /** IPv6 address was added */
+  LWIP_NSC_IPV6_SET = 0x100,
+  /** IPv6 address state has changed */
+  LWIP_NSC_IPV6_ADDR_STATE_CHANGED = 0x200
+} netif_nsc_reason_t;
 
 /** @ingroup netif
  * Argument supplied to netif_ext_callback_fn.
