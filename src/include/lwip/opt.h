@@ -319,6 +319,19 @@
 #endif
 
 /**
+ * MEM_OVERFLOW_CHECK: mem overflow protection reserves a configurable
+ * amount of bytes before and after each heap allocation chunk and fills
+ * it with a prominent default value.
+ *    MEM_OVERFLOW_CHECK == 0 no checking
+ *    MEM_OVERFLOW_CHECK == 1 checks each element when it is freed
+ *    MEM_OVERFLOW_CHECK >= 2 checks all heap elements every time
+ *      mem_malloc() or mem_free() is called (useful but slow!)
+ */
+#if !defined MEM_OVERFLOW_CHECK || defined __DOXYGEN__
+#define MEM_OVERFLOW_CHECK              0
+#endif
+
+/**
  * MEM_SANITY_CHECK==1: run a sanity check after each mem_free() to make
  * sure that the linked list of heap elements is not corrupted.
  */
