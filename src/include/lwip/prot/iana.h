@@ -83,7 +83,7 @@ enum lwip_iana_port_number {
   /** MDNS */
   LWIP_IANA_PORT_MDNS        = 5353,
   /** Secure MQTT */
-  LWIP_IANA_PORT_SEQURE_MQTT = 8883
+  LWIP_IANA_PORT_SECURE_MQTT = 8883
 };
 
 #endif /* LWIP_HDR_PROT_IANA_H */

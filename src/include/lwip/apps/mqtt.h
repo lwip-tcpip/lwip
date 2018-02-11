@@ -57,7 +57,7 @@ struct altcp_tls_config;
 #define MQTT_PORT     LWIP_IANA_PORT_MQTT
 /** @ingroup mqtt
  * Default MQTT TLS port */
-#define MQTT_TLS_PORT LWIP_IANA_PORT_SEQURE_MQTT
+#define MQTT_TLS_PORT LWIP_IANA_PORT_SECURE_MQTT
 
 /*---------------------------------------------------------------------------------------------- */
 /* Connection with server */
