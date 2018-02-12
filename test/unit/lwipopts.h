@@ -36,6 +36,10 @@
 
 #define LWIP_IPV6                       1
 
+#define LWIP_CHECKSUM_ON_COPY           1
+#define TCP_CHECKSUM_ON_COPY_SANITY_CHECK 1
+#define TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL(printfmsg) LWIP_ASSERT("TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL", 0)
+
 /* We link to special sys_arch.c (for basic non-waiting API layers unit tests) */
 #define NO_SYS                          0
 #define SYS_LIGHTWEIGHT_PROT            0
