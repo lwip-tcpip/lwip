@@ -372,7 +372,7 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, 
 void
 pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 {
-  u16_t tag, len;
+  u16_t tag, len, off;
   u16_t session, plen;
   struct pppoe_softc *sc;
 #if PPP_DEBUG
@@ -386,7 +386,7 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 #endif
   struct pppoehdr *ph;
   struct pppoetag pt;
-  int off, err;
+  int err;
   struct eth_hdr *ethhdr;
 
   /* don't do anything if there is not a single PPPoE instance */
@@ -397,11 +397,7 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 
   pb = pbuf_coalesce(pb, PBUF_RAW);
 
-  if (pb->len < sizeof(*ethhdr)) {
-    goto done;
-  }
   ethhdr = (struct eth_hdr *)pb->payload;
-  off = sizeof(*ethhdr);
 
   ac_cookie = NULL;
   ac_cookie_len = 0;
@@ -410,7 +406,8 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   hunique_len = 0;
 #endif
   session = 0;
-  if (pb->len - off < (u16_t)PPPOE_HEADERLEN) {
+  off = sizeof(struct eth_hdr) + sizeof(struct pppoehdr);
+  if (pb->len < off) {
     PPPDEBUG(LOG_DEBUG, ("pppoe: packet too short: %d\n", pb->len));
     goto done;
   }
@@ -422,15 +419,18 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   }
   session = lwip_ntohs(ph->session);
   plen = lwip_ntohs(ph->plen);
-  off += sizeof(*ph);
 
-  if (plen + off > pb->len) {
+  if (plen > (pb->len - off)) {
     PPPDEBUG(LOG_DEBUG, ("pppoe: packet content does not fit: data available = %d, packet size = %u\n",
         pb->len - off, plen));
     goto done;
   }
   if(pb->tot_len == pb->len) {
-    pb->tot_len = pb->len = (u16_t)off + plen; /* ignore trailing garbage */
+    u16_t framelen = off + plen;
+    if (framelen < pb->len) {
+      /* ignore trailing garbage */
+      pb->tot_len = pb->len = framelen;
+    }
   }
   tag = 0;
   len = 0;
@@ -1044,7 +1044,12 @@ pppoe_send_padt(struct netif *outgoing_if, u_int session, const u8_t *dest)
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  pbuf_add_header(pb, sizeof(struct eth_hdr));
+  if (pbuf_add_header(pb, sizeof(struct eth_hdr))) {
+    PPPDEBUG(LOG_ERR, ("pppoe: %c%c%"U16_F": pppoe_send_padt: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+    LINK_STATS_INC(link.lenerr);
+    pbuf_free(pb);
+    return ERR_BUF;
+  }
   ethhdr = (struct eth_hdr *)pb->payload;
   ethhdr->type = PP_HTONS(ETHTYPE_PPPOEDISC);
   MEMCPY(&ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
