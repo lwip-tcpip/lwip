@@ -289,7 +289,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
       || (((struct vj_u16_t*)ip)[3]).v != (((struct vj_u16_t*)&cs->cs_ip)[3]).v
       || (((struct vj_u16_t*)ip)[4]).v != (((struct vj_u16_t*)&cs->cs_ip)[4]).v
       || TCPH_HDRLEN(th) != TCPH_HDRLEN(oth)
-      || (deltaS > 5 && BCMP(ip + 1, &cs->cs_ip + 1, (deltaS - 5) << 2))
+      || (deltaS > 5 && BCMP(ip + 1, &cs->cs_hdr[sizeof(struct ip_hdr)], (deltaS - 5) << 2))
       || (TCPH_HDRLEN(th) > 5 && BCMP(th + 1, oth + 1, (TCPH_HDRLEN(th) - 5) << 2))) {
     goto uncompressed;
   }
