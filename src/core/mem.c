@@ -500,7 +500,7 @@ plug_holes(struct mem *mem)
       lfree = pmem;
     }
     pmem->next = mem->next;
-    if (nmem->next != MEM_SIZE_ALIGNED) {
+    if (mem->next != MEM_SIZE_ALIGNED) {
       ptr_to_mem(mem->next)->prev = mem_to_ptr(pmem);
     }
   }
