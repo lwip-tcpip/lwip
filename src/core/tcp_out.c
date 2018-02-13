@@ -965,9 +965,7 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
 memerr:
   TCP_STATS_INC(tcp.memerr);
 
-  if (seg != NULL) {
-    tcp_segs_free(seg);
-  }
+  LWIP_ASSERT("seg == NULL", seg == NULL);
   if (p != NULL) {
     pbuf_free(p);
   }

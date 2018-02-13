@@ -531,8 +531,9 @@ free_socket(struct lwip_sock *sock, int is_tcp)
 
 #if LWIP_NETCONN_FULLDUPLEX
   LWIP_ASSERT("sock->fd_used > 0", sock->fd_used > 0);
-  if (--sock->fd_used > 0) {
-    sock->fd_free_pending = LWIP_SOCK_FD_FREE_FREE | is_tcp ? LWIP_SOCK_FD_FREE_TCP : 0;
+  sock->fd_used--;
+  if (sock->fd_used > 0) {
+    sock->fd_free_pending = LWIP_SOCK_FD_FREE_FREE | (is_tcp ? LWIP_SOCK_FD_FREE_TCP : 0);
     SYS_ARCH_UNPROTECT(lev);
     return;
   }

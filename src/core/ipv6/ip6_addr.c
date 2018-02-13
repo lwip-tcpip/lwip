@@ -139,20 +139,18 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
     else {
       addr->addr[addr_index] = current_block_value << 16;
     }
-  }
 
-  /* convert to network byte order. */
-  if (addr) {
+    /* convert to network byte order. */
     for (addr_index = 0; addr_index < 4; addr_index++) {
       addr->addr[addr_index] = lwip_htonl(addr->addr[addr_index]);
     }
+
+    ip6_addr_clear_zone(addr);
   }
 
   if (current_block_index != 7) {
     return 0;
   }
-
-  ip6_addr_clear_zone(addr);
 
   return 1;
 }

@@ -763,6 +763,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     fclose(f);
     if ((readcount > fsize) || !readcount) {
       printf("failed to read data from ssi file\n");
+      free(buf);
       return 0;
     }
 
@@ -780,6 +781,7 @@ static int checkSsiByFilelist(const char* filename_listfile)
     lines = (char**)malloc(sizeof(char*) * num_lines);
     if (!lines) {
       printf("failed to allocate ssi line buffer\n");
+      free(buf);
       return 0;
     }
     memset(lines, 0, sizeof(char*) * num_lines);

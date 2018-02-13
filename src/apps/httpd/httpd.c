@@ -1728,7 +1728,11 @@ http_post_rxpbuf(struct http_state *hs, struct pbuf *p)
   /* prevent connection being closed if httpd_post_data_recved() is called nested */
   hs->unrecved_bytes++;
 #endif
-  err = httpd_post_receive_data(hs, p);
+  if (p != NULL) {
+    err = httpd_post_receive_data(hs, p);
+  } else {
+    err = ERR_OK;
+  }
 #if LWIP_HTTPD_SUPPORT_POST && LWIP_HTTPD_POST_MANUAL_WND
   hs->unrecved_bytes--;
 #endif

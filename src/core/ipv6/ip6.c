@@ -1038,14 +1038,6 @@ netif_found:
   }
 
 options_done:
-  if (hlen_tot >= 0x8000) {
-    /* s16_t overflow */
-    LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: header length overflow: %"U16_F"\n", hlen_tot));
-    pbuf_free(p);
-    IP6_STATS_INC(ip6.proterr);
-    IP6_STATS_INC(ip6.drop);
-    goto options_done;
-  }
 
   /* send to upper layers */
   LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: \n"));
@@ -1056,7 +1048,7 @@ options_done:
   
 #if LWIP_RAW
   /* p points to IPv6 header again for raw_input. */
-  pbuf_header_force(p, (s16_t)hlen_tot);
+  pbuf_add_header_force(p, hlen_tot);
   /* raw input did not eat the packet? */
   raw_status = raw_input(p, inp);
   if (raw_status != RAW_INPUT_EATEN)
@@ -1097,7 +1089,7 @@ options_done:
         {
 #if LWIP_ICMP6
         /* p points to IPv6 header again for raw_input. */
-        pbuf_header_force(p, (s16_t)hlen_tot);
+        pbuf_add_header_force(p, hlen_tot);
         /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
         if ((!ip6_addr_ismulticast(ip6_current_dest_addr())) &&
             (IP6H_NEXTH(ip6hdr) != IP6_NEXTH_ICMP6)) {
