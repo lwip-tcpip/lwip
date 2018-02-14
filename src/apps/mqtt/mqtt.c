@@ -816,19 +816,29 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
   u8_t b = 0;
 
   while (p->tot_len > in_offset) {
+    /* We ALWAYS parse the header here first. Even if the header was not
+       included in this segment, we re-parse it here by buffering it in
+       client->rx_buffer. client->msg_idx keeps track of this. */
     if ((fixed_hdr_idx < 2) || ((b & 0x80) != 0)) {
 
       if (fixed_hdr_idx < client->msg_idx) {
+        /* parse header from old pbuf (buffered in client->rx_buffer) */
         b = client->rx_buffer[fixed_hdr_idx];
       } else {
+        /* parse header from this pbuf and save it in client->rx_buffer in case
+           it comes in segmented */
         b = pbuf_get_at(p, in_offset++);
         client->rx_buffer[client->msg_idx++] = b;
       }
       fixed_hdr_idx++;
 
       if (fixed_hdr_idx >= 2) {
+        /* fixed header contains at least 2 bytes but can contain more, depending on
+           'remaining length'. All bytes but the last of this have 0x80 set to
+           indicate more bytes are coming. */
         msg_rem_len |= (u32_t)(b & 0x7f) << ((fixed_hdr_idx - 2) * 7);
         if ((b & 0x80) == 0) {
+          /* fixed header is done */
           LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_parse_incoming: Remaining length after fixed header: %"U32_F"\n", msg_rem_len));
           if (msg_rem_len == 0) {
             /* Complete message with no extra headers of payload received */
@@ -836,12 +846,14 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
             client->msg_idx = 0;
             fixed_hdr_idx = 0;
           } else {
-            /* Bytes remaining in message */
+            /* Bytes remaining in message (changes remaining length if this is
+               not the first segment of this message) */
             msg_rem_len = (msg_rem_len + fixed_hdr_idx) - client->msg_idx;
           }
         }
       }
     } else {
+      /* Fixed header has been parsed, parse variable header */
       u16_t cpy_len, cpy_start, buffer_space;
 
       cpy_start = (client->msg_idx - fixed_hdr_idx) % (MQTT_VAR_HEADER_BUFFER_LEN - fixed_hdr_idx) + fixed_hdr_idx;
@@ -862,7 +874,7 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
       msg_rem_len -= cpy_len;
 
       LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_parse_incoming: msg_idx: %"U32_F", cpy_len: %"U16_F", remaining %"U32_F"\n", client->msg_idx, cpy_len, msg_rem_len));
-      if (msg_rem_len == 0 || cpy_len == buffer_space) {
+      if ((msg_rem_len == 0) || (cpy_len == buffer_space)) {
         /* Whole message received or buffer is full */
         mqtt_connection_status_t res = mqtt_message_received(client, fixed_hdr_idx, (cpy_start + cpy_len) - fixed_hdr_idx, msg_rem_len);
         if (res != MQTT_CONNECT_ACCEPTED) {
