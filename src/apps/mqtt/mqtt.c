@@ -672,16 +672,23 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
   mqtt_connection_status_t res = MQTT_CONNECT_ACCEPTED;
 
   u8_t *var_hdr_payload = client->rx_buffer + fixed_hdr_idx;
+  size_t var_hdr_payload_bufsize = sizeof(client->rx_buffer) - fixed_hdr_idx;
 
   /* Control packet type */
   u8_t pkt_type = MQTT_CTL_PACKET_TYPE(client->rx_buffer[0]);
   u16_t pkt_id = 0;
 
+  LWIP_ASSERT("client->msg_idx < MQTT_VAR_HEADER_BUFFER_LEN", client->msg_idx < MQTT_VAR_HEADER_BUFFER_LEN);
+  LWIP_ASSERT("fixed_hdr_idx <= client->msg_idx", fixed_hdr_idx <= client->msg_idx);
   LWIP_ERROR("buffer length mismatch", fixed_hdr_idx + length <= MQTT_VAR_HEADER_BUFFER_LEN,
              return MQTT_CONNECT_DISCONNECTED);
 
   if (pkt_type == MQTT_MSG_TYPE_CONNACK) {
     if (client->conn_state == MQTT_CONNECTING) {
+      if (length < 2) {
+        LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short CONNACK message\n"));
+        goto out_disconnect;
+      }
       /* Get result code from CONNACK */
       res = (mqtt_connection_status_t)var_hdr_payload[1];
       LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_message_received: Connect response code %d\n", res));
@@ -705,24 +712,38 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
     u16_t payload_length = length;
     u8_t qos = MQTT_CTL_PACKET_QOS(client->rx_buffer[0]);
 
-    if ((client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) && (length > 0)) {
+    if (client->msg_idx <= MQTT_VAR_HEADER_BUFFER_LEN) {
       /* Should have topic and pkt id*/
       u8_t *topic;
       u16_t after_topic;
       u8_t bkp;
-      u16_t topic_len = var_hdr_payload[0];
+      u16_t topic_len;
+      if (length < 2) {
+        LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short PUBLISH packet\n"));
+        goto out_disconnect;
+      }
+      topic_len = var_hdr_payload[0];
       topic_len = (topic_len << 8) + (u16_t)(var_hdr_payload[1]);
+      if ((2U + topic_len + (qos ? 2U : 0U) > length) ||
+          (2U + topic_len + (qos ? 2U : 0U) > var_hdr_payload_bufsize)) {
+        LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short PUBLISH packet (topic)\n"));
+        goto out_disconnect;
+      }
 
       topic = var_hdr_payload + 2;
       after_topic = 2 + topic_len;
-      /* Check length, add one byte even for QoS 0 so that zero termination will fit */
-      if ((after_topic + (qos ? 2 : 1)) > length) {
+      /* Check buffer length, add one byte even for QoS 0 so that zero termination will fit */
+      if ((after_topic + (qos ? 2U : 1U)) > var_hdr_payload_bufsize) {
         LWIP_DEBUGF(MQTT_DEBUG_WARN, ("mqtt_message_received: Receive buffer can not fit topic + pkt_id\n"));
         goto out_disconnect;
       }
 
       /* id for QoS 1 and 2 */
       if (qos > 0) {
+        if (length < after_topic + 2U) {
+          LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short PUBLISH packet (after_topic)\n"));
+          goto out_disconnect;
+        }
         client->inpub_pkt_id = ((u16_t)var_hdr_payload[after_topic] << 8) + (u16_t)var_hdr_payload[after_topic + 1];
         after_topic += 2;
       } else {
@@ -745,6 +766,10 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
       topic[topic_len] = bkp;
     }
     if (payload_length > 0 || remaining_length == 0) {
+      if (length < (size_t)(payload_offset + payload_length)) {
+        LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short packet (payload)\n"));
+        goto out_disconnect;
+      }
       client->data_cb(client->inpub_arg, var_hdr_payload + payload_offset, payload_length, remaining_length == 0 ? MQTT_DATA_FLAG_LAST : 0);
       /* Reply if QoS > 0 */
       if (remaining_length == 0 && qos > 0) {
