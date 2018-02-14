@@ -214,7 +214,9 @@ typedef err_t (*netif_mld_mac_filter_fn)(struct netif *netif,
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
 #if LWIP_DHCP || LWIP_AUTOIP || LWIP_IGMP || LWIP_IPV6_MLD || (LWIP_NUM_NETIF_CLIENT_DATA > 0)
+#if LWIP_NUM_NETIF_CLIENT_DATA > 0
 u8_t netif_alloc_client_data_id(void);
+#endif
 /** @ingroup netif_cd
  * Set client data. Obtain ID from netif_alloc_client_data_id().
  */
