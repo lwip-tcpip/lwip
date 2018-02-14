@@ -251,4 +251,4 @@ void httpd_inits(struct altcp_tls_config *conf);
 }
 #endif
 
-#endif /* LWIP_HTTPD_H */
+#endif /* LWIP_HDR_APPS_HTTPD_H */

@@ -69,4 +69,4 @@ void altcp_mbedtls_free_config(void *item);
 
 #endif /* LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS */
 #endif /* LWIP_ALTCP */
-#endif /* LWIP_HDR_ALTCP_TLS_H */
+#endif /* LWIP_HDR_ALTCP_MBEDTLS_MEM_H */

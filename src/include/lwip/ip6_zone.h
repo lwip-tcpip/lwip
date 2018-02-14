@@ -293,4 +293,4 @@ enum lwip_ipv6_scope_type
 
 #endif /* LWIP_IPV6 */
 
-#endif /* LWIP_HDR_IP6_ADDR_H */
+#endif /* LWIP_HDR_IP6_ZONE_H */
