@@ -277,18 +277,19 @@ mqtt_output_send(struct mqtt_ringbuf_t *rb, struct altcp_pcb *tpcb)
 /**
  * Create request item
  * @param r_objs Pointer to request objects
+ * @param r_objs_len Number of array entries
  * @param pkt_id Packet identifier of request
  * @param cb Packet callback to call when requests lifetime ends
  * @param arg Parameter following callback
  * @return Request or NULL if failed to create
  */
 static struct mqtt_request_t *
-mqtt_create_request(struct mqtt_request_t *r_objs, u16_t pkt_id, mqtt_request_cb_t cb, void *arg)
+mqtt_create_request(struct mqtt_request_t *r_objs, size_t r_objs_len, u16_t pkt_id, mqtt_request_cb_t cb, void *arg)
 {
   struct mqtt_request_t *r = NULL;
   u8_t n;
   LWIP_ASSERT("mqtt_create_request: r_objs != NULL", r_objs != NULL);
-  for (n = 0; n < MQTT_REQ_MAX_IN_FLIGHT; n++) {
+  for (n = 0; n < r_objs_len; n++) {
     /* Item point to itself if not in use */
     if (r_objs[n].next == &r_objs[n]) {
       r = &r_objs[n];
@@ -429,13 +430,14 @@ mqtt_clear_requests(struct mqtt_request_t **tail)
 /**
  * Initialize all request items
  * @param r_objs Pointer to request objects
+ * @param r_objs_len Number of array entries
  */
 static void
-mqtt_init_requests(struct mqtt_request_t *r_objs)
+mqtt_init_requests(struct mqtt_request_t *r_objs, size_t r_objs_len)
 {
   u8_t n;
   LWIP_ASSERT("mqtt_init_requests: r_objs != NULL", r_objs != NULL);
-  for (n = 0; n < MQTT_REQ_MAX_IN_FLIGHT; n++) {
+  for (n = 0; n < r_objs_len; n++) {
     /* Item pointing to itself indicates unused */
     r_objs[n].next = &r_objs[n];
   }
@@ -1110,21 +1112,21 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
   LWIP_ERROR("mqtt_publish: topic length overflow", (topic_strlen <= (0xFFFF - 2)), return ERR_ARG);
   topic_len = (u16_t)topic_strlen;
   total_len = 2 + topic_len + payload_length;
-  LWIP_ERROR("mqtt_publish: total length overflow", (total_len <= 0xFFFF), return ERR_ARG);
-  remaining_length = (u16_t)total_len;
-
-  LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_publish: Publish with payload length %d to topic \"%s\"\n", payload_length, topic));
 
   if (qos > 0) {
-    remaining_length += 2;
+    total_len += 2;
     /* Generate pkt_id id for QoS1 and 2 */
     pkt_id = msg_generate_packet_id(client);
   } else {
     /* Use reserved value pkt_id 0 for QoS 0 in request handle */
     pkt_id = 0;
   }
+  LWIP_ERROR("mqtt_publish: total length overflow", (total_len <= 0xFFFF), return ERR_ARG);
+  remaining_length = (u16_t)total_len;
 
-  r = mqtt_create_request(client->req_list, pkt_id, cb, arg);
+  LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_publish: Publish with payload length %d to topic \"%s\"\n", payload_length, topic));
+
+  r = mqtt_create_request(client->req_list, LWIP_ARRAYSIZE(client->req_list), pkt_id, cb, arg);
   if (r == NULL) {
     return ERR_MEM;
   }
@@ -1195,7 +1197,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
   }
 
   pkt_id = msg_generate_packet_id(client);
-  r = mqtt_create_request(client->req_list, pkt_id, cb, arg);
+  r = mqtt_create_request(client->req_list, LWIP_ARRAYSIZE(client->req_list), pkt_id, cb, arg);
   if (r == NULL) {
     return ERR_MEM;
   }
@@ -1304,7 +1306,7 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
   client->connect_arg = arg;
   client->connect_cb = cb;
   client->keep_alive = client_info->keep_alive;
-  mqtt_init_requests(client->req_list);
+  mqtt_init_requests(client->req_list, LWIP_ARRAYSIZE(client->req_list));
 
   /* Build connect message */
   if (client_info->will_topic != NULL && client_info->will_msg != NULL) {
