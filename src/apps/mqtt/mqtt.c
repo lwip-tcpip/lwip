@@ -720,14 +720,15 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_idx, u16_t length, u
       u16_t after_topic;
       u8_t bkp;
       u16_t topic_len;
-      if (length < 2) {
+      u16_t qos_len = (qos ? 2U : 0U);
+      if (length < 2 + qos_len) {
         LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short PUBLISH packet\n"));
         goto out_disconnect;
       }
       topic_len = var_hdr_payload[0];
       topic_len = (topic_len << 8) + (u16_t)(var_hdr_payload[1]);
-      if ((2U + topic_len + (qos ? 2U : 0U) > length) ||
-          (2U + topic_len + (qos ? 2U : 0U) > var_hdr_payload_bufsize)) {
+      if ((topic_len > length - (2 + qos_len)) ||
+          (topic_len > var_hdr_payload_bufsize - (2 + qos_len))) {
         LWIP_DEBUGF(MQTT_DEBUG_WARN,( "mqtt_message_received: Received short PUBLISH packet (topic)\n"));
         goto out_disconnect;
       }
