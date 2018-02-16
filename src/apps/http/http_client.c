@@ -288,7 +288,7 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
     }
     if (req->parse_state == HTTPC_PARSE_WAIT_HEADERS) {
       u16_t total_header_len;
-      err_t err = http_wait_headers(p, &req->hdr_content_len, &total_header_len);
+      err_t err = http_wait_headers(req->rx_hdrs, &req->hdr_content_len, &total_header_len);
       if (err == ERR_OK) {
         /* hide header bytes in pbuf */
         struct pbuf *q;
@@ -536,6 +536,16 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
     httpc_free_state(req);
     return ERR_MEM;
   }
+#if LWIP_ALTCP_TLS
+  if (settings->tls_config) {
+    struct altcp_pcb *pcbs = altcp_tls_new(settings->tls_config, req->pcb);
+    if (pcbs == NULL) {
+      httpc_free_state(req);
+      return ERR_MEM;
+    }
+    req->pcb = pcbs;
+  }
+#endif
   req->remote_port = settings->use_proxy ? settings->proxy_port : server_port;
   altcp_arg(req->pcb, req);
   altcp_recv(req->pcb, httpc_tcp_recv);

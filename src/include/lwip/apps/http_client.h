@@ -109,6 +109,10 @@ typedef struct _httpc_connection {
   u8_t use_proxy;
   /* @todo: add username:pass? */
 
+#if LWIP_ALTCP_TLS
+  struct altcp_tls_config *tls_config;
+#endif
+
   /* this callback is called when the transfer is finished (or aborted) */
   httpc_result_fn result_fn;
   /* this callback is called after receiving the http headers
