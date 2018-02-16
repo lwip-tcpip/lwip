@@ -92,14 +92,23 @@
     "\r\n"
 #define HTTPC_REQ_11_HOST_FORMAT(uri, srv_name) HTTPC_REQ_11_HOST, uri, srv_name
 
-/* GET request with proxy: @todo */
-#define HTTPC_REQ_11_PROXY "GET %s%s HTTP/1.1\r\n" /* PROXY, URI */\
+/* GET request with proxy */
+#define HTTPC_REQ_11_PROXY "GET http://%s%s HTTP/1.1\r\n" /* HOST, URI */\
     "User-Agent: Wget/1.15 (linux-gnu)\r\n" \
     "Accept: */*\r\n" \
     "Host: %s\r\n" /* server name */ \
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
-#define HTTPC_REQ_11_PROXY_FORMAT(proxy, uri, srv_name) HTTPC_REQ_11_PROXY, proxy, uri, srv_name
+#define HTTPC_REQ_11_PROXY_FORMAT(host, uri, srv_name) HTTPC_REQ_11_PROXY, host, uri, srv_name
+
+/* GET request with proxy (non-default server port) */
+#define HTTPC_REQ_11_PROXY_PORT "GET http://%s:%d%s HTTP/1.1\r\n" /* HOST, host-port, URI */\
+    "User-Agent: Wget/1.15 (linux-gnu)\r\n" \
+    "Accept: */*\r\n" \
+    "Host: %s\r\n" /* server name */ \
+    "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
+    "\r\n"
+#define HTTPC_REQ_11_PROXY_PORT_FORMAT(host, host_port, uri, srv_name) HTTPC_REQ_11_PROXY_PORT, host, host_port, uri, srv_name
 
 typedef enum ehttpc_parse_state {
   HTTPC_PARSE_WAIT_FIRST_LINE = 0,
@@ -447,12 +456,16 @@ httpc_get_internal_dns(httpc_state_t* req, const char* server_name)
 }
 
 static int
-httpc_create_request_string(const httpc_connection_t *settings, const char* server_name, const char* uri,
+httpc_create_request_string(const httpc_connection_t *settings, const char* server_name, int server_port, const char* uri,
                             int use_host, char *buffer, size_t buffer_size)
 {
   if (settings->use_proxy) {
     LWIP_ASSERT("server_name != NULL", server_name != NULL);
-    return snprintf(buffer, buffer_size, HTTPC_REQ_11_PROXY_FORMAT(server_name, uri, server_name));
+    if (server_port != HTTP_DEFAULT_PORT) {
+      return snprintf(buffer, buffer_size, HTTPC_REQ_11_PROXY_PORT_FORMAT(server_name, server_port, uri, server_name));
+    } else {
+      return snprintf(buffer, buffer_size, HTTPC_REQ_11_PROXY_FORMAT(server_name, uri, server_name));
+    }
   } else if (use_host) {
     LWIP_ASSERT("server_name != NULL", server_name != NULL);
     return snprintf(buffer, buffer_size, HTTPC_REQ_11_HOST_FORMAT(uri, server_name));
@@ -477,7 +490,7 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   LWIP_ASSERT("uri != NULL", uri != NULL);
 
   /* get request len */
-  req_len = httpc_create_request_string(settings, server_name, uri, use_host, NULL, 0);
+  req_len = httpc_create_request_string(settings, server_name, server_port, uri, use_host, NULL, 0);
   if ((req_len < 0) || (req_len > 0xFFFF)) {
     return ERR_VAL;
   }
@@ -523,7 +536,7 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
     httpc_free_state(req);
     return ERR_MEM;
   }
-  req->remote_port = server_port;
+  req->remote_port = settings->use_proxy ? settings->proxy_port : server_port;
   altcp_arg(req->pcb, req);
   altcp_recv(req->pcb, httpc_tcp_recv);
   altcp_err(req->pcb, httpc_tcp_err);
@@ -531,7 +544,7 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   altcp_sent(req->pcb, httpc_tcp_sent);
 
   /* set up request buffer */
-  req_len2 = httpc_create_request_string(settings, server_name, uri, use_host,
+  req_len2 = httpc_create_request_string(settings, server_name, server_port, uri, use_host,
     (char *)req->request->payload, req_len + 1);
   if (req_len2 != req_len) {
     httpc_free_state(req);
@@ -596,7 +609,11 @@ httpc_get_file(const ip_addr_t* server_addr, u16_t port, const char* uri, const 
     return err;
   }
 
-  err = httpc_get_internal_addr(req, server_addr);
+  if (settings->use_proxy) {
+    err = httpc_get_internal_addr(req, &settings->proxy_addr);
+  } else {
+    err = httpc_get_internal_addr(req, server_addr);
+  }
   if(err != ERR_OK) {
     httpc_free_state(req);
     return err;
@@ -634,7 +651,11 @@ httpc_get_file_dns(const char* server_name, u16_t port, const char* uri, const h
     return err;
   }
 
-  err = httpc_get_internal_dns(req, server_name);
+  if (settings->use_proxy) {
+    err = httpc_get_internal_addr(req, &settings->proxy_addr);
+  } else {
+    err = httpc_get_internal_dns(req, server_name);
+  }
   if(err != ERR_OK) {
     httpc_free_state(req);
     return err;
@@ -777,7 +798,11 @@ httpc_get_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri
     return err;
   }
 
-  err = httpc_get_internal_addr(req, server_addr);
+  if (settings->use_proxy) {
+    err = httpc_get_internal_addr(req, &settings->proxy_addr);
+  } else {
+    err = httpc_get_internal_addr(req, server_addr);
+  }
   if(err != ERR_OK) {
     httpc_fs_free(filestate);
     httpc_free_state(req);
@@ -823,7 +848,11 @@ httpc_get_file_dns_to_disk(const char* server_name, u16_t port, const char* uri,
     return err;
   }
 
-  err = httpc_get_internal_dns(req, server_name);
+  if (settings->use_proxy) {
+    err = httpc_get_internal_addr(req, &settings->proxy_addr);
+  } else {
+    err = httpc_get_internal_dns(req, server_name);
+  }
   if(err != ERR_OK) {
     httpc_fs_free(filestate);
     httpc_free_state(req);
