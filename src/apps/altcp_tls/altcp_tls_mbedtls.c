@@ -550,7 +550,7 @@ altcp_mbedtls_lower_err(void *arg, err_t err)
 /* setup functions */
 
 static void
-altcp_tcp_remove_callbacks(struct altcp_pcb *inner_conn)
+altcp_mbedtls_remove_callbacks(struct altcp_pcb *inner_conn)
 {
   altcp_arg(inner_conn, NULL);
   altcp_recv(inner_conn, NULL);
@@ -890,7 +890,7 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
   if (inner_conn) {
     err_t err;
     altcp_poll_fn oldpoll = inner_conn->poll;
-    altcp_tcp_remove_callbacks(conn->inner_conn);
+    altcp_mbedtls_remove_callbacks(conn->inner_conn);
     err = altcp_close(conn->inner_conn);
     if (err != ERR_OK) {
       /* not closed, set up all callbacks again */
