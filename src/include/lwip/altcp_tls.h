@@ -56,7 +56,7 @@ extern "C" {
 #endif
 
 /** @ingroup altcp_tls
- * ALTCP_TLS configuration handle, content depends on port (e.g. mbedtls) 
+ * ALTCP_TLS configuration handle, content depends on port (e.g. mbedtls)
  */
 struct altcp_tls_config;
 
