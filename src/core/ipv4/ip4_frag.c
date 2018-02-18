@@ -590,14 +590,14 @@ ip4_reass(struct pbuf *p)
     u16_t datagram_len = (u16_t)(offset + len);
     if ((datagram_len < offset) || (datagram_len > (0xFFFF - IP_HLEN))) {
       /* u16_t overflow, cannot handle this */
-      goto nullreturn;
+      goto nullreturn_ipr;
     }
   }
   /* find the right place to insert this pbuf */
   /* @todo: trim pbufs if fragments are overlapping */
   valid = ip_reass_chain_frag_into_datagram_and_validate(ipr, p, is_last);
   if (valid == IP_REASS_VALIDATE_PBUF_DROPPED) {
-    goto nullreturn;
+    goto nullreturn_ipr;
   }
   /* if we come here, the pbuf has been enqueued */
 
@@ -675,6 +675,13 @@ ip4_reass(struct pbuf *p)
   /* the datagram is not (yet?) reassembled completely */
   LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_pbufcount: %d out\n", ip_reass_pbufcount));
   return NULL;
+
+nullreturn_ipr:
+  if ((ipr != NULL) && (ipr->p == NULL)) {
+    /* dropped pbuf after creating a new datagram entry: remove the entry, too */
+    LWIP_ASSERT("not firstalthough just enqueued", ipr == reassdatagrams);
+    ip_reass_dequeue_datagram(ipr, NULL);
+  }
 
 nullreturn:
   LWIP_DEBUGF(IP_REASS_DEBUG, ("ip4_reass: nullreturn\n"));
