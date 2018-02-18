@@ -265,7 +265,6 @@ http_wait_headers(struct pbuf *p, u32_t *content_length, u16_t *total_header_len
 static err_t
 httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
 {
-  err_t ret = ERR_OK;
   httpc_state_t* req = (httpc_state_t*)arg;
   LWIP_UNUSED_ARG(r);
 
@@ -311,7 +310,8 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
   if ((p != NULL) && (req->parse_state == HTTPC_PARSE_RX_DATA)) {
     req->rx_content_len += p->tot_len;
     if (req->recv_fn != NULL) {
-      ret = req->recv_fn(req->callback_arg, pcb, p, r);
+      /* directly return here: the connection migth already be aborted from the callback! */
+      return req->recv_fn(req->callback_arg, pcb, p, r);
     } else {
       altcp_recved(pcb, p->tot_len);
       pbuf_free(p);
