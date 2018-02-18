@@ -60,6 +60,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#if LWIP_SOCKET
+
 #ifndef TEST_SOCKETS_STRESS
 #define TEST_SOCKETS_STRESS   LWIP_DBG_OFF
 #endif
@@ -607,3 +609,5 @@ sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port)
   ((struct sockaddr_in *)addr)->sin_port = remote_port;
   sockets_stresstest_start_clients(addr);
 }
+
+#endif /* LWIP_SOCKET */
