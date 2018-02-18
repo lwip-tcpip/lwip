@@ -342,6 +342,7 @@ slipif_loop_thread(void *nf)
 #endif /* SLIP_USE_RX_THREAD */
 
 /**
+ * @ingroup slipif
  * SLIP netif initialization
  *
  * Call the arch specific sio_open and remember
@@ -414,6 +415,7 @@ slipif_init(struct netif *netif)
 }
 
 /**
+ * @ingroup slipif
  * Polls the serial device and feeds the IP layer with incoming packets.
  *
  * @param netif The lwip network interface structure for this slipif
@@ -436,6 +438,7 @@ slipif_poll(struct netif *netif)
 
 #if SLIP_RX_FROM_ISR
 /**
+ * @ingroup slipif
  * Feeds the IP layer with incoming packets that were receive
  *
  * @param netif The lwip network interface structure for this slipif
@@ -510,6 +513,7 @@ slipif_rxbyte_enqueue(struct netif *netif, u8_t data)
 }
 
 /**
+ * @ingroup slipif
  * Process a received byte, completed packets are put on a queue that is
  * fed into IP through slipif_process_rxqueue().
  *
@@ -527,6 +531,7 @@ slipif_received_byte(struct netif *netif, u8_t data)
 }
 
 /**
+ * @ingroup slipif
  * Process multiple received byte, completed packets are put on a queue that is
  * fed into IP through slipif_process_rxqueue().
  *

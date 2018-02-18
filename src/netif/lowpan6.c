@@ -577,6 +577,10 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   return err;
 }
 
+/**
+ * @ingroup sixlowpan
+ * Set context
+ */
 err_t
 lowpan6_set_context(u8_t idx, const ip6_addr_t *context)
 {
@@ -592,6 +596,10 @@ lowpan6_set_context(u8_t idx, const ip6_addr_t *context)
 }
 
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
+/**
+ * @ingroup sixlowpan
+ * Set short address
+ */
 err_t
 lowpan6_set_short_addr(u8_t addr_high, u8_t addr_low)
 {
@@ -603,6 +611,10 @@ lowpan6_set_short_addr(u8_t addr_high, u8_t addr_low)
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
 #if LWIP_IPV4
+/**
+ * @ingroup sixlowpan
+ * IPv4 output
+ */
 err_t
 lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 {
@@ -615,6 +627,7 @@ lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 #endif /* LWIP_IPV4 */
 
 /**
+ * @ingroup sixlowpan
  * Resolve and fill-in IEEE 802.15.4 address header for outgoing IPv6 packet.
  *
  * Perform Header Compression and fragment if necessary.
@@ -985,6 +998,10 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
   return q;
 }
 
+/**
+ * @ingroup sixlowpan
+ * NETIF input function
+ */
 err_t
 lowpan6_input(struct pbuf *p, struct netif *netif)
 {
@@ -1167,6 +1184,9 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
   return ip6_input(p, netif);
 }
 
+/**
+ * @ingroup sixlowpan
+ */
 err_t
 lowpan6_if_init(struct netif *netif)
 {
@@ -1188,6 +1208,10 @@ lowpan6_if_init(struct netif *netif)
   return ERR_OK;
 }
 
+/**
+ * @ingroup sixlowpan
+ * Set PAN ID
+ */
 err_t
 lowpan6_set_pan_id(u16_t pan_id)
 {
@@ -1198,6 +1222,7 @@ lowpan6_set_pan_id(u16_t pan_id)
 
 #if !NO_SYS
 /**
+ * @ingroup sixlowpan
  * Pass a received packet to tcpip_thread for input processing
  *
  * @param p the received packet, p->payload pointing to the
