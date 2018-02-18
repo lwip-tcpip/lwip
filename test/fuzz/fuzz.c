@@ -125,9 +125,11 @@ static void input_pkts(struct netif *netif, const u8_t *data, size_t len)
     frame_len = htons(frame_len) & 0x7FF;
     frame_len = LWIP_MIN(frame_len, max_packet_size);
     if (frame_len > rem_len) {
-      frame_len = rem_len;
+      frame_len = (u16_t)rem_len;
     }
-    input_pkt(netif, ptr, frame_len);
+    if (frame_len != 0) {
+      input_pkt(netif, ptr, frame_len);
+    }
     ptr += frame_len;
     rem_len -= frame_len;
   }
