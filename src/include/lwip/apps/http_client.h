@@ -42,12 +42,15 @@
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/altcp.h"
+#include "lwip/prot/iana.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** HTTPC_HAVE_FILE_IO: define this to 1 to have functions dowloading directly
+/**
+ * @ingroup httpc 
+ * HTTPC_HAVE_FILE_IO: define this to 1 to have functions dowloading directly
  * to disk via fopen/fwrite.
  * These functions are example implementations of the interface only.
  */
@@ -55,9 +58,16 @@ extern "C" {
 #define LWIP_HTTPC_HAVE_FILE_IO   0
 #endif
 
-/** The default TCP port used for HTTP */
-#define HTTP_DEFAULT_PORT         80
+/**
+ * @ingroup httpc 
+ * The default TCP port used for HTTP
+ */
+#define HTTP_DEFAULT_PORT         LWIP_IANA_PORT_HTTP
 
+/**
+ * @ingroup httpc 
+ * HTTP client result codes
+ */
 typedef enum ehttpc_result {
   /** File successfully received */
   HTTPC_RESULT_OK            = 0,
@@ -81,7 +91,9 @@ typedef enum ehttpc_result {
 
 typedef struct _httpc_state httpc_state_t;
 
-/** Prototype of a http client callback function
+/**
+ * @ingroup httpc 
+ * Prototype of a http client callback function
  *
  * @param arg argument specified when initiating the request
  * @param http_result result of the mail transfer (see enum httpc_result_t)
@@ -92,7 +104,9 @@ typedef struct _httpc_state httpc_state_t;
  */
 typedef void (*httpc_result_fn)(void *arg, httpc_result_t httpc_result, u32_t rx_content_len, u32_t srv_res, err_t err);
 
-/** Prototype of http client callback: called when the headers are received
+/**
+ * @ingroup httpc 
+ * Prototype of http client callback: called when the headers are received
  *
  * @param connection http client connection
  * @param arg argument specified when initiating the request

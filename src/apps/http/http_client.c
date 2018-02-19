@@ -32,7 +32,11 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
- *
+ */
+
+/**
+ * @defgroup httpc HTTP client
+ * @ingroup apps
  * @todo:
  * - persistent connections
  * - select outgoing http version
@@ -475,7 +479,7 @@ httpc_create_request_string(const httpc_connection_t *settings, const char* serv
 }
 
 /** Initialize the connection struct */
-err_t
+static err_t
 httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_t *settings, const char* server_name,
                       u16_t server_port, const char* uri, altcp_recv_fn recv_fn, void* callback_arg, int use_host)
 {
@@ -569,7 +573,10 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   return ERR_OK;
 }
 
-/** Initialize the connection struct */
+/**
+ * @ingroup httpc 
+ * Initialize the connection struct
+ */
 err_t
 httpc_init_connection(httpc_state_t **connection, const httpc_connection_t *settings, const char* server_name,
                       u16_t server_port, const char* uri, altcp_recv_fn recv_fn, void* callback_arg)
@@ -578,7 +585,10 @@ httpc_init_connection(httpc_state_t **connection, const httpc_connection_t *sett
 }
 
 
-/** Initialize the connection struct (from IP address) */
+/**
+ * @ingroup httpc 
+ * Initialize the connection struct (from IP address)
+ */
 err_t
 httpc_init_connection_addr(httpc_state_t **connection, const httpc_connection_t *settings,
                            const ip_addr_t* server_addr, u16_t server_port, const char* uri,
@@ -592,7 +602,9 @@ httpc_init_connection_addr(httpc_state_t **connection, const httpc_connection_t 
     recv_fn, callback_arg, 1);
 }
 
-/** HTTP client API: get a file by passing server IP address
+/**
+ * @ingroup httpc 
+ * HTTP client API: get a file by passing server IP address
  *
  * @param server_addr IP address of the server to connect
  * @param port tcp port of the server
@@ -635,7 +647,9 @@ httpc_get_file(const ip_addr_t* server_addr, u16_t port, const char* uri, const 
   return ERR_OK;
 }
 
-/** HTTP client API: get a file by passing server name as string (DNS name or IP address string)
+/**
+ * @ingroup httpc 
+ * HTTP client API: get a file by passing server name as string (DNS name or IP address string)
  *
  * @param server_name server name as string (DNS name or IP address string)
  * @param port tcp port of the server
@@ -775,7 +789,9 @@ httpc_fs_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
   return ERR_OK;
 }
 
-/** HTTP client API: get a file to disk by passing server IP address
+/**
+ * @ingroup httpc 
+ * HTTP client API: get a file to disk by passing server IP address
  *
  * @param server_addr IP address of the server to connect
  * @param port tcp port of the server
@@ -825,7 +841,9 @@ httpc_get_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri
   return ERR_OK;
 }
 
-/** HTTP client API: get a file to disk by passing server name as string (DNS name or IP address string)
+/**
+ * @ingroup httpc 
+ * HTTP client API: get a file to disk by passing server name as string (DNS name or IP address string)
  *
  * @param server_name server name as string (DNS name or IP address string)
  * @param port tcp port of the server
