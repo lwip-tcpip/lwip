@@ -42,6 +42,7 @@
  * - select outgoing http version
  * - optionally follow redirect
  * - check request uri for invalid characters? (e.g. encode spaces)
+ * - IPv6 support
  */
 
 #include "lwip/apps/http_client.h"
@@ -535,21 +536,11 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   req->uri = req->server_name + server_name_len + 1;
   memcpy(req->uri, uri, uri_len + 1);
 #endif
-  req->pcb = altcp_tcp_new();
+  req->pcb = altcp_new(settings->altcp_allocator);
   if(req->pcb == NULL) {
     httpc_free_state(req);
     return ERR_MEM;
   }
-#if LWIP_ALTCP_TLS
-  if (settings->tls_config) {
-    struct altcp_pcb *pcbs = altcp_tls_new(settings->tls_config, req->pcb);
-    if (pcbs == NULL) {
-      httpc_free_state(req);
-      return ERR_MEM;
-    }
-    req->pcb = pcbs;
-  }
-#endif
   req->remote_port = settings->use_proxy ? settings->proxy_port : server_port;
   altcp_arg(req->pcb, req);
   altcp_recv(req->pcb, httpc_tcp_recv);

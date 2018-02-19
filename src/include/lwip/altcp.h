@@ -66,6 +66,7 @@ typedef err_t (*altcp_sent_fn)(void *arg, struct altcp_pcb *conn, u16_t len);
 typedef err_t (*altcp_poll_fn)(void *arg, struct altcp_pcb *conn);
 typedef void  (*altcp_err_fn)(void *arg, err_t err);
 
+typedef struct altcp_pcb* (*altcp_new_fn)(void *arg, u8_t ip_type);
 
 struct altcp_pcb {
   const struct altcp_functions *fns;
@@ -81,6 +82,15 @@ struct altcp_pcb {
   altcp_err_fn        err;
   u8_t pollinterval;
 };
+
+typedef struct altcp_allocator_s {
+  altcp_new_fn  alloc;
+  void         *arg;
+} altcp_allocator_t;
+
+struct altcp_pcb *altcp_new(altcp_allocator_t *allocator);
+struct altcp_pcb *altcp_new_ip6(altcp_allocator_t *allocator);
+struct altcp_pcb *altcp_new_ip_type(altcp_allocator_t *allocator, u8_t ip_type);
 
 void altcp_arg(struct altcp_pcb *conn, void *arg);
 void altcp_accept(struct altcp_pcb *conn, altcp_accept_fn accept);
@@ -144,6 +154,10 @@ enum tcp_state altcp_dbg_get_tcp_state(struct altcp_pcb *conn);
 #define altcp_tcp_new_ip_type tcp_new_ip_type
 #define altcp_tcp_new tcp_new
 #define altcp_tcp_new_ip6 tcp_new_ip6
+
+#define altcp_new(allocator) tcp_new()
+#define altcp_new_ip6(allocator) tcp_new_ip6()
+#define altcp_new_ip_type(allocator, ip_type) tcp_new_ip_type(ip_type)
 
 #define altcp_arg tcp_arg
 #define altcp_accept tcp_accept

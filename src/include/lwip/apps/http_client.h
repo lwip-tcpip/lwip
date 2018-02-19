@@ -123,8 +123,8 @@ typedef struct _httpc_connection {
   u8_t use_proxy;
   /* @todo: add username:pass? */
 
-#if LWIP_ALTCP_TLS
-  struct altcp_tls_config *tls_config;
+#if LWIP_ALTCP
+  altcp_allocator_t *altcp_allocator;
 #endif
 
   /* this callback is called when the transfer is finished (or aborted) */

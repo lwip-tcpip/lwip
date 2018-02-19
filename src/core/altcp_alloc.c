@@ -6,7 +6,7 @@
  * This way, an application can make use of other application layer protocols
  * on top of TCP without knowing the details (e.g. TLS, proxy connection).
  *
- * This file contains the base implementation calling into tcp.
+ * This file contains allocation implementation that combine several layers.
  */
 
 /*
@@ -40,33 +40,42 @@
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
  */
-#ifndef LWIP_HDR_ALTCP_TCP_H
-#define LWIP_HDR_ALTCP_TCP_H
 
 #include "lwip/opt.h"
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/altcp.h"
+#include "lwip/altcp_tcp.h"
+#include "lwip/altcp_tls.h"
+#include "lwip/priv/altcp_priv.h"
+#include "lwip/mem.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string.h>
 
-struct altcp_pcb *altcp_tcp_new_ip_type(u8_t ip_type);
+#if LWIP_ALTCP_TLS
 
-#define altcp_tcp_new() altcp_tcp_new_ip_type(IPADDR_TYPE_V4)
-#define altcp_tcp_new_ip6() altcp_tcp_new_ip_type(IPADDR_TYPE_V6)
+/** This standard allocator function creates an altcp pcb for
+ * TLS over TCP */
+struct altcp_pcb *
+altcp_tls_alloc(void *arg, u8_t ip_type)
+{
+  struct altcp_pcb *inner_conn, *ret;
+  struct altcp_tls_config *config = (struct altcp_tls_config *)arg;
+  LWIP_UNUSED_ARG(ip_type);
 
-struct altcp_pcb *altcp_tcp_alloc(void *arg, u8_t ip_type);
-
-struct tcp_pcb;
-struct altcp_pcb *altcp_tcp_wrap(struct tcp_pcb *tpcb);
-
-#ifdef __cplusplus
+  inner_conn = altcp_tcp_new_ip_type(ip_type);
+  if (inner_conn == NULL) {
+    return NULL;
+  }
+  ret = altcp_tls_new(config, inner_conn);
+  if (ret == NULL) {
+    altcp_free(inner_conn);
+  }
+  return ret;
 }
-#endif
+
+
+#endif /* LWIP_ALTCP_TLS */
 
 #endif /* LWIP_ALTCP */
-
-#endif /* LWIP_HDR_ALTCP_TCP_H */

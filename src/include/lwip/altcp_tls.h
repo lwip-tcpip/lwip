@@ -83,6 +83,13 @@ void altcp_tls_free_config(struct altcp_tls_config *conf);
 struct altcp_pcb *altcp_tls_new(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb);
 
 /** @ingroup altcp_tls
+ * Create new ALTCP_TLS layer
+ * This allocator function fits to @ref altcp_allocator_t / @ref altcp_new.
+ * 'arg' must contain a struct altcp_tls_config *.
+ */
+struct altcp_pcb *altcp_tls_alloc(void *arg, u8_t ip_type);
+
+/** @ingroup altcp_tls
  * Return pointer to internal TLS context so application can tweak it.
  * Real type depends on port (e.g. mbedtls)
  */

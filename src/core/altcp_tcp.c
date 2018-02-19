@@ -201,6 +201,17 @@ altcp_tcp_new_ip_type(u8_t ip_type)
   return NULL;
 }
 
+/** altcp_tcp allocator function fitting to @ref altcp_allocator_t / @ref altcp_new.
+*
+* arg pointer is not used for TCP.
+*/
+struct altcp_pcb *
+altcp_tcp_alloc(void *arg, u8_t ip_type)
+{
+  LWIP_UNUSED_ARG(arg);
+  return altcp_tcp_new_ip_type(ip_type);
+}
+
 struct altcp_pcb *
 altcp_tcp_wrap(struct tcp_pcb *tpcb)
 {
