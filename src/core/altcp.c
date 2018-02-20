@@ -58,7 +58,6 @@
 extern const struct altcp_functions altcp_tcp_functions;
 
 /**
- * @ingroup altcp
  * For altcp layer implementations only: allocate a new struct altcp_pcb from the pool
  * and zero the memory
  */
@@ -73,7 +72,6 @@ altcp_alloc(void)
 }
 
 /**
- * @ingroup altcp
  * For altcp layer implementations only: return a struct altcp_pcb to the pool
  */
 void
