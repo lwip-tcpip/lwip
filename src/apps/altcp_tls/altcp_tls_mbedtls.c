@@ -903,11 +903,6 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
   }
   state = (altcp_mbedtls_state_t *)conn->state;
   if (state != NULL) {
-    if (state->rx) {
-      /* free leftover (unhandled) rx pbufs */
-      pbuf_free(state->rx);
-      state->rx = NULL;
-    }
     state->flags |= ALTCP_MBEDTLS_FLAGS_TX_CLOSED;
     if (state->flags & ALTCP_MBEDTLS_FLAGS_RX_CLOSED) {
       altcp_mbedtls_dealloc(conn);
@@ -1069,6 +1064,11 @@ altcp_mbedtls_dealloc(struct altcp_pcb *conn)
     if (state) {
       mbedtls_ssl_free(&state->ssl_context);
       state->flags = 0;
+      if (state->rx) {
+        /* free leftover (unhandled) rx pbufs */
+        pbuf_free(state->rx);
+        state->rx = NULL;
+      }
       altcp_mbedtls_free(state->conf, state);
       conn->state = NULL;
     }
