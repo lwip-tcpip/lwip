@@ -57,7 +57,9 @@
 
 extern const struct altcp_functions altcp_tcp_functions;
 
-/** For altcp layer implementations only: allocate a new struct altcp_pcb from the pool
+/**
+ * @ingroup altcp
+ * For altcp layer implementations only: allocate a new struct altcp_pcb from the pool
  * and zero the memory
  */
 struct altcp_pcb *
@@ -70,7 +72,9 @@ altcp_alloc(void)
   return ret;
 }
 
-/** For altcp layer implementations only: return a struct altcp_pcb to the pool
+/**
+ * @ingroup altcp
+ * For altcp layer implementations only: return a struct altcp_pcb to the pool
  */
 void
 altcp_free(struct altcp_pcb *conn)
@@ -83,25 +87,33 @@ altcp_free(struct altcp_pcb *conn)
   }
 }
 
-/** altcp_new_ip6: @ref altcp_new for IPv6 */
+/**
+ * @ingroup altcp
+ * altcp_new_ip6: @ref altcp_new for IPv6 
+ */
 struct altcp_pcb *
 altcp_new_ip6(altcp_allocator_t *allocator)
 {
   return altcp_new_ip_type(allocator, IPADDR_TYPE_V6);
 }
 
-/** altcp_new: @ref altcp_new for IPv4 */
+/** 
+ * @ingroup altcp
+ * altcp_new: @ref altcp_new for IPv4 
+ */
 struct altcp_pcb *
 altcp_new(altcp_allocator_t *allocator)
 {
   return altcp_new_ip_type(allocator, IPADDR_TYPE_V4);
 }
 
-/** altcp_new_ip_type: called by applications to allocate a new pcb with the help of an
+/**
+ * @ingroup altcp
+ * altcp_new_ip_type: called by applications to allocate a new pcb with the help of an
  * allocator function.
  *
  * @param allocator allocator function and argument
- * @param ip_type IP version of the pcb (IPADDR_TYPE_V4/IPADDR_TYPE_V6)
+ * @param ip_type IP version of the pcb (@ref lwip_ip_addr_type)
  * @return a new altcp_pcb or NULL on error
  */
 struct altcp_pcb *
