@@ -57,10 +57,8 @@
 
 #include <string.h>
 
-#ifndef LWIP_ICMP6_DATASIZE
-#define LWIP_ICMP6_DATASIZE   8
-#endif
 #if LWIP_ICMP6_DATASIZE == 0
+#undef LWIP_ICMP6_DATASIZE
 #define LWIP_ICMP6_DATASIZE   8
 #endif
 
