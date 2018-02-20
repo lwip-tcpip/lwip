@@ -83,8 +83,11 @@ struct altcp_pcb {
   u8_t pollinterval;
 };
 
+/** @ingroup altcp */
 typedef struct altcp_allocator_s {
+  /** Allocator function */
   altcp_new_fn  alloc;
+  /** Argument to allocator function */
   void         *arg;
 } altcp_allocator_t;
 
