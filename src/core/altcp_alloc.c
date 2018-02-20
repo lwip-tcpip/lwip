@@ -70,7 +70,7 @@ altcp_tls_alloc(void *arg, u8_t ip_type)
   }
   ret = altcp_tls_new(config, inner_conn);
   if (ret == NULL) {
-    altcp_free(inner_conn);
+    altcp_close(inner_conn);
   }
   return ret;
 }
