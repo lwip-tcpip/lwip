@@ -52,6 +52,7 @@
 #include "lwip/debug.h"
 #include "lwip/mem.h"
 #include "lwip/altcp_tls.h"
+#include "lwip/init.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -68,6 +69,11 @@
 #define HTTPC_DEBUG_REQUEST         0
 #endif
 
+/** This string is passed in the HTTP header as "User-Agent: " */
+#ifndef HTTPC_CLIENT_AGENT
+#define HTTPC_CLIENT_AGENT "lwIP/" LWIP_VERSION_STRING " (http://savannah.nongnu.org/projects/lwip)"
+#endif
+
 /* the various debug levels for this file */
 #define HTTPC_DEBUG_TRACE        (HTTPC_DEBUG | LWIP_DBG_TRACE)
 #define HTTPC_DEBUG_STATE        (HTTPC_DEBUG | LWIP_DBG_STATE)
@@ -82,38 +88,38 @@
 
 /* GET request basic */
 #define HTTPC_REQ_11 "GET %s HTTP/1.1\r\n" /* URI */\
-    "User-Agent: Wget/1.15 (linux-gnu)\r\n" \
+    "User-Agent: %s\r\n" /* User-Agent */ \
     "Accept: */*\r\n" \
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
-#define HTTPC_REQ_11_FORMAT(uri) HTTPC_REQ_11, uri
+#define HTTPC_REQ_11_FORMAT(uri) HTTPC_REQ_11, uri, HTTPC_CLIENT_AGENT
 
 /* GET request with host */
 #define HTTPC_REQ_11_HOST "GET %s HTTP/1.1\r\n" /* URI */\
-    "User-Agent: Wget/1.15 (linux-gnu)\r\n" \
+    "User-Agent: %s\r\n" /* User-Agent */ \
     "Accept: */*\r\n" \
     "Host: %s\r\n" /* server name */ \
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
-#define HTTPC_REQ_11_HOST_FORMAT(uri, srv_name) HTTPC_REQ_11_HOST, uri, srv_name
+#define HTTPC_REQ_11_HOST_FORMAT(uri, srv_name) HTTPC_REQ_11_HOST, uri, HTTPC_CLIENT_AGENT, srv_name
 
 /* GET request with proxy */
 #define HTTPC_REQ_11_PROXY "GET http://%s%s HTTP/1.1\r\n" /* HOST, URI */\
-    "User-Agent: Wget/1.15 (linux-gnu)\r\n" \
+    "User-Agent: %s\r\n" /* User-Agent */ \
     "Accept: */*\r\n" \
     "Host: %s\r\n" /* server name */ \
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
-#define HTTPC_REQ_11_PROXY_FORMAT(host, uri, srv_name) HTTPC_REQ_11_PROXY, host, uri, srv_name
+#define HTTPC_REQ_11_PROXY_FORMAT(host, uri, srv_name) HTTPC_REQ_11_PROXY, host, uri, HTTPC_CLIENT_AGENT, srv_name
 
 /* GET request with proxy (non-default server port) */
 #define HTTPC_REQ_11_PROXY_PORT "GET http://%s:%d%s HTTP/1.1\r\n" /* HOST, host-port, URI */\
-    "User-Agent: Wget/1.15 (linux-gnu)\r\n" \
+    "User-Agent: %s\r\n" /* User-Agent */ \
     "Accept: */*\r\n" \
     "Host: %s\r\n" /* server name */ \
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
-#define HTTPC_REQ_11_PROXY_PORT_FORMAT(host, host_port, uri, srv_name) HTTPC_REQ_11_PROXY_PORT, host, host_port, uri, srv_name
+#define HTTPC_REQ_11_PROXY_PORT_FORMAT(host, host_port, uri, srv_name) HTTPC_REQ_11_PROXY_PORT, host, host_port, uri, HTTPC_CLIENT_AGENT, srv_name
 
 typedef enum ehttpc_parse_state {
   HTTPC_PARSE_WAIT_FIRST_LINE = 0,
