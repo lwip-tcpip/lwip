@@ -471,8 +471,14 @@ altcp_default_bind(struct altcp_pcb *conn, const ip_addr_t *ipaddr, u16_t port)
 err_t
 altcp_default_shutdown(struct altcp_pcb *conn, int shut_rx, int shut_tx)
 {
-  if (conn && conn->inner_conn) {
-    return altcp_shutdown(conn->inner_conn, shut_rx, shut_tx);
+  if (conn) {
+    if (shut_rx && shut_tx && conn->fns && conn->fns->close) {
+      /* default shutdown for both sides is close */
+      return conn->fns->close(conn);
+    }
+    if (conn->inner_conn) {
+      return altcp_shutdown(conn->inner_conn, shut_rx, shut_tx);
+    }
   }
   return ERR_VAL;
 }
