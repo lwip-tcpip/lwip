@@ -154,9 +154,11 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
 	$(LWIPDIR)/apps/snmp/snmp_threadsync.c \
 	$(LWIPDIR)/apps/snmp/snmp_traps.c
 
-# HTTPDFILES: HTTP server
-HTTPDFILES=$(LWIPDIR)/apps/http/fs.c \
-	$(LWIPDIR)/apps/http/httpd.c
+# HTTPFILES: HTTP server + client
+HTTPFILES=$(LWIPDIR)/apps/http/altcp_proxyconnect.c \
+    $(LWIPDIR)/apps/http/fs.c \
+	$(LWIPDIR)/apps/http/http_client.c \
+	$(LWIPDIR)/apps/http/httpd.c \
 
 # MAKEFSDATA: MAKEFSDATA HTTP server host utility
 MAKEFSDATAFILES=$(LWIPDIR)/apps/http/makefsdata/makefsdata.c
