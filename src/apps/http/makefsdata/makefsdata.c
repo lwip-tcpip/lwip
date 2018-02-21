@@ -150,12 +150,13 @@ static size_t ssi_file_num_lines;
 
 static void print_usage(void)
 {
-  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-i] [-11] [-nossi] [-ssi:<filename>] [-c] [-f:<filename>] [-m] [-svr:<name>]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
+  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-11] [-nossi] [-ssi:<filename>] [-c] [-f:<filename>] [-m] [-svr:<name>]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
   printf("   targetdir: relative or absolute path to files to convert" NEWLINE);
   printf("   switch -s: toggle processing of subdirectories (default is on)" NEWLINE);
   printf("   switch -e: exclude HTTP header from file (header is created at runtime, default is off)" NEWLINE);
   printf("   switch -11: include HTTP 1.1 header (1.0 is default)" NEWLINE);
   printf("   switch -nossi: no support for SSI (cannot calculate Content-Length for SSI)" NEWLINE);
+  printf("   switch -ssi: ssi filename (ssi support controlled by file list, not by extension)" NEWLINE);
   printf("   switch -c: precalculate checksums for all pages (default is off)" NEWLINE);
   printf("   switch -f: target filename (default is \"fsdata.c\")" NEWLINE);
   printf("   switch -m: include \"Last-Modified\" header based on file time" NEWLINE);
