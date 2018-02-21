@@ -111,7 +111,6 @@ struct altcp_tls_config {
 
 static err_t altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p, err_t err);
 static err_t altcp_mbedtls_setup(void *conf, struct altcp_pcb *conn, struct altcp_pcb *inner_conn);
-static void altcp_mbedtls_dealloc(struct altcp_pcb *conn);
 static err_t altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *state);
 static err_t altcp_mbedtls_handle_rx_appldata(struct altcp_pcb *conn, altcp_mbedtls_state_t *state);
 static int altcp_mbedtls_bio_send(void *ctx, const unsigned char *dataptr, size_t size);
@@ -158,10 +157,7 @@ altcp_mbedtls_lower_connected(void *arg, struct altcp_pcb *inner_conn, err_t err
     /* upper connected is called when handshake is done */
     if (err != ERR_OK) {
       if (conn->connected) {
-        if (conn->connected(conn->arg, conn, err) == ERR_ABRT) {
-          return ERR_ABRT;
-        }
-        return ERR_OK;
+        return conn->connected(conn->arg, conn, err);
       }
     }
     return altcp_mbedtls_lower_recv_process(conn, (altcp_mbedtls_state_t *)conn->state);
@@ -216,31 +212,25 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
   if (p == NULL) {
     /* remote host sent FIN, remember this (SSL state is destroyed
         when both sides are closed only!) */
-    state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED;
     if ((state->flags & (ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE | ALTCP_MBEDTLS_FLAGS_UPPER_CALLED)) ==
         (ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE | ALTCP_MBEDTLS_FLAGS_UPPER_CALLED)) {
       /* need to notify upper layer (e.g. 'accept' called or 'connect' succeeded) */
       if ((state->rx != NULL) || (state->rx_app != NULL)) {
+        state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED;
         /* this is a normal close (FIN) but we have unprocessed data, so delay the FIN */
         altcp_mbedtls_handle_rx_appldata(conn, state);
         return ERR_OK;
       }
+      state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSED;
       if (conn->recv) {
-        err_t local_err = conn->recv(conn->arg, conn, NULL, ERR_OK);
-        if (local_err == ERR_ABRT) {
-          return ERR_ABRT;
-        }
+        return conn->recv(conn->arg, conn, NULL, ERR_OK);
       }
     } else {
       /* before connection setup is done: call 'err' */
       if (conn->err) {
         conn->err(conn->arg, ERR_CLSD);
       }
-    }
-    altcp_close(conn);
-    state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSED;
-    if (conn->state && ((state->flags & ALTCP_MBEDTLS_FLAGS_CLOSED) == ALTCP_MBEDTLS_FLAGS_CLOSED)) {
-      altcp_mbedtls_dealloc(conn);
+      altcp_close(conn);
     }
     return ERR_OK;
   }
@@ -283,7 +273,7 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
       }
 
       if (altcp_close(conn) != ERR_OK) {
-        altcp_abort(conn); 
+        altcp_abort(conn);
       }
       return ERR_OK;
     }
@@ -293,7 +283,11 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
     state->flags |= ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE;
     /* issue "connect" callback" to upper connection (this can only happen for active open) */
     if (conn->connected) {
-      conn->connected(conn->arg, conn, ERR_OK);
+      err_t err;
+      err = conn->connected(conn->arg, conn, ERR_OK);
+      if (err != ERR_OK) {
+        return err;
+      }
     }
     if (state->rx == NULL) {
       return ERR_OK;
@@ -320,6 +314,9 @@ altcp_mbedtls_pass_rx_data(struct altcp_pcb *conn, altcp_mbedtls_state_t *state)
       state->flags |= ALTCP_MBEDTLS_FLAGS_UPPER_CALLED;
       err = conn->recv(conn->arg, conn, state->rx_app, ERR_OK);
       if (err != ERR_OK) {
+        if (err == ERR_ABRT) {
+          return ERR_ABRT;
+        }
         /* not received, leave the pbuf(s) queued (and decrease 'unrecved' again) */
         state->rx_passed_unrecved -= tot_len;
         LWIP_ASSERT("state->rx_passed_unrecved >= 0", state->rx_passed_unrecved >= 0);
@@ -336,10 +333,7 @@ altcp_mbedtls_pass_rx_data(struct altcp_pcb *conn, altcp_mbedtls_state_t *state)
              ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED) {
     state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSED;
     if (conn->recv) {
-      err = conn->recv(conn->arg, conn, NULL, ERR_OK);
-      if (err == ERR_ABRT) {
-        return ERR_ABRT;
-      }
+      return conn->recv(conn->arg, conn, NULL, ERR_OK);
     }
   }
 
@@ -881,7 +875,6 @@ altcp_mbedtls_abort(struct altcp_pcb *conn)
 static err_t
 altcp_mbedtls_close(struct altcp_pcb *conn)
 {
-  altcp_mbedtls_state_t *state;
   struct altcp_pcb *inner_conn;
   if (conn == NULL) {
     return ERR_VAL;
@@ -901,13 +894,6 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
     }
     conn->inner_conn = NULL;
   }
-  state = (altcp_mbedtls_state_t *)conn->state;
-  if (state != NULL) {
-    state->flags |= ALTCP_MBEDTLS_FLAGS_TX_CLOSED;
-    if (state->flags & ALTCP_MBEDTLS_FLAGS_RX_CLOSED) {
-      altcp_mbedtls_dealloc(conn);
-    }
-  }
   altcp_free(conn);
   return ERR_OK;
 }
@@ -918,7 +904,6 @@ altcp_mbedtls_close(struct altcp_pcb *conn)
 static u16_t
 altcp_mbedtls_sndbuf(struct altcp_pcb *conn)
 {
-
   if (conn) {
     altcp_mbedtls_state_t *state;
     state = (altcp_mbedtls_state_t*)conn->state;
