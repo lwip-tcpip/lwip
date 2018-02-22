@@ -261,7 +261,7 @@ http_wait_headers(struct pbuf *p, u32_t *content_length, u16_t *total_header_len
         memset(content_len_num, 0, sizeof(content_len_num));
         if (pbuf_copy_partial(p, content_len_num, content_len_num_len, content_len_hdr + 16) == content_len_num_len) {
           int len = atoi(content_len_num);
-          if ((len >= 0) && (len < HTTPC_CONTENT_LEN_INVALID)) {
+          if ((len >= 0) && ((u32_t)len < HTTPC_CONTENT_LEN_INVALID)) {
             *content_length = (u32_t)len;
           }
         }
@@ -571,10 +571,9 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
 }
 
 /**
- * @ingroup httpc 
  * Initialize the connection struct
  */
-err_t
+static err_t
 httpc_init_connection(httpc_state_t **connection, const httpc_connection_t *settings, const char* server_name,
                       u16_t server_port, const char* uri, altcp_recv_fn recv_fn, void* callback_arg)
 {
@@ -583,10 +582,9 @@ httpc_init_connection(httpc_state_t **connection, const httpc_connection_t *sett
 
 
 /**
- * @ingroup httpc 
  * Initialize the connection struct (from IP address)
  */
-err_t
+static err_t
 httpc_init_connection_addr(httpc_state_t **connection, const httpc_connection_t *settings,
                            const ip_addr_t* server_addr, u16_t server_port, const char* uri,
                            altcp_recv_fn recv_fn, void* callback_arg)

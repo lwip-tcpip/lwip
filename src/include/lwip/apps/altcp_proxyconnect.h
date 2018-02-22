@@ -54,6 +54,7 @@ struct altcp_proxyconnect_config {
 
 
 struct altcp_pcb *altcp_proxyconnect_new(struct altcp_proxyconnect_config *config, struct altcp_pcb *inner_pcb);
+struct altcp_pcb *altcp_proxyconnect_new_tcp(struct altcp_proxyconnect_config *config, u8_t ip_type);
 
 struct altcp_pcb *altcp_proxyconnect_alloc(void *arg, u8_t ip_type);
 

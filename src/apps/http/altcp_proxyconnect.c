@@ -298,16 +298,6 @@ altcp_proxyconnect_lower_err(void *arg, err_t err)
 /* setup functions */
 
 static void
-altcp_proxyconnect_remove_callbacks(struct altcp_pcb *inner_conn)
-{
-  altcp_arg(inner_conn, NULL);
-  altcp_recv(inner_conn, NULL);
-  altcp_sent(inner_conn, NULL);
-  altcp_err(inner_conn, NULL);
-  altcp_poll(inner_conn, NULL, inner_conn->pollinterval);
-}
-
-static void
 altcp_proxyconnect_setup_callbacks(struct altcp_pcb *conn, struct altcp_pcb *inner_conn)
 {
   altcp_arg(inner_conn, conn);
