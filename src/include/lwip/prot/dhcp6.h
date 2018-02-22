@@ -49,12 +49,6 @@ extern "C" {
 
  /* DHCPv6 message item offsets and length */
 #define DHCP6_TRANSACTION_ID_LEN   3
-#define DHCP_SNAME_OFS    44U
-#define DHCP_SNAME_LEN    64U
-#define DHCP_FILE_OFS     108U
-#define DHCP_FILE_LEN     128U
-#define DHCP_MSG_LEN      236U
-#define DHCP_OPTIONS_OFS  (DHCP_MSG_LEN + 4U)*/ /* 4 byte: cookie */
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -76,8 +70,9 @@ PACK_STRUCT_END
 /* DHCP6 client states */
 typedef enum {
   DHCP6_STATE_OFF               = 0,
-  DHCP6_STATE_REQUESTING_CONFIG = 1
-} dhcp_state_enum_t;
+  DHCP6_STATE_STATELESS_IDLE    = 1,
+  DHCP6_STATE_REQUESTING_CONFIG = 2
+} dhcp6_state_enum_t;
 
 /* DHCPv6 message types */
 #define DHCP6_SOLICIT               1
@@ -93,6 +88,7 @@ typedef enum {
 #define DHCP6_INFOREQUEST           11
 #define DHCP6_RELAYFORW             12
 #define DHCP6_RELAYREPL             13
+/* More message types see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
 
 /** DHCPv6 status codes */
 #define DHCP6_STATUS_SUCCESS        0 /* Success. */
@@ -101,11 +97,13 @@ typedef enum {
 #define DHCP6_STATUS_NOBINDING      3 /* Client record (binding) unavailable. */
 #define DHCP6_STATUS_NOTONLINK      4 /* The prefix for the address is not appropriate for the link to which the client is attached. */
 #define DHCP6_STATUS_USEMULTICAST   5 /* Sent by a server to a client to force the client to send messages to the server using the All_DHCP_Relay_Agents_and_Servers address. */
+/* More status codes see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
 
 /** DHCPv6 DUID types */
 #define DHCP6_DUID_LLT              1 /* LLT: Link-layer Address Plus Time */
 #define DHCP6_DUID_EN               2 /* EN: Enterprise number */
 #define DHCP6_DUID_LL               3 /* LL: Link-layer Address */
+#define DHCP6_DUID_UUID             4 /* UUID (RFC 6355) */
 
 /* DHCPv6 options */
 #define DHCP6_OPTION_CLIENTID       1
@@ -126,7 +124,11 @@ typedef enum {
 #define DHCP6_OPTION_VENDOR_OPTS    17
 #define DHCP6_OPTION_INTERFACE_ID   18
 #define DHCP6_OPTION_RECONF_MSG     19
-#define DHCP6_OPTION_ACCEPT         20
+#define DHCP6_OPTION_RECONF_ACCEPT  20
+/* More options see https://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml */
+#define DHCP6_OPTION_DNS_SERVERS    23 /* RFC 3646 */
+#define DHCP6_OPTION_DOMAIN_LIST    24 /* RFC 3646 */
+#define DHCP6_OPTION_SNTP_SERVERS   31 /* RFC 4075 */
 
 
 #ifdef __cplusplus

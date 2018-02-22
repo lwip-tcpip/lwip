@@ -963,7 +963,7 @@
 
 /**
  * LWIP_DHCP_MAX_DNS_SERVERS > 0: Request DNS servers with discover/select.
- * DHCP servers received in the response are passed to DNS via @ref dns_setserver()
+ * DNS servers received in the response are passed to DNS via @ref dns_setserver()
  * (up to the maximum limit defined here).
  */
 #if !defined LWIP_DHCP_MAX_DNS_SERVERS || defined __DOXYGEN__
@@ -2657,10 +2657,49 @@
  */
 
 /**
- * LWIP_IPV6_DHCP6==1: enable DHCPv6 stateful address autoconfiguration.
+ * LWIP_IPV6_DHCP6==1: enable DHCPv6 stateful/stateless address autoconfiguration.
  */
 #if !defined LWIP_IPV6_DHCP6 || defined __DOXYGEN__
 #define LWIP_IPV6_DHCP6                 0
+#endif
+
+/**
+ * LWIP_IPV6_DHCP6_STATEFUL==1: enable DHCPv6 stateful address autoconfiguration.
+ */
+#if !defined LWIP_IPV6_DHCP6_STATEFUL || defined __DOXYGEN__
+#define LWIP_IPV6_DHCP6_STATEFUL        0
+#endif
+
+/**
+ * LWIP_IPV6_DHCP6_STATELESS==1: enable DHCPv6 stateless address autoconfiguration.
+ */
+#if !defined LWIP_IPV6_DHCP6_STATELESS || defined __DOXYGEN__
+#define LWIP_IPV6_DHCP6_STATELESS       0
+#endif
+
+/**
+ * LWIP_DHCP6_GETS_NTP==1: Request NTP servers via DHCPv6. For each
+ * response packet, a callback is called, which has to be provided by the port:
+ * void dhcp6_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+*/
+#if !defined LWIP_DHCP6_GET_NTP_SRV || defined __DOXYGEN__
+#define LWIP_DHCP6_GET_NTP_SRV          0
+#endif
+
+/**
+ * The maximum of NTP servers requested
+ */
+#if !defined LWIP_DHCP6_MAX_NTP_SERVERS || defined __DOXYGEN__
+#define LWIP_DHCP6_MAX_NTP_SERVERS      1
+#endif
+
+/**
+ * LWIP_DHCP6_MAX_DNS_SERVERS > 0: Request DNS servers via DHCPv6.
+ * DNS servers received in the response are passed to DNS via @ref dns_setserver()
+ * (up to the maximum limit defined here).
+ */
+#if !defined LWIP_DHCP6_MAX_DNS_SERVERS || defined __DOXYGEN__
+#define LWIP_DHCP6_MAX_DNS_SERVERS      DNS_MAX_SERVERS
 #endif
 
 /*
@@ -3048,6 +3087,34 @@
 #endif
 
 /**
+ * LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, state, msg, msg_type, options_len_ptr, max_len):
+ * Called from various dhcp6 functions when sending a DHCP6 message.
+ * This hook is called just before the DHCP6 message is sent, so the
+ * options are at the end of a DHCP6 message.
+ * Signature:\code{.c}
+ *   void my_hook(struct netif *netif, struct dhcp6 *dhcp, u8_t state, struct dhcp6_msg *msg,
+ *                u8_t msg_type, u16_t *options_len_ptr);
+ * \endcode
+ * Arguments:
+ * - netif: struct netif that the packet will be sent through
+ * - dhcp6: struct dhcp6 on that netif
+ * - state: current dhcp6 state (dhcp6_state_enum_t as an u8_t)
+ * - msg: struct dhcp6_msg that will be sent
+ * - msg_type: dhcp6 message type to be sent (u8_t)
+ * - options_len_ptr: pointer to the current length of options in the dhcp6_msg "msg"
+ *                    (must be increased when options are added!)
+ *
+ * Options need to appended like this:
+ *   u8_t *options = (u8_t *)(msg + 1);
+ *   LWIP_ASSERT("dhcp option overflow", sizeof(struct dhcp6_msg) + *options_len_ptr + newoptlen <= max_len);
+ *   options[(*options_len_ptr)++] = &lt;option_data&gt;;
+ *   [...]
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, state, msg, msg_type, options_len_ptr, max_len)
+#endif
+
+/**
  * LWIP_HOOK_SOCKETS_SETSOCKOPT(s, sock, level, optname, optval, optlen, err)
  * Called from socket API to implement setsockopt() for options not provided by lwIP.
  * Core lock is held when this hook is called.
@@ -3371,6 +3438,13 @@
  */
 #if !defined IP6_DEBUG || defined __DOXYGEN__
 #define IP6_DEBUG                       LWIP_DBG_OFF
+#endif
+
+/**
+ * DHCP6_DEBUG: Enable debugging in dhcp6.c.
+ */
+#if !defined DHCP6_DEBUG || defined __DOXYGEN__
+#define DHCP6_DEBUG                     LWIP_DBG_OFF
 #endif
 /**
  * @}

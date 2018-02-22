@@ -57,6 +57,7 @@
 #include "lwip/nd6.h"
 #include "lwip/ip6_frag.h"
 #include "lwip/mld6.h"
+#include "lwip/dhcp6.h"
 #include "lwip/sys.h"
 #include "lwip/pbuf.h"
 
@@ -108,6 +109,9 @@ const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
 #if LWIP_IPV6_MLD
   {MLD6_TMR_INTERVAL, HANDLER(mld6_tmr)},
 #endif /* LWIP_IPV6_MLD */
+#if LWIP_IPV6_DHCP6
+  {DHCP6_TIMER_MSECS, HANDLER(dhcp6_tmr)},
+#endif /* LWIP_IPV6_DHCP6 */
 #endif /* LWIP_IPV6 */
 };
 const int lwip_num_cyclic_timers = LWIP_ARRAYSIZE(lwip_cyclic_timers);
