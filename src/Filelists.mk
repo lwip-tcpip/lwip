@@ -156,9 +156,9 @@ SNMPFILES=$(LWIPDIR)/apps/snmp/snmp_asn1.c \
 
 # HTTPFILES: HTTP server + client
 HTTPFILES=$(LWIPDIR)/apps/http/altcp_proxyconnect.c \
-    $(LWIPDIR)/apps/http/fs.c \
+	$(LWIPDIR)/apps/http/fs.c \
 	$(LWIPDIR)/apps/http/http_client.c \
-	$(LWIPDIR)/apps/http/httpd.c \
+	$(LWIPDIR)/apps/http/httpd.c
 
 # MAKEFSDATA: MAKEFSDATA HTTP server host utility
 MAKEFSDATAFILES=$(LWIPDIR)/apps/http/makefsdata/makefsdata.c
@@ -191,7 +191,7 @@ MBEDTLS_FILES=$(LWIPDIR)/apps/altcp_tls/altcp_tls_mbedtls.c \
 
 # LWIPAPPFILES: All LWIP APPs
 LWIPAPPFILES=$(SNMPFILES) \
-	$(HTTPDFILES) \
+	$(HTTPFILES) \
 	$(LWIPERFFILES) \
 	$(SMTPFILES) \
 	$(SNTPFILES) \
