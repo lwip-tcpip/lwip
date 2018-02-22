@@ -477,7 +477,7 @@ dhcp_fine_tmr(void)
         dhcp->request_timeout--;
       } else if (dhcp->request_timeout == 1) {
         dhcp->request_timeout--;
-        /* { netif->dhcp->request_timeout == 0 } */
+        /* { dhcp->request_timeout == 0 } */
         LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_fine_tmr(): request timeout\n"));
         /* this client's request timeout triggered */
         dhcp_timeout(netif);
