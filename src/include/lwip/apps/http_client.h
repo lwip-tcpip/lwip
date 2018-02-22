@@ -96,7 +96,7 @@ typedef struct _httpc_state httpc_state_t;
  * Prototype of a http client callback function
  *
  * @param arg argument specified when initiating the request
- * @param http_result result of the mail transfer (see enum httpc_result_t)
+ * @param httpc_result result of the http transfer (see enum httpc_result_t)
  * @param rx_content_len number of bytes received (without headers)
  * @param srv_res this contains the http status code received (if any)
  * @param err an error returned by internal lwip functions, can help to specify
