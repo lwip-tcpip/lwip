@@ -150,7 +150,6 @@ free_etharp_q(struct etharp_q_entry *q)
 {
   struct etharp_q_entry *r;
   LWIP_ASSERT("q != NULL", q != NULL);
-  LWIP_ASSERT("q->p != NULL", q->p != NULL);
   while (q) {
     r = q;
     q = q->next;
