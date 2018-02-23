@@ -123,7 +123,7 @@ void ble_addr_to_eui64(uint8_t *dst, uint8_t *src, uint8_t public_addr)
  * 
  * This method converts an EUI64 address to a Bluetooth MAC address,
  * 
- * @param src IPv6 source 
+ * @param src IPv6 source
  * @param dst BLE MAC address destination
  * 
  */
@@ -136,7 +136,7 @@ void eui64_to_ble_addr(uint8_t *dst, uint8_t *src)
 
 /** context lookup; find context ID for IPv6 address
  * 
- * @param Pointer to IPv6 address struct
+ * @param ip6addr Pointer to IPv6 address struct
  * 
  * @return The context id, if one found; -1 if no context id found
  */
@@ -164,7 +164,7 @@ rfc7668_context_lookup(const ip6_addr_t *ip6addr)
  * 
  * @see rfc7668_get_address_mode_mc
  * 
- * @param Pointer to IPv6 address struct
+ * @param ip6addr Pointer to IPv6 address struct
  * 
  * @return Currently not defined...
  */
@@ -184,7 +184,7 @@ rfc7668_get_address_mode(const ip6_addr_t *ip6addr)
  * 
  * @see rfc7668_get_address_mode_mc
  * 
- * @param Pointer to IPv6 address struct
+ * @param ip6addr Pointer to IPv6 address struct
  * 
  * @return Currently not defined...
  */
@@ -220,8 +220,6 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
   u8_t * buffer;
   u8_t lowpan6_header_len;
   s8_t i;
-  static u8_t frame_seq_num;
-  static u16_t datagram_tag;
   err_t err = ERR_IF;
 
   /* We'll use a dedicated pbuf for building BLE fragments. */
@@ -644,7 +642,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
       /* no information avalaible, using other layers, see RFC6282 ch 3.2.2 */
       ip6hdr->src.addr[0] = PP_HTONL(0xfe800000UL);
       ip6hdr->src.addr[1] = 0;
-      MEMCPY(&ip6hdr->src.addr[2], (uint8_t *)src->addr, 8);
+      MEMCPY(&ip6hdr->src.addr[2], (const uint8_t *)src->addr, 8);
     }
   /* Source address compression (SAC) = 1 -> stateful/context-based compression */  
   } else {
