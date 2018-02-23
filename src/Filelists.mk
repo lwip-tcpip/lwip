@@ -89,6 +89,7 @@ NETIFFILES=$(LWIPDIR)/netif/ethernet.c \
 
 # SIXLOWPAN: 6LoWPAN
 SIXLOWPAN=$(LWIPDIR)/netif/lowpan6.c \
+	$(LWIPDIR)/netif/lowpan6_ble.c
 
 # PPPFILES: PPP
 PPPFILES=$(LWIPDIR)/netif/ppp/auth.c \
