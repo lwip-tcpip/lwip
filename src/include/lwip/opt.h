@@ -2665,6 +2665,7 @@
 
 /**
  * LWIP_IPV6_DHCP6_STATEFUL==1: enable DHCPv6 stateful address autoconfiguration.
+ * (not supported, yet!)
  */
 #if !defined LWIP_IPV6_DHCP6_STATEFUL || defined __DOXYGEN__
 #define LWIP_IPV6_DHCP6_STATEFUL        0
@@ -2674,7 +2675,7 @@
  * LWIP_IPV6_DHCP6_STATELESS==1: enable DHCPv6 stateless address autoconfiguration.
  */
 #if !defined LWIP_IPV6_DHCP6_STATELESS || defined __DOXYGEN__
-#define LWIP_IPV6_DHCP6_STATELESS       0
+#define LWIP_IPV6_DHCP6_STATELESS       LWIP_IPV6_DHCP6
 #endif
 
 /**
