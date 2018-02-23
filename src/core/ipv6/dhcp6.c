@@ -9,15 +9,15 @@
  *
  * For now, only stateless DHCPv6 is implemented!
  *
- * @todo:
+ * TODO:
  * - enable/disable API to not always start when RA is received
  * - stateful DHCPv6 (for now, only stateless DHCPv6 for DNS and NTP servers works)
  * - create Client Identifier?
  * - only start requests if a valid local address is available on the netif
  * - only start information requests if required (not for every RA)
  *
- * dhcp6_enable_stateful() enables stateless DHCPv6 for a netif (stateless disabled)
- * dhcp6_enable_stateless() enables stateless DHCPv6 for a netif (stateful disabled)
+ * dhcp6_enable_stateful() enables stateful DHCPv6 for a netif (stateless disabled)\n
+ * dhcp6_enable_stateless() enables stateless DHCPv6 for a netif (stateful disabled)\n
  * dhcp6_disable() disable DHCPv6 for a netif
  *
  * When enabled, requests are only issued after receipt of RA with the
@@ -284,7 +284,9 @@ dhcp6_stateful_enabled(struct dhcp6 *dhcp6)
   return 1;
 }*/
 
-/** Enable stateful DHCPv6 on this netif
+/**
+ * @ingroup dhcp6
+ * Enable stateful DHCPv6 on this netif
  * Requests are sent on receipt of an RA message with the
  * ND6_RA_FLAG_MANAGED_ADDR_CONFIG flag set.
  *
@@ -301,7 +303,9 @@ dhcp6_enable_stateful(struct netif *netif)
   return ERR_VAL;
 }
 
-/** Enable stateless DHCPv6 on this netif
+/**
+ * @ingroup dhcp6
+ * Enable stateless DHCPv6 on this netif
  * Requests are sent on receipt of an RA message with the
  * ND6_RA_FLAG_OTHER_CONFIG flag set.
  *
@@ -332,7 +336,9 @@ dhcp6_enable_stateless(struct netif *netif)
   return ERR_OK;
 }
 
-/** Disable stateful or stateless DHCPv6 on this netif
+/**
+ * @ingroup dhcp6
+ * Disable stateful or stateless DHCPv6 on this netif
  * Requests are sent on receipt of an RA message with the
  * ND6_RA_FLAG_OTHER_CONFIG flag set.
  */
