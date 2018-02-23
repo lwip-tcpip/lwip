@@ -172,6 +172,7 @@ static s8_t
 rfc7668_get_address_mode(const ip6_addr_t *ip6addr)
 {
   /* @todo implement the compression mode determination */
+  LWIP_UNUSED_ARG(ip6addr);
   /* just return 1, means stateless compression */
   return 1;
 }
@@ -191,6 +192,7 @@ static s8_t
 rfc7668_get_address_mode_mc(const ip6_addr_t *ip6addr)
 {
   /* @todo implement the compression mode determination */
+  LWIP_UNUSED_ARG(ip6addr);
   /* just return 0, no multicast compression */
   return 0;
 }
@@ -220,7 +222,6 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
   s8_t i;
   static u8_t frame_seq_num;
   static u16_t datagram_tag;
-  u16_t datagram_offset;
   err_t err = ERR_IF;
 
   /* We'll use a dedicated pbuf for building BLE fragments. */
@@ -238,8 +239,8 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
 
     /* Point to ip6 header and align copies of src/dest addresses. */
     ip6hdr = (struct ip6_hdr *)p->payload;
-    ip_addr_copy_from_ip6(ip_data.current_iphdr_dest, ip6hdr->dest);
-    ip_addr_copy_from_ip6(ip_data.current_iphdr_src, ip6hdr->src);
+    ip_addr_copy_from_ip6_packed(ip_data.current_iphdr_dest, ip6hdr->dest);
+    ip_addr_copy_from_ip6_packed(ip_data.current_iphdr_src, ip6hdr->src);
 
     /* Basic length of 6LowPAN header, set dispatch and clear fields. */
     lowpan6_header_len = 2;
@@ -516,6 +517,8 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
   s8_t lowpan6_offset;
   struct ip6_hdr *ip6hdr;
   s8_t ip6_offset = IP6_HLEN;
+
+  LWIP_UNUSED_ARG(dest);
 
   /* allocate a new pbuf for the decompressed IPv6 packet */
   q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN, PBUF_POOL);
@@ -794,8 +797,8 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
 
     /* NHC: UDP */
     if ((lowpan6_buffer[lowpan6_offset] & 0xf8) == 0xf0) {
-      LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("NHC: UDP\n"));
       struct udp_hdr *udphdr;
+      LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("NHC: UDP\n"));
 
       /* UDP compression */
       IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_UDP);
@@ -848,7 +851,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
   * Replace p with q, and free p */
   LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("IPHC decompression completed, copying remains (%d bytes)\n",p->len-lowpan6_offset)); 
   
-  MEMCPY((u8_t*)q->payload + ip6_offset, p->payload+lowpan6_offset, p->len-lowpan6_offset);
+  MEMCPY((u8_t*)q->payload + ip6_offset, (u8_t *)p->payload + lowpan6_offset, p->len-lowpan6_offset);
   q->len = q->tot_len = ip6_offset + p->len - lowpan6_offset;
   if (p->next != NULL) {
     pbuf_cat(q, p->next);
@@ -879,7 +882,6 @@ err_t
 rfc7668_input(struct pbuf * p, struct netif *netif, const ip6_addr_t *src)
 {
   u8_t * puc;
-  u16_t i;
   ip6_addr_t dest;
 
   MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
@@ -911,8 +913,10 @@ rfc7668_input(struct pbuf * p, struct netif *netif, const ip6_addr_t *src)
   }
   /* @todo: distinguish unicast/multicast */
   MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
-  
-  #if LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG==LWIP_DBG_ON
+
+#if LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG==LWIP_DBG_ON
+  {
+    u16_t i;
     LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG | LWIP_RFC7668_DEBUG, ("IPv6 payload:\n"));
     for(i = 0; i<p->len;i++)
     {
@@ -920,7 +924,8 @@ rfc7668_input(struct pbuf * p, struct netif *netif, const ip6_addr_t *src)
       LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG | LWIP_RFC7668_DEBUG, ("%2X ", *((uint8_t *)p->payload+i)));
     }
     LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG | LWIP_RFC7668_DEBUG, ("\np->len: %d\n", p->len));
-  #endif
+  }
+#endif
   /* pass data to ip6_input */
   return ip6_input(p, netif);
 }
@@ -938,12 +943,12 @@ rfc7668_input(struct pbuf * p, struct netif *netif, const ip6_addr_t *src)
 err_t
 rfc7668_if_init(struct netif *netif)
 {
-  netif->name[0] = 'B';
-  netif->name[1] = 'T';
+  netif->name[0] = 'b';
+  netif->name[1] = 't';
   /* if compiled with LWIP_IPV4 -> set IPv4 output to NULL */
-  #if LWIP_IPV4
+#if LWIP_IPV4
   netif->output = NULL;
-  #endif
+#endif
   /* local function as IPv6 output */
   netif->output_ip6 = rfc7668_output;
 
@@ -960,6 +965,7 @@ rfc7668_if_init(struct netif *netif)
 }
 
 
+#if 0 /* TODO: tcpip_inpkt() can not take rfc7668_input as input callback */
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
@@ -975,5 +981,6 @@ tcpip_rfc7668_input(struct pbuf *p, struct netif *inp)
   /* send data to upper layer, return the result */
   return tcpip_inpkt(p, inp, rfc7668_input);
 }
+#endif /* TODO */
 
-#endif /* LWIP_IPV6 && LWIP_6LOWPAN */
+#endif /* LWIP_IPV6 && LWIP_RFC7668 */
