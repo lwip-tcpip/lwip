@@ -110,10 +110,13 @@ void ble_addr_to_eui64(uint8_t *dst, uint8_t *src, uint8_t public_addr)
   dst[3] = 0xFF;
   dst[4] = 0xFE;
   memcpy(&dst[5], &src[3], 3);
-  #if LWIP_RFC7668_LINUX_WORKAROUND_PUBLIC_ADDRESS
-    if(public_addr) dst[0] &= ~0x02;
-    else dst[0] |= 0x02;
-  #endif
+#if LWIP_RFC7668_LINUX_WORKAROUND_PUBLIC_ADDRESS
+  if(public_addr) {
+    dst[0] &= ~0x02;
+  } else {
+    dst[0] |= 0x02;
+  }
+#endif
 }
 
 /** convert EUI64 address to Bluetooth MAC addr
@@ -140,16 +143,16 @@ void eui64_to_ble_addr(uint8_t *dst, uint8_t *src)
 static s8_t
 rfc7668_context_lookup(const ip6_addr_t *ip6addr)
 {
-  #if LWIP_RFC7668_NUM_CONTEXTS > 0
-    s8_t i;
-    /* iterate over all possible context addresses */
-    for (i = 0; i < LWIP_RFC7668_NUM_CONTEXTS; i++) {
-  	  /* if a match is found, return id */
-      if (ip6_addr_netcmp(&rfc7668_context[i], ip6addr)) {
-        return i;
-      }
+#if LWIP_RFC7668_NUM_CONTEXTS > 0
+  s8_t i;
+  /* iterate over all possible context addresses */
+  for (i = 0; i < LWIP_RFC7668_NUM_CONTEXTS; i++) {
+    /* if a match is found, return id */
+    if (ip6_addr_netcmp(&rfc7668_context[i], ip6addr)) {
+      return i;
     }
-  #endif
+  }
+#endif
   /* no address found, return -1 */
   return -1;
 }
@@ -461,17 +464,17 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
 err_t
 rfc7668_set_context(u8_t idx, const ip6_addr_t * context)
 {
-  #if LWIP_RFC7668_NUM_CONTEXTS > 0
-    /* check if the ID is possible */
-    if (idx >= LWIP_RFC7668_NUM_CONTEXTS) {
-      return ERR_ARG;
-    }
-    /* copy IPv6 address to context storage */
-    ip6_addr_set(&rfc7668_context[idx], context);  
-    return ERR_OK;
-  #else
-    return ERR_VAL;
-  #endif
+#if LWIP_RFC7668_NUM_CONTEXTS > 0
+  /* check if the ID is possible */
+  if (idx >= LWIP_RFC7668_NUM_CONTEXTS) {
+    return ERR_ARG;
+  }
+  /* copy IPv6 address to context storage */
+  ip6_addr_set(&rfc7668_context[idx], context);  
+  return ERR_OK;
+#else
+  return ERR_VAL;
+#endif
 }
 
 /**
@@ -528,30 +531,30 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
   ip6hdr = (struct ip6_hdr *)q->payload;
   
   /* output the full compressed packet, if set in @see rfc7668_opt.h */
-  #if LWIP_RFC7668_IP_COMPRESSED_DEBUG
-    LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("IP6 payload(compressed): \n"));
-    for(j = 0; j<p->len;j++)
-    {
-      if((j%4)==0) LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("\n"));
-      LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("%2X ",*((uint8_t *)p->payload+j)));
-    }
-    LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("\np->len: %d",p->len));
-    printf("\np->len: %d\n",p->len);
-  #endif
-  
+#if LWIP_RFC7668_IP_COMPRESSED_DEBUG
+  LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("IP6 payload(compressed): \n"));
+  for(j = 0; j<p->len;j++)
+  {
+    if((j%4)==0) LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("\n"));
+    LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("%2X ",*((uint8_t *)p->payload+j)));
+  }
+  LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_IP_COMPRESSED_DEBUG,("\np->len: %d",p->len));
+  printf("\np->len: %d\n",p->len);
+#endif
+
   /* offset for inline IP headers (RFC 6282 ch3)*/
   lowpan6_offset = 2;
-  
+
   /* if CID is set (context identifier), the context byte 
    * follows immediately after the header, so other IPHC fields are @+3 */
   if (lowpan6_buffer[1] & 0x80) {
     lowpan6_offset++;
   }
-  
+
   /* Set IPv6 version, traffic class and flow label. (RFC6282, ch 3.1.1.)*/
   if ((lowpan6_buffer[0] & 0x18) == 0x00) {
-	header_temp = ((lowpan6_buffer[lowpan6_offset+1] & 0x0f) << 16) | \
-	  (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset+3];
+    header_temp = ((lowpan6_buffer[lowpan6_offset+1] & 0x0f) << 16) | \
+      (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset+3];
     LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("TF: 00, ECN: 0x%2x, Flowlabel+DSCP: 0x%8X\n", \
       lowpan6_buffer[lowpan6_offset],header_temp));
     IP6H_VTCFL_SET(ip6hdr, 6, lowpan6_buffer[lowpan6_offset], header_temp);
@@ -709,7 +712,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
         MEMCPY(&ip6hdr->dest.addr[0], lowpan6_buffer + lowpan6_offset, 16);
         lowpan6_offset += 16;
       } else if ((lowpan6_buffer[1] & 0x03) == 0x01) {
-		/* DAM = 01, copy 4 bytes (32bits) */
+        /* DAM = 01, copy 4 bytes (32bits) */
         LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("DAM == 01, dst address form (48bits): ffXX::00XX:XXXX:XXXX\n"));
         ip6hdr->dest.addr[0] = htonl(0xff000000UL | (lowpan6_buffer[lowpan6_offset++] << 16));
         ip6hdr->dest.addr[1] = 0;
@@ -717,7 +720,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
         ip6hdr->dest.addr[3] = htonl((lowpan6_buffer[lowpan6_offset] << 24) | (lowpan6_buffer[lowpan6_offset + 1] << 16) | (lowpan6_buffer[lowpan6_offset + 2] << 8) | lowpan6_buffer[lowpan6_offset + 3]);
         lowpan6_offset += 4;
       } else if ((lowpan6_buffer[1] & 0x03) == 0x02) {
-		/* DAM = 10, copy 3 bytes (24bits) */
+        /* DAM = 10, copy 3 bytes (24bits) */
         LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("DAM == 10, dst address form (32bits): ffXX::00XX:XXXX\n"));
         ip6hdr->dest.addr[0] = htonl(0xff000000UL | (lowpan6_buffer[lowpan6_offset++]<<16));
         ip6hdr->dest.addr[1] = 0;
@@ -725,7 +728,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
         ip6hdr->dest.addr[3] = htonl((lowpan6_buffer[lowpan6_offset] << 16) | (lowpan6_buffer[lowpan6_offset + 1] << 8) | lowpan6_buffer[lowpan6_offset + 2]);
         lowpan6_offset += 3;
       } else if ((lowpan6_buffer[1] & 0x03) == 0x03) {
-		/* DAM = 11, copy 1 byte (8bits) */  
+        /* DAM = 11, copy 1 byte (8bits) */  
         LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("DAM == 11, dst address form (8bits): ff02::00XX\n"));
         ip6hdr->dest.addr[0] = PP_HTONL(0xff020000UL);
         ip6hdr->dest.addr[1] = 0;
@@ -780,7 +783,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
       ip6hdr->dest.addr[3] = htonl(0xfe000000UL | (lowpan6_buffer[lowpan6_offset] << 8) | lowpan6_buffer[lowpan6_offset + 1]);
       lowpan6_offset += 2;
     } else if ((lowpan6_buffer[1] & 0x03) == 0x03) {
-	  /* DAM=11, no bits available, use other headers (not done here) */
+      /* DAM=11, no bits available, use other headers (not done here) */
       LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("DAM == 01, dst compression, 0bits inline, using other headers\n"));
     }
   }
