@@ -269,7 +269,7 @@ dhcp6_stateless_enabled(struct dhcp6 *dhcp6)
   return 0;
 }
 
-static int
+/*static int
 dhcp6_stateful_enabled(struct dhcp6 *dhcp6)
 {
   if (dhcp6->state == DHCP6_STATE_OFF) {
@@ -279,7 +279,7 @@ dhcp6_stateful_enabled(struct dhcp6 *dhcp6)
     return 0;
   }
   return 1;
-}
+}*/
 
 /** Enable stateful DHCPv6 on this netif
  * Requests are sent on receipt of an RA message with the
@@ -346,6 +346,9 @@ dhcp6_disable(struct netif *netif)
       LWIP_DEBUGF(DHCP6_DEBUG | LWIP_DBG_TRACE, ("dhcp6_disable(): DHCPv6 disabled (old state: %s)\n",
         (dhcp6_stateless_enabled(dhcp6) ? "stateless" : "stateful")));
       dhcp6_set_state(dhcp6, DHCP6_STATE_OFF, "dhcp6_disable");
+      if (dhcp6->pcb_allocated != 0) {
+        dhcp6_dec_pcb_refcount(); /* free DHCPv6 PCB if not needed any more */
+      }
     }
   }
 }
@@ -514,7 +517,7 @@ dhcp6_handle_config_reply(struct netif *netif, struct pbuf *p_msg_in)
     u16_t idx;
     u8_t n;
 
-    ip_addr_set_zero_ip6(&dns_addr);
+    memset(&dns_addr, 0, sizeof(dns_addr));
     dns_addr6 = ip_2_ip6(&dns_addr);
     for (n = 0, idx = op_start; (idx < op_start + op_len) && (n < LWIP_DHCP6_PROVIDE_DNS_SERVERS);
          n++, idx += sizeof(struct ip6_addr_packed)) {
