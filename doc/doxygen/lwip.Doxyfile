@@ -2088,6 +2088,7 @@ PREDEFINED             = __DOXYGEN__=1 \
                          LWIP_ICMP=1 \
                          LWIP_RAW=1 \
                          LWIP_DHCP=1 \
+                         LWIP_IPV6_DHCP6=1 \
                          LWIP_UDPLITE=1 \
                          LWIP_UDP=1 \
                          LWIP_IGMP=1 \

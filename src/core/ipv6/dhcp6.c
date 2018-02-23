@@ -1,5 +1,8 @@
 /**
  * @file
+ *
+ * @defgroup dhcp6 DHCPv6
+ * @ingroup ip6
  * DHCPv6 client: IPv6 address autoconfiguration as per
  * RFC 3315 (stateful DHCPv6) and
  * RFC 3736 (stateless DHCPv6).

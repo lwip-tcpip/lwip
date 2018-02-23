@@ -2657,6 +2657,11 @@
  */
 
 /**
+ * @defgroup lwip_opts_dhcpv6 DHCPv6
+ * @ingroup lwip_opts_ipv6
+ * @{
+ */
+/**
  * LWIP_IPV6_DHCP6==1: enable DHCPv6 stateful/stateless address autoconfiguration.
  */
 #if !defined LWIP_IPV6_DHCP6 || defined __DOXYGEN__
@@ -2702,6 +2707,9 @@
 #if !defined LWIP_DHCP6_MAX_DNS_SERVERS || defined __DOXYGEN__
 #define LWIP_DHCP6_MAX_DNS_SERVERS      DNS_MAX_SERVERS
 #endif
+/**
+ * @}
+ */
 
 /*
    ---------------------------------------
