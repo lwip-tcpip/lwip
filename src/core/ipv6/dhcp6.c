@@ -357,7 +357,7 @@ dhcp6_disable(struct netif *netif)
  * Create a DHCPv6 request, fill in common headers
  *
  * @param netif the netif under DHCPv6 control
- * @param dhcp dhcp control struct
+ * @param dhcp6 dhcp6 control struct
  * @param message_type message type of the request
  * @param opt_len_alloc option length to allocate
  * @param options_out_len option length on exit
