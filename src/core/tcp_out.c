@@ -1820,6 +1820,7 @@ tcp_output_fill_options(const struct tcp_pcb *pcb, struct pbuf *p, u8_t optflags
 {
   struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
   u32_t *opts = (u32_t *)(void *)(tcphdr + 1);
+  u16_t sacks_len = 0;
 
   /* NB. MSS and window scale options are only sent on SYNs, so ignore them here */
 
@@ -1834,7 +1835,8 @@ tcp_output_fill_options(const struct tcp_pcb *pcb, struct pbuf *p, u8_t optflags
   if (num_sacks > 0) {
     tcp_build_sack_option(pcb, opts, num_sacks);
     /* 1 word for SACKs header (including 2xNOP), and 2 words for each SACK */
-    opts += 1 + num_sacks * 2;
+    sacks_len = 1 + num_sacks * 2;
+    opts += sacks_len;
   }
 #else
   LWIP_UNUSED_ARG(num_sacks);
@@ -1845,7 +1847,8 @@ tcp_output_fill_options(const struct tcp_pcb *pcb, struct pbuf *p, u8_t optflags
 #endif
 
   LWIP_UNUSED_ARG(pcb);
-  LWIP_ASSERT("options not filled", (u8_t *)opts == ((u8_t *)(tcphdr + 1)) + LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb));
+  LWIP_UNUSED_ARG(sacks_len);
+  LWIP_ASSERT("options not filled", (u8_t *)opts == ((u8_t *)(tcphdr + 1)) + sacks_len * 4 + LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb));
 }
 
 /** Output a control segment pbuf to IP.
