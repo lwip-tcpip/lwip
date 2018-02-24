@@ -152,6 +152,8 @@ rfc7668_context_lookup(const ip6_addr_t *ip6addr)
       return i;
     }
   }
+#else
+  LWIP_UNUSED_ARG(ip6addr);
 #endif
   /* no address found, return -1 */
   return -1;
@@ -461,7 +463,7 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
  * @return ERR_OK (if everything is fine), ERR_ARG (if the context id is out of range), ERR_VAL (if contexts disabled)
  */
 err_t
-rfc7668_set_context(u8_t idx, const ip6_addr_t * context)
+rfc7668_set_context(u8_t idx, const ip6_addr_t *context)
 {
 #if LWIP_RFC7668_NUM_CONTEXTS > 0
   /* check if the ID is possible */
@@ -472,6 +474,8 @@ rfc7668_set_context(u8_t idx, const ip6_addr_t * context)
   ip6_addr_set(&rfc7668_context[idx], context);  
   return ERR_OK;
 #else
+  LWIP_UNUSED_ARG(idx);
+  LWIP_UNUSED_ARG(context);
   return ERR_VAL;
 #endif
 }
@@ -669,10 +673,12 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
         pbuf_free(q);
         return NULL;
       }
+#if LWIP_RFC7668_NUM_CONTEXTS > 0
       /* load prefix from context storage */
       ip6hdr->src.addr[0] = rfc7668_context[j].addr[0];
       ip6hdr->src.addr[1] = rfc7668_context[j].addr[1];
       LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("SAM == xx, context compression found @%d: %8X, %8X\n", j, ip6hdr->src.addr[0], ip6hdr->src.addr[1]));
+#endif
     }
 
     /* determine further address bits */
@@ -756,9 +762,10 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
         pbuf_free(q);
         return NULL;
       }
-
+#if LWIP_RFC7668_NUM_CONTEXTS > 0
       ip6hdr->dest.addr[0] = rfc7668_context[j].addr[0];
       ip6hdr->dest.addr[1] = rfc7668_context[j].addr[1];
+#endif
     } else {
       LWIP_DEBUGF(LWIP_RFC7668_DEBUG|LWIP_RFC7668_DECOMPRESSION_DEBUG,("DAC == 0, stateless compression, setting link local prefix\n"));
       /* Link local address compression */
