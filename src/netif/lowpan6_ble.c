@@ -116,6 +116,8 @@ void ble_addr_to_eui64(uint8_t *dst, uint8_t *src, uint8_t public_addr)
   } else {
     dst[0] |= 0x02;
   }
+#else
+  LWIP_UNUSED_ARG(public_addr);
 #endif
 }
 
