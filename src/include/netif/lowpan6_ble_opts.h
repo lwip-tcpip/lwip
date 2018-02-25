@@ -80,6 +80,8 @@
  * the address, depending on the BD address (either public or not).
  * Might not be RFC7668 conform, so you may select to do that (=1) or 
  * not (=0) */
+#ifndef LWIP_RFC7668_LINUX_WORKAROUND_PUBLIC_ADDRESS
 #define LWIP_RFC7668_LINUX_WORKAROUND_PUBLIC_ADDRESS 1
+#endif
 
 #endif /* LWIP_HDR_RFC7668_OPTS_H */
