@@ -357,6 +357,7 @@ dhcp6_disable(struct netif *netif)
       dhcp6_set_state(dhcp6, DHCP6_STATE_OFF, "dhcp6_disable");
       if (dhcp6->pcb_allocated != 0) {
         dhcp6_dec_pcb_refcount(); /* free DHCPv6 PCB if not needed any more */
+        dhcp6->pcb_allocated = 0;
       }
     }
   }
