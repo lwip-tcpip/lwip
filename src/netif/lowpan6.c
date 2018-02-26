@@ -61,15 +61,12 @@
 #include "lwip/udp.h"
 #include "lwip/tcpip.h"
 #include "lwip/snmp.h"
+#include "netif/ieee802154.h"
 
 #include <string.h>
 
-struct ieee_802154_addr {
-  u8_t addr_len;
-  u8_t addr[8];
-};
-
-/** This is a helper struct.
+/** This is a helper struct for reassembly of fragments
+ * (IEEE 802.15.4 limits to 127 bytes)
  */
 struct lowpan6_reass_helper {
   struct pbuf *pbuf;
@@ -1017,6 +1014,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 {
   u8_t *puc;
   s8_t i;
+  u16_t frame_control, addr_mode;
   struct ieee_802154_addr src, dest;
   u16_t datagram_size, datagram_offset, datagram_tag;
   struct lowpan6_reass_helper *lrh, *lrh_temp;
@@ -1025,15 +1023,21 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 
   /* Analyze header. @todo validate. */
   puc = (u8_t *)p->payload;
+  frame_control = puc[0] | (puc[1] << 8);
   datagram_offset = 5;
-  if ((puc[1] & 0x0c) == 0x0c) {
+  addr_mode = frame_control & IEEE_802154_FC_DST_ADDR_MODE_MASK;
+  if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_EXT) {
+    /* extended address (64 bit) */
     dest.addr_len = 8;
+    /* reverse memcpy: */
     for (i = 0; i < 8; i++) {
       dest.addr[i] = puc[datagram_offset + 7 - i];
     }
     datagram_offset += 8;
   } else {
+    /* short address (16 bit) */
     dest.addr_len = 2;
+    /* reverse memcpy: */
     dest.addr[0] = puc[datagram_offset + 1];
     dest.addr[1] = puc[datagram_offset];
     datagram_offset += 2;
@@ -1041,14 +1045,19 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 
   datagram_offset += 2; /* skip PAN ID. */
 
-  if ((puc[1] & 0xc0) == 0xc0) {
+  addr_mode = frame_control & IEEE_802154_FC_SRC_ADDR_MODE_MASK;
+  if (addr_mode == IEEE_802154_FC_SRC_ADDR_MODE_EXT) {
+    /* extended address (64 bit) */
     src.addr_len = 8;
+    /* reverse memcpy: */
     for (i = 0; i < 8; i++) {
       src.addr[i] = puc[datagram_offset + 7 - i];
     }
     datagram_offset += 8;
   } else {
+    /* short address (16 bit) */
     src.addr_len = 2;
+    /* reverse memcpy: */
     src.addr[0] = puc[datagram_offset + 1];
     src.addr[1] = puc[datagram_offset];
     datagram_offset += 2;
