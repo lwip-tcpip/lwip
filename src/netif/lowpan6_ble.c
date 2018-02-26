@@ -388,7 +388,7 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
     }
 
     /* Move to payload. */
-    pbuf_header(p, -IP6_HLEN);
+    pbuf_remove_header(p, IP6_HLEN);
 
     /* Compress UDP header? */
     if (IP6H_NEXTH(ip6hdr) == IP6_NEXTH_UDP) {
@@ -427,7 +427,7 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
       buffer[lowpan6_header_len++] = ((u8_t *)p->payload)[6];
       buffer[lowpan6_header_len++] = ((u8_t *)p->payload)[7];
 
-      pbuf_header(p, -UDP_HLEN);
+      pbuf_remove_header(p, UDP_HLEN);
     }
   }
 
@@ -900,7 +900,7 @@ rfc7668_input(struct pbuf * p, struct netif *netif, const ip6_addr_t *src)
   if (*puc == 0x41) {
     LWIP_DEBUGF(LWIP_RFC7668_DECOMPRESSION_DEBUG | LWIP_RFC7668_DEBUG, ("Completed packet, removing dispatch: 0x%2x \n", *puc));
     /* This is a complete IPv6 packet, just skip header byte. */
-    pbuf_header(p, -1);
+    pbuf_remove_header(p, 1);
   /* IPHC header compression */
   } else if ((*puc & 0xe0 )== 0x60) {
     LWIP_DEBUGF(LWIP_RFC7668_DECOMPRESSION_DEBUG | LWIP_RFC7668_DEBUG, ("Completed packet, decompress dispatch: 0x%2x \n", *puc));
