@@ -1007,7 +1007,7 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
 
 /**
  * @ingroup sixlowpan
- * NETIF input function
+ * NETIF input function: don't free the input pbuf when returning != ERR_OK!
  */
 err_t
 lowpan6_input(struct pbuf *p, struct netif *netif)
@@ -1018,6 +1018,10 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
   struct ieee_802154_addr src, dest;
   u16_t datagram_size, datagram_offset, datagram_tag;
   struct lowpan6_reass_helper *lrh, *lrh_temp;
+
+  if (p == NULL) {
+    return ERR_OK;
+  }
 
   MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
 
@@ -1080,10 +1084,8 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0)) {
         /* address match with packet in reassembly. */
         if ((datagram_tag == lrh->datagram_tag) && (datagram_size == lrh->datagram_size)) {
-          MIB2_STATS_NETIF_INC(netif, ifindiscards);
           /* duplicate fragment. */
-          pbuf_free(p);
-          return ERR_OK;
+          goto lowpan6_input_discard;
         } else {
           /* We are receiving the start of a new datagram. Discard old one (incomplete). */
           lrh_temp = lrh->next_packet;
@@ -1104,9 +1106,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 
     lrh = (struct lowpan6_reass_helper *) mem_malloc(sizeof(struct lowpan6_reass_helper));
     if (lrh == NULL) {
-      MIB2_STATS_NETIF_INC(netif, ifindiscards);
-      pbuf_free(p);
-      return ERR_MEM;
+      goto lowpan6_input_discard;
     }
 
     lrh->sender_addr.addr_len = src.addr_len;
@@ -1138,23 +1138,18 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     }
     if (lrh == NULL) {
       /* rogue fragment */
-      MIB2_STATS_NETIF_INC(netif, ifindiscards);
-      pbuf_free(p);
-      return ERR_OK;
+      goto lowpan6_input_discard;
     }
 
     if (lrh->pbuf->tot_len < datagram_offset) {
       /* duplicate, ignore. */
-      pbuf_free(p);
-      return ERR_OK;
+      goto lowpan6_input_ignore;
     } else if (lrh->pbuf->tot_len > datagram_offset) {
-      MIB2_STATS_NETIF_INC(netif, ifindiscards);
       /* We have missed a fragment. Delete whole reassembly. */
       dequeue_datagram(lrh);
       pbuf_free(lrh->pbuf);
       mem_free(lrh);
-      pbuf_free(p);
-      return ERR_OK;
+      goto lowpan6_input_discard;
     }
     pbuf_cat(lrh->pbuf, p);
     p = NULL;
@@ -1192,15 +1187,20 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       return ERR_OK;
     }
   } else {
-    MIB2_STATS_NETIF_INC(netif, ifindiscards);
-    pbuf_free(p);
-    return ERR_OK;
+    goto lowpan6_input_discard;
   }
 
   /* @todo: distinguish unicast/multicast */
   MIB2_STATS_NETIF_INC(netif, ifinucastpkts);
 
   return ip6_input(p, netif);
+
+lowpan6_input_discard:
+  MIB2_STATS_NETIF_INC(netif, ifindiscards);
+lowpan6_input_ignore:
+  pbuf_free(p);
+  /* always return ERR_OK here to prevent the caller freeing the pbuf */
+  return ERR_OK;
 }
 
 /**
