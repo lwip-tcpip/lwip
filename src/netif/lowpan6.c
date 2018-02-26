@@ -2,6 +2,9 @@
   * @file
  *
  * 6LowPAN output for IPv6. Uses ND tables for link-layer addressing. Fragments packets to 6LowPAN units.
+ *
+ * This implementation aims to conform to IEEE 802.15.4(-2015), RFC 4994 and RFC 6282.
+ * @todo: RFC 6775.
  */
 
 /*
@@ -77,13 +80,20 @@ struct lowpan6_reass_helper {
   u16_t datagram_tag;
 };
 
-static struct lowpan6_reass_helper *reass_list;
-
+/** This struct keeps track of per-netif state */
+struct lowpan6_ieee802154_data {
+  /** fragment reassembly list */
+  struct lowpan6_reass_helper *reass_list;
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
-static ip6_addr_t lowpan6_context[LWIP_6LOWPAN_NUM_CONTEXTS];
+  /** address context for compression */
+  ip6_addr_t lowpan6_context[LWIP_6LOWPAN_NUM_CONTEXTS];
 #endif
+  /** local PAN ID */
+  u16_t ieee_802154_pan_id;
+};
 
-static u16_t ieee_802154_pan_id;
+/** Currently, this state is global, since there's only one 6LoWPAN netif */
+static struct lowpan6_ieee802154_data lowpan6_data;
 
 static const struct ieee_802154_addr ieee_802154_broadcast = {2, {0xff, 0xff}};
 
@@ -103,7 +113,7 @@ lowpan6_tmr(void)
 {
   struct lowpan6_reass_helper *lrh, *lrh_temp;
 
-  lrh = reass_list;
+  lrh = lowpan6_data.reass_list;
   while (lrh != NULL) {
     lrh_temp = lrh->next_packet;
     if ((--lrh->timer) == 0) {
@@ -123,10 +133,10 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh)
 {
   struct lowpan6_reass_helper *lrh_temp;
 
-  if (reass_list == lrh) {
-    reass_list = reass_list->next_packet;
+  if (lowpan6_data.reass_list == lrh) {
+    lowpan6_data.reass_list = lowpan6_data.reass_list->next_packet;
   } else {
-    lrh_temp = reass_list;
+    lrh_temp = lowpan6_data.reass_list;
     while (lrh_temp != NULL) {
       if (lrh_temp->next_packet == lrh) {
         lrh_temp->next_packet = lrh->next_packet;
@@ -146,7 +156,7 @@ lowpan6_context_lookup(const ip6_addr_t *ip6addr)
   s8_t i;
 
   for (i = 0; i < LWIP_6LOWPAN_NUM_CONTEXTS; i++) {
-    if (ip6_addr_netcmp(&lowpan6_context[i], ip6addr)) {
+    if (ip6_addr_netcmp(&lowpan6_data.lowpan6_context[i], ip6addr)) {
       return i;
     }
   }
@@ -247,15 +257,15 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   ieee_header_len++;
   buffer[ieee_header_len++] = frame_seq_num++;
 
-  buffer[ieee_header_len++] = ieee_802154_pan_id & 0xff; /* pan id */
-  buffer[ieee_header_len++] = (ieee_802154_pan_id >> 8) & 0xff; /* pan id */
+  buffer[ieee_header_len++] = lowpan6_data.ieee_802154_pan_id & 0xff; /* pan id */
+  buffer[ieee_header_len++] = (lowpan6_data.ieee_802154_pan_id >> 8) & 0xff; /* pan id */
   i = dst->addr_len;
   while (i-- > 0) {
     buffer[ieee_header_len++] = dst->addr[i];
   }
 
-  buffer[ieee_header_len++] = ieee_802154_pan_id & 0xff; /* pan id */
-  buffer[ieee_header_len++] = (ieee_802154_pan_id >> 8) & 0xff; /* pan id */
+  buffer[ieee_header_len++] = lowpan6_data.ieee_802154_pan_id & 0xff; /* pan id */
+  buffer[ieee_header_len++] = (lowpan6_data.ieee_802154_pan_id >> 8) & 0xff; /* pan id */
   i = src->addr_len;
   while (i-- > 0) {
     buffer[ieee_header_len++] = src->addr[i];
@@ -590,7 +600,7 @@ lowpan6_set_context(u8_t idx, const ip6_addr_t *context)
 
   IP6_ADDR_ZONECHECK(context);
 
-  ip6_addr_set(&lowpan6_context[idx], context);
+  ip6_addr_set(&lowpan6_data.lowpan6_context[idx], context);
 
   return ERR_OK;
 }
@@ -826,8 +836,8 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
         return NULL;
       }
 
-      ip6hdr->src.addr[0] = lowpan6_context[i].addr[0];
-      ip6hdr->src.addr[1] = lowpan6_context[i].addr[1];
+      ip6hdr->src.addr[0] = lowpan6_data.lowpan6_context[i].addr[0];
+      ip6hdr->src.addr[1] = lowpan6_data.lowpan6_context[i].addr[1];
     }
 
     if ((lowpan6_buffer[1] & 0x30) == 0x10) {
@@ -897,8 +907,8 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
         return NULL;
       }
 
-      ip6hdr->dest.addr[0] = lowpan6_context[i].addr[0];
-      ip6hdr->dest.addr[1] = lowpan6_context[i].addr[1];
+      ip6hdr->dest.addr[0] = lowpan6_data.lowpan6_context[i].addr[0];
+      ip6hdr->dest.addr[1] = lowpan6_data.lowpan6_context[i].addr[1];
     } else {
       /* Link local address compression */
       ip6hdr->dest.addr[0] = PP_HTONL(0xfe800000UL);
@@ -1055,7 +1065,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     datagram_tag = ((u16_t)puc[2] << 8) | (u16_t)puc[3];
 
     /* check for duplicate */
-    lrh = reass_list;
+    lrh = lowpan6_data.reass_list;
     while (lrh != NULL) {
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0)) {
@@ -1097,9 +1107,9 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     lrh->datagram_size = datagram_size;
     lrh->datagram_tag = datagram_tag;
     lrh->pbuf = p;
-    lrh->next_packet = reass_list;
+    lrh->next_packet = lowpan6_data.reass_list;
     lrh->timer = 2;
-    reass_list = lrh;
+    lowpan6_data.reass_list = lrh;
 
     return ERR_OK;
   } else if ((*puc & 0xf8) == 0xe0) {
@@ -1109,7 +1119,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     datagram_offset = (u16_t)puc[4] << 3;
     pbuf_remove_header(p, 5); /* hide frag1 dispatch */
 
-    for (lrh = reass_list; lrh != NULL; lrh = lrh->next_packet) {
+    for (lrh = lowpan6_data.reass_list; lrh != NULL; lrh = lrh->next_packet) {
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0) &&
           (datagram_tag == lrh->datagram_tag) &&
@@ -1215,7 +1225,7 @@ lowpan6_if_init(struct netif *netif)
 err_t
 lowpan6_set_pan_id(u16_t pan_id)
 {
-  ieee_802154_pan_id = pan_id;
+  lowpan6_data.ieee_802154_pan_id = pan_id;
 
   return ERR_OK;
 }
