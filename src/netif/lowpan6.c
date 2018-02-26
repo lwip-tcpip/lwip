@@ -1025,10 +1025,24 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
 
   MIB2_STATS_NETIF_ADD(netif, ifinoctets, p->tot_len);
 
-  /* Analyze header. @todo validate. */
+  if (p->len != p->tot_len) {
+    /* for now, this needs a pbuf in one piece */
+    goto lowpan6_input_discard;
+  }
+
+  /* Parse IEEE 802.15.4 header */
   puc = (u8_t *)p->payload;
   frame_control = puc[0] | (puc[1] << 8);
-  datagram_offset = 5;
+  datagram_offset = 2;
+  if (frame_control & IEEE_802154_FC_SEQNO_SUPPR) {
+    if (IEEE_802154_FC_FRAME_VERSION_GET(frame_control) <= 1) {
+      /* sequence number suppressed, this is not valid for versions 0/1 */
+      goto lowpan6_input_discard;
+    }
+  } else {
+    datagram_offset++;
+  }
+  datagram_offset += 2; /* Skip destination PAN ID */
   addr_mode = frame_control & IEEE_802154_FC_DST_ADDR_MODE_MASK;
   if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_EXT) {
     /* extended address (64 bit) */
@@ -1038,16 +1052,22 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       dest.addr[i] = puc[datagram_offset + 7 - i];
     }
     datagram_offset += 8;
-  } else {
+  } else if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_SHORT) {
     /* short address (16 bit) */
     dest.addr_len = 2;
     /* reverse memcpy: */
     dest.addr[0] = puc[datagram_offset + 1];
     dest.addr[1] = puc[datagram_offset];
     datagram_offset += 2;
+  } else {
+    /* unsupported address mode */
+    goto lowpan6_input_discard;
   }
 
-  datagram_offset += 2; /* skip PAN ID. */
+  if (!(frame_control & IEEE_802154_FC_PANID_COMPR)) {
+    /* No PAN ID compression, skip source PAN ID */
+    datagram_offset += 2;
+  }
 
   addr_mode = frame_control & IEEE_802154_FC_SRC_ADDR_MODE_MASK;
   if (addr_mode == IEEE_802154_FC_SRC_ADDR_MODE_EXT) {
@@ -1058,16 +1078,21 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       src.addr[i] = puc[datagram_offset + 7 - i];
     }
     datagram_offset += 8;
-  } else {
+  } else if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_SHORT) {
     /* short address (16 bit) */
     src.addr_len = 2;
-    /* reverse memcpy: */
     src.addr[0] = puc[datagram_offset + 1];
     src.addr[1] = puc[datagram_offset];
     datagram_offset += 2;
+  } else {
+    /* unsupported address mode */
+    goto lowpan6_input_discard;
   }
 
-  pbuf_remove_header(p, datagram_offset); /* hide IEEE802.15.4 header. */
+  /* hide IEEE802.15.4 header. */
+  if (pbuf_remove_header(p, datagram_offset)) {
+    goto lowpan6_input_discard;
+  }
 
   /* Check dispatch. */
   puc = (u8_t *)p->payload;
