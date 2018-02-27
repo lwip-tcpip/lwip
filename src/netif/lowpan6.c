@@ -150,6 +150,7 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh)
 static s8_t
 lowpan6_context_lookup(const ip6_addr_t *ip6addr)
 {
+#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   s8_t i;
 
   for (i = 0; i < LWIP_6LOWPAN_NUM_CONTEXTS; i++) {
@@ -157,7 +158,9 @@ lowpan6_context_lookup(const ip6_addr_t *ip6addr)
       return i;
     }
   }
-
+#else
+  LWIP_UNUSED_ARG(ip6addr);
+#endif
   return -1;
 }
 #endif /* LWIP_6LOWPAN_IPHC */
@@ -232,6 +235,8 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   static u16_t datagram_tag;
   u16_t datagram_offset;
   err_t err = ERR_IF;
+
+  LWIP_ASSERT("lowpan6_frag: netif->linkoutput not set", netif->linkoutput != NULL);
 
   /* We'll use a dedicated pbuf for building 6LowPAN fragments. */
   p_frag = pbuf_alloc(PBUF_RAW, 127, PBUF_RAM);
@@ -591,6 +596,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 err_t
 lowpan6_set_context(u8_t idx, const ip6_addr_t *context)
 {
+#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   if (idx >= LWIP_6LOWPAN_NUM_CONTEXTS) {
     return ERR_ARG;
   }
@@ -600,6 +606,11 @@ lowpan6_set_context(u8_t idx, const ip6_addr_t *context)
   ip6_addr_set(&lowpan6_data.lowpan6_context[idx], context);
 
   return ERR_OK;
+#else
+  LWIP_UNUSED_ARG(idx);
+  LWIP_UNUSED_ARG(context);
+  return ERR_ARG;
+#endif
 }
 
 #if LWIP_6LOWPAN_INFER_SHORT_ADDRESS
@@ -832,9 +843,10 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
         pbuf_free(q);
         return NULL;
       }
-
+#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
       ip6hdr->src.addr[0] = lowpan6_data.lowpan6_context[i].addr[0];
       ip6hdr->src.addr[1] = lowpan6_data.lowpan6_context[i].addr[1];
+#endif
     }
 
     if ((lowpan6_buffer[1] & 0x30) == 0x10) {
@@ -903,9 +915,10 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
         pbuf_free(q);
         return NULL;
       }
-
+#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
       ip6hdr->dest.addr[0] = lowpan6_data.lowpan6_context[i].addr[0];
       ip6hdr->dest.addr[1] = lowpan6_data.lowpan6_context[i].addr[1];
+#endif
     } else {
       /* Link local address compression */
       ip6hdr->dest.addr[0] = PP_HTONL(0xfe800000UL);
