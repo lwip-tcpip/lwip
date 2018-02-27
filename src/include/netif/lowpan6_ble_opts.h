@@ -53,9 +53,9 @@
 #define LWIP_RFC7668_NUM_CONTEXTS             10
 #endif
 
-/** LWIP_RFC7668_DEBUG: Enable generic debugging in rfc7668.c. */
+/** LWIP_RFC7668_DEBUG: Enable generic debugging in lowpan6_ble.c. */
 #ifndef LWIP_RFC7668_DEBUG
-#define LWIP_RFC7668_DEBUG                    LWIP_DBG_ON
+#define LWIP_RFC7668_DEBUG                    LWIP_DBG_OFF
 #endif
 
 /** LWIP_RFC7668_IP_COMPRESSED_DEBUG: enable compressed IP frame
