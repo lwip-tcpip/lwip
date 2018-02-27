@@ -146,11 +146,10 @@ dequeue_datagram(struct lowpan6_reass_helper *lrh)
   return ERR_OK;
 }
 
-#if LWIP_6LOWPAN_IPHC
+#if LWIP_6LOWPAN_IPHC && LWIP_6LOWPAN_NUM_CONTEXTS > 0
 static s8_t
 lowpan6_context_lookup(const ip6_addr_t *ip6addr)
 {
-#if LWIP_6LOWPAN_NUM_CONTEXTS > 0
   s8_t i;
 
   for (i = 0; i < LWIP_6LOWPAN_NUM_CONTEXTS; i++) {
@@ -158,12 +157,9 @@ lowpan6_context_lookup(const ip6_addr_t *ip6addr)
       return i;
     }
   }
-#else
-  LWIP_UNUSED_ARG(ip6addr);
-#endif
   return -1;
 }
-#endif /* LWIP_6LOWPAN_IPHC */
+#endif /* LWIP_6LOWPAN_IPHC && LWIP_6LOWPAN_NUM_CONTEXTS > 0 */
 
 #if LWIP_6LOWPAN_IPHC || LWIP_6LOWPAN_INFER_SHORT_ADDRESS
 /* Determine compression mode for unicast address. */
