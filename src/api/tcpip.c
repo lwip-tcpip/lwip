@@ -171,7 +171,9 @@ tcpip_thread_handle_msg(struct tcpip_msg *msg)
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
-      msg->msg.inp.input_fn(msg->msg.inp.p, msg->msg.inp.netif);
+      if (msg->msg.inp.input_fn(msg->msg.inp.p, msg->msg.inp.netif) != ERR_OK) {
+        pbuf_free(msg->msg.inp.p);
+      }
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */

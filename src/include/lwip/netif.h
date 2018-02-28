@@ -171,6 +171,9 @@ typedef err_t (*netif_init_fn)(struct netif *netif);
  *
  * @param p The received packet, copied into a pbuf
  * @param inp The netif which received the packet
+ * @return ERR_OK if the packet was handled
+ *         != ERR_OK is the packet was NOT handled, in this case, the caller has
+ *                   to free the pbuf
  */
 typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
 
