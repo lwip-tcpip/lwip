@@ -65,6 +65,10 @@
 
 #include <string.h>
 
+#if NETIF_MAX_HWADDR_LEN < 8
+#error "6LoWPAN netif needs a 64-bit hwaddr"
+#endif
+
 /** This is a helper struct for reassembly of fragments
  * (IEEE 802.15.4 limits to 127 bytes)
  */
@@ -675,6 +679,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   } else
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
   {
+    LWIP_ASSERT("6LowPAN needs netif->hwaddr_len == 8", netif->hwaddr_len == 8);
     src.addr_len = netif->hwaddr_len;
     SMEMCPY(src.addr, netif->hwaddr, netif->hwaddr_len);
   }
@@ -717,6 +722,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   }
 
   /* Send out the packet using the returned hardware address. */
+  LWIP_ASSERT("6LowPAN needs netif->hwaddr_len == 8", netif->hwaddr_len == 8);
   dest.addr_len = netif->hwaddr_len;
   SMEMCPY(dest.addr, hwaddr, netif->hwaddr_len);
   MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
