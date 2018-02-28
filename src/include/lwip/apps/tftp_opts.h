@@ -54,7 +54,7 @@
  * Enable TFTP debug messages
  */
 #if !defined TFTP_DEBUG || defined __DOXYGEN__
-#define TFTP_DEBUG            LWIP_DBG_ON
+#define TFTP_DEBUG            LWIP_DBG_OFF
 #endif
 
 /**
