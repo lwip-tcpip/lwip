@@ -60,7 +60,11 @@
 #endif
 
 #ifndef LWIP_6LOWPAN_HW_CRC
-#define LWIP_6LOWPAN_HW_CRC              1
+#define LWIP_6LOWPAN_HW_CRC              0
+#endif
+
+#ifndef LWIP_6LOWPAN_CALC_CRC
+#define LWIP_6LOWPAN_CALC_CRC(buf, len)  lowpan6_calc_crc(buf, len)
 #endif
 
 #ifndef LOWPAN6_DEBUG

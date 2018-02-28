@@ -69,6 +69,12 @@
 #error "6LoWPAN netif needs a 64-bit hwaddr"
 #endif
 
+#if LWIP_6LOWPAN_HW_CRC
+#define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) 0
+#else
+#define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) LWIP_6LOWPAN_CALC_CRC(buf, len)
+#endif
+
 /** This is a helper struct for reassembly of fragments
  * (IEEE 802.15.4 limits to 127 bytes)
  */
@@ -289,6 +295,31 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct ieee_802154_addr *src,
   return ERR_OK;
 }
 
+/** Calculate the 16-bit CRC as required by IEEE 802.15.4 */
+u16_t
+lowpan6_calc_crc(const void* buf, u16_t len)
+{
+#define CCITT_POLY_16 0x8408U
+  u16_t i;
+  u8_t b;
+  u16_t crc = 0;
+  const u8_t* p = (const u8_t*)buf;
+
+  for (i = 0; i < len; i++) {
+    u8_t data = *p;
+    for (b = 0U; b < 8U; b++) {
+      if (((data ^ crc) & 1) != 0) {
+        crc = (u16_t)((crc >> 1) ^ CCITT_POLY_16);
+      } else {
+        crc = (u16_t)(crc >> 1);
+      }
+      data = (u8_t)(data >> 1);
+    }
+    p++;
+  }
+  return crc;
+}
+
 #if LWIP_6LOWPAN_IPHC && LWIP_6LOWPAN_NUM_CONTEXTS > 0
 static s8_t
 lowpan6_context_lookup(const ip6_addr_t *ip6addr)
@@ -370,6 +401,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   u8_t ieee_header_len;
   u8_t lowpan6_header_len;
   s8_t i;
+  u16_t crc;
   u16_t datagram_offset;
   err_t err = ERR_IF;
 
@@ -627,15 +659,12 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     remaining_len -= frag_len - lowpan6_header_len;
     datagram_offset = frag_len;
 
-    /* 2 bytes CRC */
-#if LWIP_6LOWPAN_HW_CRC
-    /* Leave blank, will be filled by HW. */
-#else /* LWIP_6LOWPAN_HW_CRC */
-    /* @todo calculate CRC */
-#endif /* LWIP_6LOWPAN_HW_CRC */
-
     /* Calculate frame length */
-    p_frag->len = p_frag->tot_len = ieee_header_len + 4 + frag_len + 2; /* add 2 dummy bytes for crc*/
+    p_frag->len = p_frag->tot_len = ieee_header_len + 4 + frag_len + 2; /* add 2 bytes for crc*/
+
+    /* 2 bytes CRC */
+    crc = LWIP_6LOWPAN_DO_CALC_CRC(p_frag->payload, p_frag->len - 2);
+    pbuf_take_at(p_frag, &crc, 2, p_frag->len - 2);
 
     /* send the packet */
     MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
@@ -660,15 +689,12 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
       remaining_len -= frag_len;
       datagram_offset += frag_len;
 
-      /* 2 bytes CRC */
-#if LWIP_6LOWPAN_HW_CRC
-      /* Leave blank, will be filled by HW. */
-#else /* LWIP_6LOWPAN_HW_CRC */
-      /* @todo calculate CRC */
-#endif /* LWIP_6LOWPAN_HW_CRC */
-
       /* Calculate frame length */
       p_frag->len = p_frag->tot_len = frag_len + 5 + ieee_header_len + 2;
+
+      /* 2 bytes CRC */
+      crc = LWIP_6LOWPAN_DO_CALC_CRC(p_frag->payload, p_frag->len - 2);
+      pbuf_take_at(p_frag, &crc, 2, p_frag->len - 2);
 
       /* send the packet */
       MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
@@ -683,15 +709,12 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     pbuf_copy_partial(p, buffer + ieee_header_len + lowpan6_header_len, frag_len, 0);
     remaining_len = 0;
 
-    /* 2 bytes CRC */
-#if LWIP_6LOWPAN_HW_CRC
-    /* Leave blank, will be filled by HW. */
-#else /* LWIP_6LOWPAN_HW_CRC */
-    /* @todo calculate CRC */
-#endif /* LWIP_6LOWPAN_HW_CRC */
-
     /* Calculate frame length */
     p_frag->len = p_frag->tot_len = frag_len + lowpan6_header_len + ieee_header_len + 2;
+
+    /* 2 bytes CRC */
+    crc = LWIP_6LOWPAN_DO_CALC_CRC(p_frag->payload, p_frag->len - 2);
+    pbuf_take_at(p_frag, &crc, 2, p_frag->len - 2);
 
     /* send the packet */
     MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p_frag->tot_len);
