@@ -87,6 +87,8 @@ struct lowpan6_ieee802154_data {
 #endif
   /** local PAN ID */
   u16_t ieee_802154_pan_id;
+  u16_t datagram_tag;
+  u8_t frame_seq_num;
 };
 
 /** Currently, this state is global, since there's only one 6LoWPAN netif */
@@ -227,8 +229,6 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   u8_t ieee_header_len;
   u8_t lowpan6_header_len;
   s8_t i;
-  static u8_t frame_seq_num;
-  static u16_t datagram_tag;
   u16_t datagram_offset;
   err_t err = ERR_IF;
 
@@ -253,7 +253,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
   buffer[ieee_header_len] |= (dst->addr_len == 2) ? (0x02 << 2) : (0x03 << 2); /* destination addressing mode  */
   buffer[ieee_header_len] |= (src->addr_len == 2) ? (0x02 << 6) : (0x03 << 6); /* source addressing mode */
   ieee_header_len++;
-  buffer[ieee_header_len++] = frame_seq_num++;
+  buffer[ieee_header_len++] = lowpan6_data.frame_seq_num++;
 
   buffer[ieee_header_len++] = lowpan6_data.ieee_802154_pan_id & 0xff; /* pan id */
   buffer[ieee_header_len++] = (lowpan6_data.ieee_802154_pan_id >> 8) & 0xff; /* pan id */
@@ -498,9 +498,9 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     buffer[ieee_header_len] = 0xc0 | (((p->tot_len + lowpan6_header_len) >> 8) & 0x7);
     buffer[ieee_header_len + 1] = (p->tot_len + lowpan6_header_len) & 0xff;
 
-    datagram_tag++;
-    buffer[ieee_header_len + 2] = datagram_tag & 0xff;
-    buffer[ieee_header_len + 3] = (datagram_tag >> 8) & 0xff;
+    lowpan6_data.datagram_tag++;
+    buffer[ieee_header_len + 2] = lowpan6_data.datagram_tag & 0xff;
+    buffer[ieee_header_len + 3] = (lowpan6_data.datagram_tag >> 8) & 0xff;
 
     /* Fragment follows. */
     frag_len = (127 - ieee_header_len - 4 - 2) & 0xf8;
@@ -526,7 +526,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
 
     while ((remaining_len > 0) && (err == ERR_OK)) {
       /* new frame, new seq num for ACK */
-      buffer[2] = frame_seq_num++;
+      buffer[2] = lowpan6_data.frame_seq_num++;
 
       buffer[ieee_header_len] |= 0x20; /* Change FRAG1 to FRAGN */
 
