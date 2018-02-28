@@ -55,7 +55,7 @@
 extern "C" {
 #endif
 
-/** 1 second period */
+/** 1 second period for reassembly */
 #define LOWPAN6_TMR_INTERVAL 1000
 
 void lowpan6_tmr(void);

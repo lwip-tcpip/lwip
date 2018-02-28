@@ -65,10 +65,6 @@
 
 #include <string.h>
 
-#if NETIF_MAX_HWADDR_LEN < 8
-#error "6LoWPAN netif needs a 64-bit hwaddr"
-#endif
-
 #if LWIP_6LOWPAN_HW_CRC
 #define LWIP_6LOWPAN_DO_CALC_CRC(buf, len) 0
 #else
@@ -782,6 +778,25 @@ lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 }
 #endif /* LWIP_IPV4 */
 
+/* Create IEEE 802.15.4 address from netif address */
+static err_t
+lowpan6_hwaddr_to_addr(struct netif *netif, struct ieee_802154_addr *addr)
+{
+  addr->addr_len = 8;
+  if (netif->hwaddr_len == 8) {
+    SMEMCPY(addr->addr, netif->hwaddr, 8);
+  } else if (netif->hwaddr_len == 6) {
+    /* Copy from MAC-48 */
+    SMEMCPY(addr->addr, netif->hwaddr, 3);
+    addr->addr[3] = addr->addr[4] = 0xff;
+    SMEMCPY(&addr->addr[5], &netif->hwaddr[3], 3);
+  } else {
+    /* Invalid address length, don't know how to convert this */
+    return ERR_VAL;
+  }
+  return ERR_OK;
+}
+
 /**
  * @ingroup sixlowpan
  * Resolve and fill-in IEEE 802.15.4 address header for outgoing IPv6 packet.
@@ -817,9 +832,11 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   } else
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
   {
-    LWIP_ASSERT("6LowPAN needs netif->hwaddr_len == 8", netif->hwaddr_len == 8);
-    src.addr_len = netif->hwaddr_len;
-    SMEMCPY(src.addr, netif->hwaddr, netif->hwaddr_len);
+    result = lowpan6_hwaddr_to_addr(netif, &src);
+    if (result != ERR_OK) {
+      MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
+      return result;
+    }
   }
 
   /* multicast destination IP address? */
@@ -860,9 +877,11 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   }
 
   /* Send out the packet using the returned hardware address. */
-  LWIP_ASSERT("6LowPAN needs netif->hwaddr_len == 8", netif->hwaddr_len == 8);
-  dest.addr_len = netif->hwaddr_len;
-  SMEMCPY(dest.addr, hwaddr, netif->hwaddr_len);
+  result = lowpan6_hwaddr_to_addr(netif, &dest);
+  if (result != ERR_OK) {
+    MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
+    return result;
+  }
   MIB2_STATS_NETIF_INC(netif, ifoutucastpkts);
   return lowpan6_frag(netif, q, &src, &dest);
 }
