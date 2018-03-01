@@ -192,7 +192,7 @@ zepif_linkoutput(struct netif *netif, struct pbuf *p)
 #if ZEPIF_LOOPBACK
     zepif_udp_recv(netif, state->pcb, pbuf_clone(PBUF_RAW, PBUF_RAM, q), NULL, 0);
 #endif
-    err = udp_sendto(state->pcb, q, state->init.zep_ip_addr, state->init.zep_udp_port);
+    err = udp_sendto(state->pcb, q, state->init.zep_dst_ip_addr, state->init.zep_dst_udp_port);
   }
   pbuf_free(q);
 
@@ -214,13 +214,16 @@ zepif_init(struct netif *netif)
   }
   memset(state, 0, sizeof(struct zepif_state));
   if (init_state != NULL) {
-    state->init = *init_state;
+    memcpy(&state->init, init_state, sizeof(struct zepif_init));
   }
-  if (state->init.zep_udp_port == 0) {
-    state->init.zep_udp_port = ZEPIF_DEFAULT_UDP_PORT;
+  if (state->init.zep_src_udp_port == 0) {
+    state->init.zep_src_udp_port = ZEPIF_DEFAULT_UDP_PORT;
   }
-  if (state->init.zep_ip_addr == NULL) {
-    state->init.zep_ip_addr = IP_ADDR_ANY;
+  if (state->init.zep_dst_udp_port == 0) {
+    state->init.zep_dst_udp_port = ZEPIF_DEFAULT_UDP_PORT;
+  }
+  if (state->init.zep_dst_ip_addr == NULL) {
+    state->init.zep_dst_ip_addr = IP_ADDR_BROADCAST;
   }
 
   netif->state = NULL;
@@ -230,7 +233,7 @@ zepif_init(struct netif *netif)
     err = ERR_MEM;
     goto err_ret;
   }
-  err = udp_bind(state->pcb, state->init.zep_ip_addr, state->init.zep_udp_port);
+  err = udp_bind(state->pcb, state->init.zep_src_ip_addr, state->init.zep_src_udp_port);
   if (err != ERR_OK) {
     goto err_ret;
   }
