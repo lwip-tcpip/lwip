@@ -49,6 +49,8 @@
 #include "lwip/inet.h"
 #include "lwip/errno.h"
 
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
