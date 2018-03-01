@@ -213,7 +213,7 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct ieee_80
  *
  * @param p input pbuf, p->payload pointing at the IEEE 802.15.4 header
  * @param src pointer to source address filled from the header
- * @param dst pointer to destination address filled from the header
+ * @param dest pointer to destination address filled from the header
  * @returns ERR_OK if successful
  */
 static err_t
