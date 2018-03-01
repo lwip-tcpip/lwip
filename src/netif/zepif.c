@@ -59,7 +59,7 @@
 
 /** Define this to 1 to loop back TX packets for testing */
 #ifndef ZEPIF_LOOPBACK
-#define ZEPIF_LOOPBACK    1//0
+#define ZEPIF_LOOPBACK    0
 #endif
 
 #define ZEP_MAX_DATA_LEN  127
