@@ -93,8 +93,8 @@ struct lowpan6_ieee802154_data {
 #endif
   /** local PAN ID */
   u16_t ieee_802154_pan_id;
-  u16_t datagram_tag;
-  u8_t frame_seq_num;
+  u16_t tx_datagram_tag;
+  u8_t tx_frame_seq_num;
 };
 
 /** Currently, this state is global, since there's only one 6LoWPAN netif */
@@ -187,7 +187,7 @@ lowpan6_write_iee802154_header(struct ieee_802154_hdr *hdr, const struct ieee_80
     fc |= IEEE_802154_FC_SRC_ADDR_MODE_EXT;
   }
   hdr->frame_control = fc;
-  hdr->sequence_number = lowpan6_data.frame_seq_num++;
+  hdr->sequence_number = lowpan6_data.tx_frame_seq_num++;
   hdr->destination_pan_id = lowpan6_data.ieee_802154_pan_id; /* pan id */
 
   buffer = (u8_t *)hdr;
@@ -644,9 +644,9 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     buffer[ieee_header_len] = 0xc0 | (((p->tot_len + lowpan6_header_len) >> 8) & 0x7);
     buffer[ieee_header_len + 1] = (p->tot_len + lowpan6_header_len) & 0xff;
 
-    lowpan6_data.datagram_tag++;
-    buffer[ieee_header_len + 2] = lowpan6_data.datagram_tag & 0xff;
-    buffer[ieee_header_len + 3] = (lowpan6_data.datagram_tag >> 8) & 0xff;
+    lowpan6_data.tx_datagram_tag++;
+    buffer[ieee_header_len + 2] = (lowpan6_data.tx_datagram_tag >> 8) & 0xff;
+    buffer[ieee_header_len + 3] = lowpan6_data.tx_datagram_tag & 0xff;
 
     /* Fragment follows. */
     frag_len = (127 - ieee_header_len - 4 - 2) & 0xf8;
@@ -670,7 +670,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     while ((remaining_len > 0) && (err == ERR_OK)) {
       struct ieee_802154_hdr *hdr = (struct ieee_802154_hdr *)buffer;
       /* new frame, new seq num for ACK */
-      hdr->sequence_number = lowpan6_data.frame_seq_num++;
+      hdr->sequence_number = lowpan6_data.tx_frame_seq_num++;
 
       buffer[ieee_header_len] |= 0x20; /* Change FRAG1 to FRAGN */
 
