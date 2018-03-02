@@ -55,6 +55,7 @@
 
 #include "netif/lowpan6.h"
 #include "lwip/udp.h"
+#include "lwip/timeouts.h"
 #include <string.h>
 
 /** Define this to 1 to loop back TX packets for testing */
@@ -91,6 +92,18 @@ struct zepif_state {
   struct udp_pcb *pcb;
   u32_t seqno;
 };
+
+static u8_t zep_lowpan_timer_running;
+
+/* Helper function that calls the 6LoWPAN timer and reschedules itself */
+static void
+zep_lowpan_timer(void *arg)
+{
+  lowpan6_tmr();
+  if (zep_lowpan_timer_running) {
+    sys_timeout(LOWPAN6_TMR_INTERVAL, zep_lowpan_timer, arg);
+  }
+}
 
 /* Pass received pbufs into 6LowPAN netif */
 static void
@@ -138,6 +151,9 @@ zepif_udp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   if (pbuf_remove_header(p, sizeof(struct zep_hdr))) {
     goto err_return;
   }
+  /* TODO Check CRC? */
+  /* remove CRC trailer */
+  pbuf_realloc(p, p->tot_len - 2);
 
   /* Call tcpip_6lowpan_input here, not netif->input as we know the direct call
    * stack won't work as we could enter udp_input twice. */
@@ -259,6 +275,12 @@ zepif_init(struct netif *netif)
       netif->hwaddr[0] &= 0xfc;
     }
     netif->linkoutput = zepif_linkoutput;
+
+    if (!zep_lowpan_timer_running) {
+      sys_timeout(LOWPAN6_TMR_INTERVAL, zep_lowpan_timer, NULL);
+      zep_lowpan_timer_running = 1;
+    }
+
     return ERR_OK;
   }
 

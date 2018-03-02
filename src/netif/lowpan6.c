@@ -409,7 +409,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct ieee_802154_addr 
     MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
     return ERR_MEM;
   }
-  LWIP_ASSERT("this needs a pbuf in one piece", p->len == p->tot_len);
+  LWIP_ASSERT("this needs a pbuf in one piece", p_frag->len == p_frag->tot_len);
 
   /* Write IEEE 802.15.4 header. */
   buffer = (u8_t *)p_frag->payload;
