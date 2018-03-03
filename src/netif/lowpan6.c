@@ -43,7 +43,7 @@
  */
 
 /**
- * @defgroup sixlowpan 6LowPAN
+ * @defgroup sixlowpan 6LoWPAN (RFC4944)
  * @ingroup netifs
  * 6LowPAN netif implementation
  */

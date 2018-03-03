@@ -38,7 +38,7 @@
 
 
 /**
- * @defgroup rfc7668if RFC7668 - 6LoWPAN over BLE netif
+ * @defgroup rfc7668if 6LoWPAN over BLE (RFC7668)
  * @ingroup netifs
  * This file implements a RFC7668 implementation for 6LoWPAN over
  * Bluetooth Low Energy. The specification is very similar to 6LoWPAN,
@@ -49,11 +49,11 @@
  * Usage:
  * - add this netif
  *   - don't add IPv4 addresses (no IPv4 support in RFC7668), pass 'NULL','NULL','NULL'
- *   - use the BLE to EUI64 conversation util to create an IPv6 link-local address from the BLE MAC ( @see ble_addr_to_eui64)
- *   - input function: @see rfc7668_input
+ *   - use the BLE to EUI64 conversation util to create an IPv6 link-local address from the BLE MAC (@ref ble_addr_to_eui64)
+ *   - input function: @ref rfc7668_input
  * - set the link output function, which transmits output data to an established L2CAP channel
  * - If data arrives (HCI event "L2CAP_DATA_PACKET"):
- *   - allocate a @see PBUF_RAW buffer
+ *   - allocate a @ref PBUF_RAW buffer
  *   - let the pbuf struct point to the incoming data or copy it to the buffer
  *   - call netif->input
  *
