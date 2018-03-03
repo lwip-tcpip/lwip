@@ -161,12 +161,9 @@ START_TEST(test_pbuf_queueing_bigger_than_64k)
   pbuf_copy_partial(p1, testbuf_1a, TESTBUFSIZE_1, 0);
   pbuf_copy_partial(rest2, testbuf_2a, TESTBUFSIZE_2, 0);
   pbuf_copy_partial(rest3, testbuf_3a, TESTBUFSIZE_3, 0);
-  for(i = 0; i < TESTBUFSIZE_1; i++)
-    fail_unless(testbuf_1[i] == testbuf_1a[i]);
-  for(i = 0; i < TESTBUFSIZE_2; i++)
-    fail_unless(testbuf_2[i] == testbuf_2a[i]);
-  for(i = 0; i < TESTBUFSIZE_3; i++)
-    fail_unless(testbuf_3[i] == testbuf_3a[i]);
+  fail_if(memcmp(testbuf_1, testbuf_1a, TESTBUFSIZE_1));
+  fail_if(memcmp(testbuf_2, testbuf_2a, TESTBUFSIZE_2));
+  fail_if(memcmp(testbuf_3, testbuf_3a, TESTBUFSIZE_3));
 
   pbuf_free(p1);
   pbuf_free(rest2);
