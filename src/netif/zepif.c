@@ -1,14 +1,18 @@
 /**
  * @file
  *
- * A netif implementing the ZigBee Eencapsulation Protocol (ZEP).
+ * @defgroup zepif ZEP - ZigBee Encapsulation Protocol
+ * @ingroup netifs
+ * A netif implementing the ZigBee Encapsulation Protocol (ZEP).
  * This is used to tunnel 6LowPAN over UDP.
  *
  * Usage (there must be a default netif before!):
+ * @code{.c}
  *   netif_add(&zep_netif, NULL, NULL, NULL, NULL, zepif_init, tcpip_6lowpan_input);
  *   netif_create_ip6_linklocal_address(&zep_netif, 1);
  *   netif_set_up(&zep_netif);
  *   netif_set_link_up(&zep_netif);
+ * @endcode
  */
 
 /*
@@ -41,12 +45,6 @@
  *
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
- */
-
-/**
- * @defgroup sixlowpan 6LowPAN
- * @ingroup netifs
- * ZEP netif implementation
  */
 
 #include "netif/zepif.h"
@@ -215,7 +213,9 @@ zepif_linkoutput(struct netif *netif, struct pbuf *p)
   return err;
 }
 
-/** Set up a raw 6LowPAN netif and surround it with input- and output
+/**
+ * @ingroup zepif
+ * Set up a raw 6LowPAN netif and surround it with input- and output
  * functions for ZEP
  */
 err_t

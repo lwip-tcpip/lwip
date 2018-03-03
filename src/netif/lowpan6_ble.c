@@ -91,7 +91,9 @@ err_t tcpip_rfc7668_input(struct pbuf *p, struct netif *inp);
 err_t rfc7668_set_context(u8_t index, const ip6_addr_t * context);
 
 
-/** convert BT address to EUI64 addr
+/**
+ * @ingroup rfc7668if
+ *  convert BT address to EUI64 addr
  * 
  * This method converts a Bluetooth MAC address to an EUI64 address,
  * which is used within IPv6 communication
@@ -121,7 +123,9 @@ void ble_addr_to_eui64(uint8_t *dst, uint8_t *src, uint8_t public_addr)
 #endif
 }
 
-/** convert EUI64 address to Bluetooth MAC addr
+/**
+ * @ingroup rfc7668if
+ *  convert EUI64 address to Bluetooth MAC addr
  * 
  * This method converts an EUI64 address to a Bluetooth MAC address,
  * 
@@ -455,6 +459,7 @@ rfc7668_frag(struct netif *netif, struct pbuf *p, const ip6_addr_t * src, const 
 }
 
 /**
+ * @ingroup rfc7668if
  * Set context id IPv6 address
  *
  * Store one IPv6 address to a given context id.
@@ -483,6 +488,7 @@ rfc7668_set_context(u8_t idx, const ip6_addr_t *context)
 }
 
 /**
+ * @ingroup rfc7668if
  * Resolve and fill-in IEEE 802.15.4 address header for outgoing IPv6 packet.
  *
  * Perform Header Compression and fragment if necessary.
@@ -875,6 +881,7 @@ rfc7668_decompress(struct pbuf * p, const ip6_addr_t * src, const ip6_addr_t * d
 
 
 /**
+ * @ingroup rfc7668if
  * Process a received raw payload from an L2CAP channel
  *
  * @param p the received packet, p->payload pointing to the
@@ -938,6 +945,7 @@ rfc7668_input(struct pbuf * p, struct netif *netif, const ip6_addr_t *src)
 }
 
 /**
+ * @ingroup rfc7668if
  * Initialize the netif
  * 
  * No flags are used (broadcast not possible, not ethernet, ...)
