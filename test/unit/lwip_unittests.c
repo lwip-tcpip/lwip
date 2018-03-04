@@ -86,6 +86,7 @@ int main(void)
 #endif
 
   sr = srunner_create((suites[0])());
+  srunner_set_xml(sr, "lwip_unittests.xml");
   for(i = 1; i < num; i++) {
     srunner_add_suite(sr, ((suite_getter_fn*)suites[i])());
   }
