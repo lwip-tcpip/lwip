@@ -722,8 +722,8 @@ sntp_getoperatingmode(void)
 void
 sntp_servermode_dhcp(int set_servers_from_dhcp)
 {
-  LWIP_ASSERT_CORE_LOCKED();
   u8_t new_mode = set_servers_from_dhcp ? 1 : 0;
+  LWIP_ASSERT_CORE_LOCKED();
   if (sntp_set_servers_from_dhcp != new_mode) {
     sntp_set_servers_from_dhcp = new_mode;
   }
