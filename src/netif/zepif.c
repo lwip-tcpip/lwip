@@ -155,7 +155,7 @@ zepif_udp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   /* Call tcpip_6lowpan_input here, not netif->input as we know the direct call
    * stack won't work as we could enter udp_input twice. */
-  err = tcpip_6lowpan_input(p, netif_lowpan6);
+  err = netif_lowpan6->input(p, netif_lowpan6);
   if (err == ERR_OK) {
     return;
   }
