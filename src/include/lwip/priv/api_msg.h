@@ -39,10 +39,6 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_NETCONN || LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
-/* Note: Netconn API is always available when sockets are enabled -
- * sockets are implemented on top of them */
-
 #include "lwip/arch.h"
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
@@ -54,6 +50,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if LWIP_NETCONN || LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
+/* Note: Netconn API is always available when sockets are enabled -
+ * sockets are implemented on top of them */
 
 #if LWIP_MPU_COMPATIBLE
 #if LWIP_NETCONN_SEM_PER_THREAD
@@ -216,6 +216,10 @@ void lwip_netconn_do_gethostbyname(void *arg);
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);
 void netconn_free(struct netconn *conn);
 
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
+
+#if LWIP_NETIF_API /* don't build if not configured for use in lwipopts.h */
+
 /* netifapi related lwIP internal definitions */
 
 #if LWIP_MPU_COMPATIBLE
@@ -256,10 +260,10 @@ struct netifapi_msg {
   } msg;
 };
 
+#endif /* LWIP_NETIF_API */
+
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #endif /* LWIP_HDR_API_MSG_H */
