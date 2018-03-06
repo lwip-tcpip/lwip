@@ -86,7 +86,9 @@ typedef enum ehttpc_result {
   /** Local memory error */
   HTTPC_RESULT_ERR_MEM       = 7,
   /** Local abort */
-  HTTPC_RESULT_LOCAL_ABORT   = 8
+  HTTPC_RESULT_LOCAL_ABORT   = 8,
+  /** Content length mismatch */
+  HTTPC_RESULT_ERR_CONTENT_LEN = 9
 } httpc_result_t;
 
 typedef struct _httpc_state httpc_state_t;

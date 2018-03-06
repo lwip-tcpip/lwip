@@ -280,7 +280,19 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
   LWIP_UNUSED_ARG(r);
 
   if (p == NULL) {
-    return httpc_close(req, HTTPC_RESULT_OK, req->rx_status, ERR_OK);
+    httpc_result_t result;
+    if (req->parse_state != HTTPC_PARSE_RX_DATA) {
+      /* did not get RX data yet */
+      result = HTTPC_RESULT_ERR_CLOSED;
+    } else if ((req->hdr_content_len != HTTPC_CONTENT_LEN_INVALID) &&
+      (req->hdr_content_len != req->rx_content_len)) {
+      /* header has been received with content length but not all data received */
+      result = HTTPC_RESULT_ERR_CONTENT_LEN;
+    } else {
+      /* receiving data and either all data received or no content length header */
+      result = HTTPC_RESULT_OK;
+    }
+    return httpc_close(req, result, req->rx_status, ERR_OK);
   }
   if (req->parse_state != HTTPC_PARSE_RX_DATA) {
     if (req->rx_hdrs == NULL) {
