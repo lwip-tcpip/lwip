@@ -237,9 +237,12 @@ zepif_init(struct netif *netif)
   if (state->init.zep_dst_udp_port == 0) {
     state->init.zep_dst_udp_port = ZEPIF_DEFAULT_UDP_PORT;
   }
+#if LWIP_IPV4
   if (state->init.zep_dst_ip_addr == NULL) {
+    /* With IPv4 enabled, default to broadcasting packets if no address is set */
     state->init.zep_dst_ip_addr = IP_ADDR_BROADCAST;
   }
+#endif /* LWIP_IPV4 */
 
   netif->state = NULL;
 
