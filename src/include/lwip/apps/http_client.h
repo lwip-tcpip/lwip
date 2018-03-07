@@ -43,6 +43,7 @@
 #include "lwip/err.h"
 #include "lwip/altcp.h"
 #include "lwip/prot/iana.h"
+#include "lwip/pbuf.h"
 
 #ifdef __cplusplus
 extern "C" {
