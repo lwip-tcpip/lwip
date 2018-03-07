@@ -195,6 +195,13 @@
 #define SNTP_RETRY_TIMEOUT_EXP      1
 #endif
 
+/** Keep a reachability shift register per server
+ * Default is on to conform to RFC.
+ */
+#if !defined SNTP_MONITOR_SERVER_REACHABILITY || defined __DOXYGEN__
+#define SNTP_MONITOR_SERVER_REACHABILITY 1
+#endif
+
 /**
  * @}
  */

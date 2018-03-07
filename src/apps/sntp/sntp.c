@@ -231,6 +231,10 @@ struct sntp_server {
   const char *name;
 #endif /* SNTP_SERVER_DNS */
   ip_addr_t addr;
+#if SNTP_MONITOR_SERVER_REACHABILITY
+  /** Reachability shift register as described in RFC 5905 */
+  u8_t reachability;
+#endif /* SNTP_MONITOR_SERVER_REACHABILITY */
 };
 static struct sntp_server sntp_servers[SNTP_MAX_SERVERS];
 
@@ -499,6 +503,10 @@ sntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     /* correct packet received: process it it */
     sntp_process(&timestamps);
 
+#if SNTP_MONITOR_SERVER_REACHABILITY
+    /* indicate that server responded */
+    sntp_servers[sntp_current_server].reachability |= 1;
+#endif /* SNTP_MONITOR_SERVER_REACHABILITY */
     /* Set up timeout for next request (only if poll response was received)*/
     if (sntp_opmode == SNTP_OPMODE_POLL) {
       u32_t sntp_update_delay;
@@ -545,6 +553,10 @@ sntp_send_request(const ip_addr_t *server_addr)
     udp_sendto(sntp_pcb, p, server_addr, SNTP_PORT);
     /* free the pbuf after sending it */
     pbuf_free(p);
+#if SNTP_MONITOR_SERVER_REACHABILITY
+    /* indicate new packet has been sent */
+    sntp_servers[sntp_current_server].reachability <<= 1;
+#endif /* SNTP_MONITOR_SERVER_REACHABILITY */
     /* set up receive timeout: try next server or retry on timeout */
     sys_timeout((u32_t)SNTP_RECV_TIMEOUT, sntp_try_next_server, NULL);
 #if SNTP_CHECK_RESPONSE >= 1
@@ -675,6 +687,12 @@ sntp_stop(void)
 {
   LWIP_ASSERT_CORE_LOCKED();
   if (sntp_pcb != NULL) {
+#if SNTP_MONITOR_SERVER_REACHABILITY
+    u8_t i;
+    for (i = 0; i < SNTP_MAX_SERVERS; i++) {
+      sntp_servers[i].reachability = 0;
+    }
+#endif /* SNTP_MONITOR_SERVER_REACHABILITY */
     sys_untimeout(sntp_request, NULL);
     sys_untimeout(sntp_try_next_server, NULL);
     udp_remove(sntp_pcb);
@@ -714,6 +732,23 @@ sntp_getoperatingmode(void)
 {
   return sntp_opmode;
 }
+
+#if SNTP_MONITOR_SERVER_REACHABILITY
+/**
+ * @ingroup sntp
+ * Gets the server reachability shift register as described in RFC 5905.
+ *
+ * @param idx the index of the NTP server
+ */
+u8_t
+sntp_getreachability(u8_t idx)
+{
+  if (idx < SNTP_MAX_SERVERS) {
+    return sntp_servers[idx].reachability;
+  }
+  return 0;
+}
+#endif /* SNTP_MONITOR_SERVER_REACHABILITY */
 
 #if SNTP_GET_SERVERS_FROM_DHCP
 /**
