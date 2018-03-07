@@ -427,7 +427,7 @@ httpc_get_internal_addr(httpc_state_t* req, const ip_addr_t *ipaddr)
   return err;
 }
 
-#if LWIP_IPV4 && LWIP_DNS
+#if LWIP_DNS
 /** DNS callback
  * If ipaddr is non-NULL, resolving succeeded and the request can be sent, otherwise it failed.
  */
@@ -454,7 +454,7 @@ httpc_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg)
   }
   httpc_close(req, result, 0, err);
 }
-#endif /* LWIP_IPV4 && LWIP_DNS */
+#endif /* LWIP_DNS */
 
 /** Start the http request after converting 'server_name' to ip address (DNS or address string) */
 static err_t

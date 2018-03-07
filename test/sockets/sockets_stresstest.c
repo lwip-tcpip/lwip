@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if LWIP_SOCKET
+#if LWIP_SOCKET && LWIP_IPV4 /* this uses IPv4 loopback sockets, currently */
 
 #ifndef TEST_SOCKETS_STRESS
 #define TEST_SOCKETS_STRESS   LWIP_DBG_OFF
@@ -610,4 +610,4 @@ sockets_stresstest_init_client(const char *remote_ip, u16_t remote_port)
   sockets_stresstest_start_clients(addr);
 }
 
-#endif /* LWIP_SOCKET */
+#endif /* LWIP_SOCKET && LWIP_IPV4 */
