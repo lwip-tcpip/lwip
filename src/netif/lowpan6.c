@@ -886,30 +886,41 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
   return lowpan6_frag(netif, q, &src, &dest);
 }
 
-static struct pbuf *
-lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802154_addr *dest)
+/** Decompress IPv6 and UDP headers compressed according to RFC 6282
+ *
+ * @param lowpan6_buffer compressed headers, first byte is the dispatch byte
+ * @param lowpan6_bufsize size of lowpan6_buffer (may include data after headers)
+ * @param decomp_buffer buffer where the decompressed headers are stored
+ * @param decomp_bufsize size of decomp_buffer
+ * @param hdr_size_comp returns the size of the compressed headers (skip to get to data)
+ * @param hdr_size_decomp returns the size of the decompressed headers (IPv6 + UDP)
+ * @param datagram_size datagram size from fragments or 0 if unfragmented
+ * @param compressed_size compressed datagram size (for unfragmented rx)
+ * @param src source address of the outer layer, used for address compression
+ * @param dst destination address of the outer layer, used for address compression
+ * @return ERR_OK if decompression succeeded, an error otherwise
+ */
+static err_t
+lowpan6_decompress_hdr(u8_t *lowpan6_buffer, size_t lowpan6_bufsize,
+                       u8_t *decomp_buffer, size_t decomp_bufsize,
+                       u16_t *hdr_size_comp, u16_t *hdr_size_decomp,
+                       u16_t datagram_size, u16_t compressed_size,
+                       struct ieee_802154_addr *src, struct ieee_802154_addr *dest)
 {
-  struct pbuf *q;
-  u8_t *lowpan6_buffer;
   u16_t lowpan6_offset;
   struct ip6_hdr *ip6hdr;
   s8_t i;
-  s8_t ip6_offset = IP6_HLEN;
+  u16_t ip6_offset = IP6_HLEN;
 
-#if LWIP_UDP
-#define UDP_HLEN_ALLOC UDP_HLEN
-#else
-#define UDP_HLEN_ALLOC 0
-#endif
+  LWIP_ASSERT("lowpan6_buffer != NULL", lowpan6_buffer != NULL);
+  LWIP_ASSERT("decomp_buffer != NULL", decomp_buffer != NULL);
+  LWIP_ASSERT("src != NULL", src != NULL);
+  LWIP_ASSERT("dest != NULL", dest != NULL);
 
-  q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN_ALLOC, PBUF_POOL);
-  if (q == NULL) {
-    pbuf_free(p);
-    return NULL;
+  ip6hdr = (struct ip6_hdr *)decomp_buffer;
+  if (decomp_bufsize < IP6_HLEN) {
+    return ERR_MEM;
   }
-
-  lowpan6_buffer = (u8_t *)p->payload;
-  ip6hdr = (struct ip6_hdr *)q->payload;
 
   lowpan6_offset = 2;
   if (lowpan6_buffer[1] & 0x80) {
@@ -998,9 +1009,7 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
       }
       if (i >= LWIP_6LOWPAN_NUM_CONTEXTS) {
         /* Error */
-        pbuf_free(p);
-        pbuf_free(q);
-        return NULL;
+        return ERR_VAL;
       }
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
       ip6hdr->src.addr[0] = lowpan6_data.lowpan6_context[i].addr[0];
@@ -1031,9 +1040,7 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
     /* Multicast destination */
     if (lowpan6_buffer[1] & 0x04) {
       /* @todo support stateful multicast addressing */
-      pbuf_free(p);
-      pbuf_free(q);
-      return NULL;
+      return ERR_VAL;
     }
 
     if ((lowpan6_buffer[1] & 0x03) == 0x00) {
@@ -1070,9 +1077,7 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
       }
       if (i >= LWIP_6LOWPAN_NUM_CONTEXTS) {
         /* Error */
-        pbuf_free(p);
-        pbuf_free(q);
-        return NULL;
+        return ERR_VAL;
       }
 #if LWIP_6LOWPAN_NUM_CONTEXTS > 0
       ip6hdr->dest.addr[0] = lowpan6_data.lowpan6_context[i].addr[0];
@@ -1115,13 +1120,14 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
 
       /* UDP compression */
       IP6H_NEXTH_SET(ip6hdr, IP6_NEXTH_UDP);
-      udphdr = (struct udp_hdr *)((u8_t *)q->payload + ip6_offset);
+      udphdr = (struct udp_hdr *)((u8_t *)decomp_buffer + ip6_offset);
+      if (decomp_bufsize < IP6_HLEN + UDP_HLEN) {
+        return ERR_MEM;
+      }
 
       if (lowpan6_buffer[lowpan6_offset] & 0x04) {
         /* @todo support checksum decompress */
-        pbuf_free(p);
-        pbuf_free(q);
-        return NULL;
+        return ERR_VAL;
       }
 
       /* Decompress ports */
@@ -1146,32 +1152,95 @@ lowpan6_decompress(struct pbuf *p, struct ieee_802154_addr *src, struct ieee_802
 
       udphdr->chksum = lwip_htons(lowpan6_buffer[lowpan6_offset] << 8 | lowpan6_buffer[lowpan6_offset + 1]);
       lowpan6_offset += 2;
-      udphdr->len = lwip_htons(p->tot_len - lowpan6_offset + UDP_HLEN);
-
       ip6_offset += UDP_HLEN;
+      if (datagram_size == 0) {
+        datagram_size = compressed_size - lowpan6_offset + ip6_offset;
+      }
+      udphdr->len = lwip_htons(datagram_size - IP6_HLEN);
+
     } else
 #endif /* LWIP_UDP */
     {
       /* @todo support NHC other than UDP */
-      pbuf_free(p);
-      pbuf_free(q);
-      return NULL;
+      return ERR_VAL;
     }
   }
+  if (datagram_size == 0) {
+    datagram_size = compressed_size - lowpan6_offset + ip6_offset;
+  }
+  /* Infer IPv6 payload length for header */
+  IP6H_PLEN_SET(ip6hdr, datagram_size - IP6_HLEN);
 
-  /* Now we copy leftover contents from p to q, so we have all L2 and L3 headers (and L4?) in a single PBUF.
-  * Replace p with q, and free p */
+  if (lowpan6_offset > lowpan6_bufsize) {
+    /* input buffer overflow */
+    return ERR_VAL;
+  }
+  if (hdr_size_comp) {
+    *hdr_size_comp = lowpan6_offset;
+  }
+  if (hdr_size_decomp) {
+    *hdr_size_decomp = ip6_offset;
+  }
+
+  return ERR_OK;
+}
+
+static struct pbuf *
+lowpan6_decompress(struct pbuf *p, u16_t datagram_size, struct ieee_802154_addr *src, struct ieee_802154_addr *dest)
+{
+  struct pbuf *q;
+  u16_t lowpan6_offset, ip6_offset;
+  err_t err;
+
+#if LWIP_UDP
+#define UDP_HLEN_ALLOC UDP_HLEN
+#else
+#define UDP_HLEN_ALLOC 0
+#endif
+
+  /* Allocate a buffer for decompression. This buffer will be too big and will be
+     trimmed once the final size is known. */
+  q = pbuf_alloc(PBUF_IP, p->len + IP6_HLEN + UDP_HLEN_ALLOC, PBUF_POOL);
+  if (q == NULL) {
+    pbuf_free(p);
+    return NULL;
+  }
+  if (q->len < IP6_HLEN + UDP_HLEN_ALLOC) {
+    /* The headers need to fit into the first pbuf */
+    pbuf_free(p);
+    pbuf_free(q);
+    return NULL;
+  }
+
+  /* Decompress the IPv6 (and possibly UDP) header(s) into the new pbuf */
+  err = lowpan6_decompress_hdr((u8_t *)p->payload, p->len, (u8_t *)q->payload, q->len,
+    &lowpan6_offset, &ip6_offset, datagram_size, p->tot_len, src, dest);
+  if (err != ERR_OK) {
+    pbuf_free(p);
+    pbuf_free(q);
+    return NULL;
+  }
+
+  /* Now we copy leftover contents from p to q, so we have all L2 and L3 headers
+     (and L4?) in a single pbuf: */
+
+  /* Hide the compressed headers in p */
   pbuf_remove_header(p, lowpan6_offset);
-  MEMCPY((u8_t *)q->payload + ip6_offset, p->payload, p->len);
-  q->len = q->tot_len = ip6_offset + p->len;
+  /* Temporarily hide the headers in q... */
+  pbuf_remove_header(q, ip6_offset);
+  /* ... copy the rest of p into q... */
+  pbuf_copy(q, p);
+  /* ... and reveal the headers again... */
+  pbuf_add_header_force(q, ip6_offset);
+  /* ... trim the pbuf to its correct size... */
+  pbuf_realloc(q, ip6_offset + p->len);
+  /* ... and cat possibly remaining (data-only) pbufs */
   if (p->next != NULL) {
     pbuf_cat(q, p->next);
   }
+  /* the original (first) pbuf can now be freed */
   p->next = NULL;
   pbuf_free(p);
-
-  /* Infer IPv6 payload length for header */
-  IP6H_PLEN_SET(ip6hdr, q->tot_len - IP6_HLEN);
 
   /* all done */
   return q;
@@ -1187,7 +1256,8 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
   u8_t *puc;
   s8_t i;
   struct ieee_802154_addr src, dest;
-  u16_t datagram_size, datagram_offset, datagram_tag;
+  u16_t datagram_size = 0;
+  u16_t datagram_offset, datagram_tag;
   struct lowpan6_reass_helper *lrh, *lrh_temp;
 
   if (p == NULL) {
@@ -1317,7 +1387,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     pbuf_remove_header(p, 1); /* hide dispatch byte. */
   } else if ((*puc & 0xe0 ) == 0x60) {
     /* IPv6 headers are compressed using IPHC. */
-    p = lowpan6_decompress(p, &src, &dest);
+    p = lowpan6_decompress(p, 0, &src, &dest);
     if (p == NULL) {
       MIB2_STATS_NETIF_INC(netif, ifindiscards);
       return ERR_OK;
