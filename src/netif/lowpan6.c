@@ -920,7 +920,7 @@ lowpan6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
  * @param datagram_size datagram size from fragments or 0 if unfragmented
  * @param compressed_size compressed datagram size (for unfragmented rx)
  * @param src source address of the outer layer, used for address compression
- * @param dst destination address of the outer layer, used for address compression
+ * @param dest destination address of the outer layer, used for address compression
  * @return ERR_OK if decompression succeeded, an error otherwise
  */
 static err_t
