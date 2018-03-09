@@ -312,8 +312,9 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
       u16_t total_header_len;
       err_t err = http_wait_headers(req->rx_hdrs, &req->hdr_content_len, &total_header_len);
       if (err == ERR_OK) {
-        /* hide header bytes in pbuf */
         struct pbuf *q;
+        /* full header received, send window update for header bytes and call into client callback */
+        altcp_recved(pcb, total_header_len);
         if (req->conn_settings) {
           if (req->conn_settings->headers_done_fn) {
             err = req->conn_settings->headers_done_fn(req, req->callback_arg, req->rx_hdrs, total_header_len, req->hdr_content_len);
@@ -322,6 +323,7 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
             }
           }
         }
+        /* hide header bytes in pbuf */
         q = pbuf_free_header(req->rx_hdrs, total_header_len);
         p = q;
         req->rx_hdrs = NULL;
