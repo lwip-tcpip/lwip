@@ -638,12 +638,10 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
 {
   err_t err;
   struct pbuf *buf;
-#if LWIP_TCP
   API_MSG_VAR_DECLARE(msg);
 #if LWIP_MPU_COMPATIBLE
   msg = NULL;
 #endif
-#endif /* LWIP_TCP */
 
   if (!sys_mbox_valid(&conn->recvmbox)) {
     /* This only happens when calling this function more than once *after* receiving FIN */
