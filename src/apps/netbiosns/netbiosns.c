@@ -1,4 +1,4 @@
-/**
+  /**
  * @file
  * NetBIOS name service responder
  */
@@ -40,6 +40,10 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
+ * Modifications by Ray Abram to respond to NetBIOS name requests when Incoming name = *
+ * - based on code from "https://github.com/esp8266/Arduino/commit/1f7989b31d26d7df9776a08f36d685eae7ac8f99"
+ * - with permission to relicense to BSD from original author:
+ *   http://www.xpablo.cz/?p=751#more-751
  */
 
 #include "lwip/apps/netbiosns.h"
@@ -79,6 +83,10 @@
 #define NETB_NFLAG_NODETYPE_MNODE     0x4000U
 #define NETB_NFLAG_NODETYPE_PNODE     0x2000U
 #define NETB_NFLAG_NODETYPE_BNODE     0x0000U
+
+#define NETB_NFLAG_NAME_IN_CONFLICT   0x0800U /* 1=Yes, 0=No */
+#define NETB_NFLAG_NAME_IS_ACTIVE     0x0400U /* 1=Yes, 0=No */
+#define NETB_NFLAG_NAME_IS_PERMANENT  0x0200U /* 1=Yes (Name is Permanent Node Name), 0=No */
 
 /** NetBIOS message header */
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -126,6 +134,35 @@ PACK_STRUCT_BEGIN
 struct netbios_resp {
   struct netbios_hdr      resp_hdr;
   struct netbios_name_hdr resp_name;
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+
+/** The NBNS Structure Responds to a Name Query */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct netbios_answer {
+  struct netbios_hdr      answer_hdr;
+  /** the length of the next string */
+  PACK_STRUCT_FIELD(u8_t  name_size);
+  /** WARNING!!! this item may be of a different length (we use this struct for transmission) */
+  PACK_STRUCT_FLD_8(u8_t  query_name[(NETBIOS_NAME_LEN * 2) + 1]);
+  PACK_STRUCT_FIELD(u16_t packet_type);
+  PACK_STRUCT_FIELD(u16_t cls);
+  PACK_STRUCT_FIELD(u32_t ttl);
+  PACK_STRUCT_FIELD(u16_t data_length);
+  /** number of names */
+  PACK_STRUCT_FLD_8(u8_t  number_of_names);
+  /** node name */
+  PACK_STRUCT_FLD_8(u8_t  answer_name[NETBIOS_NAME_LEN]);
+  /** node flags */
+  PACK_STRUCT_FIELD(u16_t answer_name_flags);
+  /** type name */
+  PACK_STRUCT_FLD_8(u8_t  name_type);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -307,6 +344,50 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             /* free the "reference" pbuf */
             pbuf_free(q);
           }
+#if LWIP_NETBIOS_RESPOND_NAME_QUERY
+        } else if (!lwip_strnicmp(netbios_name, "*", sizeof(NETBIOS_LOCAL_NAME))) {
+          /* general query - ask for our IP address */
+          struct pbuf *q;
+          struct netbios_answer *resp;
+
+          q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct netbios_answer), PBUF_RAM);
+          if (q != NULL) {
+            /* buffer to which a response is compiled */
+            resp = (struct netbios_answer *) q->payload;
+
+            /* copy the query to the response ID */
+            resp->answer_hdr.trans_id        = netbios_hdr->trans_id;
+            /* acknowledgment of termination */
+            resp->answer_hdr.flags           = PP_HTONS(NETB_HFLAG_RESPONSE | NETB_HFLAG_OPCODE_NAME_QUERY | NETB_HFLAG_AUTHORATIVE);
+            resp->answer_hdr.questions       = PP_HTONS(0);
+            /* serial number of the answer */
+            resp->answer_hdr.answerRRs       = PP_HTONS(1);
+            resp->answer_hdr.authorityRRs    = PP_HTONS(0);
+            resp->answer_hdr.additionalRRs   = PP_HTONS(0);
+            /* we will copy the length of the station name */
+            resp->name_size                  = netbios_name_hdr->nametype;
+            /* we will copy the queried name */
+            MEMCPY(resp->query_name, netbios_name_hdr->encname, (NETBIOS_NAME_LEN * 2) + 1);
+            /* NBSTAT */
+            resp->packet_type                = PP_HTONS(0x21);
+            /* Internet name */
+            resp->cls                        = PP_HTONS(1);
+            resp->ttl                        = PP_HTONL(0);
+            resp->data_length                = PP_HTONS(4 + NETBIOS_NAME_LEN);
+            resp->number_of_names            = 1;
+
+            memset(resp->answer_name, 0x20, NETBIOS_NAME_LEN);
+            MEMCPY(resp->answer_name, NETBIOS_LOCAL_NAME, strlen(NETBIOS_LOCAL_NAME));
+
+            /* b-node, unique, active */
+            resp->answer_name_flags          = PP_HTONS(NETB_NFLAG_NAME_IS_ACTIVE);
+            /* Workstation/Redirector */
+            resp->name_type                  = 0;
+
+            udp_sendto(upcb, q, addr, port);
+            pbuf_free(q);
+          }
+#endif /* LWIP_NETBIOS_RESPOND_NAME_QUERY */
         }
       }
     }
@@ -340,19 +421,26 @@ netbiosns_init(void)
 /**
  * @ingroup netbiosns
  * Set netbios name. ATTENTION: the hostname must be less than 15 characters!
+ *                              the NetBIOS name spec says the name MUST be upper case, so incoming name is forced into uppercase :-)
  */
 void
 netbiosns_set_name(const char *hostname)
 {
+  size_t i;
   size_t copy_len = strlen(hostname);
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ASSERT("NetBIOS name is too long!", copy_len < NETBIOS_NAME_LEN);
   if (copy_len >= NETBIOS_NAME_LEN) {
     copy_len = NETBIOS_NAME_LEN - 1;
   }
-  MEMCPY(netbiosns_local_name, hostname, copy_len + 1);
+
+  /* make name into upper case */
+  for (i = 0; i < copy_len; i++ ) {
+    netbiosns_local_name[i] = (char)toupper(hostname[i]);
+  }
+  netbiosns_local_name[copy_len] = '\0';
 }
-#endif
+#endif /* NETBIOS_LWIP_NAME */
 
 /**
  * @ingroup netbiosns
