@@ -1141,7 +1141,7 @@ ip6_input_cleanup:
  * @param netif the netif on which to send this packet
  * @return ERR_OK if the packet was sent OK
  *         ERR_BUF if p doesn't have enough space for IPv6/LINK headers
- *         returns errors returned by netif->output
+ *         returns errors returned by netif->output_ip6
  */
 err_t
 ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
