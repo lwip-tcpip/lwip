@@ -110,8 +110,6 @@ static const struct ieee_802154_addr ieee_802154_broadcast = {2, {0xff, 0xff}};
 static struct ieee_802154_addr short_mac_addr = {2, {0, 0}};
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
-static void dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *prev);
-
 static void
 free_reass_datagram(struct lowpan6_reass_helper *lrh)
 {
@@ -122,6 +120,21 @@ free_reass_datagram(struct lowpan6_reass_helper *lrh)
     pbuf_free(lrh->frags);
   }
   mem_free(lrh);
+}
+
+/**
+ * Removes a datagram from the reassembly queue.
+ **/
+static void
+dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *prev)
+{
+  if (lowpan6_data.reass_list == lrh) {
+    lowpan6_data.reass_list = lowpan6_data.reass_list->next_packet;
+  } else {
+    /* it wasn't the first, so it must have a valid 'prev' */
+    LWIP_ASSERT("sanity check linked list", prev != NULL);
+    prev->next_packet = lrh->next_packet;
+  }
 }
 
 /**
@@ -144,21 +157,6 @@ lowpan6_tmr(void)
       lrh_prev = lrh;
     }
     lrh = lrh_next;
-  }
-}
-
-/**
- * Removes a datagram from the reassembly queue.
- **/
-static void
-dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *prev)
-{
-  if (lowpan6_data.reass_list == lrh) {
-    lowpan6_data.reass_list = lowpan6_data.reass_list->next_packet;
-  } else {
-    /* it wasn't the first, so it must have a valid 'prev' */
-    LWIP_ASSERT("sanity check linked list", prev != NULL);
-    prev->next_packet = lrh->next_packet;
   }
 }
 
