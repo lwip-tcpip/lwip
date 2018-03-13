@@ -960,10 +960,6 @@ rfc7668_if_init(struct netif *netif)
 {
   netif->name[0] = 'b';
   netif->name[1] = 't';
-  /* if compiled with LWIP_IPV4 -> set IPv4 output to NULL */
-#if LWIP_IPV4
-  netif->output = NULL;
-#endif
   /* local function as IPv6 output */
   netif->output_ip6 = rfc7668_output;
 

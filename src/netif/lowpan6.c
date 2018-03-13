@@ -778,22 +778,6 @@ lowpan6_set_short_addr(u8_t addr_high, u8_t addr_low)
 }
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
-#if LWIP_IPV4
-/**
- * @ingroup sixlowpan
- * IPv4 output
- */
-err_t
-lowpan4_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
-{
-  (void)netif;
-  (void)q;
-  (void)ipaddr;
-
-  return ERR_IF;
-}
-#endif /* LWIP_IPV4 */
-
 /* Create IEEE 802.15.4 address from netif address */
 static err_t
 lowpan6_hwaddr_to_addr(struct netif *netif, struct ieee_802154_addr *addr)
@@ -1500,9 +1484,6 @@ lowpan6_if_init(struct netif *netif)
 {
   netif->name[0] = 'L';
   netif->name[1] = '6';
-#if LWIP_IPV4
-  netif->output = lowpan4_output;
-#endif /* LWIP_IPV4 */
   netif->output_ip6 = lowpan6_output;
 
   MIB2_INIT_NETIF(netif, snmp_ifType_other, 0);

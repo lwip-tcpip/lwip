@@ -125,6 +125,9 @@ static void netif_issue_reports(struct netif *netif, u8_t report_type);
 #if LWIP_IPV6
 static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr);
 #endif /* LWIP_IPV6 */
+#if LWIP_IPV4
+static err_t netif_null_output_ip4(struct netif *netif, struct pbuf *p, const ip4_addr_t *ipaddr);
+#endif /* LWIP_IPV4 */
 
 #if LWIP_HAVE_LOOPIF
 #if LWIP_IPV4
@@ -300,6 +303,7 @@ netif_add(struct netif *netif,
   ip_addr_set_zero_ip4(&netif->ip_addr);
   ip_addr_set_zero_ip4(&netif->netmask);
   ip_addr_set_zero_ip4(&netif->gw);
+  netif->output = netif_null_output_ip4;
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
@@ -1577,6 +1581,20 @@ netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipa
   return ERR_IF;
 }
 #endif /* LWIP_IPV6 */
+
+#if LWIP_IPV4
+/** Dummy IPv4 output function for netifs not supporting IPv4
+ */
+static err_t
+netif_null_output_ip4(struct netif *netif, struct pbuf *p, const ip4_addr_t *ipaddr)
+{
+  LWIP_UNUSED_ARG(netif);
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(ipaddr);
+
+  return ERR_IF;
+}
+#endif /* LWIP_IPV4 */
 
 /**
 * @ingroup netif
