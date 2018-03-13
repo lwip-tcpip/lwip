@@ -110,7 +110,7 @@ static const struct ieee_802154_addr ieee_802154_broadcast = {2, {0xff, 0xff}};
 static struct ieee_802154_addr short_mac_addr = {2, {0, 0}};
 #endif /* LWIP_6LOWPAN_INFER_SHORT_ADDRESS */
 
-static err_t dequeue_datagram(struct lowpan6_reass_helper *lrh);
+static void dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *prev);
 
 static void
 free_reass_datagram(struct lowpan6_reass_helper *lrh)
@@ -132,41 +132,34 @@ free_reass_datagram(struct lowpan6_reass_helper *lrh)
 void
 lowpan6_tmr(void)
 {
-  struct lowpan6_reass_helper *lrh, *lrh_temp;
+  struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = NULL;
 
   lrh = lowpan6_data.reass_list;
   while (lrh != NULL) {
-    lrh_temp = lrh->next_packet;
+    lrh_next = lrh->next_packet;
     if ((--lrh->timer) == 0) {
-      dequeue_datagram(lrh);
+      dequeue_datagram(lrh, lrh_prev);
       free_reass_datagram(lrh);
+    } else {
+      lrh_prev = lrh;
     }
-    lrh = lrh_temp;
+    lrh = lrh_next;
   }
 }
 
 /**
  * Removes a datagram from the reassembly queue.
  **/
-static err_t
-dequeue_datagram(struct lowpan6_reass_helper *lrh)
+static void
+dequeue_datagram(struct lowpan6_reass_helper *lrh, struct lowpan6_reass_helper *prev)
 {
-  struct lowpan6_reass_helper *lrh_temp;
-
   if (lowpan6_data.reass_list == lrh) {
     lowpan6_data.reass_list = lowpan6_data.reass_list->next_packet;
   } else {
-    lrh_temp = lowpan6_data.reass_list;
-    while (lrh_temp != NULL) {
-      if (lrh_temp->next_packet == lrh) {
-        lrh_temp->next_packet = lrh->next_packet;
-        break;
-      }
-      lrh_temp = lrh_temp->next_packet;
-    }
+    /* it wasn't the first, so it must have a valid 'prev' */
+    LWIP_ASSERT("sanity check linked list", prev != NULL);
+    prev->next_packet = lrh->next_packet;
   }
-
-  return ERR_OK;
 }
 
 /** Write the IEEE 802.15.4 header that encapsulates the 6LoWPAN frame.
@@ -1281,7 +1274,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
   struct ieee_802154_addr src, dest;
   u16_t datagram_size = 0;
   u16_t datagram_offset, datagram_tag;
-  struct lowpan6_reass_helper *lrh, *lrh_temp;
+  struct lowpan6_reass_helper *lrh, *lrh_next, *lrh_prev = NULL;
 
   if (p == NULL) {
     return ERR_OK;
@@ -1310,6 +1303,8 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     /* check for duplicate */
     lrh = lowpan6_data.reass_list;
     while (lrh != NULL) {
+      uint8_t discard = 0;
+      lrh_next = lrh->next_packet;
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0)) {
         /* address match with packet in reassembly. */
@@ -1318,17 +1313,17 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
           goto lowpan6_input_discard;
         } else {
           /* We are receiving the start of a new datagram. Discard old one (incomplete). */
-          lrh_temp = lrh->next_packet;
-          dequeue_datagram(lrh);
-          free_reass_datagram(lrh);
-
-          /* Check next datagram in queue. */
-          lrh = lrh_temp;
+          discard = 1;
         }
-      } else {
-        /* Check next datagram in queue. */
-        lrh = lrh->next_packet;
       }
+      if (discard) {
+        dequeue_datagram(lrh, lrh_prev);
+        free_reass_datagram(lrh);
+      } else {
+        lrh_prev = lrh;
+      }
+      /* Check next datagram in queue. */
+      lrh = lrh_next;
     }
 
     pbuf_remove_header(p, 4); /* hide frag1 dispatch */
@@ -1370,7 +1365,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     datagram_offset = (u16_t)puc[4] << 3;
     pbuf_remove_header(p, 4); /* hide frag1 dispatch but keep datagram offset for reassembly */
 
-    for (lrh = lowpan6_data.reass_list; lrh != NULL; lrh = lrh->next_packet) {
+    for (lrh = lowpan6_data.reass_list; lrh != NULL; lrh_prev = lrh, lrh = lrh->next_packet) {
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
           (memcmp(lrh->sender_addr.addr, src.addr, src.addr_len) == 0) &&
           (datagram_tag == lrh->datagram_tag) &&
@@ -1389,7 +1384,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       /* FRAG1 already received, check this offset against first len */
       if (datagram_offset < lrh->reass->len) {
         /* fragment overlap, discard old fragments */
-        dequeue_datagram(lrh);
+        dequeue_datagram(lrh, lrh_prev);
         free_reass_datagram(lrh);
         goto lowpan6_input_discard;
       }
@@ -1407,7 +1402,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         if (datagram_offset < q_datagram_offset) {
           if (datagram_offset + new_frag_len > q_datagram_offset) {
             /* overlap, discard old fragments */
-            dequeue_datagram(lrh);
+            dequeue_datagram(lrh, lrh_prev);
             free_reass_datagram(lrh);
             goto lowpan6_input_discard;
           }
@@ -1416,7 +1411,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         } else if (datagram_offset == q_datagram_offset) {
           if (q_frag_len != new_frag_len) {
             /* fragment mismatch, discard old fragments */
-            dequeue_datagram(lrh);
+            dequeue_datagram(lrh, lrh_prev);
             free_reass_datagram(lrh);
             goto lowpan6_input_discard;
           }
@@ -1460,7 +1455,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         q->next = lrh->frags;
         lrh->frags = NULL;
         lrh->reass = NULL;
-        dequeue_datagram(lrh);
+        dequeue_datagram(lrh, lrh_prev);
         mem_free(lrh);
 
         /* @todo: distinguish unicast/multicast */
