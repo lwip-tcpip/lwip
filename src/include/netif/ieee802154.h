@@ -39,14 +39,6 @@
 
 #include "lwip/opt.h"
 
-/** Helper define for a MAC address, which can be encoded as 0, 2 or 8 bytes */
-struct ieee_802154_addr {
-  /* encoded length of the address */
-  u8_t addr_len;
-  /* address bytes */
-  u8_t addr[8];
-};
-
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif

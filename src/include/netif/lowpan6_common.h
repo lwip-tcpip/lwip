@@ -1,12 +1,11 @@
 /**
  * @file
  *
- * A netif implementing the ZigBee Eencapsulation Protocol (ZEP).
- * This is used to tunnel 6LowPAN over UDP.
+ * Common 6LowPAN routines for IPv6. Uses ND tables for link-layer addressing. Fragments packets to 6LowPAN units.
  */
 
 /*
- * Copyright (c) 2018 Simon Goldschmidt
+ * Copyright (c) 2015 Inico Technologies Ltd.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -33,44 +32,46 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Simon Goldschmidt <goldsimon@gmx.de>
+ * Author: Ivan Delamer <delamer@inicotech.com>
  *
+ *
+ * Please coordinate changes and requests with Ivan Delamer
+ * <delamer@inicotech.com>
  */
 
-#ifndef LWIP_HDR_ZEPIF_H
-#define LWIP_HDR_ZEPIF_H
+#ifndef LWIP_HDR_LOWPAN6_COMMON_H
+#define LWIP_HDR_LOWPAN6_COMMON_H
 
-#include "lwip/opt.h"
-#include "netif/lowpan6.h"
+#include "netif/lowpan6_opts.h"
 
-#if LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6 /* don't build if IPv6 is disabled in lwipopts.h */
 
+#include "lwip/pbuf.h"
+#include "lwip/ip.h"
+#include "lwip/ip6_addr.h"
 #include "lwip/netif.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define ZEPIF_DEFAULT_UDP_PORT  17754
-
-/** Pass this struct as 'state' to netif_add to control the behaviour
- * of this netif. If NULL is passed, default behaviour is chosen */
-struct zepif_init {
-  /** The UDP port used to ZEP frames from (0 = default) */
-  u16_t               zep_src_udp_port;
-  /** The UDP port used to ZEP frames to (0 = default) */
-  u16_t               zep_dst_udp_port;
-  /** The IP address to sed ZEP frames from (NULL = ANY) */
-  const ip_addr_t    *zep_src_ip_addr;
-  /** The IP address to sed ZEP frames to (NULL = BROADCAST) */
-  const ip_addr_t    *zep_dst_ip_addr;
-  /** If != NULL, the udp pcb is bound to this netif */
-  const struct netif *zep_netif;
-  /** MAC address of the 6LowPAN device */
-  u8_t                addr[6];
+/** Helper define for a link layer address, which can be encoded as 0, 2 or 8 bytes */
+struct lowpan6_link_addr {
+  /* encoded length of the address */
+  u8_t addr_len;
+  /* address bytes */
+  u8_t addr[8];
 };
 
-err_t zepif_init(struct netif *netif);
+s8_t lowpan6_get_address_mode(const ip6_addr_t *ip6addr, const struct lowpan6_link_addr *mac_addr);
+
+#if LWIP_6LOWPAN_IPHC
+err_t lowpan6_compress_headers(struct netif *netif, u8_t *inbuf, size_t inbuf_size, u8_t *outbuf, size_t outbuf_size,
+                               u8_t *lowpan6_header_len_out, u8_t *hidden_header_len_out, ip6_addr_t *lowpan6_contexts,
+                               const struct lowpan6_link_addr *src, const struct lowpan6_link_addr *dst);
+struct pbuf *lowpan6_decompress(struct pbuf *p, u16_t datagram_size, ip6_addr_t *lowpan6_contexts,
+                                struct lowpan6_link_addr *src, struct lowpan6_link_addr *dest);
+#endif /* LWIP_6LOWPAN_IPHC */
 
 #ifdef __cplusplus
 }
@@ -78,4 +79,4 @@ err_t zepif_init(struct netif *netif);
 
 #endif /* LWIP_IPV6 */
 
-#endif /* LWIP_HDR_ZEPIF_H */
+#endif /* LWIP_HDR_LOWPAN6_COMMON_H */

@@ -44,8 +44,9 @@
 
 #include "netif/lowpan6_opts.h"
 
-#if LWIP_IPV6 && LWIP_6LOWPAN /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6
 
+#include "netif/lowpan6_common.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip.h"
 #include "lwip/ip_addr.h"
@@ -83,6 +84,6 @@ err_t tcpip_6lowpan_input(struct pbuf *p, struct netif *inp);
 }
 #endif
 
-#endif /* LWIP_IPV6 && LWIP_6LOWPAN */
+#endif /* LWIP_IPV6 */
 
 #endif /* LWIP_HDR_LOWPAN6_H */
