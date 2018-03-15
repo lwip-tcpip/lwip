@@ -246,7 +246,7 @@ zepif_init(struct netif *netif)
 
   netif->state = NULL;
 
-  state->pcb = udp_new();
+  state->pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   if (state->pcb == NULL) {
     err = ERR_MEM;
     goto err_ret;
