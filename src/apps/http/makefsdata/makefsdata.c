@@ -121,6 +121,9 @@ int s_put_ascii(char *buf, const char *ascii_string, int len, int *i);
 void concat_files(const char *file1, const char *file2, const char *targetfile);
 int check_path(char *path, size_t size);
 static int checkSsiByFilelist(const char* filename_listfile);
+static int ext_in_list(const char* filename, const char *ext_list);
+static int file_to_exclude(const char* filename);
+static int file_can_be_compressed(const char* filename);
 
 /* 5 bytes per char + 3 bytes per line */
 static char file_buffer_c[COPY_BUFSIZE * 5 + ((COPY_BUFSIZE / HEX_BYTES_PER_LINE) * 3)];
@@ -140,6 +143,8 @@ unsigned char deflateNonSsiFiles = 0;
 size_t deflatedBytesReduced = 0;
 size_t overallDataBytes = 0;
 #endif
+const char *exclude_list = NULL;
+const char *ncompress_list = NULL;
 
 struct file_entry *first_file = NULL;
 struct file_entry *last_file = NULL;
@@ -150,7 +155,7 @@ static size_t ssi_file_num_lines;
 
 static void print_usage(void)
 {
-  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-11] [-nossi] [-ssi:<filename>] [-c] [-f:<filename>] [-m] [-svr:<name>]" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
+  printf(" Usage: htmlgen [targetdir] [-s] [-e] [-11] [-nossi] [-ssi:<filename>] [-c] [-f:<filename>] [-m] [-svr:<name>] [-x:<ext_list>] [-xc:<ext_list>" USAGE_ARG_DEFLATE NEWLINE NEWLINE);
   printf("   targetdir: relative or absolute path to files to convert" NEWLINE);
   printf("   switch -s: toggle processing of subdirectories (default is on)" NEWLINE);
   printf("   switch -e: exclude HTTP header from file (header is created at runtime, default is off)" NEWLINE);
@@ -161,6 +166,8 @@ static void print_usage(void)
   printf("   switch -f: target filename (default is \"fsdata.c\")" NEWLINE);
   printf("   switch -m: include \"Last-Modified\" header based on file time" NEWLINE);
   printf("   switch -svr: server identifier sent in HTTP response header ('Server' field)" NEWLINE);
+  printf("   switch -x: comma separated list of extensions of files to exclude (e.g., -x:json,txt)" NEWLINE);
+  printf("   switch -xc: comma separated list of extensions of files to not compress (e.g., -xc:mp3,jpg)" NEWLINE);
 #if MAKEFS_SUPPORT_DEFLATE
   printf("   switch -defl: deflate-compress all non-SSI files (with opt. compr.-level, default=10)" NEWLINE);
   printf("                 ATTENTION: browser has to support \"Content-Encoding: deflate\"!" NEWLINE);
@@ -241,6 +248,12 @@ int main(int argc, char *argv[])
 #else
         printf("WARNING: Deflate support is disabled\n");
 #endif
+      } else if (strstr(argv[i], "-x:") == argv[i]) {
+        exclude_list = &argv[i][3];
+        printf("Excluding files with extensions %s" NEWLINE, exclude_list);
+      } else if (strstr(argv[i], "-xc:") == argv[i]) {
+        ncompress_list = &argv[i][4];
+        printf("Skipping compresion for files with extensions %s" NEWLINE, ncompress_list);
       } else if ((strstr(argv[i], "-?")) || (strstr(argv[i], "-h"))) {
         print_usage();
         exit(0);
@@ -495,6 +508,10 @@ int process_sub(FILE *data_file, FILE *struct_file)
             if (strcmp(curName, "fshdr.tmp") == 0) {
               continue;
             }
+            if (file_to_exclude(curName)) {
+              printf("skipping %s/%s by exclude list (-x option)..." NEWLINE, curSubdir, curName);
+              continue;
+            }
 
             printf("processing %s/%s..." NEWLINE, curSubdir, curName);
 
@@ -599,7 +616,7 @@ static u8_t *get_file_data(const char *filename, int *file_size, int can_be_comp
         printf(" - uncompressed: (file is larger than deflate bufer)" NEWLINE);
       }
     } else {
-      printf(" - SSI file, cannot be compressed" NEWLINE);
+      printf(" - cannot be compressed" NEWLINE);
     }
   }
 #else
@@ -847,6 +864,42 @@ static int is_ssi_file(const char *filename)
   }
   return 0;
 }
+#include <fnmatch.h>
+static int ext_in_list(const char* filename, const char *ext_list)
+{
+    if (ext_list == NULL) return 0;
+    if (fnmatch(0, 0, 0)) return 0;
+
+    int found = 0;
+    const char *ext = ext_list;
+    while(*ext != '\0') {
+        const char *comma = strchr(ext, ',');
+        size_t ext_size;
+        size_t filename_size = strlen(filename);
+        if (comma == NULL) {
+            comma = strchr(ext, '\0');
+        }
+        ext_size = comma - ext;
+        if ((filename[filename_size - ext_size - 1] == '.') &&
+                    !strncmp(&filename[filename_size - ext_size], ext, ext_size)) {
+            found = 1;
+            break;
+        }
+        ext = comma + 1;
+    }
+
+    return found;
+}
+
+static int file_to_exclude(const char *filename)
+{
+    return (exclude_list != NULL) && ext_in_list(filename, exclude_list);
+}
+
+static int file_can_be_compressed(const char *filename)
+{
+    return (ncompress_list == NULL) || !ext_in_list(filename, ncompress_list);
+}
 
 int process_file(FILE *data_file, FILE *struct_file, const char *filename)
 {
@@ -896,7 +949,7 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
     flags |= FS_FILE_FLAGS_SSI;
   }
   has_content_len = !is_ssi;
-  can_be_compressed = includeHttpHeader && !is_ssi;
+  can_be_compressed = includeHttpHeader && !is_ssi && file_can_be_compressed(filename);
   file_data = get_file_data(filename, &file_size, can_be_compressed, &is_compressed);
   if (includeHttpHeader) {
     file_write_http_header(data_file, filename, file_size, &http_hdr_len, &http_hdr_chksum, has_content_len, is_compressed);
