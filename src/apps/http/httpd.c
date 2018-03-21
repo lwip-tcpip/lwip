@@ -2290,6 +2290,9 @@ static err_t
 http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri,
                u8_t tag_check, char *params)
 {
+#if !LWIP_HTTPD_SUPPORT_V09
+  LWIP_UNUSED_ARG(is_09);
+#endif
   if (file != NULL) {
     /* file opened, initialise struct http_state */
 #if !LWIP_HTTPD_DYNAMIC_FILE_READ
