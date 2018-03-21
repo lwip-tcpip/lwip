@@ -90,4 +90,17 @@
 #define LWIP_LOWPAN6_802154_DEBUG        LWIP_DBG_OFF
 #endif
 
+/** LWIP_LOWPAN6_IP_COMPRESSED_DEBUG: enable compressed IP frame
+ * output debugging
+ */
+#ifndef LWIP_LOWPAN6_IP_COMPRESSED_DEBUG
+#define LWIP_LOWPAN6_IP_COMPRESSED_DEBUG      LWIP_DBG_OFF
+#endif
+
+/** LWIP_LOWPAN6_DECOMPRESSION_DEBUG: enable decompression debug output
+ */
+#ifndef LWIP_LOWPAN6_DECOMPRESSION_DEBUG
+#define LWIP_LOWPAN6_DECOMPRESSION_DEBUG      LWIP_DBG_OFF
+#endif
+
 #endif /* LWIP_HDR_LOWPAN6_OPTS_H */
