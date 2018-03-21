@@ -727,7 +727,7 @@ httpc_fs_init(httpc_filestate_t **filestate_out, const char* local_file_name,
   file_len = strlen(local_file_name);
   alloc_len = sizeof(httpc_filestate_t) + file_len + 1;
 
-  filestate = (httpc_filestate_t *)mem_malloc(alloc_len);
+  filestate = (httpc_filestate_t *)mem_malloc((mem_size_t)alloc_len);
   if (filestate == NULL) {
     return ERR_MEM;
   }
