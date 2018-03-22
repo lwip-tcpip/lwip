@@ -172,47 +172,6 @@ rfc7668_set_peer_addr_mac48(struct netif *netif, const u8_t *peer_addr, size_t p
   return ERR_OK;
 }
 
-
-/** Determine unicast address compression mode
- * 
- * NOT IMPLEMENTED. This method will determine if an address should
- * be compressed either context-based or stateless.
- * 
- * @see rfc7668_get_address_mode_mc
- * 
- * @param ip6addr Pointer to IPv6 address struct
- * 
- * @return Currently not defined...
- */
-static s8_t
-rfc7668_get_address_mode(const ip6_addr_t *ip6addr)
-{
-  /* @todo implement the compression mode determination */
-  LWIP_UNUSED_ARG(ip6addr);
-  /* just return 1, means stateless compression */
-  return 1;
-}
-
-/** Determine multicast address compression mode
- * 
- * NOT IMPLEMENTED. This method will determine if an address should
- * be compressed either context-based or stateless.
- * 
- * @see rfc7668_get_address_mode_mc
- * 
- * @param ip6addr Pointer to IPv6 address struct
- * 
- * @return Currently not defined...
- */
-static s8_t
-rfc7668_get_address_mode_mc(const ip6_addr_t *ip6addr)
-{
-  /* @todo implement the compression mode determination */
-  LWIP_UNUSED_ARG(ip6addr);
-  /* just return 0, no multicast compression */
-  return 0;
-}
-
 /** Encapsulate IPv6 frames for BLE transmission
  * 
  * This method implements the IPv6 header compression:
@@ -341,8 +300,6 @@ rfc7668_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
  *        IPv6 header (maybe compressed)
  * @param netif the network interface on which the packet was received
  * 
- * @param src Source address of this packet
- * 
  * @return ERR_OK if everything was fine
  */
 err_t
@@ -436,7 +393,7 @@ rfc7668_if_init(struct netif *netif)
  *          IEEE 802.15.4 header.
  * @param inp the network interface on which the packet was received
  * 
- * @return @see tcpip_inpkt , same return values
+ * @return see @ref tcpip_inpkt, same return values
  */
 err_t
 tcpip_rfc7668_input(struct pbuf *p, struct netif *inp)
