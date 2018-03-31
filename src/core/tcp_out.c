@@ -891,7 +891,7 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
   }
   if (split_flags & TCP_FIN) {
     split_flags &= ~TCP_FIN;
-    remainder |= TCP_FIN;
+    remainder_flags |= TCP_FIN;
   }
   /* SYN should be left on split, RST should not be present with data */
 
