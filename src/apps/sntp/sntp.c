@@ -572,6 +572,7 @@ sntp_dns_found(const char *hostname, const ip_addr_t *ipaddr, void *arg)
   if (ipaddr != NULL) {
     /* Address resolved, send request */
     LWIP_DEBUGF(SNTP_DEBUG_STATE, ("sntp_dns_found: Server address resolved, sending request\n"));
+    sntp_servers[sntp_current_server].addr = *ipaddr;
     sntp_send_request(ipaddr);
   } else {
     /* DNS resolving failed -> try another server */
