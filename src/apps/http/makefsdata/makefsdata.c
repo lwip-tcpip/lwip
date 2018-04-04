@@ -864,31 +864,31 @@ static int is_ssi_file(const char *filename)
   }
   return 0;
 }
-#include <fnmatch.h>
+
 static int ext_in_list(const char* filename, const char *ext_list)
 {
-    if (ext_list == NULL) return 0;
-    if (fnmatch(0, 0, 0)) return 0;
-
-    int found = 0;
-    const char *ext = ext_list;
-    while(*ext != '\0') {
-        const char *comma = strchr(ext, ',');
-        size_t ext_size;
-        size_t filename_size = strlen(filename);
-        if (comma == NULL) {
-            comma = strchr(ext, '\0');
-        }
-        ext_size = comma - ext;
-        if ((filename[filename_size - ext_size - 1] == '.') &&
-                    !strncmp(&filename[filename_size - ext_size], ext, ext_size)) {
-            found = 1;
-            break;
-        }
-        ext = comma + 1;
+  int found = 0;
+  const char *ext = ext_list;
+  if (ext_list == NULL) {
+    return 0;
+  }
+  while(*ext != '\0') {
+    const char *comma = strchr(ext, ',');
+    size_t ext_size;
+    size_t filename_size = strlen(filename);
+    if (comma == NULL) {
+      comma = strchr(ext, '\0');
     }
+    ext_size = comma - ext;
+    if ((filename[filename_size - ext_size - 1] == '.') &&
+      !strncmp(&filename[filename_size - ext_size], ext, ext_size)) {
+        found = 1;
+        break;
+    }
+    ext = comma + 1;
+  }
 
-    return found;
+  return found;
 }
 
 static int file_to_exclude(const char *filename)
