@@ -574,6 +574,8 @@ ip6_input(struct pbuf *p, struct netif *inp)
   if (ip6_addr_isipv4mappedipv6(ip_2_ip6(&ip_data.current_iphdr_dest)) ||
      ip6_addr_isipv4mappedipv6(ip_2_ip6(&ip_data.current_iphdr_src)) ||
      ip6_addr_ismulticast(ip_2_ip6(&ip_data.current_iphdr_src))) {
+    /* free (drop) packet pbufs */
+    pbuf_free(p);
     IP6_STATS_INC(ip6.err);
     IP6_STATS_INC(ip6.drop);
     return ERR_OK;
