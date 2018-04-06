@@ -81,6 +81,16 @@
 #define API_MSG_VAR_ALLOC_RETURN_NULL(name) API_VAR_ALLOC(struct api_msg, MEMP_API_MSG, name, NULL)
 #define API_MSG_VAR_FREE(name)              API_VAR_FREE(MEMP_API_MSG, name)
 
+#if TCP_LISTEN_BACKLOG
+/* need to allocate API message for accept so empty message pool does not result in event loss
+ * see bug #47512: MPU_COMPATIBLE may fail on empty pool */
+#define API_MSG_VAR_ALLOC_ACCEPT(msg) API_MSG_VAR_ALLOC(msg)
+#define API_MSG_VAR_FREE_ACCEPT(msg) API_MSG_VAR_FREE(msg)
+#else /* TCP_LISTEN_BACKLOG */
+#define API_MSG_VAR_ALLOC_ACCEPT(msg)
+#define API_MSG_VAR_FREE_ACCEPT(msg)
+#endif /* TCP_LISTEN_BACKLOG */
+
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
 
 /**
@@ -446,25 +456,17 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
     return ERR_CLSD;
   }
 
-#if TCP_LISTEN_BACKLOG
-  /* need to allocate API message here so empty message pool does not result in event loss
-   * see bug #47512: MPU_COMPATIBLE may fail on empty pool */
-  API_MSG_VAR_ALLOC(msg);
-#endif /* TCP_LISTEN_BACKLOG */
+  API_MSG_VAR_ALLOC_ACCEPT(msg);
 
   if (netconn_is_nonblocking(conn)) {
     if (sys_arch_mbox_tryfetch(&conn->acceptmbox, &accept_ptr) == SYS_ARCH_TIMEOUT) {
-#if TCP_LISTEN_BACKLOG
-      API_MSG_VAR_FREE(msg);
-#endif /* TCP_LISTEN_BACKLOG */
+      API_MSG_VAR_FREE_ACCEPT(msg);
       return ERR_WOULDBLOCK;
     }
   } else {
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
-#if TCP_LISTEN_BACKLOG
-      API_MSG_VAR_FREE(msg);
-#endif /* TCP_LISTEN_BACKLOG */
+      API_MSG_VAR_FREE_ACCEPT(msg);
       return ERR_TIMEOUT;
     }
 #else
@@ -476,16 +478,12 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 
   if (lwip_netconn_is_err_msg(accept_ptr, &err)) {
     /* a connection has been aborted: e.g. out of pcbs or out of netconns during accept */
-#if TCP_LISTEN_BACKLOG
-    API_MSG_VAR_FREE(msg);
-#endif /* TCP_LISTEN_BACKLOG */
+    API_MSG_VAR_FREE_ACCEPT(msg);
     return err;
   }
   if (accept_ptr == NULL) {
     /* connection has been aborted */
-#if TCP_LISTEN_BACKLOG
-    API_MSG_VAR_FREE(msg);
-#endif /* TCP_LISTEN_BACKLOG */
+    API_MSG_VAR_FREE_ACCEPT(msg);
     return ERR_CLSD;
   }
   newconn = (struct netconn *)accept_ptr;
