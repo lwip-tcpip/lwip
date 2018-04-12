@@ -297,8 +297,9 @@ static void lwip_setsockopt_callback(void *arg);
 #endif
 static int lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *optlen);
 static int lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_t optlen);
-static int free_socket_locked(struct lwip_sock *sock, int is_tcp, union lwip_sock_lastdata *lastdata);
-static void free_socket_free_elements(int is_tcp, union lwip_sock_lastdata *lastdata);
+static int free_socket_locked(struct lwip_sock *sock, int is_tcp, struct netconn **conn,
+                              union lwip_sock_lastdata *lastdata);
+static void free_socket_free_elements(int is_tcp, struct netconn *conn, union lwip_sock_lastdata *lastdata);
 
 #if LWIP_IPV4 && LWIP_IPV6
 static void
@@ -378,6 +379,7 @@ done_socket(struct lwip_sock *sock)
   SYS_ARCH_DECL_PROTECT(lev);
   int freed = 0;
   int is_tcp = 0;
+  struct netconn *conn = NULL;
   union lwip_sock_lastdata lastdata;
   LWIP_ASSERT("sock != NULL", sock != NULL);
 
@@ -388,13 +390,13 @@ done_socket(struct lwip_sock *sock)
       /* free the socket */
       sock->fd_used = 1;
       is_tcp = sock->fd_free_pending & LWIP_SOCK_FD_FREE_TCP;
-      freed = free_socket_locked(sock, is_tcp, &lastdata);
+      freed = free_socket_locked(sock, is_tcp, &conn, &lastdata);
     }
   }
   SYS_ARCH_UNPROTECT(lev);
 
   if (freed) {
-    free_socket_free_elements(is_tcp, &lastdata);
+    free_socket_free_elements(is_tcp, conn, &lastdata);
   }
 }
 
@@ -539,10 +541,12 @@ alloc_socket(struct netconn *newconn, int accepted)
  *
  * @param sock the socket to free
  * @param is_tcp != 0 for TCP sockets, used to free lastdata
+ * @param conn the socekt's netconn is stored here, must be freed externally
  * @param lastdata lastdata is stored here, must be freed externally
  */
 static int
-free_socket_locked(struct lwip_sock *sock, int is_tcp, union lwip_sock_lastdata *lastdata)
+free_socket_locked(struct lwip_sock *sock, int is_tcp, struct netconn **conn,
+                   union lwip_sock_lastdata *lastdata)
 {
 #if LWIP_NETCONN_FULLDUPLEX
   LWIP_ASSERT("sock->fd_used > 0", sock->fd_used > 0);
@@ -551,10 +555,13 @@ free_socket_locked(struct lwip_sock *sock, int is_tcp, union lwip_sock_lastdata 
     sock->fd_free_pending = LWIP_SOCK_FD_FREE_FREE | (is_tcp ? LWIP_SOCK_FD_FREE_TCP : 0);
     return 0;
   }
-#endif
+#else /* LWIP_NETCONN_FULLDUPLEX */
+  LWIP_UNUSED_ARG(is_tcp);
+#endif /* LWIP_NETCONN_FULLDUPLEX */
 
   *lastdata = sock->lastdata;
   sock->lastdata.pbuf = NULL;
+  *conn = sock->conn;
   sock->conn = NULL;
   return 1;
 }
@@ -562,7 +569,7 @@ free_socket_locked(struct lwip_sock *sock, int is_tcp, union lwip_sock_lastdata 
 /** Free a socket's leftover members.
  */
 static void
-free_socket_free_elements(int is_tcp, union lwip_sock_lastdata *lastdata)
+free_socket_free_elements(int is_tcp, struct netconn *conn, union lwip_sock_lastdata *lastdata)
 {
   if (lastdata->pbuf != NULL) {
     if (is_tcp) {
@@ -570,6 +577,10 @@ free_socket_free_elements(int is_tcp, union lwip_sock_lastdata *lastdata)
     } else {
       netbuf_delete(lastdata->netbuf);
     }
+  }
+  if (conn != NULL) {
+    /* netconn_prepare_delete() has already been called, here we only free the conn */
+    netconn_delete(conn);
   }
 }
 
@@ -583,18 +594,19 @@ static void
 free_socket(struct lwip_sock *sock, int is_tcp)
 {
   int freed;
+  struct netconn *conn;
   union lwip_sock_lastdata lastdata;
   SYS_ARCH_DECL_PROTECT(lev);
 
   /* Protect socket array */
   SYS_ARCH_PROTECT(lev);
 
-  freed = free_socket_locked(sock, is_tcp, &lastdata);
+  freed = free_socket_locked(sock, is_tcp, &conn, &lastdata);
   SYS_ARCH_UNPROTECT(lev);
   /* don't use 'sock' after this line, as another task might have allocated it */
 
   if (freed) {
-    free_socket_free_elements(is_tcp, &lastdata);
+    free_socket_free_elements(is_tcp, conn, &lastdata);
   }
 }
 
@@ -785,7 +797,7 @@ lwip_close(int s)
   lwip_socket_drop_registered_mld6_memberships(s);
 #endif /* LWIP_IPV6_MLD */
 
-  err = netconn_delete(sock->conn);
+  err = netconn_prepare_delete(sock->conn);
   if (err != ERR_OK) {
     sock_set_errno(sock, err_to_errno(err));
     done_socket(sock);

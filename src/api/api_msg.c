@@ -65,6 +65,12 @@
   netconn_clear_flags(conn, NETCONN_FLAG_IN_NONBLOCKING_CONNECT); }} while(0)
 #define IN_NONBLOCKING_CONNECT(conn) netconn_is_flag_set(conn, NETCONN_FLAG_IN_NONBLOCKING_CONNECT)
 
+#if LWIP_NETCONN_FULLDUPLEX
+#define NETCONN_MBOX_VALID(conn, mbox) (sys_mbox_valid(mbox) && ((conn->flags & NETCONN_FLAG_MBOXINVALID) == 0))
+#else
+#define NETCONN_MBOX_VALID(conn, mbox) sys_mbox_valid(mbox)
+#endif
+
 /* forward declarations */
 #if LWIP_TCP
 #if LWIP_TCPIP_CORE_LOCKING
@@ -77,6 +83,8 @@
 static err_t lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM);
 static err_t lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM);
 #endif
+
+static void netconn_drain(struct netconn *conn);
 
 #if LWIP_TCPIP_CORE_LOCKING
 #define TCPIP_APIMSG_ACK(m)
@@ -145,7 +153,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
   LWIP_UNUSED_ARG(addr);
   conn = (struct netconn *)arg;
 
-  if ((conn != NULL) && sys_mbox_valid(&conn->recvmbox)) {
+  if ((conn != NULL) && NETCONN_MBOX_VALID(conn, &conn->recvmbox)) {
 #if LWIP_SO_RCVBUF
     int recv_avail;
     SYS_ARCH_GET(conn->recv_avail, recv_avail);
@@ -218,10 +226,10 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
 #if LWIP_SO_RCVBUF
   SYS_ARCH_GET(conn->recv_avail, recv_avail);
-  if (!sys_mbox_valid(&conn->recvmbox) ||
+  if (!NETCONN_MBOX_VALID(conn, &conn->recvmbox) ||
       ((recv_avail + (int)(p->tot_len)) > conn->recv_bufsize)) {
 #else  /* LWIP_SO_RCVBUF */
-  if (!sys_mbox_valid(&conn->recvmbox)) {
+  if (!NETCONN_MBOX_VALID(conn, &conn->recvmbox)) {
 #endif /* LWIP_SO_RCVBUF */
     pbuf_free(p);
     return;
@@ -286,7 +294,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   }
   LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
 
-  if (!sys_mbox_valid(&conn->recvmbox)) {
+  if (!NETCONN_MBOX_VALID(conn, &conn->recvmbox)) {
     /* recvmbox already deleted */
     if (p != NULL) {
       tcp_recved(pcb, p->tot_len);
@@ -441,12 +449,12 @@ err_tcp(void *arg, err_t err)
 
   mbox_msg = lwip_netconn_err_to_msg(err);
   /* pass error message to recvmbox to wake up pending recv */
-  if (sys_mbox_valid(&conn->recvmbox)) {
+  if (NETCONN_MBOX_VALID(conn, &conn->recvmbox)) {
     /* use trypost to prevent deadlock */
     sys_mbox_trypost(&conn->recvmbox, mbox_msg);
   }
   /* pass error message to acceptmbox to wake up pending accept */
-  if (sys_mbox_valid(&conn->acceptmbox)) {
+  if (NETCONN_MBOX_VALID(conn, &conn->acceptmbox)) {
     /* use trypost to preven deadlock */
     sys_mbox_trypost(&conn->acceptmbox, mbox_msg);
   }
@@ -516,7 +524,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   if (conn == NULL) {
     return ERR_VAL;
   }
-  if (!sys_mbox_valid(&conn->acceptmbox)) {
+  if (!NETCONN_MBOX_VALID(conn, &conn->acceptmbox)) {
     LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: acceptmbox already deleted\n"));
     return ERR_VAL;
   }
@@ -772,6 +780,12 @@ void
 netconn_free(struct netconn *conn)
 {
   LWIP_ASSERT("PCB must be deallocated outside this function", conn->pcb.tcp == NULL);
+
+#if LWIP_NETCONN_FULLDUPLEX
+  /* in fullduplex, netconn is drained here */
+  netconn_drain(conn);
+#endif /* LWIP_NETCONN_FULLDUPLEX */
+
   LWIP_ASSERT("recvmbox must be deallocated before calling this function",
               !sys_mbox_valid(&conn->recvmbox));
 #if LWIP_TCP
@@ -800,7 +814,11 @@ netconn_drain(struct netconn *conn)
 {
   void *mem;
 
-  /* This runs in tcpip_thread, so we don't need to lock against rx packets */
+  /* This runs when mbox and netconn are marked as closed,
+     so we don't need to lock against rx packets */
+#if LWIP_NETCONN_FULLDUPLEX
+  LWIP_ASSERT("netconn marked closed", conn->flags & NETCONN_FLAG_MBOXINVALID);
+#endif /* LWIP_NETCONN_FULLDUPLEX */
 
   /* Delete and drain the recvmbox. */
   if (sys_mbox_valid(&conn->recvmbox)) {
@@ -844,6 +862,15 @@ netconn_drain(struct netconn *conn)
   }
 #endif /* LWIP_TCP */
 }
+
+#if LWIP_NETCONN_FULLDUPLEX
+static void
+netconn_mark_mbox_invalid(struct netconn *conn)
+{
+  /* Prevent new calls/threads from reading from the mbox */
+  conn->flags |= NETCONN_FLAG_MBOXINVALID;
+}
+#endif /* LWIP_NETCONN_FULLDUPLEX */
 
 #if LWIP_TCP
 /**
@@ -1083,8 +1110,12 @@ lwip_netconn_do_delconn(void *m)
     LWIP_ASSERT("blocking connect in progress",
                 (state != NETCONN_CONNECT) || IN_NONBLOCKING_CONNECT(msg->conn));
     msg->err = ERR_OK;
-    /* Drain and delete mboxes */
+#if LWIP_NETCONN_FULLDUPLEX
+    /* Mark mboxes invalid */
+    netconn_mark_mbox_invalid(msg->conn);
+#else /* LWIP_NETCONN_FULLDUPLEX */
     netconn_drain(msg->conn);
+#endif /* LWIP_NETCONN_FULLDUPLEX */
 
     if (msg->conn->pcb.tcp != NULL) {
 
@@ -1904,8 +1935,12 @@ lwip_netconn_do_close(void *m)
     } else {
 #endif /* LWIP_NETCONN_FULLDUPLEX */
       if (msg->msg.sd.shut & NETCONN_SHUT_RD) {
-        /* Drain and delete mboxes */
+#if LWIP_NETCONN_FULLDUPLEX
+        /* Mark mboxes invalid */
+        netconn_mark_mbox_invalid(msg->conn);
+#else /* LWIP_NETCONN_FULLDUPLEX */
         netconn_drain(msg->conn);
+#endif /* LWIP_NETCONN_FULLDUPLEX */
       }
       LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL);
       msg->conn->state = NETCONN_CLOSE;

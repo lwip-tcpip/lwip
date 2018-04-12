@@ -91,6 +91,14 @@
 #define API_MSG_VAR_FREE_ACCEPT(msg)
 #endif /* TCP_LISTEN_BACKLOG */
 
+#if LWIP_NETCONN_FULLDUPLEX
+#define NETCONN_RECVMBOX_WAITABLE(conn) (sys_mbox_valid(&(conn)->recvmbox) && (((conn)->flags & NETCONN_FLAG_MBOXINVALID) == 0))
+#define NETCONN_ACCEPTMBOX_WAITABLE(conn) (sys_mbox_valid(&(conn)->acceptmbox) && (((conn)->flags & (NETCONN_FLAG_MBOXCLOSED|NETCONN_FLAG_MBOXINVALID)) == 0))
+#else
+#define NETCONN_RECVMBOX_WAITABLE(conn)   sys_mbox_valid(&(conn)->recvmbox)
+#define NETCONN_ACCEPTMBOX_WAITABLE(conn) (sys_mbox_valid(&(conn)->acceptmbox) && (((conn)->flags & NETCONN_FLAG_MBOXCLOSED) == 0))
+#endif
+
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
 
 /**
@@ -169,7 +177,7 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 
 /**
  * @ingroup netconn_common
- * Close a netconn 'connection' and free its resources.
+ * Close a netconn 'connection' and free all its resources but not the netconn itself.
  * UDP and RAW connection are completely closed, TCP pcbs might still be in a waitstate
  * after this returns.
  *
@@ -177,7 +185,7 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
  * @return ERR_OK if the connection was deleted
  */
 err_t
-netconn_delete(struct netconn *conn)
+netconn_prepare_delete(struct netconn *conn)
 {
   err_t err;
   API_MSG_VAR_DECLARE(msg);
@@ -205,10 +213,41 @@ netconn_delete(struct netconn *conn)
   if (err != ERR_OK) {
     return err;
   }
-
-  netconn_free(conn);
-
   return ERR_OK;
+}
+
+/**
+ * @ingroup netconn_common
+ * Close a netconn 'connection' and free its resources.
+ * UDP and RAW connection are completely closed, TCP pcbs might still be in a waitstate
+ * after this returns.
+ *
+ * @param conn the netconn to delete
+ * @return ERR_OK if the connection was deleted
+ */
+err_t
+netconn_delete(struct netconn *conn)
+{
+  err_t err;
+
+  /* No ASSERT here because possible to get a (conn == NULL) if we got an accept error */
+  if (conn == NULL) {
+    return ERR_OK;
+  }
+
+#if LWIP_NETCONN_FULLDUPLEX
+  if (conn->flags & NETCONN_FLAG_MBOXINVALID) {
+    /* Already called netconn_prepare_delete() before */
+    err = ERR_OK;
+  } else
+#endif /* LWIP_NETCONN_FULLDUPLEX */
+  {
+    err = netconn_prepare_delete(conn);
+  }
+  if (err == ERR_OK) {
+    netconn_free(conn);
+  }
+  return err;
 }
 
 /**
@@ -447,12 +486,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
     /* return pending error */
     return err;
   }
-  if (conn->flags & NETCONN_FLAG_MBOXCLOSED) {
+  if (!NETCONN_ACCEPTMBOX_WAITABLE(conn)) {
     /* don't accept if closed: this might block the application task
        waiting on acceptmbox forever! */
-    return ERR_CLSD;
-  }
-  if (!sys_mbox_valid(&conn->acceptmbox)) {
     return ERR_CLSD;
   }
 
@@ -531,7 +567,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
 
-  if (!sys_mbox_valid(&conn->recvmbox)) {
+  if (!NETCONN_RECVMBOX_WAITABLE(conn)) {
     err_t err = netconn_err(conn);
     if (err != ERR_OK) {
       /* return pending error */
@@ -641,7 +677,7 @@ netconn_recv_data_tcp(struct netconn *conn, struct pbuf **new_buf, u8_t apiflags
   msg = NULL;
 #endif
 
-  if (!sys_mbox_valid(&conn->recvmbox)) {
+  if (!NETCONN_RECVMBOX_WAITABLE(conn)) {
     /* This only happens when calling this function more than once *after* receiving FIN */
     return ERR_CONN;
   }
