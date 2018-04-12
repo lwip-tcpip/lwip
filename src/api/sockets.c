@@ -297,7 +297,8 @@ static void lwip_setsockopt_callback(void *arg);
 #endif
 static int lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *optlen);
 static int lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_t optlen);
-static void free_socket(struct lwip_sock *sock, int is_tcp);
+static int free_socket_locked(struct lwip_sock *sock, int is_tcp, union lwip_sock_lastdata *lastdata);
+static void free_socket_free_elements(int is_tcp, union lwip_sock_lastdata *lastdata);
 
 #if LWIP_IPV4 && LWIP_IPV6
 static void
@@ -329,27 +330,41 @@ lwip_socket_thread_cleanup(void)
 
 #if LWIP_NETCONN_FULLDUPLEX
 /* Thread-safe increment of sock->fd_used, with overflow check */
-static void
+static int
 sock_inc_used(struct lwip_sock *sock)
 {
+  int ret;
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_ASSERT("sock != NULL", sock != NULL);
 
   SYS_ARCH_PROTECT(lev);
-  ++sock->fd_used;
-  LWIP_ASSERT("sock->fd_used != 0", sock->fd_used != 0);
+  if (sock->fd_free_pending) {
+    /* prevent new usage of this socket if free is pending */
+    ret = 0;
+  } else {
+    ++sock->fd_used;
+    ret = 1;
+    LWIP_ASSERT("sock->fd_used != 0", sock->fd_used != 0);
+  }
   SYS_ARCH_UNPROTECT(lev);
+  return ret;
 }
 
 /* Like sock_inc_used(), but called under SYS_ARCH_PROTECT lock. */
-static void
+static int
 sock_inc_used_locked(struct lwip_sock *sock)
 {
   LWIP_ASSERT("sock != NULL", sock != NULL);
 
+  if (sock->fd_free_pending) {
+    LWIP_ASSERT("sock->fd_used != 0", sock->fd_used != 0);
+    return 0;
+  }
+
   ++sock->fd_used;
   LWIP_ASSERT("sock->fd_used != 0", sock->fd_used != 0);
+  return 1;
 }
 
 /* In full-duplex mode,sock->fd_used != 0 prevents a socket descriptor from being
@@ -358,33 +373,35 @@ sock_inc_used_locked(struct lwip_sock *sock)
  * This function is called at the end of functions using (try)get_socket*().
  */
 static void
-done_socket_locked(struct lwip_sock *sock)
+done_socket(struct lwip_sock *sock)
 {
+  SYS_ARCH_DECL_PROTECT(lev);
+  int freed = 0;
+  int is_tcp = 0;
+  union lwip_sock_lastdata lastdata;
   LWIP_ASSERT("sock != NULL", sock != NULL);
 
+  SYS_ARCH_PROTECT(lev);
   LWIP_ASSERT("sock->fd_used > 0", sock->fd_used > 0);
   if (--sock->fd_used == 0) {
     if (sock->fd_free_pending) {
       /* free the socket */
       sock->fd_used = 1;
-      free_socket(sock, sock->fd_free_pending & LWIP_SOCK_FD_FREE_TCP);
+      is_tcp = sock->fd_free_pending & LWIP_SOCK_FD_FREE_TCP;
+      freed = free_socket_locked(sock, is_tcp, &lastdata);
     }
+  }
+  SYS_ARCH_UNPROTECT(lev);
+
+  if (freed) {
+    free_socket_free_elements(is_tcp, &lastdata);
   }
 }
 
-static void
-done_socket(struct lwip_sock *sock)
-{
-  SYS_ARCH_DECL_PROTECT(lev);
-  SYS_ARCH_PROTECT(lev);
-  done_socket_locked(sock);
-  SYS_ARCH_UNPROTECT(lev);
-}
 #else /* LWIP_NETCONN_FULLDUPLEX */
-#define sock_inc_used(sock)
-#define sock_inc_used_locked(sock)
+#define sock_inc_used(sock)         1
+#define sock_inc_used_locked(sock)  1
 #define done_socket(sock)
-#define done_socket_locked(sock)
 #endif /* LWIP_NETCONN_FULLDUPLEX */
 
 /* Translate a socket 'int' into a pointer (only fails if the index is invalid) */
@@ -411,7 +428,9 @@ tryget_socket_unconn(int fd)
 {
   struct lwip_sock *ret = tryget_socket_unconn_nouse(fd);
   if (ret != NULL) {
-    sock_inc_used(ret);
+    if (!sock_inc_used(ret)) {
+      return NULL;
+    }
   }
   return ret;
 }
@@ -422,7 +441,9 @@ tryget_socket_unconn_locked(int fd)
 {
   struct lwip_sock *ret = tryget_socket_unconn_nouse(fd);
   if (ret != NULL) {
-    sock_inc_used_locked(ret);
+    if (!sock_inc_used_locked(ret)) {
+      return NULL;
+    }
   }
   return ret;
 }
@@ -514,6 +535,44 @@ alloc_socket(struct netconn *newconn, int accepted)
   return -1;
 }
 
+/** Free a socket (under lock)
+ *
+ * @param sock the socket to free
+ * @param is_tcp != 0 for TCP sockets, used to free lastdata
+ * @param lastdata lastdata is stored here, must be freed externally
+ */
+static int
+free_socket_locked(struct lwip_sock *sock, int is_tcp, union lwip_sock_lastdata *lastdata)
+{
+#if LWIP_NETCONN_FULLDUPLEX
+  LWIP_ASSERT("sock->fd_used > 0", sock->fd_used > 0);
+  sock->fd_used--;
+  if (sock->fd_used > 0) {
+    sock->fd_free_pending = LWIP_SOCK_FD_FREE_FREE | (is_tcp ? LWIP_SOCK_FD_FREE_TCP : 0);
+    return 0;
+  }
+#endif
+
+  *lastdata = sock->lastdata;
+  sock->lastdata.pbuf = NULL;
+  sock->conn = NULL;
+  return 1;
+}
+
+/** Free a socket's leftover members.
+ */
+static void
+free_socket_free_elements(int is_tcp, union lwip_sock_lastdata *lastdata)
+{
+  if (lastdata->pbuf != NULL) {
+    if (is_tcp) {
+      pbuf_free(lastdata->pbuf);
+    } else {
+      netbuf_delete(lastdata->netbuf);
+    }
+  }
+}
+
 /** Free a socket. The socket's netconn must have been
  * delete before!
  *
@@ -523,34 +582,19 @@ alloc_socket(struct netconn *newconn, int accepted)
 static void
 free_socket(struct lwip_sock *sock, int is_tcp)
 {
+  int freed;
   union lwip_sock_lastdata lastdata;
   SYS_ARCH_DECL_PROTECT(lev);
 
   /* Protect socket array */
   SYS_ARCH_PROTECT(lev);
 
-#if LWIP_NETCONN_FULLDUPLEX
-  LWIP_ASSERT("sock->fd_used > 0", sock->fd_used > 0);
-  sock->fd_used--;
-  if (sock->fd_used > 0) {
-    sock->fd_free_pending = LWIP_SOCK_FD_FREE_FREE | (is_tcp ? LWIP_SOCK_FD_FREE_TCP : 0);
-    SYS_ARCH_UNPROTECT(lev);
-    return;
-  }
-#endif
-
-  lastdata = sock->lastdata;
-  sock->lastdata.pbuf = NULL;
-  sock->conn = NULL;
+  freed = free_socket_locked(sock, is_tcp, &lastdata);
   SYS_ARCH_UNPROTECT(lev);
   /* don't use 'sock' after this line, as another task might have allocated it */
 
-  if (lastdata.pbuf != NULL) {
-    if (is_tcp) {
-      pbuf_free(lastdata.pbuf);
-    } else {
-      netbuf_delete(lastdata.netbuf);
-    }
+  if (freed) {
+    free_socket_free_elements(is_tcp, &lastdata);
   }
 }
 
@@ -1993,14 +2037,15 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             if (sock->select_waiting == 0) {
               /* overflow - too many threads waiting */
               sock->select_waiting--;
-              done_socket_locked(sock);
               nready = -1;
               maxfdp2 = i;
               SYS_ARCH_UNPROTECT(lev);
+              done_socket(sock);
               set_errno(EBUSY);
               break;
             }
-            done_socket_locked(sock);
+            SYS_ARCH_UNPROTECT(lev);
+            done_socket(sock);
           } else {
             /* Not a valid socket */
             nready = -1;
@@ -2009,7 +2054,6 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             set_errno(EBADF);
             break;
           }
-          SYS_ARCH_UNPROTECT(lev);
         }
       }
 
@@ -2053,13 +2097,14 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             if (sock->select_waiting > 0) {
               sock->select_waiting--;
             }
-            done_socket_locked(sock);
+            SYS_ARCH_UNPROTECT(lev);
+            done_socket(sock);
           } else {
+            SYS_ARCH_UNPROTECT(lev);
             /* Not a valid socket */
             nready = -1;
             set_errno(EBADF);
           }
-          SYS_ARCH_UNPROTECT(lev);
         }
       }
 
@@ -2165,9 +2210,9 @@ lwip_pollscan(struct pollfd *fds, nfds_t nfds, enum lwip_pollscan_opts opts)
           if (sock->select_waiting == 0) {
             /* overflow - too many threads waiting */
             sock->select_waiting--;
-            done_socket_locked(sock);
             nready = -1;
             SYS_ARCH_UNPROTECT(lev);
+            done_socket(sock);
             break;
           }
         } else if ((opts & LWIP_POLLSCAN_DEC_WAIT) != 0) {
@@ -2177,9 +2222,8 @@ lwip_pollscan(struct pollfd *fds, nfds_t nfds, enum lwip_pollscan_opts opts)
             sock->select_waiting--;
           }
         }
-        done_socket_locked(sock);
-
         SYS_ARCH_UNPROTECT(lev);
+        done_socket(sock);
 
         /* ... then examine it: */
         /* See if netconn of this socket is ready for read */
