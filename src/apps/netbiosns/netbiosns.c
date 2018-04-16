@@ -52,6 +52,7 @@
 
 #include "lwip/def.h"
 #include "lwip/udp.h"
+#include "lwip/ip.h"
 #include "lwip/netif.h"
 #include "lwip/prot/iana.h"
 
@@ -161,8 +162,42 @@ struct netbios_answer {
   PACK_STRUCT_FLD_8(u8_t  answer_name[NETBIOS_NAME_LEN]);
   /** node flags */
   PACK_STRUCT_FIELD(u16_t answer_name_flags);
-  /** type name */
-  PACK_STRUCT_FLD_8(u8_t  name_type);
+  /** Unit ID */
+  PACK_STRUCT_FLD_8(u8_t  unit_id[6]);
+  /** Jumpers */
+  PACK_STRUCT_FLD_8(u8_t  jumpers);
+  /** Test result */
+  PACK_STRUCT_FLD_8(u8_t  test_result);
+  /** Test result */
+  PACK_STRUCT_FIELD(u16_t version_number);
+  /** Period of statistics */
+  PACK_STRUCT_FIELD(u16_t period_of_statistics);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_crcs);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_alignment_errors);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_collisions);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_send_aborts);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_good_sends);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_good_receives);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_retransmits);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_no_resource_condition);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_command_blocks);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t number_of_pending_sessions);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t max_number_of_pending_sessions);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t max_total_sessions_possible);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t session_data_packet_size);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -355,15 +390,18 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             /* buffer to which a response is compiled */
             resp = (struct netbios_answer *) q->payload;
 
+			/* Init response to zero, especially the statistics fields */
+			memset(resp, 0, sizeof(*resp));
+
             /* copy the query to the response ID */
             resp->answer_hdr.trans_id        = netbios_hdr->trans_id;
             /* acknowledgment of termination */
             resp->answer_hdr.flags           = PP_HTONS(NETB_HFLAG_RESPONSE | NETB_HFLAG_OPCODE_NAME_QUERY | NETB_HFLAG_AUTHORATIVE);
-            resp->answer_hdr.questions       = PP_HTONS(0);
+            /* resp->answer_hdr.questions       = PP_HTONS(0); done by memset() */
             /* serial number of the answer */
             resp->answer_hdr.answerRRs       = PP_HTONS(1);
-            resp->answer_hdr.authorityRRs    = PP_HTONS(0);
-            resp->answer_hdr.additionalRRs   = PP_HTONS(0);
+            /* resp->answer_hdr.authorityRRs    = PP_HTONS(0); done by memset() */
+            /* resp->answer_hdr.additionalRRs   = PP_HTONS(0); done by memset() */
             /* we will copy the length of the station name */
             resp->name_size                  = netbios_name_hdr->nametype;
             /* we will copy the queried name */
@@ -372,7 +410,7 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             resp->packet_type                = PP_HTONS(0x21);
             /* Internet name */
             resp->cls                        = PP_HTONS(1);
-            resp->ttl                        = PP_HTONL(0);
+            /* resp->ttl                        = PP_HTONL(0); done by memset() */ 
             resp->data_length                = PP_HTONS(4 + NETBIOS_NAME_LEN);
             resp->number_of_names            = 1;
 
@@ -381,8 +419,9 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
 
             /* b-node, unique, active */
             resp->answer_name_flags          = PP_HTONS(NETB_NFLAG_NAME_IS_ACTIVE);
-            /* Workstation/Redirector */
-            resp->name_type                  = 0;
+
+			/* Set responder netif MAC address */
+			SMEMCPY(resp->unit_id, ip_current_input_netif()->hwaddr, sizeof(resp->unit_id));
 
             udp_sendto(upcb, q, addr, port);
             pbuf_free(q);
