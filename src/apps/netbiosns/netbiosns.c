@@ -390,8 +390,8 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             /* buffer to which a response is compiled */
             resp = (struct netbios_answer *) q->payload;
 
-			/* Init response to zero, especially the statistics fields */
-			memset(resp, 0, sizeof(*resp));
+            /* Init response to zero, especially the statistics fields */
+            memset(resp, 0, sizeof(*resp));
 
             /* copy the query to the response ID */
             resp->answer_hdr.trans_id        = netbios_hdr->trans_id;
@@ -420,8 +420,8 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             /* b-node, unique, active */
             resp->answer_name_flags          = PP_HTONS(NETB_NFLAG_NAME_IS_ACTIVE);
 
-			/* Set responder netif MAC address */
-			SMEMCPY(resp->unit_id, ip_current_input_netif()->hwaddr, sizeof(resp->unit_id));
+            /* Set responder netif MAC address */
+            SMEMCPY(resp->unit_id, ip_current_input_netif()->hwaddr, sizeof(resp->unit_id));
 
             udp_sendto(upcb, q, addr, port);
             pbuf_free(q);
