@@ -156,6 +156,7 @@ struct netbios_answer {
   PACK_STRUCT_FIELD(u16_t cls);
   PACK_STRUCT_FIELD(u32_t ttl);
   PACK_STRUCT_FIELD(u16_t data_length);
+#define OFFSETOF_STRUCT_NETBIOS_ANSWER_NUMBER_OF_NAMES 56
   /** number of names */
   PACK_STRUCT_FLD_8(u8_t  number_of_names);
   /** node name */
@@ -168,7 +169,7 @@ struct netbios_answer {
   PACK_STRUCT_FLD_8(u8_t  jumpers);
   /** Test result */
   PACK_STRUCT_FLD_8(u8_t  test_result);
-  /** Test result */
+  /** Version number */
   PACK_STRUCT_FIELD(u16_t version_number);
   /** Period of statistics */
   PACK_STRUCT_FIELD(u16_t period_of_statistics);
@@ -181,15 +182,19 @@ struct netbios_answer {
   /** Statistics */
   PACK_STRUCT_FIELD(u16_t number_of_send_aborts);
   /** Statistics */
-  PACK_STRUCT_FIELD(u16_t number_of_good_sends);
+  PACK_STRUCT_FIELD(u32_t number_of_good_sends);
   /** Statistics */
-  PACK_STRUCT_FIELD(u16_t number_of_good_receives);
+  PACK_STRUCT_FIELD(u32_t number_of_good_receives);
   /** Statistics */
   PACK_STRUCT_FIELD(u16_t number_of_retransmits);
   /** Statistics */
   PACK_STRUCT_FIELD(u16_t number_of_no_resource_condition);
   /** Statistics */
-  PACK_STRUCT_FIELD(u16_t number_of_command_blocks);
+  PACK_STRUCT_FIELD(u16_t number_of_free_command_blocks);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t total_number_of_command_blocks);
+  /** Statistics */
+  PACK_STRUCT_FIELD(u16_t max_total_number_of_command_blocks);
   /** Statistics */
   PACK_STRUCT_FIELD(u16_t number_of_pending_sessions);
   /** Statistics */
@@ -410,11 +415,13 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
             resp->packet_type                = PP_HTONS(0x21);
             /* Internet name */
             resp->cls                        = PP_HTONS(1);
-            /* resp->ttl                        = PP_HTONL(0); done by memset() */ 
-            resp->data_length                = PP_HTONS(4 + NETBIOS_NAME_LEN);
+            /* resp->ttl                        = PP_HTONL(0); done by memset() */
+            resp->data_length                = PP_HTONS(sizeof(struct netbios_answer) - offsetof(struct netbios_answer, number_of_names));
             resp->number_of_names            = 1;
 
-            memset(resp->answer_name, 0x20, NETBIOS_NAME_LEN);
+            /* make windows see us as workstation, not as a server */
+            memset(resp->answer_name, 0x20, NETBIOS_NAME_LEN - 1);
+            /* strlen is checked to be < NETBIOS_NAME_LEN during initialization */
             MEMCPY(resp->answer_name, NETBIOS_LOCAL_NAME, strlen(NETBIOS_LOCAL_NAME));
 
             /* b-node, unique, active */
