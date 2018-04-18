@@ -94,10 +94,14 @@
 #if LWIP_NETCONN_FULLDUPLEX
 #define NETCONN_RECVMBOX_WAITABLE(conn) (sys_mbox_valid(&(conn)->recvmbox) && (((conn)->flags & NETCONN_FLAG_MBOXINVALID) == 0))
 #define NETCONN_ACCEPTMBOX_WAITABLE(conn) (sys_mbox_valid(&(conn)->acceptmbox) && (((conn)->flags & (NETCONN_FLAG_MBOXCLOSED|NETCONN_FLAG_MBOXINVALID)) == 0))
-#else
+#define NETCONN_MBOX_WAITING_INC(conn) SYS_ARCH_INC(conn->mbox_threads_waiting, 1)
+#define NETCONN_MBOX_WAITING_DEC(conn) SYS_ARCH_INC(conn->mbox_threads_waiting, 1)
+#else /* LWIP_NETCONN_FULLDUPLEX */
 #define NETCONN_RECVMBOX_WAITABLE(conn)   sys_mbox_valid(&(conn)->recvmbox)
 #define NETCONN_ACCEPTMBOX_WAITABLE(conn) (sys_mbox_valid(&(conn)->acceptmbox) && (((conn)->flags & NETCONN_FLAG_MBOXCLOSED) == 0))
-#endif
+#define NETCONN_MBOX_WAITING_INC(conn)
+#define NETCONN_MBOX_WAITING_DEC(conn)
+#endif /* LWIP_NETCONN_FULLDUPLEX */
 
 static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
 
@@ -494,21 +498,35 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 
   API_MSG_VAR_ALLOC_ACCEPT(msg);
 
+  NETCONN_MBOX_WAITING_INC(conn);
   if (netconn_is_nonblocking(conn)) {
     if (sys_arch_mbox_tryfetch(&conn->acceptmbox, &accept_ptr) == SYS_ARCH_TIMEOUT) {
       API_MSG_VAR_FREE_ACCEPT(msg);
+      NETCONN_MBOX_WAITING_DEC(conn);
       return ERR_WOULDBLOCK;
     }
   } else {
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
       API_MSG_VAR_FREE_ACCEPT(msg);
+      NETCONN_MBOX_WAITING_DEC(conn);
       return ERR_TIMEOUT;
     }
 #else
     sys_arch_mbox_fetch(&conn->acceptmbox, &accept_ptr, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
   }
+  NETCONN_MBOX_WAITING_DEC(conn);
+#if LWIP_NETCONN_FULLDUPLEX
+  if (conn->flags & NETCONN_FLAG_MBOXINVALID) {
+    if (lwip_netconn_is_deallocated_msg(accept_ptr)) {
+      /* the netconn has been closed from another thread */
+      API_MSG_VAR_FREE_ACCEPT(msg);
+      return ERR_CONN;
+    }
+  }
+#endif
+
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
@@ -576,10 +594,13 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
     return ERR_CONN;
   }
 
+  NETCONN_MBOX_WAITING_INC(conn);
   if (netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK) ||
       (conn->flags & NETCONN_FLAG_MBOXCLOSED) || (conn->pending_err != ERR_OK)) {
     if (sys_arch_mbox_tryfetch(&conn->recvmbox, &buf) == SYS_ARCH_TIMEOUT) {
-      err_t err = netconn_err(conn);
+      err_t err;
+      NETCONN_MBOX_WAITING_DEC(conn);
+      err = netconn_err(conn);
       if (err != ERR_OK) {
         /* return pending error */
         return err;
@@ -592,12 +613,23 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   } else {
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(&conn->recvmbox, &buf, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+      NETCONN_MBOX_WAITING_DEC(conn);
       return ERR_TIMEOUT;
     }
 #else
     sys_arch_mbox_fetch(&conn->recvmbox, &buf, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
   }
+  NETCONN_MBOX_WAITING_DEC(conn);
+#if LWIP_NETCONN_FULLDUPLEX
+  if (conn->flags & NETCONN_FLAG_MBOXINVALID) {
+    if (lwip_netconn_is_deallocated_msg(buf)) {
+      /* the netconn has been closed from another thread */
+      API_MSG_VAR_FREE_ACCEPT(msg);
+      return ERR_CONN;
+    }
+  }
+#endif
 
 #if LWIP_TCP
 #if (LWIP_UDP || LWIP_RAW)

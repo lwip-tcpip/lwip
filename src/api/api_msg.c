@@ -92,6 +92,19 @@ static void netconn_drain(struct netconn *conn);
 #define TCPIP_APIMSG_ACK(m)   do { sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
+#if LWIP_NETCONN_FULLDUPLEX
+const u8_t netconn_deleted = 0;
+
+int
+lwip_netconn_is_deallocated_msg(void *msg)
+{
+  if (msg == &netconn_deleted) {
+    return 1;
+  }
+  return 0;
+}
+#endif /* LWIP_NETCONN_FULLDUPLEX */
+
 #if LWIP_TCP
 const u8_t netconn_aborted = 0;
 const u8_t netconn_reset = 0;
@@ -823,16 +836,21 @@ netconn_drain(struct netconn *conn)
   /* Delete and drain the recvmbox. */
   if (sys_mbox_valid(&conn->recvmbox)) {
     while (sys_mbox_tryfetch(&conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
-#if LWIP_TCP
-      if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
-        err_t err;
-        if (!lwip_netconn_is_err_msg(mem, &err)) {
-          pbuf_free((struct pbuf *)mem);
-        }
-      } else
-#endif /* LWIP_TCP */
+#if LWIP_NETCONN_FULLDUPLEX
+      if (!lwip_netconn_is_deallocated_msg(mem))
+#endif /* LWIP_NETCONN_FULLDUPLEX */
       {
-        netbuf_delete((struct netbuf *)mem);
+#if LWIP_TCP
+        if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
+          err_t err;
+          if (!lwip_netconn_is_err_msg(mem, &err)) {
+            pbuf_free((struct pbuf *)mem);
+          }
+        } else
+#endif /* LWIP_TCP */
+        {
+          netbuf_delete((struct netbuf *)mem);
+        }
       }
     }
     sys_mbox_free(&conn->recvmbox);
@@ -843,18 +861,23 @@ netconn_drain(struct netconn *conn)
 #if LWIP_TCP
   if (sys_mbox_valid(&conn->acceptmbox)) {
     while (sys_mbox_tryfetch(&conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
-      err_t err;
-      if (!lwip_netconn_is_err_msg(mem, &err)) {
-        struct netconn *newconn = (struct netconn *)mem;
-        /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
-        /* pcb might be set to NULL already by err_tcp() */
-        /* drain recvmbox */
-        netconn_drain(newconn);
-        if (newconn->pcb.tcp != NULL) {
-          tcp_abort(newconn->pcb.tcp);
-          newconn->pcb.tcp = NULL;
+#if LWIP_NETCONN_FULLDUPLEX
+      if (!lwip_netconn_is_deallocated_msg(mem))
+#endif /* LWIP_NETCONN_FULLDUPLEX */
+      {
+        err_t err;
+        if (!lwip_netconn_is_err_msg(mem, &err)) {
+          struct netconn *newconn = (struct netconn *)mem;
+          /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
+          /* pcb might be set to NULL already by err_tcp() */
+          /* drain recvmbox */
+          netconn_drain(newconn);
+          if (newconn->pcb.tcp != NULL) {
+            tcp_abort(newconn->pcb.tcp);
+            newconn->pcb.tcp = NULL;
+          }
+          netconn_free(newconn);
         }
-        netconn_free(newconn);
       }
     }
     sys_mbox_free(&conn->acceptmbox);
@@ -867,8 +890,20 @@ netconn_drain(struct netconn *conn)
 static void
 netconn_mark_mbox_invalid(struct netconn *conn)
 {
+  int i, num_waiting;
+  void *msg = LWIP_CONST_CAST(void *, &netconn_deleted);
+
   /* Prevent new calls/threads from reading from the mbox */
   conn->flags |= NETCONN_FLAG_MBOXINVALID;
+
+  SYS_ARCH_LOCKED(num_waiting = conn->mbox_threads_waiting);
+  for (i = 0; i < num_waiting; i++) {
+    if (sys_mbox_valid_val(conn->recvmbox)) {
+      sys_mbox_trypost(&conn->recvmbox, msg);
+    } else {
+      sys_mbox_trypost(&conn->acceptmbox, msg);
+    }
+  }
 }
 #endif /* LWIP_NETCONN_FULLDUPLEX */
 

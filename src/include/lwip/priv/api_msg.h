@@ -187,6 +187,9 @@ struct dns_api_msg {
 };
 #endif /* LWIP_DNS */
 
+#if LWIP_NETCONN_FULLDUPLEX
+int lwip_netconn_is_deallocated_msg(void *msg);
+#endif
 int lwip_netconn_is_err_msg(void *msg, err_t *err);
 void lwip_netconn_do_newconn         (void *m);
 void lwip_netconn_do_delconn         (void *m);

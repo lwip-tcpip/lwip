@@ -241,6 +241,11 @@ struct netconn {
       by the application thread */
   sys_mbox_t acceptmbox;
 #endif /* LWIP_TCP */
+#if LWIP_NETCONN_FULLDUPLEX
+  /** number of threads waiting on an mbox. This is required to unblock
+      all threads when closing while threads are waiting. */
+  int mbox_threads_waiting;
+#endif
   /** only used for socket layer */
 #if LWIP_SOCKET
   int socket;
