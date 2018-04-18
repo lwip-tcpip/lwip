@@ -384,8 +384,6 @@ LWIP_DECLARE_MEMORY_ALIGNED(ram_heap, MEM_SIZE_ALIGNED + (2U * SIZEOF_STRUCT_MEM
 static u8_t *ram;
 /** the last entry, always unused! */
 static struct mem *ram_end;
-/** pointer to the lowest free block, this is used for faster search */
-static struct mem *lfree;
 
 /** concurrent access protection */
 #if !NO_SYS
@@ -403,6 +401,7 @@ static volatile u8_t mem_free_count;
 #define LWIP_MEM_ALLOC_DECL_PROTECT() SYS_ARCH_DECL_PROTECT(lev_alloc)
 #define LWIP_MEM_ALLOC_PROTECT()      SYS_ARCH_PROTECT(lev_alloc)
 #define LWIP_MEM_ALLOC_UNPROTECT()    SYS_ARCH_UNPROTECT(lev_alloc)
+#define LWIP_MEM_LFREE_VOLATILE       volatile
 
 #else /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
 
@@ -414,8 +413,12 @@ static volatile u8_t mem_free_count;
 #define LWIP_MEM_ALLOC_DECL_PROTECT()
 #define LWIP_MEM_ALLOC_PROTECT()
 #define LWIP_MEM_ALLOC_UNPROTECT()
+#define LWIP_MEM_LFREE_VOLATILE
 
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
+
+/** pointer to the lowest free block, this is used for faster search */
+static struct mem * LWIP_MEM_LFREE_VOLATILE lfree;
 
 #if MEM_SANITY_CHECK
 static void mem_sanity(void);
