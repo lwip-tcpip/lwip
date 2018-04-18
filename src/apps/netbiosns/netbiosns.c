@@ -77,6 +77,10 @@
 #define NETB_HFLAG_REPLYCODE          0x0008U
 #define NETB_HFLAG_REPLYCODE_NOERROR  0x0000U
 
+/* NetBIOS question types */
+#define NETB_QTYPE_NB                 0x0020U
+#define NETB_QTYPE_NBSTAT             0x0021U
+
 /** NetBIOS name flags */
 #define NETB_NFLAG_UNIQUE             0x8000U
 #define NETB_NFLAG_NODETYPE           0x6000U
@@ -348,90 +352,97 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
           (netbios_hdr->questions == PP_NTOHS(1))) {
         /* decode the NetBIOS name */
         netbiosns_name_decode((char *)(netbios_name_hdr->encname), netbios_name, sizeof(netbios_name));
-        /* if the packet is for us */
-        if (lwip_strnicmp(netbios_name, NETBIOS_LOCAL_NAME, sizeof(NETBIOS_LOCAL_NAME)) == 0) {
-          struct pbuf *q;
-          struct netbios_resp *resp;
+        /* check the request type */
+        if (netbios_name_hdr->type == PP_HTONS(NETB_QTYPE_NB)) {
+          /* if the packet is for us */
+          if (lwip_strnicmp(netbios_name, NETBIOS_LOCAL_NAME, sizeof(NETBIOS_LOCAL_NAME)) == 0) {
+            struct pbuf *q;
+            struct netbios_resp *resp;
 
-          q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct netbios_resp), PBUF_RAM);
-          if (q != NULL) {
-            resp = (struct netbios_resp *)q->payload;
+            q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct netbios_resp), PBUF_RAM);
+            if (q != NULL) {
+              resp = (struct netbios_resp *)q->payload;
 
-            /* prepare NetBIOS header response */
-            resp->resp_hdr.trans_id      = netbios_hdr->trans_id;
-            resp->resp_hdr.flags         = PP_HTONS(NETB_HFLAG_RESPONSE |
-                                                    NETB_HFLAG_OPCODE_NAME_QUERY |
-                                                    NETB_HFLAG_AUTHORATIVE |
-                                                    NETB_HFLAG_RECURS_DESIRED);
-            resp->resp_hdr.questions     = 0;
-            resp->resp_hdr.answerRRs     = PP_HTONS(1);
-            resp->resp_hdr.authorityRRs  = 0;
-            resp->resp_hdr.additionalRRs = 0;
+              /* prepare NetBIOS header response */
+              resp->resp_hdr.trans_id      = netbios_hdr->trans_id;
+              resp->resp_hdr.flags         = PP_HTONS(NETB_HFLAG_RESPONSE |
+                                                      NETB_HFLAG_OPCODE_NAME_QUERY |
+                                                      NETB_HFLAG_AUTHORATIVE |
+                                                      NETB_HFLAG_RECURS_DESIRED);
+              resp->resp_hdr.questions     = 0;
+              resp->resp_hdr.answerRRs     = PP_HTONS(1);
+              resp->resp_hdr.authorityRRs  = 0;
+              resp->resp_hdr.additionalRRs = 0;
 
-            /* prepare NetBIOS header datas */
-            MEMCPY( resp->resp_name.encname, netbios_name_hdr->encname, sizeof(netbios_name_hdr->encname));
-            resp->resp_name.nametype     = netbios_name_hdr->nametype;
-            resp->resp_name.type         = netbios_name_hdr->type;
-            resp->resp_name.cls          = netbios_name_hdr->cls;
-            resp->resp_name.ttl          = PP_HTONL(NETBIOS_NAME_TTL);
-            resp->resp_name.datalen      = PP_HTONS(sizeof(resp->resp_name.flags) + sizeof(resp->resp_name.addr));
-            resp->resp_name.flags        = PP_HTONS(NETB_NFLAG_NODETYPE_BNODE);
-            ip4_addr_copy(resp->resp_name.addr, *netif_ip4_addr(netif_default));
+              /* prepare NetBIOS header datas */
+              MEMCPY( resp->resp_name.encname, netbios_name_hdr->encname, sizeof(netbios_name_hdr->encname));
+              resp->resp_name.nametype     = netbios_name_hdr->nametype;
+              resp->resp_name.type         = netbios_name_hdr->type;
+              resp->resp_name.cls          = netbios_name_hdr->cls;
+              resp->resp_name.ttl          = PP_HTONL(NETBIOS_NAME_TTL);
+              resp->resp_name.datalen      = PP_HTONS(sizeof(resp->resp_name.flags) + sizeof(resp->resp_name.addr));
+              resp->resp_name.flags        = PP_HTONS(NETB_NFLAG_NODETYPE_BNODE);
+              ip4_addr_copy(resp->resp_name.addr, *netif_ip4_addr(netif_default));
 
-            /* send the NetBIOS response */
-            udp_sendto(upcb, q, addr, port);
+              /* send the NetBIOS response */
+              udp_sendto(upcb, q, addr, port);
 
-            /* free the "reference" pbuf */
-            pbuf_free(q);
+              /* free the "reference" pbuf */
+              pbuf_free(q);
+            }
           }
 #if LWIP_NETBIOS_RESPOND_NAME_QUERY
-        } else if (!lwip_strnicmp(netbios_name, "*", sizeof(NETBIOS_LOCAL_NAME))) {
-          /* general query - ask for our IP address */
-          struct pbuf *q;
-          struct netbios_answer *resp;
+        } else if (netbios_name_hdr->type == PP_HTONS(NETB_QTYPE_NBSTAT)) {
+          /* if the packet is for us or general query */
+          if (!lwip_strnicmp(netbios_name, NETBIOS_LOCAL_NAME, sizeof(NETBIOS_LOCAL_NAME)) ||
+              !lwip_strnicmp(netbios_name, "*", sizeof(NETBIOS_LOCAL_NAME))) {
+            /* general query - ask for our IP address */
+            struct pbuf *q;
+            struct netbios_answer *resp;
 
-          q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct netbios_answer), PBUF_RAM);
-          if (q != NULL) {
-            /* buffer to which a response is compiled */
-            resp = (struct netbios_answer *) q->payload;
+            q = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct netbios_answer), PBUF_RAM);
+            if (q != NULL) {
+              /* buffer to which a response is compiled */
+              resp = (struct netbios_answer *) q->payload;
 
-            /* Init response to zero, especially the statistics fields */
-            memset(resp, 0, sizeof(*resp));
+              /* Init response to zero, especially the statistics fields */
+              memset(resp, 0, sizeof(*resp));
 
-            /* copy the query to the response ID */
-            resp->answer_hdr.trans_id        = netbios_hdr->trans_id;
-            /* acknowledgment of termination */
-            resp->answer_hdr.flags           = PP_HTONS(NETB_HFLAG_RESPONSE | NETB_HFLAG_OPCODE_NAME_QUERY | NETB_HFLAG_AUTHORATIVE);
-            /* resp->answer_hdr.questions       = PP_HTONS(0); done by memset() */
-            /* serial number of the answer */
-            resp->answer_hdr.answerRRs       = PP_HTONS(1);
-            /* resp->answer_hdr.authorityRRs    = PP_HTONS(0); done by memset() */
-            /* resp->answer_hdr.additionalRRs   = PP_HTONS(0); done by memset() */
-            /* we will copy the length of the station name */
-            resp->name_size                  = netbios_name_hdr->nametype;
-            /* we will copy the queried name */
-            MEMCPY(resp->query_name, netbios_name_hdr->encname, (NETBIOS_NAME_LEN * 2) + 1);
-            /* NBSTAT */
-            resp->packet_type                = PP_HTONS(0x21);
-            /* Internet name */
-            resp->cls                        = PP_HTONS(1);
-            /* resp->ttl                        = PP_HTONL(0); done by memset() */
-            resp->data_length                = PP_HTONS(sizeof(struct netbios_answer) - offsetof(struct netbios_answer, number_of_names));
-            resp->number_of_names            = 1;
+              /* copy the query to the response ID */
+              resp->answer_hdr.trans_id        = netbios_hdr->trans_id;
+              /* acknowledgment of termination */
+              resp->answer_hdr.flags           = PP_HTONS(NETB_HFLAG_RESPONSE | NETB_HFLAG_OPCODE_NAME_QUERY | NETB_HFLAG_AUTHORATIVE);
+              /* resp->answer_hdr.questions       = PP_HTONS(0); done by memset() */
+              /* serial number of the answer */
+              resp->answer_hdr.answerRRs       = PP_HTONS(1);
+              /* resp->answer_hdr.authorityRRs    = PP_HTONS(0); done by memset() */
+              /* resp->answer_hdr.additionalRRs   = PP_HTONS(0); done by memset() */
+              /* we will copy the length of the station name */
+              resp->name_size                  = netbios_name_hdr->nametype;
+              /* we will copy the queried name */
+              MEMCPY(resp->query_name, netbios_name_hdr->encname, (NETBIOS_NAME_LEN * 2) + 1);
+              /* NBSTAT */
+              resp->packet_type                = PP_HTONS(0x21);
+              /* Internet name */
+              resp->cls                        = PP_HTONS(1);
+              /* resp->ttl                        = PP_HTONL(0); done by memset() */
+              resp->data_length                = PP_HTONS(sizeof(struct netbios_answer) - offsetof(struct netbios_answer, number_of_names));
+              resp->number_of_names            = 1;
 
-            /* make windows see us as workstation, not as a server */
-            memset(resp->answer_name, 0x20, NETBIOS_NAME_LEN - 1);
-            /* strlen is checked to be < NETBIOS_NAME_LEN during initialization */
-            MEMCPY(resp->answer_name, NETBIOS_LOCAL_NAME, strlen(NETBIOS_LOCAL_NAME));
+              /* make windows see us as workstation, not as a server */
+              memset(resp->answer_name, 0x20, NETBIOS_NAME_LEN - 1);
+              /* strlen is checked to be < NETBIOS_NAME_LEN during initialization */
+              MEMCPY(resp->answer_name, NETBIOS_LOCAL_NAME, strlen(NETBIOS_LOCAL_NAME));
 
-            /* b-node, unique, active */
-            resp->answer_name_flags          = PP_HTONS(NETB_NFLAG_NAME_IS_ACTIVE);
+              /* b-node, unique, active */
+              resp->answer_name_flags          = PP_HTONS(NETB_NFLAG_NAME_IS_ACTIVE);
 
-            /* Set responder netif MAC address */
-            SMEMCPY(resp->unit_id, ip_current_input_netif()->hwaddr, sizeof(resp->unit_id));
+              /* Set responder netif MAC address */
+              SMEMCPY(resp->unit_id, ip_current_input_netif()->hwaddr, sizeof(resp->unit_id));
 
-            udp_sendto(upcb, q, addr, port);
-            pbuf_free(q);
+              udp_sendto(upcb, q, addr, port);
+              pbuf_free(q);
+            }
           }
 #endif /* LWIP_NETBIOS_RESPOND_NAME_QUERY */
         }
