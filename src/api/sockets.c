@@ -376,11 +376,11 @@ sock_inc_used_locked(struct lwip_sock *sock)
 static void
 done_socket(struct lwip_sock *sock)
 {
-  SYS_ARCH_DECL_PROTECT(lev);
   int freed = 0;
   int is_tcp = 0;
   struct netconn *conn = NULL;
   union lwip_sock_lastdata lastdata;
+  SYS_ARCH_DECL_PROTECT(lev);
   LWIP_ASSERT("sock != NULL", sock != NULL);
 
   SYS_ARCH_PROTECT(lev);
