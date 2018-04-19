@@ -1512,6 +1512,9 @@ dhcp_parse_reply(struct pbuf *p, struct dhcp *dhcp)
   int parse_file_as_options = 0;
   int parse_sname_as_options = 0;
   struct dhcp_msg *msg_in;
+#if LWIP_DHCP_BOOTP_FILE
+  int file_overloaded = 0;
+#endif
 
   LWIP_UNUSED_ARG(dhcp);
 
@@ -1706,25 +1709,15 @@ decode_next:
     } else {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("invalid overload option: %d\n", (int)overload));
     }
-#if LWIP_DHCP_BOOTP_FILE
-    if (!parse_file_as_options) {
-      /* only do this for ACK messages */
-      if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE) &&
-          (dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE) == DHCP_ACK))
-        /* copy bootp file name, don't care for sname (server hostname) */
-        if (pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN - 1, DHCP_FILE_OFS) != (DHCP_FILE_LEN - 1)) {
-          return ERR_BUF;
-        }
-      /* make sure the string is really NULL-terminated */
-      dhcp->boot_file_name[DHCP_FILE_LEN - 1] = 0;
-    }
-#endif /* LWIP_DHCP_BOOTP_FILE */
   }
   if (parse_file_as_options) {
     /* if both are overloaded, parse file first and then sname (RFC 2131 ch. 4.1) */
     parse_file_as_options = 0;
     options_idx = DHCP_FILE_OFS;
     options_idx_max = DHCP_FILE_OFS + DHCP_FILE_LEN;
+#if LWIP_DHCP_BOOTP_FILE
+    file_overloaded = 1;
+#endif
     goto again;
   } else if (parse_sname_as_options) {
     parse_sname_as_options = 0;
@@ -1732,6 +1725,19 @@ decode_next:
     options_idx_max = DHCP_SNAME_OFS + DHCP_SNAME_LEN;
     goto again;
   }
+#if LWIP_DHCP_BOOTP_FILE
+  if (!file_overloaded) {
+    /* only do this for ACK messages */
+    if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE) &&
+      (dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE) == DHCP_ACK))
+    /* copy bootp file name, don't care for sname (server hostname) */
+    if (pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN-1, DHCP_FILE_OFS) != (DHCP_FILE_LEN-1)) {
+      return ERR_BUF;
+    }
+    /* make sure the string is really NULL-terminated */
+    dhcp->boot_file_name[DHCP_FILE_LEN-1] = 0;
+  }
+#endif /* LWIP_DHCP_BOOTP_FILE */ 
   return ERR_OK;
 }
 
