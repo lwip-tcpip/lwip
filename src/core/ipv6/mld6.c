@@ -9,6 +9,8 @@
  * Note: The allnodes (ff01::1, ff02::1) group is assumed be received by your 
  * netif since it must always be received for correct IPv6 operation (e.g. SLAAC).
  * Ensure the netif filters are configured accordingly!\n
+ * The netif flags also need NETIF_FLAG_MLD6 flag set to enable MLD6 on a
+ * netif ("netif->flags |= NETIF_FLAG_MLD6;").\n
  * To be called from TCPIP thread.
  */
 
