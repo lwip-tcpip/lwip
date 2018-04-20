@@ -6,7 +6,10 @@
  * @ingroup ip6
  * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
  * No support for MLDv2.\n
- * To be called from TCPIP thread
+ * Note: The allnodes (ff01::1, ff02::1) group is assumed be received by your 
+ * netif since it must always be received for correct IPv6 operation (e.g. SLAAC).
+ * Ensure the netif filters are configured accordingly!\n
+ * To be called from TCPIP thread.
  */
 
 /*
