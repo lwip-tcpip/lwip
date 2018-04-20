@@ -453,7 +453,7 @@ sockets_stresstest_conn_client(void *arg)
   LWIP_ASSERT("s >= 0", s >= 0);
 
 #if LWIP_NETCONN_FULLDUPLEX
-  if (LWIP_RAND() % 1) {
+  if (LWIP_RAND() & 1) {
     sys_thread_t t;
     data = (struct sockets_stresstest_fullduplex*)mem_malloc(sizeof(struct sockets_stresstest_fullduplex));
     LWIP_ASSERT("data != NULL", data != 0);
