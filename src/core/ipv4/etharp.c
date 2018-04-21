@@ -399,7 +399,7 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif *netif)
 #if ETHARP_TABLE_MATCH_NETIF
   arp_table[i].netif = netif;
 #endif /* ETHARP_TABLE_MATCH_NETIF*/
-  return (err_t)i;
+  return (s8_t)i;
 }
 
 /**
