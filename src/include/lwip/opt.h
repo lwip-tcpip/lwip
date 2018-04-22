@@ -2423,7 +2423,7 @@
  * LWIP_IPV6_FRAG==1: Fragment outgoing IPv6 packets that are too big.
  */
 #if !defined LWIP_IPV6_FRAG || defined __DOXYGEN__
-#define LWIP_IPV6_FRAG                  0
+#define LWIP_IPV6_FRAG                  1
 #endif
 
 /**
