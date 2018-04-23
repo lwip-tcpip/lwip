@@ -5,15 +5,9 @@ set(LWIP_VERSION_REVISION "3")
 # LWIP_VERSION_RC is set to LWIP_RC_DEVELOPMENT for Git versions */
 set(LWIP_VERSION_RC       "LWIP_RC_DEVELOPMENT")
 
-set(LWIP_VERSION_STRING_SHORT
+set(LWIP_VERSION_STRING
     "${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MINOR}.${LWIP_VERSION_REVISION}"
 )
-set(LWIP_VERSION_STRING
-    "${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MINOR}.${LWIP_VERSION_REVISION}.${LWIP_VERSION_RC}"
-)
-
-configure_file(include/lwip/init.h.cmake.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/lwip/init.h)
 
 # The minimum set of files needed for lwIP.
 set(lwipcore_SRCS
@@ -233,11 +227,10 @@ option(BUILD_DOCUMENTATION "Build documentation" OFF)
 if(BUILD_DOCUMENTATION)
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
-        # set input and output files
         set(DOXYGEN_IN  ../doc/doxygen/lwip.Doxyfile.cmake.in)
         set(DOXYGEN_OUT ${CMAKE_CURRENT_SOURCE_DIR}/../doc/doxygen/lwip.Doxyfile)
 
-        # request to configure the file
+        # configure the file (version info)
         configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT})
         message("Doxygen build started")
 
@@ -250,35 +243,58 @@ if(BUILD_DOCUMENTATION)
 	else (DOXYGEN_FOUND)
         message("Doxygen need to be installed to generate the doxygen documentation")
     endif (DOXYGEN_FOUND)
-endif()
+endif(BUILD_DOCUMENTATION)
 
-# Generate Filelists.mk via cmake
-function(lwip_gen_filelist_entries var_name filelist_var_name)
-    foreach(srcfile ${${filelist_var_name}})
-       set(tmp "${tmp}$(LWIPDIR)/${srcfile} ")
-	endforeach()
-	set(${var_name} "${tmp}" PARENT_SCOPE)
-endfunction(lwip_gen_filelist_entries)
+option(CONFIGURE_FILES "Generate files configured by CMAKE (usually done by lwIP developers)" OFF)
+if(CONFIGURE_FILES)
+    # Generate Filelists.mk via cmake
+    function(lwip_gen_filelist_entries var_name filelist_var_name)
+        foreach(srcfile ${${filelist_var_name}})
+           set(tmp "${tmp}$(LWIPDIR)/${srcfile} ")
+    	endforeach()
+    	set(${var_name} "${tmp}" PARENT_SCOPE)
+    endfunction(lwip_gen_filelist_entries)
+    
+    lwip_gen_filelist_entries("filelist_mk_COREFILES" "lwipcore_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_CORE4FILES" "lwipcore4_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_CORE6FILES" "lwipcore6_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_APIFILES" "lwipapi_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_NETIFFILES" "lwipnetif_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_SIXLOWPANFILES" "lwipsixlowpan_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_PPPFILES" "lwipppp_SRCS")
+    
+    lwip_gen_filelist_entries("filelist_mk_SNMPFILES" "lwipsnmp_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_HTTPFILES" "lwiphttp_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_MKFSDATAFILES" "lwipmakefsdata_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_IPERFFILES" "lwipiperf_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_SMTPFILES" "lwipsmtp_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_SNTPFILES" "lwipsntp_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_MDNSFILES" "lwipmdns_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_NETBIOSFILES" "lwipnetbios_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_TFTPFILES" "lwiptftp_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_MQTTFILES" "lwipmqtt_SRCS")
+    lwip_gen_filelist_entries("filelist_mk_MBEDTLSFILES" "lwipmbedtls_SRCS")
+    
+    configure_file(Filelists.mk.cmake.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/Filelists.mk)
+    
+    # Generate lwip/init.h (version info)
+    configure_file(include/lwip/init.h.cmake.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/lwip/init.h)
+endif(CONFIGURE_FILES)
 
-lwip_gen_filelist_entries("filelist_mk_COREFILES" "lwipcore_SRCS")
-lwip_gen_filelist_entries("filelist_mk_CORE4FILES" "lwipcore4_SRCS")
-lwip_gen_filelist_entries("filelist_mk_CORE6FILES" "lwipcore6_SRCS")
-lwip_gen_filelist_entries("filelist_mk_APIFILES" "lwipapi_SRCS")
-lwip_gen_filelist_entries("filelist_mk_NETIFFILES" "lwipnetif_SRCS")
-lwip_gen_filelist_entries("filelist_mk_SIXLOWPANFILES" "lwipsixlowpan_SRCS")
-lwip_gen_filelist_entries("filelist_mk_PPPFILES" "lwipppp_SRCS")
+#add_library(lwip ${lwipnoapps_SRCS} ${lwipallapps_SRCS})
+#target_include_directories(lwip PUBLIC
+#    "include/"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/port/include"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/unixsim"
+#)
 
-lwip_gen_filelist_entries("filelist_mk_SNMPFILES" "lwipsnmp_SRCS")
-lwip_gen_filelist_entries("filelist_mk_HTTPFILES" "lwiphttp_SRCS")
-lwip_gen_filelist_entries("filelist_mk_MKFSDATAFILES" "lwipmakefsdata_SRCS")
-lwip_gen_filelist_entries("filelist_mk_IPERFFILES" "lwipiperf_SRCS")
-lwip_gen_filelist_entries("filelist_mk_SMTPFILES" "lwipsmtp_SRCS")
-lwip_gen_filelist_entries("filelist_mk_SNTPFILES" "lwipsntp_SRCS")
-lwip_gen_filelist_entries("filelist_mk_MDNSFILES" "lwipmdns_SRCS")
-lwip_gen_filelist_entries("filelist_mk_NETBIOSFILES" "lwipnetbios_SRCS")
-lwip_gen_filelist_entries("filelist_mk_TFTPFILES" "lwiptftp_SRCS")
-lwip_gen_filelist_entries("filelist_mk_MQTTFILES" "lwipmqtt_SRCS")
-lwip_gen_filelist_entries("filelist_mk_MBEDTLSFILES" "lwipmbedtls_SRCS")
-
-configure_file(Filelists.mk.cmake.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/Filelists.mk)
+#add_executable(makefsdata ${lwipmakefsdata_SRCS})
+#target_include_directories(makefsdata PUBLIC
+#    "include/"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/port/include"
+#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/unixsim"
+#)
