@@ -12,142 +12,142 @@ set(LWIP_VERSION_STRING
 # The minimum set of files needed for lwIP.
 set(lwipcore_SRCS
     core/init.c
-	core/def.c
-	core/dns.c
-	core/inet_chksum.c
-	core/ip.c
-	core/mem.c
-	core/memp.c
-	core/netif.c
-	core/pbuf.c
-	core/raw.c
-	core/stats.c
-	core/sys.c
-	core/altcp.c
-	core/altcp_alloc.c
-	core/altcp_tcp.c
-	core/tcp.c
-	core/tcp_in.c
-	core/tcp_out.c
-	core/timeouts.c
-	core/udp.c
+    core/def.c
+    core/dns.c
+    core/inet_chksum.c
+    core/ip.c
+    core/mem.c
+    core/memp.c
+    core/netif.c
+    core/pbuf.c
+    core/raw.c
+    core/stats.c
+    core/sys.c
+    core/altcp.c
+    core/altcp_alloc.c
+    core/altcp_tcp.c
+    core/tcp.c
+    core/tcp_in.c
+    core/tcp_out.c
+    core/timeouts.c
+    core/udp.c
 )
 set(lwipcore4_SRCS
     core/ipv4/autoip.c
-	core/ipv4/dhcp.c
-	core/ipv4/etharp.c
-	core/ipv4/icmp.c
-	core/ipv4/igmp.c
-	core/ipv4/ip4_frag.c
-	core/ipv4/ip4.c
+    core/ipv4/dhcp.c
+    core/ipv4/etharp.c
+    core/ipv4/icmp.c
+    core/ipv4/igmp.c
+    core/ipv4/ip4_frag.c
+    core/ipv4/ip4.c
     core/ipv4/ip4_addr.c
 )
 set(lwipcore6_SRCS
     core/ipv6/dhcp6.c
-	core/ipv6/ethip6.c
-	core/ipv6/icmp6.c
-	core/ipv6/inet6.c
-	core/ipv6/ip6.c
-	core/ipv6/ip6_addr.c
-	core/ipv6/ip6_frag.c
-	core/ipv6/mld6.c
+    core/ipv6/ethip6.c
+    core/ipv6/icmp6.c
+    core/ipv6/inet6.c
+    core/ipv6/ip6.c
+    core/ipv6/ip6_addr.c
+    core/ipv6/ip6_frag.c
+    core/ipv6/mld6.c
     core/ipv6/nd6.c
 )
 
 # APIFILES: The files which implement the sequential and socket APIs.
 set(lwipapi_SRCS
     api/api_lib.c
-	api/api_msg.c
-	api/err.c
-	api/if_api.c
-	api/netbuf.c
-	api/netdb.c
-	api/netifapi.c
-	api/sockets.c
+    api/api_msg.c
+    api/err.c
+    api/if_api.c
+    api/netbuf.c
+    api/netdb.c
+    api/netifapi.c
+    api/sockets.c
     api/tcpip.c
 )
 
 # Files implementing various generic network interface functions
 set(lwipnetif_SRCS
     netif/ethernet.c
-	netif/bridgeif.c
-	netif/bridgeif_fdb.c
-	netif/slipif.c
+    netif/bridgeif.c
+    netif/bridgeif_fdb.c
+    netif/slipif.c
 )
 
 # 6LoWPAN
 set(lwipsixlowpan_SRCS
     netif/lowpan6_common.c
     netif/lowpan6.c
-	netif/lowpan6_ble.c
+    netif/lowpan6_ble.c
     netif/zepif.c
 )
 
 # PPP
 set(lwipppp_SRCS
     netif/ppp/auth.c
-	netif/ppp/ccp.c
-	netif/ppp/chap-md5.c
-	netif/ppp/chap_ms.c
-	netif/ppp/chap-new.c
-	netif/ppp/demand.c
-	netif/ppp/eap.c
-	netif/ppp/ecp.c
-	netif/ppp/eui64.c
-	netif/ppp/fsm.c
-	netif/ppp/ipcp.c
-	netif/ppp/ipv6cp.c
-	netif/ppp/lcp.c
-	netif/ppp/magic.c
-	netif/ppp/mppe.c
-	netif/ppp/multilink.c
-	netif/ppp/ppp.c
-	netif/ppp/pppapi.c
-	netif/ppp/pppcrypt.c
-	netif/ppp/pppoe.c
-	netif/ppp/pppol2tp.c
-	netif/ppp/pppos.c
-	netif/ppp/upap.c
-	netif/ppp/utils.c
-	netif/ppp/vj.c
-	netif/ppp/polarssl/arc4.c
-	netif/ppp/polarssl/des.c
-	netif/ppp/polarssl/md4.c
-	netif/ppp/polarssl/md5.c
-	netif/ppp/polarssl/sha1.c
+    netif/ppp/ccp.c
+    netif/ppp/chap-md5.c
+    netif/ppp/chap_ms.c
+    netif/ppp/chap-new.c
+    netif/ppp/demand.c
+    netif/ppp/eap.c
+    netif/ppp/ecp.c
+    netif/ppp/eui64.c
+    netif/ppp/fsm.c
+    netif/ppp/ipcp.c
+    netif/ppp/ipv6cp.c
+    netif/ppp/lcp.c
+    netif/ppp/magic.c
+    netif/ppp/mppe.c
+    netif/ppp/multilink.c
+    netif/ppp/ppp.c
+    netif/ppp/pppapi.c
+    netif/ppp/pppcrypt.c
+    netif/ppp/pppoe.c
+    netif/ppp/pppol2tp.c
+    netif/ppp/pppos.c
+    netif/ppp/upap.c
+    netif/ppp/utils.c
+    netif/ppp/vj.c
+    netif/ppp/polarssl/arc4.c
+    netif/ppp/polarssl/des.c
+    netif/ppp/polarssl/md4.c
+    netif/ppp/polarssl/md5.c
+    netif/ppp/polarssl/sha1.c
 )
 
 # SNMPv3 agent
 set(lwipsnmp_SRCS
     apps/snmp/snmp_asn1.c
-	apps/snmp/snmp_core.c
-	apps/snmp/snmp_mib2.c
-	apps/snmp/snmp_mib2_icmp.c
-	apps/snmp/snmp_mib2_interfaces.c
-	apps/snmp/snmp_mib2_ip.c
-	apps/snmp/snmp_mib2_snmp.c
-	apps/snmp/snmp_mib2_system.c
-	apps/snmp/snmp_mib2_tcp.c
-	apps/snmp/snmp_mib2_udp.c
-	apps/snmp/snmp_snmpv2_framework.c
-	apps/snmp/snmp_snmpv2_usm.c
-	apps/snmp/snmp_msg.c
-	apps/snmp/snmpv3.c
-	apps/snmp/snmp_netconn.c
-	apps/snmp/snmp_pbuf_stream.c
-	apps/snmp/snmp_raw.c
-	apps/snmp/snmp_scalar.c
-	apps/snmp/snmp_table.c
-	apps/snmp/snmp_threadsync.c
-	apps/snmp/snmp_traps.c
+    apps/snmp/snmp_core.c
+    apps/snmp/snmp_mib2.c
+    apps/snmp/snmp_mib2_icmp.c
+    apps/snmp/snmp_mib2_interfaces.c
+    apps/snmp/snmp_mib2_ip.c
+    apps/snmp/snmp_mib2_snmp.c
+    apps/snmp/snmp_mib2_system.c
+    apps/snmp/snmp_mib2_tcp.c
+    apps/snmp/snmp_mib2_udp.c
+    apps/snmp/snmp_snmpv2_framework.c
+    apps/snmp/snmp_snmpv2_usm.c
+    apps/snmp/snmp_msg.c
+    apps/snmp/snmpv3.c
+    apps/snmp/snmp_netconn.c
+    apps/snmp/snmp_pbuf_stream.c
+    apps/snmp/snmp_raw.c
+    apps/snmp/snmp_scalar.c
+    apps/snmp/snmp_table.c
+    apps/snmp/snmp_threadsync.c
+    apps/snmp/snmp_traps.c
 )
 
 # HTTP server + client
 set(lwiphttp_SRCS
     apps/http/altcp_proxyconnect.c
-	apps/http/fs.c
-	apps/http/http_client.c
-	apps/http/httpd.c
+    apps/http/fs.c
+    apps/http/http_client.c
+    apps/http/httpd.c
 )
 
 # MAKEFSDATA HTTP server host utility
@@ -193,8 +193,8 @@ set(lwipmqtt_SRCS
 # ARM MBEDTLS related files of lwIP rep
 set(lwipmbedtls_SRCS
     apps/altcp_tls/altcp_tls_mbedtls.c
-	apps/altcp_tls/altcp_tls_mbedtls_mem.c
-	apps/snmp/snmpv3_mbedtls.c
+    apps/altcp_tls/altcp_tls_mbedtls_mem.c
+    apps/snmp/snmpv3_mbedtls.c
 )
 
 # All LWIP files without apps
@@ -223,8 +223,8 @@ set(lwipallapps_SRCS
 )
 
 # Documentation
-option(BUILD_DOCUMENTATION "Build documentation" OFF)
-if(BUILD_DOCUMENTATION)
+option(LWIP_BUILD_DOCUMENTATION "Build documentation" OFF)
+if(LWIP_BUILD_DOCUMENTATION)
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
         set(DOXYGEN_IN  ../doc/doxygen/lwip.Doxyfile.cmake.in)
@@ -236,23 +236,23 @@ if(BUILD_DOCUMENTATION)
 
         # note the option ALL which allows to build the docs together with the application
         add_custom_target(lwipdocs ALL
-		    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../doc/doxygen
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM )
-	else (DOXYGEN_FOUND)
+    else (DOXYGEN_FOUND)
         message("Doxygen need to be installed to generate the doxygen documentation")
     endif (DOXYGEN_FOUND)
-endif(BUILD_DOCUMENTATION)
+endif(LWIP_BUILD_DOCUMENTATION)
 
-option(CONFIGURE_FILES "Generate files configured by CMAKE (usually done by lwIP developers)" OFF)
-if(CONFIGURE_FILES)
+option(LWIP_CONFIGURE_FILES "Generate files configured by CMAKE (usually done by lwIP developers)" OFF)
+if(LWIP_CONFIGURE_FILES)
     # Generate Filelists.mk via cmake
     function(lwip_gen_filelist_entries var_name filelist_var_name)
         foreach(srcfile ${${filelist_var_name}})
            set(tmp "${tmp}$(LWIPDIR)/${srcfile} ")
-    	endforeach()
-    	set(${var_name} "${tmp}" PARENT_SCOPE)
+        endforeach()
+        set(${var_name} "${tmp}" PARENT_SCOPE)
     endfunction(lwip_gen_filelist_entries)
     
     lwip_gen_filelist_entries("filelist_mk_COREFILES" "lwipcore_SRCS")
@@ -281,7 +281,7 @@ if(CONFIGURE_FILES)
     # Generate lwip/init.h (version info)
     configure_file(include/lwip/init.h.cmake.in
         ${CMAKE_CURRENT_SOURCE_DIR}/include/lwip/init.h)
-endif(CONFIGURE_FILES)
+endif(LWIP_CONFIGURE_FILES)
 
 #add_library(lwip ${lwipnoapps_SRCS} ${lwipallapps_SRCS})
 #target_include_directories(lwip PUBLIC
