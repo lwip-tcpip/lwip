@@ -52,13 +52,13 @@
 #include "lwip/ip4.h"
 #include "lwip/prot/ethernet.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/prot/etharp.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** 1 seconds period */
 #define ARP_TMR_INTERVAL 1000
@@ -93,14 +93,13 @@ err_t etharp_add_static_entry(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr
 err_t etharp_remove_static_entry(const ip4_addr_t *ipaddr);
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
-#endif /* LWIP_IPV4 && LWIP_ARP */
-
 void etharp_input(struct pbuf *p, struct netif *netif);
 
 #ifdef __cplusplus
 }
 #endif
 
+#endif /* LWIP_IPV4 && LWIP_ARP */
 #endif /* LWIP_ARP || LWIP_ETHERNET */
 
 #endif /* LWIP_HDR_NETIF_ETHARP_H */

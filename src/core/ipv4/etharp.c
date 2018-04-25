@@ -45,7 +45,7 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_ARP || LWIP_ETHERNET
+#if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/etharp.h"
 #include "lwip/stats.h"
@@ -60,8 +60,6 @@
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
 #endif
-
-#if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 /** Re-request a used ARP entry 1 minute before it would expire to prevent
  *  breaking a steadily used connection because the ARP entry timed out. */
@@ -126,8 +124,8 @@ static u8_t etharp_cached_entry;
 #endif /* LWIP_NETIF_HWADDRHINT */
 
 
-/* Some checks, instead of etharp_init(): */
-#if (LWIP_ARP && (ARP_TABLE_SIZE > 0x7f))
+/* Check for maximum ARP_TABLE_SIZE */
+#if (ARP_TABLE_SIZE > 0x7f)
 #error "ARP_TABLE_SIZE must fit in an s8_t, you have to reduce it in your lwipopts.h"
 #endif
 
@@ -1201,6 +1199,5 @@ etharp_request(struct netif *netif, const ip4_addr_t *ipaddr)
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
   return etharp_request_dst(netif, ipaddr, &ethbroadcast);
 }
-#endif /* LWIP_IPV4 && LWIP_ARP */
 
-#endif /* LWIP_ARP || LWIP_ETHERNET */
+#endif /* LWIP_IPV4 && LWIP_ARP */
