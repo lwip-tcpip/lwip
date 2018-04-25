@@ -493,7 +493,7 @@ netbiosns_set_name(const char *hostname)
 
   /* make name into upper case */
   for (i = 0; i < copy_len; i++ ) {
-    netbiosns_local_name[i] = (char)toupper(hostname[i]);
+    netbiosns_local_name[i] = (char)toupper((unsigned char)hostname[i]);
   }
   netbiosns_local_name[copy_len] = '\0';
 }
