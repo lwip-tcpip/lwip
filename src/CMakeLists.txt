@@ -283,18 +283,6 @@ if(LWIP_CONFIGURE_FILES)
         ${CMAKE_CURRENT_SOURCE_DIR}/include/lwip/init.h)
 endif(LWIP_CONFIGURE_FILES)
 
-#add_library(lwip ${lwipnoapps_SRCS} ${lwipallapps_SRCS})
-#target_include_directories(lwip PUBLIC
-#    "include/"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/port/include"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/unixsim"
-#)
+add_library(lwip EXCLUDE_FROM_ALL ${lwipnoapps_SRCS} ${lwipallapps_SRCS})
 
-#add_executable(makefsdata ${lwipmakefsdata_SRCS})
-#target_include_directories(makefsdata PUBLIC
-#    "include/"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/port/include"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/../../lwip-contrib/ports/unix/unixsim"
-#)
+add_executable(makefsdata EXCLUDE_FROM_ALL ${lwipmakefsdata_SRCS})
