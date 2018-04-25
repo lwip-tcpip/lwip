@@ -343,6 +343,12 @@ netbiosns_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t 
     struct netbios_hdr      *netbios_hdr      = (struct netbios_hdr *)p->payload;
     struct netbios_name_hdr *netbios_name_hdr = (struct netbios_name_hdr *)(netbios_hdr + 1);
 
+    /* is the packet long enough (we need the header in one piece) */
+    if (p->len < (sizeof(struct netbios_hdr) + sizeof(struct netbios_name_hdr))) {
+      /* packet too short */
+      pbuf_free(p);
+      return;
+    }
     /* we only answer if we got a default interface */
     if (netif_default != NULL) {
       /* @todo: do we need to check answerRRs/authorityRRs/additionalRRs? */
