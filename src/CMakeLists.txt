@@ -283,6 +283,10 @@ if(LWIP_CONFIGURE_FILES)
         ${CMAKE_CURRENT_SOURCE_DIR}/include/lwip/init.h)
 endif(LWIP_CONFIGURE_FILES)
 
-add_library(lwip EXCLUDE_FROM_ALL ${lwipnoapps_SRCS} ${lwipallapps_SRCS})
+add_library(lwipcore EXCLUDE_FROM_ALL ${lwipnoapps_SRCS})
 
-add_executable(makefsdata EXCLUDE_FROM_ALL ${lwipmakefsdata_SRCS})
+add_library(lwipapps EXCLUDE_FROM_ALL ${lwipallapps_SRCS})
+
+if (NOT CMAKE_CROSSCOMPILING)
+    add_executable(makefsdata ${lwipmakefsdata_SRCS})
+endif()
