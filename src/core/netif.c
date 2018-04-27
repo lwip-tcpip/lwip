@@ -166,6 +166,7 @@ netif_loopif_init(struct netif *netif)
 #if LWIP_LOOPIF_MULTICAST
   netif_set_flags(netif, NETIF_FLAG_IGMP);
 #endif
+  NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_DISABLE_ALL);
   return ERR_OK;
 }
 #endif /* LWIP_HAVE_LOOPIF */
