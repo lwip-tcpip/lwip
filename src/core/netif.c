@@ -1060,6 +1060,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
 #endif /* MIB2_STATS */
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+  u8_t schedule_poll = 0;
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   SYS_ARCH_DECL_PROTECT(lev);
 
   /* Allocate a new pbuf */
@@ -1109,6 +1112,10 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   } else {
     netif->loop_first = r;
     netif->loop_last = last;
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+    /* No existing packets queued, schedule poll */
+    schedule_poll = 1;
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   }
   SYS_ARCH_UNPROTECT(lev);
 
@@ -1118,7 +1125,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
-  tcpip_try_callback((tcpip_callback_fn)netif_poll, netif);
+  if (schedule_poll) {
+    tcpip_try_callback((tcpip_callback_fn)netif_poll, netif);
+  }
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
   return ERR_OK;
