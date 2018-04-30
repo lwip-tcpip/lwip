@@ -3,7 +3,7 @@
 # It assumes the variable LWIP_DIR is defined pointing to the
 # root path of lwIP sources.
 #
-# This file is NOT designed (on purpose) to be included as cmake
+# This file is NOT designed (on purpose) to be used as cmake
 # subdir via add_subdirectory()
 # The intention is to provide greater flexibility to users to 
 # create their own targets using the *_SRCS variables.
