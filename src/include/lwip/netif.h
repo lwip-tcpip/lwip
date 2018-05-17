@@ -239,8 +239,10 @@ u8_t netif_alloc_client_data_id(void);
 
 #if (LWIP_IPV4 && LWIP_ARP && (ARP_TABLE_SIZE > 0x7f)) || (LWIP_IPV6 && (LWIP_ND6_NUM_DESTINATIONS > 0x7f))
 typedef u16_t netif_addr_idx_t;
+#define NETIF_ADDR_IDX_MAX 0x7FFF
 #else
 typedef u8_t netif_addr_idx_t;
+#define NETIF_ADDR_IDX_MAX 0x7F
 #endif
 
 #if LWIP_NETIF_HWADDRHINT

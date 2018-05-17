@@ -286,6 +286,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 {
   u8_t msg_type;
   s8_t i;
+  s16_t dest_idx;
 
   ND6_STATS_INC(nd6.recv);
 
@@ -836,8 +837,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Find dest address in cache */
-    i = nd6_find_destination_cache_entry(&destination_address);
-    if (i < 0) {
+    dest_idx = nd6_find_destination_cache_entry(&destination_address);
+    if (dest_idx < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
       return;
@@ -848,7 +849,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     ip6_addr_assign_zone(&target_address, IP6_UNICAST, inp);
 
     /* Set the new target address. */
-    ip6_addr_copy(destination_cache[i].next_hop_addr, target_address);
+    ip6_addr_copy(destination_cache[dest_idx].next_hop_addr, target_address);
 
     /* If Link-layer address of other router is given, try to add to neighbor cache. */
     if (lladdr_opt != NULL) {
@@ -904,8 +905,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     ip6_addr_assign_zone(&destination_address, IP6_UNKNOWN, inp);
 
     /* Look for entry in destination cache. */
-    i = nd6_find_destination_cache_entry(&destination_address);
-    if (i < 0) {
+    dest_idx = nd6_find_destination_cache_entry(&destination_address);
+    if (dest_idx < 0) {
       /* Destination not in cache, drop packet. */
       pbuf_free(p);
       return;
@@ -913,7 +914,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* Change the Path MTU. */
     pmtu = lwip_htonl(icmp6hdr->data);
-    destination_cache[i].pmtu = (u16_t)LWIP_MIN(pmtu, 0xFFFF);
+    destination_cache[dest_idx].pmtu = (u16_t)LWIP_MIN(pmtu, 0xFFFF);
 
     break; /* ICMP6_TYPE_PTB */
   }
@@ -1539,10 +1540,10 @@ nd6_free_neighbor_cache_entry(s8_t i)
  * @return The destination cache entry index that matched, -1 if no
  * entry is found
  */
-static s8_t
+static s16_t
 nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr)
 {
-  s8_t i;
+  s16_t i;
 
   IP6_ADDR_ZONECHECK(ip6addr);
 
@@ -1564,7 +1565,7 @@ nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr)
 static s16_t
 nd6_new_destination_cache_entry(void)
 {
-  s8_t i, j;
+  s16_t i, j;
   u32_t age;
 
   /* Find an empty entry. */
@@ -1910,6 +1911,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   const ip6_addr_t *next_hop_addr;
 #endif /* LWIP_HOOK_ND6_GET_GW */
   s8_t i;
+  s16_t dst_idx;
 
   IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
 
@@ -1930,16 +1932,18 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
     ND6_STATS_INC(nd6.cachehit);
   } else {
     /* Search destination cache. */
-    i = nd6_find_destination_cache_entry(ip6addr);
-    if (i >= 0) {
+    dst_idx = nd6_find_destination_cache_entry(ip6addr);
+    if (dst_idx >= 0) {
       /* found destination entry. make it our new cached index. */
-      nd6_cached_destination_index = i;
+      LWIP_ASSERT("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
+      nd6_cached_destination_index = (netif_addr_idx_t)dst_idx;
     } else {
       /* Not found. Create a new destination entry. */
-      i = nd6_new_destination_cache_entry();
-      if (i >= 0) {
+      dst_idx = nd6_new_destination_cache_entry();
+      if (dst_idx >= 0) {
         /* got new destination entry. make it our new cached index. */
-        nd6_cached_destination_index = i;
+        LWIP_ASSERT("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
+        nd6_cached_destination_index = (netif_addr_idx_t)dst_idx;
       } else {
         /* Could not create a destination cache entry. */
         return ERR_MEM;
@@ -2267,7 +2271,7 @@ nd6_get_next_hop_addr_or_queue(struct netif *netif, struct pbuf *q, const ip6_ad
 u16_t
 nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif)
 {
-  s8_t i;
+  s16_t i;
 
   i = nd6_find_destination_cache_entry(ip6addr);
   if (i >= 0) {
@@ -2298,24 +2302,25 @@ void
 nd6_reachability_hint(const ip6_addr_t *ip6addr)
 {
   s8_t i;
+  s16_t dst_idx;
 
   /* Find destination in cache. */
   if (ip6_addr_cmp(ip6addr, &(destination_cache[nd6_cached_destination_index].destination_addr))) {
-    i = nd6_cached_destination_index;
+    dst_idx = nd6_cached_destination_index;
     ND6_STATS_INC(nd6.cachehit);
   } else {
-    i = nd6_find_destination_cache_entry(ip6addr);
+    dst_idx = nd6_find_destination_cache_entry(ip6addr);
   }
-  if (i < 0) {
+  if (dst_idx < 0) {
     return;
   }
 
   /* Find next hop neighbor in cache. */
-  if (ip6_addr_cmp(&(destination_cache[i].next_hop_addr), &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
+  if (ip6_addr_cmp(&(destination_cache[dst_idx].next_hop_addr), &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
     i = nd6_cached_neighbor_index;
     ND6_STATS_INC(nd6.cachehit);
   } else {
-    i = nd6_find_neighbor_cache_entry(&(destination_cache[i].next_hop_addr));
+    i = nd6_find_neighbor_cache_entry(&(destination_cache[dst_idx].next_hop_addr));
   }
   if (i < 0) {
     return;

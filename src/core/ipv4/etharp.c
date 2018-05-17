@@ -819,7 +819,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
     dest = &mcastaddr;
     /* unicast destination IP address? */
   } else {
-    u16_t i;
+    netif_addr_idx_t i;
     /* outside local network? if so, this can neither be a global broadcast nor
        a subnet broadcast. */
     if (!ip4_addr_netcmp(ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif)) &&
@@ -936,7 +936,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
   err_t result = ERR_MEM;
   int is_new_entry = 0;
   s16_t i_err;
-  u16_t i;
+  netif_addr_idx_t i;
 
   /* non-unicast address? */
   if (ip4_addr_isbroadcast(ipaddr, netif) ||
@@ -958,7 +958,8 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
     }
     return (err_t)i_err;
   }
-  i = (u16_t)i_err;
+  LWIP_ASSERT("type overflow", (size_t)i_err < NETIF_ADDR_IDX_MAX);
+  i = (netif_addr_idx_t)i_err;
 
   /* mark a fresh entry as pending (we just sent a request) */
   if (arp_table[i].state == ETHARP_STATE_EMPTY) {
