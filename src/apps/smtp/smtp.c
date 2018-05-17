@@ -303,7 +303,9 @@ static err_t  smtp_tcp_connected(void *arg, struct altcp_pcb *pcb, err_t err);
 #if LWIP_DNS
 static void   smtp_dns_found(const char* hostname, const ip_addr_t *ipaddr, void *arg);
 #endif /* LWIP_DNS */
+#if SMTP_SUPPORT_AUTH_PLAIN || SMTP_SUPPORT_AUTH_LOGIN
 static size_t smtp_base64_encode(char* target, size_t target_len, const char* source, size_t source_len);
+#endif /* SMTP_SUPPORT_AUTH_PLAIN || SMTP_SUPPORT_AUTH_LOGIN */
 static enum   smtp_session_state smtp_prepare_mail(struct smtp_session *s, u16_t *tx_buf_len);
 static void   smtp_send_body(struct smtp_session *s, struct altcp_pcb *pcb);
 static void   smtp_process(void *arg, struct altcp_pcb *pcb, struct pbuf *p);
