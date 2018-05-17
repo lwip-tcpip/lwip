@@ -292,7 +292,9 @@ static char smtp_auth_plain[SMTP_MAX_USERNAME_LEN + SMTP_MAX_PASS_LEN + 3];
 /** Length of smtp_auth_plain string (cannot use strlen since it includes \0) */
 static size_t smtp_auth_plain_len;
 
+#if SMTP_CHECK_DATA
 static err_t  smtp_verify(const char *data, size_t data_len, u8_t linebreaks_allowed);
+#endif /* SMTP_CHECK_DATA */
 static err_t  smtp_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err);
 static void   smtp_tcp_err(void *arg, err_t err);
 static err_t  smtp_tcp_poll(void *arg, struct altcp_pcb *pcb);
