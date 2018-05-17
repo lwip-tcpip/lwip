@@ -85,7 +85,7 @@ u32_t retrans_timer = LWIP_ND6_RETRANS_TIMER; /* @todo implement this value in t
 
 /* Index for cache entries. */
 static u8_t nd6_cached_neighbor_index;
-static u8_t nd6_cached_destination_index;
+static netif_addr_idx_t nd6_cached_destination_index;
 
 /* Multicast address holder. */
 static ip6_addr_t multicast_address;
@@ -105,9 +105,9 @@ static union ra_options nd6_ra_buffer;
 static s8_t nd6_find_neighbor_cache_entry(const ip6_addr_t *ip6addr);
 static s8_t nd6_new_neighbor_cache_entry(void);
 static void nd6_free_neighbor_cache_entry(s8_t i);
-static s8_t nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr);
-static s8_t nd6_new_destination_cache_entry(void);
-static s8_t nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif);
+static s16_t nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr);
+static s16_t nd6_new_destination_cache_entry(void);
+static int nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif);
 static s8_t nd6_select_router(const ip6_addr_t *ip6addr, struct netif *netif);
 static s8_t nd6_get_router(const ip6_addr_t *router_addr, struct netif *netif);
 static s8_t nd6_new_router(const ip6_addr_t *router_addr, struct netif *netif);
@@ -1561,7 +1561,7 @@ nd6_find_destination_cache_entry(const ip6_addr_t *ip6addr)
  * @return The destination cache entry index that was created, -1 if no
  * entry was created
  */
-static s8_t
+static s16_t
 nd6_new_destination_cache_entry(void)
 {
   s8_t i, j;
@@ -1609,7 +1609,7 @@ nd6_clear_destination_cache(void)
  * @param ip6addr the IPv6 address to match
  * @return 1 if the address is on-link, 0 otherwise
  */
-static s8_t
+static int
 nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
 {
   s8_t i;
@@ -1916,7 +1916,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 #if LWIP_NETIF_HWADDRHINT
   if (netif->hints != NULL) {
     /* per-pcb cached entry was given */
-    u8_t addr_hint = netif->hints->addr_hint;
+    netif_addr_idx_t addr_hint = netif->hints->addr_hint;
     if (addr_hint < LWIP_ND6_NUM_DESTINATIONS) {
       nd6_cached_destination_index = addr_hint;
     }
