@@ -396,7 +396,7 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif *netif)
   arp_table[i].ctime = 0;
 #if ETHARP_TABLE_MATCH_NETIF
   arp_table[i].netif = netif;
-#endif /* ETHARP_TABLE_MATCH_NETIF*/
+#endif /* ETHARP_TABLE_MATCH_NETIF */
   return (s8_t)i;
 }
 
@@ -579,7 +579,7 @@ etharp_cleanup_netif(struct netif *netif)
  * @param ip_ret points to return pointer
  * @return table index if found, -1 otherwise
  */
-s8_t
+ssize_t
 etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
                  struct eth_addr **eth_ret, const ip4_addr_t **ip_ret)
 {
@@ -608,8 +608,8 @@ etharp_find_addr(struct netif *netif, const ip4_addr_t *ipaddr,
  * @param eth_ret return value: ETH address
  * @return 1 on valid index, 0 otherwise
  */
-u8_t
-etharp_get_entry(u8_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_addr **eth_ret)
+int
+etharp_get_entry(size_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth_addr **eth_ret)
 {
   LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);
   LWIP_ASSERT("netif != NULL", netif != NULL);
