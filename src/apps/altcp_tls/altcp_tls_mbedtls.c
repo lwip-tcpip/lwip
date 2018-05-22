@@ -972,6 +972,8 @@ altcp_tls_free_config(struct altcp_tls_config *conf)
   if (conf->ca) {
     mbedtls_x509_crt_free(conf->ca);
   }
+  mbedtls_entropy_free(&conf->entropy);
+  mbedtls_ctr_drbg_free(&conf->ctr_drbg);
   altcp_mbedtls_free_config(conf);
   if (altcp_tls_entropy_rng && altcp_tls_entropy_rng->ref)
       altcp_tls_entropy_rng->ref--;
