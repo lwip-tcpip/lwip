@@ -100,6 +100,17 @@ struct altcp_tls_config *altcp_tls_create_config_client_2wayauth(const u8_t *ca,
 void altcp_tls_free_config(struct altcp_tls_config *conf);
 
 /** @ingroup altcp_tls
+ * Free an ALTCP_TLS global entropy instance.
+ * All ALTCP_TLS configuration are linked to one altcp_tls_entropy_rng structure
+ * that handle an unique system entropy & ctr_drbg instance.
+ * This function allow application to free this altcp_tls_entropy_rng structure
+ * when all configuration referencing it were destroyed.
+ * This function does nothing if some ALTCP_TLS configuration handle are still
+ * active.
+ */
+void altcp_tls_free_entropy(void);
+
+/** @ingroup altcp_tls
  * Create new ALTCP_TLS layer wrapping an existing pcb as inner connection (e.g. TLS over TCP)
  */
 struct altcp_pcb *altcp_tls_wrap(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb);
