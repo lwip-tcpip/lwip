@@ -167,22 +167,34 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
                       (u16_t)((ipaddr) != NULL ? ip4_addr4_16(ipaddr) : 0))
 #define ip4_addr_debug_print_val(debug, ipaddr) \
   ip4_addr_debug_print_parts(debug, \
-                      ip4_addr1_16(&(ipaddr)),       \
-                      ip4_addr2_16(&(ipaddr)),       \
-                      ip4_addr3_16(&(ipaddr)),       \
-                      ip4_addr4_16(&(ipaddr)))
+                      ip4_addr1_16_val(ipaddr),       \
+                      ip4_addr2_16_val(ipaddr),       \
+                      ip4_addr3_16_val(ipaddr),       \
+                      ip4_addr4_16_val(ipaddr))
 
 /* Get one byte from the 4-byte address */
-#define ip4_addr1(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[0])
-#define ip4_addr2(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[1])
-#define ip4_addr3(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[2])
-#define ip4_addr4(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[3])
+#define ip4_addr_get_byte(ipaddr, idx) (((const u8_t*)(&(ipaddr)->addr))[idx])
+#define ip4_addr1(ipaddr) ip4_addr_get_byte(ipaddr, 0)
+#define ip4_addr2(ipaddr) ip4_addr_get_byte(ipaddr, 1)
+#define ip4_addr3(ipaddr) ip4_addr_get_byte(ipaddr, 2)
+#define ip4_addr4(ipaddr) ip4_addr_get_byte(ipaddr, 3)
+/* Get one byte from the 4-byte address, but argument is 'ip4_addr_t',
+ * not a pointer */
+#define ip4_addr_get_byte_val(ipaddr, idx) ((u8_t)(((ipaddr).addr >> (idx * 8)) & 0xff))
+#define ip4_addr1_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 0)
+#define ip4_addr2_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 1)
+#define ip4_addr3_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 2)
+#define ip4_addr4_val(ipaddr) ip4_addr_get_byte_val(ipaddr, 3)
 /* These are cast to u16_t, with the intent that they are often arguments
  * to printf using the U16_F format from cc.h. */
 #define ip4_addr1_16(ipaddr) ((u16_t)ip4_addr1(ipaddr))
 #define ip4_addr2_16(ipaddr) ((u16_t)ip4_addr2(ipaddr))
 #define ip4_addr3_16(ipaddr) ((u16_t)ip4_addr3(ipaddr))
 #define ip4_addr4_16(ipaddr) ((u16_t)ip4_addr4(ipaddr))
+#define ip4_addr1_16_val(ipaddr) ((u16_t)ip4_addr1_val(ipaddr))
+#define ip4_addr2_16_val(ipaddr) ((u16_t)ip4_addr2_val(ipaddr))
+#define ip4_addr3_16_val(ipaddr) ((u16_t)ip4_addr3_val(ipaddr))
+#define ip4_addr4_16_val(ipaddr) ((u16_t)ip4_addr4_val(ipaddr))
 
 #define IP4ADDR_STRLEN_MAX  16
 
