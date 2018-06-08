@@ -90,6 +90,8 @@ static netif_addr_idx_t nd6_cached_destination_index;
 /* Multicast address holder. */
 static ip6_addr_t multicast_address;
 
+static u8_t nd6_tmr_rs_reduction;
+
 /* Static buffer to parse RA packet options */
 union ra_options {
   struct lladdr_option  lladdr;
@@ -1131,15 +1133,20 @@ nd6_tmr(void)
 
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
   /* Send router solicitation messages, if necessary. */
-  NETIF_FOREACH(netif) {
-    if ((netif->rs_count > 0) && netif_is_up(netif) &&
-        netif_is_link_up(netif) &&
-        !ip6_addr_isinvalid(netif_ip6_addr_state(netif, 0)) &&
-        !ip6_addr_isduplicated(netif_ip6_addr_state(netif, 0))) {
-      if (nd6_send_rs(netif) == ERR_OK) {
-        netif->rs_count--;
+  if (!nd6_tmr_rs_reduction) {
+    nd6_tmr_rs_reduction = (ND6_RTR_SOLICITATION_INTERVAL / ND6_TMR_INTERVAL) - 1;
+    NETIF_FOREACH(netif) {
+      if ((netif->rs_count > 0) && netif_is_up(netif) &&
+          netif_is_link_up(netif) &&
+          !ip6_addr_isinvalid(netif_ip6_addr_state(netif, 0)) &&
+          !ip6_addr_isduplicated(netif_ip6_addr_state(netif, 0))) {
+        if (nd6_send_rs(netif) == ERR_OK) {
+          netif->rs_count--;
+        }
       }
     }
+  } else {
+    nd6_tmr_rs_reduction--;
   }
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
