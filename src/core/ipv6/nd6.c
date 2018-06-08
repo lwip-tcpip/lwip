@@ -587,6 +587,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     if ((inp->rs_count < LWIP_ND6_MAX_MULTICAST_SOLICIT) ||
         (nd6_send_rs(inp) == ERR_OK)) {
       inp->rs_count = 0;
+    } else {
+      inp->rs_count = 1;
     }
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
