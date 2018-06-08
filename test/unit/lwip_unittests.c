@@ -1,6 +1,7 @@
 #include "lwip_check.h"
 
 #include "ip4/test_ip4.h"
+#include "ip6/test_ip6.h"
 #include "udp/test_udp.h"
 #include "tcp/test_tcp.h"
 #include "tcp/test_tcp_oos.h"
@@ -62,6 +63,7 @@ int main(void)
   size_t i;
   suite_getter_fn* suites[] = {
     ip4_suite,
+    ip6_suite,
     udp_suite,
     tcp_suite,
     tcp_oos_suite,

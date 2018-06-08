@@ -322,13 +322,13 @@ netif_add(struct netif *netif,
 #ifdef netif_get_client_data
   memset(netif->client_data, 0, sizeof(netif->client_data));
 #endif /* LWIP_NUM_NETIF_CLIENT_DATA */
+#if LWIP_IPV6
 #if LWIP_IPV6_AUTOCONFIG
   /* IPv6 address autoconfiguration not enabled by default */
   netif->ip6_autoconfig_enabled = 0;
 #endif /* LWIP_IPV6_AUTOCONFIG */
-#if LWIP_IPV6_SEND_ROUTER_SOLICIT
-  netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
-#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
+  nd6_restart_netif(netif);
+#endif /* LWIP_IPV6 */
 #if LWIP_NETIF_STATUS_CALLBACK
   netif->status_callback = NULL;
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
@@ -842,6 +842,9 @@ netif_set_up(struct netif *netif)
 #endif
 
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
+#if LWIP_IPV6
+    nd6_restart_netif(netif);
+#endif /* LWIP_IPV6 */
   }
 }
 
@@ -881,10 +884,6 @@ netif_issue_reports(struct netif *netif, u8_t report_type)
     /* send mld memberships */
     mld6_report_groups(netif);
 #endif /* LWIP_IPV6_MLD */
-#if LWIP_IPV6_SEND_ROUTER_SOLICIT
-    /* Send Router Solicitation messages. */
-    netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
-#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
   }
 #endif /* LWIP_IPV6 */
 }
@@ -977,6 +976,9 @@ netif_set_link_up(struct netif *netif)
 #endif /* LWIP_AUTOIP */
 
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4 | NETIF_REPORT_TYPE_IPV6);
+#if LWIP_IPV6
+    nd6_restart_netif(netif);
+#endif /* LWIP_IPV6 */
 
     NETIF_LINK_CALLBACK(netif);
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
