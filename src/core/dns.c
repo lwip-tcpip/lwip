@@ -96,6 +96,7 @@
 #include "lwip/prot/dns.h"
 
 #include <string.h>
+#include <ctype.h>
 
 /** Random generator function to create random TXIDs and source ports for queries */
 #ifndef DNS_RAND_TXID
@@ -666,7 +667,7 @@ dns_compare_name(const char *query, struct pbuf *p, u16_t start_offset)
         if (c < 0) {
           return 0xFFFF;
         }
-        if ((*query) != (u8_t)c) {
+        if (tolower((*query)) != tolower((u8_t)c)) {
           return 0xFFFF;
         }
         if (response_offset == 0xFFFF) {
