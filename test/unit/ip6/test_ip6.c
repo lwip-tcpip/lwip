@@ -141,6 +141,54 @@ START_TEST(test_ip6_ll_addr)
 }
 END_TEST
 
+START_TEST(test_ip6_aton_ipv4mapped)
+{
+  int ret;
+  ip_addr_t addr;
+  ip6_addr_t addr6;
+  const ip_addr_t addr_expected = IPADDR6_INIT_HOST(0, 0, 0xFFFF, 0xD4CC65D2);
+  LWIP_UNUSED_ARG(_i);
+
+  /* check IPv6 representation */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton("0:0:0:0:0:FFFF:D4CC:65D2", &addr6);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
+  memset(&addr, 0, sizeof(addr));
+  ret = ipaddr_aton("0:0:0:0:0:FFFF:D4CC:65D2", &addr);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
+
+  /* check shortened IPv6 representation */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton("::FFFF:D4CC:65D2", &addr6);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
+  memset(&addr, 0, sizeof(addr));
+  ret = ipaddr_aton("::FFFF:D4CC:65D2", &addr);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
+
+  /* checked mixed representation */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton("::FFFF:212.204.101.210", &addr6);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
+  memset(&addr, 0, sizeof(addr));
+  ret = ipaddr_aton("::FFFF:212.204.101.210", &addr);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
+
+  /* checked bogus mixed representation */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton("::FFFF:212.204.101.2101", &addr6);
+  fail_unless(ret == 0);
+  memset(&addr, 0, sizeof(addr));
+  ret = ipaddr_aton("::FFFF:212.204.101.2101", &addr);
+  fail_unless(ret == 0);
+
+}
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
@@ -148,6 +196,7 @@ ip6_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_ip6_ll_addr),
+    TESTFUNC(test_ip6_aton_ipv4mapped),
   };
   return create_suite("IPv6", tests, sizeof(tests)/sizeof(testfunc), ip6_setup, ip6_teardown);
 }
