@@ -1106,16 +1106,16 @@ ip4_debug_print(struct pbuf *p)
                          lwip_ntohs(IPH_CHKSUM(iphdr))));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  | (src)\n",
-                         ip4_addr1_16(&iphdr->src),
-                         ip4_addr2_16(&iphdr->src),
-                         ip4_addr3_16(&iphdr->src),
-                         ip4_addr4_16(&iphdr->src)));
+                         ip4_addr1_16_val(iphdr->src),
+                         ip4_addr1_16_val(iphdr->src),
+                         ip4_addr1_16_val(iphdr->src),
+                         ip4_addr1_16_val(iphdr->src)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  | (dest)\n",
-                         ip4_addr1_16(&iphdr->dest),
-                         ip4_addr2_16(&iphdr->dest),
-                         ip4_addr3_16(&iphdr->dest),
-                         ip4_addr4_16(&iphdr->dest)));
+                         ip4_addr1_16_val(iphdr->dest),
+                         ip4_addr1_16_val(iphdr->dest),
+                         ip4_addr1_16_val(iphdr->dest),
+                         ip4_addr1_16_val(iphdr->dest)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */
