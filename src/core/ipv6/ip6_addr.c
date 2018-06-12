@@ -82,7 +82,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       zero_blocks--;
 #if LWIP_IPV4
     } else if (*s == '.') {
-      if (zero_blocks == 5) {
+      if ((zero_blocks == 5) ||(zero_blocks == 2)) {
         check_ipv4_mapped = 1;
         /* last block could be the start of an IPv4 address */
         zero_blocks--;

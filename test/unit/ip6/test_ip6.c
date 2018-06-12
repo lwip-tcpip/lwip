@@ -156,46 +156,60 @@ START_TEST(test_ip6_aton_ipv4mapped)
   ip_addr_t addr;
   ip6_addr_t addr6;
   const ip_addr_t addr_expected = IPADDR6_INIT_HOST(0, 0, 0xFFFF, 0xD4CC65D2);
+  const char *full_ipv6_addr = "0:0:0:0:0:FFFF:D4CC:65D2";
+  const char *shortened_ipv6_addr = "::FFFF:D4CC:65D2";
+  const char *full_ipv4_mapped_addr = "0:0:0:0:0:FFFF:212.204.101.210";
+  const char *shortened_ipv4_mapped_addr = "::FFFF:212.204.101.210";
+  const char *bogus_ipv4_mapped_addr = "::FFFF:212.204.101.2101";
   LWIP_UNUSED_ARG(_i);
 
   /* check IPv6 representation */
   memset(&addr6, 0, sizeof(addr6));
-  ret = ip6addr_aton("0:0:0:0:0:FFFF:D4CC:65D2", &addr6);
+  ret = ip6addr_aton(full_ipv6_addr, &addr6);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
   memset(&addr, 0, sizeof(addr));
-  ret = ipaddr_aton("0:0:0:0:0:FFFF:D4CC:65D2", &addr);
+  ret = ipaddr_aton(full_ipv6_addr, &addr);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
 
   /* check shortened IPv6 representation */
   memset(&addr6, 0, sizeof(addr6));
-  ret = ip6addr_aton("::FFFF:D4CC:65D2", &addr6);
+  ret = ip6addr_aton(shortened_ipv6_addr, &addr6);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
   memset(&addr, 0, sizeof(addr));
-  ret = ipaddr_aton("::FFFF:D4CC:65D2", &addr);
+  ret = ipaddr_aton(shortened_ipv6_addr, &addr);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
+
+  /* checked shortened mixed representation */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(shortened_ipv4_mapped_addr, &addr6);
+  fail_unless(ret == 1);
+  fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
+  memset(&addr, 0, sizeof(addr));
+  ret = ipaddr_aton(shortened_ipv4_mapped_addr, &addr);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
 
   /* checked mixed representation */
   memset(&addr6, 0, sizeof(addr6));
-  ret = ip6addr_aton("::FFFF:212.204.101.210", &addr6);
+  ret = ip6addr_aton(full_ipv4_mapped_addr, &addr6);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr6, &addr_expected, 16) == 0);
   memset(&addr, 0, sizeof(addr));
-  ret = ipaddr_aton("::FFFF:212.204.101.210", &addr);
+  ret = ipaddr_aton(full_ipv4_mapped_addr, &addr);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
 
   /* checked bogus mixed representation */
   memset(&addr6, 0, sizeof(addr6));
-  ret = ip6addr_aton("::FFFF:212.204.101.2101", &addr6);
+  ret = ip6addr_aton(bogus_ipv4_mapped_addr, &addr6);
   fail_unless(ret == 0);
   memset(&addr, 0, sizeof(addr));
-  ret = ipaddr_aton("::FFFF:212.204.101.2101", &addr);
+  ret = ipaddr_aton(bogus_ipv4_mapped_addr, &addr);
   fail_unless(ret == 0);
-
 }
 END_TEST
 
