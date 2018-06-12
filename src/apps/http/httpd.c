@@ -2198,6 +2198,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
           size_t name_len = strlen(httpd_default_filenames[loop].name);
           size_t name_copy_len = LWIP_MIN(len_left, name_len);
           MEMCPY(&http_uri_buf[copy_len], httpd_default_filenames[loop].name, name_copy_len);
+          http_uri_buf[copy_len + name_copy_len] = 0;
         }
         file_name = http_uri_buf;
       } else
