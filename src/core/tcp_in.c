@@ -128,6 +128,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   LWIP_UNUSED_ARG(inp);
   LWIP_ASSERT_CORE_LOCKED();
+  LWIP_ASSERT("tcp_input: invalid pbuf", p != NULL);
 
   PERF_START;
 
@@ -598,6 +599,8 @@ dropped:
 static int
 tcp_input_delayed_close(struct tcp_pcb *pcb)
 {
+  LWIP_ASSERT("tcp_input_delayed_close: invalid pcb", pcb != NULL);
+
   if (recv_flags & TF_CLOSED) {
     /* The connection has been closed and we will deallocate the
         PCB. */
@@ -634,6 +637,8 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* An incoming RST should be ignored. Return. */
     return;
   }
+
+  LWIP_ASSERT("tcp_listen_input: invalid pcb", pcb != NULL);
 
   /* In the LISTEN state, we check for incoming SYN segments,
      creates a new PCB, and responds with a SYN|ACK. */
@@ -741,6 +746,9 @@ tcp_timewait_input(struct tcp_pcb *pcb)
   if (flags & TCP_RST) {
     return;
   }
+
+  LWIP_ASSERT("tcp_timewait_input: invalid pcb", pcb != NULL);
+
   /* - fourth, check the SYN bit, */
   if (flags & TCP_SYN) {
     /* If an incoming segment is not acceptable, an acknowledgment
@@ -784,6 +792,8 @@ tcp_process(struct tcp_pcb *pcb)
   err_t err;
 
   err = ERR_OK;
+
+  LWIP_ASSERT("tcp_process: invalid pcb", pcb != NULL);
 
   /* Process incoming RST segments. */
   if (flags & TCP_RST) {
@@ -1042,6 +1052,8 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
 {
   struct tcp_seg *old_seg;
 
+  LWIP_ASSERT("tcp_oos_insert_segment: invalid cseg", cseg != NULL);
+
   if (TCPH_FLAGS(cseg->tcphdr) & TCP_FIN) {
     /* received segment overlaps all following segments */
     tcp_segs_free(next);
@@ -1132,6 +1144,7 @@ tcp_receive(struct tcp_pcb *pcb)
   u32_t right_wnd_edge;
   int found_dupack = 0;
 
+  LWIP_ASSERT("tcp_receive: invalid pcb", pcb != NULL);
   LWIP_ASSERT("tcp_receive: wrong state", pcb->state >= ESTABLISHED);
 
   if (flags & TCP_ACK) {
@@ -1900,6 +1913,8 @@ tcp_parseopt(struct tcp_pcb *pcb)
 #if LWIP_TCP_TIMESTAMPS
   u32_t tsval;
 #endif
+
+  LWIP_ASSERT("tcp_parseopt: invalid pcb", pcb != NULL);
 
   /* Parse the TCP MSS option, if present. */
   if (tcphdr_optlen != 0) {

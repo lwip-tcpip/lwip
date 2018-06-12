@@ -150,6 +150,8 @@ static struct netif loop_netif;
 static err_t
 netif_loopif_init(struct netif *netif)
 {
+  LWIP_ASSERT("netif_loopif_init: invalid netif", netif != NULL);
+
   /* initialize the snmp variables and counters inside the struct netif
    * ifSpeed: no assumption can be made!
    */
@@ -215,6 +217,9 @@ err_t
 netif_input(struct pbuf *p, struct netif *inp)
 {
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ASSERT("netif_input: invalid pbuf", p != NULL);
+  LWIP_ASSERT("netif_input: invalid netif", inp != NULL);
 
 #if LWIP_ETHERNET
   if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
@@ -287,7 +292,9 @@ netif_add(struct netif *netif,
   }
 #endif
 
-  LWIP_ASSERT("No init function given", init != NULL);
+  LWIP_ERROR("netif_add: invalid netif", netif != NULL, return NULL);
+  LWIP_ERROR("netif_add: No init function given", init != NULL, return NULL);
+  LWIP_ERROR("netif_add: No input function given", input != NULL, return NULL);
 
 #if LWIP_IPV4
   if (ipaddr == NULL) {
@@ -826,6 +833,8 @@ netif_set_up(struct netif *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
+  LWIP_ERROR("netif_set_up: invalid netif", netif != NULL, return);
+
   if (!(netif->flags & NETIF_FLAG_UP)) {
     netif_set_flags(netif, NETIF_FLAG_UP);
 
@@ -853,6 +862,8 @@ netif_set_up(struct netif *netif)
 static void
 netif_issue_reports(struct netif *netif, u8_t report_type)
 {
+  LWIP_ASSERT("netif_issue_reports: invalid netif", netif != NULL);
+
   /* Only send reports when both link and admin states are up */
   if (!(netif->flags & NETIF_FLAG_LINK_UP) ||
       !(netif->flags & NETIF_FLAG_UP)) {
@@ -896,6 +907,8 @@ void
 netif_set_down(struct netif *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ERROR("netif_set_down: invalid netif", netif != NULL, return);
 
   if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
@@ -964,6 +977,8 @@ netif_set_link_up(struct netif *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
+  LWIP_ERROR("netif_set_link_up: invalid netif", netif != NULL, return);
+
   if (!(netif->flags & NETIF_FLAG_LINK_UP)) {
     netif_set_flags(netif, NETIF_FLAG_LINK_UP);
 
@@ -999,6 +1014,8 @@ void
 netif_set_link_down(struct netif *netif )
 {
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ERROR("netif_set_link_down: invalid netif", netif != NULL, return);
 
   if (netif->flags & NETIF_FLAG_LINK_UP) {
     netif_clear_flags(netif, NETIF_FLAG_LINK_UP);
@@ -1066,6 +1083,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   u8_t schedule_poll = 0;
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   SYS_ARCH_DECL_PROTECT(lev);
+
+  LWIP_ASSERT("netif_loop_output: invalid netif", netif != NULL);
+  LWIP_ASSERT("netif_loop_output: invalid pbuf", p != NULL);
 
   /* Allocate a new pbuf */
   r = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
@@ -1176,6 +1196,8 @@ netif_poll(struct netif *netif)
 #endif /* MIB2_STATS */
   SYS_ARCH_DECL_PROTECT(lev);
 
+  LWIP_ASSERT("netif_poll: invalid netif", netif != NULL);
+
   /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
   SYS_ARCH_PROTECT(lev);
   while (netif->loop_first != NULL) {
@@ -1279,9 +1301,10 @@ netif_alloc_client_data_id(void)
 void
 netif_ip6_addr_set(struct netif *netif, s8_t addr_idx, const ip6_addr_t *addr6)
 {
-  LWIP_ASSERT("addr6 != NULL", addr6 != NULL);
-
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ASSERT("netif_ip6_addr_set: invalid netif", netif != NULL);
+  LWIP_ASSERT("netif_ip6_addr_set: invalid addr6", addr6 != NULL);
 
   netif_ip6_addr_set_parts(netif, addr_idx, addr6->addr[0], addr6->addr[1],
                            addr6->addr[2], addr6->addr[3]);
@@ -1432,6 +1455,9 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
 
   LWIP_ASSERT_CORE_LOCKED();
 
+  LWIP_ASSERT("netif_get_ip6_addr_match: invalid netif", netif != NULL);
+  LWIP_ASSERT("netif_get_ip6_addr_match: invalid ip6addr", ip6addr != NULL);
+
 #if LWIP_IPV6_SCOPES
   if (ip6_addr_has_zone(ip6addr) && !ip6_addr_test_zone(ip6addr, netif)) {
     return -1; /* wrong zone, no match */
@@ -1461,6 +1487,8 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
   u8_t i, addr_index;
 
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ASSERT("netif_create_ip6_linklocal_address: invalid netif", netif != NULL);
 
   /* Link-local prefix. */
   ip_2_ip6(&netif->ip6_addr[0])->addr[0] = PP_HTONL(0xfe800000ul);
@@ -1527,6 +1555,9 @@ netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chos
   s8_t i;
 
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ASSERT("netif_add_ip6_address: invalid netif", netif != NULL);
+  LWIP_ASSERT("netif_add_ip6_address: invalid ip6addr", ip6addr != NULL);
 
   i = netif_get_ip6_addr_match(netif, ip6addr);
   if (i >= 0) {
