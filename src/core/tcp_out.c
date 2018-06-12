@@ -1886,7 +1886,7 @@ tcp_output_fill_options(const struct tcp_pcb *pcb, struct pbuf *p, u8_t optflags
 #endif
 
 #if LWIP_TCP_SACK_OUT
-  if (num_sacks > 0) {
+  if (pcb && (num_sacks > 0)) {
     tcp_build_sack_option(pcb, opts, num_sacks);
     /* 1 word for SACKs header (including 2xNOP), and 2 words for each SACK */
     sacks_len = 1 + num_sacks * 2;
@@ -1979,7 +1979,6 @@ tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
   u16_t wnd;
   u8_t optlen;
 
-  LWIP_ASSERT("tcp_rst: invalid pcb", pcb != NULL);
   LWIP_ASSERT("tcp_rst: invalid local_ip", local_ip != NULL);
   LWIP_ASSERT("tcp_rst: invalid remote_ip", remote_ip != NULL);
 

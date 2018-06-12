@@ -1534,10 +1534,13 @@ tcp_txnow(void)
 err_t
 tcp_process_refused_data(struct tcp_pcb *pcb)
 {
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+  struct pbuf *rest;
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+
   LWIP_ERROR("tcp_process_refused_data: invalid pcb", pcb != NULL, return ERR_ARG);
 
 #if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
-  struct pbuf *rest;
   while (pcb->refused_data != NULL)
 #endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
   {
