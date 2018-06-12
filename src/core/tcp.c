@@ -252,7 +252,6 @@ tcp_remove_listener(struct tcp_pcb *list, struct tcp_pcb_listen *lpcb)
 {
   struct tcp_pcb *pcb;
 
-  LWIP_ASSERT("tcp_remove_listener: invalid pcb list", list != NULL);
   LWIP_ASSERT("tcp_remove_listener: invalid listener", lpcb != NULL);
 
   for (pcb = list; pcb != NULL; pcb = pcb->next) {
@@ -2298,7 +2297,6 @@ tcp_netif_ip_addr_changed_pcblist(const ip_addr_t *old_addr, struct tcp_pcb *pcb
   pcb = pcb_list;
 
   LWIP_ASSERT("tcp_netif_ip_addr_changed_pcblist: invalid old_addr", old_addr != NULL);
-  LWIP_ASSERT("tcp_netif_ip_addr_changed_pcblist: invalid pcb_list", pcb_list != NULL);
 
   while (pcb != NULL) {
     /* PCB bound to current local interface address? */
