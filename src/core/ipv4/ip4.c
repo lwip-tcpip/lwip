@@ -237,13 +237,19 @@ ip4_canforward(struct pbuf *p)
 {
   u32_t addr = lwip_htonl(ip4_addr_get_u32(ip4_current_dest_addr()));
 
+#ifdef LWIP_HOOK_IP4_CANFORWARD
+  int ret = LWIP_HOOK_IP4_CANFORWARD(p, addr);
+  if (ret >= 0) {
+    return ret;
+  }
+#endif /* LWIP_HOOK_IP4_CANFORWARD */
+
   if (p->flags & PBUF_FLAG_LLBCAST) {
     /* don't route link-layer broadcasts */
     return 0;
   }
-  if ((p->flags & PBUF_FLAG_LLMCAST) && !IP_MULTICAST(addr)) {
-    /* don't route link-layer multicasts unless the destination address is an IP
-       multicast address */
+  if ((p->flags & PBUF_FLAG_LLMCAST) || IP_MULTICAST(addr)) {
+    /* don't route link-layer multicasts (use LWIP_HOOK_IP4_CANFORWARD instead) */
     return 0;
   }
   if (IP_EXPERIMENTAL(addr)) {

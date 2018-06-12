@@ -2887,6 +2887,27 @@
 #endif
 
 /**
+ * LWIP_HOOK_IP4_CANFORWARD(src, dest):
+ * Check if an IPv4 can be forwarded - called from:
+ * ip4_input() -> ip4_forward() -> ip4_canforward() (IPv4)
+ * - source address is available via ip4_current_src_addr()
+ * - calling an output function in this context (e.g. multicast router) is allowed
+ * Signature:\code{.c}
+ *   int my_hook(struct pbuf *p, u32_t dest_addr_hostorder);
+ * \endcode
+ * Arguments:
+ * - p: packet to forward
+ * - dest: destination IPv4 address
+ * Returns values:
+ * - 1: forward
+ * - 0: don't forward
+ * - -1: no decision. In that case, ip4_canforward() continues as normal.
+ */
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP4_CANFORWARD(src, dest)
+#endif
+
+/**
  * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
  * Called from etharp_output() (IPv4)
  * Signature:\code{.c}
