@@ -208,7 +208,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   LWIP_UNUSED_ARG(ppp);
 
   /* Grab an output buffer. */
-  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_RAM);
   if (nb == NULL) {
     PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
@@ -257,7 +257,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   LWIP_UNUSED_ARG(ppp);
 
   /* Grab an output buffer. */
-  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_RAM);
   if (nb == NULL) {
     PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);

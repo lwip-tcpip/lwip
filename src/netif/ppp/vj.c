@@ -202,7 +202,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
 
   /* TCP stack requires that we don't change the packet payload, therefore we copy
    * the whole packet before compression. */
-  np = pbuf_clone(PBUF_RAW, PBUF_POOL, *pb);
+  np = pbuf_clone(PBUF_RAW, PBUF_RAM, *pb);
   if (!np) {
     return (TYPE_IP);
   }
