@@ -33,6 +33,15 @@ etharp_remove_all(void)
 }
 
 static err_t
+dummy_input_function(struct pbuf *p, struct netif *inp)
+{
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(inp);
+  fail("this netif should have no input");
+  return ERR_VAL;
+}
+
+static err_t
 default_netif_linkoutput(struct netif *netif, struct pbuf *p)
 {
   fail_unless(netif == &test_netif);
@@ -62,7 +71,7 @@ default_netif_add(void)
 
   fail_unless(netif_default == NULL);
   netif_set_default(netif_add(&test_netif, &test_ipaddr, &test_netmask,
-                              &test_gw, NULL, default_netif_init, NULL));
+                              &test_gw, NULL, default_netif_init, dummy_input_function));
   netif_set_up(&test_netif);
 }
 

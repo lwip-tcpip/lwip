@@ -46,14 +46,16 @@ static struct netif *old_netif_default;
 static void
 tcp_setup(void)
 {
+  struct tcp_pcb dummy_pcb; /* we need this for tcp_next_iss() only */
+
   old_netif_list = netif_list;
   old_netif_default = netif_default;
   netif_list = NULL;
   netif_default = NULL;
   /* reset iss to default (6510) */
   tcp_ticks = 0;
-  tcp_ticks = 0 - (tcp_next_iss(NULL) - 6510);
-  tcp_next_iss(NULL);
+  tcp_ticks = 0 - (tcp_next_iss(&dummy_pcb) - 6510);
+  tcp_next_iss(&dummy_pcb);
   tcp_ticks = 0;
 
   test_tcp_timer = 0;
@@ -669,6 +671,7 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   struct test_tcp_txcounters txcounters;
   struct test_tcp_counters counters;
   struct tcp_pcb* pcb;
+  struct tcp_pcb dummy_pcb_for_iss; /* we need this for tcp_next_iss() only */
   err_t err;
   size_t i;
   u16_t sent_total = 0;
@@ -684,8 +687,8 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
 
   /* create and initialize the pcb */
   tcp_ticks = 0;
-  tcp_ticks = 0 - tcp_next_iss(NULL);
-  tcp_ticks = SEQNO1 - tcp_next_iss(NULL);
+  tcp_ticks = 0 - tcp_next_iss(&dummy_pcb_for_iss);
+  tcp_ticks = SEQNO1 - tcp_next_iss(&dummy_pcb_for_iss);
   pcb = test_tcp_new_counters_pcb(&counters);
   EXPECT_RET(pcb != NULL);
   tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT, TEST_REMOTE_PORT);
