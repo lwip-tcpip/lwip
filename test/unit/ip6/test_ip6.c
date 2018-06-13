@@ -17,15 +17,6 @@ static struct netif test_netif6;
 static int linkoutput_ctr;
 
 static err_t
-dummy_input_function(struct pbuf *p, struct netif *inp)
-{
-  LWIP_UNUSED_ARG(p);
-  LWIP_UNUSED_ARG(inp);
-  fail("this netif should have no input");
-  return ERR_VAL;
-}
-
-static err_t
 default_netif_linkoutput(struct netif *netif, struct pbuf *p)
 {
   fail_unless(netif == &test_netif6);
@@ -51,7 +42,7 @@ default_netif_add(void)
 {
   struct netif *n;
   fail_unless(netif_default == NULL);
-  n = netif_add_noaddr(&test_netif6, NULL, default_netif_init, dummy_input_function);
+  n = netif_add_noaddr(&test_netif6, NULL, default_netif_init, NULL);
   fail_unless(n == &test_netif6);
   netif_set_default(&test_netif6);
 }
