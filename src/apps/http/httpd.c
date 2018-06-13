@@ -217,6 +217,8 @@ struct http_ssi_state {
 #if !LWIP_HTTPD_SSI_INCLUDE_TAG
   const char *tag_started;/* Pointer to the first opening '<' of the tag. */
 #endif /* !LWIP_HTTPD_SSI_INCLUDE_TAG */
+  const char *lead_in; /* Lead in for the potential current tag type. */
+  const char *lead_out; /* Lead out for the current tag type. */
   const char *tag_end;    /* Pointer to char after the closing '>' of the tag. */
   u32_t parse_left; /* Number of unparsed bytes in buf. */
   u16_t tag_index;   /* Counter used by tag parsing state machine */
@@ -316,11 +318,11 @@ static int httpd_num_tags;
 static const char **httpd_tags;
 #endif /* !LWIP_HTTPD_SSI_RAW */
 
-#define LEN_TAG_LEAD_IN 5
 static const char httpd_tag_lead_in[] = "<!--#";
-
-#define LEN_TAG_LEAD_OUT 3
 static const char httpd_tag_lead_out[] = "-->";
+static const char httpd_tag_lead_in_js[] = "/*#";
+static const char httpd_tag_lead_out_js[] = "*/";
+
 #endif /* LWIP_HTTPD_SSI */
 
 #if LWIP_HTTPD_CGI
@@ -1254,6 +1256,19 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
         if (*ssi->parsed == httpd_tag_lead_in[0]) {
           /* We found what could be the lead-in for a new tag so change
            * state appropriately. */
+          ssi->lead_in = httpd_tag_lead_in;
+          ssi->lead_out = httpd_tag_lead_out;
+          ssi->tag_state = TAG_LEADIN;
+          ssi->tag_index = 1;
+#if !LWIP_HTTPD_SSI_INCLUDE_TAG
+          ssi->tag_started = ssi->parsed;
+#endif /* !LWIP_HTTPD_SSI_INCLUDE_TAG */
+        }
+        if (*ssi->parsed == httpd_tag_lead_in_js[0]) {
+          /* We found what could be the lead-in for a new tag so change
+           * state appropriately. */
+          ssi->lead_in = httpd_tag_lead_in_js;
+          ssi->lead_out = httpd_tag_lead_out_js;
           ssi->tag_state = TAG_LEADIN;
           ssi->tag_index = 1;
 #if !LWIP_HTTPD_SSI_INCLUDE_TAG
@@ -1271,12 +1286,12 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
          * the tag name. */
 
         /* Have we reached the end of the leadin? */
-        if (ssi->tag_index == LEN_TAG_LEAD_IN) {
+        if (ssi->lead_in[ssi->tag_index] == 0) {
           ssi->tag_index = 0;
           ssi->tag_state = TAG_FOUND;
         } else {
           /* Have we found the next character we expect for the tag leadin? */
-          if (*ssi->parsed == httpd_tag_lead_in[ssi->tag_index]) {
+          if (*ssi->parsed == ssi->lead_in[ssi->tag_index]) {
             /* Yes - move to the next one unless we have found the complete
              * leadin, in which case we start looking for the tag itself */
             ssi->tag_index++;
@@ -1309,7 +1324,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
 
         /* Have we found the end of the tag name? This is signalled by
          * us finding the first leadout character or whitespace */
-        if ((*ssi->parsed == httpd_tag_lead_out[0]) ||
+        if ((*ssi->parsed == ssi->lead_out[0]) ||
             (*ssi->parsed == ' ')  || (*ssi->parsed == '\t') ||
             (*ssi->parsed == '\n') || (*ssi->parsed == '\r')) {
 
@@ -1323,7 +1338,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
             LWIP_ASSERT("ssi->tag_index <= 0xff", ssi->tag_index <= 0xff);
             ssi->tag_name_len = (u8_t)ssi->tag_index;
             ssi->tag_name[ssi->tag_index] = '\0';
-            if (*ssi->parsed == httpd_tag_lead_out[0]) {
+            if (*ssi->parsed == ssi->lead_out[0]) {
               ssi->tag_index = 1;
             } else {
               ssi->tag_index = 0;
@@ -1359,7 +1374,7 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
         }
 
         /* Have we found the next character we expect for the tag leadout? */
-        if (*ssi->parsed == httpd_tag_lead_out[ssi->tag_index]) {
+        if (*ssi->parsed == ssi->lead_out[ssi->tag_index]) {
           /* Yes - move to the next one unless we have found the complete
            * leadout, in which case we need to call the client to process
            * the tag. */
@@ -1367,8 +1382,9 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
           /* Move on to the next character in the buffer */
           ssi->parse_left--;
           ssi->parsed++;
+          ssi->tag_index++;
 
-          if (ssi->tag_index == (LEN_TAG_LEAD_OUT - 1)) {
+          if (ssi->lead_out[ssi->tag_index] == 0) {
             /* Call the client to ask for the insert string for the
              * tag we just found. */
 #if LWIP_HTTPD_SSI_MULTIPART
@@ -1410,8 +1426,6 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
                 hs->left -= len;
               }
             }
-          } else {
-            ssi->tag_index++;
           }
         } else {
           /* We found an unexpected character so this is not a tag. Move

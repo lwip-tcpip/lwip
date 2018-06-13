@@ -150,7 +150,8 @@ extern void httpd_cgi_handler(struct fs_file *file, const char* uri, int iNumPar
  * resemble an HTML comment but this syntax does not constitute a comment
  * within JavaScript and, hence, leaving the tag in place will result in
  * problems in these cases. In order to avoid these problems, define
- * LWIP_HTTPD_SSI_INCLUDE_TAG as zero in your lwip options file.
+ * LWIP_HTTPD_SSI_INCLUDE_TAG as zero in your lwip options file, or use JavaScript
+ * style block comments in the form / * # name * / (without the spaces).
  */
 typedef u16_t (*tSSIHandler)(
 #if LWIP_HTTPD_SSI_RAW
