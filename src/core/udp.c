@@ -265,6 +265,17 @@ udp_input(struct pbuf *p, struct netif *inp)
         if (uncon_pcb == NULL) {
           /* the first unconnected matching PCB */
           uncon_pcb = pcb;
+#if LWIP_IPV4
+        } else if (broadcast && ip4_current_dest_addr()->addr == IPADDR_BROADCAST) {
+          /* global broadcast address (only valid for IPv4; match was checked before) */
+          if (!IP_IS_V4_VAL(uncon_pcb->local_ip) || !ip4_addr_cmp(ip_2_ip4(&uncon_pcb->local_ip), netif_ip4_addr(inp))) {
+            /* uncon_pcb does not match the input netif, check this pcb */
+            if (IP_IS_V4_VAL(pcb->local_ip) && ip4_addr_cmp(ip_2_ip4(&pcb->local_ip), netif_ip4_addr(inp))) {
+              /* better match */
+              uncon_pcb = pcb;
+            }
+          }
+#endif /* LWIP_IPV4 */
         }
 #if SO_REUSE
         else if (!ip_addr_isany(&pcb->local_ip)) {
