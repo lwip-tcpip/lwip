@@ -213,6 +213,51 @@ START_TEST(test_ip6_aton_ipv4mapped)
 }
 END_TEST
 
+START_TEST(test_ip6_lladdr)
+{
+  u8_t zeros[128];
+  const u8_t test_mac_addr[6] = {0xb0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5};
+  const u32_t expected_ip6_addr_1[4] = {PP_HTONL(0xfe800000), 0, PP_HTONL(0xb2a1a2ff), PP_HTONL(0xfea3a4a5)};
+  const u32_t expected_ip6_addr_2[4] = {PP_HTONL(0xfe800000), 0, PP_HTONL(0x0000b0a1), PP_HTONL(0xa2a3a4a5)};
+  LWIP_UNUSED_ARG(_i);
+  memset(zeros, 0, sizeof(zeros));
+
+  fail_unless(test_netif6.hwaddr_len == 6);
+  fail_unless(!memcmp(test_netif6.hwaddr, zeros, 6));
+
+  fail_unless(test_netif6.ip6_addr_state[0] == 0);
+  fail_unless(!memcmp(netif_ip6_addr(&test_netif6, 0), zeros, sizeof(ip6_addr_t)));
+
+  /* set specific mac addr */
+  memcpy(test_netif6.hwaddr, test_mac_addr, 6);
+
+  /* create link-local addr based on mac (EUI-48) */
+  netif_create_ip6_linklocal_address(&test_netif6, 1);
+  fail_unless(IP_IS_V6(&test_netif6.ip6_addr[0]));
+  fail_unless(!memcmp(&netif_ip6_addr(&test_netif6, 0)->addr, expected_ip6_addr_1, 16));
+#if LWIP_IPV6_SCOPES
+  fail_unless(netif_ip6_addr(&test_netif6, 0)->zone == (test_netif6.num + 1));
+#endif
+  /* reset address */
+  memset(&test_netif6.ip6_addr[0], 0, sizeof(ip6_addr_t));
+  test_netif6.ip6_addr_state[0] = 0;
+
+  /* create link-local addr based interface ID */
+  netif_create_ip6_linklocal_address(&test_netif6, 0);
+  fail_unless(IP_IS_V6(&test_netif6.ip6_addr[0]));
+  fail_unless(!memcmp(&netif_ip6_addr(&test_netif6, 0)->addr, expected_ip6_addr_2, 16));
+#if LWIP_IPV6_SCOPES
+  fail_unless(netif_ip6_addr(&test_netif6, 0)->zone == (test_netif6.num + 1));
+#endif
+  /* reset address */
+  memset(&test_netif6.ip6_addr[0], 0, sizeof(ip6_addr_t));
+  test_netif6.ip6_addr_state[0] = 0;
+
+  /* reset mac address */
+  memset(&test_netif6.hwaddr, 0, sizeof(test_netif6.hwaddr));
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 ip6_suite(void)
@@ -220,6 +265,7 @@ ip6_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_ip6_ll_addr),
     TESTFUNC(test_ip6_aton_ipv4mapped),
+    TESTFUNC(test_ip6_lladdr)
   };
   return create_suite("IPv6", tests, sizeof(tests)/sizeof(testfunc), ip6_setup, ip6_teardown);
 }

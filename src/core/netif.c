@@ -1515,7 +1515,7 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
       if (i == 4) {
         addr_index--;
       }
-      ip_2_ip6(&netif->ip6_addr[0])->addr[addr_index] |= ((u32_t)(netif->hwaddr[netif->hwaddr_len - i - 1])) << (8 * (i & 0x03));
+      ip_2_ip6(&netif->ip6_addr[0])->addr[addr_index] |= lwip_htonl(((u32_t)(netif->hwaddr[netif->hwaddr_len - i - 1])) << (8 * (i & 0x03)));
     }
   }
 
