@@ -207,8 +207,10 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   err_t err;
   LWIP_UNUSED_ARG(ppp);
 
-  /* Grab an output buffer. */
-  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_RAM);
+  /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the pbuf
+     gets freed by 'pppos_output_last' before this function returns and thus
+     cannot starve rx. */
+  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (nb == NULL) {
     PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
@@ -256,8 +258,10 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   err_t err;
   LWIP_UNUSED_ARG(ppp);
 
-  /* Grab an output buffer. */
-  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_RAM);
+  /* Grab an output buffer. Using PBUF_POOL here for tx is ok since the pbuf
+     gets freed by 'pppos_output_last' before this function returns and thus
+     cannot starve rx. */
+  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (nb == NULL) {
     PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
