@@ -261,15 +261,17 @@ udp_input(struct pbuf *p, struct netif *inp)
     /* compare PCB local addr+port to UDP destination addr+port */
     if ((pcb->local_port == dest) &&
         (udp_input_local_match(pcb, inp, broadcast) != 0)) {
-      if (((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
-          ((uncon_pcb == NULL)
+      if ((pcb->flags & UDP_FLAGS_CONNECTED) == 0) {
+        if (uncon_pcb == NULL) {
+          /* the first unconnected matching PCB */
+          uncon_pcb = pcb;
+        }
 #if SO_REUSE
-           /* prefer specific IPs over cath-all */
-           || !ip_addr_isany(&pcb->local_ip)
+        else if (!ip_addr_isany(&pcb->local_ip)) {
+          /* prefer specific IPs over catch-all */
+          uncon_pcb = pcb;
+        }
 #endif /* SO_REUSE */
-          )) {
-        /* the first unconnected matching PCB */
-        uncon_pcb = pcb;
       }
 
       /* compare PCB remote addr+port to UDP source addr+port */
