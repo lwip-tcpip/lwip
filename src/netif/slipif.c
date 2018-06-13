@@ -362,6 +362,8 @@ slipif_init(struct netif *netif)
   struct slipif_priv *priv;
   u8_t sio_num;
 
+  LWIP_ASSERT("slipif needs an input callback", netif->input != NULL);
+
   /* netif->state contains serial port number */
   sio_num = LWIP_PTR_NUMERIC_CAST(u8_t, netif->state);
 

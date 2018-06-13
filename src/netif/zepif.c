@@ -224,6 +224,8 @@ zepif_init(struct netif *netif)
   struct zepif_init *init_state = (struct zepif_init *)netif->state;
   struct zepif_state *state = (struct zepif_state *)mem_malloc(sizeof(struct zepif_state));
 
+  LWIP_ASSERT("zepif needs an input callback", netif->input != NULL);
+
   if (state == NULL) {
     return ERR_MEM;
   }
