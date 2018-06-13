@@ -637,6 +637,11 @@ dns_lookup(const char *name, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_t dns_addr
  * entry (otherwise, answers might arrive late for hostname not on the list
  * any more).
  *
+ * For now, this function compares case-insensitive to cope with all kinds of
+ * servers. This also means that "dns 0x20 bit encoding" must be checked
+ * externally, if we want to implement it.
+ * Currently, the request is sent exactly as passed in by he user request.
+ *
  * @param query hostname (not encoded) from the dns_table
  * @param p pbuf containing the encoded hostname in the DNS response
  * @param start_offset offset into p where the name starts
