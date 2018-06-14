@@ -687,13 +687,20 @@ nd6_input(struct pbuf *p, struct netif *inp)
       case ND6_OPTION_TYPE_MTU:
       {
         struct mtu_option *mtu_opt;
+        u32_t mtu32;
         if (option_len < sizeof(struct mtu_option)) {
           goto lenerr_drop_free_return;
         }
         mtu_opt = (struct mtu_option *)buffer;
-        if (lwip_htonl(mtu_opt->mtu) >= 1280) {
+        mtu32 = lwip_htonl(mtu_opt->mtu);
+        if ((mtu32 >= 1280) && (mtu32 <= 0xffff)) {
 #if LWIP_ND6_ALLOW_RA_UPDATES
-          inp->mtu = (u16_t)lwip_htonl(mtu_opt->mtu);
+          if (inp->mtu) {
+            /* don't set the mtu for IPv6 higher than the netif driver supports */
+            inp->mtu6 = LWIP_MIN(inp->mtu, (u16_t)mtu32);
+          } else {
+            inp->mtu6 = (u16_t)mtu32;
+          }
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
         }
         break;
@@ -1965,7 +1972,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
       if (ip6_addr_islinklocal(ip6addr) ||
           nd6_is_prefix_in_netif(ip6addr, netif)) {
         /* Destination in local link. */
-        destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
+        destination_cache[nd6_cached_destination_index].pmtu = netif_mtu6(netif);
         ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, destination_cache[nd6_cached_destination_index].destination_addr);
 #ifdef LWIP_HOOK_ND6_GET_GW
       } else if ((next_hop_addr = LWIP_HOOK_ND6_GET_GW(netif, ip6addr)) != NULL) {
@@ -1981,7 +1988,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
           ip6_addr_set_any(&(destination_cache[nd6_cached_destination_index].destination_addr));
           return ERR_RTE;
         }
-        destination_cache[nd6_cached_destination_index].pmtu = netif->mtu; /* Start with netif mtu, correct through ICMPv6 if necessary */
+        destination_cache[nd6_cached_destination_index].pmtu = netif_mtu6(netif); /* Start with netif mtu, correct through ICMPv6 if necessary */
         ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, default_router_list[i].neighbor_entry->next_hop_address);
       }
     }
@@ -2290,7 +2297,7 @@ nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif)
   }
 
   if (netif != NULL) {
-    return netif->mtu;
+    return netif_mtu6(netif);
   }
 
   return 1280; /* Minimum MTU */

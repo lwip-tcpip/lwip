@@ -324,6 +324,7 @@ netif_add(struct netif *netif,
   netif->output_ip6 = netif_null_output_ip6;
 #endif /* LWIP_IPV6 */
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
+  netif->mtu = 0;
   netif->flags = 0;
 #ifdef netif_get_client_data
   memset(netif->client_data, 0, sizeof(netif->client_data));
@@ -370,6 +371,11 @@ netif_add(struct netif *netif,
   if (init(netif) != ERR_OK) {
     return NULL;
   }
+#if LWIP_IPV6 && LWIP_ND6_ALLOW_RA_UPDATES
+  /* Initialize the MTU for IPv6 to the one set by the netif driver.
+     This can be updated later by RA. */
+  netif->mtu6 = netif->mtu;
+#endif /* LWIP_IPV6 && LWIP_ND6_ALLOW_RA_UPDATES */
 
 #if !LWIP_SINGLE_NETIF
   /* Assign a unique netif number in the range [0..254], so that (num+1) can
