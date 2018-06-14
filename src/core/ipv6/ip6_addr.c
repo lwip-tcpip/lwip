@@ -47,6 +47,8 @@
 #include "lwip/ip_addr.h"
 #include "lwip/def.h"
 
+#include <string.h>
+
 #if LWIP_IPV4
 #include "lwip/ip4_addr.h" /* for ip6addr_aton to handle IPv4-mapped addresses */
 #endif /* LWIP_IPV4 */
@@ -223,6 +225,26 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
   s32_t i;
   u8_t zero_flag, empty_block_flag;
 
+#if LWIP_IPV4
+  if (ip6_addr_isipv4mappedipv6(addr)) {
+    /* This is an IPv4 mapped address */
+    ip4_addr_t addr4;
+    char *ret;
+#define IP4MAPPED_HEADER "::FFFF:"
+    char *buf_ip4 = buf + sizeof(IP4MAPPED_HEADER) - 1;
+    int buflen_ip4 = buflen - sizeof(IP4MAPPED_HEADER) + 1;
+    if (buflen < sizeof(IP4MAPPED_HEADER)) {
+      return NULL;
+    }
+    memcpy(buf, IP4MAPPED_HEADER, sizeof(IP4MAPPED_HEADER));
+    addr4.addr = addr->addr[3];
+    ret = ip4addr_ntoa_r(&addr4, buf_ip4, buflen_ip4);
+    if (ret != buf_ip4) {
+      return NULL;
+    }
+    return buf;
+  }
+#endif /* LWIP_IPV4 */
   i = 0;
   empty_block_flag = 0; /* used to indicate a zero chain for "::' */
 
