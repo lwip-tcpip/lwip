@@ -204,6 +204,44 @@ START_TEST(test_ip6_aton_ipv4mapped)
 }
 END_TEST
 
+START_TEST(test_ip6_ntoa_ipv4mapped)
+{
+  const ip_addr_t addr = IPADDR6_INIT_HOST(0, 0, 0xFFFF, 0xD4CC65D2);
+  char buf[128];
+  char *str;
+  LWIP_UNUSED_ARG(_i);
+
+  str = ip6addr_ntoa_r(ip_2_ip6(&addr), buf, sizeof(buf));
+  fail_unless(str == buf);
+  fail_unless(!strcmp(str, "::FFFF:212.204.101.210"));
+}
+END_TEST
+
+struct test_addr_and_str {
+  ip_addr_t addr;
+  const char *str;
+};
+
+START_TEST(test_ip6_ntoa)
+{
+  struct test_addr_and_str tests[] = {
+    {IPADDR6_INIT_HOST(0xfe800000, 0x00000000, 0xb2a1a2ff, 0xfea3a4a5), "FE80::B2A1:A2FF:FEA3:A4A5"}, /* test shortened zeros */
+    {IPADDR6_INIT_HOST(0xfe800000, 0xff000000, 0xb2a1a2ff, 0xfea3a4a5), "FE80:0:FF00:0:B2A1:A2FF:FEA3:A4A5"}, /* don't omit single zero blocks */
+    {IPADDR6_INIT_HOST(0xfe800000, 0xff000000, 0xb2000000, 0x0000a4a5), "FE80:0:FF00:0:B200::A4A5"}, /* omit longest zero block */
+  };
+  char buf[128];
+  char *str;
+  size_t i;
+  LWIP_UNUSED_ARG(_i);
+
+  for (i = 0; i < LWIP_ARRAYSIZE(tests); i++) {
+    str = ip6addr_ntoa_r(ip_2_ip6(&tests[i].addr), buf, sizeof(buf));
+    fail_unless(str == buf);
+    fail_unless(!strcmp(str, tests[i].str));
+  }
+}
+END_TEST
+
 START_TEST(test_ip6_lladdr)
 {
   u8_t zeros[128];
@@ -256,6 +294,8 @@ ip6_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_ip6_ll_addr),
     TESTFUNC(test_ip6_aton_ipv4mapped),
+    TESTFUNC(test_ip6_ntoa_ipv4mapped),
+    TESTFUNC(test_ip6_ntoa),
     TESTFUNC(test_ip6_lladdr)
   };
   return create_suite("IPv6", tests, sizeof(tests)/sizeof(testfunc), ip6_setup, ip6_teardown);
