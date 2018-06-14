@@ -498,7 +498,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   /* printf("L2TP CTRL INPUT, ns=%d, nr=%d, len=%d\n", ns, nr, p->len); */
 
   /* Handle the special case of the ICCN acknowledge */
-  if (l2tp->phase == PPPOL2TP_STATE_ICCN_SENT && l2tp->peer_nr > l2tp->our_ns) {
+  if (l2tp->phase == PPPOL2TP_STATE_ICCN_SENT && (s16_t)(l2tp->peer_nr - l2tp->our_ns) > 0) {
     l2tp->phase = PPPOL2TP_STATE_DATA;
     ppp_start(l2tp->ppp); /* notify upper layers */
   }
@@ -742,7 +742,7 @@ static void pppol2tp_timeout(void *arg) {
         return;
       }
       PPPDEBUG(LOG_DEBUG, ("pppol2tp: icrq_retried=%d\n", l2tp->icrq_retried));
-      if (l2tp->peer_nr <= l2tp->our_ns -1) { /* the SCCCN was not acknowledged */
+      if ((s16_t)(l2tp->peer_nr - l2tp->our_ns) < 0) { /* the SCCCN was not acknowledged */
         if ((err = pppol2tp_send_scccn(l2tp, l2tp->our_ns -1)) != 0) {
           l2tp->icrq_retried--;
           PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCCN, error=%d\n", err));
