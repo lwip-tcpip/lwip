@@ -1218,6 +1218,8 @@ tcp_build_sack_option(const struct tcp_pcb *pcb, u32_t *opts, u8_t num_sacks)
 static void
 tcp_build_wnd_scale_option(u32_t *opts)
 {
+  LWIP_ASSERT("tcp_build_wnd_scale_option: invalid opts", opts != NULL);
+
   /* Pad with one NOP option to make everything nicely aligned */
   opts[0] = PP_HTONL(0x01030300 | TCP_RCV_SCALE);
 }
@@ -1818,7 +1820,11 @@ tcp_output_alloc_header_common(u32_t ackno, u16_t optlen, u16_t datalen,
                         u16_t src_port, u16_t dst_port, u8_t flags, u16_t wnd)
 {
   struct tcp_hdr *tcphdr;
-  struct pbuf *p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen + datalen, PBUF_RAM);
+  struct pbuf *p;
+
+  LWIP_ASSERT("tcp_output_alloc_header: invalid pcb", pcb != NULL);
+
+  p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen + datalen, PBUF_RAM);
   if (p != NULL) {
     LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
                 (p->len >= TCP_HLEN + optlen));

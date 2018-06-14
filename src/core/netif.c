@@ -500,6 +500,9 @@ void
 netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
   ip_addr_t old_addr;
+
+  LWIP_ERROR("netif_set_ipaddr: invalid netif", netif != NULL, return);
+
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (ipaddr == NULL) {
     ipaddr = IP4_ADDR_ANY4;
@@ -564,6 +567,8 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 #endif
   LWIP_ASSERT_CORE_LOCKED();
 
+  LWIP_ERROR("netif_set_netmask: invalid netif", netif != NULL, return);
+
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (netmask == NULL) {
     netmask = IP4_ADDR_ANY4;
@@ -622,6 +627,8 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
   ip_addr_t *old_gw = NULL;
 #endif
   LWIP_ASSERT_CORE_LOCKED();
+
+  LWIP_ERROR("netif_set_gw: invalid netif", netif != NULL, return);
 
   /* Don't propagate NULL pointer (IPv4 ANY) to subsequent functions */
   if (gw == NULL) {
