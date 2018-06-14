@@ -500,6 +500,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   /* Handle the special case of the ICCN acknowledge */
   if (l2tp->phase == PPPOL2TP_STATE_ICCN_SENT && l2tp->peer_nr > l2tp->our_ns) {
     l2tp->phase = PPPOL2TP_STATE_DATA;
+    ppp_start(l2tp->ppp); /* notify upper layers */
   }
 
   /* ZLB packets */
@@ -686,7 +687,6 @@ nextavp:
       l2tp->iccn_retried = 0;
       l2tp->phase = PPPOL2TP_STATE_ICCN_SENT;
       l2tp->our_ns++;
-      ppp_start(l2tp->ppp); /* notify upper layers */
       if ((err = pppol2tp_send_iccn(l2tp, l2tp->our_ns)) != 0) {
         PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICCN, error=%d\n", err));
         LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
