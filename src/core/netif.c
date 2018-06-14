@@ -1023,7 +1023,7 @@ netif_set_link_up(struct netif *netif)
  * Called by a driver when its link goes down
  */
 void
-netif_set_link_down(struct netif *netif )
+netif_set_link_down(struct netif *netif)
 {
   LWIP_ASSERT_CORE_LOCKED();
 
