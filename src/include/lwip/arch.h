@@ -229,7 +229,7 @@ typedef int ssize_t;
 #define lwip_isxdigit(c)          isxdigit((unsigned char)(c))
 #define lwip_islower(c)           islower((unsigned char)(c))
 #define lwip_isspace(c)           isspace((unsigned char)(c))
-#define lwip_tolower(c)           tolower(c)
+#define lwip_tolower(c)           tolower((unsigned char)(c))
 #endif
 
 /** C++ const_cast<target_type>(val) equivalent to remove constness from a value (GCC -Wcast-qual) */
