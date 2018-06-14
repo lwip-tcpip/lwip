@@ -1822,8 +1822,6 @@ tcp_output_alloc_header_common(u32_t ackno, u16_t optlen, u16_t datalen,
   struct tcp_hdr *tcphdr;
   struct pbuf *p;
 
-  LWIP_ASSERT("tcp_output_alloc_header: invalid pcb", pcb != NULL);
-
   p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen + datalen, PBUF_RAM);
   if (p != NULL) {
     LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
