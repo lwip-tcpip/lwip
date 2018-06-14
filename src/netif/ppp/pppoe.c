@@ -1045,7 +1045,7 @@ pppoe_send_padt(struct netif *outgoing_if, u_int session, const u8_t *dest)
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   if (pbuf_add_header(pb, sizeof(struct eth_hdr))) {
-    PPPDEBUG(LOG_ERR, ("pppoe: %c%c%"U16_F": pppoe_send_padt: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+    PPPDEBUG(LOG_ERR, ("pppoe: pppoe_send_padt: could not allocate room for PPPoE header\n"));
     LINK_STATS_INC(link.lenerr);
     pbuf_free(pb);
     return ERR_BUF;
