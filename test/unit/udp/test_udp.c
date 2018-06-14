@@ -149,7 +149,7 @@ START_TEST(test_udp_new_remove)
 }
 END_TEST
 
-void test_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
+static void test_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     const ip_addr_t *addr, u16_t port)
 {
   struct test_udp_rxdata *ctr = (struct test_udp_rxdata *)arg;

@@ -233,7 +233,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 #define IP4MAPPED_HEADER "::FFFF:"
     char *buf_ip4 = buf + sizeof(IP4MAPPED_HEADER) - 1;
     int buflen_ip4 = buflen - sizeof(IP4MAPPED_HEADER) + 1;
-    if (buflen < sizeof(IP4MAPPED_HEADER)) {
+    if (buflen < (int)sizeof(IP4MAPPED_HEADER)) {
       return NULL;
     }
     memcpy(buf, IP4MAPPED_HEADER, sizeof(IP4MAPPED_HEADER));
