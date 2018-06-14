@@ -549,7 +549,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
           break;
         /* Stop Control Connection Notification */
         case PPPOL2TP_MESSAGETYPE_STOPCCN:
-          pppol2tp_send_zlb(l2tp, l2tp->our_ns); /* Ack the StopCCN before we switch to down state */
+          pppol2tp_send_zlb(l2tp, l2tp->our_ns+1); /* Ack the StopCCN before we switch to down state */
           if (l2tp->phase < PPPOL2TP_STATE_DATA) {
             pppol2tp_abort_connect(l2tp);
           } else if (l2tp->phase == PPPOL2TP_STATE_DATA) {
@@ -701,7 +701,7 @@ nextavp:
   return;
 
 send_zlb:
-  pppol2tp_send_zlb(l2tp, l2tp->our_ns);
+  pppol2tp_send_zlb(l2tp, l2tp->our_ns+1);
   return;
 packet_too_short:
   PPPDEBUG(LOG_DEBUG, ("pppol2tp: packet too short: %d\n", p->len));
