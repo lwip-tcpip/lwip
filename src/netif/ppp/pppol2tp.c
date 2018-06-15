@@ -510,6 +510,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   /* Handle the special case of the ICCN acknowledge */
   if (l2tp->phase == PPPOL2TP_STATE_ICCN_SENT && (s16_t)(l2tp->peer_nr - l2tp->our_ns) > 0) {
     l2tp->phase = PPPOL2TP_STATE_DATA;
+    sys_untimeout(pppol2tp_timeout, l2tp);
     ppp_start(l2tp->ppp); /* notify upper layers */
   }
 
