@@ -96,12 +96,14 @@ typedef struct _lwiperf_settings {
 struct _lwiperf_state_base;
 typedef struct _lwiperf_state_base lwiperf_state_base_t;
 struct _lwiperf_state_base {
+  /* linked list */
+  lwiperf_state_base_t *next;
   /* 1=tcp, 0=udp */
   u8_t tcp;
   /* 1=server, 0=client */
   u8_t server;
-  lwiperf_state_base_t *next;
-  lwiperf_state_base_t *related_server_state;
+  /* master state used to abort sessions (e.g. listener, main client) */
+  lwiperf_state_base_t *related_master_state;
 };
 
 /** Connection handle for a TCP iperf session */
@@ -358,41 +360,50 @@ lwiperf_tcp_client_connected(void *arg, struct tcp_pcb *tpcb, err_t err)
  * receive test has finished.
  */
 static err_t
-lwiperf_tx_start(lwiperf_state_tcp_t *conn)
+lwiperf_tx_start_impl(const ip_addr_t *remote_ip, u16_t remote_port, lwiperf_settings_t *settings, lwiperf_report_fn report_fn,
+                      void *report_arg, lwiperf_state_base_t *related_master_state, lwiperf_state_tcp_t **new_conn)
 {
   err_t err;
   lwiperf_state_tcp_t *client_conn;
   struct tcp_pcb *newpcb;
   ip_addr_t remote_addr;
-  u16_t remote_port;
+
+  LWIP_ASSERT("remote_ip != NULL", remote_ip != NULL);
+  LWIP_ASSERT("remote_ip != NULL", settings != NULL);
+  LWIP_ASSERT("new_conn != NULL", new_conn != NULL);
+  *new_conn = NULL;
 
   client_conn = (lwiperf_state_tcp_t *)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (client_conn == NULL) {
     return ERR_MEM;
   }
-  newpcb = tcp_new_ip_type(IP_GET_TYPE(&conn->conn_pcb->remote_ip));
+  newpcb = tcp_new_ip_type(IP_GET_TYPE(remote_ip));
   if (newpcb == NULL) {
     LWIPERF_FREE(lwiperf_state_tcp_t, client_conn);
     return ERR_MEM;
   }
 
-  MEMCPY(client_conn, conn, sizeof(lwiperf_state_tcp_t));
+  client_conn->base.tcp = 1;
   client_conn->base.server = 0;
+  client_conn->base.next = NULL;
+  client_conn->base.related_master_state = related_master_state;
   client_conn->server_pcb = NULL;
   client_conn->conn_pcb = newpcb;
   client_conn->time_started = sys_now(); /* @todo: set this again on 'connected' */
+  client_conn->report_fn = report_fn;
+  client_conn->report_arg = report_arg;
   client_conn->poll_count = 0;
   client_conn->next_num = 4; /* initial nr is '4' since the header has 24 byte */
   client_conn->bytes_transferred = 0;
-  client_conn->settings.flags = 0; /* prevent the remote side starting back as client again */
+  memcpy(&client_conn->settings, settings, sizeof(*settings));
+  client_conn->have_settings_buf = 1;
 
   tcp_arg(newpcb, client_conn);
   tcp_sent(newpcb, lwiperf_tcp_client_sent);
   tcp_poll(newpcb, lwiperf_tcp_poll, 2U);
   tcp_err(newpcb, lwiperf_tcp_err);
 
-  ip_addr_copy(remote_addr, conn->conn_pcb->remote_ip);
-  remote_port = (u16_t)lwip_htonl(client_conn->settings.remote_port);
+  ip_addr_copy(remote_addr, *remote_ip);
 
   err = tcp_connect(newpcb, &remote_addr, remote_port, lwiperf_tcp_client_connected);
   if (err != ERR_OK) {
@@ -400,7 +411,24 @@ lwiperf_tx_start(lwiperf_state_tcp_t *conn)
     return err;
   }
   lwiperf_list_add(&client_conn->base);
+  *new_conn = client_conn;
   return ERR_OK;
+}
+
+static err_t
+lwiperf_tx_start_passive(lwiperf_state_tcp_t *conn)
+{
+  err_t ret;
+  lwiperf_state_tcp_t *new_conn = NULL;
+  u16_t remote_port = (u16_t)lwip_htonl(conn->settings.remote_port);
+
+  ret = lwiperf_tx_start_impl(&conn->conn_pcb->remote_ip, remote_port, &conn->settings, conn->report_fn, conn->report_arg,
+    conn->base.related_master_state, &new_conn);
+  if (ret == ERR_OK) {
+    LWIP_ASSERT("new_conn != NULL", new_conn != NULL);
+    new_conn->settings.flags = 0; /* prevent the remote side starting back as client again */
+  }
+  return ret;
 }
 
 /** Receive data on an iperf tcp session */
@@ -425,7 +453,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
     if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
       if ((conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_NOW)) == 0) {
         /* client requested transmission after end of test */
-        lwiperf_tx_start(conn);
+        lwiperf_tx_start_passive(conn);
       }
     }
     lwiperf_tcp_close(conn, LWIPERF_TCP_DONE_SERVER);
@@ -452,7 +480,7 @@ lwiperf_tcp_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
       if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_TEST)) {
         if (conn->settings.flags & PP_HTONL(LWIPERF_FLAGS_ANSWER_NOW)) {
           /* client requested parallel transmission test */
-          err_t err2 = lwiperf_tx_start(conn);
+          err_t err2 = lwiperf_tx_start_passive(conn);
           if (err2 != ERR_OK) {
             lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL_TXERROR);
             pbuf_free(p);
@@ -555,7 +583,7 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   memset(conn, 0, sizeof(lwiperf_state_tcp_t));
   conn->base.tcp = 1;
   conn->base.server = 1;
-  conn->base.related_server_state = &s->base;
+  conn->base.related_master_state = &s->base;
   conn->server_pcb = s->server_pcb;
   conn->conn_pcb = newpcb;
   conn->time_started = sys_now();
@@ -644,6 +672,51 @@ lwiperf_start_tcp_server(const ip_addr_t *local_addr, u16_t local_port,
 
 /**
  * @ingroup iperf
+ * Start a TCP iperf client to the default TCP port (5001).
+ *
+ * @returns a connection handle that can be used to abort the client
+ *          by calling @ref lwiperf_abort()
+ */
+void* lwiperf_start_tcp_client_default(const ip_addr_t* remote_addr,
+                               lwiperf_report_fn report_fn, void* report_arg)
+{
+  return lwiperf_start_tcp_client(remote_addr, LWIPERF_TCP_PORT_DEFAULT, LWIPERF_CLIENT,
+                                  report_fn, report_arg);
+}
+
+/**
+ * @ingroup iperf
+ * Start a TCP iperf client to a specific IP address and port.
+ *
+ * @returns a connection handle that can be used to abort the client
+ *          by calling @ref lwiperf_abort()
+ */
+void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
+  enum lwiperf_client_type type, lwiperf_report_fn report_fn, void* report_arg)
+{
+  err_t ret;
+  lwiperf_settings_t settings;
+  lwiperf_state_tcp_t *state = NULL;
+
+  LWIP_UNUSED_ARG(type); /* TODO: implement dual/tradeoff */
+
+  memset(&settings, 0, sizeof(settings));
+  settings.flags = htonl(LWIPERF_FLAGS_ANSWER_TEST);
+  settings.num_threads = htonl(1);
+  settings.remote_port = htonl(remote_port);
+  settings.amount = htonl((u32_t)-1000);
+
+  ret = lwiperf_tx_start_impl(remote_addr, remote_port, &settings, report_fn, report_arg, NULL, &state);
+  if (ret == ERR_OK) {
+    if (state != NULL) {
+      return state;
+    }
+  }
+  return NULL;
+}
+
+/**
+ * @ingroup iperf
  * Abort an iperf session (handle returned by lwiperf_start_tcp_server*())
  */
 void
@@ -654,7 +727,7 @@ lwiperf_abort(void *lwiperf_session)
   LWIP_ASSERT_CORE_LOCKED();
 
   for (i = lwiperf_all_connections; i != NULL; ) {
-    if ((i == lwiperf_session) || (i->related_server_state == lwiperf_session)) {
+    if ((i == lwiperf_session) || (i->related_master_state == lwiperf_session)) {
       dealloc = i;
       i = i->next;
       if (last != NULL) {
