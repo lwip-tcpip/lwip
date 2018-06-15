@@ -203,9 +203,9 @@ const struct protent* const protocols[] = {
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void *arg);
 static err_t ppp_netif_init_cb(struct netif *netif);
-#if LWIP_IPV4
+#if PPP_IPV4_SUPPORT
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip4_addr_t *ipaddr);
-#endif /* LWIP_IPV4 */
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip6_addr_t *ipaddr);
 #endif /* PPP_IPV6_SUPPORT */
@@ -463,10 +463,9 @@ static void ppp_do_connect(void *arg) {
 static err_t ppp_netif_init_cb(struct netif *netif) {
   netif->name[0] = 'p';
   netif->name[1] = 'p';
-#if LWIP_IPV4
-  /* FIXME: change that when netif_null_output_ip4() will materialize */
+#if PPP_IPV4_SUPPORT
   netif->output = ppp_netif_output_ip4;
-#endif /* LWIP_IPV4 */
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
   netif->output_ip6 = ppp_netif_output_ip6;
 #endif /* PPP_IPV6_SUPPORT */
@@ -478,21 +477,15 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
   return ERR_OK;
 }
 
-#if LWIP_IPV4
+#if PPP_IPV4_SUPPORT
 /*
  * Send an IPv4 packet on the given connection.
  */
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip4_addr_t *ipaddr) {
   LWIP_UNUSED_ARG(ipaddr);
-#if PPP_IPV4_SUPPORT
   return ppp_netif_output(netif, pb, PPP_IP);
-#else /* PPP_IPV4_SUPPORT */
-  LWIP_UNUSED_ARG(netif);
-  LWIP_UNUSED_ARG(pb);
-  return ERR_IF;
-#endif /* PPP_IPV4_SUPPORT */
 }
-#endif /* LWIP_IPV4 */
+#endif /* PPP_IPV4_SUPPORT */
 
 #if PPP_IPV6_SUPPORT
 /*
