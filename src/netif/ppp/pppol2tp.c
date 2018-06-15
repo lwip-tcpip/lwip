@@ -268,7 +268,7 @@ static void pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   l2tp->tunnel_port = l2tp->remote_port;
   l2tp->our_ns = 0;
   l2tp->peer_nr = 0;
-  l2tp->peer_ns = 0;
+  l2tp->peer_ns = ~0; /* First expected packet is 0 */
   l2tp->source_tunnel_id = 0;
   l2tp->remote_tunnel_id = 0;
   l2tp->source_session_id = 0;
@@ -493,9 +493,19 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   u8_t challenge_id = 0;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  l2tp->peer_nr = nr;
-  l2tp->peer_ns = ns;
   /* printf("L2TP CTRL INPUT, ns=%d, nr=%d, len=%d\n", ns, nr, p->len); */
+
+  /* Drop unexpected packet */
+  if (ns != (u16_t)(l2tp->peer_ns+1)) {
+    PPPDEBUG(LOG_DEBUG, ("pppol2tp: drop unexpected packet: received NS=%d, expected NS=%d\n", ns, l2tp->peer_ns+1));
+    /*
+     * The RFC says we must send a ZLB ack for duplicate packets but preventing an endless
+     * ZLB packets loop came out wayyyy more complicated than just dropping the packet.
+     */
+    return;
+  }
+
+  l2tp->peer_nr = nr;
 
   /* Handle the special case of the ICCN acknowledge */
   if (l2tp->phase == PPPOL2TP_STATE_ICCN_SENT && (s16_t)(l2tp->peer_nr - l2tp->our_ns) > 0) {
@@ -507,6 +517,8 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   if (p->tot_len == 0) {
     return;
   }
+  /* A ZLB packet does not consume a NS slot thus we don't record the NS value for ZLB packets */
+  l2tp->peer_ns = ns;
 
   p = pbuf_coalesce(p, PBUF_RAW);
   inp = (u8_t*)p->payload;
