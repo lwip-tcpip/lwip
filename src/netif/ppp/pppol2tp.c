@@ -85,7 +85,7 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp);
 static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns);
-static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns);
+static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns, u16_t nr);
 static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
 static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb);
@@ -499,9 +499,17 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   if (ns != l2tp->peer_ns) {
     PPPDEBUG(LOG_DEBUG, ("pppol2tp: drop unexpected packet: received NS=%d, expected NS=%d\n", ns, l2tp->peer_ns));
     /*
-     * The RFC says we must send a ZLB ack for duplicate packets but preventing an endless
-     * ZLB packets loop came out wayyyy more complicated than just dropping the packet.
+     * In order to ensure that all messages are acknowledged properly
+     * (particularly in the case of a lost ZLB ACK message), receipt
+     * of duplicate messages MUST be acknowledged.
+     *
+     * In this very special case we Ack a packet we previously received.
+     * Therefore our NS is the NR we just received. And our NR is the
+     * NS we just received plus one.
      */
+    if ((s16_t)(ns - l2tp->peer_ns) < 0) {
+      pppol2tp_send_zlb(l2tp, nr, ns+1);
+    }
     return;
   }
 
@@ -563,7 +571,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
           break;
         /* Stop Control Connection Notification */
         case PPPOL2TP_MESSAGETYPE_STOPCCN:
-          pppol2tp_send_zlb(l2tp, l2tp->our_ns+1); /* Ack the StopCCN before we switch to down state */
+          pppol2tp_send_zlb(l2tp, l2tp->our_ns+1, l2tp->peer_ns); /* Ack the StopCCN before we switch to down state */
           if (l2tp->phase < PPPOL2TP_STATE_DATA) {
             pppol2tp_abort_connect(l2tp);
           } else if (l2tp->phase == PPPOL2TP_STATE_DATA) {
@@ -714,7 +722,7 @@ nextavp:
   return;
 
 send_zlb:
-  pppol2tp_send_zlb(l2tp, l2tp->our_ns+1);
+  pppol2tp_send_zlb(l2tp, l2tp->our_ns+1, l2tp->peer_ns);
   return;
 packet_too_short:
   PPPDEBUG(LOG_DEBUG, ("pppol2tp: packet too short: %d\n", p->len));
@@ -1042,7 +1050,7 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns) {
 }
 
 /* Send a ZLB ACK packet */
-static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns) {
+static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns, u16_t nr) {
   struct pbuf *pb;
   u8_t *p;
   u16_t len;
@@ -1065,7 +1073,7 @@ static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(0, p); /* Session Id */
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
-  PUTSHORT(l2tp->peer_ns, p); /* NR Sequence number - expected for peer */
+  PUTSHORT(nr, p); /* NR Sequence number - expected for peer */
 
   return pppol2tp_udp_send(l2tp, pb);
 }
