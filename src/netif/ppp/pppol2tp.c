@@ -268,7 +268,7 @@ static void pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   l2tp->tunnel_port = l2tp->remote_port;
   l2tp->our_ns = 0;
   l2tp->peer_nr = 0;
-  l2tp->peer_ns = ~0; /* First expected packet is 0 */
+  l2tp->peer_ns = 0;
   l2tp->source_tunnel_id = 0;
   l2tp->remote_tunnel_id = 0;
   l2tp->source_session_id = 0;
@@ -496,8 +496,8 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   /* printf("L2TP CTRL INPUT, ns=%d, nr=%d, len=%d\n", ns, nr, p->len); */
 
   /* Drop unexpected packet */
-  if (ns != (u16_t)(l2tp->peer_ns+1)) {
-    PPPDEBUG(LOG_DEBUG, ("pppol2tp: drop unexpected packet: received NS=%d, expected NS=%d\n", ns, l2tp->peer_ns+1));
+  if (ns != l2tp->peer_ns) {
+    PPPDEBUG(LOG_DEBUG, ("pppol2tp: drop unexpected packet: received NS=%d, expected NS=%d\n", ns, l2tp->peer_ns));
     /*
      * The RFC says we must send a ZLB ack for duplicate packets but preventing an endless
      * ZLB packets loop came out wayyyy more complicated than just dropping the packet.
@@ -518,7 +518,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
     return;
   }
   /* A ZLB packet does not consume a NS slot thus we don't record the NS value for ZLB packets */
-  l2tp->peer_ns = ns;
+  l2tp->peer_ns = ns+1;
 
   p = pbuf_coalesce(p, PBUF_RAW);
   inp = (u8_t*)p->payload;
@@ -922,7 +922,7 @@ static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(0, p); /* Session Id */
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
-  PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
+  PUTSHORT(l2tp->peer_ns, p); /* NR Sequence number - expected for peer */
 
   /* AVP - Message type */
   PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 8, p); /* Mandatory flag + len field */
@@ -969,7 +969,7 @@ static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(0, p); /* Session Id */
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
-  PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
+  PUTSHORT(l2tp->peer_ns, p); /* NR Sequence number - expected for peer */
 
   /* AVP - Message type */
   PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 8, p); /* Mandatory flag + len field */
@@ -1017,7 +1017,7 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(l2tp->source_session_id, p); /* Session Id */
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
-  PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
+  PUTSHORT(l2tp->peer_ns, p); /* NR Sequence number - expected for peer */
 
   /* AVP - Message type */
   PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 8, p); /* Mandatory flag + len field */
@@ -1064,7 +1064,7 @@ static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(0, p); /* Session Id */
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
-  PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
+  PUTSHORT(l2tp->peer_ns, p); /* NR Sequence number - expected for peer */
 
   return pppol2tp_udp_send(l2tp, pb);
 }
@@ -1093,7 +1093,7 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(0, p); /* Session Id */
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
-  PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
+  PUTSHORT(l2tp->peer_ns, p); /* NR Sequence number - expected for peer */
 
   /* AVP - Message type */
   PUTSHORT(PPPOL2TP_AVPHEADERFLAG_MANDATORY + 8, p); /* Mandatory flag + len field */
