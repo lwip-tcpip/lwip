@@ -82,10 +82,11 @@
 
 /**
  * PPP_NUM_TIMEOUTS_PER_PCB: the number of sys_timeouts running in parallel per
- * ppp_pcb. This is a conservative default which needs to be checked...
+ * ppp_pcb. See the detailed explanation at the end of ppp_impl.h about simultaneous
+ * timers analysis.
  */
 #ifndef PPP_NUM_TIMEOUTS_PER_PCB
-#define PPP_NUM_TIMEOUTS_PER_PCB        6
+#define PPP_NUM_TIMEOUTS_PER_PCB        (1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT)
 #endif
 
 /* The number of sys_timeouts required for the PPP module */
