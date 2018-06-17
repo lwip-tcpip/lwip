@@ -119,6 +119,8 @@ typedef struct _lwiperf_state_tcp {
   u32_t bytes_transferred;
   lwiperf_settings_t settings;
   u8_t have_settings_buf;
+  u8_t specific_remote;
+  ip_addr_t remote_addr;
 } lwiperf_state_tcp_t;
 
 /** List of active iperf sessions */
@@ -169,6 +171,10 @@ static const u8_t lwiperf_txbuf_const[1600] = {
 
 static err_t lwiperf_tcp_poll(void *arg, struct tcp_pcb *tpcb);
 static void lwiperf_tcp_err(void *arg, err_t err);
+static err_t lwiperf_start_tcp_server_impl(const ip_addr_t *local_addr, u16_t local_port,
+                                           lwiperf_report_fn report_fn, void *report_arg,
+                                           lwiperf_state_base_t *related_master_state, lwiperf_state_tcp_t **state);
+
 
 /** Add an iperf session to the 'active' list */
 static void
@@ -200,6 +206,18 @@ lwiperf_list_remove(lwiperf_state_base_t *item)
   }
 }
 
+static lwiperf_state_base_t *
+lwiperf_list_find(lwiperf_state_base_t *item)
+{
+  lwiperf_state_base_t *iter;
+  for (iter = lwiperf_all_connections; iter != NULL; iter = iter->next) {
+    if (iter == item) {
+      return item;
+    }
+  }
+  return NULL;
+}
+
 /** Call the report function of an iperf tcp session */
 static void
 lwip_tcp_conn_report(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_type)
@@ -226,8 +244,8 @@ lwiperf_tcp_close(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_typ
 {
   err_t err;
 
-  lwip_tcp_conn_report(conn, report_type);
   lwiperf_list_remove(&conn->base);
+  lwip_tcp_conn_report(conn, report_type);
   if (conn->conn_pcb != NULL) {
     tcp_arg(conn->conn_pcb, NULL);
     tcp_poll(conn->conn_pcb, NULL, 0);
@@ -240,9 +258,9 @@ lwiperf_tcp_close(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_typ
       tcp_abort(conn->conn_pcb);
     }
   } else {
-    /* no conn pcb, this is the server pcb */
+    /* no conn pcb, this is the listener pcb */
     err = tcp_close(conn->server_pcb);
-    LWIP_ASSERT("error", err != ERR_OK);
+    LWIP_ASSERT("error", err == ERR_OK);
   }
   LWIPERF_FREE(lwiperf_state_tcp_t, conn);
 }
@@ -382,17 +400,13 @@ lwiperf_tx_start_impl(const ip_addr_t *remote_ip, u16_t remote_port, lwiperf_set
     LWIPERF_FREE(lwiperf_state_tcp_t, client_conn);
     return ERR_MEM;
   }
-
+  memset(client_conn, 0, sizeof(lwiperf_state_tcp_t));
   client_conn->base.tcp = 1;
-  client_conn->base.server = 0;
-  client_conn->base.next = NULL;
   client_conn->base.related_master_state = related_master_state;
-  client_conn->server_pcb = NULL;
   client_conn->conn_pcb = newpcb;
   client_conn->time_started = sys_now(); /* @todo: set this again on 'connected' */
   client_conn->report_fn = report_fn;
   client_conn->report_arg = report_arg;
-  client_conn->poll_count = 0;
   client_conn->next_num = 4; /* initial nr is '4' since the header has 24 byte */
   client_conn->bytes_transferred = 0;
   memcpy(&client_conn->settings, settings, sizeof(*settings));
@@ -576,6 +590,19 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   }
 
   s = (lwiperf_state_tcp_t *)arg;
+  LWIP_ASSERT("invalid session", s->base.server);
+  LWIP_ASSERT("invalid listen pcb", s->server_pcb != NULL);
+  LWIP_ASSERT("invalid conn pcb", s->conn_pcb == NULL);
+  if (s->specific_remote) {
+    LWIP_ASSERT("s->base.related_master_state != NULL", s->base.related_master_state != NULL);
+    if (!ip_addr_cmp(&newpcb->remote_ip, &s->remote_addr)) {
+      /* this listener belongs to a client session, and this is not the correct remote */
+      return ERR_VAL;
+    }
+  } else {
+    LWIP_ASSERT("s->base.related_master_state == NULL", s->base.related_master_state == NULL);
+  }
+
   conn = (lwiperf_state_tcp_t *)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (conn == NULL) {
     return ERR_MEM;
@@ -584,7 +611,6 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   conn->base.tcp = 1;
   conn->base.server = 1;
   conn->base.related_master_state = &s->base;
-  conn->server_pcb = s->server_pcb;
   conn->conn_pcb = newpcb;
   conn->time_started = sys_now();
   conn->report_fn = s->report_fn;
@@ -596,6 +622,12 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   tcp_poll(newpcb, lwiperf_tcp_poll, 2U);
   tcp_err(conn->conn_pcb, lwiperf_tcp_err);
 
+  if (s->specific_remote) {
+    /* this listener belongs to a client, so close it and make the client the master */
+    conn->base.related_master_state = s->base.related_master_state;
+    s->report_fn = NULL;
+    lwiperf_tcp_close(s, LWIPERF_TCP_ABORTED_LOCAL);
+  }
   lwiperf_list_add(&conn->base);
   return ERR_OK;
 }
@@ -628,38 +660,58 @@ lwiperf_start_tcp_server(const ip_addr_t *local_addr, u16_t local_port,
                          lwiperf_report_fn report_fn, void *report_arg)
 {
   err_t err;
+  lwiperf_state_tcp_t *state = NULL;
+
+  err = lwiperf_start_tcp_server_impl(local_addr, local_port, report_fn, report_arg,
+    NULL, &state);
+  if (err == ERR_OK) {
+    return state;
+  }
+  return NULL;
+}
+
+static err_t lwiperf_start_tcp_server_impl(const ip_addr_t *local_addr, u16_t local_port,
+                                           lwiperf_report_fn report_fn, void *report_arg,
+                                           lwiperf_state_base_t *related_master_state, lwiperf_state_tcp_t **state)
+{
+  err_t err;
   struct tcp_pcb *pcb;
   lwiperf_state_tcp_t *s;
 
   LWIP_ASSERT_CORE_LOCKED();
 
+  LWIP_ASSERT("state != NULL", state != NULL);
+
   if (local_addr == NULL) {
-    return NULL;
+    return ERR_ARG;
   }
 
   s = (lwiperf_state_tcp_t *)LWIPERF_ALLOC(lwiperf_state_tcp_t);
   if (s == NULL) {
-    return NULL;
+    return ERR_MEM;
   }
   memset(s, 0, sizeof(lwiperf_state_tcp_t));
   s->base.tcp = 1;
   s->base.server = 1;
+  s->base.related_master_state = related_master_state;
   s->report_fn = report_fn;
   s->report_arg = report_arg;
 
   pcb = tcp_new_ip_type(LWIPERF_SERVER_IP_TYPE);
-  if (pcb != NULL) {
-    err = tcp_bind(pcb, local_addr, local_port);
-    if (err == ERR_OK) {
-      s->server_pcb = tcp_listen_with_backlog(pcb, 1);
-    }
+  if (pcb == NULL) {
+    return ERR_MEM;
   }
+  err = tcp_bind(pcb, local_addr, local_port);
+  if (err != ERR_OK) {
+    return err;
+  }
+  s->server_pcb = tcp_listen_with_backlog(pcb, 1);
   if (s->server_pcb == NULL) {
     if (pcb != NULL) {
       tcp_close(pcb);
     }
     LWIPERF_FREE(lwiperf_state_tcp_t, s);
-    return NULL;
+    return ERR_MEM;
   }
   pcb = NULL;
 
@@ -667,7 +719,8 @@ lwiperf_start_tcp_server(const ip_addr_t *local_addr, u16_t local_port,
   tcp_accept(s->server_pcb, lwiperf_tcp_accept);
 
   lwiperf_list_add(&s->base);
-  return s;
+  *state = s;
+  return ERR_OK;
 }
 
 /**
@@ -698,19 +751,49 @@ void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
   lwiperf_settings_t settings;
   lwiperf_state_tcp_t *state = NULL;
 
-  LWIP_UNUSED_ARG(type); /* TODO: implement dual/tradeoff */
-
   memset(&settings, 0, sizeof(settings));
-  settings.flags = htonl(LWIPERF_FLAGS_ANSWER_TEST);
+  switch (type) {
+  case LWIPERF_CLIENT:
+    /* Unidirectional tx only test */
+    settings.flags = 0;
+    break;
+  case LWIPERF_DUAL:
+    /* Do a bidirectional test simultaneously */
+    settings.flags = htonl(LWIPERF_FLAGS_ANSWER_TEST | LWIPERF_FLAGS_ANSWER_NOW);
+    break;
+  case LWIPERF_TRADEOFF:
+    /* Do a bidirectional test individually */
+    return NULL;
+    /* TODO: implement this!
+    settings.flags = htonl(LWIPERF_FLAGS_ANSWER_TEST);
+    break;*/
+  default:
+    /* invalid argument */
+    return NULL;
+  }
   settings.num_threads = htonl(1);
-  settings.remote_port = htonl(remote_port);
+  settings.remote_port = htonl(LWIPERF_TCP_PORT_DEFAULT);
+  /* TODO: implement passing duration/amount of bytes to transfer */
   settings.amount = htonl((u32_t)-1000);
 
   ret = lwiperf_tx_start_impl(remote_addr, remote_port, &settings, report_fn, report_arg, NULL, &state);
   if (ret == ERR_OK) {
-    if (state != NULL) {
-      return state;
+    LWIP_ASSERT("state != NULL", state != NULL);
+    if (type == LWIPERF_DUAL) {
+      /* start corresponding server now */
+      lwiperf_state_tcp_t *server = NULL;
+      ret = lwiperf_start_tcp_server_impl(&state->conn_pcb->local_ip, LWIPERF_TCP_PORT_DEFAULT,
+        report_fn, report_arg, (lwiperf_state_base_t *)state, &server);
+      if (ret != ERR_OK) {
+        /* starting server failed, abort client */
+        lwiperf_abort(state);
+        return NULL;
+      }
+      /* make this server accept one connection only */
+      server->specific_remote = 1;
+      server->remote_addr = state->conn_pcb->remote_ip;
     }
+    return state;
   }
   return NULL;
 }
