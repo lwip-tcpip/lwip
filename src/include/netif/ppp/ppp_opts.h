@@ -72,6 +72,8 @@
 #define LWIP_PPP_API                    (PPP_SUPPORT && (NO_SYS == 0))
 #endif
 
+#if PPP_SUPPORT
+
 /**
  * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
  * connections (requires the PPP_SUPPORT option)
@@ -91,8 +93,6 @@
 
 /* The number of sys_timeouts required for the PPP module */
 #define PPP_NUM_TIMEOUTS                (PPP_SUPPORT * PPP_NUM_TIMEOUTS_PER_PCB * MEMP_NUM_PPP_PCB)
-
-#if PPP_SUPPORT
 
 /**
  * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
@@ -601,5 +601,10 @@
 #endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
 
 #endif /* PPP_SUPPORT */
+
+/* Default value if unset */
+#ifndef PPP_NUM_TIMEOUTS
+#define PPP_NUM_TIMEOUTS                0
+#endif /* PPP_NUM_TIMEOUTS */
 
 #endif /* LWIP_PPP_OPTS_H */
