@@ -206,6 +206,7 @@ lwiperf_list_remove(lwiperf_state_base_t *item)
   }
 }
 
+/* TODO: unused for now
 static lwiperf_state_base_t *
 lwiperf_list_find(lwiperf_state_base_t *item)
 {
@@ -216,7 +217,7 @@ lwiperf_list_find(lwiperf_state_base_t *item)
     }
   }
   return NULL;
-}
+}*/
 
 /** Call the report function of an iperf tcp session */
 static void
