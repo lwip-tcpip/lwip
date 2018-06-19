@@ -801,7 +801,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
       goto memerr;
     }
     LWIP_ASSERT("this needs a pbuf in one piece!",
-                (p->len >= (IP_HLEN)));
+                (rambuf->len >= (IP_HLEN)));
     SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
     iphdr = (struct ip_hdr *)rambuf->payload;
 
