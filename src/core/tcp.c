@@ -1266,16 +1266,19 @@ tcp_slowtmr_start:
         }
       } else {
         /* Increase the retransmission timer if it is running */
-        if (pcb->rtime >= 0) {
+        if ((pcb->rtime >= 0) && (pcb->rtime < 0x7FFF)) {
           ++pcb->rtime;
         }
 
-        if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
+        if (pcb->rtime >= pcb->rto) {
           /* Time for a retransmission. */
           LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"S16_F
                                       " pcb->rto %"S16_F"\n",
                                       pcb->rtime, pcb->rto));
-          if (tcp_rexmit_rto_prepare(pcb) == ERR_OK) {
+          /* If prepare phase fails but we have unsent data but no unacked data,
+             still execute the backoff calculations below, as this means we somehow
+             failed to send segment. */
+          if ((tcp_rexmit_rto_prepare(pcb) == ERR_OK) || ((pcb->unacked == NULL) && (pcb->unsent != NULL))) {
             /* Double retransmission time-out unless we are trying to
              * connect to somebody (i.e., we are in SYN_SENT). */
             if (pcb->state != SYN_SENT) {
