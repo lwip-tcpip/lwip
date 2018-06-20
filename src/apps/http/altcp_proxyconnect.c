@@ -161,6 +161,7 @@ altcp_proxyconnect_lower_connected(void *arg, struct altcp_pcb *inner_conn, err_
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn && conn->state) {
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
+    LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
     /* upper connected is called when handshake is done */
     if (err != ERR_OK) {
       if (conn->connected) {
@@ -252,6 +253,7 @@ altcp_proxyconnect_lower_sent(void *arg, struct altcp_pcb *inner_conn, u16_t len
   if (conn) {
     altcp_proxyconnect_state_t *state = (altcp_proxyconnect_state_t *)conn->state;
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
+    LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
     if (!state || !(state->flags & ALTCP_PROXYCONNECT_FLAGS_HANDSHAKE_DONE)) {
       /* @todo: do something here? */
       return ERR_OK;
@@ -274,6 +276,7 @@ altcp_proxyconnect_lower_poll(void *arg, struct altcp_pcb *inner_conn)
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   if (conn) {
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
+    LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
     if (conn->poll) {
       return conn->poll(conn->arg, conn);
     }

@@ -114,6 +114,7 @@ zepif_udp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   LWIP_ASSERT("arg != NULL", arg != NULL);
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  LWIP_UNUSED_ARG(pcb); /* for LWIP_NOASSERT */
   LWIP_UNUSED_ARG(addr);
   LWIP_UNUSED_ARG(port);
   if (p == NULL) {

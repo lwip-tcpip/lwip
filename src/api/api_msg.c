@@ -300,6 +300,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   LWIP_ASSERT("recv_tcp must have a pcb argument", pcb != NULL);
   LWIP_ASSERT("recv_tcp must have an argument", arg != NULL);
   LWIP_ASSERT("err != ERR_OK unhandled", err == ERR_OK);
+  LWIP_UNUSED_ARG(err); /* for LWIP_NOASSERT */
   conn = (struct netconn *)arg;
 
   if (conn == NULL) {

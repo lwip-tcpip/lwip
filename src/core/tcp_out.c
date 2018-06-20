@@ -1907,6 +1907,8 @@ tcp_output_fill_options(const struct tcp_pcb *pcb, struct pbuf *p, u8_t optflags
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(sacks_len);
   LWIP_ASSERT("options not filled", (u8_t *)opts == ((u8_t *)(tcphdr + 1)) + sacks_len * 4 + LWIP_TCP_OPT_LENGTH_SEGMENT(optflags, pcb));
+  LWIP_UNUSED_ARG(optflags); /* for LWIP_NOASSERT */
+  LWIP_UNUSED_ARG(opts); /* for LWIP_NOASSERT */
 }
 
 /** Output a control segment pbuf to IP.
