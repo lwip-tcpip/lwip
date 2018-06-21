@@ -7,11 +7,15 @@
  * @defgroup iperf Iperf server
  * @ingroup apps
  *
- * This is a simple performance measuring server to check your bandwith using
- * iPerf2 on a PC as client.
- * It is currently a minimal implementation providing an IPv4 TCP server only.
+ * This is a simple performance measuring client/server to check your bandwith using
+ * iPerf2 on a PC as server/client.
+ * It is currently a minimal implementation providing an IPv4 TCP client/server only.
  *
- * @todo: implement UDP mode and IPv6
+ * @todo:
+ * - implement UDP mode and IPv6
+ * - protect combined sessions handling (via 'related_master_state') against reallocation
+ *   (this is a pointer address, currently, so if the same memory is allocated again,
+ *    session pairs (tx/rx) can be confused on reallocation)
  */
 
 /*
@@ -116,6 +120,8 @@ typedef struct _lwiperf_state_tcp {
   void *report_arg;
   u8_t poll_count;
   u8_t next_num;
+  /* 1=start server when client is closed */
+  u8_t client_tradeoff_mode;
   u32_t bytes_transferred;
   lwiperf_settings_t settings;
   u8_t have_settings_buf;
@@ -206,7 +212,6 @@ lwiperf_list_remove(lwiperf_state_base_t *item)
   }
 }
 
-/* TODO: unused for now
 static lwiperf_state_base_t *
 lwiperf_list_find(lwiperf_state_base_t *item)
 {
@@ -217,7 +222,7 @@ lwiperf_list_find(lwiperf_state_base_t *item)
     }
   }
   return NULL;
-}*/
+}
 
 /** Call the report function of an iperf tcp session */
 static void
@@ -625,10 +630,14 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   tcp_err(conn->conn_pcb, lwiperf_tcp_err);
 
   if (s->specific_remote) {
-    /* this listener belongs to a client, so close it and make the client the master */
+    /* this listener belongs to a client, so make the client the master of the newly created connection */
     conn->base.related_master_state = s->base.related_master_state;
-    s->report_fn = NULL;
-    lwiperf_tcp_close(s, LWIPERF_TCP_ABORTED_LOCAL);
+    /* if dual mode or (tradeoff mode AND client is done): close the listener */
+    if (!s->client_tradeoff_mode || !lwiperf_list_find(s->base.related_master_state)) {
+      /* prevent report when closing: this is expected */
+      s->report_fn = NULL;
+      lwiperf_tcp_close(s, LWIPERF_TCP_ABORTED_LOCAL);
+    }
   }
   lwiperf_list_add(&conn->base);
   return ERR_OK;
@@ -765,10 +774,8 @@ void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
     break;
   case LWIPERF_TRADEOFF:
     /* Do a bidirectional test individually */
-    return NULL;
-    /* TODO: implement this!
     settings.flags = htonl(LWIPERF_FLAGS_ANSWER_TEST);
-    break;*/
+    break;
   default:
     /* invalid argument */
     return NULL;
@@ -781,7 +788,7 @@ void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
   ret = lwiperf_tx_start_impl(remote_addr, remote_port, &settings, report_fn, report_arg, NULL, &state);
   if (ret == ERR_OK) {
     LWIP_ASSERT("state != NULL", state != NULL);
-    if (type == LWIPERF_DUAL) {
+    if (type != LWIPERF_CLIENT) {
       /* start corresponding server now */
       lwiperf_state_tcp_t *server = NULL;
       ret = lwiperf_start_tcp_server_impl(&state->conn_pcb->local_ip, LWIPERF_TCP_PORT_DEFAULT,
@@ -794,6 +801,11 @@ void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
       /* make this server accept one connection only */
       server->specific_remote = 1;
       server->remote_addr = state->conn_pcb->remote_ip;
+      if (type == LWIPERF_TRADEOFF) {
+        /* tradeoff means that the remote host connects only after the client is done,
+           so keep the listen pcb open until the client is done */
+        server->client_tradeoff_mode = 1;
+      }
     }
     return state;
   }
