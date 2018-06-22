@@ -9,10 +9,10 @@
  *
  * This is a simple performance measuring client/server to check your bandwith using
  * iPerf2 on a PC as server/client.
- * It is currently a minimal implementation providing an IPv4 TCP client/server only.
+ * It is currently a minimal implementation providing a TCP client/server only.
  *
  * @todo:
- * - implement UDP mode and IPv6
+ * - implement UDP mode
  * - protect combined sessions handling (via 'related_master_state') against reallocation
  *   (this is a pointer address, currently, so if the same memory is allocated again,
  *    session pairs (tx/rx) can be confused on reallocation)
@@ -56,7 +56,7 @@
 
 #include <string.h>
 
-/* Currently, only TCP is implemented (does iperf support IPv6 anyway?) */
+/* Currently, only TCP is implemented */
 #if LWIP_TCP && LWIP_CALLBACK_API
 
 /** Specify the idle timeout (in seconds) after that the test fails */
