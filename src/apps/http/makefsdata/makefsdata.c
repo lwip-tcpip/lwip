@@ -536,6 +536,7 @@ static u8_t *get_file_data(const char *filename, int *file_size, int can_be_comp
   u8_t *buf;
   size_t r;
   int rs;
+  LWIP_UNUSED_ARG(r); /* for LWIP_NOASSERT */
   inFile = fopen(filename, "rb");
   if (inFile == NULL) {
     printf("Failed to open file \"%s\"\n", filename);
@@ -629,8 +630,8 @@ static u8_t *get_file_data(const char *filename, int *file_size, int can_be_comp
 static void process_file_data(FILE *data_file, u8_t *file_data, size_t file_size)
 {
   size_t written, i, src_off = 0;
-
   size_t off = 0;
+  LWIP_UNUSED_ARG(written); /* for LWIP_NOASSERT */
   for (i = 0; i < file_size; i++) {
     LWIP_ASSERT("file_buffer_c overflow", off < sizeof(file_buffer_c) - 5);
     sprintf(&file_buffer_c[off], "0x%02x,", file_data[i]);

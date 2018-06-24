@@ -152,6 +152,7 @@ static err_t
 altcp_mbedtls_lower_connected(void *arg, struct altcp_pcb *inner_conn, err_t err)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
+  LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
   if (conn && conn->state) {
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
     /* upper connected is called when handshake is done */
@@ -437,6 +438,7 @@ altcp_mbedtls_bio_recv(void *ctx, unsigned char *buf, size_t len)
   u16_t copy_len;
   err_t err;
 
+  LWIP_UNUSED_ARG(err); /* for LWIP_NOASSERT */
   if ((conn == NULL) || (conn->state == NULL)) {
     return MBEDTLS_ERR_NET_INVALID_CONTEXT;
   }
@@ -484,6 +486,7 @@ static err_t
 altcp_mbedtls_lower_sent(void *arg, struct altcp_pcb *inner_conn, u16_t len)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
+  LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
   LWIP_UNUSED_ARG(len);
   if (conn) {
     altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
@@ -510,6 +513,7 @@ static err_t
 altcp_mbedtls_lower_poll(void *arg, struct altcp_pcb *inner_conn)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
+  LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
   if (conn) {
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
     /* check if there's unreceived rx data */
