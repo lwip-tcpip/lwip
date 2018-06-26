@@ -787,6 +787,8 @@
  * Since the received pbufs are enqueued, be sure to configure
  * PBUF_POOL_SIZE > IP_REASS_MAX_PBUFS so that the stack is still able to receive
  * packets even if the maximum amount of fragments is enqueued for reassembly!
+ * When IPv4 *and* IPv6 are enabled, this even changes to
+ * (PBUF_POOL_SIZE > 2 * IP_REASS_MAX_PBUFS)!
  */
 #if !defined IP_REASS_MAX_PBUFS || defined __DOXYGEN__
 #define IP_REASS_MAX_PBUFS              10
