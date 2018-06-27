@@ -2495,7 +2495,7 @@ http_poll(void *arg, struct altcp_pcb *pcb)
     /* If this connection has a file open, try to send some more data. If
      * it has not yet received a GET request, don't do this since it will
      * cause the connection to close immediately. */
-    if (hs && (hs->handle)) {
+    if (hs->handle) {
       LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("http_poll: try to send more data\n"));
       if (http_send(pcb, hs)) {
         /* If we wrote anything to be sent, go ahead and send it now. */
