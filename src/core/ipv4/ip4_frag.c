@@ -677,7 +677,8 @@ ip4_reass(struct pbuf *p)
   return NULL;
 
 nullreturn_ipr:
-  if ((ipr != NULL) && (ipr->p == NULL)) {
+  LWIP_ASSERT("ipr != NULL", ipr != NULL);
+  if (ipr->p == NULL) {
     /* dropped pbuf after creating a new datagram entry: remove the entry, too */
     LWIP_ASSERT("not firstalthough just enqueued", ipr == reassdatagrams);
     ip_reass_dequeue_datagram(ipr, NULL);
