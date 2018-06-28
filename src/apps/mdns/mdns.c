@@ -832,7 +832,7 @@ mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain)
   u16_t jump;
 
   if (!domain->skip_compression) {
-    for (i = 0; i < NUM_DOMAIN_OFFSETS; ++i) {
+    for (i = 0; i < NUM_DOMAIN_OFFSETS; i++) {
       u16_t offset = outpkt->domain_offsets[i];
       if (offset) {
         u16_t len = mdns_compress_domain(outpkt->pbuf, &offset, domain);
@@ -852,7 +852,7 @@ mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain)
     }
 
     /* Store offset of this new domain */
-    for (i = 0; i < NUM_DOMAIN_OFFSETS; ++i) {
+    for (i = 0; i < NUM_DOMAIN_OFFSETS; i++) {
       if (outpkt->domain_offsets[i] == 0) {
         outpkt->domain_offsets[i] = outpkt->write_offset;
         break;
@@ -1323,7 +1323,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags)
 #if LWIP_IPV6
   if (outpkt->host_replies & REPLY_HOST_AAAA) {
     int addrindex;
-    for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; ++addrindex) {
+    for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
       if (ip6_addr_isvalid(netif_ip6_addr_state(outpkt->netif, addrindex))) {
         res = mdns_add_aaaa_answer(outpkt, outpkt->cache_flush, outpkt->netif, addrindex);
         if (res != ERR_OK) {
@@ -1351,7 +1351,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags)
 #endif
 
   /* Write answers to service questions */
-  for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     service = mdns->services[i];
     if (!service) {
       continue;
@@ -1391,14 +1391,14 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags)
   }
 
   /* if this is a response, the data above is anwers, else this is a probe and the answers above goes into auth section */
-  if ( flags & DNS_FLAG1_RESPONSE ) {
+  if (flags & DNS_FLAG1_RESPONSE) {
     outpkt->answers += answers;
   } else {
     outpkt->authoritative += answers;
   }
 
   /* All answers written, add additional RRs */
-  for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     service = mdns->services[i];
     if (!service) {
       continue;
@@ -1432,7 +1432,7 @@ mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags)
 #if LWIP_IPV6
       if (!(outpkt->host_replies & REPLY_HOST_AAAA)) {
         int addrindex;
-        for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; ++addrindex) {
+        for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
           if (ip6_addr_isvalid(netif_ip6_addr_state(outpkt->netif, addrindex))) {
             res = mdns_add_aaaa_answer(outpkt, outpkt->cache_flush, outpkt->netif, addrindex);
             if (res != ERR_OK) {
@@ -1499,7 +1499,6 @@ cleanup:
   return res;
 }
 
-
 /**
  * Send unsolicited answer containing all our known data
  * @param netif The network interface to send on
@@ -1521,7 +1520,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   }
 #endif
 #if LWIP_IPV6
-  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
       announce.host_replies |= REPLY_HOST_AAAA | REPLY_HOST_PTR_V6;
       announce.host_reverse_v6_replies |= (1 << i);
@@ -1587,7 +1586,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     reply.host_replies |= check_host(pkt->netif, &q.info, &reply.host_reverse_v6_replies);
     replies |= reply.host_replies;
 
-    for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+    for (i = 0; i < MDNS_MAX_SERVICES; i++) {
       service = mdns->services[i];
       if (!service) {
         continue;
@@ -1678,7 +1677,7 @@ mdns_handle_question(struct mdns_packet *pkt)
       }
     }
 
-    for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+    for (i = 0; i < MDNS_MAX_SERVICES; i++) {
       service = mdns->services[i];
       if (!service) {
         continue;
@@ -1802,7 +1801,7 @@ mdns_handle_response(struct mdns_packet *pkt)
 
     /*"Apparently conflicting Multicast DNS responses received *before* the first probe packet is sent MUST
       be silently ignored" so drop answer if we haven't started probing yet*/
-    if (mdns->probing_state == MDNS_PROBING_ONGOING && mdns->probes_sent > 0) {
+    if ((mdns->probing_state == MDNS_PROBING_ONGOING) && (mdns->probes_sent > 0)) {
       struct mdns_domain domain;
       u8_t i;
       u8_t conflict = 0;
@@ -1813,13 +1812,13 @@ mdns_handle_response(struct mdns_packet *pkt)
         conflict = 1;
       }
 
-      for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+      for (i = 0; i < MDNS_MAX_SERVICES; i++) {
         struct mdns_service* service = mdns->services[i];
         if (!service) {
           continue;
         }
         res = mdns_build_service_domain(&domain, service, 1);
-        if (res == ERR_OK && mdns_domain_eq(&ans.info.domain, &domain)) {
+        if ((res == ERR_OK) && mdns_domain_eq(&ans.info.domain, &domain)) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe response matches service domain!"));
           conflict = 1;
         }
@@ -1955,7 +1954,7 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
     goto cleanup;
   }
   pkt.questions++;
-  for (i = 0; i < MDNS_MAX_SERVICES; ++i) {
+  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service* service = mdns->services[i];
     if (!service) {
       continue;
@@ -1975,7 +1974,7 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
   }
 #endif
 #if LWIP_IPV6
-  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
       pkt.host_replies |= REPLY_HOST_AAAA;
     }
@@ -2315,8 +2314,7 @@ mdns_resp_announce(struct netif *netif)
     return;
   }
 
-  if (mdns->probing_state == MDNS_PROBING_COMPLETE)
-  {
+  if (mdns->probing_state == MDNS_PROBING_COMPLETE) {
     /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
     mdns_announce(netif, IP6_ADDR_ANY);
