@@ -137,11 +137,9 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 /* Lookup for text info on service instance */
 #define REPLY_SERVICE_TXT       0x80
 
-typedef enum {
-  MDNS_PROBING_NOT_STARTED,
-  MDNS_PROBING_ONGOING,
-  MDNS_PROBING_COMPLETE,
-} mdns_probing_state;
+#define MDNS_PROBING_NOT_STARTED  0
+#define MDNS_PROBING_ONGOING      1
+#define MDNS_PROBING_COMPLETE     2
 
 static const char *dnssd_protos[] = {
   "_udp", /* DNSSD_PROTO_UDP */
@@ -179,7 +177,7 @@ struct mdns_host {
   /** Number of probes sent for the current name */
   u8_t probes_sent;
   /** State in probing sequence */
-  mdns_probing_state probing_state;
+  u8_t probing_state;
 };
 
 /** Information about received packet */
