@@ -137,6 +137,9 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 /* Lookup for text info on service instance */
 #define REPLY_SERVICE_TXT       0x80
 
+#define MDNS_PROBE_DELAY_MS       250
+#define MDNS_PROBE_COUNT          3
+
 #define MDNS_PROBING_NOT_STARTED  0
 #define MDNS_PROBING_ONGOING      1
 #define MDNS_PROBING_COMPLETE     2
@@ -2010,7 +2013,7 @@ mdns_probe(void* arg)
   struct netif *netif = (struct netif *)arg;
   struct mdns_host* mdns = NETIF_TO_HOST(netif);
 
-  if(mdns->probes_sent >= 3) {
+  if(mdns->probes_sent >= MDNS_PROBE_COUNT) {
     /* probing successful, announce the new name */
     mdns->probing_state = MDNS_PROBING_COMPLETE;
     mdns_resp_announce(netif);
@@ -2031,7 +2034,7 @@ mdns_probe(void* arg)
         mdns->probes_sent++;
       }
     }
-    sys_timeout(250, mdns_probe, netif);
+    sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe, netif);
   }
 }
 
@@ -2360,7 +2363,7 @@ mdns_resp_restart(struct netif *netif)
   /*todo if we've failed 15 times within a 10 second period we MUST wait 5 seconds (or wait 5 seconds every time except first)*/
   mdns->probes_sent = 0;
   mdns->probing_state = MDNS_PROBING_ONGOING;
-  sys_timeout(250, mdns_probe, netif);
+  sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe, netif);
 }
 
 /**
