@@ -139,6 +139,12 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 
 #define MDNS_PROBE_DELAY_MS       250
 #define MDNS_PROBE_COUNT          3
+#ifdef LWIP_RAND
+/* first probe timeout SHOULD be random 0-250 ms*/
+#define MDNS_INITIAL_PROBE_DELAY_MS (LWIP_RAND() % MDNS_PROBE_DELAY_MS)
+#else
+#define MDNS_INITIAL_PROBE_DELAY_MS MDNS_PROBE_DELAY_MS
+#endif
 
 #define MDNS_PROBING_NOT_STARTED  0
 #define MDNS_PROBING_ONGOING      1
@@ -1562,7 +1568,7 @@ mdns_handle_question(struct mdns_packet *pkt)
 
   if (mdns->probing_state != MDNS_PROBING_COMPLETE) {
     /* Don't answer questions until we've verified our domains via probing */
-    /* todo we should check incoming questions during probing for tiebreaking */
+    /* @todo we should check incoming questions during probing for tiebreaking */
     return;
   }
 
@@ -2327,7 +2333,7 @@ mdns_resp_announce(struct netif *netif)
       mdns_announce(netif, IP4_ADDR_ANY);
     }
 #endif
-  } /* else: ip address changed while probing was ongoing? todo reset counter to restart? */
+  } /* else: ip address changed while probing was ongoing? @todo reset counter to restart? */
 }
 
 /** Register a callback function that is called if probing is completed successfully
@@ -2359,11 +2365,10 @@ mdns_resp_restart(struct netif *netif)
   if (mdns->probing_state == MDNS_PROBING_ONGOING) {
     sys_untimeout(mdns_probe, netif);
   }
-  /*todo first probe timeout SHOULD be random 0-250 ms*/
-  /*todo if we've failed 15 times within a 10 second period we MUST wait 5 seconds (or wait 5 seconds every time except first)*/
+  /* @todo if we've failed 15 times within a 10 second period we MUST wait 5 seconds (or wait 5 seconds every time except first)*/
   mdns->probes_sent = 0;
   mdns->probing_state = MDNS_PROBING_ONGOING;
-  sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe, netif);
+  sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe, netif);
 }
 
 /**
