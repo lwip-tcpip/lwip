@@ -48,6 +48,9 @@ enum mdns_sd_proto {
   DNSSD_PROTO_TCP = 1
 };
 
+#define MDNS_PROBING_CONFLICT   0
+#define MDNS_PROBING_SUCCESSFUL 1
+
 #define MDNS_LABEL_MAXLEN  63
 
 struct mdns_host;
@@ -57,9 +60,9 @@ struct mdns_service;
 typedef void (*service_get_txt_fn_t)(struct mdns_service *service, void *txt_userdata);
 
 /** Callback function to let application know the result of probing network for name
- *  uniqueness, called with result 1 if no other node claimed use for the name for the
- *  netif or a service and is safe to use, or 0 if another node is already using it and
- *  mdns is disabled on this interface */
+ * uniqueness, called with result MDNS_PROBING_SUCCESSFUL if no other node claimed
+ * use for the name for the netif or a service and is safe to use, or MDNS_PROBING_CONFLICT
+ * if another node is already using it and mdns is disabled on this interface */
 typedef void (*mdns_name_result_cb_t)(struct netif* netif, u8_t result);
 
 void mdns_resp_init(void);

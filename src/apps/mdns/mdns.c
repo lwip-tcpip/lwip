@@ -103,7 +103,7 @@ static const ip_addr_t v6group = DNS_MQUERY_IPV6_GROUP_INIT;
 static u8_t mdns_netif_client_id;
 static struct udp_pcb *mdns_pcb;
 NETIF_DECLARE_EXT_CALLBACK(netif_callback)
-static mdns_name_result_cb_t mdns_name_result_cb = NULL;
+static mdns_name_result_cb_t mdns_name_result_cb;
 
 #define NETIF_TO_HOST(netif) (struct mdns_host*)(netif_get_client_data(netif, mdns_netif_client_id))
 
@@ -1830,7 +1830,7 @@ mdns_handle_response(struct mdns_packet *pkt)
       if (conflict != 0) {
         sys_untimeout(mdns_probe, pkt->netif);
         if (mdns_name_result_cb != NULL) {
-          mdns_name_result_cb(pkt->netif, 0);
+          mdns_name_result_cb(pkt->netif, MDNS_PROBING_CONFLICT);
         }
       }
     }
@@ -2018,7 +2018,7 @@ mdns_probe(void* arg)
     mdns->probing_state = MDNS_PROBING_COMPLETE;
     mdns_resp_announce(netif);
     if (mdns_name_result_cb != NULL) {
-      mdns_name_result_cb(netif, 1);
+      mdns_name_result_cb(netif, MDNS_PROBING_SUCCESSFUL);
     }
   } else {
 #if LWIP_IPV4
@@ -2331,6 +2331,8 @@ mdns_resp_announce(struct netif *netif)
   } /* else: ip address changed while probing was ongoing? todo reset counter to restart? */
 }
 
+/** Register a callback function that is called if probing is completed successfully
+ * or with a conflict. */
 void
 mdns_resp_register_name_result_cb(mdns_name_result_cb_t cb)
 {
