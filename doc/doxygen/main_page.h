@@ -177,7 +177,7 @@
  * This implies one or more cacheline(s) of the RX pbuf become dirty
  * and need to be flushed before the memory is handed over to the
  * DMA ethernet hardware for the next telegram to be received.
- * See http://lwip.100.n7.nabble.com/in-place-overwriting-of-payload-via-static-quot-tcphdr-quot-pointer-td31434.html
+ * See http://lists.nongnu.org/archive/html/lwip-devel/2017-12/msg00070.html
  * for a more detailed explanation.
  * Also keep in mind the user application may also write into pbufs,
  * so it is generally a bug not to flush the data cache before handing
