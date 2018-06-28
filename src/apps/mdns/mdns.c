@@ -2146,7 +2146,7 @@ err_t
 mdns_resp_rename_netif(struct netif *netif, const char *hostname)
 {
   struct mdns_host *mdns;
-  u8_t len;
+  size_t len;
 
   LWIP_ASSERT_CORE_LOCKED();
   len = strlen(hostname);
@@ -2155,7 +2155,7 @@ mdns_resp_rename_netif(struct netif *netif, const char *hostname)
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_rename_netif: Not an mdns netif", (mdns != NULL), return ERR_VAL);
 
-  MEMCPY(&mdns->name, hostname, len);
+  MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, len));
   mdns->name[len] = '\0'; /* null termination in case new name is shorter than previous */
 
   mdns_resp_restart(netif);
@@ -2258,7 +2258,7 @@ mdns_resp_rename_service(struct netif *netif, s8_t slot, const char *name)
 {
   struct mdns_service *srv;
   struct mdns_host *mdns;
-  u8_t len;
+  size_t len;
 
   LWIP_ASSERT_CORE_LOCKED();
   len = strlen(name);
@@ -2271,7 +2271,7 @@ mdns_resp_rename_service(struct netif *netif, s8_t slot, const char *name)
 
   srv = mdns->services[slot];
 
-  MEMCPY(&srv->name, name, len);
+  MEMCPY(&srv->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, len));
   srv->name[len] = '\0'; /* null termination in case new name is shorter than previous */
 
   mdns_resp_restart(netif);
