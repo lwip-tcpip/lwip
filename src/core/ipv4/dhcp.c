@@ -1574,7 +1574,6 @@ again:
         /* special option: no len encoded */
         decode_len = len = 0;
         /* will be increased below */
-        offset--;
         break;
       case (DHCP_OPTION_SUBNET_MASK):
         LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
@@ -1639,44 +1638,48 @@ again:
                                     op, len, q, val_offset);
         break;
     }
-    if (offset + len + 2 > 0xFFFF) {
-      /* overflow */
-      return ERR_BUF;
-    }
-    offset = (u16_t)(offset + len + 2);
-    if (decode_len > 0) {
-      u32_t value = 0;
-      u16_t copy_len;
+    if (op == DHCP_OPTION_PAD) {
+      offset++;
+    } else {
+      if (offset + len + 2 > 0xFFFF) {
+        /* overflow */
+        return ERR_BUF;
+      }
+      offset = (u16_t)(offset + len + 2);
+      if (decode_len > 0) {
+        u32_t value = 0;
+        u16_t copy_len;
 decode_next:
-      LWIP_ASSERT("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
-      if (!dhcp_option_given(dhcp, decode_idx)) {
-        copy_len = LWIP_MIN(decode_len, 4);
-        if (pbuf_copy_partial(q, &value, copy_len, val_offset) != copy_len) {
-          return ERR_BUF;
-        }
-        if (decode_len > 4) {
-          /* decode more than one u32_t */
-          u16_t next_val_offset;
-          LWIP_ERROR("decode_len %% 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
-          dhcp_got_option(dhcp, decode_idx);
-          dhcp_set_option_value(dhcp, decode_idx, lwip_htonl(value));
-          decode_len = (u8_t)(decode_len - 4);
-          next_val_offset = (u16_t)(val_offset + 4);
-          if (next_val_offset < val_offset) {
-            /* overflow */
+        LWIP_ASSERT("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
+        if (!dhcp_option_given(dhcp, decode_idx)) {
+          copy_len = LWIP_MIN(decode_len, 4);
+          if (pbuf_copy_partial(q, &value, copy_len, val_offset) != copy_len) {
             return ERR_BUF;
           }
-          val_offset = next_val_offset;
-          decode_idx++;
-          goto decode_next;
-        } else if (decode_len == 4) {
-          value = lwip_ntohl(value);
-        } else {
-          LWIP_ERROR("invalid decode_len", decode_len == 1, return ERR_VAL;);
-          value = ((u8_t *)&value)[0];
+          if (decode_len > 4) {
+            /* decode more than one u32_t */
+            u16_t next_val_offset;
+            LWIP_ERROR("decode_len %% 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
+            dhcp_got_option(dhcp, decode_idx);
+            dhcp_set_option_value(dhcp, decode_idx, lwip_htonl(value));
+            decode_len = (u8_t)(decode_len - 4);
+            next_val_offset = (u16_t)(val_offset + 4);
+            if (next_val_offset < val_offset) {
+              /* overflow */
+              return ERR_BUF;
+            }
+            val_offset = next_val_offset;
+            decode_idx++;
+            goto decode_next;
+          } else if (decode_len == 4) {
+            value = lwip_ntohl(value);
+          } else {
+            LWIP_ERROR("invalid decode_len", decode_len == 1, return ERR_VAL;);
+            value = ((u8_t *)&value)[0];
+          }
+          dhcp_got_option(dhcp, decode_idx);
+          dhcp_set_option_value(dhcp, decode_idx, value);
         }
-        dhcp_got_option(dhcp, decode_idx);
-        dhcp_set_option_value(dhcp, decode_idx, value);
       }
     }
     if (offset >= q->len) {
@@ -1688,7 +1691,7 @@ decode_next:
         options = (u8_t *)q->payload;
       } else {
         /* We've run out of bytes, probably no end marker. Don't proceed. */
-        break;
+        return ERR_BUF;
       }
     }
   }
