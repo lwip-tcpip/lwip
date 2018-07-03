@@ -230,6 +230,7 @@ typedef int ssize_t;
 #define lwip_isxdigit(c)          isxdigit((unsigned char)(c))
 #define lwip_islower(c)           islower((unsigned char)(c))
 #define lwip_isspace(c)           isspace((unsigned char)(c))
+#define lwip_isupper(c)           isupper((unsigned char)(c))
 #define lwip_tolower(c)           tolower((unsigned char)(c))
 #define lwip_toupper(c)           toupper((unsigned char)(c))
 #endif
