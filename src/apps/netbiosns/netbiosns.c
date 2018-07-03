@@ -245,7 +245,7 @@ netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
     if (cname == '.') {
       break;  /* scope ID follows */
     }
-    if (cname < 'A' || cname > 'Z') {
+    if (!lwip_isupper(cname)) {
       /* Not legal. */
       return -1;
     }
@@ -254,12 +254,7 @@ netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
     pname++;
 
     cname = *pname;
-    if (cname == '\0' || cname == '.') {
-      /* No more characters in the name - but we're in
-       * the middle of a pair.  Not legal. */
-      return -1;
-    }
-    if (cname < 'A' || cname > 'Z') {
+    if (!lwip_isupper(cname)) {
       /* Not legal. */
       return -1;
     }
