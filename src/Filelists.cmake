@@ -236,6 +236,8 @@ set(lwipallapps_SRCS
 configure_file(${LWIP_DIR}/src/include/lwip/init.h.cmake.in ${LWIP_DIR}/src/include/lwip/init.h)
 
 # Documentation
+set(DOXYGEN_DIR ${LWIP_DIR}/doc/doxygen)
+set(DOXYGEN_OUTPUT_DIR output)
 set(DOXYGEN_IN  ${LWIP_DIR}/doc/doxygen/lwip.Doxyfile.cmake.in)
 set(DOXYGEN_OUT ${LWIP_DIR}/doc/doxygen/lwip.Doxyfile)
 configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT})
@@ -246,7 +248,7 @@ if (DOXYGEN_FOUND)
     # note the option ALL which allows to build the docs together with the application
     add_custom_target(lwipdocs EXCLUDE_FROM_ALL
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${LWIP_DIR}/doc/doxygen
+        WORKING_DIRECTORY ${DOXYGEN_DIR}
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM)
 else (DOXYGEN_FOUND)
