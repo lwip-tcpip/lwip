@@ -102,7 +102,9 @@ static const ip_addr_t v6group = DNS_MQUERY_IPV6_GROUP_INIT;
 
 static u8_t mdns_netif_client_id;
 static struct udp_pcb *mdns_pcb;
+#if MDNS_RESP_USENETIF_EXTCALLBACK
 NETIF_DECLARE_EXT_CALLBACK(netif_callback)
+#endif
 static mdns_name_result_cb_t mdns_name_result_cb;
 
 #define NETIF_TO_HOST(netif) (struct mdns_host*)(netif_get_client_data(netif, mdns_netif_client_id))
@@ -1912,7 +1914,7 @@ dealloc:
   pbuf_free(p);
 }
 
-#if LWIP_NETIF_EXT_STATUS_CALLBACK
+#if LWIP_NETIF_EXT_STATUS_CALLBACK && MDNS_RESP_USENETIF_EXTCALLBACK
 static void
 mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, const netif_ext_callback_args_t *args)
 {
@@ -1940,7 +1942,7 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
     mdns_resp_announce(netif);
   }
 }
-#endif
+#endif /* LWIP_NETIF_EXT_STATUS_CALLBACK && MDNS_RESP_USENETIF_EXTCALLBACK */
 
 static err_t
 mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
@@ -2396,8 +2398,10 @@ mdns_resp_init(void)
 
   mdns_netif_client_id = netif_alloc_client_data_id();
 
+#if MDNS_RESP_USENETIF_EXTCALLBACK
   /* register for netif events when started on first netif */
   netif_add_ext_callback(&netif_callback, mdns_netif_ext_status_callback);
+#endif
 }
 
 #endif /* LWIP_MDNS_RESPONDER */
