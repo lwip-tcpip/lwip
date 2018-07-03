@@ -245,12 +245,18 @@ configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT})
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
     message("Doxygen build started")
-    # note the option ALL which allows to build the docs together with the application
+
     add_custom_target(lwipdocs EXCLUDE_FROM_ALL
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
         WORKING_DIRECTORY ${DOXYGEN_DIR}
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM)
+
+    # Remove old docs before generating new ones to prevent stale files
+    add_custom_command(TARGET lwipdocs
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${DOXYGEN_DIR}/${DOXYGEN_OUTPUT_DIR}/html
+)
 else (DOXYGEN_FOUND)
     message("Doxygen needs to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
