@@ -875,6 +875,9 @@ START_TEST(test_dhcp_nak_no_endmarker)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   };
   u32_t xid;
+  struct dhcp* dhcp;
+  u8_t tries;
+  u16_t request_timeout;
   LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP_NAK_NO_ENDMARKER;
@@ -889,9 +892,10 @@ START_TEST(test_dhcp_nak_no_endmarker)
   netif_set_up(&net_test);
 
   dhcp_start(&net_test);
+  dhcp = netif_dhcp_data(&net_test);
 
   fail_unless(txpacket == 1); /* DHCP discover sent */
-  xid = netif_dhcp_data(&net_test)->xid; /* Write bad xid, not using htonl! */
+  xid = dhcp->xid; /* Write bad xid, not using htonl! */
   memcpy(&dhcp_offer[46], &xid, 4);
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
@@ -901,19 +905,25 @@ START_TEST(test_dhcp_nak_no_endmarker)
   fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   fail_unless(txpacket == 1); /* Nothing more sent */
-  xid = htonl(netif_dhcp_data(&net_test)->xid);
+  xid = htonl(dhcp->xid);
   memcpy(&dhcp_offer[46], &xid, 4); /* insert correct transaction id */
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
-  
-  fail_unless(netif_dhcp_data(&net_test)->state == DHCP_STATE_REQUESTING);
+
+  fail_unless(dhcp->state == DHCP_STATE_REQUESTING);
 
   fail_unless(txpacket == 2); /* No more sent */
-  xid = htonl(netif_dhcp_data(&net_test)->xid); /* xid updated */
+  xid = htonl(dhcp->xid); /* xid updated */
   memcpy(&dhcp_nack_no_endmarker[46], &xid, 4); /* insert transaction id */
+  tries = dhcp->tries;
+  request_timeout = dhcp->request_timeout;
   send_pkt(&net_test, dhcp_nack_no_endmarker, sizeof(dhcp_nack_no_endmarker));
 
-  /* NAK should put us in another state for a while, no other way detecting it */
-  fail_unless(netif_dhcp_data(&net_test)->state != DHCP_STATE_REQUESTING);
+  /* NAK should be ignored */
+  fail_unless(dhcp->state == DHCP_STATE_REQUESTING);
+  fail_unless(txpacket == 2); /* No more sent */
+  fail_unless(xid == htonl(dhcp->xid));
+  fail_unless(tries == dhcp->tries);
+  fail_unless(request_timeout == dhcp->request_timeout);
 
   tcase = TEST_NONE;
   dhcp_stop(&net_test);
