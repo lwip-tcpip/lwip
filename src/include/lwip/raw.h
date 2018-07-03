@@ -119,7 +119,7 @@ void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *re
 #define          raw_setflags(pcb,f)  ((pcb)->flags = (f))
 
 #define          raw_set_flags(pcb, set_flags)     do { (pcb)->flags = (u8_t)((pcb)->flags |  (set_flags)); } while(0)
-#define          raw_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (u8_t)((pcb)->flags & ~(clr_flags)); } while(0)
+#define          raw_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (u8_t)((pcb)->flags & (u8_t)(~(clr_flags) & 0xff)); } while(0)
 #define          raw_is_flag_set(pcb, flag)        (((pcb)->flags & (flag)) != 0)
 
 #define raw_init() /* Compatibility define, no init needed. */

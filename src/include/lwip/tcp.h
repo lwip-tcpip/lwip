@@ -204,6 +204,7 @@ struct tcp_pcb_ext_args {
 #endif
 
 typedef u16_t tcpflags_t;
+#define TCP_ALLFLAGS 0xffffU
 
 /**
  * members common to struct tcp_pcb and struct tcp_listen_pcb
@@ -420,7 +421,7 @@ void             tcp_accept  (struct tcp_pcb *pcb, tcp_accept_fn accept);
 void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval);
 
 #define          tcp_set_flags(pcb, set_flags)     do { (pcb)->flags = (tcpflags_t)((pcb)->flags |  (set_flags)); } while(0)
-#define          tcp_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (tcpflags_t)((pcb)->flags & ~(clr_flags)); } while(0)
+#define          tcp_clear_flags(pcb, clr_flags)   do { (pcb)->flags = (tcpflags_t)((pcb)->flags & (tcpflags_t)(~(clr_flags) & TCP_ALLFLAGS)); } while(0)
 #define          tcp_is_flag_set(pcb, flag)        (((pcb)->flags & (flag)) != 0)
 
 #if LWIP_TCP_TIMESTAMPS
