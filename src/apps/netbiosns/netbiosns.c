@@ -220,7 +220,7 @@ static char netbiosns_local_name[NETBIOS_NAME_LEN];
 #define NETBIOS_LOCAL_NAME netbiosns_local_name
 #endif
 
-struct udp_pcb *netbiosns_pcb;
+static struct udp_pcb *netbiosns_pcb;
 
 /** Decode a NetBIOS name (from packet to string) */
 static int
