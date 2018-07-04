@@ -277,7 +277,7 @@
  * default values in pcbs struct are well initialized in all conditions.
  */
 #if !defined MEMP_MEM_INIT || defined __DOXYGEN__
-#define MEMP_MEM_INIT                 0
+#define MEMP_MEM_INIT                   0
 #endif
 
 /**
@@ -1125,7 +1125,7 @@
 
 /** DNS maximum number of retries when asking for a name, before "timeout". */
 #if !defined DNS_MAX_RETRIES || defined __DOXYGEN__
-#define DNS_MAX_RETRIES           4
+#define DNS_MAX_RETRIES                 4
 #endif
 
 /** DNS do a name checking between the query and the response. */
@@ -1167,7 +1167,7 @@
 /** Set this to 1 to enable querying ".local" names via mDNS
  *  using a One-Shot Multicast DNS Query */
 #if !defined LWIP_DNS_SUPPORT_MDNS_QUERIES || defined __DOXYGEN__
-#define LWIP_DNS_SUPPORT_MDNS_QUERIES  0
+#define LWIP_DNS_SUPPORT_MDNS_QUERIES   0
 #endif
 /**
  * @}
@@ -1367,7 +1367,7 @@
  */
 #if !defined TCP_OOSEQ_BYTES_LIMIT
 #if TCP_OOSEQ_MAX_BYTES
-#define TCP_OOSEQ_BYTES_LIMIT(pcb) TCP_OOSEQ_MAX_BYTES
+#define TCP_OOSEQ_BYTES_LIMIT(pcb)      TCP_OOSEQ_MAX_BYTES
 #elif defined __DOXYGEN__
 #define TCP_OOSEQ_BYTES_LIMIT(pcb)
 #endif
@@ -1390,7 +1390,7 @@
  */
 #if !defined TCP_OOSEQ_PBUFS_LIMIT
 #if TCP_OOSEQ_MAX_PBUFS
-#define TCP_OOSEQ_PBUFS_LIMIT(pcb) TCP_OOSEQ_MAX_PBUFS
+#define TCP_OOSEQ_PBUFS_LIMIT(pcb)      TCP_OOSEQ_MAX_PBUFS
 #elif defined __DOXYGEN__
 #define TCP_OOSEQ_PBUFS_LIMIT(pcb)
 #endif
@@ -1445,7 +1445,7 @@
  * explicit window update
  */
 #if !defined TCP_WND_UPDATE_THRESHOLD || defined __DOXYGEN__
-#define TCP_WND_UPDATE_THRESHOLD   LWIP_MIN((TCP_WND / 4), (TCP_MSS * 4))
+#define TCP_WND_UPDATE_THRESHOLD        LWIP_MIN((TCP_WND / 4), (TCP_MSS * 4))
 #endif
 
 /**
@@ -1559,7 +1559,7 @@
  * Default width of u8_t can be increased if 255 refs are not enough for you.
  */
 #ifndef LWIP_PBUF_REF_T
-#define LWIP_PBUF_REF_T u8_t
+#define LWIP_PBUF_REF_T                 u8_t
 #endif
 /**
  * @}
@@ -1661,7 +1661,7 @@
  *   }
  */
 #if !defined LWIP_NETIF_TX_SINGLE_PBUF || defined __DOXYGEN__
-#define LWIP_NETIF_TX_SINGLE_PBUF             0
+#define LWIP_NETIF_TX_SINGLE_PBUF       0
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
 /**
@@ -1669,7 +1669,7 @@
  * data in client_data member array of struct netif (max. 256).
  */
 #if !defined LWIP_NUM_NETIF_CLIENT_DATA || defined __DOXYGEN__
-#define LWIP_NUM_NETIF_CLIENT_DATA            0
+#define LWIP_NUM_NETIF_CLIENT_DATA      0
 #endif
 /**
  * @}
@@ -1698,7 +1698,7 @@
  * LWIP_LOOPIF_MULTICAST==1: Support multicast/IGMP on loop interface (127.0.0.1).
  */
 #if !defined LWIP_LOOPIF_MULTICAST || defined __DOXYGEN__
-#define LWIP_LOOPIF_MULTICAST               0
+#define LWIP_LOOPIF_MULTICAST           0
 #endif
 
 /**
@@ -1793,7 +1793,7 @@
  * SLIPIF_THREAD_NAME: The name assigned to the slipif_loop thread.
  */
 #if !defined SLIPIF_THREAD_NAME || defined __DOXYGEN__
-#define SLIPIF_THREAD_NAME             "slipif_loop"
+#define SLIPIF_THREAD_NAME              "slipif_loop"
 #endif
 
 /**
@@ -1818,7 +1818,7 @@
  * DEFAULT_THREAD_NAME: The name assigned to any other lwIP thread.
  */
 #if !defined DEFAULT_THREAD_NAME || defined __DOXYGEN__
-#define DEFAULT_THREAD_NAME            "lwIP"
+#define DEFAULT_THREAD_NAME             "lwIP"
 #endif
 
 /**
