@@ -125,8 +125,8 @@ static netif_addr_idx_t etharp_cached_entry;
 
 
 /* Check for maximum ARP_TABLE_SIZE */
-#if (ARP_TABLE_SIZE > 0x7f)
-#error "ARP_TABLE_SIZE must fit in an s8_t, you have to reduce it in your lwipopts.h"
+#if (ARP_TABLE_SIZE > NETIF_ADDR_IDX_MAX)
+#error "ARP_TABLE_SIZE must fit in an s16_t, you have to reduce it in your lwipopts.h"
 #endif
 
 
