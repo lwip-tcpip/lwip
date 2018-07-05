@@ -365,7 +365,7 @@ dhcp_handle_offer(struct netif *netif, struct dhcp_msg *msg_in)
 static err_t
 dhcp_select(struct netif *netif)
 {
-  struct dhcp *dhcp = netif_dhcp_data(netif);
+  struct dhcp *dhcp;
   err_t result;
   u16_t msecs;
   u8_t i;
@@ -373,6 +373,7 @@ dhcp_select(struct netif *netif)
   u16_t options_out_len;
 
   LWIP_ERROR("dhcp_select: netif != NULL", (netif != NULL), return ERR_ARG;);
+  dhcp = netif_dhcp_data(netif);
   LWIP_ERROR("dhcp_select: dhcp != NULL", (dhcp != NULL), return ERR_VAL;);
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_select(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
