@@ -413,7 +413,6 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct lowpan6_link_addr
 
     /* Fragment follows. */
     data_len = (max_data_len - 4) & 0xf8;
-    frag_len = (127 - ieee_header_len - 4 - 2) & 0xf8;
     frag_len = data_len + lowpan6_header_len;
 
     pbuf_copy_partial(p, buffer + ieee_header_len + lowpan6_header_len + 4, frag_len - lowpan6_header_len, 0);
@@ -537,6 +536,7 @@ lowpan6_hwaddr_to_addr(struct netif *netif, struct lowpan6_link_addr *addr)
 {
   addr->addr_len = 8;
   if (netif->hwaddr_len == 8) {
+    LWIP_ERROR("NETIF_MAX_HWADDR_LEN >= 8 required", sizeof(netif->hwaddr) >= 8, return ERR_VAL;);
     SMEMCPY(addr->addr, netif->hwaddr, 8);
   } else if (netif->hwaddr_len == 6) {
     /* Copy from MAC-48 */
