@@ -52,13 +52,13 @@ extern "C" {
 /** X.x.x: Major version of the stack */
 #define LWIP_VERSION_MAJOR      2
 /** x.X.x: Minor version of the stack */
-#define LWIP_VERSION_MINOR      0
+#define LWIP_VERSION_MINOR      1
 /** x.x.X: Revision of the stack */
-#define LWIP_VERSION_REVISION   3
+#define LWIP_VERSION_REVISION   0
 /** For release candidates, this is set to 1..254
   * For official releases, this is set to 255 (LWIP_RC_RELEASE)
   * For development versions (Git), this is set to 0 (LWIP_RC_DEVELOPMENT) */
-#define LWIP_VERSION_RC         LWIP_RC_DEVELOPMENT
+#define LWIP_VERSION_RC         1
 
 /** LWIP_VERSION_RC is set to LWIP_RC_RELEASE for official releases */
 #define LWIP_RC_RELEASE         255
