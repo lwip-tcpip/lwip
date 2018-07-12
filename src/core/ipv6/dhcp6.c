@@ -88,9 +88,9 @@
 #endif
 
 
-/** Option handling: options are parsed in dhcp_parse_reply
+/** Option handling: options are parsed in dhcp6_parse_reply
  * and saved in an array where other functions can load them from.
- * This might be moved into the struct dhcp (not necessarily since
+ * This might be moved into the struct dhcp6 (not necessarily since
  * lwIP is single-threaded and the array is only used while in recv
  * callback). */
 enum dhcp6_option_idx {
