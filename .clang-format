@@ -3,6 +3,5 @@ IndentWidth: 2
 ColumnLimit: 120
 DerivePointerAlignment: false
 PointerAlignment: Right
-AlignConsecutiveAssignments: true
 UseTab: Never
 AllowShortIfStatementsOnASingleLine: false
