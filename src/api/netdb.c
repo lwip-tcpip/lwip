@@ -39,18 +39,19 @@
 
 #if LWIP_DNS && LWIP_SOCKET
 
-#include "lwip/err.h"
-#include "lwip/mem.h"
-#include "lwip/memp.h"
-#include "lwip/ip_addr.h"
 #include "lwip/api.h"
 #include "lwip/dns.h"
+#include "lwip/err.h"
+#include "lwip/ip_addr.h"
+#include "lwip/mem.h"
+#include "lwip/memp.h"
 
-#include <string.h> /* memset */
 #include <stdlib.h> /* atoi */
+#include <string.h> /* memset */
 
 /** helper struct for gethostbyname_r to access the char* buffer */
-struct gethostbyname_r_helper {
+struct gethostbyname_r_helper
+{
   ip_addr_t *addr_list[2];
   ip_addr_t addr;
   char *aliases;
@@ -129,7 +130,8 @@ lwip_gethostbyname(const char *name)
     u8_t idx;
     for (idx = 0; s_hostent.h_addr_list[idx]; idx++) {
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == %p\n", idx, s_hostent.h_addr_list[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ipaddr_ntoa((ip_addr_t *)s_hostent.h_addr_list[idx])));
+      LWIP_DEBUGF(DNS_DEBUG,
+                  ("hostent.h_addr_list[%i]-> == %s\n", idx, ipaddr_ntoa((ip_addr_t *)s_hostent.h_addr_list[idx])));
     }
   }
 #endif /* DNS_DEBUG */
@@ -159,8 +161,12 @@ lwip_gethostbyname(const char *name)
  *         is stored in *h_errnop instead of h_errno to be thread-safe
  */
 int
-lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
-                     size_t buflen, struct hostent **result, int *h_errnop)
+lwip_gethostbyname_r(const char *name,
+                     struct hostent *ret,
+                     char *buf,
+                     size_t buflen,
+                     struct hostent **result,
+                     int *h_errnop)
 {
   err_t err;
   struct gethostbyname_r_helper *h;
@@ -266,8 +272,7 @@ lwip_freeaddrinfo(struct addrinfo *ai)
  * @todo: implement AI_V4MAPPED, AI_ADDRCONFIG
  */
 int
-lwip_getaddrinfo(const char *nodename, const char *servname,
-                 const struct addrinfo *hints, struct addrinfo **res)
+lwip_getaddrinfo(const char *nodename, const char *servname, const struct addrinfo *hints, struct addrinfo **res)
 {
   err_t err;
   ip_addr_t addr;
@@ -295,7 +300,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
 #if LWIP_IPV6
         && (ai_family != AF_INET6)
 #endif /* LWIP_IPV6 */
-       ) {
+    ) {
       return EAI_FAMILY;
     }
   } else {
@@ -319,8 +324,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
         return EAI_NONAME;
       }
 #if LWIP_IPV4 && LWIP_IPV6
-      if ((IP_IS_V6_VAL(addr) && ai_family == AF_INET) ||
-          (IP_IS_V4_VAL(addr) && ai_family == AF_INET6)) {
+      if ((IP_IS_V6_VAL(addr) && ai_family == AF_INET) || (IP_IS_V4_VAL(addr) && ai_family == AF_INET6)) {
         return EAI_NONAME;
       }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
@@ -359,8 +363,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     total_size += namelen + 1;
   }
   /* If this fails, please report to lwip-devel! :-) */
-  LWIP_ASSERT("total_size <= NETDB_ELEM_SIZE: please report this!",
-              total_size <= NETDB_ELEM_SIZE);
+  LWIP_ASSERT("total_size <= NETDB_ELEM_SIZE: please report this!", total_size <= NETDB_ELEM_SIZE);
   ai = (struct addrinfo *)memp_malloc(MEMP_NETDB);
   if (ai == NULL) {
     return EAI_MEMORY;

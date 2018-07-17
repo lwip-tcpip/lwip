@@ -40,20 +40,20 @@
 
 #if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/priv/tcpip_priv.h"
-#include "lwip/sys.h"
-#include "lwip/memp.h"
-#include "lwip/mem.h"
+#include "lwip/etharp.h"
 #include "lwip/init.h"
 #include "lwip/ip.h"
+#include "lwip/mem.h"
+#include "lwip/memp.h"
 #include "lwip/pbuf.h"
-#include "lwip/etharp.h"
+#include "lwip/priv/tcpip_priv.h"
+#include "lwip/sys.h"
 #include "netif/ethernet.h"
 
-#define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
+#define TCPIP_MSG_VAR_REF(name) API_VAR_REF(name)
 #define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
-#define TCPIP_MSG_VAR_ALLOC(name)   API_VAR_ALLOC(struct tcpip_msg, MEMP_TCPIP_MSG_API, name, ERR_MEM)
-#define TCPIP_MSG_VAR_FREE(name)    API_VAR_FREE(MEMP_TCPIP_MSG_API, name)
+#define TCPIP_MSG_VAR_ALLOC(name) API_VAR_ALLOC(struct tcpip_msg, MEMP_TCPIP_MSG_API, name, ERR_MEM)
+#define TCPIP_MSG_VAR_FREE(name) API_VAR_FREE(MEMP_TCPIP_MSG_API, name)
 
 /* global variables */
 static tcpip_init_done_fn tcpip_init_done;
@@ -65,7 +65,8 @@ static sys_mbox_t tcpip_mbox;
 sys_mutex_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-static void tcpip_thread_handle_msg(struct tcpip_msg *msg);
+static void
+tcpip_thread_handle_msg(struct tcpip_msg *msg);
 
 #if !LWIP_TIMERS
 /* wait for a message with timers disabled (e.g. pass a timer-check trigger into tcpip_thread) */
@@ -136,7 +137,7 @@ tcpip_thread(void *arg)
     tcpip_init_done(tcpip_init_done_arg);
   }
 
-  while (1) {                          /* MAIN Loop */
+  while (1) { /* MAIN Loop */
     LWIP_TCPIP_THREAD_ALIVE();
     /* wait for a message, timeouts are processed while waiting */
     TCPIP_MBOX_FETCH(&tcpip_mbox, (void **)&msg);
@@ -246,7 +247,7 @@ tcpip_inpkt(struct pbuf *p, struct netif *inp, netif_input_fn input_fn)
   ret = input_fn(p, inp);
   UNLOCK_TCPIP_CORE();
   return ret;
-#else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+#else  /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
   LWIP_ASSERT("Invalid mbox", sys_mbox_valid_val(tcpip_mbox));
@@ -420,7 +421,6 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 }
 #endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
 
-
 /**
  * Sends a message to TCPIP thread to call a function. Caller thread blocks on
  * on a provided semaphore, which ist NOT automatically signalled by TCPIP thread,
@@ -442,7 +442,7 @@ tcpip_send_msg_wait_sem(tcpip_callback_fn fn, void *apimsg, sys_sem_t *sem)
   fn(apimsg);
   UNLOCK_TCPIP_CORE();
   return ERR_OK;
-#else /* LWIP_TCPIP_CORE_LOCKING */
+#else  /* LWIP_TCPIP_CORE_LOCKING */
   TCPIP_MSG_VAR_DECLARE(msg);
 
   LWIP_ASSERT("semaphore not initialized", sys_sem_valid(sem));
@@ -496,7 +496,7 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
   TCPIP_MSG_VAR_REF(msg).msg.api_call.function = fn;
 #if LWIP_NETCONN_SEM_PER_THREAD
   TCPIP_MSG_VAR_REF(msg).msg.api_call.sem = LWIP_NETCONN_THREAD_SEM_GET();
-#else /* LWIP_NETCONN_SEM_PER_THREAD */
+#else  /* LWIP_NETCONN_SEM_PER_THREAD */
   TCPIP_MSG_VAR_REF(msg).msg.api_call.sem = &call->sem;
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
   sys_mbox_post(&tcpip_mbox, &TCPIP_MSG_VAR_REF(msg));
@@ -519,7 +519,7 @@ tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call)
  * e.g. the message is allocated once and posted several times from an IRQ
  * using tcpip_callbackmsg_trycallback().
  * Example usage: Trigger execution of an ethernet IRQ DPC routine in lwIP thread context.
- * 
+ *
  * @param function the function to call
  * @param ctx parameter passed to function
  * @return a struct pointer to pass to tcpip_callbackmsg_trycallback().

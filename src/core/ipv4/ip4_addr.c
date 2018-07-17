@@ -61,8 +61,7 @@ ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
   ip4_addr_set_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
-  if ((~addr == IPADDR_ANY) ||
-      (addr == IPADDR_ANY)) {
+  if ((~addr == IPADDR_ANY) || (addr == IPADDR_ANY)) {
     return 1;
     /* no broadcast support on this network interface? */
   } else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0) {
@@ -96,7 +95,7 @@ ip4_addr_netmask_valid(u32_t netmask)
   u32_t nm_hostorder = lwip_htonl(netmask);
 
   /* first, check for the first zero */
-  for (mask = 1UL << 31 ; mask != 0; mask >>= 1) {
+  for (mask = 1UL << 31; mask != 0; mask >>= 1) {
     if ((nm_hostorder & mask) == 0) {
       break;
     }
@@ -211,12 +210,12 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
   switch (pp - parts + 1) {
 
     case 0:
-      return 0;       /* initial nondigit */
+      return 0; /* initial nondigit */
 
-    case 1:             /* a -- 32 bits */
+    case 1: /* a -- 32 bits */
       break;
 
-    case 2:             /* a.b -- 8.24 bits */
+    case 2: /* a.b -- 8.24 bits */
       if (val > 0xffffffUL) {
         return 0;
       }
@@ -226,7 +225,7 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
       val |= parts[0] << 24;
       break;
 
-    case 3:             /* a.b.c -- 8.8.16 bits */
+    case 3: /* a.b.c -- 8.8.16 bits */
       if (val > 0xffff) {
         return 0;
       }
@@ -236,7 +235,7 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
       val |= (parts[0] << 24) | (parts[1] << 16);
       break;
 
-    case 4:             /* a.b.c.d -- 8.8.8.8 bits */
+    case 4: /* a.b.c.d -- 8.8.8.8 bits */
       if (val > 0xff) {
         return 0;
       }
