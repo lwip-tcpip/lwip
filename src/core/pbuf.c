@@ -1074,7 +1074,7 @@ void *
 pbuf_get_contiguous(const struct pbuf *p, void *buffer, size_t bufsize, u16_t len, u16_t offset)
 {
   const struct pbuf *q;
-  uint16_t out_offset;
+  u16_t out_offset;
 
   LWIP_ERROR("pbuf_get_contiguous: invalid buf", (p != NULL), return NULL;);
   LWIP_ERROR("pbuf_get_contiguous: invalid dataptr", (buffer != NULL), return NULL;);
