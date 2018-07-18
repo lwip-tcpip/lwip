@@ -46,8 +46,8 @@
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/memp.h"
 #include "lwip/netbuf.h"
+#include "lwip/memp.h"
 
 #include <string.h>
 
@@ -59,8 +59,8 @@
  * @return a pointer to a new netbuf
  *         NULL on lack of memory
  */
-struct netbuf *
-netbuf_new(void)
+struct
+netbuf *netbuf_new(void)
 {
   struct netbuf *buf;
 
@@ -111,7 +111,8 @@ netbuf_alloc(struct netbuf *buf, u16_t size)
   if (buf->p == NULL) {
     return NULL;
   }
-  LWIP_ASSERT("check that first pbuf can hold size", (buf->p->len >= size));
+  LWIP_ASSERT("check that first pbuf can hold size",
+              (buf->p->len >= size));
   buf->ptr = buf->p;
   return buf->p->payload;
 }

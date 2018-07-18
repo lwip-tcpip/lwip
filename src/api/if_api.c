@@ -67,7 +67,7 @@ lwip_if_indextoname(unsigned int ifindex, char *ifname)
       return ifname;
     }
   }
-#else  /* LWIP_NETIF_API */
+#else /* LWIP_NETIF_API */
   LWIP_UNUSED_ARG(ifindex);
   LWIP_UNUSED_ARG(ifname);
 #endif /* LWIP_NETIF_API */
@@ -93,9 +93,9 @@ lwip_if_nametoindex(const char *ifname)
   if (!err) {
     return idx;
   }
-#else       /* LWIP_NETIF_API */
+#else /* LWIP_NETIF_API */
   LWIP_UNUSED_ARG(ifname);
-#endif      /* LWIP_NETIF_API */
+#endif /* LWIP_NETIF_API */
   return 0; /* invalid index */
 }
 

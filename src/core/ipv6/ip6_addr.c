@@ -42,21 +42,21 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/def.h"
 #include "lwip/ip_addr.h"
+#include "lwip/def.h"
 
 #include <string.h>
 
 #if LWIP_IPV4
 #include "lwip/ip4_addr.h" /* for ip6addr_aton to handle IPv4-mapped addresses */
-#endif                     /* LWIP_IPV4 */
+#endif /* LWIP_IPV4 */
 
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
 const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
-#define lwip_xchar(i) ((char)((i) < 10 ? '0' + (i) : 'A' + (i)-10))
+#define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
 /**
  * Check whether "cp" is a valid ascii representation
@@ -84,7 +84,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       zero_blocks--;
 #if LWIP_IPV4
     } else if (*s == '.') {
-      if ((zero_blocks == 5) || (zero_blocks == 2)) {
+      if ((zero_blocks == 5) ||(zero_blocks == 2)) {
         check_ipv4_mapped = 1;
         /* last block could be the start of an IPv4 address */
         zero_blocks--;
@@ -108,7 +108,8 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       if (addr) {
         if (current_block_index & 0x1) {
           addr->addr[addr_index++] |= current_block_value;
-        } else {
+        }
+        else {
           addr->addr[addr_index] = current_block_value << 16;
         }
       }
@@ -159,9 +160,9 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       }
     } else if (lwip_isxdigit(*s)) {
       /* add current digit */
-      current_block_value =
-        (current_block_value << 4) +
-        (lwip_isdigit(*s) ? (u32_t)(*s - '0') : (u32_t)(10 + (lwip_islower(*s) ? *s - 'a' : *s - 'A')));
+      current_block_value = (current_block_value << 4) +
+          (lwip_isdigit(*s) ? (u32_t)(*s - '0') :
+          (u32_t)(10 + (lwip_islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
       break;
@@ -171,11 +172,12 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   if (addr) {
     if (current_block_index & 0x1) {
       addr->addr[addr_index++] |= current_block_value;
-    } else {
+    }
+    else {
       addr->addr[addr_index] = current_block_value << 16;
     }
 #if LWIP_IPV4
-  fix_byte_order_and_return:
+fix_byte_order_and_return:
 #endif
     /* convert to network byte order. */
     for (addr_index = 0; addr_index < 4; addr_index++) {
@@ -269,7 +271,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
          * according to current formatting suggestions RFC 5952. */
         next_block_value = lwip_htonl(addr->addr[(current_block_index + 1) >> 1]);
         if ((current_block_index & 0x1) == 0x01) {
-          next_block_value = next_block_value >> 16;
+            next_block_value = next_block_value >> 16;
         }
         next_block_value &= 0xffff;
         if (next_block_value == 0) {
@@ -318,7 +320,8 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 
     if (((current_block_value & 0xf0) == 0) && (zero_flag)) {
       /* do nothing */
-    } else {
+    }
+    else {
       buf[i++] = lwip_xchar(((current_block_value & 0xf0) >> 4));
       zero_flag = 0;
       if (i >= buflen) {
