@@ -38,23 +38,27 @@
 #include "lwip/apps/snmp_opts.h"
 #include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if LWIP_SNMP && LWIP_SNMP_V3
 
-typedef enum 
+typedef enum
 {
   SNMP_V3_AUTH_ALGO_INVAL = 0,
   SNMP_V3_AUTH_ALGO_MD5   = 1,
   SNMP_V3_AUTH_ALGO_SHA   = 2
 } snmpv3_auth_algo_t;
 
-typedef enum 
+typedef enum
 {
   SNMP_V3_PRIV_ALGO_INVAL = 0,
   SNMP_V3_PRIV_ALGO_DES   = 1,
   SNMP_V3_PRIV_ALGO_AES   = 2
 } snmpv3_priv_algo_t;
 
-typedef enum 
+typedef enum
 {
   SNMP_V3_USER_STORAGETYPE_OTHER       = 1,
   SNMP_V3_USER_STORAGETYPE_VOLATILE    = 2,
@@ -101,6 +105,10 @@ void snmpv3_password_to_key_sha(
     u8_t        engineLength, /* IN  - length of snmpEngineID */
     u8_t       *key);         /* OUT - pointer to caller 20-octet buffer */
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* LWIP_HDR_APPS_SNMP_V3_H */

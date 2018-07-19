@@ -42,6 +42,10 @@
 #include "lwip/err.h"
 #include "lwip/prot/ethernet.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct netif;
 
 #if (BRIDGEIF_MAX_PORTS < 0) || (BRIDGEIF_MAX_PORTS >= 64)
@@ -115,5 +119,9 @@ void*               bridgeif_fdb_init(u16_t max_fdb_entries);
 #define BRIDGEIF_WRITE_PROTECT(lev)
 #define BRIDGEIF_WRITE_UNPROTECT(lev)
 #endif /* BRIDGEIF_PORT_NETIFS_OUTPUT_DIRECT */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_NETIF_BRIDGEIF_H */

@@ -1,6 +1,10 @@
 #ifndef LWIP_HDR_APPS_SMTP_H
 #define LWIP_HDR_APPS_SMTP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "lwip/apps/smtp_opts.h"
 #include "lwip/err.h"
 #include "lwip/prot/iana.h"
@@ -115,6 +119,10 @@ err_t smtp_send_mail_static(const char *from, const char* to, const char* subjec
 void smtp_send_mail_int(void *arg);
 #ifdef LWIP_DEBUG
 const char* smtp_result_str(u8_t smtp_result);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* LWIP_HDR_APPS_SMTP_H */

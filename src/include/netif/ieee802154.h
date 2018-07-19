@@ -39,6 +39,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -101,5 +105,8 @@ PACK_STRUCT_END
 #define IEEE_802154_FC_SRC_ADDR_MODE_SHORT     (IEEE_802154_ADDR_MODE_SHORT << 14)
 #define IEEE_802154_FC_SRC_ADDR_MODE_EXT       (IEEE_802154_ADDR_MODE_EXT << 14)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_HDR_NETIF_IEEE802154_H */
