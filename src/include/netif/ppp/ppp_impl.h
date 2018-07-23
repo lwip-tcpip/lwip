@@ -53,6 +53,10 @@
 #include "ppp.h"
 #include "pppdebug.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Memory used for control packets.
  *
@@ -709,6 +713,10 @@ void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len);
  * Thus, the following is enough for now.
  * 1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* PPP_SUPPORT */
 #endif /* LWIP_HDR_PPP_IMPL_H */
