@@ -191,7 +191,7 @@ typedef snmp_err_t (*node_instance_set_test_method)(struct snmp_node_instance*, 
 typedef snmp_err_t (*node_instance_set_value_method)(struct snmp_node_instance*, u16_t, void*);
 typedef void (*node_instance_release_method)(struct snmp_node_instance*);
 
-#define SNMP_GET_VALUE_RAW_DATA 0x8000
+#define SNMP_GET_VALUE_RAW_DATA 0x4000  /* do not use 0x8000 because return value of node_instance_get_value_method is signed16 and 0x8000 would be the signed bit */
 
 /** SNMP node instance */
 struct snmp_node_instance

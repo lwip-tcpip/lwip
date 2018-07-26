@@ -451,10 +451,10 @@ snmp_process_varbind(struct snmp_request *request, struct snmp_varbind *vb, u8_t
     }
   } else {
     s16_t len = node_instance.get_value(&node_instance, vb->value);
-    vb->type = node_instance.asn1_type;
 
     if (len >= 0) {
       vb->value_len = (u16_t)len; /* cast is OK because we checked >= 0 above */
+      vb->type = node_instance.asn1_type;
 
       LWIP_ASSERT("SNMP_MAX_VALUE_SIZE is configured too low", (vb->value_len & ~SNMP_GET_VALUE_RAW_DATA) <= SNMP_MAX_VALUE_SIZE);
       err = snmp_append_outbound_varbind(&request->outbound_pbuf_stream, vb);
