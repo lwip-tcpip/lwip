@@ -274,4 +274,7 @@ endif (DOXYGEN_FOUND)
 
 # lwIP libraries
 add_library(lwipcore EXCLUDE_FROM_ALL ${lwipnoapps_SRCS})
+target_compile_options(lwipcore PRIVATE ${LWIP_COMPILER_FLAGS})
+
 add_library(lwipallapps EXCLUDE_FROM_ALL ${lwipallapps_SRCS})
+target_compile_options(lwipallapps PRIVATE ${LWIP_COMPILER_FLAGS})
