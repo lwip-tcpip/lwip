@@ -116,7 +116,7 @@ typedef enum
  * @ingroup mqtt
  * Function prototype for mqtt connection status callback. Called when
  * client has connected to the server after initiating a mqtt connection attempt by
- * calling mqtt_connect() or when connection is closed by server or an error
+ * calling mqtt_client_connect() or when connection is closed by server or an error
  *
  * @param client MQTT client itself
  * @param arg Additional argument to pass to the callback function
