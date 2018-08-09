@@ -275,6 +275,10 @@ endif (DOXYGEN_FOUND)
 # lwIP libraries
 add_library(lwipcore EXCLUDE_FROM_ALL ${lwipnoapps_SRCS})
 target_compile_options(lwipcore PRIVATE ${LWIP_COMPILER_FLAGS})
+target_compile_definitions(lwipcore PRIVATE ${LWIP_DEFINITIONS}  ${LWIP_MBEDTLS_DEFINITIONS})
+target_include_directories(lwipcore PRIVATE ${LWIP_INCLUDE_DIRS} ${LWIP_MBEDTLS_INCLUDE_DIRS})
 
 add_library(lwipallapps EXCLUDE_FROM_ALL ${lwipallapps_SRCS})
 target_compile_options(lwipallapps PRIVATE ${LWIP_COMPILER_FLAGS})
+target_compile_definitions(lwipallapps PRIVATE ${LWIP_DEFINITIONS}  ${LWIP_MBEDTLS_DEFINITIONS})
+target_include_directories(lwipallapps PRIVATE ${LWIP_INCLUDE_DIRS} ${LWIP_MBEDTLS_INCLUDE_DIRS})
