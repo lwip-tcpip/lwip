@@ -2485,6 +2485,18 @@ mdns_resp_rename_netif(struct netif *netif, const char *hostname)
 
 /**
  * @ingroup mdns
+ * Checks if an MDNS responder is active for a given network interface.
+ * @param netif The network interface to test.
+ * @return nonzero if responder active, zero otherwise.
+ */
+int
+mdns_resp_netif_active(struct netif *netif)
+{
+	return NETIF_TO_HOST(netif) != NULL;
+}
+
+/**
+ * @ingroup mdns
  * Add a service to the selected network interface.
  * @param netif The network interface to publish this service on
  * @param name The name of the service

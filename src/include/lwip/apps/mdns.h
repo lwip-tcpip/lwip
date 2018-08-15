@@ -110,6 +110,7 @@ void mdns_resp_register_name_result_cb(mdns_name_result_cb_t cb);
 err_t mdns_resp_add_netif(struct netif *netif, const char *hostname);
 err_t mdns_resp_remove_netif(struct netif *netif);
 err_t mdns_resp_rename_netif(struct netif *netif, const char *hostname);
+int mdns_resp_netif_active(struct netif *netif);
 
 s8_t  mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, service_get_txt_fn_t txt_fn, void *txt_userdata);
 err_t mdns_resp_del_service(struct netif *netif, u8_t slot);
