@@ -852,7 +852,7 @@ sntp_setservername(u8_t idx, const char *server)
 /**
  * Obtain one of the currently configured by name NTP servers.
  *
- * @param numdns the index of the NTP server
+ * @param idx the index of the NTP server
  * @return IP address of the indexed NTP server or NULL if the NTP
  *         server has not been configured by name (or at all)
  */
