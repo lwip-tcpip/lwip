@@ -131,8 +131,8 @@ ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr)
  * 
  * This method converts an EUI64 address to a Bluetooth MAC address,
  * 
- * @param src IPv6 source
  * @param dst BLE MAC address destination
+ * @param src IPv6 source
  * 
  */
 void
