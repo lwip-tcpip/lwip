@@ -793,8 +793,8 @@ sntp_setserver(u8_t idx, const ip_addr_t *server)
 /**
  * Initialize one of the NTP servers by IP address, required by DHCP
  *
- * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
- * @param dnsserver IP address of the NTP server to set
+ * @param num the index of the NTP server to set must be < SNTP_MAX_SERVERS
+ * @param server IP address of the NTP server to set
  */
 void
 dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
@@ -837,8 +837,8 @@ sntp_getserver(u8_t idx)
 /**
  * Initialize one of the NTP servers by name
  *
- * @param numdns the index of the NTP server to set must be < SNTP_MAX_SERVERS
- * @param dnsserver DNS name of the NTP server to set, to be resolved at contact time
+ * @param idx the index of the NTP server to set must be < SNTP_MAX_SERVERS
+ * @param server DNS name of the NTP server to set, to be resolved at contact time
  */
 void
 sntp_setservername(u8_t idx, const char *server)
