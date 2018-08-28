@@ -501,6 +501,24 @@ altcp_get_port(struct altcp_pcb *conn, int local)
   return 0;
 }
 
+#if LWIP_TCP_KEEPALIVE
+void
+altcp_keepalive_disable(struct altcp_pcb *conn)
+{
+  if (conn && conn->fns && conn->fns->keepalive_disable) {
+    conn->fns->keepalive_disable(conn);
+  }
+}
+
+void
+altcp_keepalive_enable(struct altcp_pcb *conn, u32_t idle, u32_t intvl, u32_t count)
+{
+  if (conn && conn->fns && conn->fns->keepalive_enable) {
+      conn->fns->keepalive_enable(conn, idle, intvl, count);
+  }
+}
+#endif
+
 #ifdef LWIP_DEBUG
 enum tcp_state
 altcp_dbg_get_tcp_state(struct altcp_pcb *conn)
@@ -665,6 +683,24 @@ altcp_default_get_port(struct altcp_pcb *conn, int local)
   }
   return 0;
 }
+
+#if LWIP_TCP_KEEPALIVE
+void
+altcp_default_keepalive_disable(struct altcp_pcb *conn)
+{
+  if (conn && conn->inner_conn) {
+    altcp_keepalive_disable(conn->inner_conn);
+  }
+}
+
+void
+altcp_default_keepalive_enable(struct altcp_pcb *conn, u32_t idle, u32_t intvl, u32_t count)
+{
+  if (conn && conn->inner_conn) {
+      altcp_keepalive_enable(conn->inner_conn, idle, intvl, count);
+  }
+}
+#endif
 
 #ifdef LWIP_DEBUG
 enum tcp_state
