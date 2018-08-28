@@ -49,6 +49,7 @@
 #include "lwip/altcp_tcp.h"
 #include "lwip/priv/altcp_priv.h"
 #include "lwip/tcp.h"
+#include "lwip/priv/tcp_priv.h"
 #include "lwip/mem.h"
 
 #include <string.h>
@@ -446,6 +447,31 @@ altcp_tcp_setprio(struct altcp_pcb *conn, u8_t prio)
   }
 }
 
+#if LWIP_TCP_KEEPALIVE
+static void
+altcp_tcp_keepalive_disable(struct altcp_pcb *conn)
+{
+  if (conn && conn->state) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
+    ALTCP_TCP_ASSERT_CONN(conn);
+    ip_reset_option(pcb, SOF_KEEPALIVE);
+  }
+}
+
+static void
+altcp_tcp_keepalive_enable(struct altcp_pcb *conn, u32_t idle, u32_t intvl, u32_t cnt)
+{
+  if (conn && conn->state) {
+    struct tcp_pcb *pcb = (struct tcp_pcb *)conn->state;
+    ALTCP_TCP_ASSERT_CONN(conn);
+    ip_set_option(pcb, SOF_KEEPALIVE);
+    pcb->keep_idle = idle ? idle : TCP_KEEPIDLE_DEFAULT;
+    pcb->keep_intvl = intvl ? intvl : TCP_KEEPINTVL_DEFAULT;
+    pcb->keep_cnt = cnt ? cnt : TCP_KEEPCNT_DEFAULT;
+  }
+}
+#endif
+
 static void
 altcp_tcp_dealloc(struct altcp_pcb *conn)
 {
@@ -535,6 +561,10 @@ const struct altcp_functions altcp_tcp_functions = {
   altcp_tcp_get_tcp_addrinfo,
   altcp_tcp_get_ip,
   altcp_tcp_get_port
+#if LWIP_TCP_KEEPALIVE
+  , altcp_tcp_keepalive_disable
+  , altcp_tcp_keepalive_enable
+#endif
 #ifdef LWIP_DEBUG
   , altcp_tcp_dbg_get_tcp_state
 #endif
