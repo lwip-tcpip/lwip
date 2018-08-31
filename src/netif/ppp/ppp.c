@@ -276,6 +276,8 @@ err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
 
   PPPDEBUG(LOG_DEBUG, ("ppp_connect[%d]: holdoff=%d\n", pcb->netif->num, holdoff));
 
+  magic_randomize();
+
   if (holdoff == 0) {
     ppp_do_connect(pcb);
     return ERR_OK;
@@ -302,6 +304,8 @@ err_t ppp_listen(ppp_pcb *pcb) {
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_listen[%d]\n", pcb->netif->num));
+
+  magic_randomize();
 
   if (pcb->link_cb->listen) {
     new_phase(pcb, PPP_PHASE_INITIALIZE);
