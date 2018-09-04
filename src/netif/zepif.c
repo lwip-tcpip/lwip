@@ -49,7 +49,7 @@
 
 #include "netif/zepif.h"
 
-#if LWIP_IPV6
+#if LWIP_IPV6 && LWIP_UDP
 
 #include "netif/lowpan6.h"
 #include "lwip/udp.h"
@@ -297,4 +297,4 @@ err_ret:
   return err;
 }
 
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV6 && LWIP_UDP */

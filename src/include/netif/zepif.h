@@ -43,7 +43,7 @@
 #include "lwip/opt.h"
 #include "netif/lowpan6.h"
 
-#if LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6 && LWIP_UDP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/netif.h"
 
@@ -76,6 +76,6 @@ err_t zepif_init(struct netif *netif);
 }
 #endif
 
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV6 && LWIP_UDP */
 
 #endif /* LWIP_HDR_ZEPIF_H */
