@@ -784,14 +784,11 @@ dhcp_start(struct netif *netif)
   }
   dhcp->pcb_allocated = 1;
 
-#if LWIP_DHCP_CHECK_LINK_UP
   if (!netif_is_link_up(netif)) {
     /* set state INIT and wait for dhcp_network_changed() to call dhcp_discover() */
     dhcp_set_state(dhcp, DHCP_STATE_INIT);
     return ERR_OK;
   }
-#endif /* LWIP_DHCP_CHECK_LINK_UP */
-
 
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
