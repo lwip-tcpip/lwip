@@ -1998,6 +1998,15 @@
 #endif
 
 /**
+ * LWIP_SOCKET_HEADERS==LWIP_SOCKET: Use LwIP's provided socket headers.
+ * When set to 0, user must provide its own socket headers by setting the
+ * values for LWIP_INCLUDE_SOCKETS and LWIP_INCLUDE_INET.
+ */
+#if !defined LWIP_SOCKET_HEADERS || defined __DOXYGEN__
+#define LWIP_SOCKET_HEADERS              LWIP_SOCKET
+#endif
+
+/**
  * LWIP_TCP_KEEPALIVE==1: Enable TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT
  * options processing. Note that TCP_KEEPIDLE and TCP_KEEPINTVL have to be set
  * in seconds. (does not require sockets.c, and will affect tcp.c)
