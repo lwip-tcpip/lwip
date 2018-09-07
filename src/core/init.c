@@ -238,16 +238,6 @@ PACK_STRUCT_END
 #endif
 #endif /* LWIP_NETCONN && LWIP_TCP */
 #if LWIP_SOCKET
-/* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
-#if SO_REUSEADDR != SOF_REUSEADDR
-#error "WARNING: SO_REUSEADDR != SOF_REUSEADDR"
-#endif
-#if SO_KEEPALIVE != SOF_KEEPALIVE
-#error "WARNING: SO_KEEPALIVE != SOF_KEEPALIVE"
-#endif
-#if SO_BROADCAST != SOF_BROADCAST
-#error "WARNING: SO_BROADCAST != SOF_BROADCAST"
-#endif
 #endif /* LWIP_SOCKET */
 
 
