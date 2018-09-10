@@ -384,7 +384,7 @@ altcp_proxyconnect_new_tcp(struct altcp_proxyconnect_config *config, u8_t ip_typ
 /** Allocator function to allocate a proxy connect altcp pcb connecting directly
  * via tcp to the proxy.
  *
- * The returned pcb is a chain: <altcp_proxyconnect> - <altcp_tcp> - <tcp pcb>
+ * The returned pcb is a chain: altcp_proxyconnect - altcp_tcp - tcp pcb
  *
  * This function is meant for use with @ref altcp_new.
  *
@@ -402,7 +402,7 @@ altcp_proxyconnect_alloc(void *arg, u8_t ip_type)
 
 /** Allocator function to allocate a TLS connection through a proxy.
  *
- * The returned pcb is a chain: <altcp_tls> - <altcp_proxyconnect> - <altcp_tcp> - <tcp pcb>
+ * The returned pcb is a chain: altcp_tls - altcp_proxyconnect - altcp_tcp - tcp pcb
  *
  * This function is meant for use with @ref altcp_new.
  *
