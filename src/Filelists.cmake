@@ -257,7 +257,7 @@ find_package(Doxygen)
 if (DOXYGEN_FOUND)
     message("Doxygen build started")
 
-    add_custom_target(lwipdocs EXCLUDE_FROM_ALL
+    add_custom_target(lwipdocs
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
         WORKING_DIRECTORY ${DOXYGEN_DIR}
         COMMENT "Generating API documentation with Doxygen"
