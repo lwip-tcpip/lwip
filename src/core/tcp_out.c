@@ -1585,8 +1585,8 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
       seg->chksum = SWAP_BYTES_IN_WORD(seg->chksum);
       seg->chksum_swapped = 0;
     }
-    acc += (u16_t)~(seg->chksum);
-    seg->tcphdr->chksum = FOLD_U32T(acc);
+    acc = (u16_t)~acc + seg->chksum;
+    seg->tcphdr->chksum = (u16_t)~FOLD_U32T(acc);
 #if TCP_CHECKSUM_ON_COPY_SANITY_CHECK
     if (chksum_slow != seg->tcphdr->chksum) {
       TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL(
