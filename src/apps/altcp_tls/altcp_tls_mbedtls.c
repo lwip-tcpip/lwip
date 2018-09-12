@@ -85,10 +85,6 @@
 
 #include <string.h>
 
-#if TCP_WND < MBEDTLS_SSL_MAX_CONTENT_LEN
-#error TCP_WND < MBEDTLS_SSL_MAX_CONTENT_LEN, cannot receive a full decryption buffer
-#endif
-
 #ifndef ALTCP_MBEDTLS_ENTROPY_PTR
 #define ALTCP_MBEDTLS_ENTROPY_PTR   NULL
 #endif
@@ -674,6 +670,11 @@ altcp_tls_create_config(int is_server, int have_cert, int have_pkey, int have_ca
   int ret;
   struct altcp_tls_config *conf;
   mbedtls_x509_crt *mem;
+
+  if (TCP_WND < MBEDTLS_SSL_MAX_CONTENT_LEN) {
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG|LWIP_DBG_LEVEL_SERIOUS,
+      ("altcp_tls: TCP_WND is smaller than the RX decrypion buffer, connection RX might stall!\n"));
+  }
 
   altcp_mbedtls_mem_init();
 
