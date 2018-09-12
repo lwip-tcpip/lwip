@@ -57,6 +57,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#if LWIP_TCP && LWIP_CALLBACK_API
+
 /**
  * HTTPC_DEBUG: Enable debugging for HTTP client.
  */
@@ -902,3 +904,5 @@ httpc_get_file_dns_to_disk(const char* server_name, u16_t port, const char* uri,
   return ERR_OK;
 }
 #endif /* LWIP_HTTPC_HAVE_FILE_IO */
+
+#endif /* LWIP_TCP && LWIP_CALLBACK_API */

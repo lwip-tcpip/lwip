@@ -45,6 +45,8 @@
 #include "lwip/prot/iana.h"
 #include "lwip/pbuf.h"
 
+#if LWIP_TCP && LWIP_CALLBACK_API
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -152,5 +154,7 @@ err_t httpc_get_file_dns_to_disk(const char* server_name, u16_t port, const char
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_TCP && LWIP_CALLBACK_API */
 
 #endif /* LWIP_HDR_APPS_HTTP_CLIENT_H */
