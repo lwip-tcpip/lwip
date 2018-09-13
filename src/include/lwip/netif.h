@@ -119,6 +119,9 @@ enum lwip_internal_netif_client_data_index
 #if LWIP_AUTOIP
    LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP,
 #endif
+#if LWIP_ACD
+   LWIP_NETIF_CLIENT_DATA_INDEX_ACD,
+#endif
 #if LWIP_IGMP
    LWIP_NETIF_CLIENT_DATA_INDEX_IGMP,
 #endif
@@ -376,6 +379,9 @@ struct netif {
       filter table of the ethernet MAC. */
   netif_mld_mac_filter_fn mld_mac_filter;
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+#if LWIP_ACD
+  struct acd *acd_list;
+#endif /* LWIP_ACD */
 #if LWIP_NETIF_USE_HINTS
   struct netif_hint *hints;
 #endif /* LWIP_NETIF_USE_HINTS */

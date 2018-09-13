@@ -924,10 +924,10 @@
 #endif /* !LWIP_IPV4 */
 
 /**
- * DHCP_DOES_ARP_CHECK==1: Do an ARP check on the offered address.
+ * DHCP_DOES_ACD_CHECK==1: Perform address conflict detection on the dhcp address.
  */
-#if !defined DHCP_DOES_ARP_CHECK || defined __DOXYGEN__
-#define DHCP_DOES_ARP_CHECK             (LWIP_DHCP && LWIP_ARP)
+#if !defined DHCP_DOES_ACD_CHECK || defined __DOXYGEN__
+#define DHCP_DOES_ACD_CHECK             0
 #endif
 
 /**
@@ -1005,6 +1005,31 @@
 #if !defined LWIP_DHCP_AUTOIP_COOP_TRIES || defined __DOXYGEN__
 #define LWIP_DHCP_AUTOIP_COOP_TRIES     9
 #endif
+/**
+ * @}
+ */
+
+/*
+   ------------------------------------
+   ----------- ACD options ------------
+   ------------------------------------
+*/
+/**
+ * @defgroup lwip_opts_acd ACD
+ * @ingroup lwip_opts_ipv4
+ * @{
+ */
+ /**
+  * LWIP_ACD==1: Enable ACD module. ACD module is needed when using AUTOIP.
+  */
+#if !defined LWIP_ACD || defined __DOXYGEN__
+#define LWIP_ACD                     (LWIP_AUTOIP || DHCP_DOES_ACD_CHECK)
+#endif
+#if !LWIP_IPV4
+/* disable ACD when IPv4 is disabled */
+#undef LWIP_ACD
+#define LWIP_ACD                     0
+#endif /* !LWIP_IPV4 */
 /**
  * @}
  */
@@ -3462,6 +3487,13 @@
  */
 #if !defined AUTOIP_DEBUG || defined __DOXYGEN__
 #define AUTOIP_DEBUG                    LWIP_DBG_OFF
+#endif
+
+/**
+ * ACD_DEBUG: Enable debugging in acd.c.
+ */
+#if !defined ACD_DEBUG || defined __DOXYGEN__
+#define ACD_DEBUG                       LWIP_DBG_OFF
 #endif
 
 /**

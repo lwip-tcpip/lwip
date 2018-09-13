@@ -88,6 +88,11 @@ err_t etharp_request(struct netif *netif, const ip4_addr_t *ipaddr);
 #define etharp_gratuitous(netif) etharp_request((netif), netif_ip4_addr(netif))
 void etharp_cleanup_netif(struct netif *netif);
 
+#if LWIP_ACD
+err_t etharp_acd_probe(struct netif *netif, const ip4_addr_t *ipaddr);
+err_t etharp_acd_announce(struct netif *netif, const ip4_addr_t *ipaddr);
+#endif /* LWIP_ACD */
+
 #if ETHARP_SUPPORT_STATIC_ENTRIES
 err_t etharp_add_static_entry(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr);
 err_t etharp_remove_static_entry(const ip4_addr_t *ipaddr);

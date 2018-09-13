@@ -51,7 +51,7 @@
 #include "lwip/ip4_frag.h"
 #include "lwip/etharp.h"
 #include "lwip/dhcp.h"
-#include "lwip/autoip.h"
+#include "lwip/acd.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
 #include "lwip/nd6.h"
@@ -91,9 +91,9 @@ const struct lwip_cyclic_timer lwip_cyclic_timers[] = {
   {DHCP_COARSE_TIMER_MSECS, HANDLER(dhcp_coarse_tmr)},
   {DHCP_FINE_TIMER_MSECS, HANDLER(dhcp_fine_tmr)},
 #endif /* LWIP_DHCP */
-#if LWIP_AUTOIP
-  {AUTOIP_TMR_INTERVAL, HANDLER(autoip_tmr)},
-#endif /* LWIP_AUTOIP */
+#if LWIP_ACD
+  {ACD_TMR_INTERVAL, HANDLER(acd_tmr)},
+#endif /* LWIP_ACD */
 #if LWIP_IGMP
   {IGMP_TMR_INTERVAL, HANDLER(igmp_tmr)},
 #endif /* LWIP_IGMP */
