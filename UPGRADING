@@ -8,7 +8,7 @@ with newer versions.
 
   * [Enter new changes just after this line - do not remove this line]
 
-  ++ Application changes:
+(2.0.2)
 
   * tcpip_trycallback() was renamed to tcpip_callbackmsg_trycallback() to avoid confusion
     with tcpip_try_callback()
