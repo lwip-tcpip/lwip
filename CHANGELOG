@@ -63,14 +63,8 @@ HISTORY
   2017-02-28: Simon Goldschmidt
   * Added LWIP_SINGLE_NETIF for small targets with only one netif
 
-  2017-02-17: Simon Goldschmidt
-  * Improved DNS_LOCAL_HOSTLIST interface
-
   2017-02-10: David van Moolenbroek
   * Implement UDP and RAW multicast support for IPv6 (core API, not netconn/sockets)
-
-  2017-02-10: Simon Goldschmidt
-  * tcp_close does not fail on memory error (instead, FIN is sent from tcp_tmr)
 
   2017-02-04: David van Moolenbroek
     - IPv6 scopes support
@@ -120,8 +114,50 @@ HISTORY
   * sockets.c: task #14420 (Remove sys_sem_signal from inside SYS_ARCH_PROTECT
     crit section) done for LWIP_TCPIP_CORE_LOCKING==1
 
+  2017-02-24: Simon Goldschmidt
+  * sockets.c: fixed close race conditions in lwip_select (for LWIP_NETCONN_FULLDUPLEX)
+
+  2017-02-24: Simon Goldschmidt
+  * sockets.c: fixed that select ignored invalid/not open sockets in the fd_sets (bug #50392)
+
+  2017-01-11: David van Moolenbroek
+  * Lots of IPv6 related fixes and improvements
+
+(STABLE-2.0.3)
+
+  ++ Bugfixes:
+
+  2017-09-11: Simon Goldschmidt
+  * tcp_in.c: fix bug #51937 (leaking tcp_pcbs on passive close with unacked data)
+
+  2017-08-02: Abroz Bizjak/Simon Goldschmidt
+  * multiple fixes in IPv4 reassembly (leading to corrupted datagrams received)
+  
+  2017-03-30: Simon Goldschmidt
+  * dhcp.c: return ERR_VAL instead of asserting on offset-out-of-pbuf
+
+  2017-03-23: Dirk Ziegelmeier
+  * dhcp.h: fix bug #50618 (dhcp_remove_struct() macro does not work)
+
+(STABLE-2.0.2)
+
+  ++ New features:
+
+  2017-02-10: Dirk Ziegelmeier
+  * Implement task #14367: Hooks need a better place to be defined:
+    We now have a #define for a header file name that is #included in every .c
+    file that provides hooks.
+
+  2017-02-10: Simon Goldschmidt
+  * tcp_close does not fail on memory error (instead, FIN is sent from tcp_tmr)
+
+  ++ Bugfixes:
+
+  2017-03-08
+  * tcp: do not keep sending SYNs when getting ACKs
+
   2017-03-08: Joel Cunningham
-  * tcp: initialize ssthresh to TCP_SND_BUF (bug #50476)
+  * tcp: Initialize ssthresh to TCP_SND_BUF (bug #50476)
 
   2017-03-01: Simon Goldschmidt
   * httpd: LWIP_HTTPD_POST_MANUAL_WND: fixed double-free when httpd_post_data_recved
@@ -130,23 +166,57 @@ HISTORY
   2017-02-28: David van Moolenbroek/Simon Goldschmidt
   * tcp: fixed bug #50418: LWIP_EVENT_API: fix invalid calbacks for SYN_RCVD pcb
 
-  2017-02-24: Simon Goldschmidt
-  * sockets.c: fixed close race conditions in lwip_select (for LWIP_NETCONN_FULLDUPLEX)
-
-  2017-02-24: Simon Goldschmidt
-  * sockets.c: fixed that select ignored invalid/not open sockets in the fd_sets (bug #50392)
+  2017-02-17: Simon Goldschmidt
+  * dns: Improved DNS_LOCAL_HOSTLIST interface (bug #50325)
 
   2017-02-16: Simon Goldschmidt
   * LWIP_NETCONN_FULLDUPLEX: fixed shutdown during write (bug #50274)
 
+  2017-02-13: Simon Goldschmidt/Dirk Ziegelmeier
+  * For tiny targtes, LWIP_RAND is optional (fix compile time checks)
+
+  2017-02-10: Simon Goldschmidt
+  * tcp: Fixed bug #47485 (tcp_close() should not fail on memory error) by retrying
+    to send FIN from tcp_fasttmr
+
+  2017-02-09: Simon Goldschmidt
+  * sockets: Fixed bug #44032 (LWIP_NETCONN_FULLDUPLEX: select might work on
+    invalid/reused socket) by not allowing to reallocate a socket that has
+    "select_waiting != 0"
+
+  2017-02-09: Simon Goldschmidt
+  * httpd: Fixed bug #50059 (httpd LWIP_HTTPD_SUPPORT_11_KEEPALIVE vs.
+    LWIP_HTTPD_KILL_OLD_ON_CONNECTIONS_EXCEEDED)
+
+  2017-02-08: Dirk Ziegelmeier
+  * Rename "IPv6 mapped IPv4 addresses" to their correct name from RFC4191:
+    "IPv4-mapped IPv6 address"
+
+  2017-02-08: Luc Revardel
+  * mld6.c: Fix bug #50220 (mld6_leavegroup does not send ICMP6_TYPE_MLD, even
+    if last reporter)
+
+  2017-02-08: David van Moolenbroek
+  * ip6.c: Patch #9250: fix source substitution in ip6_output_if()
+
+  2017-02-08: Simon Goldschmidt
+  * tcp_out.c: Fixed bug #50090 (last_unsent->oversize_left can become wrong value
+    in tcp_write error path)
+
+  2017-02-02: Dirk Ziegelmeier
+  * Fix bug #50206: UDP Netconn bind to IP6_ADDR_ANY fails
+
   2017-01-18: Dirk Ziegelmeier
   * Fix zero-copy RX, see bug bug #50064. PBUF_REFs were not supported as ARP requests.
 
-  2017-01-11: David van Moolenbroek
-  * Lots of IPv6 related fixes and improvements
+  2017-01-15: Axel Lin, Dirk Ziegelmeier
+  * minor bug fixes in mqtt
+
+  2017-01-11: Knut Andre Tidemann
+  * sockets/netconn: fix broken default ICMPv6 handling of checksums
 
 (STABLE-2.0.1)
- 
+
   ++ New features:
 
   2016-12-31: Simon Goldschmidt
@@ -186,7 +256,7 @@ HISTORY
 
   2016-12-05: Dirk Ziegelmeier
   * fixed compiling with IPv4 disabled (IPv6 only case)
-  
+
   2016-11-28: Simon Goldschmidt
   * api_lib.c: fixed bug #49725 (send-timeout: netconn_write() can return
     ERR_OK without all bytes being written)
@@ -215,7 +285,7 @@ HISTORY
   2016-11-11: Dirk Ziegelmeier
   * sockets.c: fixed bug #49578 (dropping multicast membership does not work
     with LWIP_SOCKET_OFFSET)
-  
+
 (STABLE-2.0.0)
 
   ++ New features:
