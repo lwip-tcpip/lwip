@@ -1,10 +1,54 @@
 HISTORY
+ * These are only the most important changes. For a full list, use git log:
+   http://git.savannah.nongnu.org/cgit/lwip.git
 
 (git master)
 
   * [Enter new changes just after this line - do not remove this line]
 
+(STABLE-2.0.3)
+
   ++ New features:
+
+  2018-06-17: Simon Goldschmidt
+  * lwiperf: implemented iPerf client mode
+
+  2018-04-23: Dirk Ziegelmeier
+  * added cmake build files
+
+  2018-03-04: Ray Abram
+  * netbios responder: respond to '*' queries
+
+  2018-02-23: Benjamin Aigner
+  * 6lowpan: add 6lowpan-over-BLE netif (based on existing 6lowpan netif)
+
+  2018-02-22: Simon Goldschmidt
+  * ipv6: add support for stateless DHCPv6 (to get DNS servers in SLAAC nets)
+
+  2018-02-16: Simon Goldschmidt
+  * add raw API http(s) client (with proxy support)
+
+  2018-02-01: Simon Goldschmidt
+  * tcp: add hooks to implement additional socket options
+
+  2018-02-01: Simon Goldschmidt
+  * tcp: add hooks to implement tcp md5 signatures or similar (see contrib/addons for an example)
+
+  2018-01-05: Simon Goldschmidt
+  * Added sys_mbox_trypost_fromisr() and tcpip_callbackmsg_trycallback_fromisr()
+    These can be used to post preallocated messages from an ISR to the tcpip thread
+    (e.g. when using FreeRTOS)
+
+  2018-01-02: Dirk Ziegelmeier
+  * task #14780: Add debug helper asserts to ensure threading/locking requirements are met
+
+  2017-11-21: Simon Goldschmidt
+  * task #14600: tcp_alloc(): kill TF_CLOSEPEND connections before other ESTABLISHED
+
+  2017-11-21: Simon Goldschmidt
+  * makefsdata: added option "-ssi:<filename>" to control SSI tag checking/insertion
+    through a list of filenames, not by checking the file extension at runtime
+
   2017-11-20: Joel Cunningham
   * netconn: add LWIP_HOOK_NETCONN_EXTERNAL_RESOLVE to use external DNS resolver (patch #9427)
 
@@ -44,7 +88,7 @@ HISTORY
   * dhcp: added two hooks for adding and parsing user defined DHCP options
 
   2017-04-25: Joel Cunningham
-  * sockets: added CMSG and IP_PKTINFO for use with recvmsg (task #14247)
+  * sockets: added recvmsg for UDP (together with CMSG and IP_PKTINFO) (task #14247)
 
   2017-04-20: Joel Cunningham
   * tcp: added Appropriate Byte Counting support (task #14128)
@@ -52,6 +96,13 @@ HISTORY
   2017-04-11: Simon Goldschmidt
   * netconn/sockets: remove fatal error handling, fix asynchronous error handling,
     ensure data before RST can be received
+
+  2017-03-30: Simon Goldschmidt
+  * added "application layered TCP" connection API (altcp) for seamless integration
+    of TLS or proxy connections
+
+  2017-03-09: Simon Goldschmidt
+  * sockets: add recvmsg for TCP
 
   2017-03-02: Joel Cunningham
   * netconn/sockets: vectorize netconn_write for TCP, treating a vectored I/O write
@@ -79,6 +130,34 @@ HISTORY
     - Support IP_HDRINCL socket option
 
   ++ Bugfixes:
+
+  2018-06-19: Simon Goldschmidt
+  * tcp: fix RTO timer not working if link is down
+
+  2018-06-15: Sylvain Rochet
+  * ppp: multiple smaller bugfixes
+
+  2018-05-17: Simon Goldschmidt
+  * etharp: arp table can now be bigger than 127 entries
+
+  2018-04-25: Jens Nielsen
+  * tftp server: correctly handle retransmissions
+
+  2018-04-18: Simon Goldschmidt
+  sockets: fix race conditions when closing full-duplex sockets
+
+  2018-03-09: Simon Goldschmidt
+  * 6lowpan: fix to work against contiki; added ZigBee encapsulation netif for tests
+
+  2018-02-04: Simon Goldschmidt
+  * sockets: fix inconsistencies on close (inconsistent error codes, double FIN)
+
+  2018-01-05: Dirk Ziegelmeier
+  * Fix bug #52748: the bug in timeouts.c by reimplementing timer logic to use
+    absolute instead of relative timeout values
+
+  2017-12-31: Dirk Ziegelmeier
+  * Fix bug #52704: DHCP and bad OFFER: Stop timeout only if offer is accepted
 
   2017-11-08: Joel Cunningham
   * netif: ensure link and admin states are up in issue reports (bug #52353)

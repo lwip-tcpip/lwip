@@ -2382,6 +2382,18 @@
  * LWIP_IPV6_SCOPES==1: Enable support for IPv6 address scopes, ensuring that
  * e.g. link-local addresses are really treated as link-local. Disable this
  * setting only for single-interface configurations.
+ * All addresses that have a scope according to the default policy (link-local
+ * unicast addresses, interface-local and link-local multicast addresses) should
+ * now have a zone set on them before being passed to the core API, although
+ * lwIP will currently attempt to select a zone on the caller's behalf when 
+ * necessary. Applications that directly assign IPv6 addresses to interfaces
+ * (which is NOT recommended) must now ensure that link-local addresses carry
+ * the netif's zone. See the new ip6_zone.h header file for more information and
+ * relevant macros. For now it is still possible to turn off scopes support
+ * through the new LWIP_IPV6_SCOPES option. When upgrading an implementation that
+ * uses the core API directly, it is highly recommended to enable
+ * LWIP_IPV6_SCOPES_DEBUG at least for a while, to ensure e.g. proper address
+ * initialization.
  */
 #if !defined LWIP_IPV6_SCOPES || defined __DOXYGEN__
 #define LWIP_IPV6_SCOPES                (LWIP_IPV6 && !LWIP_SINGLE_NETIF)
