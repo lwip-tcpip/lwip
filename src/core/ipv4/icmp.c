@@ -382,7 +382,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   {
     ip4_addr_t iphdr_dst;
     ip4_addr_copy(iphdr_dst, iphdr->dest);
-    netif = ip4_route_src(&iphdr_src, &iphdr_dst);
+    netif = ip4_route_src(&iphdr_dst, &iphdr_src);
   }
 #else
   netif = ip4_route(&iphdr_src);
