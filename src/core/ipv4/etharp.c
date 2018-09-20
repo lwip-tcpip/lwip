@@ -983,6 +983,14 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
       /* We don't re-send arp request in etharp_tmr, but we still queue packets,
          since this failure could be temporary, and the next packet calling
          etharp_query again could lead to sending the queued packets. */
+    } else {
+      /* ARP request successfully sent */
+      if ((arp_table[i].state == ETHARP_STATE_PENDING) && !is_new_entry) {
+        /* A new ARP request has been sent for a pending entry. Reset the ctime to
+           not let it expire too fast. */
+        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: reset ctime for entry %"S16_F"\n", (s16_t)i));
+        arp_table[i].ctime = 0;
+      }
     }
     if (q == NULL) {
       return result;
