@@ -1,12 +1,9 @@
 /**
  * @file
  * Application layered TCP connection API (to be used from TCPIP thread)\n
- * This interface mimics the tcp callback API to the application while preventing
- * direct linking (much like virtual functions).
- * This way, an application can make use of other application layer protocols
- * on top of TCP without knowing the details (e.g. TLS, proxy connection).
  *
  * This file contains the generic API.
+ * For more details see @ref altcp_api.
  */
 
 /*

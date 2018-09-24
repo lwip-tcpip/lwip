@@ -101,6 +101,15 @@
 
 /**
  * @page changelog Changelog
+ *
+ * 2.1.0
+ * -----
+ * * This version supports TLS via @ref altcp_api connection API
+ * * This version switches to cmake as the main build system (Makefile file
+ *   lists are maintained for now)
+ * 
+ * Detailed Changelog
+ * ------------------
  * @verbinclude "CHANGELOG"
  */
 

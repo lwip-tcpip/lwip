@@ -6,7 +6,7 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
-(STABLE-2.0.3)
+(STABLE-2.1.0):
 
   ++ New features:
 
@@ -118,7 +118,7 @@ HISTORY
   * Implement UDP and RAW multicast support for IPv6 (core API, not netconn/sockets)
 
   2017-02-04: David van Moolenbroek
-    - IPv6 scopes support
+  * IPv6 scopes support
 
   2017-01-20: Joel Cunningham
   * sockets: add interface name/index APIs (task #14314)

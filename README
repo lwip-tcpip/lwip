@@ -1,15 +1,15 @@
 INTRODUCTION
 
-lwIP is a small independent implementation of the TCP/IP protocol
-suite that has been developed by Adam Dunkels at the Computer and
-Networks Architectures (CNA) lab at the Swedish Institute of Computer
-Science (SICS).
+lwIP is a small independent implementation of the TCP/IP protocol suite.
 
 The focus of the lwIP TCP/IP implementation is to reduce the RAM usage
 while still having a full scale TCP. This making lwIP suitable for use
 in embedded systems with tens of kilobytes of free RAM and room for
 around 40 kilobytes of code ROM.
 
+lwIP was originally developed by Adam Dunkels at the Computer and Networks
+Architectures (CNA) lab at the Swedish Institute of Computer Science (SICS)
+and is now developed and maintained by a worldwide network of developers.
 
 FEATURES
 
@@ -28,8 +28,8 @@ FEATURES
     fast recovery/fast retransmit and sending SACKs
   * raw/native API for enhanced performance
   * Optional Berkeley-like socket API
-  * Optional layered TCP ("altcp") for nearly transparent TLS for any TCP-based
-    protocol, ported to mbedTLS)
+  * TLS: optional layered TCP ("altcp") for nearly transparent TLS for any
+    TCP-based protocol (ported to mbedTLS) (see changelog for more info)
   * PPPoS and PPPoE (Point-to-point protocol over Serial/Ethernet)
   * DNS (Domain name resolver incl. mDNS)
   * 6LoWPAN (via IEEE 802.15.4, BLE or ZEP)

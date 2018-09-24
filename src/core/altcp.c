@@ -1,14 +1,85 @@
 /**
  * @file
- * @defgroup altcp Application layered TCP
- * @ingroup callbackstyle_api
- * Application layered TCP connection API (to be used from TCPIP thread)\n
- * This interface mimics the tcp callback API to the application while preventing
- * direct linking (much like virtual functions).
- * This way, an application can make use of other application layer protocols
- * on top of TCP without knowing the details (e.g. TLS, proxy connection).
+ * @defgroup altcp Application layered TCP Functions
+ * @ingroup altcp_api
  *
  * This file contains the common functions for altcp to work.
+ * For more details see @ref altcp_api.
+ */
+
+/**
+ * @defgroup altcp_api Application layered TCP Introduction
+ * @ingroup callbackstyle_api
+ *
+ * Overview
+ * --------
+ * altcp (application layered TCP connection API; to be used from TCPIP thread)
+ * is an abstraction layer that prevents applications linking hard against the
+ * @ref tcp.h functions while providing the same functionality. It is used to
+ * e.g. add SSL/TLS (see LWIP_ALTCP_TLS) or proxy-connect support to an application
+ * written for the tcp callback API without that application knowing the
+ * protocol details.
+ *
+ * * This interface mimics the tcp callback API to the application while preventing
+ *   direct linking (much like virtual functions).
+ * * This way, an application can make use of other application layer protocols
+ *   on top of TCP without knowing the details (e.g. TLS, proxy connection).
+ * * This is achieved by simply including "lwip/altcp.h" instead of "lwip/tcp.h",
+ *   replacing "struct tcp_pcb" with "struct altcp_pcb" and prefixing all functions
+ *   with "altcp_" instead of "tcp_".
+ *
+ * With altcp support disabled (LWIP_ALTCP==0), applications written against the
+ * altcp API can still be compiled but are directly linked against the tcp.h
+ * callback API and then cannot use layered protocols. To minimize code changes
+ * in this case, the use of altcp_allocators is strongly suggested.
+ *
+ * Usage
+ * -----
+ * To make use of this API from an existing tcp raw API application:
+ * * Include "lwip/altcp.h" instead of "lwip/tcp.h"
+ * * Replace "struct tcp_pcb" with "struct altcp_pcb"
+ * * Prefix all called tcp API functions with "altcp_" instead of "tcp_" to link
+ *   against the altcp functions
+ * * @ref altcp_new (and @ref altcp_new_ip_type/@ref altcp_new_ip6) take
+ *   an @ref altcp_allocator_t as an argument, whereas the original tcp API
+ *   functions take no arguments.
+ * * An @ref altcp_allocator_t allocator is an object that holds a pointer to an
+ *   allocator object and a corresponding state (e.g. for TLS, the corresponding
+ *   state may hold certificates or keys). This way, the application does not
+ *   even need to know if it uses TLS or pure TCP, this is handled at runtime
+ *   by passing a specific allocator.
+ * * An application can alternatively bind hard to the altcp_tls API by calling
+ *   @ref altcp_tls_new or @ref altcp_tls_wrap.
+ * * The TLS layer is not directly implemented by lwIP, but a port to mbedTLS is
+ *   provided.
+ * * Another altcp layer is proxy-connect to use TLS behind a HTTP proxy (see
+ *   @ref altcp_proxyconnect.h)
+ *
+ * altcp_allocator_t
+ * -----------------
+ * An altcp allocator is created by the application by combining an allocator
+ * callback function and a corresponding state, e.g.:\code{.c}
+ * static const unsigned char cert[] = {0x2D, "(see mbedTLS doc for how to create this)"};
+ * struct altcp_tls_config * conf = altcp_tls_create_config_client(cert, sizeof(cert));
+ * altcp_allocator_t tls_allocator = {
+ *   altcp_tls_alloc, conf
+ * };
+ * \endcode
+ *
+ *
+ * struct altcp_tls_config
+ * -----------------------
+ * The struct altcp_tls_config holds state that is needed to create new TLS client
+ * or server connections (e.g. certificates and private keys).
+ *
+ * It is not defined by lwIP itself but by the TLS port (e.g. altcp_tls to mbedTLS
+ * adaption). However, the parameters used to create it are defined in @ref
+ * altcp_tls.h (see @ref altcp_tls_create_config_server_privkey_cert for servers
+ * and @ref altcp_tls_create_config_client/@ref altcp_tls_create_config_client_2wayauth
+ * for clients).
+ *
+ * For mbedTLS, ensure that certificates can be parsed by 'mbedtls_x509_crt_parse()' and
+ * private keys can be parsed by 'mbedtls_pk_parse_key()'.
  */
 
 /*
