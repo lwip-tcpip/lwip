@@ -418,7 +418,7 @@ altcp_proxyconnect_tls_alloc(void *arg, u8_t ip_type)
   struct altcp_pcb *tls_pcb;
 
   proxy_pcb = altcp_proxyconnect_new_tcp(&cfg->proxy, ip_type);
-  tls_pcb = altcp_tls_new(cfg->tls_config, proxy_pcb);
+  tls_pcb = altcp_tls_wrap(cfg->tls_config, proxy_pcb);
 
   if (tls_pcb == NULL) {
     altcp_close(proxy_pcb);

@@ -1362,20 +1362,17 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
     return ERR_MEM;
   }
 
-  client->conn = altcp_tcp_new();
+#if LWIP_ALTCP && LWIP_ALTCP_TLS
+  if (client_info->tls_config) {
+    client->conn = altcp_tls_new(client_info->tls_config, IP_GET_TYPE(ip_addr));
+  } else
+#endif
+  {
+    client->conn = altcp_tcp_new_ip_type(IP_GET_TYPE(ip_addr));
+  }
   if (client->conn == NULL) {
     return ERR_MEM;
   }
-#if LWIP_ALTCP && LWIP_ALTCP_TLS
-  if (client_info->tls_config) {
-    struct altcp_pcb *pcb_tls = altcp_tls_new(client_info->tls_config, client->conn);
-    if (pcb_tls == NULL) {
-      altcp_close(client->conn);
-      return ERR_MEM;
-    }
-    client->conn = pcb_tls;
-  }
-#endif
 
   /* Set arg pointer for callbacks */
   altcp_arg(client->conn, client);

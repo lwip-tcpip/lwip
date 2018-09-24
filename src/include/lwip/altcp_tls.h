@@ -85,14 +85,20 @@ struct altcp_tls_config *altcp_tls_create_config_client_2wayauth(const u8_t *ca,
 void altcp_tls_free_config(struct altcp_tls_config *conf);
 
 /** @ingroup altcp_tls
- * Create new ALTCP_TLS layer
+ * Create new ALTCP_TLS layer wrapping an existing pcb as inner connection (e.g. TLS over TCP)
  */
-struct altcp_pcb *altcp_tls_new(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb);
+struct altcp_pcb *altcp_tls_wrap(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb);
 
 /** @ingroup altcp_tls
- * Create new ALTCP_TLS layer
- * This allocator function fits to @ref altcp_allocator_t / @ref altcp_new.
- * 'arg' must contain a struct altcp_tls_config *.
+ * Create new ALTCP_TLS pcb and its inner tcp pcb
+ */
+struct altcp_pcb *altcp_tls_new(struct altcp_tls_config *config, u8_t ip_type);
+
+/** @ingroup altcp_tls
+ * Create new ALTCP_TLS layer pcb and its inner tcp pcb.
+ * Same as @ref altcp_tls_new but this allocator function fits to
+ * @ref altcp_allocator_t / @ref altcp_new.\n
+ 'arg' must contain a struct altcp_tls_config *.
  */
 struct altcp_pcb *altcp_tls_alloc(void *arg, u8_t ip_type);
 

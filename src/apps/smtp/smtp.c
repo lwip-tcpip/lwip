@@ -460,18 +460,15 @@ smtp_setup_pcb(struct smtp_session *s, const ip_addr_t* remote_ip)
   struct altcp_pcb* pcb;
   LWIP_UNUSED_ARG(remote_ip);
 
-  pcb = altcp_tcp_new_ip_type(IP_GET_TYPE(remote_ip));
-  if (pcb != NULL) {
 #if LWIP_ALTCP && LWIP_ALTCP_TLS
-    if (smtp_server_tls_config) {
-      struct altcp_pcb *pcb_tls = altcp_tls_new(smtp_server_tls_config, pcb);
-      if (pcb_tls == NULL) {
-        altcp_close(pcb);
-        return NULL;
-      }
-      pcb = pcb_tls;
-    }
+  if (smtp_server_tls_config) {
+    pcb = altcp_tls_new(smtp_server_tls_config, IP_GET_TYPE(remote_ip));
+  } else
 #endif
+  {
+    pcb = altcp_tcp_new_ip_type(IP_GET_TYPE(remote_ip));
+  }
+  if (pcb != NULL) {
     altcp_arg(pcb, s);
     altcp_recv(pcb, smtp_tcp_recv);
     altcp_err(pcb, smtp_tcp_err);

@@ -605,7 +605,7 @@ altcp_mbedtls_setup(void *conf, struct altcp_pcb *conn, struct altcp_pcb *inner_
 }
 
 struct altcp_pcb *
-altcp_tls_new(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb)
+altcp_tls_wrap(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb)
 {
   struct altcp_pcb *ret;
   if (inner_pcb == NULL) {

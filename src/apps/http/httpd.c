@@ -2685,10 +2685,7 @@ void
 httpd_inits(struct altcp_tls_config *conf)
 {
 #if LWIP_ALTCP_TLS
-  struct altcp_pcb *pcb_tls;
-  struct altcp_pcb *pcb_tcp = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
-  LWIP_ASSERT("httpd_init: tcp_new failed", pcb_tcp != NULL);
-  pcb_tls = altcp_tls_new(conf, pcb_tcp);
+  struct altcp_pcb *pcb_tls = altcp_tls_new(conf, IPADDR_TYPE_ANY);
   LWIP_ASSERT("httpd_init: altcp_tls_new failed", pcb_tls != NULL);
   httpd_init_pcb(pcb_tls, HTTPD_SERVER_PORT_HTTPS);
 #else /* LWIP_ALTCP_TLS */
