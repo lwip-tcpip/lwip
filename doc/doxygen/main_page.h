@@ -104,9 +104,14 @@
  *
  * 2.1.0
  * -----
- * * This version supports TLS via @ref altcp_api connection API
- * * This version switches to cmake as the main build system (Makefile file
- *   lists are maintained for now)
+ * * Support TLS via new @ref altcp_api connection API (https, smtps, mqtt over TLS)
+ * * Switch to cmake as the main build system (Makefile file lists are still
+ *   maintained for now)
+ * * Improve IPv6 support: support address scopes, support stateless DHCPv6, bugfixes
+ * * Add debug helper asserts to ensure threading/locking requirements are met
+ * * Add sys_mbox_trypost_fromisr() and tcpip_callbackmsg_trycallback_fromisr()
+ *   (for FreeRTOS, mainly)
+ * * socket API: support poll(), sendmsg() and recvmsg(); fix problems on close
  * 
  * Detailed Changelog
  * ------------------

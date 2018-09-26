@@ -59,7 +59,7 @@
  * -----------------
  * An altcp allocator is created by the application by combining an allocator
  * callback function and a corresponding state, e.g.:\code{.c}
- * static const unsigned char cert[] = {0x2D, "(see mbedTLS doc for how to create this)"};
+ * static const unsigned char cert[] = {0x2D, ... (see mbedTLS doc for how to create this)};
  * struct altcp_tls_config * conf = altcp_tls_create_config_client(cert, sizeof(cert));
  * altcp_allocator_t tls_allocator = {
  *   altcp_tls_alloc, conf
