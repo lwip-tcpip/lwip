@@ -461,6 +461,7 @@ altcp_mbedtls_bio_recv(void *ctx, unsigned char *buf, size_t len)
     return MBEDTLS_ERR_NET_INVALID_CONTEXT;
   }
   state = (altcp_mbedtls_state_t *)conn->state;
+  LWIP_ASSERT("state != NULL", state != NULL);
   p = state->rx;
 
   /* @todo: return MBEDTLS_ERR_NET_CONN_RESET/MBEDTLS_ERR_NET_RECV_FAILED? */
