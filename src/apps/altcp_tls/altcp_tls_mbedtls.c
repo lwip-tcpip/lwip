@@ -309,17 +309,20 @@ altcp_mbedtls_pass_rx_data(struct altcp_pcb *conn, altcp_mbedtls_state_t *state)
   LWIP_ASSERT("state != NULL", state != NULL);
   buf = state->rx_app;
   if (buf) {
+    state->rx_app = NULL;
     if (conn->recv) {
-      u16_t tot_len = state->rx_app->tot_len;
+      u16_t tot_len = buf->tot_len;
       /* this needs to be increased first because the 'recved' call may come nested */
       state->rx_passed_unrecved += tot_len;
       state->flags |= ALTCP_MBEDTLS_FLAGS_UPPER_CALLED;
-      err = conn->recv(conn->arg, conn, state->rx_app, ERR_OK);
+      err = conn->recv(conn->arg, conn, buf, ERR_OK);
       if (err != ERR_OK) {
         if (err == ERR_ABRT) {
           return ERR_ABRT;
         }
         /* not received, leave the pbuf(s) queued (and decrease 'unrecved' again) */
+        LWIP_ASSERT("state == conn->state", state == conn->state);
+        state->rx_app = buf;
         state->rx_passed_unrecved -= tot_len;
         LWIP_ASSERT("state->rx_passed_unrecved >= 0", state->rx_passed_unrecved >= 0);
         if (state->rx_passed_unrecved < 0) {
@@ -330,7 +333,6 @@ altcp_mbedtls_pass_rx_data(struct altcp_pcb *conn, altcp_mbedtls_state_t *state)
     } else {
       pbuf_free(buf);
     }
-    state->rx_app = NULL;
   } else if ((state->flags & (ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED | ALTCP_MBEDTLS_FLAGS_RX_CLOSED)) ==
              ALTCP_MBEDTLS_FLAGS_RX_CLOSE_QUEUED) {
     state->flags |= ALTCP_MBEDTLS_FLAGS_RX_CLOSED;
@@ -339,6 +341,11 @@ altcp_mbedtls_pass_rx_data(struct altcp_pcb *conn, altcp_mbedtls_state_t *state)
     }
   }
 
+  /* application may have close the connection */
+  if (conn->state != state) {
+    /* return error code to ensure altcp_mbedtls_handle_rx_appldata() exits the loop */
+    return ERR_CLSD;
+  }
   return ERR_OK;
 }
 
