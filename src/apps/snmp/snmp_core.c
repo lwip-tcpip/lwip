@@ -37,8 +37,8 @@
  * @defgroup snmp SNMPv2c/v3 agent
  * @ingroup apps
  * SNMPv2c and SNMPv3 compatible agent\n
- * There is also a MIB compiler and a MIB viewer in lwIP contrib repository
- * (lwip-contrib/apps/LwipMibCompiler).\n
+ * There is also a MIB compiler and a MIB viewer in lwIP/contrib subdir
+ * (lwip/contrib/apps/LwipMibCompiler).\n
  * The agent implements the most important MIB2 MIBs including IPv6 support
  * (interfaces, UDP, TCP, SNMP, ICMP, SYSTEM). IP MIB is an older version
  * without IPv6 statistics (TODO).\n

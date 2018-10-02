@@ -55,7 +55,7 @@ CONTRIBDIR?=../../..
 ARFLAGS?=rs
 
 #Set this to where you have the lwip core module checked out from git
-#default assumes it's a dir named lwip at the same level as the contrib module
+#default assumes it's a dir above the contrib module
 LWIPDIR?=$(CONTRIBDIR)/..
 
 CFLAGS+=-I. \

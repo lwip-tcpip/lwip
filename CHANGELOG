@@ -6,6 +6,9 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
+  2018-10-02: Dirk Ziegelmeier
+  * Integrate contrib repository into main lwIP rep, tag STABLE-2_1_0_RELEASE
+
 (STABLE-2.1.0):
 
   ++ New features:

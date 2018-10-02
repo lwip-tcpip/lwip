@@ -354,7 +354,7 @@ Call these functions in the order of appearance:
  * several places where a check for a correct thread context is
  * implemented which greatly helps the user to get threading done right.
  * See the example sys_arch.c files in unix and Win32 port 
- * in the contrib repository.
+ * in the lwIP/contrib subdirectory.
  * 
  * In short: Copy the functions sys_mark_tcpip_thread() and 
  * sys_check_core_locking() to your port and modify them to work with your OS.

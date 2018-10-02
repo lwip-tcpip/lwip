@@ -1,7 +1,7 @@
 # This file is indended to be included in end-user CMakeLists.txt
 # include(/path/to/Filelists.cmake)
 # It assumes the variable LWIP_CONTRIB_DIR is defined pointing to the
-# root path of lwIP contrib sources.
+# root path of lwIP/contrib sources.
 #
 # This file is NOT designed (on purpose) to be used as cmake
 # subdir via add_subdirectory()
