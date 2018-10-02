@@ -6,11 +6,9 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL Linux AND NOT CMAKE_SYSTEM_NAME STREQUAL Darw
     message(FATAL_ERROR "Unit test are currently only working on Linux or Darwin")
 endif()
 
-set(LWIP_CONTRIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(LWIP_DIR         ${LWIP_CONTRIB_DIR}/..)
-
+set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(LWIP_USE_SANITIZERS true)
-include(${LWIP_CONTRIB_DIR}/ports/CMakeCommon.cmake)
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 if(CMAKE_C_COMPILER_ID STREQUAL Clang)
     # check.h causes 'error: token pasting of ',' and __VA_ARGS__ is a GNU extension' with clang 9.0.0

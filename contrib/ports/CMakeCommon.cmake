@@ -1,3 +1,5 @@
+set(LWIP_CONTRIB_DIR ${LWIP_DIR}/contrib)
+
 # ARM mbedtls support https://tls.mbed.org/
 set(MBEDTLSDIR ${LWIP_DIR}/../mbedtls)
 if(EXISTS ${MBEDTLSDIR}/CMakeLists.txt)

@@ -8,10 +8,8 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL Linux AND NOT CMAKE_SYSTEM_NAME STREQUAL GNU)
     message(FATAL_ERROR "Lwip shared library is only working on Linux or the Hurd")
 endif()
 
-set(LWIP_CONTRIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(LWIP_DIR         ${LWIP_CONTRIB_DIR}/..)
-
-include(${LWIP_CONTRIB_DIR}/ports/CMakeCommon.cmake)
+set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 set (LWIP_DEFINITIONS -DLWIP_DEBUG)
 set (LWIP_INCLUDE_DIRS

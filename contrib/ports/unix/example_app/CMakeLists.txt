@@ -4,10 +4,8 @@ project(example_app C)
 
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(LWIP_CONTRIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(LWIP_DIR         ${LWIP_DIR}/..)
-
-include(${LWIP_CONTRIB_DIR}/ports/CMakeCommon.cmake)
+set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 set (LWIP_DEFINITIONS -DLWIP_DEBUG)
 set (LWIP_INCLUDE_DIRS
