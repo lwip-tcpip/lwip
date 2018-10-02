@@ -16,7 +16,10 @@ set(lwipcontribportwindows_SRCS
 )
 
 # pcapif needs WinPcap developer package: https://www.winpcap.org/devel.htm
-set(WPDPACK_DIR ${LWIP_DIR}/../WpdPack)
+if(NOT DEFINED WPDPACK_DIR)
+    message(STATUS "WPDPACK_DIR not set - using default location ${LWIP_DIR}/../WpdPack")
+    set(WPDPACK_DIR ${LWIP_DIR}/../WpdPack)
+endif()
 find_library(WPCAP  wpcap  HINTS ${WPDPACK_DIR}/lib)
 find_library(PACKET packet HINTS ${WPDPACK_DIR}/lib)
 
