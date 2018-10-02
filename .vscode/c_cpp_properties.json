@@ -1,0 +1,27 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/src/include",
+                "${workspaceFolder}/contrib",
+                "${workspaceFolder}/contrib/examples/example_app",
+                "${workspaceFolder}/contrib/ports/unix/port/include",
+                "${workspaceFolder}/contrib/ports/unix/example_app"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    ""
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

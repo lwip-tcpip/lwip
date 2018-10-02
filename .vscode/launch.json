@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": true,
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "preLaunchTask": "build",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "linux": {
+                "cwd": "${workspaceFolder}/contrib/ports/unix/example_app/build",
+                "program": "${workspaceFolder}/contrib/ports/unix/example_app/build/example_app",
+            },
+            "windows": {
+                "cwd": "${workspaceFolder}/contrib/ports/win32/example_app/build",
+                "program": "${workspaceFolder}/contrib/ports/win32/example_app/build/example_app",
+            }
+        }
+    ]
+}
