@@ -9,7 +9,7 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL Linux AND NOT CMAKE_SYSTEM_NAME STREQUAL GNU)
 endif()
 
 set(LWIP_CONTRIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(LWIP_DIR         ${CMAKE_CURRENT_SOURCE_DIR}/../../../../lwip)
+set(LWIP_DIR         ${LWIP_CONTRIB_DIR}/..)
 
 include(${LWIP_CONTRIB_DIR}/ports/CMakeCommon.cmake)
 

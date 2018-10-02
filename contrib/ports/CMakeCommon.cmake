@@ -1,5 +1,5 @@
 # ARM mbedtls support https://tls.mbed.org/
-set(MBEDTLSDIR ${LWIP_CONTRIB_DIR}/../mbedtls)
+set(MBEDTLSDIR ${LWIP_DIR}/../mbedtls)
 if(EXISTS ${MBEDTLSDIR}/CMakeLists.txt)
     set(LWIP_HAVE_MBEDTLS ON BOOL)
 
