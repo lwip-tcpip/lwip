@@ -24,34 +24,34 @@
     <ClInclude Include="..\check\sys\time.h">
       <Filter>Win32\sys</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_error.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_error.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_impl.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_impl.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_list.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_list.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_log.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_log.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_msg.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_msg.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_pack.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_pack.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_print.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_print.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\src\check_str.h">
+    <ClInclude Include="..\..\..\..\..\check\src\check_str.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\check\lib\libcompat.h">
+    <ClInclude Include="..\..\..\..\..\check\lib\libcompat.h">
       <Filter>libcompat</Filter>
     </ClInclude>
   </ItemGroup>
@@ -59,37 +59,37 @@
     <ClCompile Include="..\check\time.c">
       <Filter>Win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_error.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_error.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_list.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_list.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_log.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_log.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_msg.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_msg.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_pack.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_pack.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_print.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_print.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_run.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_run.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\src\check_str.c">
+    <ClCompile Include="..\..\..\..\..\check\src\check_str.c">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\lib\libcompat.c">
+    <ClCompile Include="..\..\..\..\..\check\lib\libcompat.c">
       <Filter>libcompat</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\check\lib\clock_gettime.c">
+    <ClCompile Include="..\..\..\..\..\check\lib\clock_gettime.c">
       <Filter>libcompat</Filter>
     </ClCompile>
   </ItemGroup>

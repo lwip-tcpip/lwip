@@ -44,7 +44,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\check;..\..\..\..\check\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\check;..\..\..\..\..\check\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_LIB;WIN32;_DEBUG;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -57,7 +57,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\check;..\..\..\..\check\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\check;..\..\..\..\..\check\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;HAVE_CONFIG_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -66,33 +66,33 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\check\lib\libcompat.h" />
+    <ClInclude Include="..\..\..\..\..\check\lib\libcompat.h" />
     <ClInclude Include="..\check\config.h" />
     <ClInclude Include="..\check\unistd.h" />
     <ClInclude Include="..\check\sys\time.h" />
-    <ClInclude Include="..\..\..\..\check\src\check.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_error.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_impl.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_list.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_log.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_msg.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_pack.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_print.h" />
-    <ClInclude Include="..\..\..\..\check\src\check_str.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_error.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_impl.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_list.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_log.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_msg.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_pack.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_print.h" />
+    <ClInclude Include="..\..\..\..\..\check\src\check_str.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\check\lib\clock_gettime.c" />
-    <ClCompile Include="..\..\..\..\check\lib\libcompat.c" />
+    <ClCompile Include="..\..\..\..\..\check\lib\clock_gettime.c" />
+    <ClCompile Include="..\..\..\..\..\check\lib\libcompat.c" />
     <ClCompile Include="..\check\time.c" />
-    <ClCompile Include="..\..\..\..\check\src\check.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_error.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_list.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_log.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_msg.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_pack.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_print.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_run.c" />
-    <ClCompile Include="..\..\..\..\check\src\check_str.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_error.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_list.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_log.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_msg.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_pack.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_print.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_run.c" />
+    <ClCompile Include="..\..\..\..\..\check\src\check_str.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

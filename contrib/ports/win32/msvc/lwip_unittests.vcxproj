@@ -42,7 +42,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\check;..\..\..\..\check\src;..\..\..\..\lwip\test\unit;..\..\..\..\lwip\src\include;..\..\..\..\lwip\src\include\ipv4;..\..\..\..\lwip\src\include\ipv6;..\include;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\check;..\..\..\..\..\check\src;..\..\..\..\test\unit;..\..\..\..\src\include;..\..\..\..\src\include\ipv4;..\..\..\..\src\include\ipv6;..\include;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_LIB;WIN32;_DEBUG;LWIP_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -63,7 +63,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\check;..\..\..\..\check\src;..\..\..\..\lwip\test\unit;..\..\..\..\lwip\src\include;..\..\..\..\lwip\src\include\ipv4;..\..\..\..\lwip\src\include\ipv6;..\include;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\check;..\..\..\..\..\check\src;..\..\..\..\test\unit;..\..\..\..\src\include;..\..\..\..\src\include\ipv4;..\..\..\..\src\include\ipv6;..\include;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -81,45 +81,45 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\lwip\test\unit\api\test_sockets.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\arch\sys_arch.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\core\test_def.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\core\test_mem.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\core\test_netif.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\core\test_pbuf.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\core\test_timers.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\ip4\test_ip4.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\ip6\test_ip6.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\mdns\test_mdns.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\mqtt\test_mqtt.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\tcp\tcp_helper.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\tcp\test_tcp.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\tcp\test_tcp_oos.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\udp\test_udp.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\etharp\test_etharp.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\dhcp\test_dhcp.c" />
-    <ClCompile Include="..\..\..\..\lwip\test\unit\lwip_unittests.c" />
+    <ClCompile Include="..\..\..\..\test\unit\api\test_sockets.c" />
+    <ClCompile Include="..\..\..\..\test\unit\arch\sys_arch.c" />
+    <ClCompile Include="..\..\..\..\test\unit\core\test_def.c" />
+    <ClCompile Include="..\..\..\..\test\unit\core\test_mem.c" />
+    <ClCompile Include="..\..\..\..\test\unit\core\test_netif.c" />
+    <ClCompile Include="..\..\..\..\test\unit\core\test_pbuf.c" />
+    <ClCompile Include="..\..\..\..\test\unit\core\test_timers.c" />
+    <ClCompile Include="..\..\..\..\test\unit\ip4\test_ip4.c" />
+    <ClCompile Include="..\..\..\..\test\unit\ip6\test_ip6.c" />
+    <ClCompile Include="..\..\..\..\test\unit\mdns\test_mdns.c" />
+    <ClCompile Include="..\..\..\..\test\unit\mqtt\test_mqtt.c" />
+    <ClCompile Include="..\..\..\..\test\unit\tcp\tcp_helper.c" />
+    <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp.c" />
+    <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp_oos.c" />
+    <ClCompile Include="..\..\..\..\test\unit\udp\test_udp.c" />
+    <ClCompile Include="..\..\..\..\test\unit\etharp\test_etharp.c" />
+    <ClCompile Include="..\..\..\..\test\unit\dhcp\test_dhcp.c" />
+    <ClCompile Include="..\..\..\..\test\unit\lwip_unittests.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\lwip\test\unit\api\test_sockets.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\arch\sys_arch.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\core\test_def.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\core\test_mem.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\core\test_netif.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\core\test_pbuf.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\core\test_timers.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\ip4\test_ip4.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\ip6\test_ip6.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\mdns\test_mdns.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\mqtt\test_mqtt.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\tcp\tcp_helper.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\tcp\test_tcp.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\tcp\test_tcp_oos.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\udp\test_udp.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\etharp\test_etharp.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\dhcp\test_dhcp.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\lwip_check.h" />
-    <ClInclude Include="..\..\..\..\lwip\test\unit\lwipopts.h" />
+    <ClInclude Include="..\..\..\..\test\unit\api\test_sockets.h" />
+    <ClInclude Include="..\..\..\..\test\unit\arch\sys_arch.h" />
+    <ClInclude Include="..\..\..\..\test\unit\core\test_def.h" />
+    <ClInclude Include="..\..\..\..\test\unit\core\test_mem.h" />
+    <ClInclude Include="..\..\..\..\test\unit\core\test_netif.h" />
+    <ClInclude Include="..\..\..\..\test\unit\core\test_pbuf.h" />
+    <ClInclude Include="..\..\..\..\test\unit\core\test_timers.h" />
+    <ClInclude Include="..\..\..\..\test\unit\ip4\test_ip4.h" />
+    <ClInclude Include="..\..\..\..\test\unit\ip6\test_ip6.h" />
+    <ClInclude Include="..\..\..\..\test\unit\mdns\test_mdns.h" />
+    <ClInclude Include="..\..\..\..\test\unit\mqtt\test_mqtt.h" />
+    <ClInclude Include="..\..\..\..\test\unit\tcp\tcp_helper.h" />
+    <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp.h" />
+    <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp_oos.h" />
+    <ClInclude Include="..\..\..\..\test\unit\udp\test_udp.h" />
+    <ClInclude Include="..\..\..\..\test\unit\etharp\test_etharp.h" />
+    <ClInclude Include="..\..\..\..\test\unit\dhcp\test_dhcp.h" />
+    <ClInclude Include="..\..\..\..\test\unit\lwip_check.h" />
+    <ClInclude Include="..\..\..\..\test\unit\lwipopts.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="libcheck.vcxproj">
