@@ -211,6 +211,8 @@ autoip_conflict_callback(struct netif *netif, acd_callback_enum_t state)
       ip4_addr_set_any(&autoip->llipaddr);
       autoip_stop(netif);
       break;
+      default:
+      break;
   }
 }
 
@@ -344,7 +346,7 @@ autoip_supplied_address(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
   return     (autoip != NULL)
-          && (ip4_addr_cmp(&netif->ip_addr, &(autoip->llipaddr)))
+          && (ip4_addr_cmp(netif_ip4_addr(netif), &(autoip->llipaddr)))
           && (autoip->state == AUTOIP_STATE_BOUND);
 }
 

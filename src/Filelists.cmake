@@ -54,6 +54,7 @@ set(lwipcore_SRCS
     ${LWIP_DIR}/src/core/udp.c
 )
 set(lwipcore4_SRCS
+    ${LWIP_DIR}/src/core/ipv4/acd.c
     ${LWIP_DIR}/src/core/ipv4/autoip.c
     ${LWIP_DIR}/src/core/ipv4/dhcp.c
     ${LWIP_DIR}/src/core/ipv4/etharp.c

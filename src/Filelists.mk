@@ -51,7 +51,8 @@ COREFILES=$(LWIPDIR)/core/init.c \
 	$(LWIPDIR)/core/timeouts.c \
 	$(LWIPDIR)/core/udp.c
 
-CORE4FILES=$(LWIPDIR)/core/ipv4/autoip.c \
+CORE4FILES=$(LWIPDIR)/core/ipv4/acd.c \
+	$(LWIPDIR)/core/ipv4/autoip.c \
 	$(LWIPDIR)/core/ipv4/dhcp.c \
 	$(LWIPDIR)/core/ipv4/etharp.c \
 	$(LWIPDIR)/core/ipv4/icmp.c \

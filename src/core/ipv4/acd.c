@@ -27,8 +27,6 @@
  * With DHCP:
  * - enable DHCP_DOES_ACD_CHECK. Then it will be called from the dhcp module.
  *   No extra's needed.
- *
- * @see netifapi_acd
  */
 
 /*
@@ -67,6 +65,8 @@
 
 /* don't build if not configured for use in lwipopts.h */
 #if LWIP_IPV4 && LWIP_ACD
+
+#include <string.h>
 
 #include "lwip/acd.h"
 #include "lwip/prot/acd.h"
@@ -154,11 +154,10 @@ acd_start(struct netif *netif, struct acd *acd, ip4_addr_t ipaddr)
  * @ingroup acd
  * Stop ACD client
  *
- * @param netif network interface on which to stop the ACD client
  * @param acd   acd module to stop
  */
 err_t
-acd_stop(struct netif *netif, struct acd *acd)
+acd_stop(struct acd *acd)
 {
   LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("acd_stop\n"));
 
@@ -180,7 +179,7 @@ acd_network_changed_link_down(struct netif *netif)
   struct acd *acd;
   /* loop over the acd's*/
   ACD_FOREACH(acd, netif->acd_list) {
-    acd_stop(netif, acd);
+    acd_stop(acd);
   }
 }
 
@@ -267,7 +266,7 @@ acd_tmr(void)
         case ACD_STATE_RATE_LIMIT:
           if (acd->ttw == 0) {
             /* acd should be stopped because ipaddr isn't valid any more */
-            acd_stop(netif, acd);
+            acd_stop(acd);
             /* let the acd user (after rate limit interval) know that their is
              * a conflict detected. So it can restart the address acquiring
              * process.*/
@@ -307,7 +306,7 @@ acd_restart(struct netif *netif, struct acd *acd)
   }
   else {
     /* acd should be stopped because ipaddr isn't valid any more */
-    acd_stop(netif, acd);
+    acd_stop(acd);
     /* let the acd user know right away that their is a conflict detected.
      * So it can restart the address acquiring process. */
     acd->acd_conflict_callback(netif, ACD_RESTART_CLIENT);
@@ -342,6 +341,7 @@ acd_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
     switch(acd->state) {
       case ACD_STATE_OFF:
       case ACD_STATE_RATE_LIMIT:
+      default:
         /* do nothing */
         break;
 
@@ -409,7 +409,7 @@ acd_handle_arp_conflict(struct netif *netif, struct acd *acd)
     /* Imediatly back off on a conflict. */
     LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
       ("acd_handle_arp_conflict(): conflict when we are in passive mode -> back off\n"));
-    acd_stop(netif, acd);
+    acd_stop(acd);
     acd->acd_conflict_callback(netif, ACD_DECLINE);
   }
   else {
@@ -439,6 +439,7 @@ acd_put_in_passive_mode(struct netif *netif, struct acd *acd)
   switch(acd->state) {
     case ACD_STATE_OFF:
     case ACD_STATE_PASSIVE_ONGOING:
+    default:
       /* do nothing */
       break;
 
@@ -446,7 +447,7 @@ acd_put_in_passive_mode(struct netif *netif, struct acd *acd)
     case ACD_STATE_PROBING:
     case ACD_STATE_ANNOUNCE_WAIT:
     case ACD_STATE_RATE_LIMIT:
-      acd_stop(netif, acd);
+      acd_stop(acd);
       acd->acd_conflict_callback(netif, ACD_DECLINE);
       break;
 
@@ -477,20 +478,20 @@ acd_netif_ip_addr_changed(struct netif *netif, const ip_addr_t *old_addr,
     ("acd_netif_ip_addr_changed(): Address changed\n"));
 
   LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
-    ("acd_netif_ip_addr_changed(): old address = %s\n", ip4addr_ntoa(old_addr)));
+    ("acd_netif_ip_addr_changed(): old address = %s\n", ipaddr_ntoa(old_addr)));
   LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
-    ("acd_netif_ip_addr_changed(): new address = %s\n", ip4addr_ntoa(new_addr)));
+    ("acd_netif_ip_addr_changed(): new address = %s\n", ipaddr_ntoa(new_addr)));
 
   /* If we change from ANY to an IP or from an IP to ANY we do nothing */
-  if (ip4_addr_isany(old_addr) || ip4_addr_isany(new_addr)) {
+  if (ip_addr_isany(old_addr) || ip_addr_isany(new_addr)) {
     return;
   }
 
   ACD_FOREACH(acd, netif->acd_list) {
     /* Find ACD module of old address */
-    if(ip4_addr_cmp(&acd->ipaddr, old_addr)) {
+    if(ip4_addr_cmp(&acd->ipaddr, ip_2_ip4(old_addr))) {
       /* Did we change from a LL address to a routable address? */
-      if (ip4_addr_islinklocal(old_addr) && !ip4_addr_islinklocal(new_addr)) {
+      if (ip_addr_islinklocal(old_addr) && !ip_addr_islinklocal(new_addr)) {
         LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
           ("acd_netif_ip_addr_changed(): changed from LL to routable address\n"));
         /* Put the module in passive conflict detection mode */
