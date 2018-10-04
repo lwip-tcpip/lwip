@@ -75,13 +75,13 @@ typedef enum {
   ACD_STATE_PASSIVE_ONGOING,
   /* To many conflicts occured, we need to wait before restarting the selection
    * process */
-  ACD_STATE_RATE_LIMIT,
+  ACD_STATE_RATE_LIMIT
 } acd_state_enum_t;
 
 typedef enum {
   ACD_IP_OK,            /* IP address is good, no conflicts found in checking state */
   ACD_RESTART_CLIENT,   /* Conflict found -> the client should try again */
-  ACD_DECLINE,          /* Decline the received IP address (rate limiting)*/
+  ACD_DECLINE           /* Decline the received IP address (rate limiting)*/
 } acd_callback_enum_t;
 
 #ifdef __cplusplus
