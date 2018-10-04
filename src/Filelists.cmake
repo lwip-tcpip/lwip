@@ -5,7 +5,7 @@
 #
 # This file is NOT designed (on purpose) to be used as cmake
 # subdir via add_subdirectory()
-# The intention is to provide greater flexibility to users to 
+# The intention is to provide greater flexibility to users to
 # create their own targets using the *_SRCS variables.
 
 set(LWIP_VERSION_MAJOR    "2")
@@ -256,7 +256,7 @@ configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT})
 
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
-    message("Doxygen build started")
+    message(STATUS "Doxygen build started")
 
     add_custom_target(lwipdocs
         COMMAND ${CMAKE_COMMAND} -E remove_directory ${DOXYGEN_DIR}/${DOXYGEN_OUTPUT_DIR}/html
@@ -265,7 +265,7 @@ if (DOXYGEN_FOUND)
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM)
 else (DOXYGEN_FOUND)
-    message("Doxygen needs to be installed to generate the doxygen documentation")
+    message(STATUS "Doxygen needs to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
 # lwIP libraries
