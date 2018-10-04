@@ -1219,6 +1219,7 @@ tcp_slowtmr_start:
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT\n", pcb->state != TIME_WAIT);
     if (pcb->last_timer == tcp_timer_ctr) {
       /* skip this pcb, we have already processed it */
+      prev = pcb;
       pcb = pcb->next;
       continue;
     }
