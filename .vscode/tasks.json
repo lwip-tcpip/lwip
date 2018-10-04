@@ -30,6 +30,18 @@
             "windows": {
                 "command": "cd ${workspaceFolder}/contrib/ports/win32/example_app && mkdir build && cd build && cmake .."
             }
+        },
+        {
+            "label": "Generate documentation",
+            "type": "shell",
+            "problemMatcher": [],
+            "group": "none",
+            "linux": {
+                "command": "cd ${workspaceFolder}/contrib/ports/unix/example_app/build && cmake --build . --target lwipdocs"
+            },
+            "windows": {
+                "command": "cd ${workspaceFolder}/contrib/ports/win32/example_app/build && cmake --build . --target lwipdocs"
+            },
         }
     ]
 }

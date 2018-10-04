@@ -10,15 +10,15 @@
                 "${workspaceFolder}/contrib/ports/unix/example_app"
             ],
             "defines": [],
-            "intelliSenseMode": "clang-x64",
+            "intelliSenseMode": "gcc-x64",
             "browse": {
                 "path": [
-                    ""
+                    "${workspaceFolder}/**"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
             },
-            "compilerPath": "/usr/bin/clang",
+            "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "c++17"
         }
