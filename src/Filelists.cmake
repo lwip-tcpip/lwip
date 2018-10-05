@@ -8,6 +8,8 @@
 # The intention is to provide greater flexibility to users to
 # create their own targets using the *_SRCS variables.
 
+include_guard(GLOBAL)
+
 set(LWIP_VERSION_MAJOR    "2")
 set(LWIP_VERSION_MINOR    "2")
 set(LWIP_VERSION_REVISION "0")

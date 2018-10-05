@@ -8,6 +8,8 @@
 # The intention is to provide greater flexibility to users to 
 # create their own targets using the *_SRCS variables.
 
+include_guard(GLOBAL)
+
 set(LWIP_TESTDIR ${LWIP_DIR}/test/unit)
 set(LWIP_TESTFILES
 	${LWIP_TESTDIR}/lwip_unittests.c

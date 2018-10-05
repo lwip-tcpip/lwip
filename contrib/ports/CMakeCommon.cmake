@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 set(LWIP_CONTRIB_DIR ${LWIP_DIR}/contrib)
 
 # ARM mbedtls support https://tls.mbed.org/

@@ -8,6 +8,8 @@
 # The intention is to provide greater flexibility to users to 
 # create their own targets using the *_SRCS variables.
 
+include_guard(GLOBAL)
+
 set(lwipcontribportwindows_SRCS
     ${LWIP_CONTRIB_DIR}/ports/win32/sys_arch.c
     ${LWIP_CONTRIB_DIR}/ports/win32/sio.c

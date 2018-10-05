@@ -8,6 +8,8 @@
 # The intention is to provide greater flexibility to users to 
 # create their own targets using the *_SRCS variables.
 
+include_guard(GLOBAL)
+
 set(lwipcontribexamples_SRCS
     ${LWIP_CONTRIB_DIR}/examples/httpd/fs_example/fs_example.c
     ${LWIP_CONTRIB_DIR}/examples/httpd/ssi_example/ssi_example.c
