@@ -4,8 +4,8 @@ set(LWIP_CONTRIB_DIR ${LWIP_DIR}/contrib)
 
 # ARM mbedtls support https://tls.mbed.org/
 if(NOT DEFINED MBEDTLSDIR)
-    message(STATUS "MBEDTLSDIR not set - using default location ${LWIP_DIR}/../mbedtls")
     set(MBEDTLSDIR ${LWIP_DIR}/../mbedtls)
+    message(STATUS "MBEDTLSDIR not set - using default location ${MBEDTLSDIR}")
 endif()
 if(EXISTS ${MBEDTLSDIR}/CMakeLists.txt)
     set(LWIP_HAVE_MBEDTLS ON BOOL)
