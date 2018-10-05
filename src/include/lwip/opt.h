@@ -924,10 +924,10 @@
 #endif /* !LWIP_IPV4 */
 
 /**
- * DHCP_DOES_ACD_CHECK==1: Perform address conflict detection on the dhcp address.
+ * LWIP_DHCP_DOES_ACD_CHECK==1: Perform address conflict detection on the dhcp address.
  */
-#if !defined DHCP_DOES_ACD_CHECK || defined __DOXYGEN__
-#define DHCP_DOES_ACD_CHECK             1
+#if !defined LWIP_DHCP_DOES_ACD_CHECK || defined __DOXYGEN__
+#define LWIP_DHCP_DOES_ACD_CHECK        1
 #endif
 
 /**
@@ -1023,7 +1023,7 @@
   * LWIP_ACD==1: Enable ACD module. ACD module is needed when using AUTOIP.
   */
 #if !defined LWIP_ACD || defined __DOXYGEN__
-#define LWIP_ACD                     (LWIP_AUTOIP || DHCP_DOES_ACD_CHECK)
+#define LWIP_ACD                     (LWIP_AUTOIP || LWIP_DHCP_DOES_ACD_CHECK)
 #endif
 #if !LWIP_IPV4
 /* disable ACD when IPv4 is disabled */

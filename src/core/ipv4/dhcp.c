@@ -192,9 +192,9 @@ static u8_t dhcp_pcb_refcount;
 static err_t dhcp_discover(struct netif *netif);
 static err_t dhcp_select(struct netif *netif);
 static void dhcp_bind(struct netif *netif);
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
 static err_t dhcp_decline(struct netif *netif);
-#endif /* DHCP_DOES_ACD_CHECK */
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 static err_t dhcp_rebind(struct netif *netif);
 static err_t dhcp_reboot(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state);
@@ -290,7 +290,7 @@ dhcp_handle_nak(struct netif *netif)
   dhcp_discover(netif);
 }
 
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
 /**
 * Handle conflict information from ACD module
 *
@@ -352,7 +352,7 @@ dhcp_check(struct netif *netif)
   /* start ACD module */
   acd_start(netif, &dhcp->acd, dhcp->offered_ip_addr);
 }
-#endif /* DHCP_DOES_ACD_CHECK */
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 
 /**
  * Remember the configuration offered by a DHCP server.
@@ -796,10 +796,10 @@ dhcp_start(struct netif *netif)
   /* dhcp_set_state(&dhcp, DHCP_STATE_OFF); */
 
 
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
   /* add acd struct to list*/
   acd_add(netif, &dhcp->acd, dhcp_conflict_callback);
-#endif /* DHCP_DOES_ACD_CHECK */
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
@@ -910,7 +910,7 @@ dhcp_network_changed_link_up(struct netif *netif)
   }
 }
 
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
 /**
  * Decline an offered lease.
  *
@@ -952,7 +952,7 @@ dhcp_decline(struct netif *netif)
   }
   return result;
 }
-#endif /* DHCP_DOES_ACD_CHECK */
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 
 
 /**
@@ -1796,7 +1796,7 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     if ((dhcp->state == DHCP_STATE_REQUESTING) ||
         (dhcp->state == DHCP_STATE_REBOOTING)) {
       dhcp_handle_ack(netif, msg_in);
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
       if ((netif->flags & NETIF_FLAG_ETHARP) != 0) {
         /* check if the acknowledged lease address is already in use */
         dhcp_check(netif);

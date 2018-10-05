@@ -25,7 +25,7 @@
  * - will be called from the autoip module. No extra's needed.
  *
  * With DHCP:
- * - enable DHCP_DOES_ACD_CHECK. Then it will be called from the dhcp module.
+ * - enable LWIP_DHCP_DOES_ACD_CHECK. Then it will be called from the dhcp module.
  *   No extra's needed.
  */
 

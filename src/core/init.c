@@ -184,7 +184,7 @@ PACK_STRUCT_END
 #if (((!LWIP_DHCP) || (!LWIP_AUTOIP)) && LWIP_DHCP_AUTOIP_COOP)
 #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
 #endif
-#if (((!LWIP_DHCP) || (!LWIP_ARP) || (!LWIP_ACD)) && DHCP_DOES_ACD_CHECK)
+#if (((!LWIP_DHCP) || (!LWIP_ARP) || (!LWIP_ACD)) && LWIP_DHCP_DOES_ACD_CHECK)
 #error "If you want to use DHCP ACD checking, you have to define LWIP_DHCP=1, LWIP_ARP=1 and LWIP_ACD=1 in your lwipopts.h"
 #endif
 #if (!LWIP_ARP && LWIP_AUTOIP)

@@ -45,9 +45,9 @@
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
 #include "lwip/acd.h"
-#endif /* DHCP_DOES_ACD_CHECK */
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,10 +100,10 @@ struct dhcp
   ip4_addr_t offered_si_addr;
   char boot_file_name[DHCP_BOOT_FILE_LEN];
 #endif /* LWIP_DHCP_BOOTPFILE */
-#if DHCP_DOES_ACD_CHECK
+#if LWIP_DHCP_DOES_ACD_CHECK
   /** acd struct */
   struct acd acd;
-#endif /* DHCP_DOES_ACD_CHECK */
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 };
 
 
