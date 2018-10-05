@@ -927,7 +927,7 @@
  * DHCP_DOES_ACD_CHECK==1: Perform address conflict detection on the dhcp address.
  */
 #if !defined DHCP_DOES_ACD_CHECK || defined __DOXYGEN__
-#define DHCP_DOES_ACD_CHECK             0
+#define DHCP_DOES_ACD_CHECK             1
 #endif
 
 /**
