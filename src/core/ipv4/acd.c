@@ -71,6 +71,10 @@
 #include "lwip/acd.h"
 #include "lwip/prot/acd.h"
 
+#define ACD_FOREACH(acd, acd_list) for ((acd) = acd_list; (acd) != NULL; (acd) = (acd)->next)
+
+#define ACD_TICKS_PER_SECOND  (1000 / ACD_TMR_INTERVAL)
+
 /* Define good random function (LWIP_RAND) in lwipopts.h */
 #define ACD_RANDOM_PROBE_WAIT     (LWIP_RAND() % \
                                   (PROBE_WAIT * ACD_TICKS_PER_SECOND))

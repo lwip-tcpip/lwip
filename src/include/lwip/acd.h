@@ -58,9 +58,6 @@ extern "C" {
  *  1000, 500, 333, 250, 200, 166, 142, 125, 111, 100 ....
  */
 #define ACD_TMR_INTERVAL      100
-#define ACD_TICKS_PER_SECOND  (1000 / ACD_TMR_INTERVAL)
-
-#define ACD_FOREACH(acd, acd_list) for ((acd) = acd_list; (acd) != NULL; (acd) = (acd)->next)
 
 /**
  * Callback function: Handle conflict information from ACD module
