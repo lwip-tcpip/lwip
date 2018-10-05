@@ -327,6 +327,8 @@ dhcp_conflict_callback(struct netif *netif, acd_callback_enum_t state)
       /* Let the DHCP server know we will not use the address */
       dhcp_decline(netif);
       break;
+    default:
+      break;
   }
 }
 
