@@ -3,11 +3,11 @@ include_guard(GLOBAL)
 set(LWIP_CONTRIB_DIR ${LWIP_DIR}/contrib)
 
 # ARM mbedtls support https://tls.mbed.org/
-if(NOT DEFINED MBEDTLSDIR)
-    set(MBEDTLSDIR ${LWIP_DIR}/../mbedtls)
-    message(STATUS "MBEDTLSDIR not set - using default location ${MBEDTLSDIR}")
+if(NOT DEFINED LWIP_MBEDTLSDIR)
+    set(LWIP_MBEDTLSDIR ${LWIP_DIR}/../mbedtls)
+    message(STATUS "LWIP_MBEDTLSDIR not set - using default location ${LWIP_MBEDTLSDIR}")
 endif()
-if(EXISTS ${MBEDTLSDIR}/CMakeLists.txt)
+if(EXISTS ${LWIP_MBEDTLSDIR}/CMakeLists.txt)
     set(LWIP_HAVE_MBEDTLS ON BOOL)
 
     # Prevent building MBEDTLS programs and tests
@@ -15,13 +15,13 @@ if(EXISTS ${MBEDTLSDIR}/CMakeLists.txt)
     set(ENABLE_TESTING  OFF CACHE BOOL "")
 
     # mbedtls uses cmake. Sweet!
-    add_subdirectory(${MBEDTLSDIR} mbedtls)
+    add_subdirectory(${LWIP_MBEDTLSDIR} mbedtls)
 
     set (LWIP_MBEDTLS_DEFINITIONS
         LWIP_HAVE_MBEDTLS=1
     )
     set (LWIP_MBEDTLS_INCLUDE_DIRS
-        ${MBEDTLSDIR}/include
+        ${LWIP_MBEDTLSDIR}/include
     )
     set (LWIP_MBEDTLS_LINK_LIBRARIES
         mbedtls
