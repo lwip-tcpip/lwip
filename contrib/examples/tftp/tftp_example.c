@@ -78,17 +78,17 @@ tftp_write(void* handle, struct pbuf* p)
 }
 
 /* For TFTP client only */
-static int
+static void
 tftp_error(void* handle, int err, const char* msg, int size)
 {
   char message[100];
 
+  LWIP_UNUSED_ARG(handle);
+
   memset(message, 0, sizeof(message));
-  MEMCPY(message, msg, LWIP_MIN(sizeof(message)-1, size));
+  MEMCPY(message, msg, LWIP_MIN(sizeof(message)-1, (size_t)size));
 
   printf("TFTP error: %d (%s)", err, message);
-
-  return 0;
 }
 
 static const struct tftp_context tftp = {

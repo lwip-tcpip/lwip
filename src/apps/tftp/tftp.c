@@ -47,7 +47,8 @@
  * This is simple TFTP client/server for the lwIP raw API.
  */
 
-#include "lwip/apps/tftp_common.h"
+#include "lwip/apps/tftp_client.h"
+#include "lwip/apps/tftp_server.h"
 
 #if LWIP_UDP
 
@@ -389,7 +390,7 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
     case PP_HTONS(TFTP_ERROR):
       if (tftp_state.handle != NULL) {
         pbuf_remove_header(p, TFTP_HEADER_LENGTH);
-        tftp_state.ctx->error(tftp_state.handle, sbuf[1], p->payload, p->len);
+        tftp_state.ctx->error(tftp_state.handle, sbuf[1], (const char*)p->payload, p->len);
         close_handle();
       }
       break;
