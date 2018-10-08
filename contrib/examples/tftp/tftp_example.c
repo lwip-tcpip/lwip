@@ -1,5 +1,5 @@
 /*
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -8,21 +8,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Dirk Ziegelmeier <dziegel@gmx.de>
  *
  */
@@ -32,13 +32,15 @@
 #include "lwip/apps/tftp_server.h"
 #include "tftp_example.h"
 
+#include <string.h>
+
 #if LWIP_UDP
 
 static void*
 tftp_open(const char* fname, const char* mode, u8_t is_write)
 {
   LWIP_UNUSED_ARG(mode);
-  
+
   if (is_write) {
     return (void*)fopen(fname, "wb");
   } else {
@@ -46,7 +48,7 @@ tftp_open(const char* fname, const char* mode, u8_t is_write)
   }
 }
 
-static void 
+static void
 tftp_close(void* handle)
 {
   fclose((FILE*)handle);
@@ -71,7 +73,20 @@ tftp_write(void* handle, struct pbuf* p)
     }
     p = p->next;
   }
-  
+
+  return 0;
+}
+
+static int
+tftp_error(void* handle, int err, const char* msg, int size)
+{
+  char message[100];
+
+  memset(message, 0, sizeof(message));
+  MEMCPY(message, msg, LWIP_MIN(sizeof(message)-1, size));
+
+  printf("TFTP error: %d (%s)", err, message);
+
   return 0;
 }
 
@@ -79,13 +94,14 @@ static const struct tftp_context tftp = {
   tftp_open,
   tftp_close,
   tftp_read,
-  tftp_write
+  tftp_write,
+  tftp_error
 };
 
 void
 tftp_example_init(void)
 {
-  tftp_init(&tftp);
+  tftp_init_server(&tftp);
 }
 
 #endif /* LWIP_UDP */

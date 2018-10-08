@@ -5,7 +5,7 @@
  *
  */
 
-/* 
+/*
  * Redistribution and use in source and binary forms, with or without
  * modification,are permitted provided that the following conditions are met:
  *
@@ -36,5 +36,7 @@
 #define LWIP_HDR_APPS_TFTP_SERVER_H
 
 #include "lwip/apps/tftp_common.h"
+
+err_t tftp_init_server(const struct tftp_context* ctx);
 
 #endif /* LWIP_HDR_APPS_TFTP_SERVER_H */

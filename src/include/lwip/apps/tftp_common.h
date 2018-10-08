@@ -94,7 +94,11 @@ struct tftp_context {
   void (*error)(void* handle, int err, const char* msg, int size);
 };
 
-err_t tftp_init(const struct tftp_context* ctx);
+#define LWIP_TFTP_MODE_SERVER       0x01
+#define LWIP_TFTP_MODE_CLIENT       0x02
+#define LWIP_TFTP_MODE_CLIENTSERVER (LWIP_TFTP_MODE_SERVER | LWIP_TFTP_MODE_CLIENT)
+
+err_t tftp_init_common(u8_t mode, const struct tftp_context* ctx);
 void tftp_cleanup(void);
 
 #ifdef __cplusplus

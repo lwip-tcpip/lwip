@@ -91,6 +91,7 @@ struct tftp_state {
 };
 
 static struct tftp_state tftp_state;
+static u8_t tftp_mode;
 
 static void tftp_tmr(void *arg);
 
@@ -261,6 +262,11 @@ recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16
         break;
       }
 
+      if ((tftp_mode & LWIP_TFTP_MODE_SERVER) == 0) {
+        send_error(addr, port, TFTP_ERROR_ACCESS_VIOLATION, "TFTP server not enabled");
+        break;
+      }
+
       sys_timeout(TFTP_TIMER_MSECS, tftp_tmr, NULL);
 
       /* find \0 in pbuf -> end of filename string */
@@ -420,12 +426,13 @@ tftp_tmr(void *arg)
   }
 }
 
-/** @ingroup tftp
+/**
  * Initialize TFTP client/server.
+ * @param mode TFTP mode (client/server)
  * @param ctx TFTP callback struct
  */
 err_t
-tftp_init(const struct tftp_context *ctx)
+tftp_init_common(u8_t mode, const struct tftp_context *ctx)
 {
   err_t ret;
 
@@ -434,6 +441,8 @@ tftp_init(const struct tftp_context *ctx)
   if (pcb == NULL) {
     return ERR_MEM;
   }
+
+  tftp_mode = mode;
 
   ret = udp_bind(pcb, IP_ANY_TYPE, TFTP_PORT);
   if (ret != ERR_OK) {
@@ -454,6 +463,26 @@ tftp_init(const struct tftp_context *ctx)
 }
 
 /** @ingroup tftp
+ * Initialize TFTP server.
+ * @param ctx TFTP callback struct
+ */
+err_t
+tftp_init_server(const struct tftp_context *ctx)
+{
+  return tftp_init_common(LWIP_TFTP_MODE_SERVER, ctx);
+}
+
+/** @ingroup tftp
+ * Initialize TFTP client.
+ * @param ctx TFTP callback struct
+ */
+err_t
+tftp_init_client(u8_t mode, const struct tftp_context *ctx)
+{
+  return tftp_init_common(LWIP_TFTP_MODE_CLIENT, ctx);
+}
+
+/** @ingroup tftp
  * Deinitialize ("turn off") TFTP client/server.
  */
 void tftp_cleanup(void)
@@ -465,7 +494,10 @@ void tftp_cleanup(void)
 }
 
 err_t
-tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode) {
+tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode)
+{
+  LWIP_ERROR("TFTP client is not enabled (tftp_init)", (tftp_mode & LWIP_TFTP_MODE_CLIENT) == 0, return ERR_VAL);
+
   tftp_state.handle = handle;
   tftp_state.blknum = 1;
   tftp_state.mode_write = 1; // We want to receive data
@@ -474,7 +506,10 @@ tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, con
 }
 
 err_t
-tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode) {
+tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode)
+{
+  LWIP_ERROR("TFTP client is not enabled (tftp_init)", (tftp_mode & LWIP_TFTP_MODE_CLIENT) == 0, return ERR_VAL);
+
   tftp_state.handle = handle;
   tftp_state.blknum = 1;
   tftp_state.mode_write = 0; // We want to send data
