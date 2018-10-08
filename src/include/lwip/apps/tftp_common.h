@@ -11,7 +11,7 @@
  *
  */
 
-/* 
+/*
  * Redistribution and use in source and binary forms, with or without
  * modification,are permitted provided that the following conditions are met:
  *
@@ -68,7 +68,7 @@ struct tftp_context {
    */
   void (*close)(void* handle);
   /**
-   * Read from file 
+   * Read from file
    * @param handle File handle returned by open()
    * @param buf Target buffer to copy read data to
    * @param bytes Number of bytes to copy to buf
@@ -96,8 +96,6 @@ struct tftp_context {
 
 err_t tftp_init(const struct tftp_context* ctx);
 void tftp_cleanup(void);
-err_t tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode);
-err_t tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode);
 
 #ifdef __cplusplus
 }

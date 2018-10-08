@@ -206,7 +206,7 @@ set(lwipnetbios_SRCS
 
 # TFTP server files
 set(lwiptftp_SRCS
-    ${LWIP_DIR}/src/apps/tftp/tftp_server.c
+    ${LWIP_DIR}/src/apps/tftp/tftp.c
 )
 
 # MQTT client files
