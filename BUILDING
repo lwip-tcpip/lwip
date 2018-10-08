@@ -39,12 +39,12 @@ In all cases, you need to provide two variables.
 
 "LWIP_DIR" pointing to the lwIP directory
 Example:
-set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lwip)
+set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals/lwip)
 
 "LWIP_INCLUDE_DIRS" that contains the include base paths
 - for lwIP itself (${LWIP_DIR}/src/include)
-- for lwIP contrib if you use it (${LWIP_CONTRIB_DIR}/)
-- to a directory for an lwIP OS port
+- for lwIP contrib if you use it (${LWIP_DIR}/contrib)
+- to a directory containing an OS port
 - to a directory containing lwipopts.h
 
 Example:
