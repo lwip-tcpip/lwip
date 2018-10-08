@@ -13,10 +13,10 @@
                 "isDefault": true
             },
             "linux": {
-                "command": "cd ${workspaceFolder}/contrib/ports/unix/example_app/build && cmake --build ."
+                "command": "cd ${workspaceFolder}/build && cmake --build ."
             },
             "windows": {
-                "command": "cd ${workspaceFolder}/contrib/ports/win32/example_app/build; cmake --build ."
+                "command": "cd ${workspaceFolder}/build; cmake --build ."
             }
         },
         {
@@ -25,10 +25,10 @@
             "problemMatcher": "$gcc",
             "group": "build",
             "linux": {
-                "command": "cd ${workspaceFolder}/contrib/ports/unix/example_app && mkdir build && cd build && cmake .."
+                "command": "cd ${workspaceFolder} && mkdir build && cd build && cmake .."
             },
             "windows": {
-                "command": "cd ${workspaceFolder}/contrib/ports/win32/example_app; mkdir build; cd build;  cmake .."
+                "command": "cd ${workspaceFolder}; mkdir build; cd build;  cmake .."
             }
         },
         {
@@ -37,10 +37,10 @@
             "problemMatcher": [],
             "group": "none",
             "linux": {
-                "command": "cd ${workspaceFolder}/contrib/ports/unix/example_app/build && cmake --build . --target lwipdocs"
+                "command": "cd ${workspaceFolder}/build && cmake --build . --target lwipdocs"
             },
             "windows": {
-                "command": "cd ${workspaceFolder}/contrib/ports/win32/example_app/build; cmake --build . --target lwipdocs"
+                "command": "cd ${workspaceFolder}/build; cmake --build . --target lwipdocs"
             },
         }
     ]

@@ -13,12 +13,12 @@ if(EXISTS ${MBEDTLSDIR}/CMakeLists.txt)
     # Prevent building MBEDTLS programs and tests
     set(ENABLE_PROGRAMS OFF CACHE BOOL "")
     set(ENABLE_TESTING  OFF CACHE BOOL "")
-    
+
     # mbedtls uses cmake. Sweet!
     add_subdirectory(${MBEDTLSDIR} mbedtls)
 
     set (LWIP_MBEDTLS_DEFINITIONS
-        -DLWIP_HAVE_MBEDTLS=1
+        LWIP_HAVE_MBEDTLS=1
     )
     set (LWIP_MBEDTLS_INCLUDE_DIRS
         ${MBEDTLSDIR}/include

@@ -2,10 +2,19 @@ cmake_minimum_required(VERSION 3.7)
 
 project(lwIP)
 
+# Example lwIP application
 set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-include(src/Filelists.cmake)
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
-# Package generation
+set (LWIP_DEFINITIONS LWIP_DEBUG=1)
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
+  add_subdirectory(${LWIP_CONTRIB_DIR}/ports/win32/example_app)
+else()
+  add_subdirectory(${LWIP_CONTRIB_DIR}/ports/unix/example_app)
+endif()
+
+# Source package generation
 set(CPACK_SOURCE_GENERATOR "ZIP")
 set(CPACK_SOURCE_PACKAGE_DESCRIPTION_SUMMARY "lwIP lightweight IP stack")
 set(CPACK_PACKAGE_VERSION_MAJOR "${LWIP_VERSION_MAJOR}")
