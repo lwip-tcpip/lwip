@@ -5,10 +5,12 @@
 #
 # This file is NOT designed (on purpose) to be used as cmake
 # subdir via add_subdirectory()
-# The intention is to provide greater flexibility to users to 
+# The intention is to provide greater flexibility to users to
 # create their own targets using the *_SRCS variables.
 
 include_guard(GLOBAL)
+
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 set(lwipcontribexamples_SRCS
     ${LWIP_CONTRIB_DIR}/examples/httpd/fs_example/fs_example.c

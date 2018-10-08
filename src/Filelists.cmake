@@ -10,6 +10,8 @@
 
 include_guard(GLOBAL)
 
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
+
 set(LWIP_VERSION_MAJOR    "2")
 set(LWIP_VERSION_MINOR    "2")
 set(LWIP_VERSION_REVISION "0")

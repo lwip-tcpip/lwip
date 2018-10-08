@@ -4,14 +4,13 @@ project(lwIP)
 
 # Example lwIP application
 set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 set (LWIP_DEFINITIONS LWIP_DEBUG=1)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-  add_subdirectory(${LWIP_CONTRIB_DIR}/ports/win32/example_app)
+  add_subdirectory(${LWIP_DIR}/contrib/ports/win32/example_app)
 else()
-  add_subdirectory(${LWIP_CONTRIB_DIR}/ports/unix/example_app)
+  add_subdirectory(${LWIP_DIR}/contrib/ports/unix/example_app)
 endif()
 
 # Source package generation

@@ -1,3 +1,5 @@
+include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
+
 set (LWIP_INCLUDE_DIRS
     "${LWIP_DIR}/src/include"
     "${LWIP_CONTRIB_DIR}/"
