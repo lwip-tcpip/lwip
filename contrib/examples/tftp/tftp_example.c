@@ -77,6 +77,7 @@ tftp_write(void* handle, struct pbuf* p)
   return 0;
 }
 
+/* For TFTP client only */
 static int
 tftp_error(void* handle, int err, const char* msg, int size)
 {

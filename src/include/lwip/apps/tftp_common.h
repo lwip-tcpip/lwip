@@ -55,7 +55,7 @@ extern "C" {
  */
 struct tftp_context {
   /**
-   * Open file for read/write.
+   * Open file for read/write (server mode only).
    * @param fname Filename
    * @param mode Mode string from TFTP RFC 1350 (netascii, octet, mail)
    * @param write Flag indicating read (0) or write (!= 0) access
@@ -64,12 +64,12 @@ struct tftp_context {
   void* (*open)(const char* fname, const char* mode, u8_t write);
   /**
    * Close file handle
-   * @param handle File handle returned by open()
+   * @param handle File handle returned by open()/tftp_put()/tftp_get()
    */
   void (*close)(void* handle);
   /**
    * Read from file
-   * @param handle File handle returned by open()
+   * @param handle File handle returned by open()/tftp_put()/tftp_get()
    * @param buf Target buffer to copy read data to
    * @param bytes Number of bytes to copy to buf
    * @returns &gt;= 0: Success; &lt; 0: Error
@@ -77,7 +77,7 @@ struct tftp_context {
   int (*read)(void* handle, void* buf, int bytes);
   /**
    * Write to file
-   * @param handle File handle returned by open()
+   * @param handle File handle returned by open()/tftp_put()/tftp_get()
    * @param pbuf PBUF adjusted such that payload pointer points
    *             to the beginning of write data. In other words,
    *             TFTP headers are stripped off.
@@ -85,8 +85,8 @@ struct tftp_context {
    */
   int (*write)(void* handle, struct pbuf* p);
   /**
-   * Error response
-   * @param handle File handle set by tftp_get/tftp_put
+   * Error response (client mode only)
+   * @param handle File handle set by tftp_get()/tftp_put()
    * @param err error code from server
    * @param msg error message from server
    * @param size size of msg
