@@ -477,7 +477,7 @@ tftp_init_server(const struct tftp_context *ctx)
  * @param ctx TFTP callback struct
  */
 err_t
-tftp_init_client(u8_t mode, const struct tftp_context *ctx)
+tftp_init_client(const struct tftp_context *ctx)
 {
   return tftp_init_common(LWIP_TFTP_MODE_CLIENT, ctx);
 }
