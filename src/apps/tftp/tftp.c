@@ -132,7 +132,8 @@ init_packet(int opcode, int extra, int size)
 }
 
 static void
-send_request(const ip_addr_t *addr, u16_t port, int opcode, const char* fname, const char* mode) {
+send_request(const ip_addr_t *addr, u16_t port, int opcode, const char* fname, const char* mode)
+{
   size_t fname_length = strlen(fname)+1;
   size_t mode_length = strlen(mode)+1;
   struct pbuf* p = init_packet(opcode, 0, -2 + fname_length + mode_length);
