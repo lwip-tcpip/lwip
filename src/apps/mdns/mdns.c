@@ -917,13 +917,14 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
   /* Add answers to the questions above into the authority section for tiebreaking */
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-    pkt.host_replies = REPLY_HOST_A;
+    outmsg.host_replies = REPLY_HOST_A | REPLY_HOST_PTR_V4;
   }
 #endif
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
-      pkt.host_replies |= REPLY_HOST_AAAA;
+      outmsg.host_replies |= REPLY_HOST_AAAA | REPLY_HOST_PTR_V6;
+      outmsg.host_reverse_v6_replies |= (1 << i);
     }
   }
 #endif
@@ -931,7 +932,8 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service *serv = mdns->services[i];
     if (serv) {
-      pkt.serv_replies[i] = REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
+      outmsg.serv_replies[i] = REPLY_SERVICE_SRV | REPLY_SERVICE_TXT
+                            | REPLY_SERVICE_TYPE_PTR | REPLY_SERVICE_NAME_PTR;
     }
   }
 
