@@ -966,6 +966,7 @@ void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
   u32_t wnd_inflation;
+  tcpwnd_size_t rcv_wnd;
 
   LWIP_ASSERT_CORE_LOCKED();
 
@@ -975,10 +976,8 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
               pcb->state != LISTEN);
 
-  pcb->rcv_wnd = (tcpwnd_size_t)(pcb->rcv_wnd + len);
-  if (pcb->rcv_wnd > TCP_WND_MAX(pcb)) {
-    pcb->rcv_wnd = TCP_WND_MAX(pcb);
-  } else if (pcb->rcv_wnd == 0) {
+  rcv_wnd = pcb->rcv_wnd + len;
+  if (rcv_wnd < pcb->rcv_wnd || (len != 0 && rcv_wnd == pcb->rcv_wnd)) {
     /* rcv_wnd overflowed */
     if (TCP_STATE_IS_CLOSING(pcb->state)) {
       /* In passive close, we allow this, since the FIN bit is added to rcv_wnd
@@ -988,6 +987,12 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
     } else {
       LWIP_ASSERT("tcp_recved: len wrapped rcv_wnd\n", 0);
     }
+  } else if (rcv_wnd <= TCP_WND_MAX(pcb)) {
+    pcb->rcv_wnd = rcv_wnd;
+  } else {
+    LWIP_ASSERT("tcp_recved: len overflowed TCP_WND_MAX",
+		rcv_wnd <= TCP_WND_MAX(pcb));
+    pcb->rcv_wnd = TCP_WND_MAX(pcb);
   }
 
   wnd_inflation = tcp_update_rcv_ann_wnd(pcb);
