@@ -34,6 +34,7 @@
 
 #include "lwip/pbuf.h"
 #include "lwip/apps/mdns.h"
+#include "lwip/apps/mdns_domain.h"
 #include "lwip/apps/mdns_priv.h"
 
 START_TEST(readname_basic)

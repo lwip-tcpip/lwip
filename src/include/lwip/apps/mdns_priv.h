@@ -37,6 +37,7 @@
 #ifndef LWIP_HDR_MDNS_PRIV_H
 #define LWIP_HDR_MDNS_PRIV_H
 
+#include "lwip/apps/mdns.h"
 #include "lwip/apps/mdns_opts.h"
 #include "lwip/pbuf.h"
 
@@ -46,10 +47,14 @@ extern "C" {
 
 #if LWIP_MDNS_RESPONDER
 
-/* Domain struct and methods - visible for unit tests */
-
 #define MDNS_DOMAIN_MAXLEN 256
 #define MDNS_READNAME_ERROR 0xFFFF
+#define NUM_DOMAIN_OFFSETS 10
+
+#define SRV_PRIORITY 0
+#define SRV_WEIGHT   0
+
+/* Domain structs - also visible for unit tests */
 
 struct mdns_domain {
   /* Encoded domain name */
@@ -60,10 +65,88 @@ struct mdns_domain {
   u8_t skip_compression;
 };
 
-err_t mdns_domain_add_label(struct mdns_domain *domain, const char *label, u8_t len);
-u16_t mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain);
-int mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b);
-u16_t mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain);
+/** Description of a service */
+struct mdns_service {
+  /** TXT record to answer with */
+  struct mdns_domain txtdata;
+  /** Name of service, like 'myweb' */
+  char name[MDNS_LABEL_MAXLEN + 1];
+  /** Type of service, like '_http' */
+  char service[MDNS_LABEL_MAXLEN + 1];
+  /** Callback function and userdata
+   * to update txtdata buffer */
+  service_get_txt_fn_t txt_fn;
+  void *txt_userdata;
+  /** TTL in seconds of SRV/TXT replies */
+  u32_t dns_ttl;
+  /** Protocol, TCP or UDP */
+  u16_t proto;
+  /** Port of the service */
+  u16_t port;
+};
+
+/** Description of a host/netif */
+struct mdns_host {
+  /** Hostname */
+  char name[MDNS_LABEL_MAXLEN + 1];
+  /** Pointer to services */
+  struct mdns_service *services[MDNS_MAX_SERVICES];
+  /** TTL in seconds of A/AAAA/PTR replies */
+  u32_t dns_ttl;
+  /** Number of probes sent for the current name */
+  u8_t probes_sent;
+  /** State in probing sequence */
+  u8_t probing_state;
+};
+
+/** mDNS output packet */
+struct mdns_outpacket {
+  /** Packet data */
+  struct pbuf *pbuf;
+  /** Current write offset in packet */
+  u16_t write_offset;
+  /** Number of questions written */
+  u16_t questions;
+  /** Number of normal answers written */
+  u16_t answers;
+  /** Number of authoritative answers written */
+  u16_t authoritative;
+  /** Number of additional answers written */
+  u16_t additional;
+  /** Offsets for written domain names in packet.
+   *  Used for compression */
+  u16_t domain_offsets[NUM_DOMAIN_OFFSETS];
+};
+
+/** mDNS output message */
+struct mdns_outmsg {
+  /** Netif to send the packet on */
+  struct netif *netif;
+  /** Identifier. Used in legacy queries */
+  u16_t tx_id;
+  /** dns flags */
+  u8_t flags;
+  /** Destination IP/port if sent unicast */
+  ip_addr_t dest_addr;
+  u16_t dest_port;
+  /** If all answers in packet should set cache_flush bit */
+  u8_t cache_flush;
+  /** If reply should be sent unicast */
+  u8_t unicast_reply;
+  /** If legacy query. (tx_id needed, and write
+   *  question again in reply before answer) */
+  u8_t legacy_query;
+  /* Question bitmask for host information */
+  u8_t host_questions;
+  /* Questions bitmask per service */
+  u8_t serv_questions[MDNS_MAX_SERVICES];
+  /* Reply bitmask for host information */
+  u8_t host_replies;
+  /* Bitmask for which reverse IPv6 hosts to answer */
+  u8_t host_reverse_v6_replies;
+  /* Reply bitmask per service */
+  u8_t serv_replies[MDNS_MAX_SERVICES];
+};
 
 #endif /* LWIP_MDNS_RESPONDER */
 

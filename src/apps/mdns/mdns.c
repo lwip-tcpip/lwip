@@ -57,6 +57,8 @@
 
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/mdns_priv.h"
+#include "lwip/apps/mdns_domain.h"
+#include "lwip/apps/mdns_out.h"
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
@@ -93,12 +95,6 @@ static const ip_addr_t v6group = DNS_MQUERY_IPV6_GROUP_INIT;
 
 #define MDNS_TTL  255
 
-/* Stored offsets to beginning of domain names
- * Used for compression.
- */
-#define NUM_DOMAIN_OFFSETS 10
-#define DOMAIN_JUMP_SIZE 2
-#define DOMAIN_JUMP 0xc000
 
 static u8_t mdns_netif_client_id;
 static struct udp_pcb *mdns_pcb;
@@ -108,36 +104,6 @@ NETIF_DECLARE_EXT_CALLBACK(netif_callback)
 static mdns_name_result_cb_t mdns_name_result_cb;
 
 #define NETIF_TO_HOST(netif) (struct mdns_host*)(netif_get_client_data(netif, mdns_netif_client_id))
-
-#define TOPDOMAIN_LOCAL "local"
-
-#define REVERSE_PTR_TOPDOMAIN "arpa"
-#define REVERSE_PTR_V4_DOMAIN "in-addr"
-#define REVERSE_PTR_V6_DOMAIN "ip6"
-
-#define SRV_PRIORITY 0
-#define SRV_WEIGHT   0
-
-/* Payload size allocated for each outgoing UDP packet */
-#define OUTPACKET_SIZE 500
-
-/* Lookup from hostname -> IPv4 */
-#define REPLY_HOST_A            0x01
-/* Lookup from IPv4/v6 -> hostname */
-#define REPLY_HOST_PTR_V4       0x02
-/* Lookup from hostname -> IPv6 */
-#define REPLY_HOST_AAAA         0x04
-/* Lookup from hostname -> IPv6 */
-#define REPLY_HOST_PTR_V6       0x08
-
-/* Lookup for service types */
-#define REPLY_SERVICE_TYPE_PTR  0x10
-/* Lookup for instances of service */
-#define REPLY_SERVICE_NAME_PTR  0x20
-/* Lookup for location of service instance */
-#define REPLY_SERVICE_SRV       0x40
-/* Lookup for text info on service instance */
-#define REPLY_SERVICE_TXT       0x80
 
 #define MDNS_PROBE_DELAY_MS       250
 #define MDNS_PROBE_COUNT          3
@@ -151,45 +117,6 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 #define MDNS_PROBING_NOT_STARTED  0
 #define MDNS_PROBING_ONGOING      1
 #define MDNS_PROBING_COMPLETE     2
-
-static const char *dnssd_protos[] = {
-  "_udp", /* DNSSD_PROTO_UDP */
-  "_tcp", /* DNSSD_PROTO_TCP */
-};
-
-/** Description of a service */
-struct mdns_service {
-  /** TXT record to answer with */
-  struct mdns_domain txtdata;
-  /** Name of service, like 'myweb' */
-  char name[MDNS_LABEL_MAXLEN + 1];
-  /** Type of service, like '_http' */
-  char service[MDNS_LABEL_MAXLEN + 1];
-  /** Callback function and userdata
-   * to update txtdata buffer */
-  service_get_txt_fn_t txt_fn;
-  void *txt_userdata;
-  /** TTL in seconds of SRV/TXT replies */
-  u32_t dns_ttl;
-  /** Protocol, TCP or UDP */
-  u16_t proto;
-  /** Port of the service */
-  u16_t port;
-};
-
-/** Description of a host/netif */
-struct mdns_host {
-  /** Hostname */
-  char name[MDNS_LABEL_MAXLEN + 1];
-  /** Pointer to services */
-  struct mdns_service *services[MDNS_MAX_SERVICES];
-  /** TTL in seconds of A/AAAA/PTR replies */
-  u32_t dns_ttl;
-  /** Number of probes sent for the current name */
-  u8_t probes_sent;
-  /** State in probing sequence */
-  u8_t probing_state;
-};
 
 /** Information about received packet */
 struct mdns_packet {
@@ -219,45 +146,6 @@ struct mdns_packet {
   u16_t answers_left;
 };
 
-/** Information about outgoing packet */
-struct mdns_outpacket {
-  /** Netif to send the packet on */
-  struct netif *netif;
-  /** Packet data */
-  struct pbuf *pbuf;
-  /** Current write offset in packet */
-  u16_t write_offset;
-  /** Identifier. Used in legacy queries */
-  u16_t tx_id;
-  /** Destination IP/port if sent unicast */
-  ip_addr_t dest_addr;
-  u16_t dest_port;
-  /** Number of questions written */
-  u16_t questions;
-  /** Number of normal answers written */
-  u16_t answers;
-  /** Number of authoritative answers written */
-  u16_t authoritative;
-  /** Number of additional answers written */
-  u16_t additional;
-  /** Offsets for written domain names in packet.
-   *  Used for compression */
-  u16_t domain_offsets[NUM_DOMAIN_OFFSETS];
-  /** If all answers in packet should set cache_flush bit */
-  u8_t cache_flush;
-  /** If reply should be sent unicast */
-  u8_t unicast_reply;
-  /** If legacy query. (tx_id needed, and write
-   *  question again in reply before answer) */
-  u8_t legacy_query;
-  /* Reply bitmask for host information */
-  u8_t host_replies;
-  /* Bitmask for which reverse IPv6 hosts to answer */
-  u8_t host_reverse_v6_replies;
-  /* Reply bitmask per service */
-  u8_t serv_replies[MDNS_MAX_SERVICES];
-};
-
 /** Domain, type and class.
  *  Shared between questions and answers */
 struct mdns_rr_info {
@@ -284,377 +172,17 @@ struct mdns_answer {
   u16_t rd_offset;
 };
 
-static err_t mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags);
 static void mdns_probe(void* arg);
 
-static err_t
-mdns_domain_add_label_base(struct mdns_domain *domain, u8_t len)
-{
-  if (len > MDNS_LABEL_MAXLEN) {
-    return ERR_VAL;
-  }
-  if (len > 0 && (1 + len + domain->length >= MDNS_DOMAIN_MAXLEN)) {
-    return ERR_VAL;
-  }
-  /* Allow only zero marker on last byte */
-  if (len == 0 && (1 + domain->length > MDNS_DOMAIN_MAXLEN)) {
-    return ERR_VAL;
-  }
-  domain->name[domain->length] = len;
-  domain->length++;
-  return ERR_OK;
+struct mdns_host*
+netif_mdns_data(struct netif *netif) {
+  return NETIF_TO_HOST(netif);
 }
 
-/**
- * Add a label part to a domain
- * @param domain The domain to add a label to
- * @param label The label to add, like &lt;hostname&gt;, 'local', 'com' or ''
- * @param len The length of the label
- * @return ERR_OK on success, an err_t otherwise if label too long
- */
-err_t
-mdns_domain_add_label(struct mdns_domain *domain, const char *label, u8_t len)
+struct udp_pcb*
+get_mdns_pcb(void)
 {
-  err_t err = mdns_domain_add_label_base(domain, len);
-  if (err != ERR_OK) {
-    return err;
-  }
-  if (len) {
-    MEMCPY(&domain->name[domain->length], label, len);
-    domain->length += len;
-  }
-  return ERR_OK;
-}
-
-/**
- * Add a label part to a domain (@see mdns_domain_add_label but copy directly from pbuf)
- */
-static err_t
-mdns_domain_add_label_pbuf(struct mdns_domain *domain, const struct pbuf *p, u16_t offset, u8_t len)
-{
-  err_t err = mdns_domain_add_label_base(domain, len);
-  if (err != ERR_OK) {
-    return err;
-  }
-  if (len) {
-    if (pbuf_copy_partial(p, &domain->name[domain->length], len, offset) != len) {
-      /* take back the ++ done before */
-      domain->length--;
-      return ERR_ARG;
-    }
-    domain->length += len;
-  }
-  return ERR_OK;
-}
-
-/**
- * Internal readname function with max 6 levels of recursion following jumps
- * while decompressing name
- */
-static u16_t
-mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, unsigned depth)
-{
-  u8_t c;
-
-  do {
-    if (depth > 5) {
-      /* Too many jumps */
-      return MDNS_READNAME_ERROR;
-    }
-
-    c = pbuf_get_at(p, offset);
-    offset++;
-
-    /* is this a compressed label? */
-    if ((c & 0xc0) == 0xc0) {
-      u16_t jumpaddr;
-      if (offset >= p->tot_len) {
-        /* Make sure both jump bytes fit in the packet */
-        return MDNS_READNAME_ERROR;
-      }
-      jumpaddr = (((c & 0x3f) << 8) | (pbuf_get_at(p, offset) & 0xff));
-      offset++;
-      if (jumpaddr >= SIZEOF_DNS_HDR && jumpaddr < p->tot_len) {
-        u16_t res;
-        /* Recursive call, maximum depth will be checked */
-        res = mdns_readname_loop(p, jumpaddr, domain, depth + 1);
-        /* Dont return offset since new bytes were not read (jumped to somewhere in packet) */
-        if (res == MDNS_READNAME_ERROR) {
-          return res;
-        }
-      } else {
-        return MDNS_READNAME_ERROR;
-      }
-      break;
-    }
-
-    /* normal label */
-    if (c <= MDNS_LABEL_MAXLEN) {
-      err_t res;
-
-      if (c + domain->length >= MDNS_DOMAIN_MAXLEN) {
-        return MDNS_READNAME_ERROR;
-      }
-      res = mdns_domain_add_label_pbuf(domain, p, offset, c);
-      if (res != ERR_OK) {
-        return MDNS_READNAME_ERROR;
-      }
-      offset += c;
-    } else {
-      /* bad length byte */
-      return MDNS_READNAME_ERROR;
-    }
-  } while (c != 0);
-
-  return offset;
-}
-
-/**
- * Read possibly compressed domain name from packet buffer
- * @param p The packet
- * @param offset start position of domain name in packet
- * @param domain The domain name destination
- * @return The new offset after the domain, or MDNS_READNAME_ERROR
- *         if reading failed
- */
-u16_t
-mdns_readname(struct pbuf *p, u16_t offset, struct mdns_domain *domain)
-{
-  memset(domain, 0, sizeof(struct mdns_domain));
-  return mdns_readname_loop(p, offset, domain, 0);
-}
-
-/**
- * Print domain name to debug output
- * @param domain The domain name
- */
-static void
-mdns_domain_debug_print(struct mdns_domain *domain)
-{
-  u8_t *src = domain->name;
-  u8_t i;
-
-  while (*src) {
-    u8_t label_len = *src;
-    src++;
-    for (i = 0; i < label_len; i++) {
-      LWIP_DEBUGF(MDNS_DEBUG, ("%c", src[i]));
-    }
-    src += label_len;
-    LWIP_DEBUGF(MDNS_DEBUG, ("."));
-  }
-}
-
-/**
- * Return 1 if contents of domains match (case-insensitive)
- * @param a Domain name to compare 1
- * @param b Domain name to compare 2
- * @return 1 if domains are equal ignoring case, 0 otherwise
- */
-int
-mdns_domain_eq(struct mdns_domain *a, struct mdns_domain *b)
-{
-  u8_t *ptra, *ptrb;
-  u8_t len;
-  int res;
-
-  if (a->length != b->length) {
-    return 0;
-  }
-
-  ptra = a->name;
-  ptrb = b->name;
-  while (*ptra && *ptrb && ptra < &a->name[a->length]) {
-    if (*ptra != *ptrb) {
-      return 0;
-    }
-    len = *ptra;
-    ptra++;
-    ptrb++;
-    res = lwip_strnicmp((char *) ptra, (char *) ptrb, len);
-    if (res != 0) {
-      return 0;
-    }
-    ptra += len;
-    ptrb += len;
-  }
-  if (*ptra != *ptrb && ptra < &a->name[a->length]) {
-    return 0;
-  }
-  return 1;
-}
-
-/**
- * Call user supplied function to setup TXT data
- * @param service The service to build TXT record for
- */
-static void
-mdns_prepare_txtdata(struct mdns_service *service)
-{
-  memset(&service->txtdata, 0, sizeof(struct mdns_domain));
-  if (service->txt_fn) {
-    service->txt_fn(service, service->txt_userdata);
-  }
-}
-
-#if LWIP_IPV4
-/**
- * Build domain for reverse lookup of IPv4 address
- * like 12.0.168.192.in-addr.arpa. for 192.168.0.12
- * @param domain Where to write the domain name
- * @param addr Pointer to an IPv4 address to encode
- * @return ERR_OK if domain was written, an err_t otherwise
- */
-static err_t
-mdns_build_reverse_v4_domain(struct mdns_domain *domain, const ip4_addr_t *addr)
-{
-  int i;
-  err_t res;
-  const u8_t *ptr;
-
-  LWIP_UNUSED_ARG(res);
-  if (!domain || !addr) {
-    return ERR_ARG;
-  }
-  memset(domain, 0, sizeof(struct mdns_domain));
-  ptr = (const u8_t *) addr;
-  for (i = sizeof(ip4_addr_t) - 1; i >= 0; i--) {
-    char buf[4];
-    u8_t val = ptr[i];
-
-    lwip_itoa(buf, sizeof(buf), val);
-    res = mdns_domain_add_label(domain, buf, (u8_t)strlen(buf));
-    LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
-  }
-  res = mdns_domain_add_label(domain, REVERSE_PTR_V4_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V4_DOMAIN) - 1));
-  LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, REVERSE_PTR_TOPDOMAIN, (u8_t)(sizeof(REVERSE_PTR_TOPDOMAIN) - 1));
-  LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, NULL, 0);
-  LWIP_ERROR("mdns_build_reverse_v4_domain: Failed to add label", (res == ERR_OK), return res);
-
-  return ERR_OK;
-}
-#endif
-
-#if LWIP_IPV6
-/**
- * Build domain for reverse lookup of IP address
- * like b.a.9.8.7.6.5.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa. for 2001:db8::567:89ab
- * @param domain Where to write the domain name
- * @param addr Pointer to an IPv6 address to encode
- * @return ERR_OK if domain was written, an err_t otherwise
- */
-static err_t
-mdns_build_reverse_v6_domain(struct mdns_domain *domain, const ip6_addr_t *addr)
-{
-  int i;
-  err_t res;
-  const u8_t *ptr;
-  LWIP_UNUSED_ARG(res);
-  if (!domain || !addr) {
-    return ERR_ARG;
-  }
-  memset(domain, 0, sizeof(struct mdns_domain));
-  ptr = (const u8_t *) addr;
-  for (i = sizeof(ip6_addr_p_t) - 1; i >= 0; i--) {
-    char buf;
-    u8_t byte = ptr[i];
-    int j;
-    for (j = 0; j < 2; j++) {
-      if ((byte & 0x0F) < 0xA) {
-        buf = '0' + (byte & 0x0F);
-      } else {
-        buf = 'a' + (byte & 0x0F) - 0xA;
-      }
-      res = mdns_domain_add_label(domain, &buf, sizeof(buf));
-      LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
-      byte >>= 4;
-    }
-  }
-  res = mdns_domain_add_label(domain, REVERSE_PTR_V6_DOMAIN, (u8_t)(sizeof(REVERSE_PTR_V6_DOMAIN) - 1));
-  LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, REVERSE_PTR_TOPDOMAIN, (u8_t)(sizeof(REVERSE_PTR_TOPDOMAIN) - 1));
-  LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, NULL, 0);
-  LWIP_ERROR("mdns_build_reverse_v6_domain: Failed to add label", (res == ERR_OK), return res);
-
-  return ERR_OK;
-}
-#endif
-
-/* Add .local. to domain */
-static err_t
-mdns_add_dotlocal(struct mdns_domain *domain)
-{
-  err_t res = mdns_domain_add_label(domain, TOPDOMAIN_LOCAL, (u8_t)(sizeof(TOPDOMAIN_LOCAL) - 1));
-  LWIP_UNUSED_ARG(res);
-  LWIP_ERROR("mdns_add_dotlocal: Failed to add label", (res == ERR_OK), return res);
-  return mdns_domain_add_label(domain, NULL, 0);
-}
-
-/**
- * Build the <hostname>.local. domain name
- * @param domain Where to write the domain name
- * @param mdns TMDNS netif descriptor.
- * @return ERR_OK if domain <hostname>.local. was written, an err_t otherwise
- */
-static err_t
-mdns_build_host_domain(struct mdns_domain *domain, struct mdns_host *mdns)
-{
-  err_t res;
-  LWIP_UNUSED_ARG(res);
-  memset(domain, 0, sizeof(struct mdns_domain));
-  LWIP_ERROR("mdns_build_host_domain: mdns != NULL", (mdns != NULL), return ERR_VAL);
-  res = mdns_domain_add_label(domain, mdns->name, (u8_t)strlen(mdns->name));
-  LWIP_ERROR("mdns_build_host_domain: Failed to add label", (res == ERR_OK), return res);
-  return mdns_add_dotlocal(domain);
-}
-
-/**
- * Build the lookup-all-services special DNS-SD domain name
- * @param domain Where to write the domain name
- * @return ERR_OK if domain _services._dns-sd._udp.local. was written, an err_t otherwise
- */
-static err_t
-mdns_build_dnssd_domain(struct mdns_domain *domain)
-{
-  err_t res;
-  LWIP_UNUSED_ARG(res);
-  memset(domain, 0, sizeof(struct mdns_domain));
-  res = mdns_domain_add_label(domain, "_services", (u8_t)(sizeof("_services") - 1));
-  LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, "_dns-sd", (u8_t)(sizeof("_dns-sd") - 1));
-  LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, dnssd_protos[DNSSD_PROTO_UDP], (u8_t)strlen(dnssd_protos[DNSSD_PROTO_UDP]));
-  LWIP_ERROR("mdns_build_dnssd_domain: Failed to add label", (res == ERR_OK), return res);
-  return mdns_add_dotlocal(domain);
-}
-
-/**
- * Build domain name for a service
- * @param domain Where to write the domain name
- * @param service The service struct, containing service name, type and protocol
- * @param include_name Whether to include the service name in the domain
- * @return ERR_OK if domain was written. If service name is included,
- *         <name>.<type>.<proto>.local. will be written, otherwise <type>.<proto>.local.
- *         An err_t is returned on error.
- */
-static err_t
-mdns_build_service_domain(struct mdns_domain *domain, struct mdns_service *service, int include_name)
-{
-  err_t res;
-  LWIP_UNUSED_ARG(res);
-  memset(domain, 0, sizeof(struct mdns_domain));
-  if (include_name) {
-    res = mdns_domain_add_label(domain, service->name, (u8_t)strlen(service->name));
-    LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
-  }
-  res = mdns_domain_add_label(domain, service->service, (u8_t)strlen(service->service));
-  LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
-  res = mdns_domain_add_label(domain, dnssd_protos[service->proto], (u8_t)strlen(dnssd_protos[service->proto]));
-  LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
-  return mdns_add_dotlocal(domain);
+  return mdns_pcb;
 }
 
 /**
@@ -770,271 +298,6 @@ check_service(struct mdns_service *service, struct mdns_rr_info *rr)
   }
 
   return replies;
-}
-
-/**
- * Return bytes needed to write before jump for best result of compressing supplied domain
- * against domain in outpacket starting at specified offset.
- * If a match is found, offset is updated to where to jump to
- * @param pbuf Pointer to pbuf with the partially constructed DNS packet
- * @param offset Start position of a domain written earlier. If this location is suitable
- *               for compression, the pointer is updated to where in the domain to jump to.
- * @param domain The domain to write
- * @return Number of bytes to write of the new domain before writing a jump to the offset.
- *         If compression can not be done against this previous domain name, the full new
- *         domain length is returned.
- */
-u16_t
-mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain)
-{
-  struct mdns_domain target;
-  u16_t target_end;
-  u8_t target_len;
-  u8_t writelen = 0;
-  u8_t *ptr;
-  if (pbuf == NULL) {
-    return domain->length;
-  }
-  target_end = mdns_readname(pbuf, *offset, &target);
-  if (target_end == MDNS_READNAME_ERROR) {
-    return domain->length;
-  }
-  target_len = (u8_t)(target_end - *offset);
-  ptr = domain->name;
-  while (writelen < domain->length) {
-    u8_t domainlen = (u8_t)(domain->length - writelen);
-    u8_t labellen;
-    if (domainlen <= target.length && domainlen > DOMAIN_JUMP_SIZE) {
-      /* Compare domains if target is long enough, and we have enough left of the domain */
-      u8_t targetpos = (u8_t)(target.length - domainlen);
-      if ((targetpos + DOMAIN_JUMP_SIZE) >= target_len) {
-        /* We are checking at or beyond a jump in the original, stop looking */
-        break;
-      }
-      if (target.length >= domainlen &&
-          memcmp(&domain->name[writelen], &target.name[targetpos], domainlen) == 0) {
-        *offset += targetpos;
-        return writelen;
-      }
-    }
-    /* Skip to next label in domain */
-    labellen = *ptr;
-    writelen += 1 + labellen;
-    ptr += 1 + labellen;
-  }
-  /* Nothing found */
-  return domain->length;
-}
-
-/**
- * Write domain to outpacket. Compression will be attempted,
- * unless domain->skip_compression is set.
- * @param outpkt The outpacket to write to
- * @param domain The domain name to write
- * @return ERR_OK on success, an err_t otherwise
- */
-static err_t
-mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain)
-{
-  int i;
-  err_t res;
-  u16_t writelen = domain->length;
-  u16_t jump_offset = 0;
-  u16_t jump;
-
-  if (!domain->skip_compression) {
-    for (i = 0; i < NUM_DOMAIN_OFFSETS; i++) {
-      u16_t offset = outpkt->domain_offsets[i];
-      if (offset) {
-        u16_t len = mdns_compress_domain(outpkt->pbuf, &offset, domain);
-        if (len < writelen) {
-          writelen = len;
-          jump_offset = offset;
-        }
-      }
-    }
-  }
-
-  if (writelen) {
-    /* Write uncompressed part of name */
-    res = pbuf_take_at(outpkt->pbuf, domain->name, writelen, outpkt->write_offset);
-    if (res != ERR_OK) {
-      return res;
-    }
-
-    /* Store offset of this new domain */
-    for (i = 0; i < NUM_DOMAIN_OFFSETS; i++) {
-      if (outpkt->domain_offsets[i] == 0) {
-        outpkt->domain_offsets[i] = outpkt->write_offset;
-        break;
-      }
-    }
-
-    outpkt->write_offset += writelen;
-  }
-  if (jump_offset) {
-    /* Write jump */
-    jump = lwip_htons(DOMAIN_JUMP | jump_offset);
-    res = pbuf_take_at(outpkt->pbuf, &jump, DOMAIN_JUMP_SIZE, outpkt->write_offset);
-    if (res != ERR_OK) {
-      return res;
-    }
-    outpkt->write_offset += DOMAIN_JUMP_SIZE;
-  }
-  return ERR_OK;
-}
-
-/**
- * Write a question to an outpacket
- * A question contains domain, type and class. Since an answer also starts with these fields this function is also
- * called from mdns_add_answer().
- * @param outpkt The outpacket to write to
- * @param domain The domain name the answer is for
- * @param type The DNS type of the answer (like 'AAAA', 'SRV')
- * @param klass The DNS type of the answer (like 'IN')
- * @param unicast If highest bit in class should be set, to instruct the responder to
- *                reply with a unicast packet
- * @return ERR_OK on success, an err_t otherwise
- */
-static err_t
-mdns_add_question(struct mdns_outpacket *outpkt, struct mdns_domain *domain, u16_t type, u16_t klass, u16_t unicast)
-{
-  u16_t question_len;
-  u16_t field16;
-  err_t res;
-
-  if (!outpkt->pbuf) {
-    /* If no pbuf is active, allocate one */
-    outpkt->pbuf = pbuf_alloc(PBUF_TRANSPORT, OUTPACKET_SIZE, PBUF_RAM);
-    if (!outpkt->pbuf) {
-      return ERR_MEM;
-    }
-    outpkt->write_offset = SIZEOF_DNS_HDR;
-  }
-
-  /* Worst case calculation. Domain string might be compressed */
-  question_len = domain->length + sizeof(type) + sizeof(klass);
-  if (outpkt->write_offset + question_len > outpkt->pbuf->tot_len) {
-    /* No space */
-    return ERR_MEM;
-  }
-
-  /* Write name */
-  res = mdns_write_domain(outpkt, domain);
-  if (res != ERR_OK) {
-    return res;
-  }
-
-  /* Write type */
-  field16 = lwip_htons(type);
-  res = pbuf_take_at(outpkt->pbuf, &field16, sizeof(field16), outpkt->write_offset);
-  if (res != ERR_OK) {
-    return res;
-  }
-  outpkt->write_offset += sizeof(field16);
-
-  /* Write class */
-  if (unicast) {
-    klass |= 0x8000;
-  }
-  field16 = lwip_htons(klass);
-  res = pbuf_take_at(outpkt->pbuf, &field16, sizeof(field16), outpkt->write_offset);
-  if (res != ERR_OK) {
-    return res;
-  }
-  outpkt->write_offset += sizeof(field16);
-
-  return ERR_OK;
-}
-
-/**
- * Write answer to reply packet.
- * buf or answer_domain can be null. The rd_length written will be buf_length +
- * size of (compressed) domain. Most uses will need either buf or answer_domain,
- * special case is SRV that starts with 3 u16 and then a domain name.
- * @param reply The outpacket to write to
- * @param domain The domain name the answer is for
- * @param type The DNS type of the answer (like 'AAAA', 'SRV')
- * @param klass The DNS type of the answer (like 'IN')
- * @param cache_flush If highest bit in class should be set, to instruct receiver that
- *                    this reply replaces any earlier answer for this domain/type/class
- * @param ttl Validity time in seconds to send out for IP address data in DNS replies
- * @param buf Pointer to buffer of answer data
- * @param buf_length Length of variable data
- * @param answer_domain A domain to write after any buffer data as answer
- * @return ERR_OK on success, an err_t otherwise
- */
-static err_t
-mdns_add_answer(struct mdns_outpacket *reply, struct mdns_domain *domain, u16_t type, u16_t klass, u16_t cache_flush,
-                u32_t ttl, const u8_t *buf, size_t buf_length, struct mdns_domain *answer_domain)
-{
-  u16_t answer_len;
-  u16_t field16;
-  u16_t rdlen_offset;
-  u16_t answer_offset;
-  u32_t field32;
-  err_t res;
-
-  if (!reply->pbuf) {
-    /* If no pbuf is active, allocate one */
-    reply->pbuf = pbuf_alloc(PBUF_TRANSPORT, OUTPACKET_SIZE, PBUF_RAM);
-    if (!reply->pbuf) {
-      return ERR_MEM;
-    }
-    reply->write_offset = SIZEOF_DNS_HDR;
-  }
-
-  /* Worst case calculation. Domain strings might be compressed */
-  answer_len = domain->length + sizeof(type) + sizeof(klass) + sizeof(ttl) + sizeof(field16)/*rd_length*/;
-  if (buf) {
-    answer_len += (u16_t)buf_length;
-  }
-  if (answer_domain) {
-    answer_len += answer_domain->length;
-  }
-  if (reply->write_offset + answer_len > reply->pbuf->tot_len) {
-    /* No space */
-    return ERR_MEM;
-  }
-
-  /* Answer starts with same data as question, then more fields */
-  mdns_add_question(reply, domain, type, klass, cache_flush);
-
-  /* Write TTL */
-  field32 = lwip_htonl(ttl);
-  res = pbuf_take_at(reply->pbuf, &field32, sizeof(field32), reply->write_offset);
-  if (res != ERR_OK) {
-    return res;
-  }
-  reply->write_offset += sizeof(field32);
-
-  /* Store offsets and skip forward to the data */
-  rdlen_offset = reply->write_offset;
-  reply->write_offset += sizeof(field16);
-  answer_offset = reply->write_offset;
-
-  if (buf) {
-    /* Write static data */
-    res = pbuf_take_at(reply->pbuf, buf, (u16_t)buf_length, reply->write_offset);
-    if (res != ERR_OK) {
-      return res;
-    }
-    reply->write_offset += (u16_t)buf_length;
-  }
-
-  if (answer_domain) {
-    /* Write name answer (compressed if possible) */
-    res = mdns_write_domain(reply, answer_domain);
-    if (res != ERR_OK) {
-      return res;
-    }
-  }
-
-  /* Write rd_length after when we know the answer size */
-  field16 = lwip_htons(reply->write_offset - answer_offset);
-  res = pbuf_take_at(reply->pbuf, &field16, sizeof(field16), rdlen_offset);
-
-  return res;
 }
 
 /**
@@ -1165,116 +428,13 @@ mdns_read_answer(struct mdns_packet *pkt, struct mdns_answer *answer)
   return ERR_VAL;
 }
 
-#if LWIP_IPV4
-/** Write an IPv4 address (A) RR to outpacket */
-static err_t
-mdns_add_a_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
-{
-  struct mdns_domain host;
-  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with A record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, (const u8_t *) netif_ip4_addr(netif), sizeof(ip4_addr_t), NULL);
-}
-
-/** Write a 4.3.2.1.in-addr.arpa -> hostname.local PTR RR to outpacket */
-static err_t
-mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif)
-{
-  struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
-  mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(netif));
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v4 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, NULL, 0, &host);
-}
-#endif
-
-#if LWIP_IPV6
-/** Write an IPv6 address (AAAA) RR to outpacket */
-static err_t
-mdns_add_aaaa_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
-{
-  struct mdns_domain host;
-  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
-  return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, (const u8_t *) netif_ip6_addr(netif, addrindex), sizeof(ip6_addr_p_t), NULL);
-}
-
-/** Write a x.y.z.ip6.arpa -> hostname.local PTR RR to outpacket */
-static err_t
-mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct netif *netif, int addrindex)
-{
-  struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, NETIF_TO_HOST(netif));
-  mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(netif, addrindex));
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v6 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, cache_flush, (NETIF_TO_HOST(netif))->dns_ttl, NULL, 0, &host);
-}
-#endif
-
-/** Write an all-services -> servicetype PTR RR to outpacket */
-static err_t
-mdns_add_servicetype_ptr_answer(struct mdns_outpacket *reply, struct mdns_service *service)
-{
-  struct mdns_domain service_type, service_dnssd;
-  mdns_build_service_domain(&service_type, service, 0);
-  mdns_build_dnssd_domain(&service_dnssd);
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with service type PTR record\n"));
-  return mdns_add_answer(reply, &service_dnssd, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0, service->dns_ttl, NULL, 0, &service_type);
-}
-
-/** Write a servicetype -> servicename PTR RR to outpacket */
-static err_t
-mdns_add_servicename_ptr_answer(struct mdns_outpacket *reply, struct mdns_service *service)
-{
-  struct mdns_domain service_type, service_instance;
-  mdns_build_service_domain(&service_type, service, 0);
-  mdns_build_service_domain(&service_instance, service, 1);
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with service name PTR record\n"));
-  return mdns_add_answer(reply, &service_type, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0, service->dns_ttl, NULL, 0, &service_instance);
-}
-
-/** Write a SRV RR to outpacket */
-static err_t
-mdns_add_srv_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct mdns_host *mdns, struct mdns_service *service)
-{
-  struct mdns_domain service_instance, srvhost;
-  u16_t srvdata[3];
-  mdns_build_service_domain(&service_instance, service, 1);
-  mdns_build_host_domain(&srvhost, mdns);
-  if (reply->legacy_query) {
-    /* RFC 6762 section 18.14:
-     * In legacy unicast responses generated to answer legacy queries,
-     * name compression MUST NOT be performed on SRV records.
-     */
-    srvhost.skip_compression = 1;
-  }
-  srvdata[0] = lwip_htons(SRV_PRIORITY);
-  srvdata[1] = lwip_htons(SRV_WEIGHT);
-  srvdata[2] = lwip_htons(service->port);
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with SRV record\n"));
-  return mdns_add_answer(reply, &service_instance, DNS_RRTYPE_SRV, DNS_RRCLASS_IN, cache_flush, service->dns_ttl,
-                         (const u8_t *) &srvdata, sizeof(srvdata), &srvhost);
-}
-
-/** Write a TXT RR to outpacket */
-static err_t
-mdns_add_txt_answer(struct mdns_outpacket *reply, u16_t cache_flush, struct mdns_service *service)
-{
-  struct mdns_domain service_instance;
-  mdns_build_service_domain(&service_instance, service, 1);
-  mdns_prepare_txtdata(service);
-  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with TXT record\n"));
-  return mdns_add_answer(reply, &service_instance, DNS_RRTYPE_TXT, DNS_RRCLASS_IN, cache_flush, service->dns_ttl,
-                         (u8_t *) &service->txtdata.name, service->txtdata.length, NULL);
-}
-
 /**
  * Setup outpacket as a reply to the incoming packet
  */
 static void
-mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
+mdns_init_outmsg_with_in_packet(struct mdns_outmsg *out, struct mdns_packet *in)
 {
-  memset(out, 0, sizeof(struct mdns_outpacket));
+  memset(out, 0, sizeof(struct mdns_outmsg));
   out->cache_flush = 1;
   out->netif = in->netif;
 
@@ -1299,218 +459,6 @@ mdns_init_outpacket(struct mdns_outpacket *out, struct mdns_packet *in)
 }
 
 /**
- * Send chosen answers as a reply
- *
- * Add all selected answers (first write will allocate pbuf)
- * Add additional answers based on the selected answers
- * Send the packet
- */
-static err_t
-mdns_send_outpacket(struct mdns_outpacket *outpkt, u8_t flags)
-{
-  struct mdns_service *service;
-  err_t res = ERR_ARG;
-  int i;
-  struct mdns_host *mdns = NETIF_TO_HOST(outpkt->netif);
-  u16_t answers = 0;
-
-  /* Write answers to host questions */
-#if LWIP_IPV4
-  if (outpkt->host_replies & REPLY_HOST_A) {
-    res = mdns_add_a_answer(outpkt, outpkt->cache_flush, outpkt->netif);
-    if (res != ERR_OK) {
-      goto cleanup;
-    }
-    answers++;
-  }
-  if (outpkt->host_replies & REPLY_HOST_PTR_V4) {
-    res = mdns_add_hostv4_ptr_answer(outpkt, outpkt->cache_flush, outpkt->netif);
-    if (res != ERR_OK) {
-      goto cleanup;
-    }
-    answers++;
-  }
-#endif
-#if LWIP_IPV6
-  if (outpkt->host_replies & REPLY_HOST_AAAA) {
-    int addrindex;
-    for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
-      if (ip6_addr_isvalid(netif_ip6_addr_state(outpkt->netif, addrindex))) {
-        res = mdns_add_aaaa_answer(outpkt, outpkt->cache_flush, outpkt->netif, addrindex);
-        if (res != ERR_OK) {
-          goto cleanup;
-        }
-        answers++;
-      }
-    }
-  }
-  if (outpkt->host_replies & REPLY_HOST_PTR_V6) {
-    u8_t rev_addrs = outpkt->host_reverse_v6_replies;
-    int addrindex = 0;
-    while (rev_addrs) {
-      if (rev_addrs & 1) {
-        res = mdns_add_hostv6_ptr_answer(outpkt, outpkt->cache_flush, outpkt->netif, addrindex);
-        if (res != ERR_OK) {
-          goto cleanup;
-        }
-        answers++;
-      }
-      addrindex++;
-      rev_addrs >>= 1;
-    }
-  }
-#endif
-
-  /* Write answers to service questions */
-  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
-    service = mdns->services[i];
-    if (!service) {
-      continue;
-    }
-
-    if (outpkt->serv_replies[i] & REPLY_SERVICE_TYPE_PTR) {
-      res = mdns_add_servicetype_ptr_answer(outpkt, service);
-      if (res != ERR_OK) {
-        goto cleanup;
-      }
-      answers++;
-    }
-
-    if (outpkt->serv_replies[i] & REPLY_SERVICE_NAME_PTR) {
-      res = mdns_add_servicename_ptr_answer(outpkt, service);
-      if (res != ERR_OK) {
-        goto cleanup;
-      }
-      answers++;
-    }
-
-    if (outpkt->serv_replies[i] & REPLY_SERVICE_SRV) {
-      res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, mdns, service);
-      if (res != ERR_OK) {
-        goto cleanup;
-      }
-      answers++;
-    }
-
-    if (outpkt->serv_replies[i] & REPLY_SERVICE_TXT) {
-      res = mdns_add_txt_answer(outpkt, outpkt->cache_flush, service);
-      if (res != ERR_OK) {
-        goto cleanup;
-      }
-      answers++;
-    }
-  }
-
-  /* if this is a response, the data above is anwers, else this is a probe and the answers above goes into auth section */
-  if (flags & DNS_FLAG1_RESPONSE) {
-    outpkt->answers += answers;
-  } else {
-    outpkt->authoritative += answers;
-  }
-
-  /* All answers written, add additional RRs */
-  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
-    service = mdns->services[i];
-    if (!service) {
-      continue;
-    }
-
-    if (outpkt->serv_replies[i] & REPLY_SERVICE_NAME_PTR) {
-      /* Our service instance requested, include SRV & TXT
-       * if they are already not requested. */
-      if (!(outpkt->serv_replies[i] & REPLY_SERVICE_SRV)) {
-        res = mdns_add_srv_answer(outpkt, outpkt->cache_flush, mdns, service);
-        if (res != ERR_OK) {
-          goto cleanup;
-        }
-        outpkt->additional++;
-      }
-
-      if (!(outpkt->serv_replies[i] & REPLY_SERVICE_TXT)) {
-        res = mdns_add_txt_answer(outpkt, outpkt->cache_flush, service);
-        if (res != ERR_OK) {
-          goto cleanup;
-        }
-        outpkt->additional++;
-      }
-    }
-
-    /* If service instance, SRV, record or an IP address is requested,
-     * supply all addresses for the host
-     */
-    if ((outpkt->serv_replies[i] & (REPLY_SERVICE_NAME_PTR | REPLY_SERVICE_SRV)) ||
-        (outpkt->host_replies & (REPLY_HOST_A | REPLY_HOST_AAAA))) {
-#if LWIP_IPV6
-      if (!(outpkt->host_replies & REPLY_HOST_AAAA)) {
-        int addrindex;
-        for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
-          if (ip6_addr_isvalid(netif_ip6_addr_state(outpkt->netif, addrindex))) {
-            res = mdns_add_aaaa_answer(outpkt, outpkt->cache_flush, outpkt->netif, addrindex);
-            if (res != ERR_OK) {
-              goto cleanup;
-            }
-            outpkt->additional++;
-          }
-        }
-      }
-#endif
-#if LWIP_IPV4
-      if (!(outpkt->host_replies & REPLY_HOST_A) &&
-          !ip4_addr_isany_val(*netif_ip4_addr(outpkt->netif))) {
-        res = mdns_add_a_answer(outpkt, outpkt->cache_flush, outpkt->netif);
-        if (res != ERR_OK) {
-          goto cleanup;
-        }
-        outpkt->additional++;
-      }
-#endif
-    }
-  }
-
-  if (outpkt->pbuf) {
-    const ip_addr_t *mcast_destaddr;
-    struct dns_hdr hdr;
-
-    /* Write header */
-    memset(&hdr, 0, sizeof(hdr));
-    hdr.flags1 = flags;
-    hdr.numquestions = lwip_htons(outpkt->questions);
-    hdr.numanswers = lwip_htons(outpkt->answers);
-    hdr.numauthrr = lwip_htons(outpkt->authoritative);
-    hdr.numextrarr = lwip_htons(outpkt->additional);
-    hdr.id = lwip_htons(outpkt->tx_id);
-    pbuf_take(outpkt->pbuf, &hdr, sizeof(hdr));
-
-    /* Shrink packet */
-    pbuf_realloc(outpkt->pbuf, outpkt->write_offset);
-
-    if (IP_IS_V6_VAL(outpkt->dest_addr)) {
-#if LWIP_IPV6
-      mcast_destaddr = &v6group;
-#endif
-    } else {
-#if LWIP_IPV4
-      mcast_destaddr = &v4group;
-#endif
-    }
-    /* Send created packet */
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d, unicast=%d\n", outpkt->write_offset, outpkt->unicast_reply));
-    if (outpkt->unicast_reply) {
-      res = udp_sendto_if(mdns_pcb, outpkt->pbuf, &outpkt->dest_addr, outpkt->dest_port, outpkt->netif);
-    } else {
-      res = udp_sendto_if(mdns_pcb, outpkt->pbuf, mcast_destaddr, LWIP_IANA_PORT_MDNS, outpkt->netif);
-    }
-  }
-
-cleanup:
-  if (outpkt->pbuf) {
-    pbuf_free(outpkt->pbuf);
-    outpkt->pbuf = NULL;
-  }
-  return res;
-}
-
-/**
  * Send unsolicited answer containing all our known data
  * @param netif The network interface to send on
  * @param destination The target address to send to (usually multicast address)
@@ -1518,7 +466,7 @@ cleanup:
 static void
 mdns_announce(struct netif *netif, const ip_addr_t *destination)
 {
-  struct mdns_outpacket announce;
+  struct mdns_outmsg announce;
   int i;
   struct mdns_host *mdns = NETIF_TO_HOST(netif);
 
@@ -1549,7 +497,8 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 
   announce.dest_port = LWIP_IANA_PORT_MDNS;
   SMEMCPY(&announce.dest_addr, destination, sizeof(announce.dest_addr));
-  mdns_send_outpacket(&announce, DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE);
+  announce.flags = DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
+  mdns_send_outpacket(&announce);
 }
 
 /**
@@ -1562,8 +511,7 @@ static void
 mdns_handle_question(struct mdns_packet *pkt)
 {
   struct mdns_service *service;
-  struct mdns_outpacket reply;
-  int replies = 0;
+  struct mdns_outmsg reply;
   int i;
   err_t res;
   struct mdns_host *mdns = NETIF_TO_HOST(pkt->netif);
@@ -1574,7 +522,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     return;
   }
 
-  mdns_init_outpacket(&reply, pkt);
+  mdns_init_outmsg_with_in_packet(&reply, pkt);
 
   while (pkt->questions_left) {
     struct mdns_question q;
@@ -1595,7 +543,6 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
 
     reply.host_replies |= check_host(pkt->netif, &q.info, &reply.host_reverse_v6_replies);
-    replies |= reply.host_replies;
 
     for (i = 0; i < MDNS_MAX_SERVICES; i++) {
       service = mdns->services[i];
@@ -1603,16 +550,6 @@ mdns_handle_question(struct mdns_packet *pkt)
         continue;
       }
       reply.serv_replies[i] |= check_service(service, &q.info);
-      replies |= reply.serv_replies[i];
-    }
-
-    if (replies && reply.legacy_query) {
-      /* Add question to reply packet (legacy packet only has 1 question) */
-      res = mdns_add_question(&reply, &q.info.domain, q.info.type, q.info.klass, 0);
-      reply.questions = 1;
-      if (res != ERR_OK) {
-        goto cleanup;
-      }
     }
   }
 
@@ -1625,7 +562,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     res = mdns_read_answer(pkt, &ans);
     if (res != ERR_OK) {
       LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping query packet\n"));
-      goto cleanup;
+      return;
     }
 
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Known answer for domain "));
@@ -1765,14 +702,23 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
   }
 
-  mdns_send_outpacket(&reply, DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE);
+  reply.flags =  DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
 
-cleanup:
-  if (reply.pbuf) {
-    /* This should only happen if we fail to alloc/write question for legacy query */
-    pbuf_free(reply.pbuf);
-    reply.pbuf = NULL;
+  if(!reply.unicast_reply) {
+    reply.dest_port = LWIP_IANA_PORT_MDNS;
+
+    if (IP_IS_V6_VAL(reply.dest_addr)) {
+#if LWIP_IPV6
+      SMEMCPY(&reply.dest_addr, &v6group, sizeof(reply.dest_addr));
+#endif
+    } else {
+#if LWIP_IPV4
+      SMEMCPY(&reply.dest_addr, &v4group, sizeof(reply.dest_addr));
+#endif
+    }
   }
+
+  mdns_send_outpacket(&reply);
 }
 
 /**
@@ -1948,34 +894,24 @@ static err_t
 mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
 {
   struct mdns_host* mdns;
-  struct mdns_outpacket pkt;
-  struct mdns_domain domain;
+  struct mdns_outmsg outmsg;
   u8_t i;
   err_t res;
 
   mdns = NETIF_TO_HOST(netif);
 
-  memset(&pkt, 0, sizeof(pkt));
-  pkt.netif = netif;
+  memset(&outmsg, 0, sizeof(outmsg));
+  outmsg.netif = netif;
 
   /* Add unicast questions with rtype ANY for all our desired records */
-  mdns_build_host_domain(&domain, mdns);
-  res = mdns_add_question(&pkt, &domain, DNS_RRTYPE_ANY, DNS_RRCLASS_IN, 1);
-  if (res != ERR_OK) {
-    goto cleanup;
-  }
-  pkt.questions++;
+  outmsg.host_questions = QUESTION_PROBE_HOST_ANY;
+
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service* service = mdns->services[i];
     if (!service) {
       continue;
     }
-    mdns_build_service_domain(&domain, service, 1);
-    res = mdns_add_question(&pkt, &domain, DNS_RRTYPE_ANY, DNS_RRCLASS_IN, 1);
-    if (res != ERR_OK) {
-      goto cleanup;
-    }
-    pkt.questions++;
+    outmsg.serv_questions[i] = QUESTION_PROBE_SERVICE_NAME_ANY;
   }
 
   /* Add answers to the questions above into the authority section for tiebreaking */
@@ -1999,16 +935,11 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
     }
   }
 
-  pkt.tx_id = 0;
-  pkt.dest_port = LWIP_IANA_PORT_MDNS;
-  SMEMCPY(&pkt.dest_addr, destination, sizeof(pkt.dest_addr));
-  res = mdns_send_outpacket(&pkt, 0);
+  outmsg.tx_id = 0;
+  outmsg.dest_port = LWIP_IANA_PORT_MDNS;
+  SMEMCPY(&outmsg.dest_addr, destination, sizeof(outmsg.dest_addr));
+  res = mdns_send_outpacket(&outmsg);
 
-cleanup:
-  if (pkt.pbuf) {
-    pbuf_free(pkt.pbuf);
-    pkt.pbuf = NULL;
-  }
   return res;
 }
 
@@ -2032,11 +963,11 @@ mdns_probe(void* arg)
 #if LWIP_IPV4
     /*if ipv4 wait with probing until address is set*/
     if (!ip4_addr_isany_val(*netif_ip4_addr(netif)) &&
-        mdns_send_probe(netif, IP4_ADDR_ANY) == ERR_OK)
+        mdns_send_probe(netif, &v4group) == ERR_OK)
 #endif
     {
 #if LWIP_IPV6
-      if (mdns_send_probe(netif, IP6_ADDR_ANY) == ERR_OK)
+      if (mdns_send_probe(netif, &v6group) == ERR_OK)
 #endif
       {
         mdns->probes_sent++;
@@ -2328,11 +1259,11 @@ mdns_resp_announce(struct netif *netif)
   if (mdns->probing_state == MDNS_PROBING_COMPLETE) {
     /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
-    mdns_announce(netif, IP6_ADDR_ANY);
+    mdns_announce(netif, &v6group);
 #endif
 #if LWIP_IPV4
     if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-      mdns_announce(netif, IP4_ADDR_ANY);
+      mdns_announce(netif, &v4group);
     }
 #endif
   } /* else: ip address changed while probing was ongoing? @todo reset counter to restart? */
