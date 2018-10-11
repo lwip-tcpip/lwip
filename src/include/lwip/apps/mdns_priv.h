@@ -54,6 +54,15 @@ extern "C" {
 #define SRV_PRIORITY 0
 #define SRV_WEIGHT   0
 
+/* mDNS TTL: (RFC6762 section 10)
+ *  - 120 seconds if the hostname appears somewhere in the RR
+ *  - 75 minutes if not (4500 seconds)
+ *  - 10 seconds if responding to a legacy query
+ */
+#define MDNS_TTL_10    10
+#define MDNS_TTL_120   120
+#define MDNS_TTL_4500  4500
+
 /* Domain structs - also visible for unit tests */
 
 struct mdns_domain {
@@ -77,8 +86,6 @@ struct mdns_service {
    * to update txtdata buffer */
   service_get_txt_fn_t txt_fn;
   void *txt_userdata;
-  /** TTL in seconds of SRV/TXT replies */
-  u32_t dns_ttl;
   /** Protocol, TCP or UDP */
   u16_t proto;
   /** Port of the service */
@@ -91,8 +98,6 @@ struct mdns_host {
   char name[MDNS_LABEL_MAXLEN + 1];
   /** Pointer to services */
   struct mdns_service *services[MDNS_MAX_SERVICES];
-  /** TTL in seconds of A/AAAA/PTR replies */
-  u32_t dns_ttl;
   /** Number of probes sent for the current name */
   u8_t probes_sent;
   /** State in probing sequence */

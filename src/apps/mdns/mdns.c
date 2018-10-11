@@ -93,7 +93,7 @@ static const ip_addr_t v4group = DNS_MQUERY_IPV4_GROUP_INIT;
 static const ip_addr_t v6group = DNS_MQUERY_IPV6_GROUP_INIT;
 #endif
 
-#define MDNS_TTL  255
+#define MDNS_IP_TTL  255
 
 
 static u8_t mdns_netif_client_id;
@@ -558,6 +558,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     struct mdns_answer ans;
     u8_t rev_v6;
     int match;
+    u32_t rr_ttl = MDNS_TTL_120;
 
     res = mdns_read_answer(pkt, &ans);
     if (res != ERR_OK) {
@@ -577,7 +578,7 @@ mdns_handle_question(struct mdns_packet *pkt)
 
     rev_v6 = 0;
     match = reply.host_replies & check_host(pkt->netif, &ans.info, &rev_v6);
-    if (match && (ans.ttl > (mdns->dns_ttl / 2))) {
+    if (match && (ans.ttl > (rr_ttl / 2))) {
       /* The RR in the known answer matches an RR we are planning to send,
        * and the TTL is less than half gone.
        * If the payload matches we should not send that answer.
@@ -631,7 +632,10 @@ mdns_handle_question(struct mdns_packet *pkt)
         continue;
       }
       match = reply.serv_replies[i] & check_service(service, &ans.info);
-      if (match && (ans.ttl > (service->dns_ttl / 2))) {
+      if (match & REPLY_SERVICE_TYPE_PTR) {
+        rr_ttl = MDNS_TTL_4500;
+      }
+      if (match && (ans.ttl > (rr_ttl / 2))) {
         /* The RR in the known answer matches an RR we are planning to send,
          * and the TTL is less than half gone.
          * If the payload matches we should not send that answer.
@@ -986,11 +990,10 @@ mdns_probe(void* arg)
  * @param hostname Name to use. Queries for &lt;hostname&gt;.local will be answered
  *                 with the IP addresses of the netif. The hostname will be copied, the
  *                 given pointer can be on the stack.
- * @param dns_ttl Validity time in seconds to send out for IP address data in DNS replies
  * @return ERR_OK if netif was added, an err_t otherwise
  */
 err_t
-mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
+mdns_resp_add_netif(struct netif *netif, const char *hostname)
 {
   err_t res;
   struct mdns_host *mdns;
@@ -1006,7 +1009,6 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname, u32_t dns_ttl)
   netif_set_client_data(netif, mdns_netif_client_id, mdns);
 
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
-  mdns->dns_ttl = dns_ttl;
   mdns->probes_sent = 0;
   mdns->probing_state = MDNS_PROBING_NOT_STARTED;
 
@@ -1115,14 +1117,13 @@ mdns_resp_rename_netif(struct netif *netif, const char *hostname)
  * @param proto The service protocol, DNSSD_PROTO_TCP for TCP ("_tcp") and DNSSD_PROTO_UDP
  *              for others ("_udp")
  * @param port The port the service listens to
- * @param dns_ttl Validity time in seconds to send out for service data in DNS replies
  * @param txt_fn Callback to get TXT data. Will be called each time a TXT reply is created to
  *               allow dynamic replies.
  * @param txt_data Userdata pointer for txt_fn
  * @return service_id if the service was added to the netif, an err_t otherwise
  */
 s8_t
-mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, u32_t dns_ttl, service_get_txt_fn_t txt_fn, void *txt_data)
+mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, service_get_txt_fn_t txt_fn, void *txt_data)
 {
   s8_t i;
   s8_t slot = -1;
@@ -1155,7 +1156,6 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
   srv->txt_userdata = txt_data;
   srv->proto = (u16_t)proto;
   srv->port = port;
-  srv->dns_ttl = dns_ttl;
 
   mdns->services[slot] = srv;
 
@@ -1320,9 +1320,9 @@ mdns_resp_init(void)
   mdns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("Failed to allocate pcb", mdns_pcb != NULL);
 #if LWIP_MULTICAST_TX_OPTIONS
-  udp_set_multicast_ttl(mdns_pcb, MDNS_TTL);
+  udp_set_multicast_ttl(mdns_pcb, MDNS_IP_TTL);
 #else
-  mdns_pcb->ttl = MDNS_TTL;
+  mdns_pcb->ttl = MDNS_IP_TTL;
 #endif
   res = udp_bind(mdns_pcb, IP_ANY_TYPE, LWIP_IANA_PORT_MDNS);
   LWIP_UNUSED_ARG(res); /* in case of LWIP_NOASSERT */

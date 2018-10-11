@@ -254,23 +254,29 @@ static err_t
 mdns_add_a_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host;
   mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with A record\n"));
   return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, msg->cache_flush,
-                         (netif_mdns_data(msg->netif))->dns_ttl,
-                         (const u8_t *) netif_ip4_addr(msg->netif), sizeof(ip4_addr_t), NULL);
+                         ttl, (const u8_t *) netif_ip4_addr(msg->netif),
+                         sizeof(ip4_addr_t), NULL);
 }
 
 /** Write a 4.3.2.1.in-addr.arpa -> hostname.local PTR RR to outpacket */
@@ -278,23 +284,29 @@ static err_t
 mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host, revhost;
   mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
   mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(msg->netif));
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v4 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, msg->cache_flush,
-                         (netif_mdns_data(msg->netif))->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN,
+                         msg->cache_flush, ttl, NULL, 0, &host);
 }
 #endif
 
@@ -304,23 +316,29 @@ static err_t
 mdns_add_aaaa_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, int addrindex)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host;
   mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
   return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, msg->cache_flush,
-                         (netif_mdns_data(msg->netif))->dns_ttl,
-                         (const u8_t *) netif_ip6_addr(msg->netif, addrindex), sizeof(ip6_addr_p_t), NULL);
+                         ttl, (const u8_t *) netif_ip6_addr(msg->netif, addrindex),
+                         sizeof(ip6_addr_p_t), NULL);
 }
 
 /** Write a x.y.z.ip6.arpa -> hostname.local PTR RR to outpacket */
@@ -328,23 +346,29 @@ static err_t
 mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, int addrindex)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host, revhost;
   mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
   mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(msg->netif, addrindex));
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with v6 PTR record\n"));
-  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, msg->cache_flush,
-                         (netif_mdns_data(msg->netif))->dns_ttl, NULL, 0, &host);
+  return mdns_add_answer(reply, &revhost, DNS_RRTYPE_PTR, DNS_RRCLASS_IN,
+                         msg->cache_flush, ttl, NULL, 0, &host);
 }
 #endif
 
@@ -354,23 +378,29 @@ mdns_add_servicetype_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg
                                 struct mdns_service *service)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_4500;
   struct mdns_domain service_type, service_dnssd;
   mdns_build_service_domain(&service_type, service, 0);
   mdns_build_dnssd_domain(&service_dnssd);
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &service_dnssd, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &service_dnssd, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with service type PTR record\n"));
   return mdns_add_answer(reply, &service_dnssd, DNS_RRTYPE_PTR, DNS_RRCLASS_IN,
-                         0, service->dns_ttl, NULL, 0, &service_type);
+                         0, ttl, NULL, 0, &service_type);
 }
 
 /** Write a servicetype -> servicename PTR RR to outpacket */
@@ -379,23 +409,29 @@ mdns_add_servicename_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg
                                 struct mdns_service *service)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain service_type, service_instance;
   mdns_build_service_domain(&service_type, service, 0);
   mdns_build_service_domain(&service_instance, service, 1);
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &service_type, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &service_type, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with service name PTR record\n"));
   return mdns_add_answer(reply, &service_type, DNS_RRTYPE_PTR, DNS_RRCLASS_IN,
-                         0, service->dns_ttl, NULL, 0, &service_instance);
+                         0, ttl, NULL, 0, &service_instance);
 }
 
 /** Write a SRV RR to outpacket */
@@ -404,6 +440,7 @@ mdns_add_srv_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
                     struct mdns_host *mdns, struct mdns_service *service)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain service_instance, srvhost;
   u16_t srvdata[3];
   mdns_build_service_domain(&service_instance, service, 1);
@@ -414,9 +451,10 @@ mdns_add_srv_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
      * name compression MUST NOT be performed on SRV records.
      */
     srvhost.skip_compression = 1;
-    /* When answering to a legacy querier, we need to repeat the question.
-     * But this only needs to be done for the question asked (max one question),
-     * not for the additional records. */
+    /* When answering to a legacy querier, we need to repeat the question and
+     * limit the ttl to the short legacy ttl.
+     * Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
     if(reply->questions < 1) {
       LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
       res = mdns_add_question(reply, &service_instance, DNS_RRTYPE_SRV, DNS_RRCLASS_IN, 0);
@@ -425,13 +463,15 @@ mdns_add_srv_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
       }
       reply->questions = 1;
     }
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   srvdata[0] = lwip_htons(SRV_PRIORITY);
   srvdata[1] = lwip_htons(SRV_WEIGHT);
   srvdata[2] = lwip_htons(service->port);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with SRV record\n"));
   return mdns_add_answer(reply, &service_instance, DNS_RRTYPE_SRV, DNS_RRCLASS_IN,
-                         msg->cache_flush, service->dns_ttl,
+                         msg->cache_flush, ttl,
                          (const u8_t *) &srvdata, sizeof(srvdata), &srvhost);
 }
 
@@ -441,24 +481,30 @@ mdns_add_txt_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
                     struct mdns_service *service)
 {
   err_t res;
+  u32_t ttl = MDNS_TTL_120;
   struct mdns_domain service_instance;
   mdns_build_service_domain(&service_instance, service, 1);
   mdns_prepare_txtdata(service);
-  /* When answering to a legacy querier, we need to repeat the question.
-   * But this only needs to be done for the question asked (max one question),
-   * not for the additional records. */
-  if(msg->legacy_query && reply->questions < 1) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
-    res = mdns_add_question(reply, &service_instance, DNS_RRTYPE_TXT, DNS_RRCLASS_IN, 0);
-    if (res != ERR_OK) {
-      return res;
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &service_instance, DNS_RRTYPE_TXT, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
     }
-    reply->questions = 1;
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with TXT record\n"));
   return mdns_add_answer(reply, &service_instance, DNS_RRTYPE_TXT, DNS_RRCLASS_IN,
-                         msg->cache_flush, service->dns_ttl,
-                         (u8_t *) &service->txtdata.name, service->txtdata.length, NULL);
+                         msg->cache_flush, ttl, (u8_t *) &service->txtdata.name,
+                         service->txtdata.length, NULL);
 }
 
 
