@@ -33,4 +33,4 @@ addons:
       - cmake
       - libsubunit-dev
 
-script: ./test.sh
+script: ./travis.sh
