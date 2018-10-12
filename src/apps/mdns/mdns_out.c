@@ -225,11 +225,11 @@ mdns_add_answer(struct mdns_outpacket *reply, struct mdns_domain *domain,
 /** Write an ANY host question to outpacket */
 static err_t
 mdns_add_any_host_question(struct mdns_outpacket *outpkt,
-                           struct mdns_outmsg *msg,
+                           struct mdns_host *mdns,
                            u16_t request_unicast_reply)
 {
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
+  mdns_build_host_domain(&host, mdns);
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Adding host question for ANY type\n"));
   return mdns_add_question(outpkt, &host, DNS_RRTYPE_ANY, DNS_RRCLASS_IN,
                            request_unicast_reply);
@@ -251,12 +251,13 @@ mdns_add_any_service_question(struct mdns_outpacket *outpkt,
 #if LWIP_IPV4
 /** Write an IPv4 address (A) RR to outpacket */
 static err_t
-mdns_add_a_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg)
+mdns_add_a_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
+                  struct netif *netif)
 {
   err_t res;
   u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
+  mdns_build_host_domain(&host, netif_mdns_data(netif));
   /* When answering to a legacy querier, we need to repeat the question and
    * limit the ttl to the short legacy ttl */
   if(msg->legacy_query) {
@@ -275,19 +276,20 @@ mdns_add_a_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg)
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with A record\n"));
   return mdns_add_answer(reply, &host, DNS_RRTYPE_A, DNS_RRCLASS_IN, msg->cache_flush,
-                         ttl, (const u8_t *) netif_ip4_addr(msg->netif),
+                         ttl, (const u8_t *) netif_ip4_addr(netif),
                          sizeof(ip4_addr_t), NULL);
 }
 
 /** Write a 4.3.2.1.in-addr.arpa -> hostname.local PTR RR to outpacket */
 static err_t
-mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg)
+mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
+                           struct netif *netif)
 {
   err_t res;
   u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
-  mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(msg->netif));
+  mdns_build_host_domain(&host, netif_mdns_data(netif));
+  mdns_build_reverse_v4_domain(&revhost, netif_ip4_addr(netif));
   /* When answering to a legacy querier, we need to repeat the question and
    * limit the ttl to the short legacy ttl */
   if(msg->legacy_query) {
@@ -313,12 +315,13 @@ mdns_add_hostv4_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg
 #if LWIP_IPV6
 /** Write an IPv6 address (AAAA) RR to outpacket */
 static err_t
-mdns_add_aaaa_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, int addrindex)
+mdns_add_aaaa_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
+                     struct netif *netif, int addrindex)
 {
   err_t res;
   u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host;
-  mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
+  mdns_build_host_domain(&host, netif_mdns_data(netif));
   /* When answering to a legacy querier, we need to repeat the question and
    * limit the ttl to the short legacy ttl */
   if(msg->legacy_query) {
@@ -337,19 +340,20 @@ mdns_add_aaaa_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, int 
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with AAAA record\n"));
   return mdns_add_answer(reply, &host, DNS_RRTYPE_AAAA, DNS_RRCLASS_IN, msg->cache_flush,
-                         ttl, (const u8_t *) netif_ip6_addr(msg->netif, addrindex),
+                         ttl, (const u8_t *) netif_ip6_addr(netif, addrindex),
                          sizeof(ip6_addr_p_t), NULL);
 }
 
 /** Write a x.y.z.ip6.arpa -> hostname.local PTR RR to outpacket */
 static err_t
-mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, int addrindex)
+mdns_add_hostv6_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
+                           struct netif *netif, int addrindex)
 {
   err_t res;
   u32_t ttl = MDNS_TTL_120;
   struct mdns_domain host, revhost;
-  mdns_build_host_domain(&host, netif_mdns_data(msg->netif));
-  mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(msg->netif, addrindex));
+  mdns_build_host_domain(&host, netif_mdns_data(netif));
+  mdns_build_reverse_v6_domain(&revhost, netif_ip6_addr(netif, addrindex));
   /* When answering to a legacy querier, we need to repeat the question and
    * limit the ttl to the short legacy ttl */
   if(msg->legacy_query) {
@@ -509,15 +513,16 @@ mdns_add_txt_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
 
 
 static err_t
-mdns_add_probe_questions_to_outpacket(struct mdns_outpacket *outpkt, struct mdns_outmsg *msg)
+mdns_add_probe_questions_to_outpacket(struct mdns_outpacket *outpkt, struct mdns_outmsg *msg,
+                                      struct netif *netif)
 {
   err_t res;
   int i;
-  struct mdns_host *mdns = netif_mdns_data(msg->netif);
+  struct mdns_host *mdns = netif_mdns_data(netif);
 
   /* Write host questions (probing or legacy query) */
   if(msg->host_questions & QUESTION_PROBE_HOST_ANY) {
-    res = mdns_add_any_host_question(outpkt, msg, 1);
+    res = mdns_add_any_host_question(outpkt, mdns, 1);
     if (res != ERR_OK) {
       return res;
     }
@@ -548,18 +553,18 @@ mdns_add_probe_questions_to_outpacket(struct mdns_outpacket *outpkt, struct mdns
  * Send the packet
  */
 err_t
-mdns_send_outpacket(struct mdns_outmsg *msg)
+mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
 {
   struct mdns_service *service;
   struct mdns_outpacket outpkt;
   err_t res = ERR_ARG;
   int i;
-  struct mdns_host *mdns = netif_mdns_data(msg->netif);
+  struct mdns_host *mdns = netif_mdns_data(netif);
   u16_t answers = 0;
 
   memset(&outpkt, 0, sizeof(outpkt));
 
-  res = mdns_add_probe_questions_to_outpacket(&outpkt, msg);
+  res = mdns_add_probe_questions_to_outpacket(&outpkt, msg, netif);
   if (res != ERR_OK) {
     goto cleanup;
   }
@@ -567,14 +572,14 @@ mdns_send_outpacket(struct mdns_outmsg *msg)
   /* Write answers to host questions */
 #if LWIP_IPV4
   if (msg->host_replies & REPLY_HOST_A) {
-    res = mdns_add_a_answer(&outpkt, msg);
+    res = mdns_add_a_answer(&outpkt, msg, netif);
     if (res != ERR_OK) {
       goto cleanup;
     }
     answers++;
   }
   if (msg->host_replies & REPLY_HOST_PTR_V4) {
-    res = mdns_add_hostv4_ptr_answer(&outpkt, msg);
+    res = mdns_add_hostv4_ptr_answer(&outpkt, msg, netif);
     if (res != ERR_OK) {
       goto cleanup;
     }
@@ -585,8 +590,8 @@ mdns_send_outpacket(struct mdns_outmsg *msg)
   if (msg->host_replies & REPLY_HOST_AAAA) {
     int addrindex;
     for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
-      if (ip6_addr_isvalid(netif_ip6_addr_state(msg->netif, addrindex))) {
-        res = mdns_add_aaaa_answer(&outpkt, msg, addrindex);
+      if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addrindex))) {
+        res = mdns_add_aaaa_answer(&outpkt, msg, netif, addrindex);
         if (res != ERR_OK) {
           goto cleanup;
         }
@@ -599,7 +604,7 @@ mdns_send_outpacket(struct mdns_outmsg *msg)
     int addrindex = 0;
     while (rev_addrs) {
       if (rev_addrs & 1) {
-        res = mdns_add_hostv6_ptr_answer(&outpkt, msg, addrindex);
+        res = mdns_add_hostv6_ptr_answer(&outpkt, msg, netif, addrindex);
         if (res != ERR_OK) {
           goto cleanup;
         }
@@ -695,8 +700,8 @@ mdns_send_outpacket(struct mdns_outmsg *msg)
       if (!(msg->host_replies & REPLY_HOST_AAAA)) {
         int addrindex;
         for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
-          if (ip6_addr_isvalid(netif_ip6_addr_state(msg->netif, addrindex))) {
-            res = mdns_add_aaaa_answer(&outpkt, msg, addrindex);
+          if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addrindex))) {
+            res = mdns_add_aaaa_answer(&outpkt, msg, netif, addrindex);
             if (res != ERR_OK) {
               goto cleanup;
             }
@@ -707,8 +712,8 @@ mdns_send_outpacket(struct mdns_outmsg *msg)
 #endif
 #if LWIP_IPV4
       if (!(msg->host_replies & REPLY_HOST_A) &&
-          !ip4_addr_isany_val(*netif_ip4_addr(msg->netif))) {
-        res = mdns_add_a_answer(&outpkt, msg);
+          !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
+        res = mdns_add_a_answer(&outpkt, msg, netif);
         if (res != ERR_OK) {
           goto cleanup;
         }
@@ -738,7 +743,7 @@ mdns_send_outpacket(struct mdns_outmsg *msg)
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d, unicast=%d\n",
                 outpkt.write_offset, msg->unicast_reply));
 
-    res = udp_sendto_if(get_mdns_pcb(), outpkt.pbuf, &msg->dest_addr, msg->dest_port, msg->netif);
+    res = udp_sendto_if(get_mdns_pcb(), outpkt.pbuf, &msg->dest_addr, msg->dest_port, netif);
   }
 
 cleanup:

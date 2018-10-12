@@ -125,8 +125,6 @@ struct mdns_outpacket {
 
 /** mDNS output message */
 struct mdns_outmsg {
-  /** Netif to send the packet on */
-  struct netif *netif;
   /** Identifier. Used in legacy queries */
   u16_t tx_id;
   /** dns flags */

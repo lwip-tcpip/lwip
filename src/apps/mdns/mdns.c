@@ -125,8 +125,6 @@ struct mdns_packet {
   u16_t source_port;
   /** If packet was received unicast */
   u16_t recv_unicast;
-  /** Netif that received the packet */
-  struct netif *netif;
   /** Packet data */
   struct pbuf *pbuf;
   /** Current parsing offset in packet */
@@ -436,7 +434,6 @@ mdns_init_outmsg_with_in_packet(struct mdns_outmsg *out, struct mdns_packet *in)
 {
   memset(out, 0, sizeof(struct mdns_outmsg));
   out->cache_flush = 1;
-  out->netif = in->netif;
 
   /* Copy source IP/port to use when responding unicast, or to choose
    * which pcb to use for multicast (IPv4/IPv6)
@@ -471,7 +468,6 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   struct mdns_host *mdns = NETIF_TO_HOST(netif);
 
   memset(&announce, 0, sizeof(announce));
-  announce.netif = netif;
   announce.cache_flush = 1;
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
@@ -498,7 +494,7 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
   announce.dest_port = LWIP_IANA_PORT_MDNS;
   SMEMCPY(&announce.dest_addr, destination, sizeof(announce.dest_addr));
   announce.flags = DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
-  mdns_send_outpacket(&announce);
+  mdns_send_outpacket(&announce, netif);
 }
 
 /**
@@ -508,13 +504,13 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
  * 3. Put chosen answers in new packet and send as reply
  */
 static void
-mdns_handle_question(struct mdns_packet *pkt)
+mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
 {
   struct mdns_service *service;
   struct mdns_outmsg reply;
   int i;
   err_t res;
-  struct mdns_host *mdns = NETIF_TO_HOST(pkt->netif);
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
 
   if (mdns->probing_state != MDNS_PROBING_COMPLETE) {
     /* Don't answer questions until we've verified our domains via probing */
@@ -542,7 +538,7 @@ mdns_handle_question(struct mdns_packet *pkt)
       reply.unicast_reply = 1;
     }
 
-    reply.host_replies |= check_host(pkt->netif, &q.info, &reply.host_reverse_v6_replies);
+    reply.host_replies |= check_host(netif, &q.info, &reply.host_reverse_v6_replies);
 
     for (i = 0; i < MDNS_MAX_SERVICES; i++) {
       service = mdns->services[i];
@@ -577,7 +573,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
 
     rev_v6 = 0;
-    match = reply.host_replies & check_host(pkt->netif, &ans.info, &rev_v6);
+    match = reply.host_replies & check_host(netif, &ans.info, &rev_v6);
     if (match && (ans.ttl > (rr_ttl / 2))) {
       /* The RR in the known answer matches an RR we are planning to send,
        * and the TTL is less than half gone.
@@ -609,7 +605,7 @@ mdns_handle_question(struct mdns_packet *pkt)
       } else if (match & REPLY_HOST_A) {
 #if LWIP_IPV4
         if (ans.rd_length == sizeof(ip4_addr_t) &&
-            pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip4_addr(pkt->netif), ans.rd_length) == 0) {
+            pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip4_addr(netif), ans.rd_length) == 0) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: A\n"));
           reply.host_replies &= ~REPLY_HOST_A;
         }
@@ -618,7 +614,7 @@ mdns_handle_question(struct mdns_packet *pkt)
 #if LWIP_IPV6
         if (ans.rd_length == sizeof(ip6_addr_p_t) &&
             /* TODO this clears all AAAA responses if first addr is set as known */
-            pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip6_addr(pkt->netif, 0), ans.rd_length) == 0) {
+            pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip6_addr(netif, 0), ans.rd_length) == 0) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: AAAA\n"));
           reply.host_replies &= ~REPLY_HOST_AAAA;
         }
@@ -722,7 +718,7 @@ mdns_handle_question(struct mdns_packet *pkt)
     }
   }
 
-  mdns_send_outpacket(&reply);
+  mdns_send_outpacket(&reply, netif);
 }
 
 /**
@@ -730,9 +726,9 @@ mdns_handle_question(struct mdns_packet *pkt)
  * Only prints debug for now. Will need more code to do conflict resolution.
  */
 static void
-mdns_handle_response(struct mdns_packet *pkt)
+mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
 {
-  struct mdns_host* mdns = NETIF_TO_HOST(pkt->netif);
+  struct mdns_host* mdns = NETIF_TO_HOST(netif);
 
   /* Ignore all questions */
   while (pkt->questions_left) {
@@ -786,9 +782,9 @@ mdns_handle_response(struct mdns_packet *pkt)
       }
 
       if (conflict != 0) {
-        sys_untimeout(mdns_probe, pkt->netif);
+        sys_untimeout(mdns_probe, netif);
         if (mdns_name_result_cb != NULL) {
-          mdns_name_result_cb(pkt->netif, MDNS_PROBING_CONFLICT);
+          mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT);
         }
       }
     }
@@ -831,7 +827,6 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   memset(&packet, 0, sizeof(packet));
   SMEMCPY(&packet.source_addr, addr, sizeof(packet.source_addr));
   packet.source_port = port;
-  packet.netif = recv_netif;
   packet.pbuf = p;
   packet.parse_offset = offset;
   packet.tx_id = lwip_ntohs(hdr.id);
@@ -855,9 +850,9 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 #endif
 
   if (hdr.flags1 & DNS_FLAG1_RESPONSE) {
-    mdns_handle_response(&packet);
+    mdns_handle_response(&packet, recv_netif);
   } else {
-    mdns_handle_question(&packet);
+    mdns_handle_question(&packet, recv_netif);
   }
 
 dealloc:
@@ -905,7 +900,6 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
   mdns = NETIF_TO_HOST(netif);
 
   memset(&outmsg, 0, sizeof(outmsg));
-  outmsg.netif = netif;
 
   /* Add unicast questions with rtype ANY for all our desired records */
   outmsg.host_questions = QUESTION_PROBE_HOST_ANY;
@@ -944,7 +938,7 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
   outmsg.tx_id = 0;
   outmsg.dest_port = LWIP_IANA_PORT_MDNS;
   SMEMCPY(&outmsg.dest_addr, destination, sizeof(outmsg.dest_addr));
-  res = mdns_send_outpacket(&outmsg);
+  res = mdns_send_outpacket(&outmsg, netif);
 
   return res;
 }

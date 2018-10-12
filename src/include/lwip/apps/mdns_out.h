@@ -73,7 +73,7 @@ extern "C" {
 /* Lookup for text info on service instance */
 #define REPLY_SERVICE_TXT       0x80
 
-err_t mdns_send_outpacket(struct mdns_outmsg *msg);
+err_t mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif);
 void mdns_prepare_txtdata(struct mdns_service *service);
 
 #endif /* LWIP_MDNS_RESPONDER */
