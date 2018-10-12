@@ -54,6 +54,9 @@
 /* Payload size allocated for each outgoing UDP packet */
 #define OUTPACKET_SIZE 500
 
+/* Function prototypes */
+static void mdns_clear_outmsg(struct mdns_outmsg *outmsg);
+
 /**
  * Call user supplied function to setup TXT data
  * @param service The service to build TXT record for
@@ -740,8 +743,8 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
     pbuf_realloc(outpkt.pbuf, outpkt.write_offset);
 
     /* Send created packet */
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d, unicast=%d\n",
-                outpkt.write_offset, msg->unicast_reply));
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Sending packet, len=%d\n",
+                outpkt.write_offset));
 
     res = udp_sendto_if(get_mdns_pcb(), outpkt.pbuf, &msg->dest_addr, msg->dest_port, netif);
   }
@@ -752,6 +755,237 @@ cleanup:
     outpkt.pbuf = NULL;
   }
   return res;
+}
+
+#if LWIP_IPV4
+/**
+ *  Called by timeouts when timer is passed, allows multicast IPv4 traffic again.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_multicast_timeout_reset_ipv4(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout finished - IPv4\n"));
+
+  mdns->ipv4.multicast_timeout = 0;
+}
+
+/**
+ *  Called by timeouts when timer is passed, allows to send an answer on a QU
+ *  question via multicast.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_multicast_timeout_25ttl_reset_ipv4(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl finished - IPv4\n"));
+
+  mdns->ipv4.multicast_timeout_25TTL = 0;
+}
+
+/**
+ *  Called by timeouts when timer is passed, sends out delayed multicast IPv4 response.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_send_multicast_msg_delayed_ipv4(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+  err_t res;
+
+  res = mdns_send_outpacket(&mdns->ipv4.delayed_msg_multicast, netif);
+  if(res != ERR_OK) {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed multicast send failed - IPv4\n"));
+  }
+  else {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed multicast send successful - IPv4\n"));
+    mdns_clear_outmsg(&mdns->ipv4.delayed_msg_multicast);
+    mdns->ipv4.multicast_msg_waiting = 0;
+    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
+                     &mdns->ipv4.multicast_timeout);
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
+    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
+                     &mdns->ipv4.multicast_timeout_25TTL);
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
+  }
+}
+
+/**
+ *  Called by timeouts when timer is passed, sends out delayed unicast IPv4 response.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_send_unicast_msg_delayed_ipv4(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+  err_t res;
+
+  res = mdns_send_outpacket(&mdns->ipv4.delayed_msg_unicast, netif);
+  if(res != ERR_OK) {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed unicast send failed - IPv4\n"));
+  }
+  else {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed unicast send successful - IPv4\n"));
+    mdns_clear_outmsg(&mdns->ipv4.delayed_msg_unicast);
+    mdns->ipv4.unicast_msg_in_use = 0;
+  }
+}
+
+#endif
+
+#if LWIP_IPV6
+/**
+ *  Called by timeouts when timer is passed, allows multicast IPv6 traffic again.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_multicast_timeout_reset_ipv6(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout finished - IPv6\n"));
+
+  mdns->ipv6.multicast_timeout = 0;
+}
+
+/**
+ *  Called by timeouts when timer is passed, allows to send an answer on a QU
+ *  question via multicast.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_multicast_timeout_25ttl_reset_ipv6(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl finished - IPv6\n"));
+
+  mdns->ipv6.multicast_timeout_25TTL = 0;
+}
+
+/**
+ *  Called by timeouts when timer is passed, sends out delayed multicast IPv6 response.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_send_multicast_msg_delayed_ipv6(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+  err_t res;
+
+  res = mdns_send_outpacket(&mdns->ipv6.delayed_msg_multicast, netif);
+  if(res != ERR_OK) {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed multicast send failed - IPv6\n"));
+  }
+  else {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed multicast send successful - IPv6\n"));
+    mdns_clear_outmsg(&mdns->ipv6.delayed_msg_multicast);
+    mdns->ipv6.multicast_msg_waiting = 0;
+    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
+                     &mdns->ipv6.multicast_timeout);
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
+    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
+                     &mdns->ipv6.multicast_timeout_25TTL);
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
+  }
+}
+
+/**
+ *  Called by timeouts when timer is passed, sends out delayed unicast IPv6 response.
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_send_unicast_msg_delayed_ipv6(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+  err_t res;
+
+  res = mdns_send_outpacket(&mdns->ipv6.delayed_msg_unicast, netif);
+  if(res != ERR_OK) {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed unicast send failed - IPv6\n"));
+  }
+  else {
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed unicast send successful - IPv6\n"));
+    mdns_clear_outmsg(&mdns->ipv6.delayed_msg_unicast);
+    mdns->ipv6.unicast_msg_in_use = 0;
+  }
+}
+
+#endif
+
+/**
+ *  This function clears the output message without changing the destination
+ *  address or port. This is useful for clearing the delayed msg structs without
+ *  loosing the set IP.
+ *
+ *  @param outmsg pointer to output message to clear.
+ */
+static void
+mdns_clear_outmsg(struct mdns_outmsg *outmsg)
+{
+  int i;
+
+  outmsg->tx_id = 0;
+  outmsg->flags = 0;
+  outmsg->cache_flush = 0;
+  outmsg->unicast_reply_requested = 0;
+  outmsg->legacy_query = 0;
+  outmsg->probe_query_recv = 0;
+  outmsg->host_questions = 0;
+  outmsg->host_replies = 0;
+  outmsg->host_reverse_v6_replies = 0;
+
+  for(i = 0; i < MDNS_MAX_SERVICES; i++) {
+    outmsg->serv_questions[i] = 0;
+    outmsg->serv_replies[i] = 0;
+  }
+}
+
+/**
+ *  Sets a timer that calls the handler when finished.
+ *  Depending on the busy_flag the timer is restarted or started. The flag is
+ *  set before return. Sys_timeout does not give us this functionality.
+ *
+ *  @param netif      Network interface info
+ *  @param msecs      Time value to set
+ *  @param handler    Callback function to call
+ *  @param busy_flag  Pointer to flag that displays if the timer is running or not.
+ */
+void
+mdns_set_timeout(struct netif *netif, u32_t msecs, sys_timeout_handler handler,
+                 u8_t *busy_flag)
+{
+  if(*busy_flag) {
+    /* restart timer */
+    sys_untimeout(handler, netif);
+    sys_timeout(msecs, handler, netif);
+  }
+  else {
+    /* start timer */
+    sys_timeout(msecs, handler, netif);
+  }
+  /* Now we have a timer running */
+  *busy_flag = 1;
 }
 
 #endif /* LWIP_MDNS_RESPONDER */

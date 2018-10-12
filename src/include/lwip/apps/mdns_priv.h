@@ -92,18 +92,6 @@ struct mdns_service {
   u16_t port;
 };
 
-/** Description of a host/netif */
-struct mdns_host {
-  /** Hostname */
-  char name[MDNS_LABEL_MAXLEN + 1];
-  /** Pointer to services */
-  struct mdns_service *services[MDNS_MAX_SERVICES];
-  /** Number of probes sent for the current name */
-  u8_t probes_sent;
-  /** State in probing sequence */
-  u8_t probing_state;
-};
-
 /** mDNS output packet */
 struct mdns_outpacket {
   /** Packet data */
@@ -134,11 +122,14 @@ struct mdns_outmsg {
   u16_t dest_port;
   /** If all answers in packet should set cache_flush bit */
   u8_t cache_flush;
-  /** If reply should be sent unicast */
-  u8_t unicast_reply;
+  /** If reply should be sent unicast (as requested) */
+  u8_t unicast_reply_requested;
   /** If legacy query. (tx_id needed, and write
    *  question again in reply before answer) */
   u8_t legacy_query;
+  /** If the query is a probe msg we need to respond immediatly. Independent of
+   *  the QU or QM flag. */
+  u8_t probe_query_recv;
   /* Question bitmask for host information */
   u8_t host_questions;
   /* Questions bitmask per service */
@@ -149,6 +140,43 @@ struct mdns_outmsg {
   u8_t host_reverse_v6_replies;
   /* Reply bitmask per service */
   u8_t serv_replies[MDNS_MAX_SERVICES];
+};
+
+/** Delayed msg info */
+struct mdns_delayed_msg {
+  /** Timer state multicast */
+  u8_t multicast_msg_waiting;
+  /** Multicast timeout on */
+  u8_t multicast_timeout;
+  /** Output msg used for delayed multicast responses */
+  struct mdns_outmsg delayed_msg_multicast;
+  /** Prefer multicast over unicast timeout -> 25% of TTL = we take 30s as
+      general delay. */
+  u8_t multicast_timeout_25TTL;
+  /** Only send out new unicast message if previous was send */
+  u8_t unicast_msg_in_use;
+  /** Output msg used for delayed unicast responses */
+  struct mdns_outmsg delayed_msg_unicast;
+};
+
+/** Description of a host/netif */
+struct mdns_host {
+  /** Hostname */
+  char name[MDNS_LABEL_MAXLEN + 1];
+  /** Pointer to services */
+  struct mdns_service *services[MDNS_MAX_SERVICES];
+  /** Number of probes sent for the current name */
+  u8_t probes_sent;
+  /** State in probing sequence */
+  u8_t probing_state;
+#if LWIP_IPV4
+  /** delayed msg struct for IPv4 */
+  struct mdns_delayed_msg ipv4;
+#endif
+#if LWIP_IPV6
+  /** delayed msg struct for IPv6 */
+  struct mdns_delayed_msg ipv6;
+#endif
 };
 
 #endif /* LWIP_MDNS_RESPONDER */

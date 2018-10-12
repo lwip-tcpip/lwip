@@ -80,6 +80,9 @@
 #if (!LWIP_UDP)
 #error "If you want to use MDNS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
+#ifndef LWIP_RAND
+#error "If you want to use MDNS, you have to define LWIP_RAND=(random function) in your lwipopts.h"
+#endif
 
 #if LWIP_IPV4
 #include "lwip/igmp.h"
@@ -105,6 +108,13 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 
 #define NETIF_TO_HOST(netif) (struct mdns_host*)(netif_get_client_data(netif, mdns_netif_client_id))
 
+/** Delayed response defines */
+#define MDNS_RESPONSE_DELAY_MAX   120
+#define MDNS_RESPONSE_DELAY_MIN    20
+#define MDNS_RESPONSE_DELAY (LWIP_RAND() %(MDNS_RESPONSE_DELAY_MAX - \
+                             MDNS_RESPONSE_DELAY_MIN) + MDNS_RESPONSE_DELAY_MIN)
+
+/** Probing defines */
 #define MDNS_PROBE_DELAY_MS       250
 #define MDNS_PROBE_COUNT          3
 #ifdef LWIP_RAND
@@ -136,12 +146,18 @@ struct mdns_packet {
   u16_t questions;
   /** Number of unparsed questions */
   u16_t questions_left;
-  /** Number of answers in packet,
-   *  (sum of normal, authoritative and additional answers)
-   *  read from packet header */
+  /** Number of answers in packet */
   u16_t answers;
   /** Number of unparsed answers */
   u16_t answers_left;
+  /** Number of authoritative answers in packet */
+  u16_t authoritative;
+  /** Number of unparsed authoritative answers */
+  u16_t authoritative_left;
+  /** Number of additional answers in packet */
+  u16_t additional;
+  /** Number of unparsed additional answers */
+  u16_t additional_left;
 };
 
 /** Domain, type and class.
@@ -172,11 +188,25 @@ struct mdns_answer {
 
 static void mdns_probe(void* arg);
 
+/**
+ *  Construction to make mdns struct accessible from mdns_out.c
+ *  TODO:
+ *  can we add the mdns struct to the netif like we do for dhcp, autoip,...?
+ *  Then this is not needed any more.
+ *
+ *  @param netif  The network interface
+ *  @return       mdns struct
+ */
 struct mdns_host*
 netif_mdns_data(struct netif *netif) {
   return NETIF_TO_HOST(netif);
 }
 
+/**
+ *  Construction to access the mdns udp pcb.
+ *
+ *  @return   udp_pcb struct of mdns
+ */
 struct udp_pcb*
 get_mdns_pcb(void)
 {
@@ -370,13 +400,14 @@ mdns_read_question(struct mdns_packet *pkt, struct mdns_question *question)
 /**
  * Read an answer from the packet
  * The variable length reply is not copied, its pbuf offset and length is stored instead.
- * @param pkt The MDNS packet to read. The answers_left field will be decremented and
+ * @param pkt The MDNS packet to read. The num_left field will be decremented and
  *            the parse_offset will be updated.
- * @param answer The struct to fill with answer data
+ * @param answer    The struct to fill with answer data
+ * @param num_left  number of answers left -> answers, authoritative or additional
  * @return ERR_OK on success, an err_t otherwise
  */
 static err_t
-mdns_read_answer(struct mdns_packet *pkt, struct mdns_answer *answer)
+mdns_read_answer(struct mdns_packet *pkt, struct mdns_answer *answer, u16_t *num_left)
 {
   /* Read questions first */
   if (pkt->questions_left) {
@@ -388,11 +419,11 @@ mdns_read_answer(struct mdns_packet *pkt, struct mdns_answer *answer)
     return ERR_VAL;
   }
 
-  if (pkt->answers_left) {
+  if (*num_left) {
     u16_t copied, field16;
     u32_t ttl;
     err_t res;
-    pkt->answers_left--;
+    (*num_left)--;
 
     memset(answer, 0, sizeof(struct mdns_answer));
     res = mdns_read_rr_info(pkt, &answer->info);
@@ -424,35 +455,6 @@ mdns_read_answer(struct mdns_packet *pkt, struct mdns_answer *answer)
     return ERR_OK;
   }
   return ERR_VAL;
-}
-
-/**
- * Setup outpacket as a reply to the incoming packet
- */
-static void
-mdns_init_outmsg_with_in_packet(struct mdns_outmsg *out, struct mdns_packet *in)
-{
-  memset(out, 0, sizeof(struct mdns_outmsg));
-  out->cache_flush = 1;
-
-  /* Copy source IP/port to use when responding unicast, or to choose
-   * which pcb to use for multicast (IPv4/IPv6)
-   */
-  SMEMCPY(&out->dest_addr, &in->source_addr, sizeof(ip_addr_t));
-  out->dest_port = in->source_port;
-
-  if (in->source_port != LWIP_IANA_PORT_MDNS) {
-    out->unicast_reply = 1;
-    out->cache_flush = 0;
-    if (in->questions == 1) {
-      out->legacy_query = 1;
-      out->tx_id = in->tx_id;
-    }
-  }
-
-  if (in->recv_unicast) {
-    out->unicast_reply = 1;
-  }
 }
 
 /**
@@ -498,27 +500,21 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 }
 
 /**
- * Handle question MDNS packet
- * 1. Parse all questions and set bits what answers to send
- * 2. Clear pending answers if known answers are supplied
- * 3. Put chosen answers in new packet and send as reply
+ * Check the incomming packet and parse all questions
+ *
+ * @param netif network interface of incoming packet
+ * @param pkt   incoming packet
+ * @param reply outgoing message
+ * @return err_t
  */
-static void
-mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
+static err_t
+mdns_parse_pkt_questions(struct netif *netif, struct mdns_packet *pkt,
+                         struct mdns_outmsg *reply)
 {
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
   struct mdns_service *service;
-  struct mdns_outmsg reply;
   int i;
   err_t res;
-  struct mdns_host *mdns = NETIF_TO_HOST(netif);
-
-  if (mdns->probing_state != MDNS_PROBING_COMPLETE) {
-    /* Don't answer questions until we've verified our domains via probing */
-    /* @todo we should check incoming questions during probing for tiebreaking */
-    return;
-  }
-
-  mdns_init_outmsg_with_in_packet(&reply, pkt);
 
   while (pkt->questions_left) {
     struct mdns_question q;
@@ -526,7 +522,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
     res = mdns_read_question(pkt, &q);
     if (res != ERR_OK) {
       LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse question, skipping query packet\n"));
-      return;
+      return res;
     }
 
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Query for domain "));
@@ -534,32 +530,51 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", q.info.type, q.info.klass));
 
     if (q.unicast) {
-      /* Reply unicast if any question is unicast */
-      reply.unicast_reply = 1;
+      /* Reply unicast if it is requested in the question */
+      reply->unicast_reply_requested = 1;
     }
 
-    reply.host_replies |= check_host(netif, &q.info, &reply.host_reverse_v6_replies);
+    reply->host_replies |= check_host(netif, &q.info, &reply->host_reverse_v6_replies);
 
     for (i = 0; i < MDNS_MAX_SERVICES; i++) {
       service = mdns->services[i];
       if (!service) {
         continue;
       }
-      reply.serv_replies[i] |= check_service(service, &q.info);
+      reply->serv_replies[i] |= check_service(service, &q.info);
     }
   }
 
-  /* Handle known answers */
+  return ERR_OK;
+}
+
+/**
+ * Check the incomming packet and parse all (known) answers
+ *
+ * @param netif network interface of incoming packet
+ * @param pkt   incoming packet
+ * @param reply outgoing message
+ * @return err_t
+ */
+static err_t
+mdns_parse_pkt_known_answers(struct netif *netif, struct mdns_packet *pkt,
+                             struct mdns_outmsg *reply)
+{
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
+  struct mdns_service *service;
+  int i;
+  err_t res;
+
   while (pkt->answers_left) {
     struct mdns_answer ans;
     u8_t rev_v6;
     int match;
     u32_t rr_ttl = MDNS_TTL_120;
 
-    res = mdns_read_answer(pkt, &ans);
+    res = mdns_read_answer(pkt, &ans, &pkt->answers_left);
     if (res != ERR_OK) {
       LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping query packet\n"));
-      return;
+      return res;
     }
 
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Known answer for domain "));
@@ -573,7 +588,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
     }
 
     rev_v6 = 0;
-    match = reply.host_replies & check_host(netif, &ans.info, &rev_v6);
+    match = reply->host_replies & check_host(netif, &ans.info, &rev_v6);
     if (match && (ans.ttl > (rr_ttl / 2))) {
       /* The RR in the known answer matches an RR we are planning to send,
        * and the TTL is less than half gone.
@@ -589,15 +604,15 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
 #if LWIP_IPV4
           if (match & REPLY_HOST_PTR_V4) {
             LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: v4 PTR\n"));
-            reply.host_replies &= ~REPLY_HOST_PTR_V4;
+            reply->host_replies &= ~REPLY_HOST_PTR_V4;
           }
 #endif
 #if LWIP_IPV6
           if (match & REPLY_HOST_PTR_V6) {
             LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: v6 PTR\n"));
-            reply.host_reverse_v6_replies &= ~rev_v6;
-            if (reply.host_reverse_v6_replies == 0) {
-              reply.host_replies &= ~REPLY_HOST_PTR_V6;
+            reply->host_reverse_v6_replies &= ~rev_v6;
+            if (reply->host_reverse_v6_replies == 0) {
+              reply->host_replies &= ~REPLY_HOST_PTR_V6;
             }
           }
 #endif
@@ -607,7 +622,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
         if (ans.rd_length == sizeof(ip4_addr_t) &&
             pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip4_addr(netif), ans.rd_length) == 0) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: A\n"));
-          reply.host_replies &= ~REPLY_HOST_A;
+          reply->host_replies &= ~REPLY_HOST_A;
         }
 #endif
       } else if (match & REPLY_HOST_AAAA) {
@@ -616,7 +631,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
             /* TODO this clears all AAAA responses if first addr is set as known */
             pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip6_addr(netif, 0), ans.rd_length) == 0) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: AAAA\n"));
-          reply.host_replies &= ~REPLY_HOST_AAAA;
+          reply->host_replies &= ~REPLY_HOST_AAAA;
         }
 #endif
       }
@@ -627,7 +642,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
       if (!service) {
         continue;
       }
-      match = reply.serv_replies[i] & check_service(service, &ans.info);
+      match = reply->serv_replies[i] & check_service(service, &ans.info);
       if (match & REPLY_SERVICE_TYPE_PTR) {
         rr_ttl = MDNS_TTL_4500;
       }
@@ -646,14 +661,14 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
               res = mdns_build_service_domain(&my_ans, service, 0);
               if (res == ERR_OK && mdns_domain_eq(&known_ans, &my_ans)) {
                 LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: service type PTR\n"));
-                reply.serv_replies[i] &= ~REPLY_SERVICE_TYPE_PTR;
+                reply->serv_replies[i] &= ~REPLY_SERVICE_TYPE_PTR;
               }
             }
             if (match & REPLY_SERVICE_NAME_PTR) {
               res = mdns_build_service_domain(&my_ans, service, 1);
               if (res == ERR_OK && mdns_domain_eq(&known_ans, &my_ans)) {
                 LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: service name PTR\n"));
-                reply.serv_replies[i] &= ~REPLY_SERVICE_NAME_PTR;
+                reply->serv_replies[i] &= ~REPLY_SERVICE_NAME_PTR;
               }
             }
           }
@@ -688,37 +703,374 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
               break;
             }
             LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: SRV\n"));
-            reply.serv_replies[i] &= ~REPLY_SERVICE_SRV;
+            reply->serv_replies[i] &= ~REPLY_SERVICE_SRV;
           } while (0);
         } else if (match & REPLY_SERVICE_TXT) {
           mdns_prepare_txtdata(service);
           if (service->txtdata.length == ans.rd_length &&
               pbuf_memcmp(pkt->pbuf, ans.rd_offset, service->txtdata.name, ans.rd_length) == 0) {
             LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: TXT\n"));
-            reply.serv_replies[i] &= ~REPLY_SERVICE_TXT;
+            reply->serv_replies[i] &= ~REPLY_SERVICE_TXT;
           }
         }
       }
     }
   }
 
-  reply.flags =  DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
+  return ERR_OK;
+}
 
-  if(!reply.unicast_reply) {
-    reply.dest_port = LWIP_IANA_PORT_MDNS;
+/**
+ * Check the incomming packet and parse all authoritative answers to see if the
+ * query is a probe query.
+ *
+ * @param netif network interface of incoming packet
+ * @param pkt   incoming packet
+ * @param reply outgoing message
+ * @return err_t
+ */
+static err_t
+mdns_parse_pkt_authoritative_answers(struct netif *netif, struct mdns_packet *pkt,
+                                     struct mdns_outmsg *reply)
+{
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
+  struct mdns_service *service;
+  int i;
+  err_t res;
 
-    if (IP_IS_V6_VAL(reply.dest_addr)) {
-#if LWIP_IPV6
-      SMEMCPY(&reply.dest_addr, &v6group, sizeof(reply.dest_addr));
-#endif
-    } else {
-#if LWIP_IPV4
-      SMEMCPY(&reply.dest_addr, &v4group, sizeof(reply.dest_addr));
-#endif
+  while (pkt->authoritative_left) {
+    struct mdns_answer ans;
+    u8_t rev_v6;
+    int match;
+
+    res = mdns_read_answer(pkt, &ans, &pkt->authoritative_left);
+    if (res != ERR_OK) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping query packet\n"));
+      return res;
+    }
+
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Authoritative answer for domain "));
+    mdns_domain_debug_print(&ans.info.domain);
+    LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", ans.info.type, ans.info.klass));
+
+
+    if (ans.info.type == DNS_RRTYPE_ANY || ans.info.klass == DNS_RRCLASS_ANY) {
+      /* Skip known answers for ANY type & class */
+      continue;
+    }
+
+    rev_v6 = 0;
+    match = reply->host_replies & check_host(netif, &ans.info, &rev_v6);
+    if (match) {
+      reply->probe_query_recv = 1;
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe for own host info received\r\n"));
+    }
+
+    for (i = 0; i < MDNS_MAX_SERVICES; i++) {
+      service = mdns->services[i];
+      if (!service) {
+        continue;
+      }
+      match = reply->serv_replies[i] & check_service(service, &ans.info);
+
+      if (match) {
+        reply->probe_query_recv = 1;
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe for own service info received\r\n"));
+      }
     }
   }
 
-  mdns_send_outpacket(&reply, netif);
+  return ERR_OK;
+}
+
+/**
+ * Add / copy message to delaying message buffer.
+ *
+ * @param dest destination msg struct
+ * @param src  source msg struct
+ */
+static void
+mdns_add_msg_to_delayed(struct mdns_outmsg *dest, struct mdns_outmsg *src)
+{
+  dest->host_questions |= src->host_questions;
+  dest->host_replies |= src->host_replies;
+  dest->host_reverse_v6_replies |= src->host_reverse_v6_replies;
+  for (int i = 0; i < MDNS_MAX_SERVICES; i++) {
+    dest->serv_questions[i] |= src->serv_questions[i];
+    dest->serv_replies[i] |= src->serv_replies[i];
+  }
+
+  dest->flags = src->flags;
+  dest->cache_flush = src->cache_flush;
+  dest->tx_id = src->tx_id;
+  dest->legacy_query = src->legacy_query;
+}
+
+/**
+ * Handle question MDNS packet
+ * 1. Parse all questions and set bits what answers to send
+ * 2. Clear pending answers if known answers are supplied
+ * 3. Define which type of answer is requested
+ * 4. Send out packet or put it on hold until after random time
+ *
+ * @param pkt   incoming packet
+ * @param netif network interface of incoming packet
+ */
+static void
+mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
+{
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
+  struct mdns_outmsg reply;
+  u8_t rrs_to_send;
+  u8_t shared_answer = 0;
+  u8_t delay_response = 1;
+  u8_t send_unicast = 0;
+  u8_t listen_to_QU_bit = 0;
+  int i;
+  err_t res;
+
+  if (mdns->probing_state != MDNS_PROBING_COMPLETE) {
+    /* Don't answer questions until we've verified our domains via probing */
+    /* @todo we should check incoming questions during probing for tiebreaking */
+    return;
+  }
+
+  memset(&reply, 0, sizeof(struct mdns_outmsg));
+
+  /* Parse question */
+  res = mdns_parse_pkt_questions(netif, pkt, &reply);
+  if (res != ERR_OK) {
+    return;
+  }
+  /* Parse answers -> count as known answers because it's a question */
+  res = mdns_parse_pkt_known_answers(netif, pkt, &reply);
+  if (res != ERR_OK) {
+    return;
+  }
+  /* Parse authoritative answers -> probing */
+  /* If it's a probe query, we need to directly answer via unicast. */
+  res = mdns_parse_pkt_authoritative_answers(netif, pkt, &reply);
+  if (res != ERR_OK) {
+    return;
+  }
+  /* Ignore additional answers -> do not have any need for them at the moment */
+  if(pkt->additional) {
+    LWIP_DEBUGF(MDNS_DEBUG,
+      ("MDNS: Query contains additional answers -> they are discarded \r\n"));
+  }
+
+  /* Any replies on question? */
+  rrs_to_send = reply.host_replies | reply.host_questions;
+  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
+    rrs_to_send |= reply.serv_replies[i] | reply.serv_questions[i];
+  }
+
+  if (!rrs_to_send) {
+    /* This case is most common */
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Nothing to answer\r\n"));
+    return;
+  }
+
+  reply.flags =  DNS_FLAG1_RESPONSE | DNS_FLAG1_AUTHORATIVE;
+
+  /* Detect if it's a legacy querier asking the question
+   * How to detect legacy DNS query? (RFC6762 section 6.7)
+   *  - source port != 5353
+   *  - a legacy query can only contain 1 question
+   */
+  if (pkt->source_port != LWIP_IANA_PORT_MDNS) {
+    if (pkt->questions == 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: request from legacy querier\r\n"));
+      reply.legacy_query = 1;
+      reply.tx_id = pkt->tx_id;
+      reply.cache_flush = 0;
+    }
+    else {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: ignore query if (src UDP port != 5353) && (!= legacy query)\r\n"));
+      return;
+    }
+  }
+  else {
+    reply.cache_flush = 1;
+  }
+
+  /* Delaying response.
+   * Always delay the response, unicast or multicast, except when:
+   *  - Answering to a single question with a unique answer (RFC6762 section 6)
+   *  - Answering to a probe query via unicast (RFC6762 section 6)
+   *
+   * unique answer? -> not if it includes service type or name ptr's
+   */
+  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
+    shared_answer |= (reply.serv_replies[i] &
+                      (REPLY_SERVICE_TYPE_PTR | REPLY_SERVICE_NAME_PTR));
+  }
+  if (((pkt->questions == 1) && (!shared_answer)) || reply.probe_query_recv) {
+    delay_response = 0;
+  }
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: response %s delayed\r\n", (delay_response ? "randomly" : "not")));
+
+  /* Unicast / multicast response:
+   * Answering to (m)DNS querier via unicast response.
+   * When:
+   *  a) Unicast reply requested && recently multicasted 1/4ttl (RFC6762 section 5.4)
+   *  b) Direct unicast query to port 5353 (RFC6762 section 5.5)
+   *  c) Reply to Legacy DNS querier (RFC6762 section 6.7)
+   *  d) A probe message is received (RFC6762 section 6)
+   */
+
+#if LWIP_IPV6
+  if ((IP_IS_V6_VAL(pkt->source_addr) && mdns->ipv6.multicast_timeout_25TTL)) {
+    listen_to_QU_bit = 1;
+  }
+#endif
+#if LWIP_IPV4
+  if ((IP_IS_V4_VAL(pkt->source_addr) && mdns->ipv4.multicast_timeout_25TTL)) {
+    listen_to_QU_bit = 1;
+  }
+#endif
+  if (   (reply.unicast_reply_requested && listen_to_QU_bit)
+      || pkt->recv_unicast
+      || reply.legacy_query
+      || reply.probe_query_recv ) {
+    send_unicast = 1;
+  }
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: send response via %s\r\n", (send_unicast ? "unicast" : "multicast")));
+
+  /* Send out or put on waiting list */
+  if (delay_response) {
+    if (send_unicast) {
+#if LWIP_IPV6
+      /* Add answers to IPv6 waiting list if:
+       *  - it's a IPv6 incoming packet
+       *  - no message is in it yet
+       */
+      if (IP_IS_V6_VAL(pkt->source_addr) && !mdns->ipv6.unicast_msg_in_use) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to unicast IPv6 waiting list\r\n"));
+        SMEMCPY(&mdns->ipv6.delayed_msg_unicast.dest_addr, &pkt->source_addr, sizeof(ip_addr_t));
+        mdns->ipv6.delayed_msg_unicast.dest_port = pkt->source_port;
+
+        mdns_add_msg_to_delayed(&mdns->ipv6.delayed_msg_unicast, &reply);
+
+        mdns_set_timeout(netif, MDNS_RESPONSE_DELAY, mdns_send_unicast_msg_delayed_ipv6,
+                         &mdns->ipv6.unicast_msg_in_use);
+      }
+#endif
+#if LWIP_IPV4
+      /* Add answers to IPv4 waiting list if:
+       *  - it's a IPv4 incoming packet
+       *  - no message is in it yet
+       */
+      if (IP_IS_V4_VAL(pkt->source_addr) && !mdns->ipv4.unicast_msg_in_use) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to unicast IPv4 waiting list\r\n"));
+        SMEMCPY(&mdns->ipv4.delayed_msg_unicast.dest_addr, &pkt->source_addr, sizeof(ip_addr_t));
+        mdns->ipv4.delayed_msg_unicast.dest_port = pkt->source_port;
+
+        mdns_add_msg_to_delayed(&mdns->ipv4.delayed_msg_unicast, &reply);
+
+        mdns_set_timeout(netif, MDNS_RESPONSE_DELAY, mdns_send_unicast_msg_delayed_ipv4,
+                         &mdns->ipv4.unicast_msg_in_use);
+      }
+#endif
+    }
+    else {
+#if LWIP_IPV6
+      /* Add answers to IPv6 waiting list if:
+       *  - it's a IPv6 incoming packet
+       *  - and the 1 second timeout is passed (RFC6762 section 6)
+       */
+      if (IP_IS_V6_VAL(pkt->source_addr) && !mdns->ipv6.multicast_timeout) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to multicast IPv6 waiting list\r\n"));
+
+        mdns_add_msg_to_delayed(&mdns->ipv6.delayed_msg_multicast, &reply);
+
+        mdns_set_timeout(netif, MDNS_RESPONSE_DELAY, mdns_send_multicast_msg_delayed_ipv6,
+                         &mdns->ipv6.multicast_msg_waiting);
+      }
+#endif
+#if LWIP_IPV4
+      /* Add answers to IPv4 waiting list if:
+       *  - it's a IPv4 incoming packet
+       *  - and the 1 second timeout is passed (RFC6762 section 6)
+       */
+      if (IP_IS_V4_VAL(pkt->source_addr) && !mdns->ipv4.multicast_timeout) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to multicast IPv4 waiting list\r\n"));
+
+        mdns_add_msg_to_delayed(&mdns->ipv4.delayed_msg_multicast, &reply);
+
+        mdns_set_timeout(netif, MDNS_RESPONSE_DELAY, mdns_send_multicast_msg_delayed_ipv4,
+                         &mdns->ipv4.multicast_msg_waiting);
+      }
+#endif
+    }
+  }
+  else {
+    if (send_unicast) {
+      /* Copy source IP/port to use when responding unicast */
+      SMEMCPY(&reply.dest_addr, &pkt->source_addr, sizeof(ip_addr_t));
+      reply.dest_port = pkt->source_port;
+      /* send answer directly via unicast */
+      res = mdns_send_outpacket(&reply, netif);
+      if (res != ERR_OK) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Unicast answer could not be send\r\n"));
+      }
+      else {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Unicast answer send successfully\r\n"));
+      }
+      return;
+    }
+    else {
+      /* Set IP/port to use when responding multicast */
+#if LWIP_IPV6
+      if (IP_IS_V6_VAL(pkt->source_addr)) {
+        if (mdns->ipv6.multicast_timeout) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: we just multicasted, ignore question\r\n"));
+          return;
+        }
+        SMEMCPY(&reply.dest_addr, &v6group, sizeof(ip_addr_t));
+      }
+#endif
+#if LWIP_IPV4
+      if (IP_IS_V4_VAL(pkt->source_addr)) {
+        if (mdns->ipv4.multicast_timeout) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: we just multicasted, ignore question\r\n"));
+          return;
+        }
+        SMEMCPY(&reply.dest_addr, &v4group, sizeof(ip_addr_t));
+      }
+#endif
+      reply.dest_port = LWIP_IANA_PORT_MDNS;
+      /* send answer directly via multicast */
+      res = mdns_send_outpacket(&reply, netif);
+      if (res != ERR_OK) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Multicast answer could not be send\r\n"));
+      }
+      else {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Multicast answer send successfully\r\n"));
+#if LWIP_IPV6
+        if (IP_IS_V6_VAL(pkt->source_addr)) {
+          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
+                           &mdns->ipv6.multicast_timeout);
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
+          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
+                           &mdns->ipv6.multicast_timeout_25TTL);
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
+        }
+#endif
+#if LWIP_IPV4
+        if (IP_IS_V4_VAL(pkt->source_addr)) {
+          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
+                           &mdns->ipv4.multicast_timeout);
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
+          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
+                           &mdns->ipv4.multicast_timeout_25TTL);
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
+        }
+#endif
+      }
+      return;
+    }
+  }
 }
 
 /**
@@ -746,7 +1098,7 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
     struct mdns_answer ans;
     err_t res;
 
-    res = mdns_read_answer(pkt, &ans);
+    res = mdns_read_answer(pkt, &ans, &pkt->answers_left);
     if (res != ERR_OK) {
       LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping response packet\n"));
       return;
@@ -831,7 +1183,9 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   packet.parse_offset = offset;
   packet.tx_id = lwip_ntohs(hdr.id);
   packet.questions = packet.questions_left = lwip_ntohs(hdr.numquestions);
-  packet.answers = packet.answers_left = lwip_ntohs(hdr.numanswers) + lwip_ntohs(hdr.numauthrr) + lwip_ntohs(hdr.numextrarr);
+  packet.answers = packet.answers_left = lwip_ntohs(hdr.numanswers);
+  packet.authoritative = packet.authoritative_left = lwip_ntohs(hdr.numauthrr);
+  packet.additional = packet.additional_left = lwip_ntohs(hdr.numextrarr);
 
 #if LWIP_IPV6
   if (IP_IS_V6(ip_current_dest_addr())) {
@@ -1005,6 +1359,19 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname)
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
   mdns->probes_sent = 0;
   mdns->probing_state = MDNS_PROBING_NOT_STARTED;
+
+  /* Init delayed message structs with address and port */
+#if LWIP_IPV4
+  mdns->ipv4.delayed_msg_multicast.dest_port = LWIP_IANA_PORT_MDNS;
+  SMEMCPY(&mdns->ipv4.delayed_msg_multicast.dest_addr, &v4group,
+            sizeof(ip_addr_t));
+#endif
+
+#if LWIP_IPV6
+  mdns->ipv6.delayed_msg_multicast.dest_port = LWIP_IANA_PORT_MDNS;
+  SMEMCPY(&mdns->ipv6.delayed_msg_multicast.dest_addr, &v6group,
+            sizeof(ip_addr_t));
+#endif
 
   /* Join multicast groups */
 #if LWIP_IPV4
@@ -1256,10 +1623,22 @@ mdns_resp_announce(struct netif *netif)
     /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
     mdns_announce(netif, &v6group);
+    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
+                     &mdns->ipv6.multicast_timeout);
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
+    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
+                     &mdns->ipv6.multicast_timeout_25TTL);
+    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
 #endif
 #if LWIP_IPV4
     if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
       mdns_announce(netif, &v4group);
+      mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
+                       &mdns->ipv4.multicast_timeout);
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
+      mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
+                       &mdns->ipv4.multicast_timeout_25TTL);
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
     }
 #endif
   } /* else: ip address changed while probing was ongoing? @todo reset counter to restart? */
