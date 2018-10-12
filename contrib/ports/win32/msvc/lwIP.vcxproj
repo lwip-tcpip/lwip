@@ -281,7 +281,7 @@
     <ClCompile Include="..\..\..\..\src\apps\snmp\snmp_snmpv2_framework.c" />
     <ClCompile Include="..\..\..\..\src\apps\snmp\snmp_snmpv2_usm.c" />
     <ClCompile Include="..\..\..\..\src\apps\sntp\sntp.c" />
-    <ClCompile Include="..\..\..\..\src\apps\tftp\tftp_server.c" />
+    <ClCompile Include="..\..\..\..\src\apps\tftp\tftp.c" />
     <ClCompile Include="..\..\..\..\src\core\altcp.c" />
     <ClCompile Include="..\..\..\..\src\core\altcp_alloc.c" />
     <ClCompile Include="..\..\..\..\src\core\altcp_tcp.c" />
@@ -300,6 +300,7 @@
     <ClCompile Include="..\..\..\..\src\core\tcp_in.c" />
     <ClCompile Include="..\..\..\..\src\core\tcp_out.c" />
     <ClCompile Include="..\..\..\..\src\core\udp.c" />
+    <ClCompile Include="..\..\..\..\src\core\ipv4\acd.c" />
     <ClCompile Include="..\..\..\..\src\core\ipv4\autoip.c" />
     <ClCompile Include="..\..\..\..\src\core\ipv4\dhcp.c" />
     <ClCompile Include="..\..\..\..\src\core\ipv4\etharp.c" />
@@ -428,6 +429,8 @@
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\snmp_snmpv2_usm.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\sntp.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\sntp_opts.h" />
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_client.h" />
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_common.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_opts.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_server.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\errno.h" />
@@ -443,6 +446,7 @@
     <ClInclude Include="..\..\..\..\src\include\lwip\priv\sockets_priv.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\priv\tcpip_priv.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\priv\tcp_priv.h" />
+    <ClInclude Include="..\..\..\..\src\include\lwip\acd.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\api.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\arch.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\autoip.h" />
@@ -548,6 +552,7 @@
     <ClInclude Include="..\..\..\..\src\include\lwip\timeouts.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_opts.h" />
+    <ClInclude Include="..\..\..\..\src\include\lwip\prot\acd.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\prot\autoip.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\prot\dhcp.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\prot\dns.h" />

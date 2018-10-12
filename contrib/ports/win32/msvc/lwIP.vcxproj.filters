@@ -226,6 +226,9 @@
     <ClCompile Include="..\..\..\..\src\core\udp.c">
       <Filter>src\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\src\core\ipv4\acd.c">
+      <Filter>src\core\ipv4</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\..\src\core\ipv4\autoip.c">
       <Filter>src\core\ipv4</Filter>
     </ClCompile>
@@ -463,7 +466,7 @@
     <ClCompile Include="..\..\..\..\doc\NO_SYS_SampleCode.c">
       <Filter>doc</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\src\apps\tftp\tftp_server.c">
+    <ClCompile Include="..\..\..\..\src\apps\tftp\tftp.c">
       <Filter>src\apps\tftp</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\src\apps\mqtt\mqtt.c">
@@ -539,6 +542,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\sntp_opts.h">
       <Filter>src\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\lwip\acd.h">
+      <Filter>src\include\lwip</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\include\lwip\api.h">
       <Filter>src\include\lwip</Filter>
@@ -858,6 +864,9 @@
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_opts.h">
       <Filter>src\include\lwip\apps</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\lwip\prot\acd.h">
+      <Filter>src\include\lwip\prot</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\..\src\include\lwip\prot\autoip.h">
       <Filter>src\include\lwip\prot</Filter>
     </ClInclude>
@@ -911,6 +920,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\doc\doxygen\main_page.h">
       <Filter>doc\doxygen</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_client.h">
+      <Filter>src\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_common.h">
+      <Filter>src\include\lwip\apps</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\tftp_opts.h">
       <Filter>src\include\lwip\apps</Filter>
