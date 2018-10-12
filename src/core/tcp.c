@@ -991,7 +991,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
     pcb->rcv_wnd = rcv_wnd;
   } else {
     LWIP_ASSERT("tcp_recved: len overflowed TCP_WND_MAX",
-		rcv_wnd <= TCP_WND_MAX(pcb));
+                rcv_wnd <= TCP_WND_MAX(pcb));
     pcb->rcv_wnd = TCP_WND_MAX(pcb);
   }
 
