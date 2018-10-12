@@ -502,7 +502,7 @@ tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, con
 
   tftp_state.handle = handle;
   tftp_state.blknum = 1;
-  tftp_state.mode_write = 1; // We want to receive data
+  tftp_state.mode_write = 1; /* We want to receive data */
   send_request(addr, port, TFTP_RRQ, fname, mode);
   return ERR_OK;
 }
@@ -514,7 +514,7 @@ tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, con
 
   tftp_state.handle = handle;
   tftp_state.blknum = 1;
-  tftp_state.mode_write = 0; // We want to send data
+  tftp_state.mode_write = 0; /* We want to send data */
   send_request(addr, port, TFTP_WRQ, fname, mode);
   return ERR_OK;
 }
