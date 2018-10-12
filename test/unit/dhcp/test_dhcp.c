@@ -402,16 +402,17 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
         }
         break;
       }
-#if DHCP_TEST_NUM_ARP_FRAMES > 0
     case 3:
-#if DHCP_TEST_NUM_ARP_FRAMES > 1
+#if DHCP_TEST_NUM_ARP_FRAMES > 0
     case 4:
-#if DHCP_TEST_NUM_ARP_FRAMES > 2
+#if DHCP_TEST_NUM_ARP_FRAMES > 1
     case 5:
-#if DHCP_TEST_NUM_ARP_FRAMES > 3
+#if DHCP_TEST_NUM_ARP_FRAMES > 2
     case 6:
-#if DHCP_TEST_NUM_ARP_FRAMES > 4
+#if DHCP_TEST_NUM_ARP_FRAMES > 3
     case 7:
+#if DHCP_TEST_NUM_ARP_FRAMES > 4
+    case 8:
 #endif
 #endif
 #endif
@@ -426,7 +427,7 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
         break;
       }
 #endif
-    case 3 + DHCP_TEST_NUM_ARP_FRAMES:
+    case 4 + DHCP_TEST_NUM_ARP_FRAMES:
       {
         const u8_t fake_arp[6] = { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xab };
         const u8_t ipproto[] = { 0x08, 0x00 };
@@ -850,7 +851,7 @@ START_TEST(test_dhcp_relayed)
     tick_lwip();
   }
 
-  fail_unless(txpacket == (5 + DHCP_TEST_NUM_ARP_FRAMES), "TX %d packets, expected %d", txpacket, (5 + DHCP_TEST_NUM_ARP_FRAMES));
+  fail_unless(txpacket == (4 + DHCP_TEST_NUM_ARP_FRAMES), "TX %d packets, expected %d", txpacket, (5 + DHCP_TEST_NUM_ARP_FRAMES));
 
   tcase = TEST_NONE;
   dhcp_stop(&net_test);
@@ -1092,10 +1093,10 @@ dhcp_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_dhcp),
-    TESTFUNC(test_dhcp_nak)/*,
+    TESTFUNC(test_dhcp_nak),
     TESTFUNC(test_dhcp_relayed),
     TESTFUNC(test_dhcp_nak_no_endmarker),
-    TESTFUNC(test_dhcp_invalid_overload)*/
+    TESTFUNC(test_dhcp_invalid_overload)
   };
   return create_suite("DHCP", tests, sizeof(tests)/sizeof(testfunc), dhcp_setup, dhcp_teardown);
 }
