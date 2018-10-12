@@ -1,0 +1,35 @@
+language: c
+os: linux
+sudo: false
+
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - check
+            - libsubunit-dev
+            - gcc-5
+      env: COMPILER=gcc-5
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+          packages:
+            - check
+            - libsubunit-dev
+            - clang-3.8
+      env: COMPILER=clang-3.8
+
+addons:
+  apt:
+    packages:
+      - check
+      - libsubunit-dev
+
+script: ./test.sh
