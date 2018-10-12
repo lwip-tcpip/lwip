@@ -76,12 +76,28 @@
 #define ACD_TICKS_PER_SECOND  (1000 / ACD_TMR_INTERVAL)
 
 /* Define good random function (LWIP_RAND) in lwipopts.h */
-#define ACD_RANDOM_PROBE_WAIT     (LWIP_RAND() % \
-                                  (PROBE_WAIT * ACD_TICKS_PER_SECOND))
+#ifdef LWIP_RAND
+#define LWIP_ACD_RAND(netif, acd)    LWIP_RAND()
+#else /* LWIP_RAND */
+#ifdef LWIP_AUTOIP_RAND
+#include "lwip/autoip.h"
+#define LWIP_ACD_RAND(netif, acd)    LWIP_AUTOIP_RAND(netif) /* for backwards compatibility */
+#else
+#define LWIP_ACD_RAND(netif, acd) ((((u32_t)((netif->hwaddr[5]) & 0xff) << 24) | \
+                                    ((u32_t)((netif->hwaddr[3]) & 0xff) << 16) | \
+                                    ((u32_t)((netif->hwaddr[2]) & 0xff) << 8) | \
+                                    ((u32_t)((netif->hwaddr[4]) & 0xff))) + \
+                                    (acd->sent_num))
+#endif /* LWIP_AUTOIP_RAND */
+#endif /* LWIP_RAND */
 
-#define ACD_RANDOM_PROBE_INTERVAL ((LWIP_RAND() % ((PROBE_MAX - PROBE_MIN) \
-                                   * ACD_TICKS_PER_SECOND)) + \
-                                   (PROBE_MIN * ACD_TICKS_PER_SECOND ))
+
+#define ACD_RANDOM_PROBE_WAIT(netif, acd) (LWIP_ACD_RAND(netif, acd) % \
+                                    (PROBE_WAIT * ACD_TICKS_PER_SECOND))
+
+#define ACD_RANDOM_PROBE_INTERVAL(netif, acd) ((LWIP_ACD_RAND(netif, acd) % \
+                                    ((PROBE_MAX - PROBE_MIN) * ACD_TICKS_PER_SECOND)) + \
+                                    (PROBE_MIN * ACD_TICKS_PER_SECOND ))
 
 /* Function definitions */
 static void acd_restart(struct netif *netif, struct acd *acd);
@@ -138,6 +154,7 @@ acd_start(struct netif *netif, struct acd *acd, ip4_addr_t ipaddr)
 {
   err_t result = ERR_OK;
 
+  LWIP_UNUSED_ARG(netif);
   LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("acd_start(netif=%p) %c%c%"U16_F"\n",
               (void *)netif, netif->name[0],
@@ -149,7 +166,7 @@ acd_start(struct netif *netif, struct acd *acd, ip4_addr_t ipaddr)
   ip4_addr_copy(acd->ipaddr, ipaddr);
   acd->state = ACD_STATE_PROBE_WAIT;
 
-  acd->ttw = (u16_t)(ACD_RANDOM_PROBE_WAIT);
+  acd->ttw = (u16_t)(ACD_RANDOM_PROBE_WAIT(netif, acd));
 
   return result;
 }
@@ -229,7 +246,7 @@ acd_tmr(void)
               acd->ttw = (u16_t)(ANNOUNCE_WAIT * ACD_TICKS_PER_SECOND);
             } else {
               /* calculate time to wait to next probe */
-              acd->ttw = (u16_t)(ACD_RANDOM_PROBE_INTERVAL);
+              acd->ttw = (u16_t)(ACD_RANDOM_PROBE_INTERVAL(netif, acd));
             }
           }
           break;
