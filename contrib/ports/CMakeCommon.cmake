@@ -1,4 +1,6 @@
-include_guard(GLOBAL)
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
+    include_guard(GLOBAL)
+endif()
 
 set(LWIP_CONTRIB_DIR ${LWIP_DIR}/contrib)
 
