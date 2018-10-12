@@ -13,7 +13,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darw
   add_subdirectory(${LWIP_DIR}/contrib/ports/unix/example_app)
 else()
   message(WARNING "Host ${CMAKE_SYSTEM_NAME} is not supported to build example_app")
-  include(src/Filelists.cmake)
 endif()
 
 # Source package generation
@@ -27,5 +26,8 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME "lwip-${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MI
 include(CPack)
 
 # Target for package generation
+if ("${lwipcore_SRCS}" STREQUAL "")
+  include(src/Filelists.cmake)
+endif()
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 add_dependencies(dist lwipdocs)
