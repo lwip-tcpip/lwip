@@ -30,6 +30,7 @@ addons:
   apt:
     packages:
       - check
+      - cmake
       - libsubunit-dev
 
 script: ./test.sh

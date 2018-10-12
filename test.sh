@@ -12,4 +12,16 @@ if [ $ERR != 0 ]; then
        echo "unittests build failed"
        exit 33
 fi
-make check
+make check -j 4
+
+cd ../../../../
+
+mkdir build
+cd build
+cmake ..
+ERR=$?
+if [ $ERR != 0 ]; then
+       echo "cmake failed"
+       exit 33
+fi
+cmake --build .
