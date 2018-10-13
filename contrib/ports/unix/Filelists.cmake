@@ -12,8 +12,6 @@ if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
     include_guard(GLOBAL)
 endif()
 
-include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
-
 set(lwipcontribportunix_SRCS
     ${LWIP_CONTRIB_DIR}/ports/unix/port/sys_arch.c
     ${LWIP_CONTRIB_DIR}/ports/unix/port/perf.c

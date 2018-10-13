@@ -12,8 +12,6 @@ if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
     include_guard(GLOBAL)
 endif()
 
-include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
-
 set(lwipcontribexamples_SRCS
     ${LWIP_CONTRIB_DIR}/examples/httpd/fs_example/fs_example.c
     ${LWIP_CONTRIB_DIR}/examples/httpd/ssi_example/ssi_example.c

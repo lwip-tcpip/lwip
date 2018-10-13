@@ -12,8 +12,6 @@ if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
     include_guard(GLOBAL)
 endif()
 
-include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
-
 set(LWIP_VERSION_MAJOR    "2")
 set(LWIP_VERSION_MINOR    "2")
 set(LWIP_VERSION_REVISION "0")

@@ -10,14 +10,14 @@ if [ $ERR != 0 ]; then
 fi
 make check -j 4
 
-#cd ../../../../
+cd ../../../../
 
-#mkdir build
-#cd build
-#cmake ..
-#ERR=$?
-#if [ $ERR != 0 ]; then
-#       echo "cmake failed"
-#       exit 33
-#fi
-#cmake --build .
+mkdir build
+cd build
+cmake ..
+ERR=$?
+if [ $ERR != 0 ]; then
+       echo "cmake failed"
+       exit 33
+fi
+cmake --build .
