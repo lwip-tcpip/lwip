@@ -59,5 +59,8 @@ typedef struct sys_mbox * sys_mbox_t;
 struct sys_thread;
 typedef struct sys_thread * sys_thread_t;
 
+#define LWIP_EXAMPLE_APP_ABORT() lwip_unix_keypressed()
+int lwip_unix_keypressed(void);
+
 #endif /* LWIP_ARCH_SYS_ARCH_H */
 
