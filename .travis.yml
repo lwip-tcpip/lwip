@@ -4,7 +4,7 @@ sudo: false
 
 matrix:
   include:
-    - compiler: gcc
+    - compiler: gcc-7
       addons:
         apt:
           sources:
@@ -13,8 +13,10 @@ matrix:
             - check
             - libsubunit-dev
             - gcc-7
-      env: COMPILER=gcc-7
-    - compiler: clang
+      env:
+        - LSAN_OPTIONS=verbosity=1:log_threads=1
+
+    - compiler: clang-6.0
       addons:
         apt:
           sources:
@@ -24,7 +26,8 @@ matrix:
             - check
             - libsubunit-dev
             - clang-6.0
-      env: COMPILER=clang-6.0
+      env:
+        - LSAN_OPTIONS=verbosity=1:log_threads=1
 
 addons:
   apt:

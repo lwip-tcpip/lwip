@@ -1,9 +1,5 @@
 #!/bin/bash
 
-if [ "$COMPILER" ];
-then
-	export CC=$COMPILER
-fi
 cd contrib/ports/unix/check
 #build and run unit tests
 make clean all
