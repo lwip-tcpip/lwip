@@ -12,19 +12,19 @@ matrix:
           packages:
             - check
             - libsubunit-dev
-            - gcc-5
-      env: COMPILER=gcc-5
+            - gcc-7
+      env: COMPILER=gcc-7
     - compiler: clang
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
+            - llvm-toolchain-trusty-6.0
           packages:
             - check
             - libsubunit-dev
-            - clang-3.8
-      env: COMPILER=clang-3.8
+            - clang-6.0
+      env: COMPILER=clang-6.0
 
 addons:
   apt:
