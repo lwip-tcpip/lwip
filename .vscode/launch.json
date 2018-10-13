@@ -22,12 +22,12 @@
                 }
             ],
             "linux": {
-                "cwd": "${workspaceFolder}/contrib/ports/unix/example_app/build",
-                "program": "${workspaceFolder}/contrib/ports/unix/example_app/build/example_app",
+                "cwd": "${workspaceFolder}/build/contrib/ports/unix/example_app",
+                "program": "${workspaceFolder}/build/contrib/ports/unix/example_app/example_app",
             },
             "windows": {
-                "cwd": "${workspaceFolder}/contrib/ports/win32/example_app/build",
-                "program": "${workspaceFolder}/contrib/ports/win32/example_app/build/example_app",
+                "cwd": "${workspaceFolder}/build/contrib/ports/win32/example_app",
+                "program": "${workspaceFolder}/build/contrib/ports/win32/example_app/example_app",
             }
         }
     ]
