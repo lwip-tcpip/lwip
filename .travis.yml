@@ -1,6 +1,6 @@
 language: c
 os: linux
-sudo: false
+sudo: required
 
 matrix:
   include:
