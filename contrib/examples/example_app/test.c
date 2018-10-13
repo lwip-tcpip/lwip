@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2001,2002 Florian Schulze.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  * 3. Neither the name of the authors nor the names of the contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -86,16 +86,6 @@
 
 #include "default_netif.h"
 
-static u8_t
-keypressed(void)
-{
-  struct timeval tv = { 0L, 0L };
-  fd_set fds;
-  FD_ZERO(&fds);
-  FD_SET(0, &fds);
-  return select(1, &fds, NULL, NULL, &tv);
-}
-
 #if NO_SYS
 /* ... then we need information about the timer intervals: */
 #include "lwip/ip4_frag.h"
@@ -116,6 +106,10 @@ keypressed(void)
 
 /* include the port-dependent configuration */
 #include "lwipcfg.h"
+
+#ifndef LWIP_EXAMPLE_APP_ABORT
+#define LWIP_EXAMPLE_APP_ABORT() 0
+#endif
 
 /** Define this to 1 to enable a port-specific ethernet interface as default interface. */
 #ifndef USE_DEFAULT_ETH_NETIF
@@ -375,7 +369,7 @@ test_netif_init(void)
 #endif
 #if LWIP_IPV6
   netif_create_ip6_linklocal_address(netif_default, 1);
-#if LWIP_IPV6_AUTOCONFIG
+#if LWIP_IPV6_AUTOCONFIG 
   netif_default->ip6_autoconfig_enabled = 1;
 #endif
   printf("ip6 linklocal address: %s\n", ip6addr_ntoa(netif_ip6_addr(netif_default, 0)));
@@ -496,7 +490,7 @@ dns_dorequest(void *arg)
   const char* dnsname = "3com.com";
   ip_addr_t dnsresp;
   LWIP_UNUSED_ARG(arg);
-
+ 
   if (dns_gethostbyname(dnsname, &dnsresp, dns_found, 0) == ERR_OK) {
     dns_found(dnsname, &dnsresp, 0);
   }
@@ -663,7 +657,7 @@ main_loop(void)
 #endif
 
   /* MAIN LOOP for driver update (and timers if NO_SYS) */
-  while (!keypressed()) {
+  while (!LWIP_EXAMPLE_APP_ABORT()) {
 #if NO_SYS
     /* handle timers (already done in tcpip.c when NO_SYS=0) */
     sys_check_timeouts();
