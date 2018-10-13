@@ -14,7 +14,7 @@ matrix:
             - libsubunit-dev
             - gcc-7
       env:
-        - LSAN_OPTIONS=verbosity=1:log_threads=1
+        - LSAN_OPTIONS=verbosity=1
 
     - compiler: clang-6.0
       addons:
@@ -27,7 +27,7 @@ matrix:
             - libsubunit-dev
             - clang-6.0
       env:
-        - LSAN_OPTIONS=verbosity=1:log_threads=1
+        - LSAN_OPTIONS=verbosity=1
 
 addons:
   apt:
