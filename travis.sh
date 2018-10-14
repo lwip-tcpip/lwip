@@ -15,7 +15,7 @@ make check -j 4
 # Build example_app using cmake, this tests the CMake toolchain
 cd ../../../../
 # Copy lwipcfg for example app
-cp contrib/examples/example_app/lwipcfg.h.example contrib/examples/example_app/lwipcfg.h
+cp contrib/examples/example_app/lwipcfg.h.travis contrib/examples/example_app/lwipcfg.h
 
 # Generate CMake
 mkdir build
