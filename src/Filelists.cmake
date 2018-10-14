@@ -245,7 +245,6 @@ set(lwipallapps_SRCS
     ${lwipnetbios_SRCS}
     ${lwiptftp_SRCS}
     ${lwipmqtt_SRCS}
-    ${lwipmbedtls_SRCS}
 )
 
 # Generate lwip/init.h (version info)
@@ -282,3 +281,8 @@ add_library(lwipallapps EXCLUDE_FROM_ALL ${lwipallapps_SRCS})
 target_compile_options(lwipallapps PRIVATE ${LWIP_COMPILER_FLAGS})
 target_compile_definitions(lwipallapps PRIVATE ${LWIP_DEFINITIONS}  ${LWIP_MBEDTLS_DEFINITIONS})
 target_include_directories(lwipallapps PRIVATE ${LWIP_INCLUDE_DIRS} ${LWIP_MBEDTLS_INCLUDE_DIRS})
+
+add_library(lwipmbedtls EXCLUDE_FROM_ALL ${lwipmbedtls_SRCS})
+target_compile_options(lwipmbedtls PRIVATE ${LWIP_COMPILER_FLAGS})
+target_compile_definitions(lwipmbedtls PRIVATE ${LWIP_DEFINITIONS}  ${LWIP_MBEDTLS_DEFINITIONS})
+target_include_directories(lwipmbedtls PRIVATE ${LWIP_INCLUDE_DIRS} ${LWIP_MBEDTLS_INCLUDE_DIRS})
