@@ -16,16 +16,16 @@ matrix:
       env:
         - LSAN_OPTIONS=verbosity=1:log_threads=1
 
-    - compiler: clang-6.0
+    - compiler: clang-7
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-6.0
+            - llvm-toolchain-trusty-7
           packages:
             - check
             - libsubunit-dev
-            - clang-6.0
+            - clang-7
       env:
         - LSAN_OPTIONS=verbosity=1:log_threads=1
 
