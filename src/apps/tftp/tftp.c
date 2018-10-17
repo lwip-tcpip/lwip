@@ -503,7 +503,7 @@ void tftp_cleanup(void)
   memset(&tftp_state, 0, sizeof(tftp_state));
 }
 
-const char *
+static const char *
 mode_to_string(enum tftp_transfer_mode mode)
 {
   if (mode == TFTP_MODE_OCTET) {
