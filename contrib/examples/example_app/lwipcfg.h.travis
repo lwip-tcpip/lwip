@@ -62,6 +62,7 @@
  * otherwise the raw api server will be used. */
 /*#define LWIP_TCPECHO_APP_NETCONN   */
 #define LWIP_TFTP_APP                 1
+#define LWIP_TFTP_CLIENT_APP          1
 #define LWIP_UDPECHO_APP              1
 #define LWIP_LWIPERF_APP              1
 

@@ -576,7 +576,10 @@ apps_init(void)
   sntp_example_init();
 #endif
 #if LWIP_TFTP_APP
-  tftp_example_init();
+  tftp_example_init_server();
+#endif
+#if LWIP_TFTP_CLIENT_APP
+  tftp_example_init_client();
 #endif
 #if LWIP_LWIPERF_APP
   lwiperf_example_init();
