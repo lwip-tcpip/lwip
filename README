@@ -87,14 +87,16 @@ Self documentation of the source code is regularly extracted from the current
 Git sources and is available from this web page:
   http://www.nongnu.org/lwip/
 
-There is now a constantly growing wiki about lwIP at
-  http://lwip.wikia.com/wiki/LwIP_Wiki
-
 Also, there are mailing lists you can subscribe at
   http://savannah.nongnu.org/mail/?group=lwip
 plus searchable archives:
   http://lists.nongnu.org/archive/html/lwip-users/
   http://lists.nongnu.org/archive/html/lwip-devel/
+
+There is a wiki about lwIP at
+  http://lwip.wikia.com/wiki/LwIP_Wiki
+You might get questions answered there, but unfortunately, it is not as
+well maintained as it should be.
 
 lwIP was originally written by Adam Dunkels:
   http://dunkels.com/adam/
