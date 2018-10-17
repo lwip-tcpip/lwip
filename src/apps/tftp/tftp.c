@@ -503,26 +503,45 @@ void tftp_cleanup(void)
   memset(&tftp_state, 0, sizeof(tftp_state));
 }
 
+const char *
+mode_to_string(enum tftp_transfer_mode mode)
+{
+  if (mode == TFTP_MODE_OCTET) {
+    return "octet";
+  }
+  if (mode == TFTP_MODE_NETASCII) {
+    return "netascii";
+  }
+  if (mode == TFTP_MODE_BINARY) {
+    return "binary";
+  }
+  return NULL;
+}
+
 err_t
-tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode)
+tftp_get(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, enum tftp_transfer_mode mode)
 {
   LWIP_ERROR("TFTP client is not enabled (tftp_init)", (tftp_state.tftp_mode & LWIP_TFTP_MODE_CLIENT) != 0, return ERR_VAL);
+  LWIP_ERROR("tftp_get: invalid file name", fname != NULL, return ERR_VAL);
+  LWIP_ERROR("tftp_get: invalid mode", mode <= TFTP_MODE_BINARY, return ERR_VAL);
 
   tftp_state.handle = handle;
   tftp_state.blknum = 1;
   tftp_state.mode_write = 1; /* We want to receive data */
-  return send_request(addr, port, TFTP_RRQ, fname, mode);
+  return send_request(addr, port, TFTP_RRQ, fname, mode_to_string(mode));
 }
 
 err_t
-tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, const char* mode)
+tftp_put(void* handle, const ip_addr_t *addr, u16_t port, const char* fname, enum tftp_transfer_mode mode)
 {
   LWIP_ERROR("TFTP client is not enabled (tftp_init)", (tftp_state.tftp_mode & LWIP_TFTP_MODE_CLIENT) != 0, return ERR_VAL);
+  LWIP_ERROR("tftp_put: invalid file name", fname != NULL, return ERR_VAL);
+  LWIP_ERROR("tftp_put: invalid mode", mode <= TFTP_MODE_BINARY, return ERR_VAL);
 
   tftp_state.handle = handle;
   tftp_state.blknum = 1;
   tftp_state.mode_write = 0; /* We want to send data */
-  return send_request(addr, port, TFTP_WRQ, fname, mode);
+  return send_request(addr, port, TFTP_WRQ, fname, mode_to_string(mode));
 }
 
 #endif /* LWIP_UDP */
