@@ -20,7 +20,7 @@ cp contrib/examples/example_app/lwipcfg.h.travis contrib/examples/example_app/lw
 # Generate CMake
 mkdir build
 cd build
-/usr/local/bin/cmake ..
+/usr/local/bin/cmake .. -G Ninja
 
 # Build CMake
 ERR=$?
