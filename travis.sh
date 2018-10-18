@@ -25,7 +25,19 @@ cd build
 # Build CMake
 ERR=$?
 if [ $ERR != 0 ]; then
-       echo "cmake build failed"
+       echo "cmake GENERATE failed"
        exit 33
 fi
 /usr/local/bin/cmake --build . -- -j 4
+ERR=$?
+if [ $ERR != 0 ]; then
+       echo "cmake build failed"
+       exit 33
+fi
+
+/usr/local/bin/cmake --build . --target lwipdocs
+ERR=$?
+if [ $ERR != 0 ]; then
+       echo "lwIP documentation failed"
+       exit 33
+fi

@@ -28,4 +28,6 @@ include(CPack)
 # Generate docs before creating source package
 include(src/Filelists.cmake)
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-add_dependencies(dist lwipdocs)
+if (TARGET lwipdocs)
+  add_dependencies(dist lwipdocs)
+endif()

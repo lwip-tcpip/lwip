@@ -35,6 +35,7 @@ addons:
       - check
       - libsubunit-dev
       - ninja-build
+      - doxygen
 
 before_install:
   # Install cmake
