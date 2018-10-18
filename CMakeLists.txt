@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 
 project(lwIP)
 
@@ -13,7 +13,6 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darw
   add_subdirectory(${LWIP_DIR}/contrib/ports/unix/example_app)
 else()
   message(WARNING "Host ${CMAKE_SYSTEM_NAME} is not supported to build example_app")
-  include(src/Filelists.cmake)
 endif()
 
 # Source package generation
@@ -26,6 +25,6 @@ set(CPACK_SOURCE_IGNORE_FILES "/build/;${CPACK_SOURCE_IGNORE_FILES};.git")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "lwip-${LWIP_VERSION_MAJOR}.${LWIP_VERSION_MINOR}.${LWIP_VERSION_REVISION}")
 include(CPack)
 
-# Target for package generation
-add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-#add_dependencies(dist lwipdocs)
+# Generate docs before creating source package
+include(src/Filelists.cmake)
+add_dependencies(package_source lwipdocs)
