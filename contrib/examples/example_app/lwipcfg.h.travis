@@ -43,31 +43,31 @@
 
 #define LWIP_CHARGEN_APP              1
 #define LWIP_DNS_APP                  1
-#define LWIP_HTTPD_APP                1
+#define LWIP_HTTPD_APP                LWIP_TCP
 /* Set this to 1 to use the netconn http server,
  * otherwise the raw api server will be used. */
 /*#define LWIP_HTTPD_APP_NETCONN     */
-#define LWIP_NETBIOS_APP              1
+#define LWIP_NETBIOS_APP              LWIP_IPV4 && LWIP_UDP
 #define LWIP_NETIO_APP                1
-#define LWIP_MDNS_APP                 1
-#define LWIP_MQTT_APP                 1
+#define LWIP_MDNS_APP                 LWIP_UDP
+#define LWIP_MQTT_APP                 LWIP_TCP
 #define LWIP_PING_APP                 1
 #define LWIP_RTP_APP                  1
-#define LWIP_SHELL_APP                1
-#define LWIP_SNMP_APP                 1
-#define LWIP_SNTP_APP                 1
+#define LWIP_SHELL_APP                LWIP_TCP
+#define LWIP_SNMP_APP                 LWIP_UDP
+#define LWIP_SNTP_APP                 LWIP_UDP
 #define LWIP_SOCKET_EXAMPLES_APP      1
-#define LWIP_TCPECHO_APP              1
+#define LWIP_TCPECHO_APP              LWIP_TCP
 /* Set this to 1 to use the netconn tcpecho server,
  * otherwise the raw api server will be used. */
 /*#define LWIP_TCPECHO_APP_NETCONN   */
-#define LWIP_TFTP_APP                 1
-#define LWIP_TFTP_CLIENT_APP          1
-#define LWIP_UDPECHO_APP              1
-#define LWIP_LWIPERF_APP              1
+#define LWIP_TFTP_APP                 LWIP_UDP
+#define LWIP_TFTP_CLIENT_APP          LWIP_UDP
+#define LWIP_UDPECHO_APP              LWIP_UDP
+#define LWIP_LWIPERF_APP              LWIP_TCP
 
-#define USE_DHCP    1
-#define USE_AUTOIP  1
+#define USE_DHCP                      LWIP_DHCP
+#define USE_AUTOIP                    LWIP_AUTOIP
 
 /* define this to your custom application-init function */
 /* #define LWIP_APP_INIT my_app_init() */

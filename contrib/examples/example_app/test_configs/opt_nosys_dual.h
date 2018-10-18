@@ -71,8 +71,7 @@
 #define LWIP_MULTICAST_PING             0
 #define LWIP_RAW                        0
 #define RAW_TTL                         (IP_DEFAULT_TTL)
-#define LWIP_DHCP                       0
-#define DHCP_DOES_ARP_CHECK             ((LWIP_DHCP) && (LWIP_ARP))
+#define LWIP_DHCP                       1
 #define LWIP_DHCP_CHECK_LINK_UP         0
 #define LWIP_DHCP_BOOTP_FILE            0
 #define LWIP_DHCP_GET_NTP_SRV           0
