@@ -41,3 +41,7 @@ if [ $ERR != 0 ]; then
        echo "lwIP documentation failed"
        exit 33
 fi
+
+cd ..
+cd contrib/ports/unix/example_app
+./iteropts.sh

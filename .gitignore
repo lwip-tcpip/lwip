@@ -3,6 +3,7 @@
 *.a
 *lwip_unittests.xml
 *.suo
+*.log
 .depend
 
 /doc/doxygen/output/html
@@ -16,7 +17,6 @@
 /contrib/examples/example_app/lwipcfg.h
 /contrib/examples/example_app/lwipopts_test.h
 
-/contrib/ports/unix/example_app/iteropts.log
 /contrib/ports/unix/example_app/build
 /contrib/ports/unix/example_app/example_app
 /contrib/ports/unix/example_app/makefsdata
