@@ -20,7 +20,7 @@ cp contrib/examples/example_app/lwipcfg.h.travis contrib/examples/example_app/lw
 # Generate CMake
 mkdir build
 cd build
-cmake ..
+/usr/local/bin/cmake ..
 
 # Build CMake
 ERR=$?
@@ -28,4 +28,4 @@ if [ $ERR != 0 ]; then
        echo "cmake build failed"
        exit 33
 fi
-cmake --build . -- -j 4
+/usr/local/bin/cmake --build . -- -j 4
