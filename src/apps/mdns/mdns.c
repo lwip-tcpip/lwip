@@ -1188,11 +1188,22 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   packet.authoritative = packet.authoritative_left = lwip_ntohs(hdr.numauthrr);
   packet.additional = packet.additional_left = lwip_ntohs(hdr.numextrarr);
 
+  /*  Source address check (RFC6762 section 11) -> for responses.
+   *  Source address check (RFC6762 section 5.5) -> for queries.
+   *  When the dest addr == multicast addr we know the packet originated on that
+   *  link. If not, we need to check the source address. We only accept queries
+   *  that originated on the link. Others are discarded.
+   */
 #if LWIP_IPV6
   if (IP_IS_V6(ip_current_dest_addr())) {
     /* instead of having one 'v6group' per netif, just compare zoneless here */
     if (!ip_addr_cmp_zoneless(ip_current_dest_addr(), &v6group)) {
       packet.recv_unicast = 1;
+
+      if (ip6_addr_ismulticast_global(ip_2_ip6(ip_current_src_addr()))
+          || ip6_addr_isglobal(ip_2_ip6(ip_current_src_addr()))) {
+        goto dealloc;
+      }
     }
   }
 #endif
@@ -1200,6 +1211,12 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   if (!IP_IS_V6(ip_current_dest_addr())) {
     if (!ip_addr_cmp(ip_current_dest_addr(), &v4group)) {
       packet.recv_unicast = 1;
+
+      if (!ip4_addr_netcmp(ip_2_ip4(ip_current_src_addr()),
+                          netif_ip4_addr(recv_netif),
+                          netif_ip4_netmask(recv_netif))){
+           goto dealloc;
+         }
     }
   }
 #endif
