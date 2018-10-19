@@ -1083,6 +1083,12 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
 {
   struct mdns_host* mdns = NETIF_TO_HOST(netif);
 
+  /* Ignore responses with a source port different from 5353
+   * (LWIP_IANA_PORT_MDNS) -> RFC6762 section 6 */
+  if (pkt->source_port != LWIP_IANA_PORT_MDNS) {
+    return;
+  }
+
   /* Ignore all questions */
   while (pkt->questions_left) {
     struct mdns_question q;
