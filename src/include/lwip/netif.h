@@ -248,14 +248,20 @@ typedef u8_t netif_addr_idx_t;
 #define NETIF_ADDR_IDX_MAX 0x7F
 #endif
 
+#if LWIP_NETIF_HWADDRHINT || LWIP_VLAN_PCP
+ #define LWIP_NETIF_USE_HINTS              1
+ struct netif_hint {
 #if LWIP_NETIF_HWADDRHINT
-#define LWIP_NETIF_USE_HINTS              1
-struct netif_hint {
-  netif_addr_idx_t addr_hint;
-};
-#else /* LWIP_NETIF_HWADDRHINT */
-#define LWIP_NETIF_USE_HINTS              0
-#endif /* LWIP_NETIF_HWADDRHINT */
+   u8_t addr_hint;
+#endif
+#if LWIP_VLAN_PCP
+  /** VLAN hader is set if this is >= 0 (but must be <= 0xFFFF) */
+  s32_t tci;
+#endif
+ };
+#else /* LWIP_NETIF_HWADDRHINT || LWIP_VLAN_PCP */
+ #define LWIP_NETIF_USE_HINTS              0
+#endif /* LWIP_NETIF_HWADDRHINT || LWIP_VLAN_PCP*/
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
@@ -348,7 +354,7 @@ struct netif {
   u8_t flags;
   /** descriptive abbreviation */
   char name[2];
-  /** number of this interface. Used for @ref if_api and @ref netifapi_netif, 
+  /** number of this interface. Used for @ref if_api and @ref netifapi_netif,
    * as well as for IPv6 zones */
   u8_t num;
 #if LWIP_IPV6_AUTOCONFIG
