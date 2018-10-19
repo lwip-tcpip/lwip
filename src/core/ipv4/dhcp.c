@@ -1479,6 +1479,7 @@ dhcp_parse_reply(struct pbuf *p, struct dhcp *dhcp)
   u8_t *options;
   u16_t offset;
   u16_t offset_max;
+  u16_t options_offset;
   u16_t options_idx;
   u16_t options_idx_max;
   struct pbuf *q;
@@ -1511,6 +1512,7 @@ dhcp_parse_reply(struct pbuf *p, struct dhcp *dhcp)
   options_idx_max = p->tot_len;
 again:
   q = p;
+  options_offset = options_idx;
   while ((q != NULL) && (options_idx >= q->len)) {
     options_idx = (u16_t)(options_idx - q->len);
     options_idx_max = (u16_t)(options_idx_max - q->len);
@@ -1584,7 +1586,7 @@ again:
       case (DHCP_OPTION_OVERLOAD):
         LWIP_ERROR("len == 1", len == 1, return ERR_VAL;);
         /* decode overload only in options, not in file/sname: invalid packet */
-        LWIP_ERROR("overload in file/sname", options_idx == DHCP_OPTIONS_OFS, return ERR_VAL;);
+        LWIP_ERROR("overload in file/sname", options_offset == DHCP_OPTIONS_OFS, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_OVERLOAD;
         break;
       case (DHCP_OPTION_MESSAGE_TYPE):
