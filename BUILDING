@@ -93,11 +93,11 @@ the lwIP root dir:
 
 - mkdir build
 - cd build
-- cmake <path to lwip dir>
-- cmake --build
+- cmake ..
+- cmake --build .
 
 The CMakeLists.txt will autoselect the correct port
-for your system.
+for your system (supported: Linux, Windows, Darwin).
 
 Makefile based build system
 ===========================
