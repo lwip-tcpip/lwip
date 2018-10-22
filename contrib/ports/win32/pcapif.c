@@ -895,7 +895,7 @@ pcapif_low_level_input(struct netif *netif, const void *packet, int packet_len)
   /* MAC filter: only let my MAC or non-unicast through (pcap receives loopback traffic, too) */
   if (memcmp(dest, &netif->hwaddr, ETH_HWADDR_LEN) &&
 #if PCAPIF_FILTER_GROUP_ADDRESSES
-    (memcmp(dest, ipv4mcast, 3) || ((dest->addr[3] & 0x80) != 0)) && 
+    (memcmp(dest, ipv4mcast, 3) || ((dest->addr[3] & 0x80) != 0)) &&
     memcmp(dest, ipv6mcast, 2) &&
     memcmp(dest, bcast, 6)
 #else /* PCAPIF_FILTER_GROUP_ADDRESSES */

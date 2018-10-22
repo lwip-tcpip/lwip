@@ -52,7 +52,7 @@ extern "C" {
 #endif
 
 struct netif;
-  
+
 /**
  * LWIP_IPV6_NUM_ROUTES: Number of IPV6 routes that can be kept in the static route table.
  */

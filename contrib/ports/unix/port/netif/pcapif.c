@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,21 +11,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -87,18 +87,18 @@ timeout(void *arg)
   struct pcapif *pcapif;
   struct pbuf *p;
   struct eth_hdr *ethhdr;
-  
+
   netif = (struct netif *)arg;
   pcapif = netif->state;
   ethhdr = (struct eth_hdr *)pcapif->pkt;
 
-  
+
   if (lwip_htons(ethhdr->type) != ETHTYPE_IP ||
      ip_lookup(pcapif->pkt + 14, netif)) {
-    
+
     /* We allocate a pbuf chain of pbufs from the pool. */
     p = pbuf_alloc(PBUF_LINK, pcapif->len, PBUF_POOL);
-    
+
     if (p != NULL) {
       pbuf_take(p, pcapif->pkt, pcapif->len);
 
@@ -137,19 +137,19 @@ callback(u_char *arg, const struct pcap_pkthdr *hdr, const u_char *pkt)
   struct netif *netif;
   struct pcapif *pcapif;
   u32_t time, lasttime;
-  
+
   netif = (struct netif *)arg;
   pcapif = netif->state;
 
   pcapif->len = hdr->len;
-  
+
   bcopy(pkt, pcapif->pkt, hdr->len);
 
   time = hdr->ts.tv_sec * 1000 + hdr->ts.tv_usec / 1000;
 
   lasttime = pcapif->lasttime;
   pcapif->lasttime = time;
-  
+
 
   if (lasttime == 0) {
     sys_timeout(1000, timeout, netif);
@@ -179,7 +179,7 @@ err_t
 pcapif_init(struct netif *netif)
 {
   struct pcapif *p;
-    
+
   p = malloc(sizeof(struct pcapif));
   if (p == NULL)
       return ERR_MEM;
@@ -198,8 +198,8 @@ pcapif_init(struct netif *netif)
     LWIP_ASSERT("Failed to create semaphore", 0);
   }
   p->p = NULL;
-  p->lasttime = 0; 
-  
+  p->lasttime = 0;
+
   sys_thread_new("pcapif_thread", pcapif_thread, netif, DEFAULT_THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
   return ERR_OK;
 }

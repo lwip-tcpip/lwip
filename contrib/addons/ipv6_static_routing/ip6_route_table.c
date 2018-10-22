@@ -223,7 +223,7 @@ ip6_get_gateway(struct netif *netif, const ip6_addr_t *dest)
   const int i = ip6_find_route_entry(dest);
 
   LWIP_UNUSED_ARG(netif);
-  
+
   if (i >= 0) {
     if (static_route_table[i].gateway != NULL) {
       ret_gw = static_route_table[i].gateway;

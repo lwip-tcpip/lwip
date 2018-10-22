@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2001,2002 Florian Schulze.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  * 3. Neither the name of the authors nor the names of the contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -369,7 +369,7 @@ test_netif_init(void)
 #endif
 #if LWIP_IPV6
   netif_create_ip6_linklocal_address(netif_default, 1);
-#if LWIP_IPV6_AUTOCONFIG 
+#if LWIP_IPV6_AUTOCONFIG
   netif_default->ip6_autoconfig_enabled = 1;
 #endif
   printf("ip6 linklocal address: %s\n", ip6addr_ntoa(netif_ip6_addr(netif_default, 0)));
@@ -490,7 +490,7 @@ dns_dorequest(void *arg)
   const char* dnsname = "3com.com";
   ip_addr_t dnsresp;
   LWIP_UNUSED_ARG(arg);
- 
+
   if (dns_gethostbyname(dnsname, &dnsresp, dns_found, 0) == ERR_OK) {
     dns_found(dnsname, &dnsresp, 0);
   }

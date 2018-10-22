@@ -22,13 +22,13 @@
 #define SIO_FIFO_DEBUG LWIP_DBG_OFF
 #endif
 
-u8_t fifoGet(fifo_t * fifo) 
+u8_t fifoGet(fifo_t * fifo)
 {
 	u8_t c;
 
 	sys_sem_wait(&fifo->sem);      /* enter critical section */
 
-	if (fifo->dataslot == fifo->emptyslot) 
+	if (fifo->dataslot == fifo->emptyslot)
 	{
             fifo->getWaiting = TRUE;    /* tell putFifo to signal us when data is available */
             sys_sem_signal(&fifo->sem);  /* leave critical section (allow input from serial port..) */
@@ -39,22 +39,22 @@ u8_t fifoGet(fifo_t * fifo)
 	c = fifo->data[fifo->dataslot++];
 	fifo->len--;
 
-	if (fifo->dataslot == FIFOSIZE) 
+	if (fifo->dataslot == FIFOSIZE)
 	{
-		fifo->dataslot = 0; 
+		fifo->dataslot = 0;
 	}
 	sys_sem_signal(&fifo->sem);    /* leave critical section */
 	return c;
 }
 
 
-s16_t fifoGetNonBlock(fifo_t * fifo) 
+s16_t fifoGetNonBlock(fifo_t * fifo)
 {
 	u16_t c;
 
 	sys_sem_wait(&fifo->sem);      /* enter critical section */
 
-	if (fifo->dataslot == fifo->emptyslot) 
+	if (fifo->dataslot == fifo->emptyslot)
 	{
             /* empty fifo */
 		c = -1;
@@ -64,9 +64,9 @@ s16_t fifoGetNonBlock(fifo_t * fifo)
 		c = fifo->data[fifo->dataslot++];
 		fifo->len--;
 
-		if (fifo->dataslot == FIFOSIZE) 
+		if (fifo->dataslot == FIFOSIZE)
 		{
-			fifo->dataslot = 0; 
+			fifo->dataslot = 0;
 		}
 	}
 	sys_sem_signal(&fifo->sem);    /* leave critical section */
@@ -74,7 +74,7 @@ s16_t fifoGetNonBlock(fifo_t * fifo)
 }
 
 
-void fifoPut(fifo_t * fifo, int fd) 
+void fifoPut(fifo_t * fifo, int fd)
 {
 	/* FIXME: mutex around struct data.. */
 	int cnt=0;
@@ -86,7 +86,7 @@ void fifoPut(fifo_t * fifo, int fd)
 	if ( fifo->emptyslot < fifo->dataslot )
 	{
 		cnt = read( fd, &fifo->data[fifo->emptyslot], fifo->dataslot - fifo->emptyslot );
-	} 
+	}
 	else
 	{
 		cnt = read( fd, &fifo->data[fifo->emptyslot], FIFOSIZE-fifo->emptyslot );

@@ -119,7 +119,7 @@ low_level_init(struct netif *netif)
   char buf[1024];
 #endif /* LWIP_IPV4 */
   char *preconfigured_tapif = getenv("PRECONFIGURED_TAPIF");
-  
+
   tapif = (struct tapif *)netif->state;
 
   /* Obtain MAC address from network interface. */
@@ -156,7 +156,7 @@ low_level_init(struct netif *netif)
       strncpy(ifr.ifr_name, preconfigured_tapif, sizeof(ifr.ifr_name));
     } else {
       strncpy(ifr.ifr_name, DEVTAP_DEFAULT_IF, sizeof(ifr.ifr_name));
-    } 
+    }
     ifr.ifr_name[sizeof(ifr.ifr_name)-1] = 0; /* ensure \0 termination */
 
     ifr.ifr_flags = IFF_TAP|IFF_NO_PI;
