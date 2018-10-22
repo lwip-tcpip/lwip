@@ -5,43 +5,33 @@
     "tasks": [
         {
             "label": "Build example_app",
-            "identifier": "build",
             "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
             "problemMatcher": "$gcc",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "linux": {
-                "command": "cd ${workspaceFolder}/build && cmake --build ."
-            },
-            "windows": {
-                "command": "cd ${workspaceFolder}/build; cmake --build ."
-            }
+            "command": "cmake --build ."
         },
         {
             "label": "Configure example_app",
             "type": "shell",
             "problemMatcher": "$gcc",
             "group": "build",
-            "linux": {
-                "command": "cd ${workspaceFolder} && mkdir build && cd build && cmake .."
-            },
-            "windows": {
-                "command": "cd ${workspaceFolder}; mkdir build; cd build;  cmake .."
-            }
+            "command": "cd ${workspaceFolder}; mkdir build; cd build; cmake .."
         },
         {
             "label": "Generate documentation",
             "type": "shell",
             "problemMatcher": [],
             "group": "none",
-            "linux": {
-                "command": "cd ${workspaceFolder}/build && cmake --build . --target lwipdocs"
+            "options": {
+                "cwd": "${workspaceFolder}/build"
             },
-            "windows": {
-                "command": "cd ${workspaceFolder}/build; cmake --build . --target lwipdocs"
-            },
+            "command": "cmake --build . --target lwipdocs"
         }
     ]
 }

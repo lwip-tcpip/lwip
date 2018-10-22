@@ -13,7 +13,7 @@
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
-            "preLaunchTask": "build",
+            "preLaunchTask": "Build example_app",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
