@@ -28,7 +28,7 @@ if [ $ERR != 0 ]; then
        echo "cmake GENERATE failed"
        exit 33
 fi
-/usr/local/bin/cmake --build . -- -j 4
+/usr/local/bin/cmake --build .
 ERR=$?
 if [ $ERR != 0 ]; then
        echo "cmake build failed"
