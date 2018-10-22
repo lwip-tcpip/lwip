@@ -895,7 +895,7 @@ netif_issue_reports(struct netif *netif, u8_t report_type)
 #if LWIP_ARP && !LWIP_ACD
     /* For Ethernet network interfaces:
      * we would like to send a "gratuitous ARP".
-     * Only needs to be done here if ACD isn't configured. 
+     * Only needs to be done here if ACD isn't configured.
      */
     if (netif->flags & (NETIF_FLAG_ETHARP)) {
       etharp_gratuitous(netif);

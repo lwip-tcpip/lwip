@@ -78,7 +78,7 @@ struct dhcp
   u8_t state;
   /** retries of current request */
   u8_t tries;
-  
+
   u8_t subnet_mask_given;
 
   u16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */

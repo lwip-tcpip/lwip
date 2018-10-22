@@ -166,4 +166,3 @@ stats_display(void)
 #endif /* LWIP_STATS_DISPLAY */
 
 #endif /* LWIP_STATS */
-
