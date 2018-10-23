@@ -857,6 +857,7 @@ static int is_ssi_file(const char *filename)
       }
       curSubdir[sublen] = 0;
       return ret;
+#if LWIP_HTTPD_SSI_BY_FILE_EXTENSION
     } else {
       /* check file extension */
       size_t loop;
@@ -865,6 +866,7 @@ static int is_ssi_file(const char *filename)
           return 1;
         }
       }
+#endif /* LWIP_HTTPD_SSI_BY_FILE_EXTENSION */
     }
   }
   return 0;
