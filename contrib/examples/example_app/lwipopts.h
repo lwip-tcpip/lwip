@@ -326,4 +326,10 @@ void sys_unlock_tcpip_core(void);
 #endif
 #endif
 
+#ifndef LWIP_PLATFORM_ASSERT
+/* Define LWIP_PLATFORM_ASSERT to something to catch missing stdio.h includes */
+void lwip_example_app_platform_assert(const char *msg, int line, const char *file);
+#define LWIP_PLATFORM_ASSERT(x) lwip_example_app_platform_assert(x, __LINE__, __FILE__)
+#endif
+
 #endif /* LWIP_LWIPOPTS_H */

@@ -82,8 +82,8 @@ typedef int sys_prot_t;
 #define PACK_STRUCT_USE_INCLUDES
 
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
-  printf("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__); \
-  fflush(NULL);handler;} } while(0)
+  LWIP_PLATFORM_DIAG(("Assertion \"%s\" failed at line %d in %s\n", message, __LINE__, __FILE__)); \
+  handler;} } while(0)
 
 #ifdef _MSC_VER
 /* C runtime functions redefined */
@@ -94,9 +94,9 @@ typedef int sys_prot_t;
 #endif
 
 /* Define an example for LWIP_PLATFORM_DIAG: since this uses varargs and the old
- * C standard lwIP targets does not support this in macros, we have extra brackets
- * around the arguments, which are left out in the following macro definition:
- */
+* C standard lwIP targets does not support this in macros, we have extra brackets
+* around the arguments, which are left out in the following macro definition:
+*/
 #if !defined(LWIP_TESTMODE) || !LWIP_TESTMODE
 void lwip_win32_platform_diag(const char *format, ...);
 #define LWIP_PLATFORM_DIAG(x) lwip_win32_platform_diag x
