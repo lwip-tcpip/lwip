@@ -112,13 +112,23 @@
 /** Set this to 0 to prevent parsing the file extension at runtime to decide
  * if a file should be scanned for SSI tags or not.
  * Default is 1 (file extensions are checked using the g_pcSSIExtensions array)
- * Set to 2 to override this runtime test function.
+ * Set to 2 to override this runtime test function. In this case, you have to
+ * provide an external function that does the check:
+ *   u8_t http_uri_is_ssi(struct fs_file *file, const char *uri)
  *
  * This is enabled by default, but if you only use a newer version of makefsdata
  * supporting the "-ssi" option, this info is already present in
  */
 #if !defined LWIP_HTTPD_SSI_BY_FILE_EXTENSION || defined __DOXYGEN__
 #define LWIP_HTTPD_SSI_BY_FILE_EXTENSION  1
+#endif
+
+/** This is a list of file extensions handled as SSI files. This define
+ * is used to initialize a 'const char *const[]'. It is only used if
+ * LWIP_HTTPD_SSI_BY_FILE_EXTENSION != 0.
+ */
+#if !defined LWIP_HTTPD_SSI_EXTENSIONS || defined __DOXYGEN__
+#define LWIP_HTTPD_SSI_EXTENSIONS ".shtml", ".shtm", ".ssi", ".xml", ".json"
 #endif
 
 /** Set this to 1 to support HTTP POST */

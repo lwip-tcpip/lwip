@@ -113,11 +113,11 @@ static const tHTTPHeader g_psHTTPHeaders[] = {
 
 #endif /* LWIP_HTTPD_DYNAMIC_HEADERS */
 
-#if LWIP_HTTPD_SSI
+#if LWIP_HTTPD_SSI && LWIP_HTTPD_SSI_BY_FILE_EXTENSION
 static const char *const g_pcSSIExtensions[] = {
-  ".shtml", ".shtm", ".ssi", ".xml", ".json"
+  LWIP_HTTPD_SSI_EXTENSIONS
 };
 #define NUM_SHTML_EXTENSIONS LWIP_ARRAYSIZE(g_pcSSIExtensions)
-#endif /* LWIP_HTTPD_SSI */
+#endif /* LWIP_HTTPD_SSI && LWIP_HTTPD_SSI_BY_FILE_EXTENSION */
 
 #endif /* LWIP_HTTPD_STRUCTS_H */
