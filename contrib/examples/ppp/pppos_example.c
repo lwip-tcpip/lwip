@@ -41,6 +41,8 @@
 
 #include "pppos_example.h"
 
+#include <stdio.h>
+
 #if PPPOS_SUPPORT
 static sio_fd_t ppp_sio;
 static ppp_pcb *ppp;

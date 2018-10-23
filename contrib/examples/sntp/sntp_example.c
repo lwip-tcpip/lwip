@@ -48,7 +48,7 @@ sntp_set_system_time(u32_t sec)
 #endif
   
   strftime(buf, sizeof(buf), "%d.%m.%Y %H:%M:%S", &current_time_val);
-  printf("SNTP time: %s\n", buf);
+  LWIP_PLATFORM_DIAG(("SNTP time: %s\n", buf));
 }
 
 void
