@@ -40,7 +40,8 @@ set(LWIP_COMPILER_FLAGS_GNU_CLANG
     -Wparentheses
     -Wsequence-point
     -Wswitch-default
-    -Wextra -Wundef
+    -Wextra
+    -Wundef
     -Wshadow
     -Wpointer-arith
     -Wcast-qual
