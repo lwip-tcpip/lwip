@@ -14,11 +14,11 @@
  * -------------------------
  *
  * - Tiebreaking for simultaneous probing
+ * - Correct announcing method
  * - Sending goodbye messages (zero ttl) - shutdown, DHCP lease about to expire, DHCP turned off...
- * - Checking that source address of unicast requests are on the same network
- * - Limiting multicast responses to 1 per second per resource record
+ * - Sending negative responses NSEC
  * - Fragmenting replies if required
- * - Handling multi-packet known answers
+ * - Handling multi-packet known answers (TC bit)
  * - Individual known answer detection for all local IPv6 addresses
  * - Dynamic size of outgoing packet
  */
@@ -52,6 +52,7 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Erik Ekman <erik@kryo.se>
+ * Author: Jasper Verschueren <jasper.verschueren@apart-audio.com>
  *
  */
 
