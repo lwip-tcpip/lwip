@@ -206,7 +206,7 @@ snmp_scalar_array_get_value(struct snmp_node_instance *instance, void *value)
 static snmp_err_t
 snmp_scalar_array_set_test(struct snmp_node_instance *instance, u16_t value_len, void *value)
 {
-  snmp_err_t result = SNMP_ERR_NOSUCHINSTANCE;
+  snmp_err_t result = SNMP_ERR_NOTWRITABLE;
   const struct snmp_scalar_array_node *array_node = (const struct snmp_scalar_array_node *)(const void *)instance->node;
   const struct snmp_scalar_array_node_def *array_node_def = (const struct snmp_scalar_array_node_def *)instance->reference.const_ptr;
 
@@ -219,7 +219,7 @@ snmp_scalar_array_set_test(struct snmp_node_instance *instance, u16_t value_len,
 static snmp_err_t
 snmp_scalar_array_set_value(struct snmp_node_instance *instance, u16_t value_len, void *value)
 {
-  snmp_err_t result = SNMP_ERR_NOSUCHINSTANCE;
+  snmp_err_t result = SNMP_ERR_NOTWRITABLE;
   const struct snmp_scalar_array_node *array_node = (const struct snmp_scalar_array_node *)(const void *)instance->node;
   const struct snmp_scalar_array_node_def *array_node_def = (const struct snmp_scalar_array_node_def *)instance->reference.const_ptr;
 

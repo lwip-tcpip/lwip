@@ -83,7 +83,7 @@ threadsync_set_test_synced(void *ctx)
   if (call_data->proxy_instance.set_test != NULL) {
     call_data->retval.err = call_data->proxy_instance.set_test(&call_data->proxy_instance, call_data->arg2.len, call_data->arg1.value);
   } else {
-    call_data->retval.err = SNMP_ERR_NOSUCHINSTANCE;
+    call_data->retval.err = SNMP_ERR_NOTWRITABLE;
   }
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
@@ -109,7 +109,7 @@ threadsync_set_value_synced(void *ctx)
   if (call_data->proxy_instance.set_value != NULL) {
     call_data->retval.err = call_data->proxy_instance.set_value(&call_data->proxy_instance, call_data->arg2.len, call_data->arg1.value);
   } else {
-    call_data->retval.err = SNMP_ERR_NOSUCHINSTANCE;
+    call_data->retval.err = SNMP_ERR_NOTWRITABLE;
   }
 
   sys_sem_signal(&call_data->threadsync_node->instance->sem);
