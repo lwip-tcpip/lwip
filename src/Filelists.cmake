@@ -199,6 +199,8 @@ set(lwipsntp_SRCS
 # MDNS responder
 set(lwipmdns_SRCS
     ${LWIP_DIR}/src/apps/mdns/mdns.c
+    ${LWIP_DIR}/src/apps/mdns/mdns_out.c
+    ${LWIP_DIR}/src/apps/mdns/mdns_domain.c
 )
 
 # NetBIOS name server

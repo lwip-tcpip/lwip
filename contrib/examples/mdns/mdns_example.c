@@ -56,8 +56,8 @@ mdns_example_init(void)
 #if LWIP_MDNS_RESPONDER
   mdns_resp_register_name_result_cb(mdns_example_report);
   mdns_resp_init();
-  mdns_resp_add_netif(netif_default, "lwip", 3600);
-  mdns_resp_add_service(netif_default, "myweb", "_http", DNSSD_PROTO_TCP, 80, 3600, srv_txt, NULL);
+  mdns_resp_add_netif(netif_default, "lwip");
+  mdns_resp_add_service(netif_default, "myweb", "_http", DNSSD_PROTO_TCP, 80, srv_txt, NULL);
   mdns_resp_announce(netif_default);
 #endif
 }

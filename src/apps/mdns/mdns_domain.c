@@ -41,6 +41,8 @@
 #include "lwip/apps/mdns_priv.h"
 #include "lwip/prot/dns.h"
 
+#include <string.h>
+
 #if LWIP_IPV6
 #include "lwip/prot/ip6.h"
 #endif

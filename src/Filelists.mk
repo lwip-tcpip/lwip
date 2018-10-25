@@ -177,7 +177,9 @@ SMTPFILES=$(LWIPDIR)/apps/smtp/smtp.c
 SNTPFILES=$(LWIPDIR)/apps/sntp/sntp.c
 
 # MDNSFILES: MDNS responder
-MDNSFILES=$(LWIPDIR)/apps/mdns/mdns.c
+MDNSFILES=$(LWIPDIR)/apps/mdns/mdns.c \
+	$(LWIPDIR)/apps/mdns/mdns_out.c \
+	$(LWIPDIR)/apps/mdns/mdns_domain.c
 
 # NETBIOSNSFILES: NetBIOS name server
 NETBIOSNSFILES=$(LWIPDIR)/apps/netbiosns/netbiosns.c

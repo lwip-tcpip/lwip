@@ -43,6 +43,7 @@
 #include "lwip/prot/iana.h"
 #include "lwip/udp.h"
 
+#include <string.h>
 
 #if LWIP_IPV6
 #include "lwip/prot/ip6.h"
