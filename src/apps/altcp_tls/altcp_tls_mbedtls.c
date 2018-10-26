@@ -46,11 +46,7 @@
  *   GOOD custom entropy
  *
  * Missing things / @todo:
- * - RX data is acknowledged after receiving (tcp_recved is called when enqueueing
- *   the pbuf for mbedTLS receive, not when processed by mbedTLS or the inner
- *   connection; altcp_recved() from inner connection does nothing)
- * - Client connections starting with 'connect()' are not handled yet...
- * - some unhandled things are caught by LWIP_ASSERTs...
+ * - some unhandled/untested things migh be caught by LWIP_ASSERTs...
  */
 
 #include "lwip/opt.h"
