@@ -17,6 +17,23 @@
             "command": "cmake --build ."
         },
         {
+            "label": "Build unit tests",
+            "type": "shell",
+            "problemMatcher": "$gcc",
+            "group": "build",
+            "linux": {
+                "options": {
+                    "cwd": "${workspaceFolder}/contrib/ports/unix/check/build"
+                },
+            },
+            "windows": {
+                "options": {
+                    "cwd": "${workspaceFolder}/contrib/ports/win32/check/build"
+                },
+            },
+            "command": "cmake --build ."
+        },
+        {
             "label": "Configure example_app",
             "type": "shell",
             "problemMatcher": "$gcc",
