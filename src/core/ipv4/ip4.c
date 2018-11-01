@@ -184,7 +184,7 @@ ip4_route(const ip4_addr_t *dest)
   }
 
 #if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
-  /* loopif is disabled, looopback traffic is passed through any netif */
+  /* loopif is disabled, loopback traffic is passed through any netif */
   if (ip4_addr_isloopback(dest)) {
     /* don't check for link on loopback traffic */
     if ((netif_default != NULL) && netif_is_up(netif_default)) {
