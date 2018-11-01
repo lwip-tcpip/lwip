@@ -1,6 +1,7 @@
 #include "test_ip4.h"
 
 #include "lwip/ip4.h"
+#include "lwip/etharp.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/stats.h"
 #include "lwip/prot/ip.h"
@@ -11,6 +12,55 @@
 #if !LWIP_IPV4 || !IP_REASSEMBLY || !MIB2_STATS || !IPFRAG_STATS
 #error "This tests needs LWIP_IPV4, IP_REASSEMBLY; MIB2- and IPFRAG-statistics enabled"
 #endif
+
+static struct netif test_netif;
+static ip4_addr_t test_ipaddr, test_netmask, test_gw;
+static int linkoutput_ctr;
+
+/* reference internal lwip variable in netif.c */
+
+static err_t
+test_netif_linkoutput(struct netif *netif, struct pbuf *p)
+{
+  fail_unless(netif == &test_netif);
+  fail_unless(p != NULL);
+  linkoutput_ctr++;
+  return ERR_OK;
+}
+
+static err_t
+test_netif_init(struct netif *netif)
+{
+  fail_unless(netif != NULL);
+  netif->linkoutput = test_netif_linkoutput;
+  netif->output = etharp_output;
+  netif->mtu = 1500;
+  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
+  netif->hwaddr_len = ETHARP_HWADDR_LEN;
+  return ERR_OK;
+}
+
+static void
+test_netif_add(void)
+{
+  IP4_ADDR(&test_gw, 192,168,0,1);
+  IP4_ADDR(&test_ipaddr, 192,168,0,1);
+  IP4_ADDR(&test_netmask, 255,255,0,0);
+
+  fail_unless(netif_default == NULL);
+  netif_add(&test_netif, &test_ipaddr, &test_netmask, &test_gw,
+    NULL, test_netif_init, NULL);
+  netif_set_default(&test_netif);
+  netif_set_up(&test_netif);
+}
+
+static void
+test_netif_remove(void)
+{
+  if (netif_default == &test_netif) {
+    netif_remove(&test_netif);
+  }
+}
 
 /* Helper functions */
 static void
@@ -71,11 +121,11 @@ ip4_teardown(void)
   /* poll until all memory is released... */
   tcpip_thread_poll_one();
   lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
+  test_netif_remove();
+  netif_set_up(netif_get_loopif());
 }
 
-
 /* Test functions */
-
 START_TEST(test_ip4_reass)
 {
   const u16_t ip_id = 128;
@@ -148,6 +198,26 @@ START_TEST(test_ip4_reass)
 }
 END_TEST
 
+/* packets to 127.0.0.1 shall not be sent out to netif_default */
+START_TEST(test_127_0_0_1)
+{
+  ip4_addr_t localhost;
+  struct pbuf* p;
+
+  LWIP_UNUSED_ARG(_i);
+
+  test_netif_add();
+  netif_set_down(netif_get_loopif());
+
+  IP4_ADDR(&localhost, 127, 0, 0, 1);
+  p = pbuf_alloc(PBUF_IP, 10, PBUF_POOL);
+
+  if(ip4_output(p, netif_ip4_addr(netif_default), &localhost, 0, 0, IP_PROTO_UDP) != ERR_OK) {
+    pbuf_free(p);
+  }
+  fail_unless(linkoutput_ctr == 0);
+}
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
@@ -155,6 +225,7 @@ ip4_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_ip4_reass),
+    TESTFUNC(test_127_0_0_1),
   };
   return create_suite("IPv4", tests, sizeof(tests)/sizeof(testfunc), ip4_setup, ip4_teardown);
 }
