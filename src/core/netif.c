@@ -143,6 +143,14 @@ static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const i
 
 static struct netif loop_netif;
 
+#if LWIP_TESTMODE
+struct netif* netif_get_loopif(void)
+{
+  return &loop_netif;
+}
+#endif
+
+
 /**
  * Initialize a lwip network interface structure for a loopback interface
  *
