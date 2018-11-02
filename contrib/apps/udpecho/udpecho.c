@@ -51,12 +51,13 @@ udpecho_thread(void *arg)
 
 #if LWIP_IPV6
   conn = netconn_new(NETCONN_UDP_IPV6);
+  LWIP_ERROR("udpecho: invalid conn", (conn != NULL), return;);
   netconn_bind(conn, IP6_ADDR_ANY, 7);
 #else /* LWIP_IPV6 */
   conn = netconn_new(NETCONN_UDP);
+  LWIP_ERROR("udpecho: invalid conn", (conn != NULL), return;);
   netconn_bind(conn, IP_ADDR_ANY, 7);
 #endif /* LWIP_IPV6 */
-  LWIP_ERROR("udpecho: invalid conn", (conn != NULL), return;);
 
   while (1) {
     err = netconn_recv(conn, &buf);
