@@ -6,10 +6,14 @@
 # http://backreference.org/2010/03/26/tuntap-interface-tutorial/
 
 # After executing this script, start unixsim/simhost.
-# Enter 192.168.0.2 or "http://simhost.local/" (Zeroconf)
+# Enter 192.168.1.200 or "http://simhost.local/" (Zeroconf)
 # in your webbrowser to see simhost webpage.
 
-sudo ip tuntap add dev tap0 mode tap user `whoami`
-sudo ip link set tap0 up
-sudo ip addr add 192.168.0.1/24 dev tap0
 export PRECONFIGURED_TAPIF=tap0
+
+sudo ip tuntap add dev $PRECONFIGURED_TAPIF mode tap user `whoami`
+sudo ip link set $PRECONFIGURED_TAPIF up
+sudo brctl addbr lwipbridge
+sudo brctl addif lwipbridge $PRECONFIGURED_TAPIF
+sudo ip addr add 192.168.1.1/24 dev lwipbridge
+sudo ip link set dev lwipbridge up
