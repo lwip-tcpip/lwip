@@ -40,8 +40,8 @@
  *   track of the ratio of application data and TLS overhead would be too much.
  *
  * Mandatory security-related configuration:
- * - define ALTCP_MBEDTLS_RNG_FN to a custom GOOD rng function returning 0 on success:
- *   int my_rng_fn(void *ctx, unsigned char *buffer , size_t len)
+ * - ensure to add at least one strong entropy source to your mbedtls port (implement
+ *   mbedtls_platform_entropy_poll or mbedtls_hardware_poll providing strong entropy)
  * - define ALTCP_MBEDTLS_ENTROPY_PTR and ALTCP_MBEDTLS_ENTROPY_LEN to something providing
  *   GOOD custom entropy
  *
@@ -647,22 +647,6 @@ altcp_mbedtls_debug(void *ctx, int level, const char *file, int line, const char
 }
 #endif
 
-#ifndef ALTCP_MBEDTLS_RNG_FN
-/** ATTENTION: It is *really* important to *NOT* use this dummy RNG in production code!!!! */
-static int
-dummy_rng(void *ctx, unsigned char *buffer, size_t len)
-{
-  static size_t ctr;
-  size_t i;
-  LWIP_UNUSED_ARG(ctx);
-  for (i = 0; i < len; i++) {
-    buffer[i] = (unsigned char)++ctr;
-  }
-  return 0;
-}
-#define ALTCP_MBEDTLS_RNG_FN dummy_rng
-#endif /* ALTCP_MBEDTLS_RNG_FN */
-
 /** Create new TLS configuration
  * ATTENTION: Server certificate and private key have to be added outside this function!
  */
@@ -714,7 +698,7 @@ altcp_tls_create_config(int is_server, int have_cert, int have_pkey, int have_ca
   mbedtls_ctr_drbg_init(&conf->ctr_drbg);
 
   /* Seed the RNG */
-  ret = mbedtls_ctr_drbg_seed(&conf->ctr_drbg, ALTCP_MBEDTLS_RNG_FN, &conf->entropy, ALTCP_MBEDTLS_ENTROPY_PTR, ALTCP_MBEDTLS_ENTROPY_LEN);
+  ret = mbedtls_ctr_drbg_seed(&conf->ctr_drbg, mbedtls_entropy_func, &conf->entropy, ALTCP_MBEDTLS_ENTROPY_PTR, ALTCP_MBEDTLS_ENTROPY_LEN);
   if (ret != 0) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ctr_drbg_seed failed: %d\n", ret));
     altcp_mbedtls_free_config(conf);
