@@ -51,8 +51,8 @@ static const struct snmp_mib *mibs[] = {
 void
 snmp_example_init(void)
 {
-  s32_t req_nr;
 #if LWIP_SNMP
+  s32_t req_nr;
   lwip_privmib_init();
 #if SNMP_LWIP_MIB2
 #if SNMP_USE_NETCONN
