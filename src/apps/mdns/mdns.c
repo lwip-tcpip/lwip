@@ -115,7 +115,7 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 #define MDNS_RESPONSE_DELAY (LWIP_RAND() %(MDNS_RESPONSE_DELAY_MAX - \
                              MDNS_RESPONSE_DELAY_MIN) + MDNS_RESPONSE_DELAY_MIN)
 
-/** Probing defines */
+/** Probing & announcing defines */
 #define MDNS_PROBE_DELAY_MS       250
 #define MDNS_PROBE_COUNT          3
 #ifdef LWIP_RAND
@@ -125,9 +125,12 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 #define MDNS_INITIAL_PROBE_DELAY_MS MDNS_PROBE_DELAY_MS
 #endif
 
-#define MDNS_PROBING_NOT_STARTED  0
-#define MDNS_PROBING_ONGOING      1
-#define MDNS_PROBING_COMPLETE     2
+/* Delay between successive announcements (RFC6762 section 8.3)
+ * -> increase by a factor 2 with every response sent.
+ */
+#define MDNS_ANNOUNCE_DELAY_MS    1000
+/* Minimum 2 announces, may send up to 8 (RFC6762 section 8.3) */
+#define MDNS_ANNOUNCE_COUNT       2
 
 /** Information about received packet */
 struct mdns_packet {
@@ -187,7 +190,7 @@ struct mdns_answer {
   u16_t rd_offset;
 };
 
-static void mdns_probe(void* arg);
+static void mdns_probe_and_announce(void* arg);
 
 /**
  *  Construction to make mdns struct accessible from mdns_out.c
@@ -830,7 +833,8 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
   int i;
   err_t res;
 
-  if (mdns->probing_state != MDNS_PROBING_COMPLETE) {
+  if ((mdns->state != MDNS_STATE_COMPLETE) &&
+      (mdns->state != MDNS_STATE_ANNOUNCING)) {
     /* Don't answer questions until we've verified our domains via probing */
     /* @todo we should check incoming questions during probing for tiebreaking */
     return;
@@ -1115,9 +1119,11 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
     mdns_domain_debug_print(&ans.info.domain);
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", ans.info.type, ans.info.klass));
 
-    /*"Apparently conflicting Multicast DNS responses received *before* the first probe packet is sent MUST
-      be silently ignored" so drop answer if we haven't started probing yet*/
-    if ((mdns->probing_state == MDNS_PROBING_ONGOING) && (mdns->probes_sent > 0)) {
+    /* "Conflicting Multicast DNS responses received *before* the first probe
+     * packet is sent MUST be silently ignored" so drop answer if we haven't
+     * started probing yet. */
+    if ((mdns->state == MDNS_STATE_PROBING) ||
+        (mdns->state == MDNS_STATE_ANNOUNCE_WAIT)) {
       struct mdns_domain domain;
       u8_t i;
       u8_t conflict = 0;
@@ -1141,7 +1147,7 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
       }
 
       if (conflict != 0) {
-        sys_untimeout(mdns_probe, netif);
+        sys_untimeout(mdns_probe_and_announce, netif);
         if (mdns_name_result_cb != NULL) {
           mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT);
         }
@@ -1322,36 +1328,71 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
 }
 
 /**
- * Timer callback for probing network.
+ * Timer callback for probing and announcing on the network.
  */
 static void
-mdns_probe(void* arg)
+mdns_probe_and_announce(void* arg)
 {
   struct netif *netif = (struct netif *)arg;
   struct mdns_host* mdns = NETIF_TO_HOST(netif);
+  u32_t announce_delay;
 
-  if(mdns->probes_sent >= MDNS_PROBE_COUNT) {
-    /* probing successful, announce the new name */
-    mdns->probing_state = MDNS_PROBING_COMPLETE;
-    mdns_resp_announce(netif);
-    if (mdns_name_result_cb != NULL) {
-      mdns_name_result_cb(netif, MDNS_PROBING_SUCCESSFUL);
-    }
-  } else {
+
+  switch (mdns->state) {
+    case MDNS_STATE_OFF:
+    case MDNS_STATE_PROBE_WAIT:
+    case MDNS_STATE_PROBING:
 #if LWIP_IPV4
-    /*if ipv4 wait with probing until address is set*/
-    if (!ip4_addr_isany_val(*netif_ip4_addr(netif)) &&
-        mdns_send_probe(netif, &v4group) == ERR_OK)
-#endif
-    {
-#if LWIP_IPV6
-      if (mdns_send_probe(netif, &v6group) == ERR_OK)
+      /*if ipv4 wait with probing until address is set*/
+      if (!ip4_addr_isany_val(*netif_ip4_addr(netif)) &&
+          mdns_send_probe(netif, &v4group) == ERR_OK)
 #endif
       {
-        mdns->probes_sent++;
+#if LWIP_IPV6
+        if (mdns_send_probe(netif, &v6group) == ERR_OK)
+#endif
+        {
+          mdns->state = MDNS_STATE_PROBING;
+          mdns->sent_num++;
+        }
       }
-    }
-    sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe, netif);
+
+      if (mdns->sent_num >= MDNS_PROBE_COUNT) {
+        mdns->state = MDNS_STATE_ANNOUNCE_WAIT;
+        mdns->sent_num = 0;
+      }
+
+      sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+
+      break;
+    case MDNS_STATE_ANNOUNCE_WAIT:
+    case MDNS_STATE_ANNOUNCING:
+      if (mdns->sent_num == 0) {
+        /* probing was succesful, announce all records */
+        mdns->state = MDNS_STATE_ANNOUNCING;
+        /* Let the client know probing was successful */
+        if (mdns_name_result_cb != NULL) {
+          mdns_name_result_cb(netif, MDNS_PROBING_SUCCESSFUL);
+        }
+      }
+
+      mdns_resp_announce(netif);
+      mdns->sent_num++;
+
+      if (mdns->sent_num >= MDNS_ANNOUNCE_COUNT) {
+        /* Announcing and probing complete */
+        mdns->state = MDNS_STATE_COMPLETE;
+        mdns->sent_num = 0;
+      }
+      else {
+        announce_delay = MDNS_ANNOUNCE_DELAY_MS * (1 << (mdns->sent_num - 1));
+        sys_timeout(announce_delay, mdns_probe_and_announce, netif);
+      }
+      break;
+    case MDNS_STATE_COMPLETE:
+    default:
+      /* Do nothing */
+      break;
   }
 }
 
@@ -1381,8 +1422,6 @@ mdns_resp_add_netif(struct netif *netif, const char *hostname)
   netif_set_client_data(netif, mdns_netif_client_id, mdns);
 
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(hostname)));
-  mdns->probes_sent = 0;
-  mdns->probing_state = MDNS_PROBING_NOT_STARTED;
 
   /* Init delayed message structs with address and port */
 #if LWIP_IPV4
@@ -1439,9 +1478,7 @@ mdns_resp_remove_netif(struct netif *netif)
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_remove_netif: Not an active netif", (mdns != NULL), return ERR_VAL);
 
-  if (mdns->probing_state == MDNS_PROBING_ONGOING) {
-    sys_untimeout(mdns_probe, netif);
-  }
+  sys_untimeout(mdns_probe_and_announce, netif);
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service *service = mdns->services[i];
@@ -1643,7 +1680,12 @@ mdns_resp_announce(struct netif *netif)
     return;
   }
 
-  if (mdns->probing_state == MDNS_PROBING_COMPLETE) {
+  /* Do not announce if the mdns responder is off, waiting to probe, probing or
+   * waiting to announce. */
+  if (!(   (mdns->state == MDNS_STATE_OFF)
+        || (mdns->state == MDNS_STATE_PROBE_WAIT)
+        || (mdns->state == MDNS_STATE_PROBING)
+        || (mdns->state == MDNS_STATE_ANNOUNCE_WAIT))) {
     /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
     mdns_announce(netif, &v6group);
@@ -1693,14 +1735,13 @@ mdns_resp_restart(struct netif *netif)
   if (mdns == NULL) {
     return;
   }
+  /* Make sure timer is not running */
+  sys_untimeout(mdns_probe_and_announce, netif);
 
-  if (mdns->probing_state == MDNS_PROBING_ONGOING) {
-    sys_untimeout(mdns_probe, netif);
-  }
   /* @todo if we've failed 15 times within a 10 second period we MUST wait 5 seconds (or wait 5 seconds every time except first)*/
-  mdns->probes_sent = 0;
-  mdns->probing_state = MDNS_PROBING_ONGOING;
-  sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe, netif);
+  mdns->sent_num = 0;
+  mdns->state = MDNS_STATE_PROBE_WAIT;
+  sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
 }
 
 /**

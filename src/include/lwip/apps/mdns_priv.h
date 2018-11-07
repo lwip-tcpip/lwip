@@ -160,16 +160,32 @@ struct mdns_delayed_msg {
   struct mdns_outmsg delayed_msg_unicast;
 };
 
+/* MDNS states */
+typedef enum {
+  /* MDNS module is off */
+  MDNS_STATE_OFF,
+  /* Waiting before probing can be started */
+  MDNS_STATE_PROBE_WAIT,
+  /* Probing the unique records */
+  MDNS_STATE_PROBING,
+  /* Waiting before announcing the probed unique records */
+  MDNS_STATE_ANNOUNCE_WAIT,
+  /* Announcing all records */
+  MDNS_STATE_ANNOUNCING,
+  /* Probing and announcing completed */
+  MDNS_STATE_COMPLETE
+} acd_state_enum_t;
+
 /** Description of a host/netif */
 struct mdns_host {
   /** Hostname */
   char name[MDNS_LABEL_MAXLEN + 1];
   /** Pointer to services */
   struct mdns_service *services[MDNS_MAX_SERVICES];
-  /** Number of probes sent for the current name */
-  u8_t probes_sent;
-  /** State in probing sequence */
-  u8_t probing_state;
+  /** Number of probes/announces sent for the current name */
+  u8_t sent_num;
+  /** State of the mdns responder */
+  acd_state_enum_t state;
 #if LWIP_IPV4
   /** delayed msg struct for IPv4 */
   struct mdns_delayed_msg ipv4;
