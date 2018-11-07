@@ -853,11 +853,7 @@ snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_s
 err_t
 snmp_send_inform_specific(s32_t specific_trap, struct snmp_varbind *varbinds, s32_t *ptr_request_id)
 {
-  struct snmp_msg_trap trap_msg = {0};
-  trap_msg.snmp_version = SNMP_VERSION_2c;
-  trap_msg.trap_or_inform = SNMP_IS_INFORM;
-  *ptr_request_id = req_id;
-  return snmp_send_trap_or_notification_or_inform_generic(&trap_msg, NULL, SNMP_GENTRAP_ENTERPRISE_SPECIFIC, specific_trap, varbinds);
+  return snmp_send_inform(NULL, SNMP_GENTRAP_ENTERPRISE_SPECIFIC, specific_trap, varbinds, ptr_request_id);
 }
 
 /**
@@ -871,11 +867,7 @@ snmp_send_inform_specific(s32_t specific_trap, struct snmp_varbind *varbinds, s3
 err_t
 snmp_send_inform_generic(s32_t generic_trap, struct snmp_varbind *varbinds, s32_t *ptr_request_id)
 {
-  struct snmp_msg_trap trap_msg = {0};
-  trap_msg.snmp_version = SNMP_VERSION_2c;
-  trap_msg.trap_or_inform = SNMP_IS_INFORM;
-  *ptr_request_id = req_id;
-  return snmp_send_trap_or_notification_or_inform_generic(&trap_msg, NULL, generic_trap, 0, varbinds);
+  return snmp_send_inform(NULL, generic_trap, 0, varbinds, ptr_request_id);
 }
 
 /**
