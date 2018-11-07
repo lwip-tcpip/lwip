@@ -880,8 +880,10 @@ snmp_send_inform_generic(s32_t generic_trap, struct snmp_varbind *varbinds, s32_
 
 /**
  * @ingroup snmp_traps
- * Wrapper function for sending informs
- * @param specific_trap will be appended to enterprise oid [see RFC 3584]
+ * Generic function for sending informs
+ * @param oid points to object identifier
+ * @param generic_trap is the trap code
+ * @param specific_trap used for enterprise traps when generic_trap == 6
  * @param varbinds linked list of varbinds (at the beginning of this list function will insert 2 special purpose varbinds [see RFC 3584])
  * @param ptr_request_id[out] variable in which to store request_id needed to verify acknowledgement
  * @return ERR_OK if successful
