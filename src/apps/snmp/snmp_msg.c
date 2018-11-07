@@ -155,6 +155,9 @@ snmp_v3_enable(u8_t enable)
 
 #endif
 
+snmp_inform_callback_fct snmp_inform_callback     = NULL;
+void*                    snmp_inform_callback_arg = NULL;
+
 /**
  * @ingroup snmp_core
  * Returns current SNMP community string.
@@ -249,6 +252,17 @@ snmp_set_write_callback(snmp_write_callback_fct write_callback, void *callback_a
   snmp_write_callback_arg = callback_arg;
 }
 
+/**
+ * @ingroup snmp_core
+ * Callback fired on every received INFORM confirmation (get-response)
+ */
+void
+snmp_set_inform_callback(snmp_inform_callback_fct inform_callback, void* callback_arg)
+{
+  snmp_inform_callback     = inform_callback;
+  snmp_inform_callback_arg = callback_arg;
+}
+
 /* ----------------------------------------------------------------------- */
 /* forward declarations */
 /* ----------------------------------------------------------------------- */
@@ -297,6 +311,11 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
           err = snmp_process_getbulk_request(&request);
         } else if (request.request_type == SNMP_ASN1_CONTEXT_PDU_SET_REQ) {
           err = snmp_process_set_request(&request);
+        } else if(request.request_type == SNMP_ASN1_CONTEXT_PDU_GET_RESP) {
+          /* If callback function has been defined call it. */
+          if (snmp_inform_callback != NULL) {
+            snmp_inform_callback(&request, snmp_inform_callback_arg);
+          }
         }
       }
 #if LWIP_SNMP_V3
@@ -360,7 +379,7 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
       }
 #endif
 
-      if (err == ERR_OK) {
+      if ((err == ERR_OK) && (request.request_type != SNMP_ASN1_CONTEXT_PDU_GET_RESP)) {
         err = snmp_complete_outbound_frame(&request);
 
         if (err == ERR_OK) {
@@ -1173,6 +1192,10 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     case (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_SET_REQ):
       /* SetRequest PDU */
       snmp_stats.insetrequests++;
+      break;
+    case (SNMP_ASN1_CLASS_CONTEXT | SNMP_ASN1_CONTENTTYPE_CONSTRUCTED | SNMP_ASN1_CONTEXT_PDU_GET_RESP):
+      /* GetResponse PDU */
+      snmp_stats.ingetresponses++;
       break;
     default:
       /* unsupported input PDU for this agent (no parse error) */
