@@ -550,42 +550,40 @@ mdns_add_probe_questions_to_outpacket(struct mdns_outpacket *outpkt, struct mdns
 }
 
 /**
- * Send chosen answers as a reply
+ * Create packet with chosen answers as a reply
  *
- * Add all selected answers (first write will allocate pbuf)
+ * Add all selected answers / questions
  * Add additional answers based on the selected answers
- * Send the packet
  */
 err_t
-mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
+mdns_create_outpacket(struct netif *netif, struct mdns_outmsg *msg,
+                      struct mdns_outpacket *outpkt)
 {
-  struct mdns_service *service;
-  struct mdns_outpacket outpkt;
-  err_t res = ERR_ARG;
-  int i;
   struct mdns_host *mdns = netif_mdns_data(netif);
+  struct mdns_service *service;
+  err_t res;
+  int i;
   u16_t answers = 0;
 
-  memset(&outpkt, 0, sizeof(outpkt));
 
-  res = mdns_add_probe_questions_to_outpacket(&outpkt, msg, netif);
+  res = mdns_add_probe_questions_to_outpacket(outpkt, msg, netif);
   if (res != ERR_OK) {
-    goto cleanup;
+    return res;
   }
 
   /* Write answers to host questions */
 #if LWIP_IPV4
   if (msg->host_replies & REPLY_HOST_A) {
-    res = mdns_add_a_answer(&outpkt, msg, netif);
+    res = mdns_add_a_answer(outpkt, msg, netif);
     if (res != ERR_OK) {
-      goto cleanup;
+      return res;
     }
     answers++;
   }
   if (msg->host_replies & REPLY_HOST_PTR_V4) {
-    res = mdns_add_hostv4_ptr_answer(&outpkt, msg, netif);
+    res = mdns_add_hostv4_ptr_answer(outpkt, msg, netif);
     if (res != ERR_OK) {
-      goto cleanup;
+      return res;
     }
     answers++;
   }
@@ -595,9 +593,9 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
     int addrindex;
     for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
       if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addrindex))) {
-        res = mdns_add_aaaa_answer(&outpkt, msg, netif, addrindex);
+        res = mdns_add_aaaa_answer(outpkt, msg, netif, addrindex);
         if (res != ERR_OK) {
-          goto cleanup;
+          return res;
         }
         answers++;
       }
@@ -608,9 +606,9 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
     int addrindex = 0;
     while (rev_addrs) {
       if (rev_addrs & 1) {
-        res = mdns_add_hostv6_ptr_answer(&outpkt, msg, netif, addrindex);
+        res = mdns_add_hostv6_ptr_answer(outpkt, msg, netif, addrindex);
         if (res != ERR_OK) {
-          goto cleanup;
+          return res;
         }
         answers++;
       }
@@ -628,33 +626,33 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
     }
 
     if (msg->serv_replies[i] & REPLY_SERVICE_TYPE_PTR) {
-      res = mdns_add_servicetype_ptr_answer(&outpkt, msg, service);
+      res = mdns_add_servicetype_ptr_answer(outpkt, msg, service);
       if (res != ERR_OK) {
-        goto cleanup;
+        return res;
       }
       answers++;
     }
 
     if (msg->serv_replies[i] & REPLY_SERVICE_NAME_PTR) {
-      res = mdns_add_servicename_ptr_answer(&outpkt, msg, service);
+      res = mdns_add_servicename_ptr_answer(outpkt, msg, service);
       if (res != ERR_OK) {
-        goto cleanup;
+        return res;
       }
       answers++;
     }
 
     if (msg->serv_replies[i] & REPLY_SERVICE_SRV) {
-      res = mdns_add_srv_answer(&outpkt, msg, mdns, service);
+      res = mdns_add_srv_answer(outpkt, msg, mdns, service);
       if (res != ERR_OK) {
-        goto cleanup;
+        return res;
       }
       answers++;
     }
 
     if (msg->serv_replies[i] & REPLY_SERVICE_TXT) {
-      res = mdns_add_txt_answer(&outpkt, msg, service);
+      res = mdns_add_txt_answer(outpkt, msg, service);
       if (res != ERR_OK) {
-        goto cleanup;
+        return res;
       }
       answers++;
     }
@@ -663,9 +661,9 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
   /* if this is a response, the data above is anwers, else this is a probe and
    * the answers above goes into auth section */
   if (msg->flags & DNS_FLAG1_RESPONSE) {
-    outpkt.answers += answers;
+    outpkt->answers += answers;
   } else {
-    outpkt.authoritative += answers;
+    outpkt->authoritative += answers;
   }
 
   /* All answers written, add additional RRs */
@@ -679,19 +677,19 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
       /* Our service instance requested, include SRV & TXT
        * if they are already not requested. */
       if (!(msg->serv_replies[i] & REPLY_SERVICE_SRV)) {
-        res = mdns_add_srv_answer(&outpkt, msg, mdns, service);
+        res = mdns_add_srv_answer(outpkt, msg, mdns, service);
         if (res != ERR_OK) {
-          goto cleanup;
+          return res;
         }
-        outpkt.additional++;
+        outpkt->additional++;
       }
 
       if (!(msg->serv_replies[i] & REPLY_SERVICE_TXT)) {
-        res = mdns_add_txt_answer(&outpkt, msg, service);
+        res = mdns_add_txt_answer(outpkt, msg, service);
         if (res != ERR_OK) {
-          goto cleanup;
+          return res;
         }
-        outpkt.additional++;
+        outpkt->additional++;
       }
     }
 
@@ -705,11 +703,11 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
         int addrindex;
         for (addrindex = 0; addrindex < LWIP_IPV6_NUM_ADDRESSES; addrindex++) {
           if (ip6_addr_isvalid(netif_ip6_addr_state(netif, addrindex))) {
-            res = mdns_add_aaaa_answer(&outpkt, msg, netif, addrindex);
+            res = mdns_add_aaaa_answer(outpkt, msg, netif, addrindex);
             if (res != ERR_OK) {
-              goto cleanup;
+              return res;
             }
-            outpkt.additional++;
+            outpkt->additional++;
           }
         }
       }
@@ -717,14 +715,36 @@ mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
 #if LWIP_IPV4
       if (!(msg->host_replies & REPLY_HOST_A) &&
           !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-        res = mdns_add_a_answer(&outpkt, msg, netif);
+        res = mdns_add_a_answer(outpkt, msg, netif);
         if (res != ERR_OK) {
-          goto cleanup;
+          return res;
         }
-        outpkt.additional++;
+        outpkt->additional++;
       }
 #endif
     }
+  }
+
+  return res;
+}
+
+/**
+ * Send chosen answers as a reply
+ *
+ * Create the packet
+ * Send the packet
+ */
+err_t
+mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif)
+{
+  struct mdns_outpacket outpkt;
+  err_t res;
+
+  memset(&outpkt, 0, sizeof(outpkt));
+
+  res = mdns_create_outpacket(netif, msg, &outpkt);
+  if (res != ERR_OK) {
+    goto cleanup;
   }
 
   if (outpkt.pbuf) {

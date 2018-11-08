@@ -1303,39 +1303,35 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
 }
 #endif /* LWIP_NETIF_EXT_STATUS_CALLBACK && MDNS_RESP_USENETIF_EXTCALLBACK */
 
-static err_t
-mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
+static void
+mdns_define_probe_rrs_to_send(struct netif *netif, struct mdns_outmsg *outmsg)
 {
-  struct mdns_host* mdns;
-  struct mdns_outmsg outmsg;
-  u8_t i;
-  err_t res;
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
+  int i;
 
-  mdns = NETIF_TO_HOST(netif);
-
-  memset(&outmsg, 0, sizeof(outmsg));
+  memset(outmsg, 0, sizeof(struct mdns_outmsg));
 
   /* Add unicast questions with rtype ANY for all our desired records */
-  outmsg.host_questions = QUESTION_PROBE_HOST_ANY;
+  outmsg->host_questions = QUESTION_PROBE_HOST_ANY;
 
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service* service = mdns->services[i];
     if (!service) {
       continue;
     }
-    outmsg.serv_questions[i] = QUESTION_PROBE_SERVICE_NAME_ANY;
+    outmsg->serv_questions[i] = QUESTION_PROBE_SERVICE_NAME_ANY;
   }
 
   /* Add answers to the questions above into the authority section for tiebreaking */
 #if LWIP_IPV4
   if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
-    outmsg.host_replies = REPLY_HOST_A;
+    outmsg->host_replies = REPLY_HOST_A;
   }
 #endif
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i))) {
-      outmsg.host_replies |= REPLY_HOST_AAAA;
+      outmsg->host_replies |= REPLY_HOST_AAAA;
     }
   }
 #endif
@@ -1343,16 +1339,22 @@ mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service *serv = mdns->services[i];
     if (serv) {
-      outmsg.serv_replies[i] = REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
+      outmsg->serv_replies[i] = REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
     }
   }
+}
+
+static err_t
+mdns_send_probe(struct netif* netif, const ip_addr_t *destination)
+{
+  struct mdns_outmsg outmsg;
+
+  mdns_define_probe_rrs_to_send(netif, &outmsg);
 
   outmsg.tx_id = 0;
   outmsg.dest_port = LWIP_IANA_PORT_MDNS;
   SMEMCPY(&outmsg.dest_addr, destination, sizeof(outmsg.dest_addr));
-  res = mdns_send_outpacket(&outmsg, netif);
-
-  return res;
+  return mdns_send_outpacket(&outmsg, netif);
 }
 
 /**

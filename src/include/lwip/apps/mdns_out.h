@@ -103,6 +103,8 @@ extern "C" {
  */
 #define MDNS_MULTICAST_TIMEOUT_25TTL  30000
 
+err_t mdns_create_outpacket(struct netif *netif, struct mdns_outmsg *msg,
+                            struct mdns_outpacket *outpkt);
 err_t mdns_send_outpacket(struct mdns_outmsg *msg, struct netif *netif);
 void mdns_set_timeout(struct netif *netif, u32_t msecs,
                         sys_timeout_handler handler, u8_t *busy_flag);
