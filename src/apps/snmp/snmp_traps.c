@@ -426,7 +426,7 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
  * @ingroup snmp_traps
  * This function is a wrapper function for preparing and sending generic or specific traps.
  *
- * @param eoid points to enterprise object identifier
+ * @param oid points to enterprise object identifier
  * @param generic_trap is the trap code
  * @param specific_trap used for enterprise traps when generic_trap == 6
  * @param varbinds linked list of varbinds to be sent
@@ -847,7 +847,7 @@ snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_s
  * Wrapper function for sending informs
  * @param specific_trap will be appended to enterprise oid [see RFC 3584]
  * @param varbinds linked list of varbinds (at the beginning of this list function will insert 2 special purpose varbinds [see RFC 3584])
- * @param ptr_request_id[out] variable in which to store request_id needed to verify acknowledgement
+ * @param ptr_request_id [out] variable in which to store request_id needed to verify acknowledgement
  * @return ERR_OK if successful
  */
 err_t
@@ -861,7 +861,7 @@ snmp_send_inform_specific(s32_t specific_trap, struct snmp_varbind *varbinds, s3
  * Wrapper function for sending informs
  * @param generic_trap is the trap code
  * @param varbinds linked list of varbinds (at the beginning of this list function will insert 2 special purpose varbinds [see RFC 3584])
- * @param ptr_request_id[out] variable in which to store request_id needed to verify acknowledgement
+ * @param ptr_request_id [out] variable in which to store request_id needed to verify acknowledgement
  * @return ERR_OK if successful
  */
 err_t
@@ -877,7 +877,7 @@ snmp_send_inform_generic(s32_t generic_trap, struct snmp_varbind *varbinds, s32_
  * @param generic_trap is the trap code
  * @param specific_trap used for enterprise traps when generic_trap == 6
  * @param varbinds linked list of varbinds (at the beginning of this list function will insert 2 special purpose varbinds [see RFC 3584])
- * @param ptr_request_id[out] variable in which to store request_id needed to verify acknowledgement
+ * @param ptr_request_id [out] variable in which to store request_id needed to verify acknowledgement
  * @return ERR_OK if successful
  */
 err_t
