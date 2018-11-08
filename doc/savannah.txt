@@ -107,9 +107,8 @@ Now, sign the archives with a detached GPG binary signature as follows:
  gpg -b lwip-1.4.1.tar.bz2
  gpg -b lwip-1.4.1.zip
 
-Upload these files using anonymous FTP:
- ncftp ftp://savannah.gnu.org/incoming/savannah/lwip
- ncftp> mput *1.4.1.*
+Upload these files using scp:
+ scp lwip-1.4.1.* <username>@dl.sv.nongnu.org:/releases/lwip/
 
 Additionally, you may post a news item on Savannah, like this:
 
