@@ -99,7 +99,7 @@ struct lwip_sock {
 /** Maximum optlen used by setsockopt/getsockopt */
 #define LWIP_SETGETSOCKOPT_MAXOPTLEN LWIP_MAX(16, sizeof(struct ifreq))
 
-/** This struct is used to pass data to the set/getsockopt_internal
+/** This struct is used to pass data to the set/getsockopt_impl
  * functions running in tcpip_thread context (only a void* is allowed) */
 struct lwip_setgetsockopt_data {
   /** socket index for which to change options */

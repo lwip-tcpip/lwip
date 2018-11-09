@@ -2822,7 +2822,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
          LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optlen);
 #endif /* LWIP_MPU_COMPATIBLE */
 
-  /* maybe lwip_getsockopt_internal has changed err */
+  /* maybe lwip_getsockopt_impl has changed err */
   err = LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err;
   LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
@@ -3263,7 +3263,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   }
   sys_arch_sem_wait((sys_sem_t *)(LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem), 0);
 
-  /* maybe lwip_getsockopt_internal has changed err */
+  /* maybe lwip_setsockopt_impl has changed err */
   err = LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err;
   LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
 #endif  /* LWIP_TCPIP_CORE_LOCKING */
