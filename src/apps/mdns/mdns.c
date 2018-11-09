@@ -13,8 +13,6 @@
  * Things left to implement:
  * -------------------------
  *
- * - Tiebreaking for simultaneous probing
- * - Correct announcing method
  * - Sending goodbye messages (zero ttl) - shutdown, DHCP lease about to expire, DHCP turned off...
  * - Sending negative responses NSEC
  * - Fragmenting replies if required
@@ -125,6 +123,13 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 #define MDNS_INITIAL_PROBE_DELAY_MS MDNS_PROBE_DELAY_MS
 #endif
 
+#define MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS    1000
+#define MDNS_PROBE_TIEBREAK_MAX_ANSWERS          5
+
+#define MDNS_LEXICOGRAPHICAL_EQUAL    0
+#define MDNS_LEXICOGRAPHICAL_EARLIER  1
+#define MDNS_LEXICOGRAPHICAL_LATER    2
+
 /* Delay between successive announcements (RFC6762 section 8.3)
  * -> increase by a factor 2 with every response sent.
  */
@@ -190,6 +195,16 @@ struct mdns_answer {
   u16_t rd_offset;
 };
 
+struct mdns_answer_list {
+  u16_t offset[MDNS_PROBE_TIEBREAK_MAX_ANSWERS];
+  u16_t size;
+};
+
+static err_t mdns_parse_pkt_questions(struct netif *netif,
+                                      struct mdns_packet *pkt,
+                                      struct mdns_outmsg *reply);
+static void mdns_define_probe_rrs_to_send(struct netif *netif,
+                                          struct mdns_outmsg *outmsg);
 static void mdns_probe_and_announce(void* arg);
 
 /**
@@ -504,6 +519,500 @@ mdns_announce(struct netif *netif, const ip_addr_t *destination)
 }
 
 /**
+ * Perform lexicographical comparison to define the lexicographical order of the
+ * records.
+ *
+ * @param pkt_a   first packet (needed for rr data)
+ * @param pkt_b   second packet (needed for rr data)
+ * @param ans_a   first rr
+ * @param ans_b   second rr
+ * @param result  pointer to save result in ->  MDNS_LEXICOGRAPHICAL_EQUAL,
+ *                MDNS_LEXICOGRAPHICAL_LATER or MDNS_LEXICOGRAPHICAL_EARLIER.
+ * @return err_t  ERR_OK if result is good, ERR_VAL if domain decompression failed.
+ */
+static err_t
+mdns_lexicographical_comparison(struct mdns_packet *pkt_a, struct mdns_packet *pkt_b,
+                                struct mdns_answer *ans_a, struct mdns_answer *ans_b,
+                                u8_t *result)
+{
+  int len, i;
+  u8_t a_rd, b_rd;
+  u16_t res;
+  struct mdns_domain domain_a, domain_b;
+
+  /* Compare classes */
+  if (ans_a->info.klass != ans_b->info.klass) {
+    if (ans_a->info.klass > ans_b->info.klass) {
+      *result = MDNS_LEXICOGRAPHICAL_LATER;
+      return ERR_OK;
+    }
+    else {
+      *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+      return ERR_OK;
+    }
+  }
+  /* Compare types */
+  if (ans_a->info.type != ans_b->info.type) {
+    if (ans_a->info.type > ans_b->info.type) {
+      *result = MDNS_LEXICOGRAPHICAL_LATER;
+      return ERR_OK;
+    }
+    else {
+      *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+      return ERR_OK;
+    }
+  }
+
+  /* Compare rr data section
+   * Name compression:
+   * We have 4 different RR types in our authoritative section (if IPv4 and IPv6 is enabled): A,
+   * AAAA, SRV and TXT. Only one of the 4 can be subject to name compression in the rdata, the SRV
+   * record. As stated in the RFC6762 section 8.2: the names must be uncompressed before comparison.
+   * We only need to take the SRV record into account. It's the only one that in a comparison with
+   * compressed data could lead to rdata comparison. Others will already stop after the type
+   * comparison. So if we get passed the class and type comparison we need to check if the
+   * comparison contains an SRV record. If so, we need a different comparison method.
+   */
+
+  /* The answers do not contain an SRV record */
+  if (ans_a->info.type != DNS_RRTYPE_SRV && ans_b->info.type != DNS_RRTYPE_SRV) {
+    len = LWIP_MIN(ans_a->rd_length, ans_b->rd_length);
+    for (i = 0; i < len; i++) {
+      a_rd = pbuf_get_at(pkt_a->pbuf, (u16_t)(ans_a->rd_offset + i));
+      b_rd = pbuf_get_at(pkt_b->pbuf, (u16_t)(ans_b->rd_offset + i));
+      if (a_rd != b_rd) {
+        if (a_rd > b_rd) {
+          *result = MDNS_LEXICOGRAPHICAL_LATER;
+          return ERR_OK;
+        }
+        else {
+          *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+          return ERR_OK;
+        }
+      }
+    }
+    /* If the overlapping data is the same, compare the length */
+    if (ans_a->rd_length != ans_b->rd_length) {
+      if (ans_a->rd_length > ans_b->rd_length) {
+        *result = MDNS_LEXICOGRAPHICAL_LATER;
+        return ERR_OK;
+      }
+      else {
+        *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+        return ERR_OK;
+      }
+    }
+  }
+  /* Because the types are guaranteed equal here, we know they are both SRV RRs */
+  else {
+    /* We will first compare the priority, weight and port */
+    for (i = 0; i < 6; i++) {
+      a_rd = pbuf_get_at(pkt_a->pbuf, (u16_t)(ans_a->rd_offset + i));
+      b_rd = pbuf_get_at(pkt_b->pbuf, (u16_t)(ans_b->rd_offset + i));
+      if (a_rd != b_rd) {
+        if (a_rd > b_rd) {
+          *result = MDNS_LEXICOGRAPHICAL_LATER;
+          return ERR_OK;
+        }
+        else {
+          *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+          return ERR_OK;
+        }
+      }
+    }
+    /* Decompress names if compressed and save in domain_a or domain_b */
+    res = mdns_readname(pkt_a->pbuf, ans_a->rd_offset + 6, &domain_a);
+    if (res == MDNS_READNAME_ERROR) {
+      return ERR_VAL;
+    }
+    res = mdns_readname(pkt_b->pbuf, ans_b->rd_offset + 6, &domain_b);
+    if (res == MDNS_READNAME_ERROR) {
+      return ERR_VAL;
+    }
+    LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: domain a: len = %d, name = ", domain_a.name[0]));
+    mdns_domain_debug_print(&domain_a);
+    LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: domain b: len = %d, name = ", domain_b.name[0]));
+    mdns_domain_debug_print(&domain_b);
+    /* Compare names pairwise */
+    len = LWIP_MIN(domain_a.length, domain_b.length);
+    for (i = 0; i < len; i++) {
+      if (domain_a.name[i] != domain_b.name[i]) {
+        if (domain_a.name[i] > domain_b.name[i]) {
+          *result = MDNS_LEXICOGRAPHICAL_LATER;
+          return ERR_OK;
+        }
+        else {
+          *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+          return ERR_OK;
+        }
+      }
+    }
+    /* If the overlapping data is the same, compare the length */
+    if (domain_a.length != domain_b.length) {
+      if (domain_a.length > domain_b.length) {
+        *result = MDNS_LEXICOGRAPHICAL_LATER;
+        return ERR_OK;
+      }
+      else {
+        *result = MDNS_LEXICOGRAPHICAL_EARLIER;
+        return ERR_OK;
+      }
+    }
+  }
+  /* They are exactly the same */
+  *result = MDNS_LEXICOGRAPHICAL_EQUAL;
+  return ERR_OK;
+}
+
+/**
+ * Clear authoritative answer list
+ *
+ * @param a_list  answer list to clear
+ */
+static void
+mdns_init_answer_list(struct mdns_answer_list *a_list)
+{
+  a_list->size = 0;
+  for(int i = 0; i < MDNS_PROBE_TIEBREAK_MAX_ANSWERS; i++) {
+    a_list->offset[i] = 0;
+  }
+}
+
+/**
+ * Pushes the offset of the answer on a lexicographically later sorted list.
+ * We use a simple insertion sort because most of the time we are only sorting
+ * two items. The answers are sorted from the smallest to the largest.
+ *
+ * @param a_list      Answer list to which to add the answer
+ * @param pkt         Packet where answer originated
+ * @param new_offset  Offset of the new answer in the packet
+ * @param new_answer  The new answer
+ * @return err_t ERR_MEM if list is full
+ */
+static err_t
+mdns_push_answer_to_sorted_list(struct mdns_answer_list *a_list,
+                                struct mdns_packet *pkt,
+                                u16_t new_offset,
+                                struct mdns_answer *new_answer)
+{
+  struct mdns_answer a;
+  int pos = a_list->size;
+  err_t res = ERR_OK;
+  u8_t result;
+  u16_t num_left = pkt->authoritative;
+  u16_t parse_offset = pkt->parse_offset;
+
+  /* Check size */
+  if ((a_list->size + 1) >= MDNS_PROBE_TIEBREAK_MAX_ANSWERS) {
+    return ERR_MEM;
+  }
+  /* Search location and open a location */
+  for (int i = 0; i < a_list->size; i++) {
+    /* Read answers already in the list from pkt */
+    pkt->parse_offset = a_list->offset[i];
+    res = mdns_read_answer(pkt, &a, &num_left);
+    if (res != ERR_OK) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping probe packet\n"));
+      return res;
+    }
+    /* Compare them with the new answer to find it's place */
+    res = mdns_lexicographical_comparison(pkt, pkt, &a, new_answer, &result);
+    if (res != ERR_OK) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to compare answers, skipping probe packet\n"));
+      return res;
+    }
+    if (result == MDNS_LEXICOGRAPHICAL_LATER) {
+      pos = i;
+      for (int j = (a_list->size + 1); j>i; j--) {
+        a_list->offset[j] = a_list->offset[j-1];
+      }
+      break;
+    }
+  }
+  /* Insert new value */
+  a_list->offset[pos] = new_offset;
+  a_list->size++;
+  /* Reset parse offset for further evaluation */
+  pkt->parse_offset = parse_offset;
+  return res;
+}
+
+/**
+ * Check if the given answer answers the give question
+ *
+ * @param q     query to find answer for
+ * @param a     answer to given query
+ * @return      1 it a answers q, 0 if not
+ */
+static u8_t
+mdns_is_answer_to_question(struct mdns_question *q, struct mdns_answer *a)
+{
+  if (q->info.type == DNS_RRTYPE_ANY || q->info.type == a->info.type) {
+    /* The types match or question type is any */
+    if (mdns_domain_eq(&q->info.domain, &a->info.domain)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Converts the output packet to the input packet format for probe tiebreaking
+ *
+ * @param inpkt   destination packet for conversion
+ * @param outpkt  source packet for conversion
+ */
+static void
+mdns_convert_out_to_in_pkt(struct mdns_packet *inpkt, struct mdns_outpacket *outpkt)
+{
+  inpkt->pbuf = outpkt->pbuf;
+  inpkt->parse_offset = SIZEOF_DNS_HDR;
+
+  inpkt->questions = inpkt->questions_left = outpkt->questions;
+  inpkt->answers = inpkt->answers_left = outpkt->answers;
+  inpkt->authoritative = inpkt->authoritative_left = outpkt->authoritative;
+  inpkt->additional = inpkt->additional_left = outpkt->additional;
+}
+
+/**
+ * Debug print to print the answer part that is lexicographically compared
+ *
+ * @param pkt Packet where answer originated
+ * @param a   The answer to print
+ */
+static void
+mdns_debug_print_answer(struct mdns_packet *pkt, struct mdns_answer *a)
+{
+  /* Arbitratry chose for 200 -> don't want to see more then that. It's only
+   * for debug so not that important. */
+  char string[200];
+  int i;
+
+  snprintf(string, 35, "Type = %2d, class = %1d, rdata = ", a->info.type, a->info.klass);
+  for (i = 0; ((i < a->rd_length) && ((30 + 4*i) < 195)) ; i++) {
+    snprintf(&string[30 + 4*i], 5, "%3d ", (u8_t)pbuf_get_at(pkt->pbuf, (u16_t)(a->rd_offset + i)));
+  }
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: %s\n", string));
+}
+
+/**
+ * Perform probe tiebreaking according to RFC6762 section 8.2
+ *
+ * @param netif network interface of incoming packet
+ * @param pkt   incoming packet
+ */
+static void
+mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
+{
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
+  struct mdns_question pkt_q, my_q, q_dummy;
+  struct mdns_answer pkt_a, my_a;
+  struct mdns_outmsg myprobe_msg;
+  struct mdns_outpacket myprobe_outpkt;
+  struct mdns_packet myprobe_inpkt;
+  struct mdns_answer_list pkt_a_list, my_a_list;
+  u16_t save_parse_offset;
+  u16_t pkt_parse_offset, myprobe_parse_offset, myprobe_questions_left;
+  err_t res;
+  u8_t match, result;
+  int min, i;
+
+  /* Generate probe packet to perform comparison.
+   * This is a lot of calculation at this stage without any pre calculation
+   * needed. It should be evaluated if this is the best approach.
+   */
+  mdns_define_probe_rrs_to_send(netif, &myprobe_msg);
+  memset(&myprobe_outpkt, 0, sizeof(myprobe_outpkt));
+  res = mdns_create_outpacket(netif, &myprobe_msg, &myprobe_outpkt);
+  if (res != ERR_OK) {
+    goto cleanup;
+  }
+  mdns_convert_out_to_in_pkt(&myprobe_inpkt, &myprobe_outpkt);
+
+  /* Loop over all our probes to search for matches */
+  while (myprobe_inpkt.questions_left) {
+    /* Read one of our probe questions to check if pkt contains same question */
+    res = mdns_read_question(&myprobe_inpkt, &my_q);
+    if (res != ERR_OK) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse question, skipping probe packet\n"));
+      goto cleanup;
+    }
+    /* Remember parse offsets so we can restart the search for the next question */
+    pkt_parse_offset = pkt->parse_offset;
+    myprobe_parse_offset = myprobe_inpkt.parse_offset;
+    /* Remember questions left of our probe packet */
+    myprobe_questions_left = myprobe_inpkt.questions_left;
+    /* Reset match flag */
+    match = 0;
+    /* Search for a matching probe in the incomming packet */
+    while (pkt->questions_left) {
+      /* Read probe questions one by one */
+      res = mdns_read_question(pkt, &pkt_q);
+      if (res != ERR_OK) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse question, skipping probe packet\n"));
+        goto cleanup;
+      }
+      /* Stop evaluating if the class is not supported */
+      if (pkt_q.info.klass != DNS_RRCLASS_IN && pkt_q.info.klass != DNS_RRCLASS_ANY) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: question class not supported, skipping probe packet\n"));
+        goto cleanup;
+      }
+      /* We probe for type any, so we do not have to compare types */
+      /* Compare if we are probing for the same domain */
+      if (mdns_domain_eq(&pkt_q.info.domain, &my_q.info.domain)) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: We are probing for the same rr\n"));
+        match = 1;
+        break;
+      }
+    }
+    /* When matched start evaluating the authoritative section */
+    if (match) {
+      /* Ignore all following questions to be able to get to the authoritative answers */
+      while (pkt->questions_left) {
+        res = mdns_read_question(pkt, &q_dummy);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse question, skipping probe packet\n"));
+          goto cleanup;
+        }
+      }
+      while (myprobe_inpkt.questions_left) {
+        res = mdns_read_question(&myprobe_inpkt, &q_dummy);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse question, skipping probe packet\n"));
+          goto cleanup;
+        }
+      }
+
+      /* Extract and sort our authoritative answers that answer our question */
+      mdns_init_answer_list(&my_a_list);
+      while(myprobe_inpkt.authoritative_left) {
+        save_parse_offset = myprobe_inpkt.parse_offset;
+        res = mdns_read_answer(&myprobe_inpkt, &my_a, &myprobe_inpkt.authoritative_left);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping probe packet\n"));
+          goto cleanup;
+        }
+        if (mdns_is_answer_to_question(&my_q, &my_a)) {
+          /* Add to list */
+          res = mdns_push_answer_to_sorted_list(&my_a_list, &myprobe_inpkt, save_parse_offset, &my_a);
+          if (res != ERR_OK) {
+            LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to add answer, skipping probe packet\n"));
+            goto cleanup;
+          }
+        }
+      }
+      /* Extract and sort the packets authoritative answers that answer the
+         question */
+      mdns_init_answer_list(&pkt_a_list);
+      while(pkt->authoritative_left) {
+        save_parse_offset = pkt->parse_offset;
+        res = mdns_read_answer(pkt, &pkt_a, &pkt->authoritative_left);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping probe packet\n"));
+          goto cleanup;
+        }
+        if (mdns_is_answer_to_question(&my_q, &pkt_a)) {
+          /* Add to list */
+          res = mdns_push_answer_to_sorted_list(&pkt_a_list, pkt, save_parse_offset, &pkt_a);
+          if (res != ERR_OK) {
+            LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to add answer, skipping probe packet\n"));
+            goto cleanup;
+          }
+        }
+      }
+
+      /* Reinitiate authoritative left */
+      myprobe_inpkt.authoritative_left = myprobe_inpkt.authoritative;
+      pkt->authoritative_left = pkt->authoritative;
+
+      /* Compare pairwise.
+       *  - lexicographically later? -> we win, ignore the packet.
+       *  - lexicographically earlier? -> we loose, wait one second and retry.
+       *  - lexicographically equal? -> no conflict, check other probes.
+       */
+      min = LWIP_MIN(my_a_list.size, pkt_a_list.size);
+      for (i = 0; i < min; i++) {
+        /* Get answer of our own list */
+        myprobe_inpkt.parse_offset = my_a_list.offset[i];
+        res = mdns_read_answer(&myprobe_inpkt, &my_a, &myprobe_inpkt.authoritative_left);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping probe packet\n"));
+          goto cleanup;
+        }
+        /* Get answer of the packets list  */
+        pkt->parse_offset = pkt_a_list.offset[i];
+        res = mdns_read_answer(pkt, &pkt_a, &pkt->authoritative_left);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping probe packet\n"));
+          goto cleanup;
+        }
+        /* Print both answers for debugging */
+        mdns_debug_print_answer(pkt, &pkt_a);
+        mdns_debug_print_answer(&myprobe_inpkt, &my_a);
+        /* Define the winner */
+        res = mdns_lexicographical_comparison(&myprobe_inpkt, pkt, &my_a, &pkt_a, &result);
+        if (res != ERR_OK) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to compare answers, skipping probe packet\n"));
+          goto cleanup;
+        }
+        if (result == MDNS_LEXICOGRAPHICAL_LATER) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: we win, we are lexicographically later\n"));
+          goto cleanup;
+        }
+        else if (result == MDNS_LEXICOGRAPHICAL_EARLIER) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: we loose, we are lexicographically earlier. 1s timeout started\n"));
+          sys_untimeout(mdns_probe_and_announce, netif);
+          mdns->state = MDNS_STATE_PROBE_WAIT;
+          mdns->sent_num = 0;
+          sys_timeout(MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS, mdns_probe_and_announce, netif);
+          goto cleanup;
+        }
+        else {
+          LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: lexicographically equal, so no conclusion\n"));
+        }
+      }
+      /* All compared RR were equal, otherwise we would not be here
+       * -> check if one of both have more answers to the question */
+      if (my_a_list.size != pkt_a_list.size) {
+        if (my_a_list.size > pkt_a_list.size) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: we win, we have more records answering the probe\n"));
+          goto cleanup;
+        }
+        else {
+          LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: we loose, we have less records. 1s timeout started\n"));
+          sys_untimeout(mdns_probe_and_announce, netif);
+          mdns->state = MDNS_STATE_PROBE_WAIT;
+          mdns->sent_num = 0;
+          sys_timeout(MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS, mdns_probe_and_announce, netif);
+          goto cleanup;
+        }
+      }
+      else {
+        /* There is no conflict on this probe, both devices have the same data
+         * in the authoritative section. We should still check the other probes
+         * for conflicts. */
+        LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: no conflict, all records answering the probe are equal\n"));
+      }
+    }
+    /* Evaluate other probes if any. */
+    /* Reinitiate parse offsets */
+    pkt->parse_offset = pkt_parse_offset;
+    myprobe_inpkt.parse_offset = myprobe_parse_offset;
+    /* Reinitiate questions_left and authoritative_left */
+    pkt->questions_left = pkt->questions;
+    pkt->authoritative_left = pkt->authoritative;
+    myprobe_inpkt.questions_left = myprobe_questions_left;
+    myprobe_inpkt.authoritative_left = myprobe_inpkt.authoritative;
+  }
+
+cleanup:
+  if (myprobe_inpkt.pbuf) {
+    pbuf_free(myprobe_inpkt.pbuf);
+    myprobe_inpkt.pbuf = NULL;
+  }
+}
+
+/**
  * Check the incomming packet and parse all questions
  *
  * @param netif network interface of incoming packet
@@ -814,10 +1323,11 @@ mdns_add_msg_to_delayed(struct mdns_outmsg *dest, struct mdns_outmsg *src)
 
 /**
  * Handle question MDNS packet
- * 1. Parse all questions and set bits what answers to send
- * 2. Clear pending answers if known answers are supplied
- * 3. Define which type of answer is requested
- * 4. Send out packet or put it on hold until after random time
+ * - Perform probe tiebreaking when in probing state
+ * - Parse all questions and set bits what answers to send
+ * - Clear pending answers if known answers are supplied
+ * - Define which type of answer is requested
+ * - Send out packet or put it on hold until after random time
  *
  * @param pkt   incoming packet
  * @param netif network interface of incoming packet
@@ -834,6 +1344,17 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
   u8_t listen_to_QU_bit = 0;
   int i;
   err_t res;
+
+  if ((mdns->state == MDNS_STATE_PROBING) ||
+      (mdns->state == MDNS_STATE_ANNOUNCE_WAIT)) {
+    /* Probe Tiebreaking */
+    /* Check if packet is a probe message */
+    if ((pkt->questions > 0) && (pkt->answers == 0) &&
+        (pkt->authoritative > 0) && (pkt->additional == 0)) {
+      /* This should be a probe message -> call probe handler */
+      mdns_handle_probe_tiebreaking(netif, pkt);
+    }
+  }
 
   if ((mdns->state != MDNS_STATE_COMPLETE) &&
       (mdns->state != MDNS_STATE_ANNOUNCING)) {
