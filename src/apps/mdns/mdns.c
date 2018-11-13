@@ -796,10 +796,12 @@ mdns_parse_pkt_authoritative_answers(struct netif *netif, struct mdns_packet *pk
 static void
 mdns_add_msg_to_delayed(struct mdns_outmsg *dest, struct mdns_outmsg *src)
 {
+  int i;
+
   dest->host_questions |= src->host_questions;
   dest->host_replies |= src->host_replies;
   dest->host_reverse_v6_replies |= src->host_reverse_v6_replies;
-  for (int i = 0; i < MDNS_MAX_SERVICES; i++) {
+  for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     dest->serv_questions[i] |= src->serv_questions[i];
     dest->serv_replies[i] |= src->serv_replies[i];
   }
