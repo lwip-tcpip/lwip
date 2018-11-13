@@ -196,6 +196,9 @@ struct mdns_host {
 #endif
 };
 
+struct mdns_host* netif_mdns_data(struct netif *netif);
+struct udp_pcb* get_mdns_pcb(void);
+
 #endif /* LWIP_MDNS_RESPONDER */
 
 #ifdef __cplusplus

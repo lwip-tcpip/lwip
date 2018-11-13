@@ -97,9 +97,6 @@ void mdns_resp_announce(struct netif *netif);
  */
 #define mdns_resp_netif_settings_changed(netif) mdns_resp_announce(netif)
 
-struct mdns_host* netif_mdns_data(struct netif *netif);
-struct udp_pcb* get_mdns_pcb(void);
-
 #endif /* LWIP_MDNS_RESPONDER */
 
 #ifdef __cplusplus
