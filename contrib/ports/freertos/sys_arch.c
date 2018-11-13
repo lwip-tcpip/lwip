@@ -432,10 +432,7 @@ sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg)
   }
   LWIP_ASSERT("mbox fetch failed", ret == pdTRUE);
 
-  /* Old versions of lwIP required us to return the time waited.
-     This is not the case any more. Just returning != SYS_ARCH_TIMEOUT
-     here is enough. */
-  return 1;
+  return 0;
 }
 
 void
