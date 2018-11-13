@@ -688,7 +688,7 @@ sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
       *msg  = NULL;
     }
 
-    return SYS_ARCH_TIMEOUT;
+    return SYS_MBOX_EMPTY;
   }
 }
 
