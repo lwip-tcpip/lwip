@@ -520,6 +520,12 @@
     <ClCompile Include="..\..\..\..\src\netif\lowpan6_common.c">
       <Filter>src\netif</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\src\apps\mdns\mdns_domain.c">
+      <Filter>src\apps\mdns</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\src\apps\mdns\mdns_out.c">
+      <Filter>src\apps\mdns</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\lwiperf.h">
@@ -1058,6 +1064,12 @@
     </ClInclude>
     <ClInclude Include="..\..\..\examples\example_app\ppp_settings.h">
       <Filter>example_app</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_domain.h">
+      <Filter>src\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_out.h">
+      <Filter>src\include\lwip\apps</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

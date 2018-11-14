@@ -275,6 +275,8 @@
     <ClCompile Include="..\..\..\..\src\apps\http\altcp_proxyconnect.c" />
     <ClCompile Include="..\..\..\..\src\apps\http\http_client.c" />
     <ClCompile Include="..\..\..\..\src\apps\lwiperf\lwiperf.c" />
+    <ClCompile Include="..\..\..\..\src\apps\mdns\mdns_domain.c" />
+    <ClCompile Include="..\..\..\..\src\apps\mdns\mdns_out.c" />
     <ClCompile Include="..\..\..\..\src\apps\mqtt\mqtt.c" />
     <ClCompile Include="..\..\..\..\src\apps\netbiosns\netbiosns.c" />
     <ClCompile Include="..\..\..\..\src\apps\smtp\smtp.c" />
@@ -415,6 +417,8 @@
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\altcp_tls_mbedtls_opts.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\http_client.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\lwiperf.h" />
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_domain.h" />
+    <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_out.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\mdns_priv.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\mqtt.h" />
     <ClInclude Include="..\..\..\..\src\include\lwip\apps\mqtt_opts.h" />
