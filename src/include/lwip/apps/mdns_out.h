@@ -83,6 +83,14 @@ extern "C" {
  */
 #define MDNS_MULTICAST_TIMEOUT    1000
 
+/* RFC6762 section 6:
+ * In this special case only, when responding via multicast to a probe, a
+ * Multicast DNS responder is only required to delay its transmission as
+ * necessary to ensure an interval of at least 250 ms since the last time the
+ * record was multicast on that interface.
+ */
+#define MDNS_MULTICAST_PROBE_TIMEOUT    250
+
 /* RFC6762 section 5.4:
  * When receiving a question with the unicast-response bit set, a responder
  * SHOULD usually respond with a unicast packet directed back to the querier.
@@ -100,15 +108,19 @@ void mdns_set_timeout(struct netif *netif, u32_t msecs,
                         sys_timeout_handler handler, u8_t *busy_flag);
 #if LWIP_IPV4
 void mdns_multicast_timeout_reset_ipv4(void *arg);
+void mdns_multicast_probe_timeout_reset_ipv4(void *arg);
 void mdns_multicast_timeout_25ttl_reset_ipv4(void *arg);
 void mdns_send_multicast_msg_delayed_ipv4(void *arg);
 void mdns_send_unicast_msg_delayed_ipv4(void *arg);
+void mdns_start_multicast_timeouts_ipv4(struct netif *netif);
 #endif
 #if LWIP_IPV6
 void mdns_multicast_timeout_reset_ipv6(void *arg);
+void mdns_multicast_probe_timeout_reset_ipv6(void *arg);
 void mdns_multicast_timeout_25ttl_reset_ipv6(void *arg);
 void mdns_send_multicast_msg_delayed_ipv6(void *arg);
 void mdns_send_unicast_msg_delayed_ipv6(void *arg);
+void mdns_start_multicast_timeouts_ipv6(struct netif *netif);
 #endif
 void mdns_prepare_txtdata(struct mdns_service *service);
 

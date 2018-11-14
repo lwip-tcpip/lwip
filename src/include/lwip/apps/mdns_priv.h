@@ -145,10 +145,12 @@ struct mdns_outmsg {
 
 /** Delayed msg info */
 struct mdns_delayed_msg {
-  /** Timer state multicast */
+  /** Signals if a multicast msg needs to be send out */
   u8_t multicast_msg_waiting;
-  /** Multicast timeout on */
+  /** Multicast timeout for all multicast traffic except probe answers */
   u8_t multicast_timeout;
+  /** Multicast timeout only for probe answers */
+  u8_t multicast_probe_timeout;
   /** Output msg used for delayed multicast responses */
   struct mdns_outmsg delayed_msg_multicast;
   /** Prefer multicast over unicast timeout -> 25% of TTL = we take 30s as

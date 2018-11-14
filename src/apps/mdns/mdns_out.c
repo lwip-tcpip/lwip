@@ -776,6 +776,37 @@ mdns_multicast_timeout_reset_ipv4(void *arg)
 }
 
 /**
+ *  Called by timeouts when timer is passed, allows direct multicast IPv4 probe
+ *  response traffic again and sends out probe response if one was pending
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_multicast_probe_timeout_reset_ipv4(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+  err_t res;
+
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast probe timeout finished - IPv4\n"));
+
+  mdns->ipv4.multicast_probe_timeout = 0;
+
+  if (mdns->ipv4.multicast_msg_waiting) {
+    res = mdns_send_outpacket(&mdns->ipv4.delayed_msg_multicast, netif);
+    if(res != ERR_OK) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Waiting probe multicast send failed - IPv4\n"));
+    }
+    else {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Waiting probe multicast send successful - IPv4\n"));
+      mdns_clear_outmsg(&mdns->ipv4.delayed_msg_multicast);
+      mdns->ipv4.multicast_msg_waiting = 0;
+      mdns_start_multicast_timeouts_ipv4(netif);
+    }
+  }
+}
+
+/**
  *  Called by timeouts when timer is passed, allows to send an answer on a QU
  *  question via multicast.
  *
@@ -812,12 +843,7 @@ mdns_send_multicast_msg_delayed_ipv4(void *arg)
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed multicast send successful - IPv4\n"));
     mdns_clear_outmsg(&mdns->ipv4.delayed_msg_multicast);
     mdns->ipv4.multicast_msg_waiting = 0;
-    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
-                     &mdns->ipv4.multicast_timeout);
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
-    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
-                     &mdns->ipv4.multicast_timeout_25TTL);
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
+    mdns_start_multicast_timeouts_ipv4(netif);
   }
 }
 
@@ -844,6 +870,29 @@ mdns_send_unicast_msg_delayed_ipv4(void *arg)
   }
 }
 
+/** Start all multicast timeouts for IPv4
+ *  Timeouts started:
+ *    - do not multicast within one second
+ *    - do not multicast a probe response within 250ms
+ *    - send a multicast answer on a QU question if not send recently.
+ *
+ *  @param netif network interface to start timeouts on
+ */
+void
+mdns_start_multicast_timeouts_ipv4(struct netif *netif)
+{
+  struct mdns_host *mdns = netif_mdns_data(netif);
+
+  mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
+                   &mdns->ipv4.multicast_timeout);
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
+  mdns_set_timeout(netif, MDNS_MULTICAST_PROBE_TIMEOUT, mdns_multicast_probe_timeout_reset_ipv4,
+                   &mdns->ipv4.multicast_probe_timeout);
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast probe timeout started - IPv4\n"));
+  mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
+                   &mdns->ipv4.multicast_timeout_25TTL);
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
+}
 #endif
 
 #if LWIP_IPV6
@@ -861,6 +910,37 @@ mdns_multicast_timeout_reset_ipv6(void *arg)
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout finished - IPv6\n"));
 
   mdns->ipv6.multicast_timeout = 0;
+}
+
+/**
+ *  Called by timeouts when timer is passed, allows direct multicast IPv6 probe
+ *  response traffic again and sends out probe response if one was pending
+ *
+ *  @param arg  pointer to netif of timeout.
+ */
+void
+mdns_multicast_probe_timeout_reset_ipv6(void *arg)
+{
+  struct netif *netif = (struct netif*)arg;
+  struct mdns_host *mdns = netif_mdns_data(netif);
+  err_t res;
+
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast probe timeout finished - IPv6\n"));
+
+  mdns->ipv6.multicast_probe_timeout = 0;
+
+  if (mdns->ipv6.multicast_msg_waiting) {
+    res = mdns_send_outpacket(&mdns->ipv6.delayed_msg_multicast, netif);
+    if(res != ERR_OK) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Waiting probe multicast send failed - IPv6\n"));
+    }
+    else {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Waiting probe multicast send successful - IPv6\n"));
+      mdns_clear_outmsg(&mdns->ipv6.delayed_msg_multicast);
+      mdns->ipv6.multicast_msg_waiting = 0;
+      mdns_start_multicast_timeouts_ipv6(netif);
+    }
+  }
 }
 
 /**
@@ -900,12 +980,7 @@ mdns_send_multicast_msg_delayed_ipv6(void *arg)
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Delayed multicast send successful - IPv6\n"));
     mdns_clear_outmsg(&mdns->ipv6.delayed_msg_multicast);
     mdns->ipv6.multicast_msg_waiting = 0;
-    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
-                     &mdns->ipv6.multicast_timeout);
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
-    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
-                     &mdns->ipv6.multicast_timeout_25TTL);
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
+    mdns_start_multicast_timeouts_ipv6(netif);
   }
 }
 
@@ -932,6 +1007,29 @@ mdns_send_unicast_msg_delayed_ipv6(void *arg)
   }
 }
 
+/** Start all multicast timeouts for IPv6
+ *  Timeouts started:
+ *    - do not multicast within one second
+ *    - do not multicast a probe response within 250ms
+ *    - send a multicast answer on a QU question if not send recently.
+ *
+ *  @param netif network interface to start timeouts on
+ */
+void
+mdns_start_multicast_timeouts_ipv6(struct netif *netif)
+{
+  struct mdns_host *mdns = netif_mdns_data(netif);
+
+  mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
+                   &mdns->ipv6.multicast_timeout);
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
+  mdns_set_timeout(netif, MDNS_MULTICAST_PROBE_TIMEOUT, mdns_multicast_probe_timeout_reset_ipv6,
+                   &mdns->ipv6.multicast_probe_timeout);
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast probe timeout started - IPv6\n"));
+  mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
+                   &mdns->ipv6.multicast_timeout_25TTL);
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
+}
 #endif
 
 /**

@@ -901,10 +901,11 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
     reply.cache_flush = 1;
   }
 
-  /* Delaying response.
+  /* Delaying response. (RFC6762 section 6)
    * Always delay the response, unicast or multicast, except when:
-   *  - Answering to a single question with a unique answer (RFC6762 section 6)
-   *  - Answering to a probe query via unicast (RFC6762 section 6)
+   *  - Answering to a single question with a unique answer (not a probe).
+   *  - Answering to a probe query via unicast.
+   *  - Answering to a probe query via multicast if not multicasted within 250ms.
    *
    * unique answer? -> not if it includes service type or name ptr's
    */
@@ -912,9 +913,22 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
     shared_answer |= (reply.serv_replies[i] &
                       (REPLY_SERVICE_TYPE_PTR | REPLY_SERVICE_NAME_PTR));
   }
-  if (((pkt->questions == 1) && (!shared_answer)) || reply.probe_query_recv) {
+  if (   ((pkt->questions == 1) && (!shared_answer) && !reply.probe_query_recv)
+      || (reply.probe_query_recv && reply.unicast_reply_requested)) {
     delay_response = 0;
   }
+#if LWIP_IPV6
+  if (IP_IS_V6_VAL(pkt->source_addr) && reply.probe_query_recv
+      && !reply.unicast_reply_requested && !mdns->ipv6.multicast_probe_timeout) {
+    delay_response = 0;
+  }
+#endif
+#if LWIP_IPV4
+  if (IP_IS_V4_VAL(pkt->source_addr) && reply.probe_query_recv
+      && !reply.unicast_reply_requested && !mdns->ipv4.multicast_probe_timeout) {
+    delay_response = 0;
+  }
+#endif
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: response %s delayed\r\n", (delay_response ? "randomly" : "not")));
 
   /* Unicast / multicast response:
@@ -923,7 +937,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
    *  a) Unicast reply requested && recently multicasted 1/4ttl (RFC6762 section 5.4)
    *  b) Direct unicast query to port 5353 (RFC6762 section 5.5)
    *  c) Reply to Legacy DNS querier (RFC6762 section 6.7)
-   *  d) A probe message is received (RFC6762 section 6)
+   *  d) A probe message is received requesting unicast (RFC6762 section 6)
    */
 
 #if LWIP_IPV6
@@ -939,7 +953,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
   if (   (reply.unicast_reply_requested && listen_to_QU_bit)
       || pkt->recv_unicast
       || reply.legacy_query
-      || reply.probe_query_recv ) {
+      || (reply.probe_query_recv && reply.unicast_reply_requested)) {
     send_unicast = 1;
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: send response via %s\r\n", (send_unicast ? "unicast" : "multicast")));
@@ -984,9 +998,14 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
 #if LWIP_IPV6
       /* Add answers to IPv6 waiting list if:
        *  - it's a IPv6 incoming packet
-       *  - and the 1 second timeout is passed (RFC6762 section 6)
+       *  - the 1 second timeout is passed (RFC6762 section 6)
+       *  - and it's not a probe packet
+       * Or if:
+       *  - it's a IPv6 incoming packet
+       *  - and it's a probe packet
        */
-      if (IP_IS_V6_VAL(pkt->source_addr) && !mdns->ipv6.multicast_timeout) {
+      if (IP_IS_V6_VAL(pkt->source_addr) && !mdns->ipv6.multicast_timeout
+          && !reply.probe_query_recv) {
         LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to multicast IPv6 waiting list\r\n"));
 
         mdns_add_msg_to_delayed(&mdns->ipv6.delayed_msg_multicast, &reply);
@@ -994,19 +1013,38 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
         mdns_set_timeout(netif, MDNS_RESPONSE_DELAY, mdns_send_multicast_msg_delayed_ipv6,
                          &mdns->ipv6.multicast_msg_waiting);
       }
+      else if (IP_IS_V6_VAL(pkt->source_addr) && reply.probe_query_recv) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to probe multicast IPv6 waiting list\r\n"));
+
+        mdns_add_msg_to_delayed(&mdns->ipv6.delayed_msg_multicast, &reply);
+
+        mdns->ipv6.multicast_msg_waiting = 1;
+      }
 #endif
 #if LWIP_IPV4
       /* Add answers to IPv4 waiting list if:
        *  - it's a IPv4 incoming packet
-       *  - and the 1 second timeout is passed (RFC6762 section 6)
+       *  - the 1 second timeout is passed (RFC6762 section 6)
+       *  - and it's not a probe packet
+       * Or if:
+       *  - it's a IPv4 incoming packet
+       *  - and it's a probe packet
        */
-      if (IP_IS_V4_VAL(pkt->source_addr) && !mdns->ipv4.multicast_timeout) {
+      if (IP_IS_V4_VAL(pkt->source_addr) && !mdns->ipv4.multicast_timeout
+          && !reply.probe_query_recv) {
         LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to multicast IPv4 waiting list\r\n"));
 
         mdns_add_msg_to_delayed(&mdns->ipv4.delayed_msg_multicast, &reply);
 
         mdns_set_timeout(netif, MDNS_RESPONSE_DELAY, mdns_send_multicast_msg_delayed_ipv4,
                          &mdns->ipv4.multicast_msg_waiting);
+      }
+      else if (IP_IS_V4_VAL(pkt->source_addr) && reply.probe_query_recv) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: add answers to probe multicast IPv4 waiting list\r\n"));
+
+        mdns_add_msg_to_delayed(&mdns->ipv4.delayed_msg_multicast, &reply);
+
+        mdns->ipv4.multicast_msg_waiting = 1;
       }
 #endif
     }
@@ -1030,7 +1068,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
       /* Set IP/port to use when responding multicast */
 #if LWIP_IPV6
       if (IP_IS_V6_VAL(pkt->source_addr)) {
-        if (mdns->ipv6.multicast_timeout) {
+        if (mdns->ipv6.multicast_timeout && !reply.probe_query_recv) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: we just multicasted, ignore question\r\n"));
           return;
         }
@@ -1039,7 +1077,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
 #endif
 #if LWIP_IPV4
       if (IP_IS_V4_VAL(pkt->source_addr)) {
-        if (mdns->ipv4.multicast_timeout) {
+        if (mdns->ipv4.multicast_timeout && !reply.probe_query_recv) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: we just multicasted, ignore question\r\n"));
           return;
         }
@@ -1056,22 +1094,12 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
         LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Multicast answer send successfully\r\n"));
 #if LWIP_IPV6
         if (IP_IS_V6_VAL(pkt->source_addr)) {
-          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
-                           &mdns->ipv6.multicast_timeout);
-          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
-          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
-                           &mdns->ipv6.multicast_timeout_25TTL);
-          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
+          mdns_start_multicast_timeouts_ipv6(netif);
         }
 #endif
 #if LWIP_IPV4
         if (IP_IS_V4_VAL(pkt->source_addr)) {
-          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
-                           &mdns->ipv4.multicast_timeout);
-          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
-          mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
-                           &mdns->ipv4.multicast_timeout_25TTL);
-          LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
+          mdns_start_multicast_timeouts_ipv4(netif);
         }
 #endif
       }
@@ -1689,22 +1717,12 @@ mdns_resp_announce(struct netif *netif)
     /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
     mdns_announce(netif, &v6group);
-    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv6,
-                     &mdns->ipv6.multicast_timeout);
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv6\n"));
-    mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv6,
-                     &mdns->ipv6.multicast_timeout_25TTL);
-    LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv6\n"));
+    mdns_start_multicast_timeouts_ipv6(netif);
 #endif
 #if LWIP_IPV4
     if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
       mdns_announce(netif, &v4group);
-      mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT, mdns_multicast_timeout_reset_ipv4,
-                       &mdns->ipv4.multicast_timeout);
-      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout started - IPv4\n"));
-      mdns_set_timeout(netif, MDNS_MULTICAST_TIMEOUT_25TTL, mdns_multicast_timeout_25ttl_reset_ipv4,
-                       &mdns->ipv4.multicast_timeout_25TTL);
-      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: multicast timeout 1/4 of ttl started - IPv4\n"));
+      mdns_start_multicast_timeouts_ipv4(netif);
     }
 #endif
   } /* else: ip address changed while probing was ongoing? @todo reset counter to restart? */
