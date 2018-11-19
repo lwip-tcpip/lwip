@@ -67,7 +67,8 @@
 #include "lwip/timeouts.h"
 #include "lwip/sys.h"
 
-#include <string.h>
+#include <string.h> /* memset */
+#include <stdio.h>  /* snprintf */
 
 #if LWIP_MDNS_RESPONDER
 
@@ -673,8 +674,9 @@ mdns_lexicographical_comparison(struct mdns_packet *pkt_a, struct mdns_packet *p
 static void
 mdns_init_answer_list(struct mdns_answer_list *a_list)
 {
+  int i;
   a_list->size = 0;
-  for(int i = 0; i < MDNS_PROBE_TIEBREAK_MAX_ANSWERS; i++) {
+  for(i = 0; i < MDNS_PROBE_TIEBREAK_MAX_ANSWERS; i++) {
     a_list->offset[i] = 0;
   }
 }
@@ -696,6 +698,7 @@ mdns_push_answer_to_sorted_list(struct mdns_answer_list *a_list,
                                 u16_t new_offset,
                                 struct mdns_answer *new_answer)
 {
+  int i;
   struct mdns_answer a;
   int pos = a_list->size;
   err_t res = ERR_OK;
@@ -708,7 +711,7 @@ mdns_push_answer_to_sorted_list(struct mdns_answer_list *a_list,
     return ERR_MEM;
   }
   /* Search location and open a location */
-  for (int i = 0; i < a_list->size; i++) {
+  for (i = 0; i < a_list->size; i++) {
     /* Read answers already in the list from pkt */
     pkt->parse_offset = a_list->offset[i];
     res = mdns_read_answer(pkt, &a, &num_left);
@@ -723,8 +726,9 @@ mdns_push_answer_to_sorted_list(struct mdns_answer_list *a_list,
       return res;
     }
     if (result == MDNS_LEXICOGRAPHICAL_LATER) {
+      int j;
       pos = i;
-      for (int j = (a_list->size + 1); j>i; j--) {
+      for (j = (a_list->size + 1); j>i; j--) {
         a_list->offset[j] = a_list->offset[j-1];
       }
       break;
