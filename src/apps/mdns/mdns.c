@@ -65,6 +65,7 @@
 #include "lwip/prot/dns.h"
 #include "lwip/prot/iana.h"
 #include "lwip/timeouts.h"
+#include "lwip/sys.h"
 
 #include <string.h>
 
@@ -1630,6 +1631,53 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
 }
 
 /**
+ * Handle a probe conflict:
+ *  - Check if we exceeded the maximum of 15 conflicts in 10seconds.
+ *  - Let the user know there is a conflict.
+ *
+ * @param netif network interface on which the conflict occured.
+ */
+static void
+mdns_probe_conflict(struct netif *netif)
+{
+  struct mdns_host* mdns = NETIF_TO_HOST(netif);
+  int i;
+  u32_t diff;
+  u8_t index2;
+
+  /* Disable currently running probe / announce timer */
+  sys_untimeout(mdns_probe_and_announce, netif);
+
+  /* Increase the number of conflicts occured */
+  mdns->num_conflicts++;
+  mdns->conflict_time[mdns->index] = sys_now();
+  /* Print timestamp list */
+  LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: conflict timestamp list, insert index = %d\n", mdns->index));
+  for(i = 0; i < MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT; i++) {
+    LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: time no. %d = %d\n", i, mdns->conflict_time[i]));
+  }
+  /* Check if we had enough conflicts, minimum 15 */
+  if (mdns->num_conflicts >= MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT) {
+    /* Get the index to the oldest timestamp */
+    index2 = (mdns->index + 1) % MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT;
+    /* Compare the oldest vs newest time stamp */
+    diff = mdns->conflict_time[mdns->index] - mdns->conflict_time[index2];
+    /* If they are less then 10 seconds apart, initiate rate limit */
+    if (diff < MDNS_PROBE_MAX_CONFLICTS_TIME_WINDOW) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: probe rate limit enabled\n"));
+      mdns->rate_limit_activated = 1;
+    }
+  }
+  /* Increase index */
+  mdns->index = (mdns->index + 1) % MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT;
+
+  /* Inform the host on the conflict, if a callback is set */
+  if (mdns_name_result_cb != NULL) {
+    mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT);
+  }
+}
+
+/**
  * Handle response MDNS packet
  * Only prints debug for now. Will need more code to do conflict resolution.
  */
@@ -1698,10 +1746,7 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
       }
 
       if (conflict != 0) {
-        sys_untimeout(mdns_probe_and_announce, netif);
-        if (mdns_name_result_cb != NULL) {
-          mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT);
-        }
+        mdns_probe_conflict(netif);
       }
     }
   }
@@ -1921,6 +1966,8 @@ mdns_probe_and_announce(void* arg)
       if (mdns->sent_num == 0) {
         /* probing was succesful, announce all records */
         mdns->state = MDNS_STATE_ANNOUNCING;
+        /* Reset rate limit max probe conflict timeout flag */
+        mdns->rate_limit_activated = 0;
         /* Let the client know probing was successful */
         if (mdns_name_result_cb != NULL) {
           mdns_name_result_cb(netif, MDNS_PROBING_SUCCESSFUL);
@@ -2279,10 +2326,19 @@ mdns_resp_restart(struct netif *netif)
   /* Make sure timer is not running */
   sys_untimeout(mdns_probe_and_announce, netif);
 
-  /* @todo if we've failed 15 times within a 10 second period we MUST wait 5 seconds (or wait 5 seconds every time except first)*/
   mdns->sent_num = 0;
   mdns->state = MDNS_STATE_PROBE_WAIT;
-  sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+
+  /* RFC6762 section 8.1: If fifteen conflicts occur within any ten-second period,
+   * then the host MUST wait at least five seconds before each successive
+   * additional probe attempt.
+   */
+  if (mdns->rate_limit_activated == 1) {
+    sys_timeout(MDNS_PROBE_MAX_CONFLICTS_TIMEOUT, mdns_probe_and_announce, netif);
+  }
+  else {
+    sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+  }
 }
 
 /**

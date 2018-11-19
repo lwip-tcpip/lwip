@@ -64,6 +64,14 @@ extern "C" {
 #define MDNS_TTL_120   120
 #define MDNS_TTL_4500  4500
 
+/* RFC6762 section 8.1: If fifteen conflicts occur within any ten-second period,
+ * then the host MUST wait at least five seconds before each successive
+ * additional probe attempt.
+ */
+#define MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT  15
+#define MDNS_PROBE_MAX_CONFLICTS_TIME_WINDOW        10000
+#define MDNS_PROBE_MAX_CONFLICTS_TIMEOUT            5000
+
 /* Domain structs - also visible for unit tests */
 
 struct mdns_domain {
@@ -196,6 +204,14 @@ struct mdns_host {
   /** delayed msg struct for IPv6 */
   struct mdns_delayed_msg ipv6;
 #endif
+  /** Timestamp of probe conflict saved in list */
+  u32_t conflict_time[MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT];
+  /** Rate limit flag */
+  u8_t rate_limit_activated;
+  /** List index for timestamps */
+  u8_t index;
+  /** number of conflicts since startup */
+  u8_t num_conflicts;
 };
 
 struct mdns_host* netif_mdns_data(struct netif *netif);
