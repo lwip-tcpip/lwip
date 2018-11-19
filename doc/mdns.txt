@@ -45,7 +45,7 @@ This opens UDP sockets on port 5353 for IPv4 and IPv6.
 
 
 To start responding on a netif, run
-  mdns_resp_add_netif(struct netif *netif, char *hostname, u32_t dns_ttl)
+  mdns_resp_add_netif(struct netif *netif, const char *hostname)
 
 The hostname will be copied. If this returns successfully, the netif will join
 the multicast groups and any MDNS/legacy DNS requests sent unicast or multicast
@@ -53,7 +53,6 @@ to port 5353 will be handled:
 - <hostname>.local type A, AAAA or ANY returns relevant IP addresses
 - Reverse lookups (PTR in-addr.arpa, ip6.arpa) of netif addresses
   returns <hostname>.local
-Answers will use the supplied TTL (in seconds)
 MDNS allows UTF-8 names, but it is recommended to stay within ASCII,
 since the default case-insensitive comparison assumes this.
 
@@ -71,8 +70,8 @@ Adding services:
 ================
 
 The netif first needs to be registered. Then run
-  mdns_resp_add_service(struct netif *netif, char *name, char *service,
-      u16_t proto, u16_t port, u32_t dns_ttl,
+  mdns_resp_add_service(struct netif *netif, const char *name, const char *service,
+      enum mdns_sd_proto proto, u16_t port,
       service_get_txt_fn_t txt_fn, void *txt_userdata);
 
 The name and service pointers will be copied. Name refers to the name of the
@@ -100,7 +99,7 @@ If this call returns successfully, the following queries will be answered:
 If your device runs a webserver on port 80, an example call might be:
 
   mdns_resp_add_service(netif, "myweb", "_http"
-      DNSSD_PROTO_TCP, 80, 3600, srv_txt, NULL);
+      DNSSD_PROTO_TCP, 80, srv_txt, NULL);
 
 which will publish myweb._http._tcp.local for any hosts looking for web servers,
 and point them to <hostname>.local:80
