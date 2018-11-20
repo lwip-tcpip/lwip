@@ -1682,13 +1682,18 @@ mdns_probe_conflict(struct netif *netif)
 }
 
 /**
- * Handle response MDNS packet
- * Only prints debug for now. Will need more code to do conflict resolution.
+ * Handle response MDNS packet:
+ *  - Handle responses on probe query
+ *  - Perform conflict resolution on every packet (RFC6762 section 9)
+ *
+ * @param pkt   incoming packet
+ * @param netif network interface on which packet was received
  */
 static void
 mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
 {
   struct mdns_host* mdns = NETIF_TO_HOST(netif);
+  u16_t total_answers_left;
 
   /* Ignore responses with a source port different from 5353
    * (LWIP_IANA_PORT_MDNS) -> RFC6762 section 6 */
@@ -1707,12 +1712,13 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
       return;
     }
   }
-
-  while (pkt->answers_left) {
+  /* We need to check all resource record sections: answers, authoritative and additional */
+  total_answers_left = pkt->answers_left + pkt->authoritative_left + pkt->additional_left;
+  while (total_answers_left) {
     struct mdns_answer ans;
     err_t res;
 
-    res = mdns_read_answer(pkt, &ans, &pkt->answers_left);
+    res = mdns_read_answer(pkt, &ans, &total_answers_left);
     if (res != ERR_OK) {
       LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Failed to parse answer, skipping response packet\n"));
       return;
@@ -1721,6 +1727,11 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
     LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Answer for domain "));
     mdns_domain_debug_print(&ans.info.domain);
     LWIP_DEBUGF(MDNS_DEBUG, (" type %d class %d\n", ans.info.type, ans.info.klass));
+
+    if (ans.info.type == DNS_RRTYPE_ANY || ans.info.klass != DNS_RRCLASS_IN) {
+      /* Skip answers for ANY type or if class != IN */
+      continue;
+    }
 
     /* "Conflicting Multicast DNS responses received *before* the first probe
      * packet is sent MUST be silently ignored" so drop answer if we haven't
@@ -1751,9 +1762,123 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
 
       if (conflict != 0) {
         mdns_probe_conflict(netif);
+        break;
+      }
+    }
+    /* Perform conflict resolution (RFC6762 section 9):
+     * We assume a conflict if the hostname or service name matches the answers
+     * domain. Only if the rdata matches exactly we reset our assumption to no
+     * conflict. As stated in the RFC:
+     * What may be considered inconsistent is context sensitive, except that
+     * resource records with identical rdata are never considered inconsistent,
+     * even if they originate from different hosts.
+     */
+    else if ((mdns->state == MDNS_STATE_ANNOUNCING) ||
+             (mdns->state == MDNS_STATE_COMPLETE)) {
+      struct mdns_domain domain;
+      u8_t i;
+      u8_t conflict = 0;
+
+      /* Evaluate unique hostname records -> A and AAAA */
+      res = mdns_build_host_domain(&domain, mdns);
+      if (res == ERR_OK && mdns_domain_eq(&ans.info.domain, &domain)) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response matches host domain, assuming conflict\n"));
+        /* This means a conflict has taken place, except when the packet contains
+         * exactly the same rdata. */
+        conflict = 1;
+        /* Evaluate rdata -> to see if it's a copy of our own data */
+        if (ans.info.type == DNS_RRTYPE_A) {
+#if LWIP_IPV4
+          if (ans.rd_length == sizeof(ip4_addr_t) &&
+              pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip4_addr(netif), ans.rd_length) == 0) {
+            LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response equals our own IPv4 address record -> no conflict\n"));
+            conflict = 0;
+          }
+#endif
+        }
+        else if (ans.info.type == DNS_RRTYPE_AAAA) {
+#if LWIP_IPV6
+          if (ans.rd_length == sizeof(ip6_addr_p_t)) {
+            for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+              if (pbuf_memcmp(pkt->pbuf, ans.rd_offset, netif_ip6_addr(netif, i), ans.rd_length) == 0) {
+                LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response equals our own iPv6 address record, num = %d -> no conflict\n",i));
+                conflict = 0;
+              }
+            }
+          }
+#endif
+        }
+      }
+      /* Evaluate unique service name records -> SRV and TXT */
+      for (i = 0; i < MDNS_MAX_SERVICES; i++) {
+        struct mdns_service* service = mdns->services[i];
+        if (!service) {
+          continue;
+        }
+        res = mdns_build_service_domain(&domain, service, 1);
+        if ((res == ERR_OK) && mdns_domain_eq(&ans.info.domain, &domain)) {
+          LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response matches service domain, assuming conflict\n"));
+          /* This means a conflict has taken place, except when the packet contains
+           * exactly the same rdata. */
+          conflict = 1;
+          /* Evaluate rdata -> to see if it's a copy of our own data */
+          if (ans.info.type == DNS_RRTYPE_SRV) {
+            /* Read and compare to with our SRV record */
+            u16_t field16, len, read_pos;
+            struct mdns_domain srv_ans, my_ans;
+            read_pos = ans.rd_offset;
+            do {
+              /* Check priority field */
+              len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
+              if (len != sizeof(field16) || lwip_ntohs(field16) != SRV_PRIORITY) {
+                break;
+              }
+              read_pos += len;
+              /* Check weight field */
+              len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
+              if (len != sizeof(field16) || lwip_ntohs(field16) != SRV_WEIGHT) {
+                break;
+              }
+              read_pos += len;
+              /* Check port field */
+              len = pbuf_copy_partial(pkt->pbuf, &field16, sizeof(field16), read_pos);
+              if (len != sizeof(field16) || lwip_ntohs(field16) != service->port) {
+                break;
+              }
+              read_pos += len;
+              /* Check host field */
+              len = mdns_readname(pkt->pbuf, read_pos, &srv_ans);
+              mdns_build_host_domain(&my_ans, mdns);
+              if (len == MDNS_READNAME_ERROR || !mdns_domain_eq(&srv_ans, &my_ans)) {
+                break;
+              }
+              LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response equals our own SRV record -> no conflict\n"));
+              conflict = 0;
+            } while (0);
+          } else if (ans.info.type == DNS_RRTYPE_TXT) {
+            mdns_prepare_txtdata(service);
+            if (service->txtdata.length == ans.rd_length &&
+                pbuf_memcmp(pkt->pbuf, ans.rd_offset, service->txtdata.name, ans.rd_length) == 0) {
+              LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response equals our own TXT record -> no conflict\n"));
+              conflict = 0;
+            }
+          }
+        }
+      }
+      if (conflict != 0) {
+        /* Reset host to probing to reconfirm uniqueness */
+        LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: Conflict resolution -> reset to probing state\n"));
+        mdns->state = MDNS_STATE_PROBE_WAIT;
+        mdns->sent_num = 0;
+        sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+        break;
       }
     }
   }
+  /* Clear all xxx_left variables because we parsed all answers */
+  pkt->answers_left = 0;
+  pkt->authoritative_left = 0;
+  pkt->additional_left = 0;
 }
 
 /**
