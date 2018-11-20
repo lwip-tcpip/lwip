@@ -132,7 +132,7 @@ static int file_can_be_compressed(const char* filename);
 /* 5 bytes per char + 3 bytes per line */
 static char file_buffer_c[COPY_BUFSIZE * 5 + ((COPY_BUFSIZE / HEX_BYTES_PER_LINE) * 3)];
 
-char curSubdir[MAX_PATH_LEN];
+char curSubdir[MAX_PATH_LEN-3];
 char lastFileVar[MAX_PATH_LEN];
 char hdr_buf[4096];
 
@@ -926,9 +926,9 @@ int process_file(FILE *data_file, FILE *struct_file, const char *filename)
   int flags_printed;
 
   /* create qualified name (@todo: prepend slash or not?) */
-  sprintf(qualifiedName, "%s/%s", curSubdir, filename);
+  snprintf(qualifiedName, sizeof(qualifiedName), "%s/%s", curSubdir, filename);
   /* create C variable name */
-  strcpy(varname, qualifiedName);
+  strncpy(varname, qualifiedName, sizeof(varname));
   /* convert slashes & dots to underscores */
   fix_filename_for_c(varname, MAX_PATH_LEN);
   register_filename(varname);
