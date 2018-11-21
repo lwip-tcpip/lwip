@@ -240,12 +240,12 @@ static struct udp_pcb *netbiosns_pcb;
 
 /** Decode a NetBIOS name (from packet to string) */
 static int
-netbiosns_name_decode(char *name_enc, char *name_dec, int name_dec_len)
+netbiosns_name_decode(const char *name_enc, char *name_dec, int name_dec_len)
 {
-  char *pname;
-  char  cname;
-  char  cnbname;
-  int   idx = 0;
+  const char *pname;
+  char       cname;
+  char       cnbname;
+  int        idx = 0;
 
   LWIP_UNUSED_ARG(name_dec_len);
 
