@@ -71,8 +71,11 @@ const char *snmp_community_write = SNMP_COMMUNITY_WRITE;
 /** SNMP community string for sending traps */
 const char *snmp_community_trap = SNMP_COMMUNITY_TRAP;
 
-snmp_write_callback_fct snmp_write_callback     = NULL;
-void                   *snmp_write_callback_arg = NULL;
+snmp_write_callback_fct snmp_write_callback;
+void *snmp_write_callback_arg;
+
+snmp_inform_callback_fct snmp_inform_callback;
+void *snmp_inform_callback_arg;
 
 #if LWIP_SNMP_CONFIGURE_VERSIONS
 
@@ -154,9 +157,6 @@ snmp_v3_enable(u8_t enable)
 }
 
 #endif
-
-snmp_inform_callback_fct snmp_inform_callback     = NULL;
-void*                    snmp_inform_callback_arg = NULL;
 
 /**
  * @ingroup snmp_core
