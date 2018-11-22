@@ -30,14 +30,14 @@ target_compile_options(lwipcontribportunix PRIVATE ${LWIP_COMPILER_FLAGS})
 target_compile_definitions(lwipcontribportunix PRIVATE ${LWIP_DEFINITIONS} ${LWIP_MBEDTLS_DEFINITIONS})
 target_link_libraries(lwipcontribportunix PUBLIC ${LWIP_MBEDTLS_LINK_LIBRARIES})
 
-if (CMAKE_SYSTEM_NAME STREQUAL Linux)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_library(LIBUTIL util)
     find_library(LIBPTHREAD pthread)
     find_library(LIBRT rt)
     target_link_libraries(lwipcontribportunix PUBLIC ${LIBUTIL} ${LIBPTHREAD} ${LIBRT})
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL Darwin)
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # Darwin doesn't have pthreads or POSIX real-time extensions libs
     find_library(LIBUTIL util)
     target_link_libraries(lwipcontribportunix PUBLIC ${LIBUTIL})

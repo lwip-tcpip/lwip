@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 project(lwipunittests C)
 
-if (NOT CMAKE_SYSTEM_NAME STREQUAL Linux AND NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(FATAL_ERROR "Unit test are currently only working on Linux or Darwin")
 endif()
 
@@ -10,7 +10,7 @@ set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 set(LWIP_USE_SANITIZERS true)
 include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
-if(CMAKE_C_COMPILER_ID STREQUAL Clang)
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
     # check.h causes 'error: token pasting of ',' and __VA_ARGS__ is a GNU extension' with clang 9.0.0
     list(LWIP_COMPILER_FLAGS APPEND -Wno-gnu-zero-variadic-macro-arguments)
 endif()
@@ -37,20 +37,20 @@ find_library(LIBCHECK check)
 find_library(LIBM m)
 target_link_libraries(lwip_unittests ${LWIP_SANITIZER_LIBS} lwipallapps lwipcore ${LIBCHECK} ${LIBM})
 
-if (NOT CMAKE_SYSTEM_NAME STREQUAL Darwin)
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # check installed via brew on Darwin doesn't have a separate subunit library (must be statically linked)
     find_library(LIBSUBUNIT subunit)
     target_link_libraries(lwip_unittests ${LIBSUBUNIT})
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL Linux)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_library(LIBUTIL util)
     find_library(LIBPTHREAD pthread)
     find_library(LIBRT rt)
     target_link_libraries(lwip_unittests ${LIBUTIL} ${LIBPTHREAD} ${LIBRT})
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL Darwin)
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # Darwin doesn't have pthreads or POSIX real-time extensions libs
     find_library(LIBUTIL util)
     target_link_libraries(lwip_unittests ${LIBUTIL})
