@@ -69,6 +69,7 @@ int deflate_level = 10; /* default compression level, can be changed via command
 #elif __linux__
 
 #define GETCWD(path, len)             getcwd(path, len)
+#define GETCWD_SUCCEEDED(ret)         (ret != NULL)
 #define CHDIR(path)                   chdir(path)
 #define CHDIR_SUCCEEDED(ret)          (ret == 0)
 
@@ -276,7 +277,10 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  GETCWD(appPath, MAX_PATH_LEN);
+  if(!GETCWD_SUCCEEDED(GETCWD(appPath, MAX_PATH_LEN))) {
+    printf("Unable to get current dir." NEWLINE);
+    exit(-1);
+  }
   /* if command line param or subdir named 'fs' not found spout usage verbiage */
   if (!CHDIR_SUCCEEDED(CHDIR(path))) {
     /* if no subdir named 'fs' (or the one which was given) exists, spout usage verbiage */
@@ -284,7 +288,10 @@ int main(int argc, char *argv[])
     print_usage();
     exit(-1);
   }
-  CHDIR(appPath);
+  if(!CHDIR_SUCCEEDED(CHDIR(appPath))) {
+    printf("Invalid path: \"%s\"." NEWLINE, appPath);
+    exit(-1);
+  }
 
   printf("HTTP %sheader will %s statically included." NEWLINE,
          (includeHttpHeader ? (useHttp11 ? "1.1 " : "1.0 ") : ""),
@@ -310,7 +317,10 @@ int main(int argc, char *argv[])
     exit(-1);
   }
 
-  CHDIR(path);
+  if(!CHDIR_SUCCEEDED(CHDIR(path))) {
+    printf("Invalid path: \"%s\"." NEWLINE, path);
+    exit(-1);
+  }
 
   fprintf(data_file, "#include \"lwip/apps/fs.h\"" NEWLINE);
   fprintf(data_file, "#include \"lwip/def.h\"" NEWLINE NEWLINE NEWLINE);
@@ -344,7 +354,11 @@ int main(int argc, char *argv[])
   fclose(data_file);
   fclose(struct_file);
 
-  CHDIR(appPath);
+  if(!CHDIR_SUCCEEDED(CHDIR(appPath))) {
+    printf("Invalid path: \"%s\"." NEWLINE, appPath);
+    exit(-1);
+  }
+
   /* append struct_file to data_file */
   printf(NEWLINE "Creating target file..." NEWLINE NEWLINE);
   concat_files("fsdata.tmp", "fshdr.tmp", targetfile);
@@ -473,13 +487,19 @@ int process_sub(FILE *data_file, FILE *struct_file)
             continue;
           }
           if (freelen > 0) {
-            CHDIR(currName);
+            if(!CHDIR_SUCCEEDED(CHDIR(currName))) {
+              printf("Invalid path: \"%s\"." NEWLINE, currName);
+              exit(-1);
+            }
             strncat(curSubdir, "/", freelen);
             strncat(curSubdir, currName, freelen - 1);
             curSubdir[sizeof(curSubdir) - 1] = 0;
             printf("processing subdirectory %s/..." NEWLINE, curSubdir);
             filesProcessed += process_sub(data_file, struct_file);
-            CHDIR("..");
+            if(!CHDIR_SUCCEEDED(CHDIR(".."))) {
+              printf("Unable to get back to parent dir of: \"%s\"." NEWLINE, currName);
+              exit(-1);
+            }
             curSubdir[sublen] = 0;
           } else {
             printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, currName);
