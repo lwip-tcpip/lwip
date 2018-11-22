@@ -834,6 +834,7 @@ mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
    */
   mdns_define_probe_rrs_to_send(netif, &myprobe_msg);
   memset(&myprobe_outpkt, 0, sizeof(myprobe_outpkt));
+  memset(&myprobe_inpkt, 0, sizeof(myprobe_inpkt));
   res = mdns_create_outpacket(netif, &myprobe_msg, &myprobe_outpkt);
   if (res != ERR_OK) {
     goto cleanup;
@@ -1017,9 +1018,8 @@ mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
   }
 
 cleanup:
-  if (myprobe_inpkt.pbuf) {
+  if (myprobe_inpkt.pbuf != NULL) {
     pbuf_free(myprobe_inpkt.pbuf);
-    myprobe_inpkt.pbuf = NULL;
   }
 }
 
