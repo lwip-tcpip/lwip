@@ -788,16 +788,22 @@ mdns_convert_out_to_in_pkt(struct mdns_packet *inpkt, struct mdns_outpacket *out
 static void
 mdns_debug_print_answer(struct mdns_packet *pkt, struct mdns_answer *a)
 {
+#ifdef LWIP_DEBUG
   /* Arbitratry chose for 200 -> don't want to see more then that. It's only
    * for debug so not that important. */
   char string[200];
   int i;
+  int pos;
 
-  snprintf(string, 35, "Type = %2d, class = %1d, rdata = ", a->info.type, a->info.klass);
-  for (i = 0; ((i < a->rd_length) && ((30 + 4*i) < 195)) ; i++) {
-    snprintf(&string[30 + 4*i], 5, "%3d ", (u8_t)pbuf_get_at(pkt->pbuf, (u16_t)(a->rd_offset + i)));
+  pos = snprintf(string, sizeof(string), "Type = %2d, class = %1d, rdata = ", a->info.type, a->info.klass);
+  for (i = 0; ((i < a->rd_length) && ((pos + 4*i) < 195)) ; i++) {
+    snprintf(&string[pos + 4*i], 5, "%3d ", (u8_t)pbuf_get_at(pkt->pbuf, (u16_t)(a->rd_offset + i)));
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: %s\n", string));
+#else
+  LWIP_UNUSED_ARG(pkt);
+  LWIP_UNUSED_ARG(a);
+#endif
 }
 
 /**
