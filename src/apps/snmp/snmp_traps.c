@@ -356,7 +356,7 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
   struct snmp_varbind snmp_v2_special_varbinds[] = {
                                                      /* First varbind is used to store sysUpTime */
                                                      {
-                                                       &snmp_v2_special_varbinds[1],    /* *next */
+                                                       NULL,                            /* *next */
                                                        NULL,                            /* *prev */
                                                        {                                /* oid */
                                                          8,                             /* oid len */
@@ -364,12 +364,12 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
                                                        },
                                                        SNMP_ASN1_TYPE_TIMETICKS,        /* type */
                                                        sizeof(u32_t),                   /* value_len */
-                                                       &timestamp                       /* value */
+                                                       NULL                             /* value */
                                                      },
                                                      /* Second varbind is used to store snmpTrapOID */
                                                      {
-                                                       varbinds,                        /* *next */
-                                                       &snmp_v2_special_varbinds[0],    /* *prev */
+                                                       NULL,                            /* *next */
+                                                       NULL,                            /* *prev */
                                                        {                                /* oid */
                                                          10,                            /* oid len */
                                                          {1, 3, 6, 1, 6, 3, 1, 1, 4, 1} /* oid for snmpTrapOID */
@@ -381,6 +381,13 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
    };
 
   LWIP_ASSERT_CORE_LOCKED();
+
+  snmp_v2_special_varbinds[0].next = &snmp_v2_special_varbinds[1];
+  snmp_v2_special_varbinds[1].prev = &snmp_v2_special_varbinds[0];
+
+  snmp_v2_special_varbinds[0].value = &timestamp;
+
+  snmp_v2_special_varbinds[1].next = varbinds;
 
   /* see rfc3584 */
   if (trap_msg->snmp_version == SNMP_VERSION_2c) {
