@@ -298,6 +298,16 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
 
   err = snmp_parse_inbound_frame(&request);
   if (err == ERR_OK) {
+    if (request.request_type == SNMP_ASN1_CONTEXT_PDU_GET_RESP) {
+      if (request.error_status == SNMP_ERR_NOERROR) {
+        /* If callback function has been defined call it. */
+        if (snmp_inform_callback != NULL) {
+          snmp_inform_callback(&request, snmp_inform_callback_arg);
+        }
+      }
+      /* stop further handling of GET RESP PDU, we are an agent */
+      return;
+    }
     err = snmp_prepare_outbound_frame(&request);
     if (err == ERR_OK) {
 
@@ -311,11 +321,6 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
           err = snmp_process_getbulk_request(&request);
         } else if (request.request_type == SNMP_ASN1_CONTEXT_PDU_SET_REQ) {
           err = snmp_process_set_request(&request);
-        } else if(request.request_type == SNMP_ASN1_CONTEXT_PDU_GET_RESP) {
-          /* If callback function has been defined call it. */
-          if (snmp_inform_callback != NULL) {
-            snmp_inform_callback(&request, snmp_inform_callback_arg);
-          }
         }
       }
 #if LWIP_SNMP_V3
@@ -379,7 +384,7 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
       }
 #endif
 
-      if ((err == ERR_OK) && (request.request_type != SNMP_ASN1_CONTEXT_PDU_GET_RESP)) {
+      if (err == ERR_OK) {
         err = snmp_complete_outbound_frame(&request);
 
         if (err == ERR_OK) {
