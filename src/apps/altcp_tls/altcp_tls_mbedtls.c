@@ -76,6 +76,7 @@
 #include "mbedtls/platform.h"
 #include "mbedtls/memory_buffer_alloc.h"
 #include "mbedtls/ssl_cache.h"
+#include "mbedtls/ssl_ticket.h"
 
 #include "mbedtls/ssl_internal.h" /* to call mbedtls_flush_output after ERR_MEM */
 
@@ -100,9 +101,12 @@ struct altcp_tls_config {
   mbedtls_x509_crt *cert;
   mbedtls_pk_context *pkey;
   mbedtls_x509_crt *ca;
-#if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
+#if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_USE_SESSION_CACHE
   /** Inter-connection cache for fast connection startup */
   struct mbedtls_ssl_cache_context cache;
+#endif
+#if defined(MBEDTLS_SSL_SESSION_TICKETS) && ALTCP_MBEDTLS_USE_SESSION_TICKETS
+  mbedtls_ssl_ticket_context ticket_ctx;
 #endif
 };
 
@@ -721,11 +725,27 @@ altcp_tls_create_config(int is_server, int have_cert, int have_pkey, int have_ca
 #if ALTCP_MBEDTLS_LIB_DEBUG != LWIP_DBG_OFF
   mbedtls_ssl_conf_dbg(&conf->conf, altcp_mbedtls_debug, stdout);
 #endif
-#if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
+#if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_USE_SESSION_CACHE
   mbedtls_ssl_conf_session_cache(&conf->conf, &conf->cache, mbedtls_ssl_cache_get, mbedtls_ssl_cache_set);
-  mbedtls_ssl_cache_set_timeout(&conf->cache, 30);
-  mbedtls_ssl_cache_set_max_entries(&conf->cache, 30);
+  mbedtls_ssl_cache_set_timeout(&conf->cache, ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS);
+  mbedtls_ssl_cache_set_max_entries(&conf->cache, ALTCP_MBEDTLS_SESSION_CACHE_SIZE);
 #endif
+
+#if defined(MBEDTLS_SSL_SESSION_TICKETS) && ALTCP_MBEDTLS_USE_SESSION_TICKETS
+  mbedtls_ssl_ticket_init(&conf->ticket_ctx);
+
+  ret = mbedtls_ssl_ticket_setup(&conf->ticket_ctx, mbedtls_ctr_drbg_random, &conf->ctr_drbg,
+    ALTCP_MBEDTLS_SESSION_TICKET_CIPHER, ALTCP_MBEDTLS_SESSION_TICKET_TIMEOUT_SECONDS);
+  if (ret) {
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_ticket_setup failed: %d\n", ret));
+    altcp_mbedtls_free_config(conf);
+    return NULL;
+  }
+
+  mbedtls_ssl_conf_session_tickets_cb(&conf->conf, mbedtls_ssl_ticket_write, mbedtls_ssl_ticket_parse,
+    &conf->ticket_ctx);
+#endif
+
 
   return conf;
 }
