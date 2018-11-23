@@ -55,6 +55,16 @@
 #define ALTCP_MBEDTLS_DEBUG                           LWIP_DBG_OFF
 #endif
 
+/** Configure lwIP debug level of the mbedTLS library */
+#ifndef ALTCP_MBEDTLS_LIB_DEBUG
+#define ALTCP_MBEDTLS_LIB_DEBUG                       LWIP_DBG_OFF
+#endif
+
+/** Configure minimum internal debug level of the mbedTLS library */
+#ifndef ALTCP_MBEDTLS_LIB_DEBUG_LEVEL_MIN
+#define ALTCP_MBEDTLS_LIB_DEBUG_LEVEL_MIN             0
+#endif
+
 /** Set a session timeout in seconds for the basic session cache
  * ATTENTION: Using a session cache can lower security by reusing keys!
  */
