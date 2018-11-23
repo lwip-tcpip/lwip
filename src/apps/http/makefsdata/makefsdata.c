@@ -63,6 +63,7 @@ int deflate_level = 10; /* default compression level, can be changed via command
 #ifdef WIN32
 
 #define GETCWD(path, len)             GetCurrentDirectoryA(len, path)
+#define GETCWD_SUCCEEDED(ret)         (ret != 0)
 #define CHDIR(path)                   SetCurrentDirectoryA(path)
 #define CHDIR_SUCCEEDED(ret)          (ret == TRUE)
 
