@@ -1498,7 +1498,6 @@ smtp_send_mail_bodycback(const char *from, const char* to, const char* subject,
   LWIP_ASSERT("string is too long", len <= 0xffff);
   s->subject_len = (u16_t)len;
   s->body = NULL;
-  LWIP_ASSERT("string is too long", len <= 0xffff);
   s->callback_fn = callback_fn;
   s->callback_arg = callback_arg;
   s->bodydh->callback_fn = bodycback_fn;
