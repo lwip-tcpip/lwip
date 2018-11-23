@@ -634,16 +634,18 @@ altcp_tls_context(struct altcp_pcb *conn)
   return NULL;
 }
 
-#if ALTCP_MBEDTLS_DEBUG != LWIP_DBG_OFF
+#if ALTCP_MBEDTLS_LIB_DEBUG != LWIP_DBG_OFF
 static void
 altcp_mbedtls_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
-  LWIP_UNUSED_ARG(str);
-  LWIP_UNUSED_ARG(level);
+  LWIP_UNUSED_ARG(ctx);
   LWIP_UNUSED_ARG(file);
   LWIP_UNUSED_ARG(line);
-  LWIP_UNUSED_ARG(ctx);
-  /* @todo: output debug string :-) */
+  LWIP_UNUSED_ARG(str);
+
+  if (level >= ALTCP_MBEDTLS_LIB_DEBUG_LEVEL_MIN) {
+    LWIP_DEBUGF(ALTCP_MBEDTLS_LIB_DEBUG, ("%s:%04d: %s", file, line, str));
+  }
 }
 #endif
 
@@ -716,7 +718,7 @@ altcp_tls_create_config(int is_server, int have_cert, int have_pkey, int have_ca
   mbedtls_ssl_conf_authmode(&conf->conf, MBEDTLS_SSL_VERIFY_OPTIONAL);
 
   mbedtls_ssl_conf_rng(&conf->conf, mbedtls_ctr_drbg_random, &conf->ctr_drbg);
-#if ALTCP_MBEDTLS_DEBUG != LWIP_DBG_OFF
+#if ALTCP_MBEDTLS_LIB_DEBUG != LWIP_DBG_OFF
   mbedtls_ssl_conf_dbg(&conf->conf, altcp_mbedtls_debug, stdout);
 #endif
 #if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_SESSION_CACHE_TIMEOUT_SECONDS
