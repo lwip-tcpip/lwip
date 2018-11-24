@@ -61,7 +61,22 @@ extern "C" {
 struct altcp_tls_config;
 
 /** @ingroup altcp_tls
- * Create an ALTCP_TLS server configuration handle
+ * Create an ALTCP_TLS server configuration handle prepared for multiple certificates
+ */
+struct altcp_tls_config *altcp_tls_create_config_server(uint8_t cert_count);
+
+/** @ingroup altcp_tls
+ * Add a certificate to an ALTCP_TLS server configuration handle
+ */
+err_t altcp_tls_config_server_add_privkey_cert(struct altcp_tls_config *config,
+      const u8_t *privkey, size_t privkey_len,
+      const u8_t *privkey_pass, size_t privkey_pass_len,
+      const u8_t *cert, size_t cert_len);
+
+/** @ingroup altcp_tls
+ * Create an ALTCP_TLS server configuration handle with one certificate
+ * (short version of calling @ref altcp_tls_create_config_server and
+ * @ref altcp_tls_config_server_add_privkey_cert)
  */
 struct altcp_tls_config *altcp_tls_create_config_server_privkey_cert(const u8_t *privkey, size_t privkey_len,
                             const u8_t *privkey_pass, size_t privkey_pass_len,
