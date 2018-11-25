@@ -370,10 +370,10 @@ mdns_add_dotlocal(struct mdns_domain *domain)
 }
 
 /**
- * Build the <hostname>.local. domain name
+ * Build the \<hostname\>.local. domain name
  * @param domain Where to write the domain name
  * @param mdns TMDNS netif descriptor.
- * @return ERR_OK if domain <hostname>.local. was written, an err_t otherwise
+ * @return ERR_OK if domain \<hostname\>.local. was written, an err_t otherwise
  */
 err_t
 mdns_build_host_domain(struct mdns_domain *domain, struct mdns_host *mdns)
@@ -413,7 +413,7 @@ mdns_build_dnssd_domain(struct mdns_domain *domain)
  * @param service The service struct, containing service name, type and protocol
  * @param include_name Whether to include the service name in the domain
  * @return ERR_OK if domain was written. If service name is included,
- *         <name>.<type>.<proto>.local. will be written, otherwise <type>.<proto>.local.
+ *         \<name\>.\<type\>.\<proto\>.local. will be written, otherwise \<type\>.\<proto\>.local.
  *         An err_t is returned on error.
  */
 err_t
