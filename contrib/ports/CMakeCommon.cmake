@@ -2,6 +2,12 @@ if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
     include_guard(GLOBAL)
 endif()
 
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS  "CMAKE_BUILD_TYPE not set - defaulting to Debug build.")
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${CMAKE_CONFIGURATION_TYPES}." FORCE)
+endif()
+message (STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 set(LWIP_CONTRIB_DIR ${LWIP_DIR}/contrib)
 
 # ARM mbedtls support https://tls.mbed.org/
@@ -33,6 +39,8 @@ if(EXISTS ${LWIP_MBEDTLSDIR}/CMakeLists.txt)
 endif()
 
 set(LWIP_COMPILER_FLAGS_GNU_CLANG
+    $<$<CONFIG:Debug>:-Og>
+    $<$<CONFIG:Release>:-O3>
     -g
     -Wall
     -pedantic
@@ -111,5 +119,10 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-    set(LWIP_COMPILER_FLAGS /Wall /WX)
+    set(LWIP_COMPILER_FLAGS
+        $<$<CONFIG:Debug>:/O0>
+        $<$<CONFIG:Release>:/O2>
+        /Wall
+        /WX
+    )
 endif()
