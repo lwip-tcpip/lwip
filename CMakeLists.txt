@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
+set (CMAKE_CONFIGURATION_TYPES "Debug;Release")
+
 project(lwIP)
 
 # Example lwIP application
