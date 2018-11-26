@@ -120,8 +120,8 @@ endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     set(LWIP_COMPILER_FLAGS
-        $<$<CONFIG:Debug>:/O0>
-        $<$<CONFIG:Release>:/O2>
+        $<$<CONFIG:Debug>:/Od>
+        $<$<CONFIG:Release>:/Ox>
         /Wall
         /WX
     )
