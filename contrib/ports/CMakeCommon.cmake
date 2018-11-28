@@ -40,8 +40,8 @@ endif()
 
 set(LWIP_COMPILER_FLAGS_GNU_CLANG
     $<$<CONFIG:Debug>:-Og>
+    $<$<CONFIG:Debug>:-g>
     $<$<CONFIG:Release>:-O3>
-    -g
     -Wall
     -pedantic
     -Werror
