@@ -985,6 +985,11 @@ altcp_mbedtls_listen(struct altcp_pcb *conn, u8_t backlog, err_t *err)
   }
   lpcb = altcp_listen_with_backlog_and_err(conn->inner_conn, backlog, err);
   if (lpcb != NULL) {
+    altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
+    /* Free members of the ssl context (not used on listening pcb). This
+       includes freeing input/output buffers, so saves ~32KByte by default */
+    mbedtls_ssl_free(&state->ssl_context);
+
     conn->inner_conn = lpcb;
     altcp_accept(lpcb, altcp_mbedtls_lower_accept);
     return conn;
