@@ -144,6 +144,10 @@ int   lwip_stricmp(const char* str1, const char* str2);
 /* This can be #defined to strnstr() depending on your platform */
 char* lwip_strnstr(const char* buffer, const char* token, size_t n);
 #endif
+#ifndef lwip_strnistr
+/* This can be #defined to strnistr() depending on your platform */
+char* lwip_strnistr(const char* buffer, const char* token, size_t n);
+#endif
 
 #ifdef __cplusplus
 }
