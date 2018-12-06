@@ -335,13 +335,122 @@ START_TEST(test_udp_broadcast_rx_with_2_netifs)
 }
 END_TEST
 
+START_TEST(test_udp_bind)
+{
+  struct udp_pcb* pcb1;
+  struct udp_pcb* pcb2;
+  ip_addr_t ip1;
+  ip_addr_t ip2;
+  err_t err1;
+  err_t err2;
+  LWIP_UNUSED_ARG(_i);
+
+  /* bind on same port using different IP address types */
+  ip_addr_set_any(0, &ip1);
+  ip_addr_set_any(1, &ip2);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V4);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V6);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_OK);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+
+  /* bind on same port using SAME IPv4 address type */
+  ip_addr_set_any(0, &ip1);
+  ip_addr_set_any(0, &ip2);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V4);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_USE);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+
+  /* bind on same port using SAME IPv4 address type */
+  ip_addr_set_any(1, &ip1);
+  ip_addr_set_any(1, &ip2);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V6);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_USE);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+
+  /* Bind with different IP address type */
+  ip_addr_set_any(0, &ip1);
+  ip_addr_set_any(1, &ip2);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_OK);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+
+  /* Bind with different IP numbers */
+  IP_ADDR4(&ip1, 1, 2, 3, 4);
+  IP_ADDR4(&ip2, 4, 3, 2, 1);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_OK);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+
+  /* Bind with same IP numbers */
+  IP_ADDR4(&ip1, 1, 2, 3, 4);
+  IP_ADDR4(&ip2, 1, 2, 3, 4);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_USE);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 udp_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_udp_new_remove),
-    TESTFUNC(test_udp_broadcast_rx_with_2_netifs)
+    TESTFUNC(test_udp_broadcast_rx_with_2_netifs),
+    TESTFUNC(test_udp_bind)
   };
   return create_suite("UDP", tests, sizeof(tests)/sizeof(testfunc), udp_setup, udp_teardown);
 }
