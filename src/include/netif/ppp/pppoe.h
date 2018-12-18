@@ -149,10 +149,10 @@ struct pppoe_softc {
   u16_t sc_session;            /* PPPoE session id */
   u8_t sc_state;               /* discovery phase or session connected */
 
-#ifdef PPPOE_TODO
+#if PPPOE_SCNAME_SUPPORT
   u8_t *sc_service_name;       /* if != NULL: requested name of service */
   u8_t *sc_concentrator_name;  /* if != NULL: requested concentrator id */
-#endif /* PPPOE_TODO */
+#endif /* PPPOE_SCNAME_SUPPORT */
   u8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
   u8_t sc_ac_cookie_len;       /* length of cookie data */
 #ifdef PPPOE_SERVER
