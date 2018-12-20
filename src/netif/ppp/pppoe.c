@@ -175,8 +175,10 @@ ppp_pcb *pppoe_create(struct netif *pppif,
 {
   ppp_pcb *ppp;
   struct pppoe_softc *sc;
+#if !PPPOE_SCNAME_SUPPORT
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
+#endif /* !PPPOE_SCNAME_SUPPORT */
   LWIP_ASSERT_CORE_LOCKED();
 
   sc = (struct pppoe_softc *)LWIP_MEMPOOL_ALLOC(PPPOE_IF);
@@ -193,6 +195,10 @@ ppp_pcb *pppoe_create(struct netif *pppif,
   memset(sc, 0, sizeof(struct pppoe_softc));
   sc->pcb = ppp;
   sc->sc_ethif = ethif;
+#if PPPOE_SCNAME_SUPPORT
+  sc->sc_service_name = service_name;
+  sc->sc_concentrator_name = concentrator_name;
+#endif /* PPPOE_SCNAME_SUPPORT */
   /* put the new interface at the head of the list */
   sc->next = pppoe_softc_list;
   pppoe_softc_list = sc;
@@ -300,15 +306,6 @@ pppoe_destroy(ppp_pcb *ppp, void *ctx)
        break;
     }
   }
-
-#if PPPOE_SCNAME_SUPPORT
-  if (sc->sc_concentrator_name) {
-    mem_free(sc->sc_concentrator_name);
-  }
-  if (sc->sc_service_name) {
-    mem_free(sc->sc_service_name);
-  }
-#endif /* PPPOE_SCNAME_SUPPORT */
   LWIP_MEMPOOL_FREE(PPPOE_IF, sc);
 
   return ERR_OK;
