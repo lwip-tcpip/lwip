@@ -85,10 +85,10 @@ struct tftp_context {
    */
   int (*write)(void* handle, struct pbuf* p);
   /**
-   * Error response (client mode only)
-   * @param handle File handle set by tftp_get()/tftp_put()
-   * @param err error code from server
-   * @param msg error message from server
+   * Error indication from client or response from server
+   * @param handle File handle set by open()/tftp_get()/tftp_put()
+   * @param err error code from client or server
+   * @param msg error message from client or server
    * @param size size of msg
    */
   void (*error)(void* handle, int err, const char* msg, int size);
