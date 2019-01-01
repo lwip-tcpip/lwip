@@ -346,8 +346,8 @@ START_TEST(test_udp_bind)
   LWIP_UNUSED_ARG(_i);
 
   /* bind on same port using different IP address types */
-  ip_addr_set_any(0, &ip1);
-  ip_addr_set_any(1, &ip2);
+  ip_addr_set_any_val(0, ip1);
+  ip_addr_set_any_val(1, ip2);
 
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V4);
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V6);
@@ -362,8 +362,8 @@ START_TEST(test_udp_bind)
   udp_remove(pcb2);
 
   /* bind on same port using SAME IPv4 address type */
-  ip_addr_set_any(0, &ip1);
-  ip_addr_set_any(0, &ip2);
+  ip_addr_set_any_val(0, ip1);
+  ip_addr_set_any_val(0, ip2);
 
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V4);
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
@@ -378,8 +378,8 @@ START_TEST(test_udp_bind)
   udp_remove(pcb2);
 
   /* bind on same port using SAME IPv4 address type */
-  ip_addr_set_any(1, &ip1);
-  ip_addr_set_any(1, &ip2);
+  ip_addr_set_any_val(1, ip1);
+  ip_addr_set_any_val(1, ip2);
 
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V6);
@@ -394,8 +394,8 @@ START_TEST(test_udp_bind)
   udp_remove(pcb2);
 
   /* Bind with different IP address type */
-  ip_addr_set_any(0, &ip1);
-  ip_addr_set_any(1, &ip2);
+  ip_addr_set_any_val(0, ip1);
+  ip_addr_set_any_val(1, ip2);
 
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
