@@ -107,7 +107,7 @@ static struct lowpan6_link_addr rfc7668_peer_addr;
  * @see LWIP_RFC7668_LINUX_WORKAROUND_PUBLIC_ADDRESS
  */
 void
-ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr)
+ble_addr_to_eui64(u8_t *dst, const u8_t *src, int public_addr)
 {
   /* according to RFC7668 ch 3.2.2. */
   memcpy(dst, src, 3);
@@ -136,7 +136,7 @@ ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr)
  *
  */
 void
-eui64_to_ble_addr(uint8_t *dst, const uint8_t *src)
+eui64_to_ble_addr(u8_t *dst, const u8_t *src)
 {
   /* according to RFC7668 ch 3.2.2. */
   memcpy(dst,src,3);
@@ -386,7 +386,7 @@ rfc7668_input(struct pbuf * p, struct netif *netif)
       if ((i%4)==0) {
         LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("\n"));
       }
-      LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("%2X ", *((uint8_t *)p->payload+i)));
+      LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("%2X ", *((u8_t *)p->payload+i)));
     }
     LWIP_DEBUGF(LWIP_RFC7668_IP_UNCOMPRESSED_DEBUG, ("\np->len: %d\n", p->len));
   }

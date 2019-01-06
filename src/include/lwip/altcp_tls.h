@@ -63,7 +63,7 @@ struct altcp_tls_config;
 /** @ingroup altcp_tls
  * Create an ALTCP_TLS server configuration handle prepared for multiple certificates
  */
-struct altcp_tls_config *altcp_tls_create_config_server(uint8_t cert_count);
+struct altcp_tls_config *altcp_tls_create_config_server(u8_t cert_count);
 
 /** @ingroup altcp_tls
  * Add a certificate to an ALTCP_TLS server configuration handle

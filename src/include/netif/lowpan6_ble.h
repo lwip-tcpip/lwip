@@ -66,8 +66,8 @@ err_t rfc7668_if_init(struct netif *netif);
 err_t tcpip_rfc7668_input(struct pbuf *p, struct netif *inp);
 #endif
 
-void ble_addr_to_eui64(uint8_t *dst, const uint8_t *src, int public_addr);
-void eui64_to_ble_addr(uint8_t *dst, const uint8_t *src);
+void ble_addr_to_eui64(u8_t *dst, const u8_t *src, int public_addr);
+void eui64_to_ble_addr(u8_t *dst, const u8_t *src);
 
 #ifdef __cplusplus
 }

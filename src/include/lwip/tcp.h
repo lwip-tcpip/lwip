@@ -486,9 +486,9 @@ err_t            tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_add
 
 #if LWIP_TCP_PCB_NUM_EXT_ARGS
 u8_t tcp_ext_arg_alloc_id(void);
-void tcp_ext_arg_set_callbacks(struct tcp_pcb *pcb, uint8_t id, const struct tcp_ext_arg_callbacks * const callbacks);
-void tcp_ext_arg_set(struct tcp_pcb *pcb, uint8_t id, void *arg);
-void *tcp_ext_arg_get(const struct tcp_pcb *pcb, uint8_t id);
+void tcp_ext_arg_set_callbacks(struct tcp_pcb *pcb, u8_t id, const struct tcp_ext_arg_callbacks * const callbacks);
+void tcp_ext_arg_set(struct tcp_pcb *pcb, u8_t id, void *arg);
+void *tcp_ext_arg_get(const struct tcp_pcb *pcb, u8_t id);
 #endif
 
 #ifdef __cplusplus

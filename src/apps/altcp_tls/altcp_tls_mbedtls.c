@@ -100,10 +100,10 @@ struct altcp_tls_config {
   mbedtls_ctr_drbg_context ctr_drbg;
   mbedtls_x509_crt *cert;
   mbedtls_pk_context *pkey;
-  uint8_t cert_count;
-  uint8_t cert_max;
-  uint8_t pkey_count;
-  uint8_t pkey_max;
+  u8_t cert_count;
+  u8_t cert_max;
+  u8_t pkey_count;
+  u8_t pkey_max;
   mbedtls_x509_crt *ca;
 #if defined(MBEDTLS_SSL_CACHE_C) && ALTCP_MBEDTLS_USE_SESSION_CACHE
   /** Inter-connection cache for fast connection startup */
@@ -661,7 +661,7 @@ altcp_mbedtls_debug(void *ctx, int level, const char *file, int line, const char
  * ATTENTION: Server certificate and private key have to be added outside this function!
  */
 static struct altcp_tls_config *
-altcp_tls_create_config(int is_server, uint8_t cert_count, uint8_t pkey_count, int have_ca)
+altcp_tls_create_config(int is_server, u8_t cert_count, u8_t pkey_count, int have_ca)
 {
   size_t sz;
   int ret;
@@ -756,7 +756,7 @@ altcp_tls_create_config(int is_server, uint8_t cert_count, uint8_t pkey_count, i
   return conf;
 }
 
-struct altcp_tls_config *altcp_tls_create_config_server(uint8_t cert_count)
+struct altcp_tls_config *altcp_tls_create_config_server(u8_t cert_count)
 {
   struct altcp_tls_config *conf = altcp_tls_create_config(1, cert_count, cert_count, 0);
   if (conf == NULL) {
