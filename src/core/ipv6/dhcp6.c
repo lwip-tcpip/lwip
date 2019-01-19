@@ -451,7 +451,16 @@ dhcp6_msg_finalize(u16_t options_out_len, struct pbuf *p_out)
 static void
 dhcp6_information_request(struct netif *netif, struct dhcp6 *dhcp6)
 {
-  const u16_t requested_options[] = {DHCP6_OPTION_DNS_SERVERS, DHCP6_OPTION_DOMAIN_LIST, DHCP6_OPTION_SNTP_SERVERS};
+  const u16_t requested_options[] = {
+#if LWIP_DHCP6_PROVIDE_DNS_SERVERS
+    DHCP6_OPTION_DNS_SERVERS, 
+    DHCP6_OPTION_DOMAIN_LIST
+#endif
+#if LWIP_DHCP6_GET_NTP_SRV
+    , DHCP6_OPTION_SNTP_SERVERS
+#endif
+  };
+  
   u16_t msecs;
   struct pbuf *p_out;
   u16_t options_out_len;
