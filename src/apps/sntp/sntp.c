@@ -238,9 +238,9 @@ struct sntp_server {
 };
 static struct sntp_server sntp_servers[SNTP_MAX_SERVERS];
 
-#if SNTP_GET_SERVERS_FROM_DHCP
+#if SNTP_GET_SERVERS_FROM_DHCP || SNTP_GET_SERVERS_FROM_DHCPV6
 static u8_t sntp_set_servers_from_dhcp;
-#endif /* SNTP_GET_SERVERS_FROM_DHCP */
+#endif /* SNTP_GET_SERVERS_FROM_DHCP || SNTP_GET_SERVERS_FROM_DHCPV6 */
 #if SNTP_SUPPORT_MULTIPLE_SERVERS
 /** The currently used server (initialized to 0) */
 static u8_t sntp_current_server;
@@ -648,6 +648,7 @@ void
 sntp_init(void)
 {
   /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
+  LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp_init: SNTP initialised\n"));
 
 #ifdef SNTP_SERVER_ADDRESS
 #if SNTP_SERVER_DNS
@@ -750,7 +751,7 @@ sntp_getreachability(u8_t idx)
 }
 #endif /* SNTP_MONITOR_SERVER_REACHABILITY */
 
-#if SNTP_GET_SERVERS_FROM_DHCP
+#if SNTP_GET_SERVERS_FROM_DHCP || SNTP_GET_SERVERS_FROM_DHCPV6
 /**
  * Config SNTP server handling by IP address, name, or DHCP; clear table
  * @param set_servers_from_dhcp enable or disable getting server addresses from dhcp
@@ -764,7 +765,7 @@ sntp_servermode_dhcp(int set_servers_from_dhcp)
     sntp_set_servers_from_dhcp = new_mode;
   }
 }
-#endif /* SNTP_GET_SERVERS_FROM_DHCP */
+#endif /* SNTP_GET_SERVERS_FROM_DHCP || SNTP_GET_SERVERS_FROM_DHCPV6 */
 
 /**
  * @ingroup sntp
@@ -815,6 +816,33 @@ dhcp_set_ntp_servers(u8_t num, const ip4_addr_t *server)
   }
 }
 #endif /* LWIP_DHCP && SNTP_GET_SERVERS_FROM_DHCP */
+
+#if LWIP_IPV6_DHCP6 && SNTP_GET_SERVERS_FROM_DHCPV6
+/**
+ * Initialize one of the NTP servers by IP address, required by DHCPV6
+ *
+ * @param num the number of NTP server addresses to set must be < SNTP_MAX_SERVERS
+ * @param server array of IP address of the NTP servers to set
+ */
+void
+dhcp6_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs)
+{
+  LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp: %s %u NTP server(s) via DHCPv6\n",
+                                 (sntp_set_servers_from_dhcp ? "Got" : "Rejected"),
+                                 num_ntp_servers));
+  if (sntp_set_servers_from_dhcp && num_ntp_servers) {
+    u8_t i;
+    for (i = 0; (i < num_ntp_servers) && (i < SNTP_MAX_SERVERS); i++) {
+      LWIP_DEBUGF(SNTP_DEBUG_TRACE, ("sntp: NTP server %u: %s\n",
+                                     i, ipaddr_ntoa(&ntp_server_addrs[i])));
+      sntp_setserver(i, &ntp_server_addrs[i]);
+    }
+    for (i = num_ntp_servers; i < SNTP_MAX_SERVERS; i++) {
+      sntp_setserver(i, NULL);
+    }
+  }
+}
+#endif /* LWIP_DHCPv6 && SNTP_GET_SERVERS_FROM_DHCPV6 */
 
 /**
  * @ingroup sntp
