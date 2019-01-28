@@ -527,7 +527,7 @@ dhcp6_handle_config_reply(struct netif *netif, struct pbuf *p_msg_in)
     u16_t idx;
     u8_t n;
 
-    memset(&dns_addr, 0, sizeof(dns_addr));
+    ip_addr_set_zero_ip6(&dns_addr);
     dns_addr6 = ip_2_ip6(&dns_addr);
     for (n = 0, idx = op_start; (idx < op_start + op_len) && (n < LWIP_DHCP6_PROVIDE_DNS_SERVERS);
          n++, idx += sizeof(struct ip6_addr_packed)) {
