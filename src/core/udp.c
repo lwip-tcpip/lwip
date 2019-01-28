@@ -1208,6 +1208,7 @@ udp_remove(struct udp_pcb *pcb)
  * Creates a new UDP pcb which can be used for UDP communication. The
  * pcb is not active until it has either been bound to a local address
  * or connected to a remote address.
+ * @see MEMP_NUM_UDP_PCB
  *
  * @return The UDP PCB which was created. NULL if the PCB data structure
  * could not be allocated.
@@ -1242,7 +1243,8 @@ udp_new(void)
  * Create a UDP PCB for specific IP type.
  * The pcb is not active until it has either been bound to a local address
  * or connected to a remote address.
- * 
+ * @see MEMP_NUM_UDP_PCB
+ *
  * @param type IP address type, see @ref lwip_ip_addr_type definitions.
  * If you want to listen to IPv4 and IPv6 (dual-stack) packets,
  * supply @ref IPADDR_TYPE_ANY as argument and bind to @ref IP_ANY_TYPE.

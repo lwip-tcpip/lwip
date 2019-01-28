@@ -647,6 +647,7 @@ tcp_abort(struct tcp_pcb *pcb)
  * bound to all local IP addresses.
  * If another connection is bound to the same port, the function will
  * return ERR_USE, otherwise ERR_OK is returned.
+ * @see MEMP_NUM_TCP_PCB_LISTEN and MEMP_NUM_TCP_PCB
  *
  * @param pcb the tcp_pcb to bind (no check is done whether this pcb is
  *        already bound!)
@@ -1933,6 +1934,7 @@ tcp_alloc(u8_t prio)
  * any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
  * If memory is not available for creating the new pcb, NULL is returned.
+ * @see MEMP_NUM_TCP_PCB_LISTEN and MEMP_NUM_TCP_PCB
  *
  * @internal: Maybe there should be a idle TCP PCB list where these
  * PCBs are put on. Port reservation using tcp_bind() is implemented but
@@ -1952,6 +1954,7 @@ tcp_new(void)
  * Creates a new TCP protocol control block but doesn't
  * place it on any of the TCP PCB lists.
  * The pcb is not put on any list until binding using tcp_bind().
+ * @see MEMP_NUM_TCP_PCB_LISTEN and MEMP_NUM_TCP_PCB
  *
  * @param type IP address type, see @ref lwip_ip_addr_type definitions.
  * If you want to listen to IPv4 and IPv6 (dual-stack) connections,
@@ -2067,6 +2070,7 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
  * @ingroup tcp_raw
  * Used for specifying the function that should be called when a
  * LISTENing connection has been connected to another host.
+ * @see MEMP_NUM_TCP_PCB_LISTEN and MEMP_NUM_TCP_PCB
  *
  * @param pcb tcp_pcb to set the accept callback
  * @param accept callback function to call for this pcb when LISTENing
