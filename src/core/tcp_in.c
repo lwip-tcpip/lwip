@@ -853,7 +853,7 @@ tcp_process(struct tcp_pcb *pcb)
   switch (pcb->state) {
     case SYN_SENT:
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("SYN-SENT: ackno %"U32_F" pcb->snd_nxt %"U32_F" unacked %"U32_F"\n", ackno,
-                                    pcb->snd_nxt, lwip_ntohl(pcb->unacked->tcphdr->seqno)));
+                                    pcb->snd_nxt, (pcb->unacked != NULL)? lwip_ntohl(pcb->unacked->tcphdr->seqno) : 0));
       /* received SYN ACK with expected sequence number? */
       if ((flags & TCP_ACK) && (flags & TCP_SYN)
           && (ackno == pcb->lastack + 1)) {
