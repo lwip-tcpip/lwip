@@ -205,6 +205,15 @@
  */
 
 /**
+ * @page mem_err Debugging memory pool sizes
+ * If you have issues with lwIP and you are using memory pools, check that your pools
+ * are correctly sized.\n
+ * To debug pool sizes, \#define LWIP_STATS and MEMP_STATS to 1. Check the global variable
+ * lwip_stats.memp[] using a debugger. If the "err" member of a pool is > 0, the pool
+ * may be too small for your application and you need to increase its size.
+ */
+
+/**
  * @page bugs Reporting bugs
  * Please report bugs in the lwIP bug tracker at savannah.\n
  * BEFORE submitting, please check if the bug has already been reported!\n
