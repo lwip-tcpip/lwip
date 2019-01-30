@@ -235,6 +235,9 @@ struct sntp_server {
   /** Reachability shift register as described in RFC 5905 */
   u8_t reachability;
 #endif /* SNTP_MONITOR_SERVER_REACHABILITY */
+#if SNTP_SUPPORT_MULTIPLE_SERVERS
+  u8_t kod_received;
+#endif
 };
 static struct sntp_server sntp_servers[SNTP_MAX_SERVERS];
 
@@ -408,6 +411,10 @@ sntp_try_next_server(void *arg)
     if (sntp_current_server >= SNTP_MAX_SERVERS) {
       sntp_current_server = 0;
     }
+    if (sntp_servers[sntp_current_server].kod_received) {
+      /* KOD received, don't use this server */
+      continue;
+    }
     if (!ip_addr_isany(&sntp_servers[sntp_current_server].addr)
 #if SNTP_SERVER_DNS
         || (sntp_servers[sntp_current_server].name != NULL)
@@ -426,9 +433,18 @@ sntp_try_next_server(void *arg)
   sntp_current_server = old_server;
   sntp_retry(NULL);
 }
+
+static void
+sntp_kod_try_next_server(void *arg)
+{
+  sntp_servers[sntp_current_server].kod_received = 1;
+  sntp_try_next_server(arg);
+}
+
 #else /* SNTP_SUPPORT_MULTIPLE_SERVERS */
 /* Always retry on error if only one server is supported */
-#define sntp_try_next_server    sntp_retry
+#define sntp_try_next_server     sntp_retry
+#define sntp_kod_try_next_server sntp_retry
 #endif /* SNTP_SUPPORT_MULTIPLE_SERVERS */
 
 /** UDP recv callback for the sntp pcb */
@@ -525,7 +541,7 @@ sntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     /* KOD errors are only processed in case of an explicit poll response */
     if (sntp_opmode == SNTP_OPMODE_POLL) {
       /* Kiss-of-death packet. Use another server or increase UPDATE_DELAY. */
-      sntp_try_next_server(NULL);
+      sntp_kod_try_next_server(NULL);
     }
   } else {
     /* ignore any broken packet, poll mode: retry after timeout to avoid flooding */
@@ -781,6 +797,9 @@ sntp_setserver(u8_t idx, const ip_addr_t *server)
   if (idx < SNTP_MAX_SERVERS) {
     if (server != NULL) {
       sntp_servers[idx].addr = (*server);
+#if SNTP_SUPPORT_MULTIPLE_SERVERS
+      sntp_servers[idx].kod_received = 0;
+#endif
     } else {
       ip_addr_set_zero(&sntp_servers[idx].addr);
     }
@@ -861,6 +880,27 @@ sntp_getserver(u8_t idx)
   return IP_ADDR_ANY;
 }
 
+/**
+ * @ingroup sntp
+ * Check if a Kiss-of-Death has been received from this server (only valid for
+ * SNTP_MAX_SERVERS > 1).
+ *
+ * @param idx the index of the NTP server
+ * @return 1 if a KoD has been received, 0 if not.
+ */
+u8_t
+sntp_getkodreceived(u8_t idx)
+{
+#if SNTP_SUPPORT_MULTIPLE_SERVERS
+  if (idx < SNTP_MAX_SERVERS) {
+    return sntp_servers[idx].kod_received;
+  }
+#else
+  LWIP_UNUSED_ARG(idx);
+#endif
+  return 0;
+}
+
 #if SNTP_SERVER_DNS
 /**
  * Initialize one of the NTP servers by name
@@ -874,6 +914,9 @@ sntp_setservername(u8_t idx, const char *server)
   LWIP_ASSERT_CORE_LOCKED();
   if (idx < SNTP_MAX_SERVERS) {
     sntp_servers[idx].name = server;
+#if SNTP_SUPPORT_MULTIPLE_SERVERS
+    sntp_servers[idx].kod_received = 0;
+#endif
   }
 }
 
