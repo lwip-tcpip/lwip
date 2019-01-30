@@ -1800,6 +1800,8 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
       req = mdns_lookup_request(&ans.info);
     }
     if (req && req->result_fn) {
+      u16_t offset;
+      struct pbuf *p;
       int flags = (first ? MDNS_SEARCH_RESULT_FIRST : 0) |
           (!total_answers_left ? MDNS_SEARCH_RESULT_LAST : 0);
       if (req->only_ptr) {
@@ -1807,10 +1809,8 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
               continue; /* Ignore non matching answer type */
           flags = MDNS_SEARCH_RESULT_FIRST | MDNS_SEARCH_RESULT_LAST;
       }
-      u16_t offset;
-      struct pbuf *p = pbuf_skip(pkt->pbuf, ans.rd_offset, &offset);
-      if (ans.info.type == DNS_RRTYPE_PTR || ans.info.type == DNS_RRTYPE_SRV)
-      {
+      p = pbuf_skip(pkt->pbuf, ans.rd_offset, &offset);
+      if (ans.info.type == DNS_RRTYPE_PTR || ans.info.type == DNS_RRTYPE_SRV) {
         /* Those RR types have compressed domain name. Must uncompress here,
            since cannot be done without pbuf. */
         struct {
@@ -1825,21 +1825,16 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
           memcpy(&data.dom, (const char *)p->payload + offset + off, data.dom.length);
         }
         /* Adjust len/off according RR type */
-        if (ans.info.type == DNS_RRTYPE_SRV)
-        {
+        if (ans.info.type == DNS_RRTYPE_SRV) {
           memcpy(&data, (const char *)p->payload + offset, 6);
           len = data.dom.length + 6;
           off = 0;
-        }
-        else
-        {
+        } else {
           len = data.dom.length;
           off = 6;
         }
         req->result_fn(&ans, (const char *)&data + off, len, flags, req->arg);
-      }
-      else
-      {
+      } else {
         /* Direct call result_fn with varpart pointing in pbuf payload */
         req->result_fn(&ans, (const char *)p->payload + offset, ans.rd_length, flags, req->arg);
       }
@@ -2513,10 +2508,12 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
 void
 mdns_search_stop(s8_t request_id)
 {
+  struct mdns_request *req;
   LWIP_ASSERT("mdns_search_stop: bad request_id", (request_id >= 0) && (request_id < MDNS_MAX_REQUESTS));
-  struct mdns_request *req = &mdns_requests[request_id];
-  if (req && req->result_fn)
+  req = &mdns_requests[request_id];
+  if (req && req->result_fn) {
     req->result_fn = NULL;
+  }
 }
 
 /**
@@ -2538,11 +2535,11 @@ mdns_search_service(const char *name, const char *service, enum mdns_sd_proto pr
                     struct netif *netif, search_result_fn_t result_fn, void *arg,
                     s8_t *request_id)
 {
-  int i;
-  s8_t slot = -1;
+  s8_t i, slot = -1;
   struct mdns_request *req;
-  if (name)
+  if (name) {
     LWIP_ERROR("mdns_search_service: Name too long", (strlen(name) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
+  }
   LWIP_ERROR("mdns_search_service: Service too long", (strlen(service) < MDNS_DOMAIN_MAXLEN), return ERR_VAL);
   LWIP_ERROR("mdns_search_service: Bad reqid pointer", request_id, return ERR_VAL);
   LWIP_ERROR("mdns_search_service: Bad proto (need TCP or UDP)", (proto == DNSSD_PROTO_TCP || proto == DNSSD_PROTO_UDP), return ERR_VAL);
@@ -2552,9 +2549,10 @@ mdns_search_service(const char *name, const char *service, enum mdns_sd_proto pr
       break;
     }
   }
-  if (slot < 0)
+  if (slot < 0) {
     /* Don't assert if no more space in mdns_request table. Just return an error. */
     return ERR_MEM;
+  }
 
   req = &mdns_requests[slot];
   memset(req, 0, sizeof(struct mdns_request));
@@ -2562,11 +2560,13 @@ mdns_search_service(const char *name, const char *service, enum mdns_sd_proto pr
   req->arg = arg;
   req->proto = (u16_t)proto;
   req->qtype = DNS_RRTYPE_PTR;
-  if (proto == DNSSD_PROTO_UDP && strcmp(service, "_services._dns-sd") == 0)
+  if (proto == DNSSD_PROTO_UDP && strcmp(service, "_services._dns-sd") == 0) {
       req->only_ptr = 1; /* don't check other answers */
+  }
   mdns_domain_add_string(&req->service, service);
-  if (name)
+  if (name) {
     MEMCPY(&req->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(name)));
+  }
   /* save request id (slot) in pointer provided by caller */
   *request_id = slot;
   /* now prepare a MDNS request and send it (on specified interface) */

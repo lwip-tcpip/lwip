@@ -62,8 +62,7 @@ enum mdns_sd_proto {
 struct mdns_host;
 struct mdns_service;
 
-/* Domain structs - also visible for unit tests */
-
+/* Domain structs */
 struct mdns_domain {
   /* Encoded domain name */
   u8_t name[MDNS_DOMAIN_MAXLEN];

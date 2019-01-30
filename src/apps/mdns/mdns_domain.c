@@ -145,7 +145,7 @@ mdns_domain_add_label_pbuf(struct mdns_domain *domain, const struct pbuf *p, u16
 err_t
 mdns_domain_add_domain(struct mdns_domain *domain, struct mdns_domain *source)
 {
-  u8_t len = source->length;
+  u16_t len = source->length;
   if (len > 0 && (1 + len + domain->length >= MDNS_DOMAIN_MAXLEN)) {
     return ERR_VAL;
   }
@@ -157,10 +157,9 @@ mdns_domain_add_domain(struct mdns_domain *domain, struct mdns_domain *source)
     /* Copy partial domain */
     MEMCPY(&domain->name[domain->length], source->name, len);
     domain->length += len;
-  }
-  else {
+  } else {
     /* Add zero marker */
-    domain->name[domain->length] = len;
+    domain->name[domain->length] = 0;
     domain->length++;
   }
   return ERR_OK;
@@ -184,15 +183,15 @@ mdns_domain_add_string(struct mdns_domain *domain, const char *source)
         len = start++;
         *len = 0;
         source++;
-      }
-      else {
+      } else {
         *start++ = *source++;
         *len = *len + 1;
       }
   }
-  if (start == end)
+  if (start == end) {
       return ERR_VAL;
-  domain->length = start - &domain->name[0];
+  }
+  domain->length = (u16_t)(start - &domain->name[0]);
   return ERR_OK;
 }
 
