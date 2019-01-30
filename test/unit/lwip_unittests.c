@@ -21,6 +21,13 @@
 #include "lwip/tcpip.h"
 #endif
 
+/* This function is used for LWIP_RAND by some ports... */
+unsigned int
+lwip_port_rand(void)
+{
+  return rand();
+}
+
 Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, SFun setup, SFun teardown)
 {
   size_t i;
