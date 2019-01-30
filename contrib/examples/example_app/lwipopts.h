@@ -36,15 +36,6 @@
 #include "lwipopts_test.h"
 #else /* LWIP_OPTTEST_FILE */
 
-//#define LWIP_HAVE_MBEDTLS
-#define ALTCP_MBEDTLS_USE_SESSION_TICKETS 1
-#define ALTCP_MBEDTLS_USE_SESSION_CACHE 1
-
-/*
- * struct lwip_sock *tryget_socket_unconn_nouse(int fd);
- */
-#define LWIP_SOCKET_EXTERNAL_ALLOC 0//1
-
 #define LWIP_IPV4                  1
 #define LWIP_IPV6                  1
 
@@ -56,7 +47,7 @@
 #define LWIP_IGMP                  LWIP_IPV4
 #define LWIP_ICMP                  LWIP_IPV4
 
-#define LWIP_SNMP                  0//LWIP_UDP
+#define LWIP_SNMP                  LWIP_UDP
 #define MIB2_STATS                 LWIP_SNMP
 #ifdef LWIP_HAVE_MBEDTLS
 #define LWIP_SNMP_V3               (LWIP_SNMP)
