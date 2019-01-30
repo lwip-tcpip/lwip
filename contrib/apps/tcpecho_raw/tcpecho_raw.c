@@ -212,9 +212,7 @@ tcpecho_raw_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
     ret_err = ERR_OK;
   } else if(err != ERR_OK) {
     /* cleanup, for unknown reason */
-    if (p != NULL) {
-      pbuf_free(p);
-    }
+    LWIP_ASSERT("no pbuf expected here", p == NULL);
     ret_err = err;
   }
   else if(es->state == ES_ACCEPTED) {
