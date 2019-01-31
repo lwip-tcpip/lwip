@@ -60,6 +60,16 @@
 #define MDNS_MAX_SERVICES               1
 #endif
 
+/** Payload size allocated for each outgoing UDP packet. Will be allocated with
+ * PBUF_RAM and freed after packet was sent.
+ * According to RFC 6762, there is no reason to retain the 512 bytes restriction
+ * for link-local multicast packet.
+ * 512 bytes isn't enough when 2 services need to be probed.
+ */
+#ifndef MDNS_OUTPUT_PACKET_SIZE
+#define MDNS_OUTPUT_PACKET_SIZE      ((MDNS_MAX_SERVICES == 1) ? 512 : 1450)
+#endif
+
 /** MDNS_RESP_USENETIF_EXTCALLBACK==1: register an ext_callback on the netif
  * to automatically restart probing/announcing on status or address change.
  */
