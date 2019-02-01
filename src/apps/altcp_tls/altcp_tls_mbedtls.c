@@ -639,6 +639,44 @@ altcp_tls_wrap(struct altcp_tls_config *config, struct altcp_pcb *inner_pcb)
   return ret;
 }
 
+void
+altcp_tls_init_session(struct altcp_tls_session *session)
+{
+  if (session)
+    mbedtls_ssl_session_init(&session->data);
+}
+
+err_t
+altcp_tls_get_session(struct altcp_pcb *conn, struct altcp_tls_session *session)
+{
+  if (session && conn && conn->state) {
+    altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
+    int ret = mbedtls_ssl_get_session(&state->ssl_context, &session->data);
+    return ret < 0 ? ERR_VAL : ERR_OK;
+  }
+  return ERR_ARG;
+}
+
+err_t
+altcp_tls_set_session(struct altcp_pcb *conn, struct altcp_tls_session *session)
+{
+  if (session && conn && conn->state) {
+    altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
+    int ret = -1;
+    if (session->data.start)
+      ret = mbedtls_ssl_set_session(&state->ssl_context, &session->data);
+    return ret < 0 ? ERR_VAL : ERR_OK;
+  }
+  return ERR_ARG;
+}
+
+void
+altcp_tls_free_session(struct altcp_tls_session *session)
+{
+  if (session)
+    mbedtls_ssl_session_free(&session->data);
+}
+
 void *
 altcp_tls_context(struct altcp_pcb *conn)
 {

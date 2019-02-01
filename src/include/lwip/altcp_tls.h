@@ -51,6 +51,13 @@
 
 #include "lwip/altcp.h"
 
+/* check if mbedtls port is enabled */
+#include "lwip/apps/altcp_tls_mbedtls_opts.h"
+/* allow session structure to be fully defined when using mbedtls port */
+#if LWIP_ALTCP_TLS_MBEDTLS
+#include "mbedtls/ssl.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -142,6 +149,43 @@ struct altcp_pcb *altcp_tls_alloc(void *arg, u8_t ip_type);
  * Real type depends on port (e.g. mbedtls)
  */
 void *altcp_tls_context(struct altcp_pcb *conn);
+
+/** @ingroup altcp_tls
+ * ALTCP_TLS session handle, content depends on port (e.g. mbedtls)
+ */
+struct altcp_tls_session
+#if LWIP_ALTCP_TLS_MBEDTLS
+{
+    mbedtls_ssl_session data;
+}
+#endif
+;
+
+/** @ingroup altcp_tls
+ * Initialise a TLS session buffer.
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ */
+void altcp_tls_init_session(struct altcp_tls_session *dest);
+
+/** @ingroup altcp_tls
+ * Save current connected session to reuse it later. Should be called after altcp_connect() succeeded.
+ * Return error if saving session fail.
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ */
+err_t altcp_tls_get_session(struct altcp_pcb *conn, struct altcp_tls_session *dest);
+
+/** @ingroup altcp_tls
+ * Restore a previously saved session. Must be called before altcp_connect().
+ * Return error if cannot restore session.
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ */
+err_t altcp_tls_set_session(struct altcp_pcb *conn, struct altcp_tls_session *from);
+
+/** @ingroup altcp_tls
+ * Free allocated data inside a TLS session buffer.
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ */
+void altcp_tls_free_session(struct altcp_tls_session *dest);
 
 #ifdef __cplusplus
 }
