@@ -2503,7 +2503,7 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
 /**
  * @ingroup mdns
  * Stop a search request.
- * @param req The search request to stop
+ * @param request_id The search request to stop
  */
 void
 mdns_search_stop(s8_t request_id)

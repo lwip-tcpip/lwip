@@ -139,7 +139,7 @@ mdns_domain_add_label_pbuf(struct mdns_domain *domain, const struct pbuf *p, u16
 /**
  * Add a partial domain to a domain
  * @param domain The domain to add a label to
- * @param source The domain to add, like &lt;\x09_services\007_dns-sd\000&gt;
+ * @param source The domain to add, like &lt;\\x09_services\\007_dns-sd\\000&gt;
  * @return ERR_OK on success, an err_t otherwise if label too long
  */
 err_t
@@ -500,7 +500,7 @@ mdns_build_service_domain(struct mdns_domain *domain, struct mdns_service *servi
  * @param request The request struct, containing service name, type and protocol
  * @param include_name Whether to include the service name in the domain
  * @return ERR_OK if domain was written. If service name is included,
- *         <name>.<type>.<proto>.local. will be written, otherwise <type>.<proto>.local.
+ *         \<name\>.\<type\>.\<proto\>.local. will be written, otherwise \<type\>.\<proto\>.local.
  *         An err_t is returned on error.
  */
 err_t
