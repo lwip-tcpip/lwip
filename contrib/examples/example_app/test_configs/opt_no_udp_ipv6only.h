@@ -2,6 +2,3 @@
 
 #undef LWIP_UDP
 #define LWIP_UDP 0
-
-#foo
-void x

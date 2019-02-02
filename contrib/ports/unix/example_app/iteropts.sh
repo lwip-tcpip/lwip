@@ -23,4 +23,5 @@ done
 echo done, cleaning
 make clean > /dev/null
 popd
+echo Exit value: $RETVAL
 exit $RETVAL
