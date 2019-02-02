@@ -45,3 +45,8 @@ fi
 cd ..
 cd contrib/ports/unix/example_app
 ./iteropts.sh
+ERR=$?
+if [ $ERR != 0 ]; then
+       echo "lwIP iteropts test failed"
+       exit 33
+fi

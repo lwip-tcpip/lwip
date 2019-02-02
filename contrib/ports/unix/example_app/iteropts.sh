@@ -17,7 +17,7 @@ do
     rm $EXAPPDIR/lwipopts_test.h
     # cat the file to update its timestamp
     cat $f > $EXAPPDIR/lwipopts_test.h
-    make TESTFLAGS=-DLWIP_OPTTEST_FILE -Wno-documentation -j 8 1> $BUILDLOG 2>&1 || (RETVAL=1; echo file $f failed >> $LOGFILE; echo ++++++++ $f FAILED +++++++; cat $BUILDLOG)
+    make TESTFLAGS="-DLWIP_OPTTEST_FILE -Wno-documentation" -j 8 1> $BUILDLOG 2>&1 || (RETVAL=1; echo file $f failed >> $LOGFILE; echo ++++++++ $f FAILED +++++++; cat $BUILDLOG)
     echo test $f done >> $LOGFILE
 done
 echo done, cleaning
