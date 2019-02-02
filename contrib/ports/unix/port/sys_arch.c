@@ -71,7 +71,7 @@
 u32_t
 lwip_port_rand(void)
 {
-  return rand();
+  return (u32_t)rand();
 }
 
 static void
