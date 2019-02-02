@@ -68,6 +68,12 @@
 #include "lwip/stats.h"
 #include "lwip/tcpip.h"
 
+u32_t
+lwip_port_rand(void)
+{
+  return rand();
+}
+
 static void
 get_monotonic_time(struct timespec *ts)
 {

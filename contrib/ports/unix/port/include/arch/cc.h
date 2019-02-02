@@ -56,7 +56,8 @@
 #define LWIP_ERRNO_STDINCLUDE	1
 #endif
 
-#define LWIP_RAND() ((u32_t)rand())
+extern unsigned int lwip_port_rand(void);
+#define LWIP_RAND() (lwip_port_rand())
 
 /* different handling for unit test, normally not needed */
 #ifdef LWIP_NOASSERT_ON_ERROR
