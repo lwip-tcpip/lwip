@@ -40,10 +40,8 @@
  *   track of the ratio of application data and TLS overhead would be too much.
  *
  * Mandatory security-related configuration:
- * - define ALTCP_MBEDTLS_RNG_FN to mbedtls_entropy_func to use the standard mbedTLS
- *   entropy and ensure to add at least one strong entropy source to your mbedtls port
- *   (implement mbedtls_platform_entropy_poll or mbedtls_hardware_poll providing strong
- *   entropy)
+ * - define ALTCP_MBEDTLS_RNG_FN to a custom GOOD rng function returning 0 on success:
+ *   int my_rng_fn(void *ctx, unsigned char *buffer , size_t len)
  * - define ALTCP_MBEDTLS_ENTROPY_PTR and ALTCP_MBEDTLS_ENTROPY_LEN to something providing
  *   GOOD custom entropy
  *
@@ -640,13 +638,12 @@ altcp_tls_context(struct altcp_pcb *conn)
 static void
 altcp_mbedtls_debug(void *ctx, int level, const char *file, int line, const char *str)
 {
-  LWIP_UNUSED_ARG(ctx);
+  LWIP_UNUSED_ARG(str);
   LWIP_UNUSED_ARG(level);
   LWIP_UNUSED_ARG(file);
   LWIP_UNUSED_ARG(line);
-  LWIP_UNUSED_ARG(str);
-
-  LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("%s:%04d: %s", file, line, str));
+  LWIP_UNUSED_ARG(ctx);
+  /* @todo: output debug string :-) */
 }
 #endif
 
@@ -679,7 +676,7 @@ altcp_tls_create_config(int is_server, int have_cert, int have_pkey, int have_ca
 
   if (TCP_WND < MBEDTLS_SSL_MAX_CONTENT_LEN) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG|LWIP_DBG_LEVEL_SERIOUS,
-      ("altcp_tls: TCP_WND is smaller than the RX decryption buffer, connection RX might stall!\n"));
+      ("altcp_tls: TCP_WND is smaller than the RX decrypion buffer, connection RX might stall!\n"));
   }
 
   altcp_mbedtls_mem_init();
