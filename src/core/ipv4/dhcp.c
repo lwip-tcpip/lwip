@@ -1365,10 +1365,10 @@ dhcp_release_and_stop(struct netif *netif)
       /* sending release failed, but that's not a problem since the correct behaviour of dhcp does not rely on release */
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_release: could not allocate DHCP request\n"));
     }
-  }
 
-  /* remove IP address from interface (prevents routing from selecting this interface) */
-  netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
+    /* remove IP address from interface (prevents routing from selecting this interface) */
+    netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
+  }
 
 #if LWIP_DHCP_AUTOIP_COOP
   if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
