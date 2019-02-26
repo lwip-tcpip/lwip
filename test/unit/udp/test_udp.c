@@ -377,7 +377,7 @@ START_TEST(test_udp_bind)
   udp_remove(pcb1);
   udp_remove(pcb2);
 
-  /* bind on same port using SAME IPv4 address type */
+  /* bind on same port using SAME IPv6 address type */
   ip_addr_set_any_val(1, ip1);
   ip_addr_set_any_val(1, ip2);
 
@@ -430,6 +430,22 @@ START_TEST(test_udp_bind)
   IP_ADDR4(&ip2, 1, 2, 3, 4);
 
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+  pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
+
+  err1 = udp_bind(pcb1, &ip1, 2105);
+  err2 = udp_bind(pcb2, &ip2, 2105);
+
+  fail_unless(err1 == ERR_OK);
+  fail_unless(err2 == ERR_USE);
+
+  udp_remove(pcb1);
+  udp_remove(pcb2);
+
+  /* bind on same port using ANY + IPv4 */
+  ip1 = *IP_ANY_TYPE;
+  IP_ADDR4(&ip2, 1, 2, 3, 4);
+
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_ANY);
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
 
   err1 = udp_bind(pcb1, &ip1, 2105);
