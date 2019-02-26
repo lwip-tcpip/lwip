@@ -997,11 +997,13 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
         {
           /* port matches that of PCB in list and REUSEADDR not set -> reject */
           if ((ipcb->local_port == port) &&
-              (IP_GET_TYPE(&ipcb->local_ip) == IP_GET_TYPE(ipaddr)) &&
+              ((IP_GET_TYPE(&ipcb->local_ip) == IP_GET_TYPE(ipaddr)) &&
               /* IP address matches or any IP used? */
               (ip_addr_cmp(&ipcb->local_ip, ipaddr) ||
               ip_addr_isany(ipaddr) ||
-              ip_addr_isany(&ipcb->local_ip))) {
+              ip_addr_isany(&ipcb->local_ip))) ||
+              (IP_GET_TYPE(&ipcb->local_ip) == IPADDR_TYPE_ANY) ||
+              (IP_GET_TYPE(ipaddr) == IPADDR_TYPE_ANY)) {
             /* other PCB already binds to this local IP and port */
             LWIP_DEBUGF(UDP_DEBUG,
                         ("udp_bind: local port %"U16_F" already bound by another pcb\n", port));
