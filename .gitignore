@@ -6,6 +6,8 @@
 *.log
 .depend
 
+/.vscode/ipch
+
 /doc/doxygen/output/html
 
 /test/fuzz/output
