@@ -3,10 +3,12 @@ MQTT client for lwIP
 Author: Erik Andersson
 
 Details of the MQTT protocol can be found at:
-http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html 
+http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html
 
 -----------------------------------------------------------------
 1. Initial steps, reserve memory and make connection to server:
+
+You need to increase MEMP_NUM_SYS_TIMEOUT by one if you use MQTT!
 
 1.1: Provide storage
 
@@ -19,34 +21,34 @@ Dynamic allocation:
   if(client != NULL) {
     example_do_connect(&client);
   }
-  
+
 1.2: Establish Connection with server
 
 void example_do_connect(mqtt_client_t *client)
 {
   struct mqtt_connect_client_info_t ci;
   err_t err;
-  
+
   /* Setup an empty client info structure */
   memset(&ci, 0, sizeof(ci));
-  
-  /* Minimal amount of information required is client identifier, so set it here */ 
+
+  /* Minimal amount of information required is client identifier, so set it here */
   ci.client_id = "lwip_test";
-  
+
   /* Initiate client and connect to server, if this fails immediately an error code is returned
-     otherwise mqtt_connection_cb will be called with connection result after attempting 
-     to establish a connection with the server. 
+     otherwise mqtt_connection_cb will be called with connection result after attempting
+     to establish a connection with the server.
      For now MQTT version 3.1.1 is always used */
-  
+
   err = mqtt_client_connect(client, ip_addr, MQTT_PORT, mqtt_connection_cb, 0, &ci);
-  
+
   /* For now just print the result code if something goes wrong */
   if(err != ERR_OK) {
     printf("mqtt_connect return %d\n", err);
   }
 }
 
-Connection to server can also be probed by calling mqtt_client_is_connected(client) 
+Connection to server can also be probed by calling mqtt_client_is_connected(client)
 
 -----------------------------------------------------------------
 2. Implementing the connection status callback
@@ -57,11 +59,11 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
   err_t err;
   if(status == MQTT_CONNECT_ACCEPTED) {
     printf("mqtt_connection_cb: Successfully connected\n");
-    
+
     /* Setup callback for incoming publish requests */
     mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);
-    
-    /* Subscribe to a topic named "subtopic" with QoS level 1, call mqtt_sub_request_cb with result */ 
+
+    /* Subscribe to a topic named "subtopic" with QoS level 1, call mqtt_sub_request_cb with result */
     err = mqtt_subscribe(client, "subtopic", 1, mqtt_sub_request_cb, arg);
 
     if(err != ERR_OK) {
@@ -69,16 +71,16 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
     }
   } else {
     printf("mqtt_connection_cb: Disconnected, reason: %d\n", status);
-    
+
     /* Its more nice to be connected, so try to reconnect */
     example_do_connect(client);
-  }  
+  }
 }
 
 static void mqtt_sub_request_cb(void *arg, err_t result)
 {
-  /* Just print the result code here for simplicity, 
-     normal behaviour would be to take some action if subscribe fails like 
+  /* Just print the result code here for simplicity,
+     normal behaviour would be to take some action if subscribe fails like
      notifying user, retry subscribe or disconnect from server */
   printf("Subscribe result: %d\n", result);
 }

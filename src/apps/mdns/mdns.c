@@ -8,6 +8,8 @@
  * RFC 6762 - Multicast DNS\n
  * RFC 6763 - DNS-Based Service Discovery\n
  *
+ * You need to increase MEMP_NUM_SYS_TIMEOUT by one if you use MDNS!
+ *
  * @verbinclude mdns.txt
  *
  * Things left to implement:

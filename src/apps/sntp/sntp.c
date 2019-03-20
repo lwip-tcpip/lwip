@@ -42,6 +42,8 @@
  * This is simple "SNTP" client for the lwIP raw API.
  * It is a minimal implementation of SNTPv4 as specified in RFC 4330.
  *
+ * You need to increase MEMP_NUM_SYS_TIMEOUT by one if you use SNTP!
+ *
  * For a list of some public NTP servers, see this link:
  * http://support.ntp.org/bin/view/Servers/NTPPoolServers
  *

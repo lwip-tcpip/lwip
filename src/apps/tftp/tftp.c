@@ -45,6 +45,7 @@
  * @ingroup apps
  *
  * This is simple TFTP client/server for the lwIP raw API.
+ * You need to increase MEMP_NUM_SYS_TIMEOUT by one if you use TFTP!
  */
 
 #include "lwip/apps/tftp_client.h"
