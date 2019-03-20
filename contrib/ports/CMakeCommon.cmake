@@ -53,12 +53,12 @@ set(LWIP_COMPILER_FLAGS_GNU_CLANG
     -Wshadow
     -Wpointer-arith
     -Wcast-qual
-    -Wc++-compat
+     $<$<COMPILE_LANGUAGE:C>:-Wc++-compat>
     -Wwrite-strings
-    -Wold-style-definition
+     $<$<COMPILE_LANGUAGE:C>:-Wold-style-definition>
     -Wcast-align
-    -Wmissing-prototypes
-    -Wnested-externs
+     $<$<COMPILE_LANGUAGE:C>:-Wmissing-prototypes>
+     $<$<COMPILE_LANGUAGE:C>:-Wnested-externs>
     -Wunreachable-code
     -Wuninitialized
     -Wmissing-prototypes
@@ -80,7 +80,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 
     if (NOT LWIP_HAVE_MBEDTLS)
         list(APPEND LWIP_COMPILER_FLAGS_GNU_CLANG
-            -Wc90-c99-compat
+            $<$<COMPILE_LANGUAGE:C>:-Wc90-c99-compat>
         )
     endif()
 
