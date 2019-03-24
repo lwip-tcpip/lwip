@@ -1301,6 +1301,22 @@ http_send_data_ssi(struct altcp_pcb *pcb, struct http_state *hs)
             ssi->tag_state = TAG_NONE;
           }
 
+#if LWIP_HTTPD_DYNAMIC_FILE_READ && !LWIP_HTTPD_SSI_INCLUDE_TAG
+          if ((ssi->tag_state == TAG_NONE) &&
+              (ssi->parsed - hs->file < ssi->tag_index)) {
+            for(u16_t i = 0;i < ssi->tag_index;i++) {
+              ssi->tag_insert[i] = http_ssi_tag_desc[ssi->tag_type].lead_in[i];
+            }
+            ssi->tag_insert_len = ssi->tag_index;
+            hs->file += ssi->parsed - hs->file;
+            hs->left -= ssi->parsed - hs->file;
+            ssi->tag_end = hs->file;
+            ssi->tag_index = 0;
+            ssi->tag_state = TAG_SENDING;
+            break;
+          }
+#endif
+
           /* Move on to the next character in the buffer */
           ssi->parse_left--;
           ssi->parsed++;
