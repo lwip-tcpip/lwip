@@ -253,7 +253,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
       while (group != NULL) {
         if ((!(ip6_addr_ismulticast_iflocal(&(group->group_address)))) &&
             (!(ip6_addr_isallnodes_linklocal(&(group->group_address))))) {
-          mld6_delayed_report(group, mld_hdr->max_resp_delay);
+          mld6_delayed_report(group, lwip_ntohs(mld_hdr->max_resp_delay));
         }
         group = group->next;
       }
@@ -265,7 +265,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
       group = mld6_lookfor_group(inp, ip6_current_dest_addr());
       if (group != NULL) {
         /* Schedule a report. */
-        mld6_delayed_report(group, mld_hdr->max_resp_delay);
+        mld6_delayed_report(group, lwip_ntohs(mld_hdr->max_resp_delay));
       }
     }
     break; /* ICMP6_TYPE_MLQ */
