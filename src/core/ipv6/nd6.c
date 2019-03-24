@@ -1182,7 +1182,7 @@ nd6_send_ns(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
 {
   struct ns_header *ns_hdr;
   struct pbuf *p;
-  const ip6_addr_t *src_addr;
+  const ip6_addr_t *src_addr = NULL;
   u16_t lladdr_opt_len;
 
   LWIP_ASSERT("target address is required", target_addr != NULL);
