@@ -1187,10 +1187,22 @@ nd6_send_ns(struct netif *netif, const ip6_addr_t *target_addr, u8_t flags)
 
   LWIP_ASSERT("target address is required", target_addr != NULL);
 
-  if (!(flags & ND6_SEND_FLAG_ANY_SRC) &&
-      ip6_addr_isvalid(netif_ip6_addr_state(netif,0))) {
-    /* Use link-local address as source address. */
-    src_addr = netif_ip6_addr(netif, 0);
+  if (!(flags & ND6_SEND_FLAG_ANY_SRC)) {
+    int i;
+    for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+      if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
+            ip6_addr_netcmp(target_addr, netif_ip6_addr(netif, i))) {
+        src_addr = netif_ip6_addr(netif, i);
+        break;
+      }
+    }
+
+    if (i == LWIP_IPV6_NUM_ADDRESSES) {
+      LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_WARNING, ("ICMPv6 NS: no available src address\n"));
+      ND6_STATS_INC(nd6.err);
+      return;
+    }
+
     /* calculate option length (in 8-byte-blocks) */
     lladdr_opt_len = ((netif->hwaddr_len + 2) + 7) >> 3;
   } else {
