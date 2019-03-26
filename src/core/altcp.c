@@ -40,7 +40,7 @@
  * * Replace "struct tcp_pcb" with "struct altcp_pcb"
  * * Prefix all called tcp API functions with "altcp_" instead of "tcp_" to link
  *   against the altcp functions
- * * @ref altcp_new (and @ref altcp_new_ip_type/@ref altcp_new_ip6) take
+ * * @ref altcp_new (and @ref altcp_new_ip_type / @ref altcp_new_ip6) take
  *   an @ref altcp_allocator_t as an argument, whereas the original tcp API
  *   functions take no arguments.
  * * An @ref altcp_allocator_t allocator is an object that holds a pointer to an
@@ -75,7 +75,7 @@
  * It is not defined by lwIP itself but by the TLS port (e.g. altcp_tls to mbedTLS
  * adaption). However, the parameters used to create it are defined in @ref
  * altcp_tls.h (see @ref altcp_tls_create_config_server_privkey_cert for servers
- * and @ref altcp_tls_create_config_client/@ref altcp_tls_create_config_client_2wayauth
+ * and @ref altcp_tls_create_config_client / @ref altcp_tls_create_config_client_2wayauth
  * for clients).
  *
  * For mbedTLS, ensure that certificates can be parsed by 'mbedtls_x509_crt_parse()' and
