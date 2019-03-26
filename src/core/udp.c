@@ -1,12 +1,12 @@
 /**
  * @file
- * User Datagram Protocol module\n
- * The code for the User Datagram Protocol UDP & UDPLite (RFC 3828).\n
+ * User Datagram Protocol module<br>
+ * The code for the User Datagram Protocol UDP & UDPLite (RFC 3828).<br>
  * See also @ref udp_raw
  *
  * @defgroup udp_raw UDP
  * @ingroup callbackstyle_api
- * User Datagram Protocol module\n
+ * User Datagram Protocol module<br>
  * @see @ref api
  */
 

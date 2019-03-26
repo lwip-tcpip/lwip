@@ -73,10 +73,10 @@
  *
  * @defgroup socket Socket API
  * @ingroup api
- * BSD-style socket API.\n
- * Thread-safe, to be called from non-TCPIP threads only.\n
- * Can be activated by defining @ref LWIP_SOCKET to 1.\n
- * Header is in posix/sys/socket.h\n
+ * BSD-style socket API.<br>
+ * Thread-safe, to be called from non-TCPIP threads only.<br>
+ * Can be activated by defining @ref LWIP_SOCKET to 1.<br>
+ * Header is in posix/sys/socket.h<br>
  * The socket API is a compatibility API for existing applications,
  * currently it is built on top of the sequential API. It is meant to
  * provide all functions needed to run socket API applications running
@@ -212,7 +212,7 @@
 /**
  * @page mem_err Debugging memory pool sizes
  * If you have issues with lwIP and you are using memory pools, check that your pools
- * are correctly sized.\n
+ * are correctly sized.<br>
  * To debug pool sizes, \#define LWIP_STATS and MEMP_STATS to 1. Check the global variable
  * lwip_stats.memp[] using a debugger. If the "err" member of a pool is > 0, the pool
  * may be too small for your application and you need to increase its size.
@@ -220,8 +220,8 @@
 
 /**
  * @page bugs Reporting bugs
- * Please report bugs in the lwIP bug tracker at savannah.\n
- * BEFORE submitting, please check if the bug has already been reported!\n
+ * Please report bugs in the lwIP bug tracker at savannah.<br>
+ * BEFORE submitting, please check if the bug has already been reported!<br>
  * https://savannah.nongnu.org/bugs/?group=lwip
  */
 
@@ -237,12 +237,12 @@
  * Use this mode if you do not run an OS on your system. \#define NO_SYS to 1.
  * Feed incoming packets to netif->input(pbuf, netif) function from mainloop,
  * *not* *from* *interrupt* *context*. You can allocate a @ref pbuf in interrupt
- * context and put them into a queue which is processed from mainloop.\n
- * Call sys_check_timeouts() periodically in the mainloop.\n
+ * context and put them into a queue which is processed from mainloop.<br>
+ * Call sys_check_timeouts() periodically in the mainloop.<br>
  * Porting: implement all functions in @ref sys_time, @ref sys_prot and
- * @ref compiler_abstraction.\n
- * You can only use @ref callbackstyle_api in this mode.\n
- * Sample code:\n
+ * @ref compiler_abstraction.<br>
+ * You can only use @ref callbackstyle_api in this mode.<br>
+ * Sample code:
  * @include NO_SYS_SampleCode.c
  */
 
@@ -251,8 +251,8 @@
  * @ingroup lwip
  * Use this mode if you run an OS on your system. It is recommended to
  * use an RTOS that correctly handles priority inversion and
- * to use @ref LWIP_TCPIP_CORE_LOCKING.\n
- * Porting: implement all functions in @ref sys_layer.\n
+ * to use @ref LWIP_TCPIP_CORE_LOCKING.<br>
+ * Porting: implement all functions in @ref sys_layer.<br>
  * You can use @ref callbackstyle_api together with @ref tcpip_callback,
  * and all @ref sequential_api.
  */

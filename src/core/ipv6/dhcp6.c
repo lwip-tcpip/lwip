@@ -16,8 +16,8 @@
  * - only start requests if a valid local address is available on the netif
  * - only start information requests if required (not for every RA)
  *
- * dhcp6_enable_stateful() enables stateful DHCPv6 for a netif (stateless disabled)\n
- * dhcp6_enable_stateless() enables stateless DHCPv6 for a netif (stateful disabled)\n
+ * dhcp6_enable_stateful() enables stateful DHCPv6 for a netif (stateless disabled)<br>
+ * dhcp6_enable_stateless() enables stateless DHCPv6 for a netif (stateful disabled)<br>
  * dhcp6_disable() disable DHCPv6 for a netif
  *
  * When enabled, requests are only issued after receipt of RA with the
@@ -453,14 +453,14 @@ dhcp6_information_request(struct netif *netif, struct dhcp6 *dhcp6)
 {
   const u16_t requested_options[] = {
 #if LWIP_DHCP6_PROVIDE_DNS_SERVERS
-    DHCP6_OPTION_DNS_SERVERS, 
+    DHCP6_OPTION_DNS_SERVERS,
     DHCP6_OPTION_DOMAIN_LIST
 #endif
 #if LWIP_DHCP6_GET_NTP_SRV
     , DHCP6_OPTION_SNTP_SERVERS
 #endif
   };
-  
+
   u16_t msecs;
   struct pbuf *p_out;
   u16_t options_out_len;

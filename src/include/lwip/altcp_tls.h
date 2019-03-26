@@ -123,7 +123,7 @@ struct altcp_pcb *altcp_tls_new(struct altcp_tls_config *config, u8_t ip_type);
 /** @ingroup altcp_tls
  * Create new ALTCP_TLS layer pcb and its inner tcp pcb.
  * Same as @ref altcp_tls_new but this allocator function fits to
- * @ref altcp_allocator_t / @ref altcp_new.\n
+ * @ref altcp_allocator_t / @ref altcp_new.<br>
  'arg' must contain a struct altcp_tls_config *.
  */
 struct altcp_pcb *altcp_tls_alloc(void *arg, u8_t ip_type);

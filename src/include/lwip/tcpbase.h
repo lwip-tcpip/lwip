@@ -1,6 +1,6 @@
 /**
  * @file
- * Base TCP API definitions shared by TCP and ALTCP\n
+ * Base TCP API definitions shared by TCP and ALTCP<br>
  * See also @ref tcp_raw
  */
 

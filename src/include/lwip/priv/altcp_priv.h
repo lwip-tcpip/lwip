@@ -1,6 +1,6 @@
 /**
  * @file
- * Application layered TCP connection API (to be used from TCPIP thread)\n
+ * Application layered TCP connection API (to be used from TCPIP thread)<br>
  * This interface mimics the tcp callback API to the application while preventing
  * direct linking (much like virtual functions).
  * This way, an application can make use of other application layer protocols

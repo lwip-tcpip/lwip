@@ -5,12 +5,12 @@
  *
  * @defgroup tcp_raw TCP
  * @ingroup callbackstyle_api
- * Transmission Control Protocol for IP\n
+ * Transmission Control Protocol for IP<br>
  * @see @ref api
  *
  * Common functions for the TCP implementation, such as functions
  * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_in.c and tcp_out.c respectively.\n
+ * related to input and output is found in tcp_in.c and tcp_out.c respectively.<br>
  *
  * TCP connection setup
  * --------------------
@@ -2540,7 +2540,7 @@ tcp_pcbs_sane(void)
 /**
  * @defgroup tcp_raw_extargs ext arguments
  * @ingroup tcp_raw
- * Additional data storage per tcp pcb\n
+ * Additional data storage per tcp pcb<br>
  * @see @ref tcp_raw
  *
  * When LWIP_TCP_PCB_NUM_EXT_ARGS is > 0, every tcp pcb (including listen pcb)

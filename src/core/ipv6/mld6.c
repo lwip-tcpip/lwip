@@ -5,12 +5,12 @@
  * @defgroup mld6 MLD6
  * @ingroup ip6
  * Multicast listener discovery for IPv6. Aims to be compliant with RFC 2710.
- * No support for MLDv2.\n
+ * No support for MLDv2.<br>
  * Note: The allnodes (ff01::1, ff02::1) group is assumed be received by your
  * netif since it must always be received for correct IPv6 operation (e.g. SLAAC).
- * Ensure the netif filters are configured accordingly!\n
+ * Ensure the netif filters are configured accordingly!<br>
  * The netif flags also need NETIF_FLAG_MLD6 flag set to enable MLD6 on a
- * netif ("netif->flags |= NETIF_FLAG_MLD6;").\n
+ * netif ("netif->flags |= NETIF_FLAG_MLD6;").<br>
  * To be called from TCPIP thread.
  */
 

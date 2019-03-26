@@ -5,8 +5,8 @@
  * @defgroup mdns MDNS
  * @ingroup apps
  *
- * RFC 6762 - Multicast DNS\n
- * RFC 6763 - DNS-Based Service Discovery\n
+ * RFC 6762 - Multicast DNS<br>
+ * RFC 6763 - DNS-Based Service Discovery
  *
  * You need to increase MEMP_NUM_SYS_TIMEOUT by one if you use MDNS!
  *

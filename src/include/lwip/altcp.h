@@ -1,6 +1,6 @@
 /**
  * @file
- * Application layered TCP connection API (to be used from TCPIP thread)\n
+ * Application layered TCP connection API (to be used from TCPIP thread)
  *
  * This file contains the generic API.
  * For more details see @ref altcp_api.

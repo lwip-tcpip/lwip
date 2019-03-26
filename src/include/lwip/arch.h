@@ -72,7 +72,7 @@
 #define LWIP_RAND() ((u32_t)rand())
 #endif
 
-/** Platform specific diagnostic output.\n
+/** Platform specific diagnostic output.<br>
  * Note the default implementation pulls in printf, which may
  * in turn pull in a lot of standard libary code. In resource-constrained
  * systems, this should be defined to something less resource-consuming.
@@ -83,7 +83,7 @@
 #include <stdlib.h>
 #endif
 
-/** Platform specific assertion handling.\n
+/** Platform specific assertion handling.<br>
  * Note the default implementation pulls in printf, fflush and abort, which may
  * in turn pull in a lot of standard libary code. In resource-constrained
  * systems, this should be defined to something less resource-consuming.
@@ -261,10 +261,10 @@ typedef int ssize_t;
  * its start address using LWIP_MEM_ALIGN.
  * You can declare your own version here e.g. to enforce alignment without adding
  * trailing padding bytes (see LWIP_MEM_ALIGN_BUFFER) or your own section placement
- * requirements.\n
- * e.g. if you use gcc and need 32 bit alignment:\n
- * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] \_\_attribute\_\_((aligned(4)))\n
- * or more portable:\n
+ * requirements.<br>
+ * e.g. if you use gcc and need 32 bit alignment:<br>
+ * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] \_\_attribute\_\_((aligned(4)))<br>
+ * or more portable:<br>
  * \#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u32_t variable_name[(size + sizeof(u32_t) - 1) / sizeof(u32_t)]
  */
 #ifndef LWIP_DECLARE_MEMORY_ALIGNED
@@ -299,8 +299,8 @@ extern "C" {
 #endif
 
 /** Packed structs support.
-  * Placed BEFORE declaration of a packed struct.\n
-  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+  * Placed BEFORE declaration of a packed struct.<br>
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */
 #ifndef PACK_STRUCT_BEGIN
@@ -308,8 +308,8 @@ extern "C" {
 #endif /* PACK_STRUCT_BEGIN */
 
 /** Packed structs support.
-  * Placed AFTER declaration of a packed struct.\n
-  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+  * Placed AFTER declaration of a packed struct.<br>
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */
 #ifndef PACK_STRUCT_END
@@ -317,8 +317,8 @@ extern "C" {
 #endif /* PACK_STRUCT_END */
 
 /** Packed structs support.
-  * Placed between end of declaration of a packed struct and trailing semicolon.\n
-  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+  * Placed between end of declaration of a packed struct and trailing semicolon.<br>
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */
 #ifndef PACK_STRUCT_STRUCT
@@ -330,8 +330,8 @@ extern "C" {
 #endif /* PACK_STRUCT_STRUCT */
 
 /** Packed structs support.
-  * Wraps u32_t and u16_t members.\n
-  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+  * Wraps u32_t and u16_t members.<br>
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */
 #ifndef PACK_STRUCT_FIELD
@@ -339,8 +339,8 @@ extern "C" {
 #endif /* PACK_STRUCT_FIELD */
 
 /** Packed structs support.
-  * Wraps u8_t members, where some compilers warn that packing is not necessary.\n
-  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+  * Wraps u8_t members, where some compilers warn that packing is not necessary.<br>
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */
 #ifndef PACK_STRUCT_FLD_8
@@ -348,20 +348,20 @@ extern "C" {
 #endif /* PACK_STRUCT_FLD_8 */
 
 /** Packed structs support.
-  * Wraps members that are packed structs themselves, where some compilers warn that packing is not necessary.\n
-  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+  * Wraps members that are packed structs themselves, where some compilers warn that packing is not necessary.<br>
+  * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
   * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
   */
 #ifndef PACK_STRUCT_FLD_S
 #define PACK_STRUCT_FLD_S(x) PACK_STRUCT_FIELD(x)
 #endif /* PACK_STRUCT_FLD_S */
 
-/** PACK_STRUCT_USE_INCLUDES==1: Packed structs support using \#include files before and after struct to be packed.\n
- * The file included BEFORE the struct is "arch/bpstruct.h".\n
- * The file included AFTER the struct is "arch/epstruct.h".\n
+/** PACK_STRUCT_USE_INCLUDES==1: Packed structs support using \#include files before and after struct to be packed.<br>
+ * The file included BEFORE the struct is "arch/bpstruct.h".<br>
+ * The file included AFTER the struct is "arch/epstruct.h".<br>
  * This can be used to implement struct packing on MS Visual C compilers, see
  * the Win32 port in the lwIP/contrib subdir for reference.
- * For examples of packed struct declarations, see include/lwip/prot/ subfolder.\n
+ * For examples of packed struct declarations, see include/lwip/prot/ subfolder.<br>
  * A port to GCC/clang is included in lwIP, if you use these compilers there is nothing to do here.
  */
 #ifdef __DOXYGEN__

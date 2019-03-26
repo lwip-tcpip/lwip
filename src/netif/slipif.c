@@ -46,12 +46,12 @@
  * This is an arch independent SLIP netif. The specific serial hooks must be
  * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send
  *
- * Usage: This netif can be used in three ways:\n
- *        1) For NO_SYS==0, an RX thread can be used which blocks on sio_read()
- *           until data is received.\n
- *        2) In your main loop, call slipif_poll() to check for new RX bytes,
- *           completed packets are fed into netif->input().\n
- *        3) Call slipif_received_byte[s]() from your serial RX ISR and
+ * Usage: This netif can be used in three ways:
+ *        1. For NO_SYS==0, an RX thread can be used which blocks on sio_read()
+ *           until data is received.
+ *        2. In your main loop, call slipif_poll() to check for new RX bytes,
+ *           completed packets are fed into netif->input().
+ *        3. Call slipif_received_byte[s]() from your serial RX ISR and
  *           slipif_process_rxqueue() from your main loop. ISR level decodes
  *           packets and puts completed packets on a queue which is fed into
  *           the stack from the main loop (needs SYS_LIGHTWEIGHT_PROT for
