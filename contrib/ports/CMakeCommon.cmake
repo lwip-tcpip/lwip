@@ -53,7 +53,6 @@ set(LWIP_COMPILER_FLAGS_GNU_CLANG
     -Wshadow
     -Wpointer-arith
     -Wcast-qual
-     $<$<COMPILE_LANGUAGE:C>:-Wc++-compat>
     -Wwrite-strings
      $<$<COMPILE_LANGUAGE:C>:-Wold-style-definition>
     -Wcast-align
@@ -69,6 +68,7 @@ set(LWIP_COMPILER_FLAGS_GNU_CLANG
 if (NOT LWIP_HAVE_MBEDTLS)
     list(APPEND LWIP_COMPILER_FLAGS_GNU_CLANG
         -Wredundant-decls
+        $<$<COMPILE_LANGUAGE:C>:-Wc++-compat>
     )
 endif()
 
