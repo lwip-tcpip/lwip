@@ -50,6 +50,7 @@
  */
 
 #include "lwip/opt.h"
+#include "lwip/sys.h"
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
 
@@ -714,6 +715,55 @@ altcp_mbedtls_debug(void *ctx, int level, const char *file, int line, const char
 }
 #endif
 
+static err_t
+altcp_mbedtls_ref_entropy()
+{
+  SYS_ARCH_DECL_PROTECT(old_level);
+  SYS_ARCH_PROTECT(old_level);
+  if (!altcp_tls_entropy_rng) {
+    altcp_tls_entropy_rng = (struct altcp_tls_entropy_rng *)altcp_mbedtls_alloc_config(sizeof(struct altcp_tls_entropy_rng));
+    if (altcp_tls_entropy_rng) {
+      int ret;
+      altcp_tls_entropy_rng->ref = 1;
+      mbedtls_entropy_init(&altcp_tls_entropy_rng->entropy);
+      mbedtls_ctr_drbg_init(&altcp_tls_entropy_rng->ctr_drbg);
+      /* Seed the RNG, only once */
+      ret = mbedtls_ctr_drbg_seed(&altcp_tls_entropy_rng->ctr_drbg,
+                                  ALTCP_MBEDTLS_RNG_FN, &altcp_tls_entropy_rng->entropy,
+                                  ALTCP_MBEDTLS_ENTROPY_PTR, ALTCP_MBEDTLS_ENTROPY_LEN);
+      if (ret != 0) {
+        LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ctr_drbg_seed failed: %d\n", ret));
+        mbedtls_ctr_drbg_free(&altcp_tls_entropy_rng->ctr_drbg);
+        mbedtls_entropy_free(&altcp_tls_entropy_rng->entropy);
+        altcp_mbedtls_free_config(altcp_tls_entropy_rng);
+        altcp_tls_entropy_rng = NULL;
+        SYS_ARCH_UNPROTECT(old_level);
+        return ERR_ARG;
+      }
+    }
+    else {
+      SYS_ARCH_UNPROTECT(old_level);
+      return ERR_MEM;
+    }
+  }
+  else
+    altcp_tls_entropy_rng->ref++;
+  SYS_ARCH_UNPROTECT(old_level);
+  return ERR_OK;
+}
+
+
+
+static void
+altcp_mbedtls_unref_entropy()
+{
+  SYS_ARCH_DECL_PROTECT(old_level);
+  SYS_ARCH_PROTECT(old_level);
+  if (altcp_tls_entropy_rng && altcp_tls_entropy_rng->ref)
+      altcp_tls_entropy_rng->ref--;
+  SYS_ARCH_UNPROTECT(old_level);
+}
+
 /** Create new TLS configuration
  * ATTENTION: Server certificate and private key have to be added outside this function!
  */
@@ -764,31 +814,9 @@ altcp_tls_create_config(int is_server, u8_t cert_count, u8_t pkey_count, int hav
 
   mbedtls_ssl_config_init(&conf->conf);
 
-  if (!altcp_tls_entropy_rng) {
-    altcp_tls_entropy_rng = (struct altcp_tls_entropy_rng *)altcp_mbedtls_alloc_config(sizeof(struct altcp_tls_entropy_rng));
-    if (altcp_tls_entropy_rng) {
-      altcp_tls_entropy_rng->ref = 1;
-      mbedtls_entropy_init(&altcp_tls_entropy_rng->entropy);
-      mbedtls_ctr_drbg_init(&altcp_tls_entropy_rng->ctr_drbg);
-      /* Seed the RNG, only once */
-      ret = mbedtls_ctr_drbg_seed(&altcp_tls_entropy_rng->ctr_drbg,
-                                  mbedtls_entropy_func, &altcp_tls_entropy_rng->entropy,
-                                  ALTCP_MBEDTLS_ENTROPY_PTR, ALTCP_MBEDTLS_ENTROPY_LEN);
-      if (ret != 0) {
-        LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ctr_drbg_seed failed: %d\n", ret));
-        mbedtls_ctr_drbg_free(&altcp_tls_entropy_rng->ctr_drbg);
-        mbedtls_entropy_free(&altcp_tls_entropy_rng->entropy);
-        altcp_mbedtls_free_config(altcp_tls_entropy_rng);
-        altcp_tls_entropy_rng = NULL;
-        altcp_mbedtls_free_config(conf);
-        return NULL;
-      }
-    } else {
-      altcp_mbedtls_free_config(conf);
-      return NULL;
-    }
-  } else {
-    altcp_tls_entropy_rng->ref++;
+  if (altcp_mbedtls_ref_entropy() != ERR_OK) {
+    altcp_mbedtls_free_config(conf);
+    return NULL;
   }
 
   /* Setup ssl context (@todo: what's different for a client here? -> might better be done on listen/connect) */
@@ -796,12 +824,7 @@ altcp_tls_create_config(int is_server, u8_t cert_count, u8_t pkey_count, int hav
                                     MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT);
   if (ret != 0) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_config_defaults failed: %d\n", ret));
-    if (altcp_tls_entropy_rng->ref == 1) {
-      mbedtls_ctr_drbg_free(&altcp_tls_entropy_rng->ctr_drbg);
-      mbedtls_entropy_free(&altcp_tls_entropy_rng->entropy);
-      altcp_mbedtls_free_config(altcp_tls_entropy_rng);
-      altcp_tls_entropy_rng = NULL;
-    }
+    altcp_mbedtls_unref_entropy();
     altcp_mbedtls_free_config(conf);
     return NULL;
   }
@@ -824,6 +847,7 @@ altcp_tls_create_config(int is_server, u8_t cert_count, u8_t pkey_count, int hav
     ALTCP_MBEDTLS_SESSION_TICKET_CIPHER, ALTCP_MBEDTLS_SESSION_TICKET_TIMEOUT_SECONDS);
   if (ret) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_ticket_setup failed: %d\n", ret));
+    altcp_mbedtls_unref_entropy();
     altcp_mbedtls_free_config(conf);
     return NULL;
   }
@@ -911,7 +935,7 @@ altcp_tls_create_config_server_privkey_cert(const u8_t *privkey, size_t privkey_
 
   if (altcp_tls_config_server_add_privkey_cert(conf, privkey, privkey_len,
     privkey_pass, privkey_pass_len, cert, cert_len) != ERR_OK) {
-    altcp_mbedtls_free_config(conf);
+    altcp_tls_free_config(conf);
     return NULL;
   }
 
@@ -935,7 +959,7 @@ altcp_tls_create_config_client_common(const u8_t *ca, size_t ca_len, int is_2way
     ret = mbedtls_x509_crt_parse(conf->ca, ca, ca_len);
     if (ret != 0) {
       LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_x509_crt_parse ca failed: %d 0x%x", ret, -1*ret));
-      altcp_mbedtls_free_config(conf);
+      altcp_tls_free_config(conf);
       return NULL;
     }
 
@@ -973,7 +997,7 @@ altcp_tls_create_config_client_2wayauth(const u8_t *ca, size_t ca_len, const u8_
   ret = mbedtls_x509_crt_parse(conf->cert, cert, cert_len);
   if (ret != 0) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_x509_crt_parse cert failed: %d 0x%x", ret, -1*ret));
-    altcp_mbedtls_free_config(conf->cert);
+    altcp_tls_free_config(conf);
     return NULL;
   }
 
@@ -981,14 +1005,14 @@ altcp_tls_create_config_client_2wayauth(const u8_t *ca, size_t ca_len, const u8_
   ret = mbedtls_pk_parse_key(conf->pkey, privkey, privkey_len, privkey_pass, privkey_pass_len);
   if (ret != 0) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_pk_parse_key failed: %d 0x%x", ret, -1*ret));
-    altcp_mbedtls_free_config(conf);
+    altcp_tls_free_config(conf);
     return NULL;
   }
 
   ret = mbedtls_ssl_conf_own_cert(&conf->conf, conf->cert, conf->pkey);
   if (ret != 0) {
     LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_conf_own_cert failed: %d 0x%x", ret, -1*ret));
-    altcp_mbedtls_free_config(conf);
+    altcp_tls_free_config(conf);
     return NULL;
   }
 
@@ -1025,19 +1049,21 @@ altcp_tls_free_config(struct altcp_tls_config *conf)
   mbedtls_entropy_free(&conf->entropy);
   mbedtls_ctr_drbg_free(&conf->ctr_drbg);
   altcp_mbedtls_free_config(conf);
-  if (altcp_tls_entropy_rng && altcp_tls_entropy_rng->ref)
-      altcp_tls_entropy_rng->ref--;
+  altcp_mbedtls_unref_entropy();
 }
 
 void
 altcp_tls_free_entropy(void)
 {
+  SYS_ARCH_DECL_PROTECT(old_level);
+  SYS_ARCH_PROTECT(old_level);
   if (altcp_tls_entropy_rng && altcp_tls_entropy_rng->ref == 0) {
     mbedtls_ctr_drbg_free(&altcp_tls_entropy_rng->ctr_drbg);
     mbedtls_entropy_free(&altcp_tls_entropy_rng->entropy);
     altcp_mbedtls_free_config(altcp_tls_entropy_rng);
     altcp_tls_entropy_rng = NULL;
   }
+  SYS_ARCH_UNPROTECT(old_level);
 }
 
 /* "virtual" functions */
