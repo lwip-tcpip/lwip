@@ -693,7 +693,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         }
         mtu_opt = (struct mtu_option *)buffer;
         mtu32 = lwip_htonl(mtu_opt->mtu);
-        if ((mtu32 >= 1280) && (mtu32 <= 0xffff)) {
+        if ((mtu32 >= IP6_MIN_MTU_LENGTH) && (mtu32 <= 0xffff)) {
 #if LWIP_ND6_ALLOW_RA_UPDATES
           if (inp->mtu) {
             /* don't set the mtu for IPv6 higher than the netif driver supports */
@@ -2312,7 +2312,7 @@ nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif)
     return netif_mtu6(netif);
   }
 
-  return 1280; /* Minimum MTU */
+  return IP6_MIN_MTU_LENGTH; /* Minimum MTU */
 }
 
 
