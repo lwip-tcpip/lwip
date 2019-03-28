@@ -881,7 +881,7 @@ lowpan6_if_init(struct netif *netif)
   MIB2_INIT_NETIF(netif, snmp_ifType_other, 0);
 
   /* maximum transfer unit */
-  netif->mtu = 1280;
+  netif->mtu = IP6_MIN_MTU_LENGTH;
 
   /* broadcast capability */
   netif->flags = NETIF_FLAG_BROADCAST /* | NETIF_FLAG_LOWPAN6 */;

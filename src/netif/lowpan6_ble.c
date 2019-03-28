@@ -417,7 +417,7 @@ rfc7668_if_init(struct netif *netif)
   MIB2_INIT_NETIF(netif, snmp_ifType_other, 0);
 
   /* maximum transfer unit, set according to RFC7668 ch2.4 */
-  netif->mtu = 1280;
+  netif->mtu = IP6_MIN_MTU_LENGTH;
 
   /* no flags set (no broadcast, ethernet,...)*/
   netif->flags = 0;
