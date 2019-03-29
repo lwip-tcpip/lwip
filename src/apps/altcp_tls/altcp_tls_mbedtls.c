@@ -165,6 +165,7 @@ altcp_mbedtls_lower_connected(void *arg, struct altcp_pcb *inner_conn, err_t err
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
   if (conn && conn->state) {
+    altcp_mbedtls_state_t *state;
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
     /* upper connected is called when handshake is done */
     if (err != ERR_OK) {
@@ -172,7 +173,10 @@ altcp_mbedtls_lower_connected(void *arg, struct altcp_pcb *inner_conn, err_t err
         return conn->connected(conn->arg, conn, err);
       }
     }
-    return altcp_mbedtls_lower_recv_process(conn, (altcp_mbedtls_state_t *)conn->state);
+    state = (altcp_mbedtls_state_t *)conn->state;
+    /* ensure overhead value is valid before first write */
+    state->overhead_bytes_adjust = 0;
+    return altcp_mbedtls_lower_recv_process(conn, state);
   }
   return ERR_VAL;
 }
@@ -498,27 +502,35 @@ altcp_mbedtls_bio_recv(void *ctx, unsigned char *buf, size_t len)
 }
 
 /** Sent callback from lower connection (i.e. TCP)
- * This only informs the upper layer to try to send more, not about
- * the number of ACKed bytes.
+ * This only informs the upper layer the number of ACKed bytes.
+ * This now take care of TLS added bytes so application receive
+ * correct ACKed bytes.
  */
 static err_t
 altcp_mbedtls_lower_sent(void *arg, struct altcp_pcb *inner_conn, u16_t len)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
-  LWIP_UNUSED_ARG(len);
   if (conn) {
     altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
+    LWIP_ASSERT("state", state != NULL);
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
-    if (!state || !(state->flags & ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE)) {
-      /* @todo: do something here? */
-      return ERR_OK;
-    }
-    /* try to send more if we failed before */
+    /* calculate TLS overhead part to not send it to application */
+    int overhead = state->overhead_bytes_adjust + state->ssl_context.out_left;
+    if ((unsigned)overhead > len)
+      overhead = len;
+    /* remove ACKed bytes from overhead adjust counter */
+    state->overhead_bytes_adjust -= len;
+    /* try to send more if we failed before (may increase overhead adjust counter) */
     mbedtls_ssl_flush_output(&state->ssl_context);
-    /* call upper sent with len==0 if the application already sent data */
-    if ((state->flags & ALTCP_MBEDTLS_FLAGS_APPLDATA_SENT) && conn->sent) {
-      return conn->sent(conn->arg, conn, 0);
+    /* remove calculated overhead from ACKed bytes len */
+    len -= overhead;
+    /* update application write counter and inform application */
+    if (len)
+    {
+      state->overhead_bytes_adjust += len;
+      if (conn->sent)
+        return conn->sent(conn->arg, conn, len);
     }
   }
   return ERR_OK;
@@ -1192,7 +1204,7 @@ altcp_mbedtls_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t
     return ERR_VAL;
   }
 
-  /* HACK: if thre is something left to send, try to flush it and only
+  /* HACK: if there is something left to send, try to flush it and only
      allow sending more if this succeeded (this is a hack because neither
      returning 0 nor MBEDTLS_ERR_SSL_WANT_WRITE worked for me) */
   if (state->ssl_context.out_left) {
@@ -1206,7 +1218,8 @@ altcp_mbedtls_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t
   altcp_output(conn->inner_conn);
   if (ret >= 0) {
     if (ret == len) {
-      state->flags |= ALTCP_MBEDTLS_FLAGS_APPLDATA_SENT;
+      /* update application sent counter */
+      state->overhead_bytes_adjust -= ret;
       return ERR_OK;
     } else {
       /* @todo/@fixme: assumption: either everything sent or error */
@@ -1231,6 +1244,7 @@ static int
 altcp_mbedtls_bio_send(void *ctx, const unsigned char *dataptr, size_t size)
 {
   struct altcp_pcb *conn = (struct altcp_pcb *) ctx;
+  altcp_mbedtls_state_t *state;
   int written = 0;
   size_t size_left = size;
   u8_t apiflags = TCP_WRITE_FLAG_COPY;
@@ -1239,6 +1253,8 @@ altcp_mbedtls_bio_send(void *ctx, const unsigned char *dataptr, size_t size)
   if ((conn == NULL) || (conn->inner_conn == NULL)) {
     return MBEDTLS_ERR_NET_INVALID_CONTEXT;
   }
+  state = (altcp_mbedtls_state_t *)conn->state;
+  LWIP_ASSERT("state != NULL", state != NULL);
 
   while (size_left) {
     u16_t write_len = (u16_t)LWIP_MIN(size_left, 0xFFFF);
@@ -1246,6 +1262,7 @@ altcp_mbedtls_bio_send(void *ctx, const unsigned char *dataptr, size_t size)
     if (err == ERR_OK) {
       written += write_len;
       size_left -= write_len;
+      state->overhead_bytes_adjust += write_len;
     } else if (err == ERR_MEM) {
       if (written) {
         return written;
