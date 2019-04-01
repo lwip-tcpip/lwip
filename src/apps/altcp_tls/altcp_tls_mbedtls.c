@@ -244,7 +244,7 @@ altcp_mbedtls_lower_recv(void *arg, struct altcp_pcb *inner_conn, struct pbuf *p
     } else {
       /* before connection setup is done: call 'err' */
       if (conn->err) {
-        conn->err(conn->arg, ERR_CLSD);
+        conn->err(conn->arg, ERR_ABRT);
       }
       altcp_close(conn);
     }
@@ -358,7 +358,7 @@ altcp_mbedtls_pass_rx_data(struct altcp_pcb *conn, altcp_mbedtls_state_t *state)
   /* application may have close the connection */
   if (conn->state != state) {
     /* return error code to ensure altcp_mbedtls_handle_rx_appldata() exits the loop */
-    return ERR_CLSD;
+    return ERR_ARG;
   }
   return ERR_OK;
 }
@@ -1197,7 +1197,7 @@ altcp_mbedtls_write(struct altcp_pcb *conn, const void *dataptr, u16_t len, u8_t
   state = (altcp_mbedtls_state_t *)conn->state;
   if (state == NULL) {
     /* @todo: which error? */
-    return ERR_CLSD;
+    return ERR_ARG;
   }
   if (!(state->flags & ALTCP_MBEDTLS_FLAGS_HANDSHAKE_DONE)) {
     /* @todo: which error? */
