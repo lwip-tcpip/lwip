@@ -2537,7 +2537,7 @@ mdns_search_service(const char *name, const char *service, enum mdns_sd_proto pr
                     struct netif *netif, search_result_fn_t result_fn, void *arg,
                     s8_t *request_id)
 {
-  s8_t i, slot = -1;
+  u8_t slot;
   struct mdns_request *req;
   if (name) {
     LWIP_ERROR("mdns_search_service: Name too long", (strlen(name) <= MDNS_LABEL_MAXLEN), return ERR_VAL);
@@ -2545,13 +2545,12 @@ mdns_search_service(const char *name, const char *service, enum mdns_sd_proto pr
   LWIP_ERROR("mdns_search_service: Service too long", (strlen(service) < MDNS_DOMAIN_MAXLEN), return ERR_VAL);
   LWIP_ERROR("mdns_search_service: Bad reqid pointer", request_id, return ERR_VAL);
   LWIP_ERROR("mdns_search_service: Bad proto (need TCP or UDP)", (proto == DNSSD_PROTO_TCP || proto == DNSSD_PROTO_UDP), return ERR_VAL);
-  for (i = 0; i < MDNS_MAX_REQUESTS; i++) {
-    if (mdns_requests[i].result_fn == NULL) {
-      slot = i;
+  for (slot = 0; slot < MDNS_MAX_REQUESTS; slot++) {
+    if (mdns_requests[slot].result_fn == NULL) {
       break;
     }
   }
-  if (slot < 0) {
+  if (slot >= MDNS_MAX_REQUESTS) {
     /* Don't assert if no more space in mdns_request table. Just return an error. */
     return ERR_MEM;
   }
