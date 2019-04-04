@@ -83,6 +83,10 @@ struct nd6_router_list_entry default_router_list[LWIP_ND6_NUM_ROUTERS];
 u32_t reachable_time = LWIP_ND6_REACHABLE_TIME;
 u32_t retrans_timer = LWIP_ND6_RETRANS_TIMER; /* @todo implement this value in timer */
 
+#if LWIP_ND6_QUEUEING
+u8_t nd6_queue_size = 0;
+#endif
+
 /* Index for cache entries. */
 static u8_t nd6_cached_neighbor_index;
 static netif_addr_idx_t nd6_cached_destination_index;
@@ -2109,7 +2113,11 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
     /* queue packet ... */
 #if LWIP_ND6_QUEUEING
     /* allocate a new nd6 queue entry */
-    new_entry = (struct nd6_q_entry *)memp_malloc(MEMP_ND6_QUEUE);
+    new_entry = NULL;
+    if (nd6_queue_size < MEMP_NUM_ND6_QUEUE) {
+      new_entry = (struct nd6_q_entry *)memp_malloc(MEMP_ND6_QUEUE);
+      nd6_queue_size++;
+    }
     if ((new_entry == NULL) && (neighbor_cache[neighbor_index].q != NULL)) {
       /* Free oldest packet (as per RFC recommendation) */
       r = neighbor_cache[neighbor_index].q;
@@ -2117,6 +2125,7 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf *q)
       r->next = NULL;
       nd6_free_q(r);
       new_entry = (struct nd6_q_entry *)memp_malloc(MEMP_ND6_QUEUE);
+      nd6_queue_size++;
     }
     if (new_entry != NULL) {
       new_entry->next = NULL;
@@ -2175,6 +2184,7 @@ nd6_free_q(struct nd6_q_entry *q)
     LWIP_ASSERT("r->p != NULL", (r->p != NULL));
     pbuf_free(r->p);
     memp_free(MEMP_ND6_QUEUE, r);
+    nd6_queue_size--;
   }
 }
 #endif /* LWIP_ND6_QUEUEING */
@@ -2215,6 +2225,7 @@ nd6_send_q(s8_t i)
     pbuf_free(q->p);
     /* now queue entry can be freed */
     memp_free(MEMP_ND6_QUEUE, q);
+    nd6_queue_size--;
   }
 #else /* LWIP_ND6_QUEUEING */
   if (neighbor_cache[i].q != NULL) {
