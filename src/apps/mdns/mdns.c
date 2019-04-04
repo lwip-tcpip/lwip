@@ -2572,10 +2572,10 @@ mdns_search_service(const char *name, const char *service, enum mdns_sd_proto pr
   *request_id = slot;
   /* now prepare a MDNS request and send it (on specified interface) */
 #if LWIP_IPV6
-  mdns_send_request(req, netif, IP6_ADDR_ANY);
+  mdns_send_request(req, netif, &v6group);
 #endif
 #if LWIP_IPV4
-  mdns_send_request(req, netif, IP4_ADDR_ANY);
+  mdns_send_request(req, netif, &v4group);
 #endif
   return ERR_OK;
 }
