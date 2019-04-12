@@ -2432,14 +2432,14 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
  * @return ERR_OK if the service was removed from the netif, an err_t otherwise
  */
 err_t
-mdns_resp_del_service(struct netif *netif, s8_t slot)
+mdns_resp_del_service(struct netif *netif, u8_t slot)
 {
   struct mdns_host *mdns;
   struct mdns_service *srv;
   LWIP_ASSERT("mdns_resp_del_service: netif != NULL", netif);
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_del_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
-  LWIP_ERROR("mdns_resp_del_service: Invalid Service ID", (slot >= 0) && (slot < MDNS_MAX_SERVICES), return ERR_VAL);
+  LWIP_ERROR("mdns_resp_del_service: Invalid Service ID", slot < MDNS_MAX_SERVICES, return ERR_VAL);
   LWIP_ERROR("mdns_resp_del_service: Invalid Service ID", (mdns->services[slot] != NULL), return ERR_VAL);
 
   srv = mdns->services[slot];
@@ -2457,7 +2457,7 @@ mdns_resp_del_service(struct netif *netif, s8_t slot)
  * @return ERR_OK if name could be set on service, an err_t otherwise
  */
 err_t
-mdns_resp_rename_service(struct netif *netif, s8_t slot, const char *name)
+mdns_resp_rename_service(struct netif *netif, u8_t slot, const char *name)
 {
   struct mdns_service *srv;
   struct mdns_host *mdns;
@@ -2469,7 +2469,7 @@ mdns_resp_rename_service(struct netif *netif, s8_t slot, const char *name)
   mdns = NETIF_TO_HOST(netif);
   LWIP_ERROR("mdns_resp_rename_service: Not an mdns netif", (mdns != NULL), return ERR_VAL);
   LWIP_ERROR("mdns_resp_rename_service: Name too long", (len <= MDNS_LABEL_MAXLEN), return ERR_VAL);
-  LWIP_ERROR("mdns_resp_rename_service: Invalid Service ID", (slot >= 0) && (slot < MDNS_MAX_SERVICES), return ERR_VAL);
+  LWIP_ERROR("mdns_resp_rename_service: Invalid Service ID", slot < MDNS_MAX_SERVICES, return ERR_VAL);
   LWIP_ERROR("mdns_resp_rename_service: Invalid Service ID", (mdns->services[slot] != NULL), return ERR_VAL);
 
   srv = mdns->services[slot];

@@ -108,4 +108,4 @@ Relevant information will be sent as additional records to reduce number of
 requests required from a client.
 
 To remove a service from a netif, run
-  mdns_resp_del_service(struct netif *netif, s8_t slot)
+  mdns_resp_del_service(struct netif *netif, u8_t slot)
