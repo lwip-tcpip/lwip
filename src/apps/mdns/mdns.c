@@ -2506,10 +2506,10 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
  * @param request_id The search request to stop
  */
 void
-mdns_search_stop(s8_t request_id)
+mdns_search_stop(u8_t request_id)
 {
   struct mdns_request *req;
-  LWIP_ASSERT("mdns_search_stop: bad request_id", (request_id >= 0) && (request_id < MDNS_MAX_REQUESTS));
+  LWIP_ASSERT("mdns_search_stop: bad request_id", request_id < MDNS_MAX_REQUESTS);
   req = &mdns_requests[request_id];
   if (req && req->result_fn) {
     req->result_fn = NULL;
@@ -2533,7 +2533,7 @@ mdns_search_stop(s8_t request_id)
 err_t
 mdns_search_service(const char *name, const char *service, enum mdns_sd_proto proto,
                     struct netif *netif, search_result_fn_t result_fn, void *arg,
-                    s8_t *request_id)
+                    u8_t *request_id)
 {
   u8_t slot;
   struct mdns_request *req;
