@@ -84,7 +84,6 @@ static err_t testif_init(struct netif *netif)
 
 #if LWIP_IPV6
   netif->output_ip6 = ethip6_output;
-  netif->ip6_autoconfig_enabled = 1;
   netif_create_ip6_linklocal_address(netif, 1);
   netif->flags |= NETIF_FLAG_MLD6;
 #endif
