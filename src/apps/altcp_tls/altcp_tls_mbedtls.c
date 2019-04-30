@@ -945,6 +945,21 @@ altcp_tls_create_config_client_2wayauth(const u8_t *ca, size_t ca_len, const u8_
   return conf;
 }
 
+int
+altcp_tls_configure_alpn_protocols(struct altcp_tls_config *conf, const char **protos)
+{
+#if defined(MBEDTLS_SSL_ALPN)
+  int ret = mbedtls_ssl_conf_alpn_protocols(&conf->conf, protos);
+  if (ret != 0) {
+    LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_conf_alpn_protocols failed: %d\n", ret));
+  }
+
+  return ret;
+#else
+  return -1;
+#endif
+}
+
 void
 altcp_tls_free_config(struct altcp_tls_config *conf)
 {
