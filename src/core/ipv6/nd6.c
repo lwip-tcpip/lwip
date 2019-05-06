@@ -697,7 +697,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 #if LWIP_ND6_ALLOW_RA_UPDATES
           if (inp->mtu) {
             /* don't set the mtu for IPv6 higher than the netif driver supports */
-            inp->mtu6 = LWIP_MIN(inp->mtu, (u16_t)mtu32);
+            inp->mtu6 = LWIP_MIN(LWIP_MIN(inp->mtu, inp->mtu6), (u16_t)mtu32);
           } else {
             inp->mtu6 = (u16_t)mtu32;
           }
