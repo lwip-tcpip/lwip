@@ -1058,6 +1058,10 @@ netif_set_link_down(struct netif *netif)
     acd_network_changed_link_down(netif);
 #endif /* LWIP_ACD */
 
+#if LWIP_IPV6 && LWIP_ND6_ALLOW_RA_UPDATES
+    netif->mtu6 = netif->mtu;
+#endif
+
     NETIF_LINK_CALLBACK(netif);
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
     {
