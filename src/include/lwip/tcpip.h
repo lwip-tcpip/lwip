@@ -81,6 +81,7 @@ err_t  tcpip_input(struct pbuf *p, struct netif *inp);
 
 err_t  tcpip_try_callback(tcpip_callback_fn function, void *ctx);
 err_t  tcpip_callback(tcpip_callback_fn function, void *ctx);
+err_t  tcpip_callback_wait(tcpip_callback_fn function, void *ctx);
 /**  @ingroup lwip_os
  * @deprecated use tcpip_try_callback() or tcpip_callback() instead
  */
