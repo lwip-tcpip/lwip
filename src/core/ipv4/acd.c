@@ -319,7 +319,7 @@ acd_restart(struct netif *netif, struct acd *acd)
 
   /* if we tried more then MAX_CONFLICTS we must limit our rate for
    * acquiring and probing addresses. compliant to RFC 5227 Section 2.1.1 */
-  if (acd->num_conflicts > MAX_CONFLICTS) {
+  if (acd->num_conflicts >= MAX_CONFLICTS) {
     acd->state = ACD_STATE_RATE_LIMIT;
     acd->ttw = (u16_t)(RATE_LIMIT_INTERVAL * ACD_TICKS_PER_SECOND);
     LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
