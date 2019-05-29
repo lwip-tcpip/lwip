@@ -117,6 +117,7 @@ err_t mdns_resp_rename_service(struct netif *netif, u8_t slot, const char *name)
 
 err_t mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_t txt_len);
 
+void mdns_resp_restart_delay(struct netif *netif, uint32_t delay);
 void mdns_resp_restart(struct netif *netif);
 void mdns_resp_announce(struct netif *netif);
 

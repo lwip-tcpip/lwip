@@ -1976,9 +1976,7 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
       if (conflict != 0) {
         /* Reset host to probing to reconfirm uniqueness */
         LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: Conflict resolution -> reset to probing state\n"));
-        mdns->state = MDNS_STATE_PROBE_WAIT;
-        mdns->sent_num = 0;
-        sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+        mdns_resp_restart(netif);
         break;
       }
     }
@@ -2360,7 +2358,7 @@ mdns_resp_rename_netif(struct netif *netif, const char *hostname)
   MEMCPY(&mdns->name, hostname, LWIP_MIN(MDNS_LABEL_MAXLEN, len));
   mdns->name[len] = '\0'; /* null termination in case new name is shorter than previous */
 
-  mdns_resp_restart(netif);
+  mdns_resp_restart_delay(netif, MDNS_PROBE_DELAY_MS);
 
   return ERR_OK;
 }
@@ -2472,7 +2470,7 @@ mdns_resp_rename_service(struct netif *netif, u8_t slot, const char *name)
   MEMCPY(&srv->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, len));
   srv->name[len] = '\0'; /* null termination in case new name is shorter than previous */
 
-  mdns_resp_restart(netif);
+  mdns_resp_restart_delay(netif, MDNS_PROBE_DELAY_MS);
 
   return ERR_OK;
 }
@@ -2620,12 +2618,13 @@ mdns_resp_register_name_result_cb(mdns_name_result_cb_t cb)
 
 /**
  * @ingroup mdns
- * Restart mdns responder. Call this when cable is connected after being disconnected or
- * administrative interface is set up after being down
+ * Restart mdns responder after a specified delay. Call this when cable is connected
+ * after being disconnected or administrative interface is set up after being down
  * @param netif The network interface to send on
+ * @param delay The delay to use before sending probe
  */
 void
-mdns_resp_restart(struct netif *netif)
+mdns_resp_restart_delay(struct netif *netif, uint32_t delay)
 {
   struct mdns_host* mdns;
   LWIP_ASSERT_CORE_LOCKED();
@@ -2649,8 +2648,21 @@ mdns_resp_restart(struct netif *netif)
     sys_timeout(MDNS_PROBE_MAX_CONFLICTS_TIMEOUT, mdns_probe_and_announce, netif);
   }
   else {
-    sys_timeout(MDNS_INITIAL_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+    /* Adjust probe delay according sent probe count. */
+    sys_timeout(delay, mdns_probe_and_announce, netif);
   }
+}
+
+/**
+ * @ingroup mdns
+ * Restart mdns responder. Call this when cable is connected after being disconnected or
+ * administrative interface is set up after being down
+ * @param netif The network interface to send on
+ */
+void
+mdns_resp_restart(struct netif *netif)
+{
+  mdns_resp_restart_delay(netif, MDNS_INITIAL_PROBE_DELAY_MS);
 }
 
 /**
