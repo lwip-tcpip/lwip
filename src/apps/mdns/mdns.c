@@ -2595,10 +2595,7 @@ mdns_resp_announce(struct netif *netif)
 
   /* Do not announce if the mdns responder is off, waiting to probe, probing or
    * waiting to announce. */
-  if (!(   (mdns->state == MDNS_STATE_OFF)
-        || (mdns->state == MDNS_STATE_PROBE_WAIT)
-        || (mdns->state == MDNS_STATE_PROBING)
-        || (mdns->state == MDNS_STATE_ANNOUNCE_WAIT))) {
+  if (mdns->state >= MDNS_STATE_ANNOUNCING) {
     /* Announce on IPv6 and IPv4 */
 #if LWIP_IPV6
     mdns_announce(netif, &v6group);

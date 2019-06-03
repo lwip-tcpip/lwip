@@ -195,7 +195,7 @@ typedef enum {
   MDNS_STATE_ANNOUNCING,
   /* Probing and announcing completed */
   MDNS_STATE_COMPLETE
-} acd_state_enum_t;
+} mdns_resp_state_enum_t;
 
 /** Description of a host/netif */
 struct mdns_host {
@@ -206,7 +206,7 @@ struct mdns_host {
   /** Number of probes/announces sent for the current name */
   u8_t sent_num;
   /** State of the mdns responder */
-  acd_state_enum_t state;
+  mdns_resp_state_enum_t state;
 #if LWIP_IPV4
   /** delayed msg struct for IPv4 */
   struct mdns_delayed_msg ipv4;
