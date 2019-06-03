@@ -371,6 +371,7 @@ sntp_retry(void *arg)
                                  sntp_retry_timeout));
 
   /* set up a timer to send a retry and increase the retry delay */
+  sys_untimeout(sntp_request, NULL);
   sys_timeout(sntp_retry_timeout, sntp_request, NULL);
 
 #if SNTP_RETRY_TIMEOUT_EXP
@@ -558,6 +559,7 @@ sntp_send_request(const ip_addr_t *server_addr)
     sntp_servers[sntp_current_server].reachability <<= 1;
 #endif /* SNTP_MONITOR_SERVER_REACHABILITY */
     /* set up receive timeout: try next server or retry on timeout */
+    sys_untimeout(sntp_try_next_server, NULL);
     sys_timeout((u32_t)SNTP_RECV_TIMEOUT, sntp_try_next_server, NULL);
 #if SNTP_CHECK_RESPONSE >= 1
     /* save server address to verify it in sntp_recv */
@@ -567,6 +569,7 @@ sntp_send_request(const ip_addr_t *server_addr)
     LWIP_DEBUGF(SNTP_DEBUG_SERIOUS, ("sntp_send_request: Out of memory, trying again in %"U32_F" ms\n",
                                      (u32_t)SNTP_RETRY_TIMEOUT));
     /* out of memory: set up a timer to send a retry */
+    sys_untimeout(sntp_request, NULL);
     sys_timeout((u32_t)SNTP_RETRY_TIMEOUT, sntp_request, NULL);
   }
 }
@@ -635,6 +638,7 @@ sntp_request(void *arg)
   } else {
     /* address conversion failed, try another server */
     LWIP_DEBUGF(SNTP_DEBUG_WARN_STATE, ("sntp_request: Invalid server address, trying next server.\n"));
+    sys_untimeout(sntp_try_next_server, NULL);
     sys_timeout((u32_t)SNTP_RETRY_TIMEOUT, sntp_try_next_server, NULL);
   }
 }
