@@ -2140,7 +2140,7 @@ mdns_define_probe_rrs_to_send(struct netif *netif, struct mdns_outmsg *outmsg)
   for (i = 0; i < MDNS_MAX_SERVICES; i++) {
     struct mdns_service *serv = mdns->services[i];
     if (serv) {
-      outmsg->serv_replies[i] = REPLY_SERVICE_SRV | REPLY_SERVICE_TXT;
+      outmsg->serv_replies[i] = REPLY_SERVICE_SRV;
     }
   }
 }
