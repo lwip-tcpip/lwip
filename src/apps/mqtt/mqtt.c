@@ -603,14 +603,13 @@ mqtt_cyclic_timer(void *arg)
       }
 
       /* If time for a keep alive message to be sent, transmission has been idle for keep_alive time */
+      client->cyclic_tick++;
       if ((client->cyclic_tick * MQTT_CYCLIC_TIMER_INTERVAL) >= client->keep_alive) {
         LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_cyclic_timer: Sending keep-alive message to server\n"));
         if (mqtt_output_check_space(&client->output, 0) != 0) {
           mqtt_output_append_fixed_header(&client->output, MQTT_MSG_TYPE_PINGREQ, 0, 0, 0, 0);
           client->cyclic_tick = 0;
         }
-      } else {
-        client->cyclic_tick++;
       }
     }
   } else {
