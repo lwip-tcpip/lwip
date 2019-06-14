@@ -208,6 +208,7 @@ static err_t mdns_parse_pkt_questions(struct netif *netif,
 static void mdns_define_probe_rrs_to_send(struct netif *netif,
                                           struct mdns_outmsg *outmsg);
 static void mdns_probe_and_announce(void* arg);
+static void mdns_conflict_save_time(struct netif *netif);
 
 /**
  *  Construction to make mdns struct accessible from mdns_out.c
@@ -854,7 +855,6 @@ mdns_debug_print_answer(struct mdns_packet *pkt, struct mdns_answer *a)
 static void
 mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
 {
-  struct mdns_host *mdns = NETIF_TO_HOST(netif);
   struct mdns_question pkt_q, my_q, q_dummy;
   struct mdns_answer pkt_a, my_a;
   struct mdns_outmsg myprobe_msg;
@@ -1012,10 +1012,10 @@ mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
         }
         else if (result == MDNS_LEXICOGRAPHICAL_EARLIER) {
           LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: we loose, we are lexicographically earlier. 1s timeout started\n"));
-          sys_untimeout(mdns_probe_and_announce, netif);
-          mdns->state = MDNS_STATE_PROBE_WAIT;
-          mdns->sent_num = 0;
-          sys_timeout(MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS, mdns_probe_and_announce, netif);
+          /* Increase the number of conflicts occurred */
+          mdns_conflict_save_time(netif);
+          /* then restart with 1s delay */
+          mdns_resp_restart_delay(netif, MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS);
           goto cleanup;
         }
         else {
@@ -1031,10 +1031,10 @@ mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
         }
         else {
           LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: we loose, we have less records. 1s timeout started\n"));
-          sys_untimeout(mdns_probe_and_announce, netif);
-          mdns->state = MDNS_STATE_PROBE_WAIT;
-          mdns->sent_num = 0;
-          sys_timeout(MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS, mdns_probe_and_announce, netif);
+          /* Increase the number of conflicts occurred */
+          mdns_conflict_save_time(netif);
+          /* then restart with 1s delay */
+          mdns_resp_restart_delay(netif, MDNS_PROBE_TIEBREAK_CONFLICT_DELAY_MS);
           goto cleanup;
         }
       }
@@ -1729,23 +1729,18 @@ mdns_handle_tc_question(void *arg)
 }
 
 /**
- * Handle a probe conflict:
+ * Save time when a probe conflict occurs:
  *  - Check if we exceeded the maximum of 15 conflicts in 10seconds.
- *  - Let the user know there is a conflict.
  *
  * @param netif network interface on which the conflict occured.
- * @param slot service index +1 on which the conflict occured (0 indicate hostname conflict).
  */
 static void
-mdns_probe_conflict(struct netif *netif, s8_t slot)
+mdns_conflict_save_time(struct netif *netif)
 {
   struct mdns_host* mdns = NETIF_TO_HOST(netif);
   int i;
   u32_t diff;
   u8_t index2;
-
-  /* Disable currently running probe / announce timer */
-  sys_untimeout(mdns_probe_and_announce, netif);
 
   /* Increase the number of conflicts occured */
   mdns->num_conflicts++;
@@ -1769,13 +1764,31 @@ mdns_probe_conflict(struct netif *netif, s8_t slot)
   }
   /* Increase index */
   mdns->index = (mdns->index + 1) % MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT;
+}
+
+/**
+ * Handle a probe conflict:
+ *  - Check if we exceeded the maximum of 15 conflicts in 10seconds.
+ *  - Let the user know there is a conflict.
+ *
+ * @param netif network interface on which the conflict occured.
+ * @param slot service index +1 on which the conflict occured (0 indicate hostname conflict).
+ */
+static void
+mdns_probe_conflict(struct netif *netif, s8_t slot)
+{
+  /* Increase the number of conflicts occurred and check rate limiting */
+  mdns_conflict_save_time(netif);
+
+  /* Disable currently running probe / announce timer */
+  sys_untimeout(mdns_probe_and_announce, netif);
 
   /* Inform the host on the conflict, if a callback is set */
   if (mdns_name_result_cb != NULL) {
     mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT, slot);
   }
+  /* TODO: rename and call restart if no mdns_name_result_cb was set? */
 }
-
 
 /**
  * Loockup matching request for response MDNS packet
@@ -2294,8 +2307,13 @@ mdns_probe_and_announce(void* arg)
         mdns->sent_num = 0;
       }
 
-      sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
-
+      if (mdns->sent_num && mdns->rate_limit_activated == 1) {
+        /* delay second probe if rate limiting activated */
+        sys_timeout(MDNS_PROBE_MAX_CONFLICTS_TIMEOUT, mdns_probe_and_announce, netif);
+      }
+      else {
+        sys_timeout(MDNS_PROBE_DELAY_MS, mdns_probe_and_announce, netif);
+      }
       break;
     case MDNS_STATE_ANNOUNCE_WAIT:
     case MDNS_STATE_ANNOUNCING:
