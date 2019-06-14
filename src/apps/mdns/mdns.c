@@ -18,7 +18,6 @@
  * - Sending goodbye messages (zero ttl) - shutdown, DHCP lease about to expire, DHCP turned off...
  * - Sending negative responses NSEC
  * - Fragmenting replies if required
- * - Handling multi-packet known answers (TC bit)
  * - Individual known answer detection for all local IPv6 addresses
  * - Dynamic size of outgoing packet
  */
@@ -64,6 +63,7 @@
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
+#include "lwip/memp.h"
 #include "lwip/prot/dns.h"
 #include "lwip/prot/iana.h"
 #include "lwip/timeouts.h"
@@ -119,6 +119,11 @@ static mdns_name_result_cb_t mdns_name_result_cb;
 #define MDNS_RESPONSE_DELAY_MIN    20
 #define MDNS_RESPONSE_DELAY (LWIP_RAND() %(MDNS_RESPONSE_DELAY_MAX - \
                              MDNS_RESPONSE_DELAY_MIN) + MDNS_RESPONSE_DELAY_MIN)
+/* Delayed response for truncated question defines */
+#define MDNS_RESPONSE_TC_DELAY_MAX   500
+#define MDNS_RESPONSE_TC_DELAY_MIN   400
+#define MDNS_RESPONSE_TC_DELAY_MS (LWIP_RAND() % (MDNS_RESPONSE_TC_DELAY_MAX - \
+                             MDNS_RESPONSE_TC_DELAY_MIN) + MDNS_RESPONSE_TC_DELAY_MIN)
 
 /** Probing & announcing defines */
 #define MDNS_PROBE_DELAY_MS       250
@@ -174,7 +179,17 @@ struct mdns_packet {
   u16_t additional;
   /** Number of unparsed additional answers */
   u16_t additional_left;
+  /** Chained list of known answer received after a truncated question */
+  struct mdns_packet *next_answer;
+  /** Chained list of truncated question that are waiting */
+  struct mdns_packet *next_tc_question;
 };
+
+/* list of received questions with TC flags set, waiting for known answers */
+static struct mdns_packet *pending_tc_questions;
+
+/* pool of received packets */
+LWIP_MEMPOOL_DECLARE(MDNS_PKTS, MDNS_MAX_STORED_PKTS, sizeof (struct mdns_packet), "Stored mDNS packets")
 
 struct mdns_question {
   struct mdns_rr_info info;
@@ -1364,7 +1379,7 @@ mdns_add_msg_to_delayed(struct mdns_outmsg *dest, struct mdns_outmsg *src)
  * - Define which type of answer is requested
  * - Send out packet or put it on hold until after random time
  *
- * @param pkt   incoming packet
+ * @param pkt   incoming packet (in stack)
  * @param netif network interface of incoming packet
  */
 static void
@@ -1409,6 +1424,17 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
   res = mdns_parse_pkt_known_answers(netif, pkt, &reply);
   if (res != ERR_OK) {
     return;
+  }
+  if (pkt->next_answer) {
+    /* Also parse known-answers from additional packets */
+    struct mdns_packet *pkta = pkt->next_answer;
+    while (pkta) {
+      res = mdns_parse_pkt_known_answers(netif, pkta, &reply);
+      if (res != ERR_OK) {
+        return;
+      }
+      pkta = pkta->next_answer;
+    }
   }
   /* Parse authoritative answers -> probing */
   /* If it's a probe query, we need to directly answer via unicast. */
@@ -1662,6 +1688,44 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
       return;
     }
   }
+}
+
+/**
+ * Handle truncated question MDNS packet
+ * - Called by timer
+ * - Call mdns_handle_question
+ * - Do cleanup
+ *
+ * @param pkt   incoming packet (in pool)
+ */
+static void
+mdns_handle_tc_question(void *arg)
+{
+  struct mdns_packet *pkt = (struct mdns_packet *)arg;
+  struct netif *from = netif_get_by_index(pkt->pbuf->if_idx);
+  /* timer as elapsed, now handle this question */
+  mdns_handle_question(pkt, from);
+  /* remove from pending list */
+  if (pending_tc_questions == pkt) {
+    pending_tc_questions = pkt->next_tc_question;
+  }
+  else {
+    struct mdns_packet *prev = pending_tc_questions;
+    while (prev && prev->next_tc_question != pkt) {
+      prev = prev->next_tc_question;
+    }
+    LWIP_ASSERT("pkt not found in pending_tc_questions list", prev != NULL);
+    prev->next_tc_question = pkt->next_tc_question;
+  }
+  /* free linked answers and this question */
+  while (pkt->next_answer) {
+    struct mdns_packet *ans = pkt->next_answer;
+    pkt->next_answer = ans->next_answer;
+    pbuf_free(ans->pbuf);
+    LWIP_MEMPOOL_FREE(MDNS_PKTS, ans);
+  }
+  pbuf_free(pkt->pbuf);
+  LWIP_MEMPOOL_FREE(MDNS_PKTS, pkt);
 }
 
 /**
@@ -2067,6 +2131,43 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
   if (hdr.flags1 & DNS_FLAG1_RESPONSE) {
     mdns_handle_response(&packet, recv_netif);
   } else {
+    if (packet.questions && hdr.flags1 & DNS_FLAG1_TRUNC) {
+      /* this is a new truncated question */
+      struct mdns_packet *pkt = (struct mdns_packet *)LWIP_MEMPOOL_ALLOC(MDNS_PKTS);
+      if (!pkt)
+        goto dealloc; /* don't reply truncated question if alloc error */
+      SMEMCPY(pkt, &packet, sizeof(packet));
+      /* insert this question in pending list */
+      pkt->next_tc_question = pending_tc_questions;
+      pending_tc_questions = pkt;
+      /* question with truncated flags, need to wait 400-500ms before replying */
+      sys_timeout(MDNS_RESPONSE_TC_DELAY_MS, mdns_handle_tc_question, pkt);
+      /* return without dealloc pbuf */
+      return;
+    }
+    else if (!packet.questions && packet.answers && pending_tc_questions) {
+      /* this packet is a known-answer packet for a truncated question previously received */
+      struct mdns_packet *q = pending_tc_questions;
+      while (q) {
+        if ((packet.source_port == q->source_port) &&
+            ip_addr_cmp(&packet.source_addr, &q->source_addr))
+          break;
+        q = q->next_tc_question;
+      }
+      if (q) {
+        /* found question from the same source */
+        struct mdns_packet *pkt = (struct mdns_packet *)LWIP_MEMPOOL_ALLOC(MDNS_PKTS);
+        if (!pkt)
+          goto dealloc; /* don't reply truncated question if alloc error */
+        SMEMCPY(pkt, &packet, sizeof(packet));
+        /* insert this known-ansert in question */
+        pkt->next_answer = q->next_answer;
+        q->next_answer = pkt;
+        /* nothing more to do */
+        return;
+      }
+    }
+    /* if previous tests fail, handle this question normally */
     mdns_handle_question(&packet, recv_netif);
   }
 
@@ -2675,10 +2776,10 @@ mdns_resp_init(void)
   err_t res;
 
   /* LWIP_ASSERT_CORE_LOCKED(); is checked by udp_new() */
-
 #if LWIP_MDNS_SEARCH
   memset(mdns_requests, 0, sizeof(mdns_requests));
 #endif
+  LWIP_MEMPOOL_INIT(MDNS_PKTS);
   mdns_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("Failed to allocate pcb", mdns_pcb != NULL);
 #if LWIP_MULTICAST_TX_OPTIONS

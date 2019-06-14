@@ -60,6 +60,16 @@
 #define MDNS_MAX_SERVICES               1
 #endif
 
+/** The maximum number of received packets stored in chained list of known
+ * answers for pending truncated questions. This value define the size of
+ * the MDNS_PKTS mempool.
+ * Up to MDNS_MAX_STORED_PKTS pbuf can be stored in addition to TC questions
+ * that are pending.
+ */
+#ifndef MDNS_MAX_STORED_PKTS
+#define MDNS_MAX_STORED_PKTS            4
+#endif
+
 /** Payload size allocated for each outgoing UDP packet. Will be allocated with
  * PBUF_RAM and freed after packet was sent.
  * According to RFC 6762, there is no reason to retain the 512 bytes restriction
