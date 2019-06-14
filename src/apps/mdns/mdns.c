@@ -1949,6 +1949,8 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
           break;
         }
       }
+      if (i < MDNS_MAX_SERVICES)
+        break;
     }
     /* Perform conflict resolution (RFC6762 section 9):
      * We assume a conflict if the hostname or service name matches the answers
