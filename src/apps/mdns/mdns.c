@@ -126,7 +126,6 @@ static mdns_name_result_cb_t mdns_name_result_cb;
                              MDNS_RESPONSE_TC_DELAY_MIN) + MDNS_RESPONSE_TC_DELAY_MIN)
 
 /** Probing & announcing defines */
-#define MDNS_PROBE_DELAY_MS       250
 #define MDNS_PROBE_COUNT          3
 #ifdef LWIP_RAND
 /* first probe timeout SHOULD be random 0-250 ms*/

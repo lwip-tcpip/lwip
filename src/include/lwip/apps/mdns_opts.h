@@ -60,6 +60,14 @@
 #define MDNS_MAX_SERVICES               1
 #endif
 
+/** The minimum delay between probes in ms. RFC 6762 require 250ms.
+ * In noisy WiFi environment, adding 30-50ms to this value help a lot for
+ * a successful Apple BCT tests.
+ */
+#ifndef MDNS_PROBE_DELAY_MS
+#define MDNS_PROBE_DELAY_MS           250
+#endif
+
 /** The maximum number of received packets stored in chained list of known
  * answers for pending truncated questions. This value define the size of
  * the MDNS_PKTS mempool.
