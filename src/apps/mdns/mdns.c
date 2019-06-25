@@ -2214,7 +2214,7 @@ mdns_netif_ext_status_callback(struct netif *netif, netif_nsc_reason_t reason, c
   if (reason & (LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_GATEWAY_CHANGED |
       LWIP_NSC_IPV4_NETMASK_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED |
       LWIP_NSC_IPV6_SET | LWIP_NSC_IPV6_ADDR_STATE_CHANGED)) {
-    mdns_resp_announce(netif);
+    mdns_resp_restart(netif);
   }
 }
 #endif /* LWIP_NETIF_EXT_STATUS_CALLBACK && MDNS_RESP_USENETIF_EXTCALLBACK */
