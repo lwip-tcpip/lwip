@@ -260,6 +260,9 @@ acd_tmr(void)
               /* let acd user know that the address is good and can be used */
               acd->acd_conflict_callback(netif, ACD_IP_OK);
 
+              /* reset conflict count to ensure fast re-probing after announcing */
+              acd->num_conflicts = 0;
+
               LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
                     ("acd_tmr(): changing state to ANNOUNCING: %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
                      ip4_addr1_16(&acd->ipaddr), ip4_addr2_16(&acd->ipaddr),
