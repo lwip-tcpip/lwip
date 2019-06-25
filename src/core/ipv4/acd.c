@@ -257,9 +257,6 @@ acd_tmr(void)
             if (acd->sent_num == 0) {
               acd->state = ACD_STATE_ANNOUNCING;
 
-              /* let acd user know that the address is good and can be used */
-              acd->acd_conflict_callback(netif, ACD_IP_OK);
-
               /* reset conflict count to ensure fast re-probing after announcing */
               acd->num_conflicts = 0;
 
@@ -283,6 +280,9 @@ acd_tmr(void)
                     ("acd_tmr(): changing state to ONGOING: %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
                      ip4_addr1_16(&acd->ipaddr), ip4_addr2_16(&acd->ipaddr),
                      ip4_addr3_16(&acd->ipaddr), ip4_addr4_16(&acd->ipaddr)));
+
+              /* finally, let acd user know that the address is good and can be used */
+              acd->acd_conflict_callback(netif, ACD_IP_OK);
             }
           }
           break;
