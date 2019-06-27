@@ -93,8 +93,14 @@
 #define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset) do { LWIP_UNUSED_ARG(msg); } while(0)
 #endif
 
-/** Calculating and setting DHCP timeouts, thresholds and backoff sequences
+/** DHCP_DEFINE_CUSTOM_TIMEOUTS: if this is defined then you can customize various DHCP timeouts using these macros:
+      - DHCP_SET_TIMEOUT_FROM_OFFERED_T0_LEASE() to adjust the t0 lease timeout from the offered value
+      - DHCP_SET_TIMEOUT_FROM_OFFERED_T1_RENEW() same for t1 renew
+      - DHCP_SET_TIMEOUT_FROM_OFFERED_T2_REBIND() same for t2 rebind
+      - DHCP_NEXT_TIMEOUT_THRESHOLD to adjust the period of the next timeout
+      - DHCP_REQUEST_BACKOFF_SEQUENCE to adjust back-off times based on DHCP request attempts
  */
+#ifndef DHCP_DEFINE_CUSTOM_TIMEOUTS
 #define SET_TIMEOUT_FROM_OFFERED(result, offered, min, max) do { \
   u32_t timeout = (offered + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;  \
   if (timeout > max) {    \
@@ -103,7 +109,7 @@
   if (timeout == min) {   \
     timeout = 1;          \
   } \
-  result = (u16_t)timeout; \
+  result = (dhcp_timeout_t)timeout; \
 } while(0)
 
 #define DHCP_SET_TIMEOUT_FROM_OFFERED_T0_LEASE(res, dhcp)  SET_TIMEOUT_FROM_OFFERED(res, (dhcp)->offered_t0_lease, 0, 0xffff)
@@ -112,6 +118,8 @@
 
 #define DHCP_NEXT_TIMEOUT_THRESHOLD ((60 + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS)
 #define DHCP_REQUEST_BACKOFF_SEQUENCE(tries)   (u16_t)(( (tries) < 6 ? 1 << (tries) : 60) * 1000)
+
+#endif /* DHCP_DEFINE_CUSTOM_TIMEOUTS */
 
 /** DHCP_CREATE_RAND_XID: if this is set to 1, the xid is created using
  * LWIP_RAND() (this overrides DHCP_GLOBAL_XID)
@@ -605,7 +613,7 @@ dhcp_t1_timeout(struct netif *netif)
     dhcp_renew(netif);
     /* Calculate next timeout */
     if (((dhcp->t2_timeout - dhcp->lease_used) / 2) >= DHCP_NEXT_TIMEOUT_THRESHOLD) {
-      dhcp->t1_renew_time = (u16_t)((dhcp->t2_timeout - dhcp->lease_used) / 2);
+      dhcp->t1_renew_time = (dhcp_timeout_t)((dhcp->t2_timeout - dhcp->lease_used) / 2);
     }
   }
 }
@@ -631,7 +639,7 @@ dhcp_t2_timeout(struct netif *netif)
     dhcp_rebind(netif);
     /* Calculate next timeout */
     if (((dhcp->t0_timeout - dhcp->lease_used) / 2) >= DHCP_NEXT_TIMEOUT_THRESHOLD) {
-      dhcp->t2_rebind_time = (u16_t)((dhcp->t0_timeout - dhcp->lease_used) / 2);
+      dhcp->t2_rebind_time = (dhcp_timeout_t)((dhcp->t0_timeout - dhcp->lease_used) / 2);
     }
   }
 }
