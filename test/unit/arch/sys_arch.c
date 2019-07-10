@@ -365,7 +365,23 @@ sys_arch_mbox_tryfetch(sys_mbox_t *q, void **msg)
 }
 
 #if LWIP_NETCONN_SEM_PER_THREAD
-#error LWIP_NETCONN_SEM_PER_THREAD==1 not supported
+/* Simple implementation of this: unit tests only support one thread */
+static sys_sem_t global_netconn_sem;
+
+sys_sem_t* sys_arch_netconn_sem_get(void)
+{
+  return &global_netconn_sem;
+}
+
+void sys_arch_netconn_sem_alloc(void)
+{
+  sys_sem_new(&global_netconn_sem, 0);
+}
+
+void sys_arch_netconn_sem_free(void)
+{
+  sys_sem_free(&global_netconn_sem);
+}
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
 #endif /* !NO_SYS */

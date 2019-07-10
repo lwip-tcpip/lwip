@@ -68,5 +68,12 @@ void test_sys_arch_wait_callback(test_sys_arch_waiting_fn waiting_fn);
 /* current time */
 extern u32_t lwip_sys_now;
 
+sys_sem_t* sys_arch_netconn_sem_get(void);
+void sys_arch_netconn_sem_alloc(void);
+void sys_arch_netconn_sem_free(void);
+#define LWIP_NETCONN_THREAD_SEM_GET()   sys_arch_netconn_sem_get()
+#define LWIP_NETCONN_THREAD_SEM_ALLOC() sys_arch_netconn_sem_alloc()
+#define LWIP_NETCONN_THREAD_SEM_FREE()  sys_arch_netconn_sem_free()
+
 #endif /* LWIP_HDR_TEST_SYS_ARCH_H */
 

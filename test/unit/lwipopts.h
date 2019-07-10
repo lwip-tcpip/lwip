@@ -46,6 +46,7 @@
 #define LWIP_NETCONN                    !NO_SYS
 #define LWIP_SOCKET                     !NO_SYS
 #define LWIP_NETCONN_FULLDUPLEX         LWIP_SOCKET
+#define LWIP_NETCONN_SEM_PER_THREAD     1
 #define LWIP_NETBUF_RECVINFO            1
 #define LWIP_HAVE_LOOPIF                1
 #define TCPIP_THREAD_TEST
