@@ -661,8 +661,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * so nsock->rcvevent is >= 1 here!
    */
   SYS_ARCH_PROTECT(lev);
-  recvevent = (s16_t)(-1 - newconn->socket);
-  newconn->socket = newsock;
+  recvevent = (s16_t)(-1 - newconn->callback_arg.socket);
+  newconn->callback_arg.socket = newsock;
   SYS_ARCH_UNPROTECT(lev);
 
   if (newconn->callback) {
@@ -1729,7 +1729,7 @@ lwip_socket(int domain, int type, int protocol)
     set_errno(ENFILE);
     return -1;
   }
-  conn->socket = i;
+  conn->callback_arg.socket = i;
   done_socket(&sockets[i - LWIP_SOCKET_OFFSET]);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("%d\n", i));
   set_errno(0);
@@ -2478,7 +2478,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 
   /* Get socket */
   if (conn) {
-    s = conn->socket;
+    s = conn->callback_arg.socket;
     if (s < 0) {
       /* Data comes in right away after an accept, even though
        * the server task might not have created a new socket yet.
@@ -2486,16 +2486,16 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
        * will use the data later. Note that only receive events
        * can happen before the new socket is set up. */
       SYS_ARCH_PROTECT(lev);
-      if (conn->socket < 0) {
+      if (conn->callback_arg.socket < 0) {
         if (evt == NETCONN_EVT_RCVPLUS) {
           /* conn->socket is -1 on initialization
              lwip_accept adjusts sock->recvevent if conn->socket < -1 */
-          conn->socket--;
+          conn->callback_arg.socket--;
         }
         SYS_ARCH_UNPROTECT(lev);
         return;
       }
-      s = conn->socket;
+      s = conn->callback_arg.socket;
       SYS_ARCH_UNPROTECT(lev);
     }
 

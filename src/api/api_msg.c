@@ -759,10 +759,8 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   sys_mbox_set_invalid(&conn->acceptmbox);
 #endif
   conn->state        = NETCONN_NONE;
-#if LWIP_SOCKET
   /* initialize socket to -1 since 0 is a valid socket */
-  conn->socket       = -1;
-#endif /* LWIP_SOCKET */
+  conn->callback_arg.socket = -1;
   conn->callback     = callback;
 #if LWIP_TCP
   conn->current_msg  = NULL;
