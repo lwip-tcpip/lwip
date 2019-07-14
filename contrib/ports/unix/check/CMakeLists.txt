@@ -4,12 +4,14 @@ set (CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 project(lwipunittests C)
 
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    message(FATAL_ERROR "Unit test are currently only working on Linux or Darwin")
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "GNU")
+    message(FATAL_ERROR "Unit test are currently only working on Linux, Darwin or Hurd")
 endif()
 
 set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
-set(LWIP_USE_SANITIZERS true)
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "GNU")
+    set(LWIP_USE_SANITIZERS true)
+endif()
 include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
@@ -45,7 +47,7 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(lwip_unittests ${LIBSUBUNIT})
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "GNU")
     find_library(LIBUTIL util)
     find_library(LIBPTHREAD pthread)
     find_library(LIBRT rt)
