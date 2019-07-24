@@ -227,14 +227,7 @@
 #define LWIP_ASSERT_CORE_LOCKED()
 #endif
 
-/**
- * Called as first thing in the lwIP TCPIP thread. Can be used in conjunction
- * with @ref LWIP_ASSERT_CORE_LOCKED to check core locking.
- * @see @ref multithreading
- */
-#if !defined LWIP_MARK_TCPIP_THREAD || defined __DOXYGEN__
-#define LWIP_MARK_TCPIP_THREAD()
-#endif
+
 /**
  * @}
  */

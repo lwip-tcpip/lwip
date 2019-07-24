@@ -422,6 +422,16 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 #endif /* NO_SYS */
 
 /**
+ * @ingroup lwip_opts_lock
+ * Called as first thing in the lwIP TCPIP thread. Can be used in conjunction
+ * with @ref LWIP_ASSERT_CORE_LOCKED to check core locking.
+ * @see @ref multithreading
+ */
+#if !defined LWIP_MARK_TCPIP_THREAD || defined __DOXYGEN__
+#define LWIP_MARK_TCPIP_THREAD()
+#endif
+
+/**
  * @ingroup sys_misc
  * sys_init() must be called before anything else.
  * Initialize the sys_arch layer.
