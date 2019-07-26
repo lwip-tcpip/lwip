@@ -128,6 +128,11 @@
 #define LWIP_DHCP_PROVIDE_DNS_SERVERS 0
 #endif
 
+#ifndef LWIP_DHCP_INPUT_ERROR
+#define LWIP_DHCP_INPUT_ERROR(message, expression, handler) do { if (!(expression)) { \
+  handler;} } while(0)
+#endif
+
 /** Option handling: options are parsed in dhcp_parse_reply
  * and saved in an array where other functions can load them from.
  * This might be moved into the struct dhcp (not necessarily since
@@ -1551,58 +1556,58 @@ again:
         /* will be increased below */
         break;
       case (DHCP_OPTION_SUBNET_MASK):
-        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_SUBNET_MASK;
         break;
       case (DHCP_OPTION_ROUTER):
         decode_len = 4; /* only copy the first given router */
-        LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_ROUTER;
         break;
 #if LWIP_DHCP_PROVIDE_DNS_SERVERS
       case (DHCP_OPTION_DNS_SERVER):
         /* special case: there might be more than one server */
-        LWIP_ERROR("len %% 4 == 0", len % 4 == 0, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len %% 4 == 0", len % 4 == 0, return ERR_VAL;);
         /* limit number of DNS servers */
         decode_len = LWIP_MIN(len, 4 * DNS_MAX_SERVERS);
-        LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_DNS_SERVER;
         break;
 #endif /* LWIP_DHCP_PROVIDE_DNS_SERVERS */
       case (DHCP_OPTION_LEASE_TIME):
-        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_LEASE_TIME;
         break;
 #if LWIP_DHCP_GET_NTP_SRV
       case (DHCP_OPTION_NTP):
         /* special case: there might be more than one server */
-        LWIP_ERROR("len %% 4 == 0", len % 4 == 0, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len %% 4 == 0", len % 4 == 0, return ERR_VAL;);
         /* limit number of NTP servers */
         decode_len = LWIP_MIN(len, 4 * LWIP_DHCP_MAX_NTP_SERVERS);
-        LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_NTP_SERVER;
         break;
 #endif /* LWIP_DHCP_GET_NTP_SRV*/
       case (DHCP_OPTION_OVERLOAD):
-        LWIP_ERROR("len == 1", len == 1, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 1", len == 1, return ERR_VAL;);
         /* decode overload only in options, not in file/sname: invalid packet */
-        LWIP_ERROR("overload in file/sname", options_offset == DHCP_OPTIONS_OFS, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("overload in file/sname", options_offset == DHCP_OPTIONS_OFS, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_OVERLOAD;
         break;
       case (DHCP_OPTION_MESSAGE_TYPE):
-        LWIP_ERROR("len == 1", len == 1, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 1", len == 1, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_MSG_TYPE;
         break;
       case (DHCP_OPTION_SERVER_ID):
-        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_SERVER_ID;
         break;
       case (DHCP_OPTION_T1):
-        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_T1;
         break;
       case (DHCP_OPTION_T2):
-        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_T2;
         break;
       default:
@@ -1634,7 +1639,7 @@ decode_next:
           if (decode_len > 4) {
             /* decode more than one u32_t */
             u16_t next_val_offset;
-            LWIP_ERROR("decode_len %% 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
+            LWIP_DHCP_INPUT_ERROR("decode_len %% 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
             dhcp_got_option(dhcp, decode_idx);
             dhcp_set_option_value(dhcp, decode_idx, lwip_htonl(value));
             decode_len = (u8_t)(decode_len - 4);
@@ -1649,7 +1654,7 @@ decode_next:
           } else if (decode_len == 4) {
             value = lwip_ntohl(value);
           } else {
-            LWIP_ERROR("invalid decode_len", decode_len == 1, return ERR_VAL;);
+            LWIP_DHCP_INPUT_ERROR("invalid decode_len", decode_len == 1, return ERR_VAL;);
             value = ((u8_t *)&value)[0];
           }
           dhcp_got_option(dhcp, decode_idx);
@@ -1662,7 +1667,7 @@ decode_next:
       offset_max = (u16_t)(offset_max - q->len);
       if (offset < offset_max) {
         q = q->next;
-        LWIP_ERROR("next pbuf was null", q != NULL, return ERR_VAL;);
+        LWIP_DHCP_INPUT_ERROR("next pbuf was null", q != NULL, return ERR_VAL;);
         options = (u8_t *)q->payload;
       } else {
         /* We've run out of bytes, probably no end marker. Don't proceed. */
