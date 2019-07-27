@@ -85,9 +85,55 @@
 #define API_SELECT_CB_VAR_ALLOC(name, retblock)   API_VAR_ALLOC_EXT(struct lwip_select_cb, MEMP_SELECT_CB, name, retblock)
 #define API_SELECT_CB_VAR_FREE(name)              API_VAR_FREE(MEMP_SELECT_CB, name)
 
+#ifdef _HAVE_SA_LEN
+#define HAVE_SA_LEN	_HAVE_SA_LEN
+#else
+#define HAVE_SA_LEN	0
+#endif /* _HAVE_SA_LEN */
+
+/* Address length safe read and write */
+#if HAVE_SA_LEN
+
+#if LWIP_IPV4
+#define IP4ADDR_SOCKADDR_SET_LEN(sin) \
+      (sin)->sin_len = sizeof(struct sockaddr_in)
+#endif /* LWIP_IPV4 */
+
+#if LWIP_IPV6
+#define IP6ADDR_SOCKADDR_SET_LEN(sin6) \
+      (sin6)->sin6_len = sizeof(struct sockaddr_in6)
+#endif /* LWIP_IPV6 */
+
+#define IPADDR_SOCKADDR_GET_LEN(addr) \
+      (addr)->sa.sa_len
+
+#else
+
+#if LWIP_IPV4
+#define IP4ADDR_SOCKADDR_SET_LEN(addr)
+#endif /* LWIP_IPV4 */
+
+#if LWIP_IPV6
+#define IP6ADDR_SOCKADDR_SET_LEN(addr)
+#endif /* LWIP_IPV6 */
+
+#if LWIP_IPV4 && LWIP_IPV6
+#define IPADDR_SOCKADDR_GET_LEN(addr) \
+      ((addr)->sa.sa_family == AF_INET ? sizeof(struct sockaddr_in) \
+        : ((addr)->sa.sa_family == AF_INET6 ? sizeof(struct sockaddr_in6) : 0))
+#elif LWIP_IPV4
+#define IPADDR_SOCKADDR_GET_LEN(addr) sizeof(struct sockaddr_in)
+#elif LWIP_IPV6
+#define IPADDR_SOCKADDR_GET_LEN(addr) sizeof(struct sockaddr_in6)
+#else
+#define IPADDR_SOCKADDR_GET_LEN(addr) sizeof(struct sockaddr)
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
+#endif /* HAVE_SA_LEN */
+
 #if LWIP_IPV4
 #define IP4ADDR_PORT_TO_SOCKADDR(sin, ipaddr, port) do { \
-      (sin)->sin_len = sizeof(struct sockaddr_in); \
+      IP4ADDR_SOCKADDR_SET_LEN(sin); \
       (sin)->sin_family = AF_INET; \
       (sin)->sin_port = lwip_htons((port)); \
       inet_addr_from_ip4addr(&(sin)->sin_addr, ipaddr); \
@@ -99,7 +145,7 @@
 
 #if LWIP_IPV6
 #define IP6ADDR_PORT_TO_SOCKADDR(sin6, ipaddr, port) do { \
-      (sin6)->sin6_len = sizeof(struct sockaddr_in6); \
+      IP6ADDR_SOCKADDR_SET_LEN(sin6); \
       (sin6)->sin6_family = AF_INET6; \
       (sin6)->sin6_port = lwip_htons((port)); \
       (sin6)->sin6_flowinfo = 0; \
@@ -690,8 +736,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     }
 
     IPADDR_PORT_TO_SOCKADDR(&tempaddr, &naddr, port);
-    if (*addrlen > tempaddr.sa.sa_len) {
-      *addrlen = tempaddr.sa.sa_len;
+    if (*addrlen > IPADDR_SOCKADDR_GET_LEN(&tempaddr)) {
+      *addrlen = IPADDR_SOCKADDR_GET_LEN(&tempaddr);
     }
     MEMCPY(addr, &tempaddr, *addrlen);
 
@@ -1035,10 +1081,10 @@ lwip_sock_make_addr(struct netconn *conn, ip_addr_t *fromaddr, u16_t port,
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
   IPADDR_PORT_TO_SOCKADDR(&saddr, fromaddr, port);
-  if (*fromlen < saddr.sa.sa_len) {
+  if (*fromlen < IPADDR_SOCKADDR_GET_LEN(&saddr)) {
     truncated = 1;
-  } else if (*fromlen > saddr.sa.sa_len) {
-    *fromlen = saddr.sa.sa_len;
+  } else if (*fromlen > IPADDR_SOCKADDR_GET_LEN(&saddr)) {
+    *fromlen = IPADDR_SOCKADDR_GET_LEN(&saddr);
   }
   MEMCPY(from, &saddr, *fromlen);
   return truncated;
@@ -2727,8 +2773,8 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   ip_addr_debug_print_val(SOCKETS_DEBUG, naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", port));
 
-  if (*namelen > saddr.sa.sa_len) {
-    *namelen = saddr.sa.sa_len;
+  if (*namelen > IPADDR_SOCKADDR_GET_LEN(&saddr)) {
+    *namelen = IPADDR_SOCKADDR_GET_LEN(&saddr);
   }
   MEMCPY(name, &saddr, *namelen);
 

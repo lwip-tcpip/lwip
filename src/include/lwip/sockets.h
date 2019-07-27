@@ -59,6 +59,9 @@
 extern "C" {
 #endif
 
+/* sockaddr and pals include length fields */
+#define _HAVE_SA_LEN  1
+
 /* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
    to prevent this code from redefining it. */
 #if !defined(sa_family_t) && !defined(SA_FAMILY_T_DEFINED)
