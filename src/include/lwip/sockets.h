@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 /* sockaddr and pals include length fields */
-#define _HAVE_SA_LEN  1
+#define LWIP_SOCKET_HAVE_SA_LEN  1
 
 /* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
    to prevent this code from redefining it. */

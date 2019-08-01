@@ -85,14 +85,12 @@
 #define API_SELECT_CB_VAR_ALLOC(name, retblock)   API_VAR_ALLOC_EXT(struct lwip_select_cb, MEMP_SELECT_CB, name, retblock)
 #define API_SELECT_CB_VAR_FREE(name)              API_VAR_FREE(MEMP_SELECT_CB, name)
 
-#ifdef _HAVE_SA_LEN
-#define HAVE_SA_LEN	_HAVE_SA_LEN
-#else
-#define HAVE_SA_LEN	0
-#endif /* _HAVE_SA_LEN */
+#ifndef LWIP_SOCKET_HAVE_SA_LEN
+#define LWIP_SOCKET_HAVE_SA_LEN 0
+#endif /* LWIP_SOCKET_HAVE_SA_LEN */
 
 /* Address length safe read and write */
-#if HAVE_SA_LEN
+#if LWIP_SOCKET_HAVE_SA_LEN
 
 #if LWIP_IPV4
 #define IP4ADDR_SOCKADDR_SET_LEN(sin) \
@@ -129,7 +127,7 @@
 #define IPADDR_SOCKADDR_GET_LEN(addr) sizeof(struct sockaddr)
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 
-#endif /* HAVE_SA_LEN */
+#endif /* LWIP_SOCKET_HAVE_SA_LEN */
 
 #if LWIP_IPV4
 #define IP4ADDR_PORT_TO_SOCKADDR(sin, ipaddr, port) do { \
