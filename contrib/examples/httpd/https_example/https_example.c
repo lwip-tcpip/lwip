@@ -63,10 +63,7 @@
 #define LWIP_HTTPD_EXAMPLE_HTTPS 0
 #endif
 
-#define LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE "f:\\dev\\lwip\\https_test\\privateKey.key"
-#define LWIP_HTTPD_EXAMPLE_HTTPS_CERT_FILE "f:\\dev\\lwip\\https_test\\certificate.crt"
-
-#if LWIP_HTTPD_EXAMPLE_HTTPS
+#if LWIP_HTTPD_EXAMPLE_HTTPS && LWIP_ALTCP_TLS
 
 #ifndef LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE
 #error "define LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE to the created server private key"
@@ -98,7 +95,7 @@ static u8_t *read_file(const char *filename, size_t *file_size)
   fsize = ftell(f);
   fseek(f, 0, SEEK_SET);
 
-  buf = malloc(fsize + 1);
+  buf = (u8_t *)malloc(fsize + 1);
   if (!buf) {
     fclose(f);
     return NULL;
