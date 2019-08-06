@@ -134,6 +134,7 @@
     <ClCompile Include="..\..\..\examples\httpd\cgi_example\cgi_example.c" />
     <ClCompile Include="..\..\..\examples\httpd\fs_example\fs_example.c" />
     <ClCompile Include="..\..\..\examples\httpd\genfiles_example\genfiles_example.c" />
+    <ClCompile Include="..\..\..\examples\httpd\https_example\https_example.c" />
     <ClCompile Include="..\..\..\examples\httpd\post_example\post_example.c" />
     <ClCompile Include="..\..\..\examples\httpd\ssi_example\ssi_example.c" />
     <ClCompile Include="..\..\..\examples\lwiperf\lwiperf_example.c" />
@@ -173,6 +174,7 @@
     <ClInclude Include="..\..\..\examples\httpd\cgi_example\cgi_example.h" />
     <ClInclude Include="..\..\..\examples\httpd\fs_example\fs_example.h" />
     <ClInclude Include="..\..\..\examples\httpd\genfiles_example\genfiles_example.h" />
+    <ClInclude Include="..\..\..\examples\httpd\https_example\https_example.h" />
     <ClInclude Include="..\..\..\examples\httpd\ssi_example\ssi_example.h" />
     <ClInclude Include="..\..\..\examples\lwiperf\lwiperf_example.h" />
     <ClInclude Include="..\..\..\examples\mdns\mdns_example.h" />

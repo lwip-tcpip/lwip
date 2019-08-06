@@ -65,6 +65,9 @@
     <Filter Include="Source Files\examples\mqtt">
       <UniqueIdentifier>{bd6f1fcc-c88f-4b96-a267-401f6bf9898b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\examples\httpd\https_example">
+      <UniqueIdentifier>{1098bc59-6867-48a3-afa4-b896510241d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\apps\chargen\chargen.c">
@@ -154,6 +157,9 @@
     <ClCompile Include="..\example_app\default_netif.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\examples\httpd\https_example\https_example.c">
+      <Filter>Source Files\examples\httpd\https_example</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\apps\chargen\chargen.h">
@@ -233,6 +239,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\examples\mqtt\mqtt_example.h">
       <Filter>Source Files\examples\mqtt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\examples\httpd\https_example\https_example.h">
+      <Filter>Source Files\examples\httpd\https_example</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
