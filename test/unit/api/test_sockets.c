@@ -250,7 +250,7 @@ static void test_sockets_init_loopback_addr(int domain, struct sockaddr_storage 
 
 static void test_sockets_msgapi_update_iovs(struct msghdr *msg, size_t bytes)
 {
-  int i;
+  msg_iovlen_t i;
 
   /* note: this modifies the underyling iov_base and iov_len for a partial
      read for an individual vector. This updates the msg->msg_iov pointer

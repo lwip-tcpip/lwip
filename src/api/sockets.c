@@ -1129,7 +1129,7 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
   u8_t apiflags;
   err_t err;
   u16_t buflen, copylen, copied;
-  int i;
+  msg_iovlen_t i;
 
   LWIP_UNUSED_ARG(dbg_s);
   LWIP_ERROR("lwip_recvfrom_udp_raw: invalid arguments", (msg->msg_iov != NULL) || (msg->msg_iovlen <= 0), return ERR_ARG;);
@@ -1319,7 +1319,7 @@ ssize_t
 lwip_recvmsg(int s, struct msghdr *message, int flags)
 {
   struct lwip_sock *sock;
-  int i;
+  msg_iovlen_t i;
   ssize_t buflen;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvmsg(%d, message=%p, flags=0x%x)\n", s, (void *)message, flags));
@@ -1506,7 +1506,7 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
 #if LWIP_UDP || LWIP_RAW
   {
     struct netbuf chain_buf;
-    int i;
+    msg_iovlen_t i;
     ssize_t size = 0;
 
     LWIP_UNUSED_ARG(flags);
