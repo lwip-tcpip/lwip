@@ -2,6 +2,7 @@
 
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
+#include "lwip/inet.h"
 #include "tcp_helper.h"
 #include "lwip/inet_chksum.h"
 

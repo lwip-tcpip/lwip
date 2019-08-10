@@ -53,6 +53,7 @@
 
 #include "lwip/tcp.h"
 #include "lwip/sys.h"
+#include "lwip/inet.h"
 
 #include <string.h>
 

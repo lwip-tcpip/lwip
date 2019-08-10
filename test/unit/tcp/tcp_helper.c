@@ -3,6 +3,7 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/stats.h"
 #include "lwip/pbuf.h"
+#include "lwip/inet.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/ip_addr.h"
 

@@ -4,6 +4,7 @@
 #include "lwip/dhcp.h"
 #include "lwip/prot/dhcp.h"
 #include "lwip/etharp.h"
+#include "lwip/inet.h"
 #include "netif/ethernet.h"
 
 #if LWIP_ACD
