@@ -231,24 +231,25 @@ autoip_start(struct netif *netif)
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
 
+  if (autoip == NULL) {
+    /* no AutoIP client attached yet? */
+    LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
+                ("autoip_start(): starting new AUTOIP client\n"));
+    autoip = (struct autoip *)mem_calloc(1, sizeof(struct autoip));
+    if (autoip == NULL) {
+      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
+                  ("autoip_start(): could not allocate autoip\n"));
+      return ERR_MEM;
+    }
+    /* store this AutoIP client in the netif */
+    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
+    LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip"));
+  }
+
   if (autoip->state == AUTOIP_STATE_OFF) {
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
                 ("autoip_start(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0],
                  netif->name[1], (u16_t)netif->num));
-    if (autoip == NULL) {
-      /* no AutoIP client attached yet? */
-      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
-                  ("autoip_start(): starting new AUTOIP client\n"));
-      autoip = (struct autoip *)mem_calloc(1, sizeof(struct autoip));
-      if (autoip == NULL) {
-        LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
-                    ("autoip_start(): could not allocate autoip\n"));
-        return ERR_MEM;
-      }
-      /* store this AutoIP client in the netif */
-      netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
-      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip"));
-    }
 
     /* add acd struct to list*/
     acd_add(netif, &autoip->acd, autoip_conflict_callback);
@@ -262,8 +263,7 @@ autoip_start(struct netif *netif)
     }
     autoip->state = AUTOIP_STATE_CHECKING;
     acd_start(netif, &autoip->acd, autoip->llipaddr);
-  }
-  else {
+  } else {
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
                 ("autoip_start(): already started on netif=%p %c%c%"U16_F"\n",
                 (void *)netif, netif->name[0],
