@@ -217,7 +217,7 @@ tcpip_thread_poll_one(void)
   int ret = 0;
   struct tcpip_msg *msg;
 
-  if (sys_arch_mbox_tryfetch(&tcpip_mbox, (void **)&msg) != SYS_ARCH_TIMEOUT) {
+  if (sys_arch_mbox_tryfetch(&tcpip_mbox, (void **)&msg) != SYS_MBOX_EMPTY) {
     LOCK_TCPIP_CORE();
     if (msg != NULL) {
       tcpip_thread_handle_msg(msg);
