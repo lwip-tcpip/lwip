@@ -99,7 +99,9 @@ typedef void (*service_get_txt_fn_t)(struct mdns_service *service, void *txt_use
  * uniqueness, called with result MDNS_PROBING_SUCCESSFUL if no other node claimed
  * use for the name for the netif or a service and is safe to use, or MDNS_PROBING_CONFLICT
  * if another node is already using it and mdns is disabled on this interface */
-typedef void (*mdns_name_result_cb_t)(struct netif* netif, u8_t result);
+typedef void (*mdns_name_result_cb_t)(struct netif* netif, u8_t result, s8_t slot);
+
+void *mdns_get_service_txt_userdata(struct netif *netif, s8_t slot);
 
 void mdns_resp_init(void);
 

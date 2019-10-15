@@ -1670,9 +1670,10 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
  *  - Let the user know there is a conflict.
  *
  * @param netif network interface on which the conflict occured.
+ * @param slot service index +1 on which the conflict occured (0 indicate hostname conflict).
  */
 static void
-mdns_probe_conflict(struct netif *netif)
+mdns_probe_conflict(struct netif *netif, s8_t slot)
 {
   struct mdns_host* mdns = NETIF_TO_HOST(netif);
   int i;
@@ -1707,7 +1708,7 @@ mdns_probe_conflict(struct netif *netif)
 
   /* Inform the host on the conflict, if a callback is set */
   if (mdns_name_result_cb != NULL) {
-    mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT);
+    mdns_name_result_cb(netif, MDNS_PROBING_CONFLICT, slot);
   }
 }
 
@@ -1851,12 +1852,12 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
         (mdns->state == MDNS_STATE_ANNOUNCE_WAIT)) {
       struct mdns_domain domain;
       u8_t i;
-      u8_t conflict = 0;
 
       res = mdns_build_host_domain(&domain, mdns);
       if (res == ERR_OK && mdns_domain_eq(&ans.info.domain, &domain)) {
         LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe response matches host domain!"));
-        conflict = 1;
+        mdns_probe_conflict(netif, 0);
+        break;
       }
 
       for (i = 0; i < MDNS_MAX_SERVICES; i++) {
@@ -1867,13 +1868,9 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
         res = mdns_build_service_domain(&domain, service, 1);
         if ((res == ERR_OK) && mdns_domain_eq(&ans.info.domain, &domain)) {
           LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Probe response matches service domain!"));
-          conflict = 1;
+          mdns_probe_conflict(netif, i + 1);
+          break;
         }
-      }
-
-      if (conflict != 0) {
-        mdns_probe_conflict(netif);
-        break;
       }
     }
     /* Perform conflict resolution (RFC6762 section 9):
@@ -2210,7 +2207,7 @@ mdns_probe_and_announce(void* arg)
         mdns->rate_limit_activated = 0;
         /* Let the client know probing was successful */
         if (mdns_name_result_cb != NULL) {
-          mdns_name_result_cb(netif, MDNS_PROBING_SUCCESSFUL);
+          mdns_name_result_cb(netif, MDNS_PROBING_SUCCESSFUL, 0);
         }
       }
 
@@ -2691,6 +2688,21 @@ mdns_resp_init(void)
   /* register for netif events when started on first netif */
   netif_add_ext_callback(&netif_callback, mdns_netif_ext_status_callback);
 #endif
+}
+
+/**
+ * @ingroup mdns
+ * Return TXT userdata of a specific service on a network interface.
+ * @param netif Network interface.
+ * @param slot Service index.
+ */
+void *mdns_get_service_txt_userdata(struct netif *netif, s8_t slot)
+{
+  struct mdns_host *mdns = NETIF_TO_HOST(netif);
+  struct mdns_service *s;
+  LWIP_ASSERT("mdns_get_service_txt_userdata: index out of range", slot < MDNS_MAX_SERVICES);
+  s = mdns->services[slot];
+  return s ? s->txt_userdata : NULL;
 }
 
 #endif /* LWIP_MDNS_RESPONDER */
