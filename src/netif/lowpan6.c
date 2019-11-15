@@ -383,6 +383,7 @@ lowpan6_frag(struct netif *netif, struct pbuf *p, const struct lowpan6_link_addr
 #else /* LWIP_6LOWPAN_IPHC */
   /* Send uncompressed IPv6 header with appropriate dispatch byte. */
   lowpan6_header_len = 1;
+  hidden_header_len = 0;
   buffer[ieee_header_len] = 0x41; /* IPv6 dispatch */
 #endif /* LWIP_6LOWPAN_IPHC */
 
