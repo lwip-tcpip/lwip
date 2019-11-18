@@ -966,6 +966,14 @@
 #if !defined LWIP_DHCP_MAX_DNS_SERVERS || defined __DOXYGEN__
 #define LWIP_DHCP_MAX_DNS_SERVERS       DNS_MAX_SERVERS
 #endif
+
+/** LWIP_DHCP_DISCOVER_ADD_HOSTNAME: Set to 1 to include hostname opt in discover packets.
+ * If the hostname is not set in the DISCOVER packet, then some servers might issue an OFFER with hostname
+ * configured and consequently reject the REQUEST with any other hostname.
+ */
+#if !defined LWIP_DHCP_DISCOVER_ADD_HOSTNAME || defined __DOXYGEN__
+#define LWIP_DHCP_DISCOVER_ADD_HOSTNAME 0
+#endif /* LWIP_DHCP_DISCOVER_ADD_HOSTNAME */
 /**
  * @}
  */
