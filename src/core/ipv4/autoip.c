@@ -109,6 +109,23 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
   netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
 }
 
+/**
+ * @ingroup autoip
+ * Remove a struct autoip previously set to the netif using autoip_set_struct()
+ *
+ * @param netif the netif for which to set the struct autoip
+ */
+void
+autoip_remove_struct(struct netif *netif)
+{
+  LWIP_ASSERT_CORE_LOCKED();
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ASSERT("netif has no struct autoip set",
+              netif_autoip_data(netif) != NULL);
+
+  netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, NULL);
+}
+
 /** Restart AutoIP client and check the next address (conflict detected)
  *
  * @param netif The netif under AutoIP control

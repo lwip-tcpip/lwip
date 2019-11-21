@@ -69,8 +69,7 @@ struct autoip
 
 
 void autoip_set_struct(struct netif *netif, struct autoip *autoip);
-/** Remove a struct autoip previously set to the netif using autoip_set_struct() */
-#define autoip_remove_struct(netif) do { (netif)->autoip = NULL; } while (0)
+void autoip_remove_struct(struct netif *netif);
 err_t autoip_start(struct netif *netif);
 err_t autoip_stop(struct netif *netif);
 void autoip_network_changed_link_up(struct netif *netif);
