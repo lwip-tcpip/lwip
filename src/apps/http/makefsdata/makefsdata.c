@@ -52,9 +52,8 @@ static uint8 s_checkbuf[OUT_BUF_SIZE];
 /* tdefl_compressor contains all the state needed by the low-level compressor so it's a pretty big struct (~300k).
    This example makes it a global vs. putting it on the stack, of course in real-world usage you'll probably malloc() or new it. */
 tdefl_compressor g_deflator;
-tinfl_decompressor g_inflator;
 
-int deflate_level = 10; /* default compression level, can be changed via command line */
+static int deflate_level; /* default compression level, can be changed via command line */
 #define USAGE_ARG_DEFLATE " [-defl<:compr_level>]"
 #else /* MAKEFS_SUPPORT_DEFLATE */
 #define USAGE_ARG_DEFLATE ""
@@ -235,19 +234,20 @@ int main(int argc, char *argv[])
         printf("Writing to file \"%s\"\n", targetfile);
       } else if (!strcmp(argv[i], "-m")) {
         includeLastModified = 1;
-      } else if (!strcmp(argv[i], "-defl")) {
+      } else if (strstr(argv[i], "-defl") == argv[i]) {
 #if MAKEFS_SUPPORT_DEFLATE
-        char *colon = strstr(argv[i], ":");
-        if (colon) {
-          if (colon[1] != 0) {
-            int defl_level = atoi(&colon[1]);
-            if ((defl_level >= 0) && (defl_level <= 10)) {
-              deflate_level = defl_level;
-            } else {
-              printf("ERROR: deflate level must be [0..10]" NEWLINE);
-              exit(0);
-            }
+        const char *colon = &argv[i][5];
+        if (*colon == ':') {
+          int defl_level = atoi(&colon[1]);
+          if ((colon[1] != 0) && (defl_level >= 0) && (defl_level <= 10)) {
+            deflate_level = defl_level;
+          } else {
+            printf("ERROR: deflate level must be [0..10]" NEWLINE);
+            exit(0);
           }
+        } else {
+          /* default to highest compression */
+          deflate_level = 10;
         }
         deflateNonSsiFiles = 1;
         printf("Deflating all non-SSI files with level %d (but only if size is reduced)" NEWLINE, deflate_level);
