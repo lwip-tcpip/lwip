@@ -422,7 +422,7 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
  * @param l length of received data
  */
 err_t
-pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
+pppos_input_tcpip(ppp_pcb *ppp, const void *s, int l)
 {
   struct pbuf *p;
   err_t err;
