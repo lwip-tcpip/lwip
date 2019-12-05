@@ -849,7 +849,7 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
    * Sure we don't quite fill the buffer if the character doesn't
    * get escaped but is one character worth complicating this? */
   if ((PBUF_POOL_BUFSIZE - nb->len) < 2) {
-    u32_t l = pppos->output_cb(pppos->ppp, (u8_t*)nb->payload, nb->len, pppos->ppp->ctx_cb);
+    u32_t l = pppos->output_cb(pppos->ppp, nb->payload, nb->len, pppos->ppp->ctx_cb);
     if (l != nb->len) {
       return ERR_IF;
     }
@@ -888,7 +888,7 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
 
   /* Send remaining buffer if not empty */
   if (nb->len > 0) {
-    u32_t l = pppos->output_cb(ppp, (u8_t*)nb->payload, nb->len, ppp->ctx_cb);
+    u32_t l = pppos->output_cb(ppp, nb->payload, nb->len, ppp->ctx_cb);
     if (l != nb->len) {
       err = ERR_IF;
       goto failed;
