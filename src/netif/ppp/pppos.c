@@ -477,10 +477,11 @@ PACK_STRUCT_END
  * @param l length of received data
  */
 void
-pppos_input(ppp_pcb *ppp, u8_t *s, int l)
+pppos_input(ppp_pcb *ppp, const void *s, int l)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
   struct pbuf *next_pbuf;
+  const u8_t *s_u8 = (const u8_t *)s;
   u8_t cur_char;
   u8_t escaped;
   PPPOS_DECL_PROTECT(lev);
@@ -490,7 +491,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
-    cur_char = *s++;
+    cur_char = *s_u8++;
 
     PPPOS_PROTECT(lev);
     /* ppp_input can disconnect the interface, we need to abort to prevent a memory

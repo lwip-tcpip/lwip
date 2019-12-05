@@ -106,7 +106,7 @@ err_t pppos_input_tcpip(ppp_pcb *ppp, const void *s, int l);
 #endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 /* PPP over Serial: this is the input function to be called for received data. */
-void pppos_input(ppp_pcb *ppp, u8_t* data, int len);
+void pppos_input(ppp_pcb *ppp, const void* data, int len);
 
 
 /*
