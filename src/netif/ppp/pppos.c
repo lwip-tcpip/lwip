@@ -447,7 +447,7 @@ err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
   LWIP_ASSERT_CORE_LOCKED();
 
   for (n = p; n; n = n->next) {
-    pppos_input(ppp, (u8_t*)n->payload, n->len);
+    pppos_input(ppp, n->payload, n->len);
   }
   pbuf_free(p);
   return ERR_OK;
