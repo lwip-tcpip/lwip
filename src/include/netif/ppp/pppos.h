@@ -58,7 +58,7 @@ enum {
 };
 
 /* PPPoS serial output callback function prototype */
-typedef u32_t (*pppos_output_cb_fn)(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx);
+typedef u32_t (*pppos_output_cb_fn)(ppp_pcb *pcb, const void *data, u32_t len, void *ctx);
 
 /*
  * Extended asyncmap - allows any character to be escaped.

@@ -195,7 +195,7 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
  *
  * Return value: len if write succeed
  */
-static u32_t output_cb(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
+static u32_t output_cb(ppp_pcb *pcb, const void *data, u32_t len, void *ctx) {
   return uart_write(UART, data, len);
 }
 
