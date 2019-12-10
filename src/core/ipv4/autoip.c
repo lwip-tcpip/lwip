@@ -273,7 +273,7 @@ autoip_start(struct netif *netif)
 
     /* In accordance to RFC3927 section 2.1:
      * Keep using the same link local address as much as possible.
-     * Only when their is none or when their was a conflict, select a new one.
+     * Only when there is none or when there was a conflict, select a new one.
      */
     if (!ip4_addr_islinklocal(&autoip->llipaddr)) {
       autoip_create_addr(netif, &(autoip->llipaddr));
