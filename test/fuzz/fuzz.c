@@ -165,7 +165,7 @@ int main(int argc, char** argv)
   httpd_init();
   lwiperf_start_tcp_server_default(NULL, NULL);
   mdns_resp_init();
-  mdns_resp_add_netif(&net_test, "hostname", 255);
+  mdns_resp_add_netif(&net_test, "hostname");
   snmp_init();
 
   if(argc > 1) {
