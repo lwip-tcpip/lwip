@@ -1695,7 +1695,7 @@ mdns_handle_question(struct mdns_packet *pkt, struct netif *netif)
  * - Call mdns_handle_question
  * - Do cleanup
  *
- * @param pkt   incoming packet (in pool)
+ * @param arg   incoming packet (in pool)
  */
 static void
 mdns_handle_tc_question(void *arg)
