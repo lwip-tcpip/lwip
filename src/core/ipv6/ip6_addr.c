@@ -46,6 +46,7 @@
 
 #include "lwip/ip_addr.h"
 #include "lwip/def.h"
+#include "lwip/netif.h"
 
 #include <string.h>
 
@@ -185,6 +186,17 @@ fix_byte_order_and_return:
     }
 
     ip6_addr_clear_zone(addr);
+#if LWIP_IPV6_SCOPES
+    if (*s == '%') {
+      const char *scopestr = s + 1;
+      if (*scopestr) {
+        struct netif *netif = netif_find(scopestr);
+        if (netif) {
+          ip6_addr_assign_zone(addr, IP6_UNKNOWN, netif);
+        }
+      }
+    }
+#endif
   }
 
   if (current_block_index != 7) {
