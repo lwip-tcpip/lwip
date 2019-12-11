@@ -37,7 +37,8 @@ LDFLAGS=-lm
 # use 'make D=-DUSER_DEFINE' to pass a user define to gcc
 CFLAGS=-O0 $(D)
 
-CONTRIBDIR=../../../lwip-contrib
+LWIPDIR=../../src
+CONTRIBDIR=../../contrib
 include $(CONTRIBDIR)/ports/unix/Common.mk
 
 clean:

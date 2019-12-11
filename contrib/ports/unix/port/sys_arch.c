@@ -752,6 +752,7 @@ sys_arch_unprotect(sys_prot_t pval)
 }
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
+#if !NO_SYS
 /* get keyboard state to terminate the debug app by using select */
 int
 lwip_unix_keypressed(void)
@@ -762,3 +763,4 @@ lwip_unix_keypressed(void)
   FD_SET(0, &fds);
   return select(1, &fds, NULL, NULL, &tv);
 }
+#endif /* !NO_SYS */
