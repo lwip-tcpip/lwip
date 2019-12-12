@@ -1744,7 +1744,7 @@ netif_find(const char *name)
   }
 
   num = (u8_t)atoi(&name[2]);
-  if (!num && (name[2] != 0)) {
+  if (!num && (name[2] != '0')) {
     /* this means atoi has failed */
     return NULL;
   }
