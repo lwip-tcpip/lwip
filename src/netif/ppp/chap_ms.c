@@ -264,7 +264,7 @@ static int chapms_verify_response(ppp_pcb *pcb, int id, const char *name,
 #ifndef MSLANMAN
 	if (!response[MS_CHAP_USENT]) {
 		/* Should really propagate this into the error packet. */
-		ppp_notice("Peer request for LANMAN auth not supported");
+		ppp_notice(("Peer request for LANMAN auth not supported"));
 		goto bad;
 	}
 #endif
@@ -404,7 +404,7 @@ static int chapms2_check_success(ppp_pcb *pcb, unsigned char *msg, int len, unsi
 	if ((len < MS_AUTH_RESPONSE_LENGTH + 2) ||
 	    strncmp((char *)msg, "S=", 2) != 0) {
 		/* Packet does not start with "S=" */
-		ppp_error("MS-CHAPv2 Success packet is badly formed.");
+		ppp_error(("MS-CHAPv2 Success packet is badly formed."));
 		return 0;
 	}
 	msg += 2;
@@ -412,7 +412,7 @@ static int chapms2_check_success(ppp_pcb *pcb, unsigned char *msg, int len, unsi
 	if (len < MS_AUTH_RESPONSE_LENGTH
 	    || memcmp(msg, private_, MS_AUTH_RESPONSE_LENGTH)) {
 		/* Authenticator Response did not match expected. */
-		ppp_error("MS-CHAPv2 mutual authentication failed.");
+		ppp_error(("MS-CHAPv2 mutual authentication failed."));
 		return 0;
 	}
 	/* Authenticator Response matches. */
@@ -422,7 +422,7 @@ static int chapms2_check_success(ppp_pcb *pcb, unsigned char *msg, int len, unsi
 		msg += 3; /* Eat the delimiter */
 	} else if (len) {
 		/* Packet has extra text which does not begin " M=" */
-		ppp_error("MS-CHAPv2 Success packet is badly formed.");
+		ppp_error(("MS-CHAPv2 Success packet is badly formed."));
 		return 0;
 	}
 	return 1;
@@ -483,14 +483,14 @@ static void chapms_handle_failure(ppp_pcb *pcb, unsigned char *inp, int len) {
 			break;
 
 		default:
-			ppp_error("Unknown MS-CHAP authentication failure: %.*v",
-			      len, inp);
+			ppp_error(("Unknown MS-CHAP authentication failure: %.*v",
+			      len, inp));
 			return;
 		}
 	}
 print_msg:
 	if (p != NULL)
-		ppp_error("MS-CHAP authentication failed: %v", p);
+		ppp_error(("MS-CHAP authentication failed: %v", p));
 }
 
 static void ChallengeResponse(const u_char *challenge,

@@ -539,7 +539,7 @@ void update_link_stats(int u); /* Get stats at link termination */
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
 
-#define PRINTMSG(m, l)		{ ppp_info("Remote message: %0.*v", l, m); }
+#define PRINTMSG(m, l)		{ ppp_info(("Remote message: %0.*v", l, m)); }
 
 /*
  * MAKEHEADER - Add Header fields to a packet.
@@ -614,12 +614,19 @@ int ppp_slprintf(char *buf, int buflen, const char *fmt, ...);            /* spr
 int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args);  /* vsprintf++ */
 size_t ppp_strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */
 size_t ppp_strlcat(char *dest, const char *src, size_t len);        /* safe strncpy */
-void ppp_dbglog(const char *fmt, ...);    /* log a debug message */
-void ppp_info(const char *fmt, ...);      /* log an informational message */
-void ppp_notice(const char *fmt, ...);    /* log a notice-level message */
-void ppp_warn(const char *fmt, ...);      /* log a warning message */
-void ppp_error(const char *fmt, ...);     /* log an error message */
-void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
+void ppp_dbglog_impl(const char *fmt, ...);    /* log a debug message */
+void ppp_info_impl(const char *fmt, ...);      /* log an informational message */
+void ppp_notice_impl(const char *fmt, ...);    /* log a notice-level message */
+void ppp_warn_impl(const char *fmt, ...);      /* log a warning message */
+void ppp_error_impl(const char *fmt, ...);     /* log an error message */
+void ppp_fatal_impl(const char *fmt, ...);     /* log an error message and die(1) */
+/* wrap all the above functions so they will only be linked when enabled */
+#define ppp_dbglog(x) do { if (LWIP_DEBUG_ENABLED(LOG_DEBUG)) { ppp_dbglog_impl x; }} while(0)
+#define ppp_info(x)   do { if (LWIP_DEBUG_ENABLED(LOG_INFO)) { ppp_info_impl x; }} while(0)
+#define ppp_notice(x) do { if (LWIP_DEBUG_ENABLED(LOG_NOTICE)) { ppp_notice_impl x; }} while(0)
+#define ppp_warn(x)   do { if (LWIP_DEBUG_ENABLED(LOG_WARNING)) { ppp_warn_impl x; }} while(0)
+#define ppp_error(x)  do { if (LWIP_DEBUG_ENABLED(LOG_ERR)) { ppp_error_impl x; }} while(0)
+#define ppp_fatal(x)  do { if (LWIP_DEBUG_ENABLED(LOG_CRITICAL)) { ppp_fatal_impl x; }} while(0)
 #if PRINTPKT_SUPPORT
 void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len);
                                 /* dump packet to debug log if interesting */

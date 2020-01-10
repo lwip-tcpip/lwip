@@ -211,7 +211,7 @@ static void eap_client_timeout(void *arg) {
 	if (!eap_client_active(pcb))
 		return;
 
-	ppp_error("EAP: timeout waiting for Request from peer");
+	ppp_error(("EAP: timeout waiting for Request from peer"));
 	auth_withpeer_fail(pcb, PPP_EAP);
 	pcb->eap.es_client.ea_state = eapBadAuth;
 }
@@ -471,8 +471,8 @@ static void eap_figure_next_state(ppp_pcb *pcb, int status) {
 				toffs -= 86400;
 				/* FIXME: if we want to do SRP, we need to find a way to pass the PolarSSL des_context instead of using static memory */
 				if (!DesDecrypt(secbuf, clear)) {
-					ppp_dbglog("no DES here; cannot decode "
-					    "pseudonym");
+					ppp_dbglog(("no DES here; cannot decode "
+					    "pseudonym"));
 					return;
 				}
 				id = *(unsigned char *)clear;
@@ -502,11 +502,11 @@ static void eap_figure_next_state(ppp_pcb *pcb, int status) {
 				}
 				pcb->eap.es_server.ea_peer[
 					pcb->eap.es_server.ea_peerlen] = '\0';
-				ppp_dbglog("decoded pseudonym to \"%.*q\"",
+				ppp_dbglog(("decoded pseudonym to \"%.*q\"",
 				    pcb->eap.es_server.ea_peerlen,
-				    pcb->eap.es_server.ea_peer);
+				    pcb->eap.es_server.ea_peer));
 			} else {
-				ppp_dbglog("failed to decode real name");
+				ppp_dbglog(("failed to decode real name"));
 				/* Stay in eapIdentfy state; requery */
 				break;
 			}
@@ -676,9 +676,9 @@ static void eap_send_request(ppp_pcb *pcb) {
 	if (pcb->settings.eap_max_transmits > 0 &&
 	    pcb->eap.es_server.ea_requests >= pcb->settings.eap_max_transmits) {
 		if (pcb->eap.es_server.ea_responses > 0)
-			ppp_error("EAP: too many Requests sent");
+			ppp_error(("EAP: too many Requests sent"));
 		else
-			ppp_error("EAP: no response to Requests");
+			ppp_error(("EAP: no response to Requests"));
 		eap_send_failure(pcb);
 		return;
 	}
@@ -786,7 +786,7 @@ static void eap_send_request(ppp_pcb *pcb) {
 			cp += j;
 			/* FIXME: if we want to do SRP, we need to find a way to pass the PolarSSL des_context instead of using static memory */
 			if (!DesEncrypt(clear, cipher)) {
-				ppp_dbglog("no DES here; not generating pseudonym");
+				ppp_dbglog(("no DES here; not generating pseudonym"));
 				break;
 			}
 			BZERO(&b64, sizeof (b64));
@@ -997,12 +997,12 @@ static void eap_lowerdown(ppp_pcb *pcb) {
 static void eap_protrej(ppp_pcb *pcb) {
 
 	if (eap_client_active(pcb)) {
-		ppp_error("EAP authentication failed due to Protocol-Reject");
+		ppp_error(("EAP authentication failed due to Protocol-Reject"));
 		auth_withpeer_fail(pcb, PPP_EAP);
 	}
 #if PPP_SERVER
 	if (eap_server_active(pcb)) {
-		ppp_error("EAP authentication of peer failed on Protocol-Reject");
+		ppp_error(("EAP authentication of peer failed on Protocol-Reject"));
 		auth_peer_fail(pcb, PPP_EAP);
 	}
 #endif /* PPP_SERVER */
@@ -1213,7 +1213,7 @@ name_of_pn_file()
 		return (NULL);
 	(void) slprintf(path, pl, "%s/%s", user, file);
 	if (!pnlogged) {
-		ppp_dbglog("pseudonym file: %s", path);
+		ppp_dbglog(("pseudonym file: %s", path));
 		pnlogged = 1;
 	}
 	return (path);
@@ -1284,22 +1284,22 @@ int len, id;
 
 	/* Now check that the result is sane */
 	if (olen <= 0 || *inp + 1 > olen) {
-		ppp_dbglog("EAP: decoded pseudonym is unusable <%.*B>", olen, inp);
+		ppp_dbglog(("EAP: decoded pseudonym is unusable <%.*B>", olen, inp));
 		return;
 	}
 
 	/* Save it away */
 	fd = open_pn_file(O_WRONLY | O_CREAT | O_TRUNC);
 	if (fd < 0) {
-		ppp_dbglog("EAP: error saving pseudonym: %m");
+		ppp_dbglog(("EAP: error saving pseudonym: %m"));
 		return;
 	}
 	len = write(fd, inp + 1, *inp);
 	if (close(fd) != -1 && len == *inp) {
-		ppp_dbglog("EAP: saved pseudonym");
+		ppp_dbglog(("EAP: saved pseudonym"));
 		pcb->eap.es_usedpseudo = 0;
 	} else {
-		ppp_dbglog("EAP: failed to save pseudonym");
+		ppp_dbglog(("EAP: failed to save pseudonym"));
 		remove_pn_file();
 	}
 }
@@ -1334,7 +1334,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	pcb->eap.es_client.ea_requests++;
 	if (pcb->settings.eap_allow_req != 0 &&
 	    pcb->eap.es_client.ea_requests > pcb->settings.eap_allow_req) {
-		ppp_info("EAP: received too many Request messages");
+		ppp_info(("EAP: received too many Request messages"));
 		if (pcb->settings.eap_req_time > 0) {
 			UNTIMEOUT(eap_client_timeout, pcb);
 		}
@@ -1343,7 +1343,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	}
 
 	if (len <= 0) {
-		ppp_error("EAP: empty Request message discarded");
+		ppp_error(("EAP: empty Request message discarded"));
 		return;
 	}
 
@@ -1353,7 +1353,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	switch (typenum) {
 	case EAPT_IDENTITY:
 		if (len > 0)
-			ppp_info("EAP: Identity prompt \"%.*q\"", len, inp);
+			ppp_info(("EAP: Identity prompt \"%.*q\"", len, inp));
 #ifdef USE_SRP
 		if (pcb->eap.es_usepseudo &&
 		    (pcb->eap.es_usedpseudo == 0 ||
@@ -1387,7 +1387,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 	case EAPT_NOTIFICATION:
 		if (len > 0)
-			ppp_info("EAP: Notification \"%.*q\"", len, inp);
+			ppp_info(("EAP: Notification \"%.*q\"", len, inp));
 		eap_send_response(pcb, id, typenum, NULL, 0);
 		break;
 
@@ -1396,21 +1396,21 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		 * Avoid the temptation to send Response Nak in reply
 		 * to Request Nak here.  It can only lead to trouble.
 		 */
-		ppp_warn("EAP: unexpected Nak in Request; ignored");
+		ppp_warn(("EAP: unexpected Nak in Request; ignored"));
 		/* Return because we're waiting for something real. */
 		return;
 
 	case EAPT_MD5CHAP:
 		if (len < 1) {
-			ppp_error("EAP: received MD5-Challenge with no data");
+			ppp_error(("EAP: received MD5-Challenge with no data"));
 			/* Bogus request; wait for something real. */
 			return;
 		}
 		GETCHAR(vallen, inp);
 		len--;
 		if (vallen < 8 || vallen > len) {
-			ppp_error("EAP: MD5-Challenge with bad length %d (8..%d)",
-			    vallen, len);
+			ppp_error(("EAP: MD5-Challenge with bad length %d (8..%d)",
+			    vallen, len));
 			/* Try something better. */
 			eap_send_nak(pcb, id, EAPT_SRP);
 			break;
@@ -1418,7 +1418,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 		/* Not so likely to happen. */
 		if (vallen >= len + sizeof (rhostname)) {
-			ppp_dbglog("EAP: trimming really long peer name down");
+			ppp_dbglog(("EAP: trimming really long peer name down"));
 			MEMCPY(rhostname, inp + vallen, sizeof (rhostname) - 1);
 			rhostname[sizeof (rhostname) - 1] = '\0';
 		} else {
@@ -1439,7 +1439,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		 */
 		if (!get_secret(pcb, pcb->eap.es_client.ea_name,
 		    rhostname, secret, &secret_len, 0)) {
-			ppp_dbglog("EAP: no MD5 secret for auth to %q", rhostname);
+			ppp_dbglog(("EAP: no MD5 secret for auth to %q", rhostname));
 			eap_send_nak(pcb, id, EAPT_SRP);
 			break;
 		}
@@ -1459,7 +1459,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 #ifdef USE_SRP
 	case EAPT_SRP:
 		if (len < 1) {
-			ppp_error("EAP: received empty SRP Request");
+			ppp_error(("EAP: received empty SRP Request"));
 			/* Bogus request; wait for something real. */
 			return;
 		}
@@ -1492,8 +1492,8 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 				GETCHAR(vallen, inp);
 				len--;
 				if (vallen >= len) {
-					ppp_error("EAP: badly-formed SRP Challenge"
-					    " (name)");
+					ppp_error(("EAP: badly-formed SRP Challenge"
+					    " (name)"));
 					/* Ignore badly-formed messages */
 					return;
 				}
@@ -1523,8 +1523,8 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 				GETCHAR(vallen, inp);
 				len--;
 				if (vallen >= len) {
-					ppp_error("EAP: badly-formed SRP Challenge"
-					    " (s)");
+					ppp_error(("EAP: badly-formed SRP Challenge"
+					    " (s)"));
 					/* Ignore badly-formed messages */
 					return;
 				}
@@ -1536,8 +1536,8 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 				GETCHAR(vallen, inp);
 				len--;
 				if (vallen > len) {
-					ppp_error("EAP: badly-formed SRP Challenge"
-					    " (g)");
+					ppp_error(("EAP: badly-formed SRP Challenge"
+					    " (g)"));
 					/* Ignore badly-formed messages */
 					return;
 				}
@@ -1584,7 +1584,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		case EAPSRP_SKEY:
 			tc = (struct t_client *)pcb->eap.es_client.ea_session;
 			if (tc == NULL) {
-				ppp_warn("EAP: peer sent Subtype 2 without 1");
+				ppp_warn(("EAP: peer sent Subtype 2 without 1"));
 				eap_send_nak(pcb, id, EAPT_MD5CHAP);
 				break;
 			}
@@ -1594,9 +1594,9 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 				 * if it does (but otherwise ignore).
 				 */
 				if (id != pcb->eap.es_client.ea_id) {
-					ppp_warn("EAP: ID changed from %d to %d "
+					ppp_warn(("EAP: ID changed from %d to %d "
 					    "in SRP Subtype 2 rexmit",
-					    pcb->eap.es_client.ea_id, id);
+					    pcb->eap.es_client.ea_id, id));
 				}
 			} else {
 				if (get_srp_secret(pcb->eap.es_unit,
@@ -1618,7 +1618,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 				    t_clientgetkey(tc, &Bval);
 				if (pcb->eap.es_client.ea_skey == NULL) {
 					/* Server is rogue; stop now */
-					ppp_error("EAP: SRP server is rogue");
+					ppp_error(("EAP: SRP server is rogue"));
 					goto client_failure;
 				}
 			}
@@ -1629,7 +1629,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		case EAPSRP_SVALIDATOR:
 			tc = (struct t_client *)pcb->eap.es_client.ea_session;
 			if (tc == NULL || pcb->eap.es_client.ea_skey == NULL) {
-				ppp_warn("EAP: peer sent Subtype 3 without 1/2");
+				ppp_warn(("EAP: peer sent Subtype 3 without 1/2"));
 				eap_send_nak(pcb, id, EAPT_MD5CHAP);
 				break;
 			}
@@ -1640,16 +1640,16 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			 */
 			if (pcb->eap.es_client.ea_state == eapOpen) {
 				if (id != pcb->eap.es_client.ea_id) {
-					ppp_warn("EAP: ID changed from %d to %d "
+					ppp_warn(("EAP: ID changed from %d to %d "
 					    "in SRP Subtype 3 rexmit",
-					    pcb->eap.es_client.ea_id, id);
+					    pcb->eap.es_client.ea_id, id));
 				}
 			} else {
 				len -= sizeof (u32_t) + SHA_DIGESTSIZE;
 				if (len < 0 || t_clientverify(tc, inp +
 					sizeof (u32_t)) != 0) {
-					ppp_error("EAP: SRP server verification "
-					    "failed");
+					ppp_error(("EAP: SRP server verification "
+					    "failed"));
 					goto client_failure;
 				}
 				GETLONG(pcb->eap.es_client.ea_keyflags, inp);
@@ -1669,7 +1669,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 		case EAPSRP_LWRECHALLENGE:
 			if (len < 4) {
-				ppp_warn("EAP: malformed Lightweight rechallenge");
+				ppp_warn(("EAP: malformed Lightweight rechallenge"));
 				return;
 			}
 			SHA1Init(&ctxt);
@@ -1686,7 +1686,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			break;
 
 		default:
-			ppp_error("EAP: unknown SRP Subtype %d", vallen);
+			ppp_error(("EAP: unknown SRP Subtype %d", vallen));
 			eap_send_nak(pcb, id, EAPT_MD5CHAP);
 			break;
 		}
@@ -1694,7 +1694,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 #endif /* USE_SRP */
 
 	default:
-		ppp_info("EAP: unknown authentication type %d; Naking", typenum);
+		ppp_info(("EAP: unknown authentication type %d; Naking", typenum));
 		eap_send_nak(pcb, id, EAPT_SRP);
 		break;
 	}
@@ -1738,15 +1738,15 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 #endif /* USE_SRP */
 
 	if (pcb->eap.es_server.ea_id != id) {
-		ppp_dbglog("EAP: discarding Response %d; expected ID %d", id,
-		    pcb->eap.es_server.ea_id);
+		ppp_dbglog(("EAP: discarding Response %d; expected ID %d", id,
+		    pcb->eap.es_server.ea_id));
 		return;
 	}
 
 	pcb->eap.es_server.ea_responses++;
 
 	if (len <= 0) {
-		ppp_error("EAP: empty Response message discarded");
+		ppp_error(("EAP: empty Response message discarded"));
 		return;
 	}
 
@@ -1756,11 +1756,11 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	switch (typenum) {
 	case EAPT_IDENTITY:
 		if (pcb->eap.es_server.ea_state != eapIdentify) {
-			ppp_dbglog("EAP discarding unwanted Identify \"%.q\"", len,
-			    inp);
+			ppp_dbglog(("EAP discarding unwanted Identify \"%.q\"", len,
+			    inp));
 			break;
 		}
-		ppp_info("EAP: unauthenticated peer name \"%.*q\"", len, inp);
+		ppp_info(("EAP: unauthenticated peer name \"%.*q\"", len, inp));
 		if (len > MAXNAMELEN) {
 		  len = MAXNAMELEN;
 		}
@@ -1771,12 +1771,12 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		break;
 
 	case EAPT_NOTIFICATION:
-		ppp_dbglog("EAP unexpected Notification; response discarded");
+		ppp_dbglog(("EAP unexpected Notification; response discarded"));
 		break;
 
 	case EAPT_NAK:
 		if (len < 1) {
-			ppp_info("EAP: Nak Response with no suggested protocol");
+			ppp_info(("EAP: Nak Response with no suggested protocol"));
 			eap_figure_next_state(pcb, 1);
 			break;
 		}
@@ -1806,7 +1806,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			break;
 
 		default:
-			ppp_dbglog("EAP: peer requesting unknown Type %d", vallen);
+			ppp_dbglog(("EAP: peer requesting unknown Type %d", vallen));
 			switch (pcb->eap.es_server.ea_state) {
 			case eapSRP1:
 			case eapSRP2:
@@ -1827,26 +1827,26 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 	case EAPT_MD5CHAP:
 		if (pcb->eap.es_server.ea_state != eapMD5Chall) {
-			ppp_error("EAP: unexpected MD5-Response");
+			ppp_error(("EAP: unexpected MD5-Response"));
 			eap_figure_next_state(pcb, 1);
 			break;
 		}
 		if (len < 1) {
-			ppp_error("EAP: received MD5-Response with no data");
+			ppp_error(("EAP: received MD5-Response with no data"));
 			eap_figure_next_state(pcb, 1);
 			break;
 		}
 		GETCHAR(vallen, inp);
 		len--;
 		if (vallen != 16 || vallen > len) {
-			ppp_error("EAP: MD5-Response with bad length %d", vallen);
+			ppp_error(("EAP: MD5-Response with bad length %d", vallen));
 			eap_figure_next_state(pcb, 1);
 			break;
 		}
 
 		/* Not so likely to happen. */
 		if (vallen >= len + sizeof (rhostname)) {
-			ppp_dbglog("EAP: trimming really long peer name down");
+			ppp_dbglog(("EAP: trimming really long peer name down"));
 			MEMCPY(rhostname, inp + vallen, sizeof (rhostname) - 1);
 			rhostname[sizeof (rhostname) - 1] = '\0';
 		} else {
@@ -1867,7 +1867,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		 */
 		if (!get_secret(pcb, rhostname,
 		    pcb->eap.es_server.ea_name, secret, &secret_len, 1)) {
-			ppp_dbglog("EAP: no MD5 secret for auth of %q", rhostname);
+			ppp_dbglog(("EAP: no MD5 secret for auth of %q", rhostname));
 			eap_send_failure(pcb);
 			break;
 		}
@@ -1893,7 +1893,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 #ifdef USE_SRP
 	case EAPT_SRP:
 		if (len < 1) {
-			ppp_error("EAP: empty SRP Response");
+			ppp_error(("EAP: empty SRP Response"));
 			eap_figure_next_state(pcb, 1);
 			break;
 		}
@@ -1902,7 +1902,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		switch (typenum) {
 		case EAPSRP_CKEY:
 			if (pcb->eap.es_server.ea_state != eapSRP1) {
-				ppp_error("EAP: unexpected SRP Subtype 1 Response");
+				ppp_error(("EAP: unexpected SRP Subtype 1 Response"));
 				eap_figure_next_state(pcb, 1);
 				break;
 			}
@@ -1913,7 +1913,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			pcb->eap.es_server.ea_skey = t_servergetkey(ts, &A);
 			if (pcb->eap.es_server.ea_skey == NULL) {
 				/* Client's A value is bogus; terminate now */
-				ppp_error("EAP: bogus A value from client");
+				ppp_error(("EAP: bogus A value from client"));
 				eap_send_failure(pcb);
 			} else {
 				eap_figure_next_state(pcb, 0);
@@ -1922,13 +1922,13 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 		case EAPSRP_CVALIDATOR:
 			if (pcb->eap.es_server.ea_state != eapSRP2) {
-				ppp_error("EAP: unexpected SRP Subtype 2 Response");
+				ppp_error(("EAP: unexpected SRP Subtype 2 Response"));
 				eap_figure_next_state(pcb, 1);
 				break;
 			}
 			if (len < sizeof (u32_t) + SHA_DIGESTSIZE) {
-				ppp_error("EAP: M1 length %d < %d", len,
-				    sizeof (u32_t) + SHA_DIGESTSIZE);
+				ppp_error(("EAP: M1 length %d < %d", len,
+				    sizeof (u32_t) + SHA_DIGESTSIZE));
 				eap_figure_next_state(pcb, 1);
 				break;
 			}
@@ -1936,7 +1936,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			ts = (struct t_server *)pcb->eap.es_server.ea_session;
 			assert(ts != NULL);
 			if (t_serververify(ts, inp)) {
-				ppp_info("EAP: unable to validate client identity");
+				ppp_info(("EAP: unable to validate client identity"));
 				eap_send_failure(pcb);
 				break;
 			}
@@ -1945,7 +1945,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 		case EAPSRP_ACK:
 			if (pcb->eap.es_server.ea_state != eapSRP3) {
-				ppp_error("EAP: unexpected SRP Subtype 3 Response");
+				ppp_error(("EAP: unexpected SRP Subtype 3 Response"));
 				eap_send_failure(esp);
 				break;
 			}
@@ -1962,12 +1962,12 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 		case EAPSRP_LWRECHALLENGE:
 			if (pcb->eap.es_server.ea_state != eapSRP4) {
-				ppp_info("EAP: unexpected SRP Subtype 4 Response");
+				ppp_info(("EAP: unexpected SRP Subtype 4 Response"));
 				return;
 			}
 			if (len != SHA_DIGESTSIZE) {
-				ppp_error("EAP: bad Lightweight rechallenge "
-				    "response");
+				ppp_error(("EAP: bad Lightweight rechallenge "
+				    "response"));
 				return;
 			}
 			SHA1Init(&ctxt);
@@ -1980,7 +1980,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			    pcb->eap.es_server.ea_peerlen);
 			SHA1Final(dig, &ctxt);
 			if (BCMP(dig, inp, SHA_DIGESTSIZE) != 0) {
-				ppp_error("EAP: failed Lightweight rechallenge");
+				ppp_error(("EAP: failed Lightweight rechallenge"));
 				eap_send_failure(pcb);
 				break;
 			}
@@ -1995,7 +1995,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 	default:
 		/* This can't happen. */
-		ppp_error("EAP: unknown Response type %d; ignored", typenum);
+		ppp_error(("EAP: unknown Response type %d; ignored", typenum));
 		return;
 	}
 
@@ -2018,9 +2018,9 @@ static void eap_success(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	LWIP_UNUSED_ARG(id);
 
 	if (pcb->eap.es_client.ea_state != eapOpen && !eap_client_active(pcb)) {
-		ppp_dbglog("EAP unexpected success message in state %s (%d)",
+		ppp_dbglog(("EAP unexpected success message in state %s (%d)",
 		    eap_state_name(pcb->eap.es_client.ea_state),
-		    pcb->eap.es_client.ea_state);
+		    pcb->eap.es_client.ea_state));
 		return;
 	}
 
@@ -2044,7 +2044,7 @@ static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	LWIP_UNUSED_ARG(id);
 
 	if (!eap_client_active(pcb)) {
-		ppp_dbglog("EAP unexpected failure message in state %s (%d)",
+		ppp_dbglog(("EAP unexpected failure message in state %s (%d)",
 		    eap_state_name(pcb->eap.es_client.ea_state),
 		    pcb->eap.es_client.ea_state);
 	}
@@ -2060,7 +2060,7 @@ static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
 	pcb->eap.es_client.ea_state = eapBadAuth;
 
-	ppp_error("EAP: peer reports authentication failure");
+	ppp_error(("EAP: peer reports authentication failure"));
 	auth_withpeer_fail(pcb, PPP_EAP);
 }
 
@@ -2076,15 +2076,15 @@ static void eap_input(ppp_pcb *pcb, u_char *inp, int inlen) {
 	 * drop it.
 	 */
 	if (inlen < EAP_HEADERLEN) {
-		ppp_error("EAP: packet too short: %d < %d", inlen, EAP_HEADERLEN);
+		ppp_error(("EAP: packet too short: %d < %d", inlen, EAP_HEADERLEN));
 		return;
 	}
 	GETCHAR(code, inp);
 	GETCHAR(id, inp);
 	GETSHORT(len, inp);
 	if (len < EAP_HEADERLEN || len > inlen) {
-		ppp_error("EAP: packet has illegal length field %d (%d..%d)", len,
-		    EAP_HEADERLEN, inlen);
+		ppp_error(("EAP: packet has illegal length field %d (%d..%d)", len,
+		    EAP_HEADERLEN, inlen));
 		return;
 	}
 	len -= EAP_HEADERLEN;
@@ -2111,7 +2111,7 @@ static void eap_input(ppp_pcb *pcb, u_char *inp, int inlen) {
 
 	default:				/* XXX Need code reject */
 		/* Note: it's not legal to send EAP Nak here. */
-		ppp_warn("EAP: unknown code %d received", code);
+		ppp_warn(("EAP: unknown code %d received", code));
 		break;
 	}
 }

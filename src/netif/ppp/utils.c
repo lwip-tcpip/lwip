@@ -629,7 +629,7 @@ static void ppp_log_write(int level, char *buf) {
 /*
  * ppp_fatal - log an error message and die horribly.
  */
-void ppp_fatal(const char *fmt, ...) {
+void ppp_fatal_impl(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -642,7 +642,7 @@ void ppp_fatal(const char *fmt, ...) {
 /*
  * ppp_error - log an error message.
  */
-void ppp_error(const char *fmt, ...) {
+void ppp_error_impl(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -656,7 +656,7 @@ void ppp_error(const char *fmt, ...) {
 /*
  * ppp_warn - log a warning message.
  */
-void ppp_warn(const char *fmt, ...) {
+void ppp_warn_impl(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -667,7 +667,7 @@ void ppp_warn(const char *fmt, ...) {
 /*
  * ppp_notice - log a notice-level message.
  */
-void ppp_notice(const char *fmt, ...) {
+void ppp_notice_impl(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -678,7 +678,7 @@ void ppp_notice(const char *fmt, ...) {
 /*
  * ppp_info - log an informational message.
  */
-void ppp_info(const char *fmt, ...) {
+void ppp_info_impl(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -689,7 +689,7 @@ void ppp_info(const char *fmt, ...) {
 /*
  * ppp_dbglog - log a debug message.
  */
-void ppp_dbglog(const char *fmt, ...) {
+void ppp_dbglog_impl(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -724,7 +724,7 @@ void ppp_dump_packet(ppp_pcb *pcb, const char *tag, unsigned char *p, int len) {
 	    return;
     }
 
-    ppp_dbglog("%s %P", tag, p, len);
+    ppp_dbglog(("%s %P", tag, p, len));
 }
 #endif /* PRINTPKT_SUPPORT */
 
@@ -788,9 +788,9 @@ lock(dev)
     }
 
     if (result > 0)
-        ppp_notice("Device %s is locked by pid %d", dev, result);
+        ppp_notice(("Device %s is locked by pid %d", dev, result));
     else
-	ppp_error("Can't create lock file %s", lock_file);
+	ppp_error(("Can't create lock file %s", lock_file));
     return -1;
 
 #else /* LOCKLIB */
@@ -802,11 +802,11 @@ lock(dev)
     struct stat sbuf;
 
     if (stat(dev, &sbuf) < 0) {
-	ppp_error("Can't get device number for %s: %m", dev);
+	ppp_error(("Can't get device number for %s: %m", dev));
 	return -1;
     }
     if ((sbuf.st_mode & S_IFMT) != S_IFCHR) {
-	ppp_error("Can't lock %s: not a character device", dev);
+	ppp_error(("Can't lock %s: not a character device", dev));
 	return -1;
     }
     ppp_slprintf(lock_file, sizeof(lock_file), "%s/LK.%03d.%03d.%03d",
@@ -833,7 +833,7 @@ lock(dev)
 
     while ((fd = open(lock_file, O_EXCL | O_CREAT | O_RDWR, 0644)) < 0) {
 	if (errno != EEXIST) {
-	    ppp_error("Can't create lock file %s: %m", lock_file);
+	    ppp_error(("Can't create lock file %s: %m", lock_file));
 	    break;
 	}
 
@@ -842,7 +842,7 @@ lock(dev)
 	if (fd < 0) {
 	    if (errno == ENOENT) /* This is just a timing problem. */
 		continue;
-	    ppp_error("Can't open existing lock file %s: %m", lock_file);
+	    ppp_error(("Can't open existing lock file %s: %m", lock_file));
 	    break;
 	}
 #ifndef LOCK_BINARY
@@ -853,7 +853,7 @@ lock(dev)
 	close(fd);
 	fd = -1;
 	if (n <= 0) {
-	    ppp_error("Can't read pid from lock file %s", lock_file);
+	    ppp_error(("Can't read pid from lock file %s", lock_file));
 	    break;
 	}
 
@@ -867,12 +867,12 @@ lock(dev)
 	if (pid == 0
 	    || (kill(pid, 0) == -1 && errno == ESRCH)) {
 	    if (unlink (lock_file) == 0) {
-		ppp_notice("Removed stale lock on %s (pid %d)", dev, pid);
+		ppp_notice(("Removed stale lock on %s (pid %d)", dev, pid));
 		continue;
 	    }
-	    ppp_warn("Couldn't remove stale lock on %s", dev);
+	    ppp_warn(("Couldn't remove stale lock on %s", dev));
 	} else
-	    ppp_notice("Device %s is locked by pid %d", dev, pid);
+	    ppp_notice(("Device %s is locked by pid %d", dev, pid));
 	break;
     }
 
@@ -919,7 +919,7 @@ relock(pid)
 	return -1;
     fd = open(lock_file, O_WRONLY, 0);
     if (fd < 0) {
-	ppp_error("Couldn't reopen lock file %s: %m", lock_file);
+	ppp_error(("Couldn't reopen lock file %s: %m", lock_file));
 	lock_file[0] = 0;
 	return -1;
     }

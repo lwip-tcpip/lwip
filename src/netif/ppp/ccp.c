@@ -463,10 +463,10 @@ static void ccp_input(ppp_pcb *pcb, u_char *p, int len) {
     oldstate = f->state;
     fsm_input(f, p, len);
     if (oldstate == PPP_FSM_OPENED && p[0] == TERMREQ && f->state != PPP_FSM_OPENED) {
-	ppp_notice("Compression disabled by peer.");
+	ppp_notice(("Compression disabled by peer."));
 #if MPPE_SUPPORT
 	if (go->mppe) {
-	    ppp_error("MPPE disabled, closing LCP");
+	    ppp_error(("MPPE disabled, closing LCP"));
 	    lcp_close(pcb, "MPPE disabled by peer");
 	}
 #endif /* MPPE_SUPPORT */
@@ -528,7 +528,7 @@ static void ccp_protrej(ppp_pcb *pcb) {
 
 #if MPPE_SUPPORT
     if (go->mppe) {
-	ppp_error("MPPE required but peer negotiation failed");
+	ppp_error(("MPPE required but peer negotiation failed"));
 	lcp_close(pcb, "MPPE required but peer negotiation failed");
     }
 #endif /* MPPE_SUPPORT */
@@ -589,20 +589,20 @@ static void ccp_resetci(fsm *f) {
 	    auth_mschap_bits >>= 1;
 	} while (auth_mschap_bits);
 	if (numbits > 1) {
-	    ppp_error("MPPE required, but auth done in both directions.");
+	    ppp_error(("MPPE required, but auth done in both directions."));
 	    lcp_close(pcb, "MPPE required but not available");
 	    return;
 	}
 	if (!numbits) {
-	    ppp_error("MPPE required, but MS-CHAP[v2] auth not performed.");
+	    ppp_error(("MPPE required, but MS-CHAP[v2] auth not performed."));
 	    lcp_close(pcb, "MPPE required but not available");
 	    return;
 	}
 
 	/* A plugin (eg radius) may not have obtained key material. */
 	if (!pcb->mppe_keys_set) {
-	    ppp_error("MPPE required, but keys are not available.  "
-		  "Possible plugin problem?");
+	    ppp_error(("MPPE required, but keys are not available.  "
+		  "Possible plugin problem?"));
 	    lcp_close(pcb, "MPPE required but not available");
 	    return;
 	}
@@ -611,7 +611,7 @@ static void ccp_resetci(fsm *f) {
 	if (pcb->auth_done & (CHAP_MS_WITHPEER | CHAP_MS_PEER)) {
 	    /* This might be noise */
 	    if (go->mppe & MPPE_OPT_40) {
-		ppp_notice("Disabling 40-bit MPPE; MS-CHAP LM not supported");
+		ppp_notice(("Disabling 40-bit MPPE; MS-CHAP LM not supported"));
 		go->mppe &= ~MPPE_OPT_40;
 		wo->mppe &= ~MPPE_OPT_40;
 	    }
@@ -620,7 +620,7 @@ static void ccp_resetci(fsm *f) {
 	/* Last check: can we actually negotiate something? */
 	if (!(go->mppe & (MPPE_OPT_40 | MPPE_OPT_128))) {
 	    /* Could be misconfig, could be 40-bit disabled above. */
-	    ppp_error("MPPE required, but both 40-bit and 128-bit disabled.");
+	    ppp_error(("MPPE required, but both 40-bit and 128-bit disabled."));
 	    lcp_close(pcb, "MPPE required but not available");
 	    return;
 	}
@@ -949,7 +949,7 @@ static int ccp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	 */
 	MPPE_CI_TO_OPTS(&p[2], try_.mppe);
 	if ((try_.mppe & MPPE_OPT_STATEFUL) && pcb->settings.refuse_mppe_stateful) {
-	    ppp_error("Refusing MPPE stateful mode offered by peer");
+	    ppp_error(("Refusing MPPE stateful mode offered by peer"));
 	    try_.mppe = 0;
 	} else if (((go->mppe | MPPE_OPT_STATEFUL) & try_.mppe) != try_.mppe) {
 	    /* Peer must have set options we didn't request (suggest) */
@@ -957,7 +957,7 @@ static int ccp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	}
 
 	if (!try_.mppe) {
-	    ppp_error("MPPE required but peer negotiation failed");
+	    ppp_error(("MPPE required but peer negotiation failed"));
 	    lcp_close(pcb, "MPPE required but peer negotiation failed");
 	}
     }
@@ -1035,7 +1035,7 @@ static int ccp_rejci(fsm *f, u_char *p, int len) {
 #if MPPE_SUPPORT
     if (go->mppe && len >= CILEN_MPPE
 	&& p[0] == CI_MPPE && p[1] == CILEN_MPPE) {
-	ppp_error("MPPE required but peer refused");
+	ppp_error(("MPPE required but peer refused"));
 	lcp_close(pcb, "MPPE required but peer refused");
 	p += CILEN_MPPE;
 	len -= CILEN_MPPE;
@@ -1164,7 +1164,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 		     * the Internet -- which is where we expect MPPE.
 		     */
 		   if (pcb->settings.refuse_mppe_stateful) {
-			ppp_error("Refusing MPPE stateful mode offered by peer");
+			ppp_error(("Refusing MPPE stateful mode offered by peer"));
 			newret = CONFREJ;
 			break;
 		    }
@@ -1375,7 +1375,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
     }
 #if MPPE_SUPPORT
     if (ret == CONFREJ && ao->mppe && rej_for_ci_mppe) {
-	ppp_error("MPPE required but peer negotiation failed");
+	ppp_error(("MPPE required but peer negotiation failed"));
 	lcp_close(pcb, "MPPE required but peer negotiation failed");
     }
 #endif /* MPPE_SUPPORT */
@@ -1466,16 +1466,16 @@ static void ccp_up(fsm *f) {
     if (ccp_anycompress(go)) {
 	if (ccp_anycompress(ho)) {
 	    if (go->method == ho->method) {
-		ppp_notice("%s compression enabled", method_name(go, ho));
+		ppp_notice(("%s compression enabled", method_name(go, ho)));
 	    } else {
 		ppp_strlcpy(method1, method_name(go, NULL), sizeof(method1));
-		ppp_notice("%s / %s compression enabled",
-		       method1, method_name(ho, NULL));
+		ppp_notice(("%s / %s compression enabled",
+		       method1, method_name(ho, NULL)));
 	    }
 	} else
-	    ppp_notice("%s receive compression enabled", method_name(go, NULL));
+	    ppp_notice(("%s receive compression enabled", method_name(go, NULL)));
     } else if (ccp_anycompress(ho))
-	ppp_notice("%s transmit compression enabled", method_name(ho, NULL));
+	ppp_notice(("%s transmit compression enabled", method_name(ho, NULL)));
 #if MPPE_SUPPORT
     if (go->mppe) {
 	continue_networks(pcb);		/* Bring up IP et al */
@@ -1501,7 +1501,7 @@ static void ccp_down(fsm *f) {
 	go->mppe = 0;
 	if (pcb->lcp_fsm.state == PPP_FSM_OPENED) {
 	    /* If LCP is not already going down, make sure it does. */
-	    ppp_error("MPPE disabled");
+	    ppp_error(("MPPE disabled"));
 	    lcp_close(pcb, "MPPE disabled");
 	}
     }
@@ -1671,14 +1671,14 @@ static void ccp_datainput(ppp_pcb *pcb, u_char *pkt, int len) {
 	    /*
 	     * Disable compression by taking CCP down.
 	     */
-	    ppp_error("Lost compression sync: disabling compression");
+	    ppp_error(("Lost compression sync: disabling compression"));
 	    ccp_close(pcb, "Lost compression sync");
 #if MPPE_SUPPORT
 	    /*
 	     * If we were doing MPPE, we must also take the link down.
 	     */
 	    if (go->mppe) {
-		ppp_error("Too many MPPE errors, closing LCP");
+		ppp_error(("Too many MPPE errors, closing LCP"));
 		lcp_close(pcb, "Too many MPPE errors");
 	    }
 #endif /* MPPE_SUPPORT */

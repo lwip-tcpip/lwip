@@ -798,7 +798,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
    * Toss all non-LCP packets unless LCP is OPEN.
    */
   if (protocol != PPP_LCP && pcb->lcp_fsm.state != PPP_FSM_OPENED) {
-    ppp_dbglog("Discarded non-LCP packet when LCP not open");
+    ppp_dbglog(("Discarded non-LCP packet when LCP not open"));
     goto drop;
   }
 
@@ -821,7 +821,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
    || protocol == PPP_EAP
 #endif /* EAP_SUPPORT */
    )) {
-    ppp_dbglog("discarding proto 0x%x in phase %d", protocol, pcb->phase);
+    ppp_dbglog(("discarding proto 0x%x in phase %d", protocol, pcb->phase));
     goto drop;
   }
 
@@ -956,10 +956,10 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #if PPP_PROTOCOLNAME
       pname = protocol_name(protocol);
       if (pname != NULL) {
-        ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+        ppp_warn(("Unsupported protocol '%s' (0x%x) received", pname, protocol));
       } else
 #endif /* PPP_PROTOCOLNAME */
-        ppp_warn("Unsupported protocol 0x%x received", protocol);
+        ppp_warn(("Unsupported protocol 0x%x received", protocol));
 #endif /* PPP_DEBUG */
         if (pbuf_add_header(pb, sizeof(protocol))) {
           PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));
