@@ -166,7 +166,8 @@ START_TEST(test_netif_extcallbacks)
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   IP4_ADDR(&gw, 1, 2, 3, 254);
   expected_reasons = (netif_nsc_reason_t)(LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_NETMASK_CHANGED |
-                                          LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED);
+                                          LWIP_NSC_IPV4_GATEWAY_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED |
+                                          LWIP_NSC_IPV4_ADDR_VALID);
   callback_ctr = 0;
   netif_set_addr(&net_test, &addr, &netmask, &gw);
   fail_unless(callback_ctr == 1);
@@ -185,13 +186,16 @@ START_TEST(test_netif_extcallbacks)
   netif_set_gw(&net_test, &gw);
   fail_unless(callback_ctr == 0);
 
+  /* netif_set_addr() always issues at least LWIP_NSC_IPV4_ADDR_VALID */
+  expected_reasons = LWIP_NSC_IPV4_ADDR_VALID;
   callback_ctr = 0;
   netif_set_addr(&net_test, &addr, &netmask, &gw);
-  fail_unless(callback_ctr == 0);
+  fail_unless(callback_ctr == 1);
 
   /* check for single-events */
   IP4_ADDR(&addr, 1, 2, 3, 5);
-  expected_reasons = (netif_nsc_reason_t)(LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED);
+  expected_reasons = (netif_nsc_reason_t)(LWIP_NSC_IPV4_ADDRESS_CHANGED | LWIP_NSC_IPV4_SETTINGS_CHANGED |
+                                          LWIP_NSC_IPV4_ADDR_VALID);
   callback_ctr = 0;
   netif_set_addr(&net_test, &addr, &netmask, &gw);
   fail_unless(callback_ctr == 1);
