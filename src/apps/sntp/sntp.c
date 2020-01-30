@@ -383,6 +383,8 @@ sntp_retry(void *arg)
     if ((new_retry_timeout <= SNTP_RETRY_TIMEOUT_MAX) &&
         (new_retry_timeout > sntp_retry_timeout)) {
       sntp_retry_timeout = new_retry_timeout;
+    } else {
+      sntp_retry_timeout = SNTP_RETRY_TIMEOUT_MAX;
     }
   }
 #endif /* SNTP_RETRY_TIMEOUT_EXP */
