@@ -341,8 +341,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 {
   struct pbuf *q;
   struct ip_hdr *iphdr;
-  /* we can use the echo header here */
-  struct icmp_echo_hdr *icmphdr;
+  struct icmp_hdr *icmphdr;
   ip4_addr_t iphdr_src;
   struct netif *netif;
 
@@ -350,7 +349,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   MIB2_STATS_INC(mib2.icmpoutmsgs);
 
   /* ICMP header + IP header + 8 bytes of data */
-  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
+  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
                  PBUF_RAM);
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMP packet.\n"));
@@ -367,11 +366,10 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   ip4_addr_debug_print_val(ICMP_DEBUG, iphdr->dest);
   LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
 
-  icmphdr = (struct icmp_echo_hdr *)q->payload;
+  icmphdr = (struct icmp_hdr *)q->payload;
   icmphdr->type = type;
   icmphdr->code = code;
-  icmphdr->id = 0;
-  icmphdr->seqno = 0;
+  icmphdr->data = 0;
 
   /* copy fields from original packet */
   SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_echo_hdr), (u8_t *)p->payload,
