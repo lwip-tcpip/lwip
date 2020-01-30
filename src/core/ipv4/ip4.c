@@ -365,6 +365,9 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     }
     break;
 #endif
+  default:
+    /* there's really nothing to do here other than satisfying 'switch-default' */
+    break;
   }
 
   LWIP_DEBUGF(IP_DEBUG, ("ip4_forward: forwarding packet to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
