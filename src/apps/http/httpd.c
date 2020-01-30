@@ -871,14 +871,14 @@ get_http_headers(struct http_state *hs, const char *uri)
     return;
   }
   /* We are dealing with a particular filename. Look for one other
-      special case.  We assume that any filename with "404" in it must be
-      indicative of a 404 server error whereas all other files require
-      the 200 OK header. */
-  if (strstr(uri, "404")) {
+     special case.  We assume that any filename with "404" in it must be
+     indicative of a 404 server error whereas all other files require
+     the 200 OK header. */
+  if (strstr(uri, "404.") == uri) {
     hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
-  } else if (strstr(uri, "400")) {
+  } else if (strstr(uri, "400.") == uri) {
     hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_BAD_REQUEST];
-  } else if (strstr(uri, "501")) {
+  } else if (strstr(uri, "501.") == uri) {
     hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_IMPL];
   } else {
     hs->hdrs[HDR_STRINGS_IDX_HTTP_STATUS] = g_psHTTPHeaderStrings[HTTP_HDR_OK];
