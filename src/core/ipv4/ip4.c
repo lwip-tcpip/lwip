@@ -347,21 +347,21 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 #endif
   case IP_PROTO_UDP:
     if (CHECKSUM_GEN_UDP || NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_UDP)) {
-      ((struct udp_hdr *)((const u8_t *)iphdr + IPH_HL_BYTES(iphdr)))->chksum = 0;
+      ((struct udp_hdr *)((u8_t *)iphdr + IPH_HL_BYTES(iphdr)))->chksum = 0;
     }
     break;
 #endif
 #if LWIP_TCP
   case IP_PROTO_TCP:
     if (CHECKSUM_GEN_TCP || NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_TCP)) {
-      ((struct tcp_hdr *)((const u8_t *)iphdr + IPH_HL_BYTES(iphdr)))->chksum = 0;
+      ((struct tcp_hdr *)((u8_t *)iphdr + IPH_HL_BYTES(iphdr)))->chksum = 0;
     }
     break;
 #endif
 #if LWIP_ICMP
   case IP_PROTO_ICMP:
     if (CHECKSUM_GEN_ICMP || NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP)) {
-      ((struct icmp_hdr *)((const u8_t *)iphdr + IPH_HL_BYTES(iphdr)))->chksum = 0;
+      ((struct icmp_hdr *)((u8_t *)iphdr + IPH_HL_BYTES(iphdr)))->chksum = 0;
     }
     break;
 #endif
