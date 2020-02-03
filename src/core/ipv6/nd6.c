@@ -72,6 +72,18 @@
 #if LWIP_IPV6_DUP_DETECT_ATTEMPTS > IP6_ADDR_TENTATIVE_COUNT_MASK
 #error LWIP_IPV6_DUP_DETECT_ATTEMPTS > IP6_ADDR_TENTATIVE_COUNT_MASK
 #endif
+#if LWIP_ND6_NUM_NEIGHBORS > 127
+#error LWIP_ND6_NUM_NEIGHBORS must fit into an s8_t (max value: 127)
+#endif
+#if LWIP_ND6_NUM_DESTINATIONS > 32767
+#error LWIP_ND6_NUM_DESTINATIONS must fit into an s16_t (max value: 32767)
+#endif
+#if LWIP_ND6_NUM_PREFIXES > 127
+#error LWIP_ND6_NUM_PREFIXES must fit into an s8_t (max value: 127)
+#endif
+#if LWIP_ND6_NUM_ROUTERS > 127
+#error LWIP_ND6_NUM_ROUTERS must fit into an s8_t (max value: 127)
+#endif
 
 /* Router tables. */
 struct nd6_neighbor_cache_entry neighbor_cache[LWIP_ND6_NUM_NEIGHBORS];
