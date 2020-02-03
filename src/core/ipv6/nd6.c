@@ -2008,14 +2008,13 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
         ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, default_router_list[i].neighbor_entry->next_hop_address);
       }
     }
-  }
-
 #if LWIP_NETIF_HWADDRHINT
-  if (netif->hints != NULL) {
-    /* per-pcb cached entry was given */
-    netif->hints->addr_hint = nd6_cached_destination_index;
-  }
+    if (netif->hints != NULL) {
+      /* per-pcb cached entry was given */
+      netif->hints->addr_hint = nd6_cached_destination_index;
+    }
 #endif /* LWIP_NETIF_HWADDRHINT */
+  }
 
   /* Look in neighbor cache for the next-hop address. */
   if (ip6_addr_cmp(&(destination_cache[nd6_cached_destination_index].next_hop_addr),
