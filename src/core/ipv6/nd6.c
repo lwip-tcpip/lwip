@@ -100,7 +100,6 @@ u8_t nd6_queue_size = 0;
 #endif
 
 /* Index for cache entries. */
-static u8_t nd6_cached_neighbor_index;
 static netif_addr_idx_t nd6_cached_destination_index;
 
 /* Multicast address holder. */
@@ -2036,7 +2035,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 
   /* Look in neighbor cache for the next-hop address. */
   if (ip6_addr_cmp(&dest->next_hop_addr,
-                   &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
+                   &(neighbor_cache[dest->cached_neighbor_idx].next_hop_address))) {
     /* Cache hit. */
     /* Do nothing. */
     ND6_STATS_INC(nd6.cachehit);
@@ -2044,13 +2043,13 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
     i = nd6_find_neighbor_cache_entry(&dest->next_hop_addr);
     if (i >= 0) {
       /* Found a matching record, make it new cached entry. */
-      nd6_cached_neighbor_index = i;
+      dest->cached_neighbor_idx = i;
     } else {
       /* Neighbor not in cache. Make a new entry. */
       i = nd6_new_neighbor_cache_entry();
       if (i >= 0) {
         /* got new neighbor entry. make it our new cached index. */
-        nd6_cached_neighbor_index = i;
+        dest->cached_neighbor_idx = i;
       } else {
         /* Could not create a neighbor cache entry. */
         return ERR_MEM;
@@ -2069,7 +2068,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   /* Reset this destination's age. */
   dest->age = 0;
 
-  return nd6_cached_neighbor_index;
+  return dest->cached_neighbor_idx;
 }
 
 /**
@@ -2373,8 +2372,8 @@ nd6_reachability_hint(const ip6_addr_t *ip6addr)
 
   /* Find next hop neighbor in cache. */
   dest = &destination_cache[dst_idx];
-  if (ip6_addr_cmp(&dest->next_hop_addr, &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
-    i = nd6_cached_neighbor_index;
+  if (ip6_addr_cmp(&dest->next_hop_addr, &(neighbor_cache[dest->cached_neighbor_idx].next_hop_address))) {
+    i = dest->cached_neighbor_idx;
     ND6_STATS_INC(nd6.cachehit);
   } else {
     i = nd6_find_neighbor_cache_entry(&dest->next_hop_addr);
