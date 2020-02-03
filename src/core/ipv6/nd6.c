@@ -1944,6 +1944,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 #endif /* LWIP_HOOK_ND6_GET_GW */
   s8_t i;
   s16_t dst_idx;
+  struct nd6_destination_cache_entry *dest;
 
   IP6_ADDR_ZONECHECK_NETIF(ip6addr, netif);
 
@@ -1957,8 +1958,11 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   }
 #endif /* LWIP_NETIF_HWADDRHINT */
 
+  LWIP_ASSERT("sane cache index", nd6_cached_destination_index < LWIP_ND6_NUM_DESTINATIONS);
+
   /* Look for ip6addr in destination cache. */
-  if (ip6_addr_cmp(ip6addr, &(destination_cache[nd6_cached_destination_index].destination_addr))) {
+  dest = &destination_cache[nd6_cached_destination_index];
+  if (ip6_addr_cmp(ip6addr, &dest->destination_addr)) {
     /* the cached entry index is the right one! */
     /* do nothing. */
     ND6_STATS_INC(nd6.cachehit);
@@ -1969,6 +1973,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
       /* found destination entry. make it our new cached index. */
       LWIP_ASSERT("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
       nd6_cached_destination_index = (netif_addr_idx_t)dst_idx;
+      dest = &destination_cache[dst_idx];
     } else {
       /* Not found. Create a new destination entry. */
       dst_idx = nd6_new_destination_cache_entry();
@@ -1976,36 +1981,37 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
         /* got new destination entry. make it our new cached index. */
         LWIP_ASSERT("type overflow", (size_t)dst_idx < NETIF_ADDR_IDX_MAX);
         nd6_cached_destination_index = (netif_addr_idx_t)dst_idx;
+        dest = &destination_cache[dst_idx];
       } else {
         /* Could not create a destination cache entry. */
         return ERR_MEM;
       }
 
       /* Copy dest address to destination cache. */
-      ip6_addr_set(&(destination_cache[nd6_cached_destination_index].destination_addr), ip6addr);
+      ip6_addr_set(&dest->destination_addr, ip6addr);
 
       /* Now find the next hop. is it a neighbor? */
       if (ip6_addr_islinklocal(ip6addr) ||
           nd6_is_prefix_in_netif(ip6addr, netif)) {
         /* Destination in local link. */
-        destination_cache[nd6_cached_destination_index].pmtu = netif_mtu6(netif);
-        ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, destination_cache[nd6_cached_destination_index].destination_addr);
+        dest->pmtu = netif_mtu6(netif);
+        ip6_addr_copy(dest->next_hop_addr, dest->destination_addr);
 #ifdef LWIP_HOOK_ND6_GET_GW
       } else if ((next_hop_addr = LWIP_HOOK_ND6_GET_GW(netif, ip6addr)) != NULL) {
         /* Next hop for destination provided by hook function. */
-        destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
-        ip6_addr_set(&destination_cache[nd6_cached_destination_index].next_hop_addr, next_hop_addr);
+        dest->pmtu = netif->mtu;
+        ip6_addr_set(&dest->next_hop_addr, next_hop_addr);
 #endif /* LWIP_HOOK_ND6_GET_GW */
       } else {
         /* We need to select a router. */
         i = nd6_select_router(ip6addr, netif);
         if (i < 0) {
           /* No router found. */
-          ip6_addr_set_any(&(destination_cache[nd6_cached_destination_index].destination_addr));
+          ip6_addr_set_any(&dest->destination_addr);
           return ERR_RTE;
         }
-        destination_cache[nd6_cached_destination_index].pmtu = netif_mtu6(netif); /* Start with netif mtu, correct through ICMPv6 if necessary */
-        ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, default_router_list[i].neighbor_entry->next_hop_address);
+        dest->pmtu = netif_mtu6(netif); /* Start with netif mtu, correct through ICMPv6 if necessary */
+        ip6_addr_copy(dest->next_hop_addr, default_router_list[i].neighbor_entry->next_hop_address);
       }
     }
 #if LWIP_NETIF_HWADDRHINT
@@ -2017,13 +2023,13 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   }
 
   /* Look in neighbor cache for the next-hop address. */
-  if (ip6_addr_cmp(&(destination_cache[nd6_cached_destination_index].next_hop_addr),
+  if (ip6_addr_cmp(&dest->next_hop_addr,
                    &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
     /* Cache hit. */
     /* Do nothing. */
     ND6_STATS_INC(nd6.cachehit);
   } else {
-    i = nd6_find_neighbor_cache_entry(&(destination_cache[nd6_cached_destination_index].next_hop_addr));
+    i = nd6_find_neighbor_cache_entry(&dest->next_hop_addr);
     if (i >= 0) {
       /* Found a matching record, make it new cached entry. */
       nd6_cached_neighbor_index = i;
@@ -2039,8 +2045,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
       }
 
       /* Initialize fields. */
-      ip6_addr_copy(neighbor_cache[i].next_hop_address,
-                   destination_cache[nd6_cached_destination_index].next_hop_addr);
+      ip6_addr_copy(neighbor_cache[i].next_hop_address, dest->next_hop_addr);
       neighbor_cache[i].isrouter = 0;
       neighbor_cache[i].netif = netif;
       neighbor_cache[i].state = ND6_INCOMPLETE;
@@ -2050,7 +2055,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
   }
 
   /* Reset this destination's age. */
-  destination_cache[nd6_cached_destination_index].age = 0;
+  dest->age = 0;
 
   return nd6_cached_neighbor_index;
 }
@@ -2341,6 +2346,7 @@ nd6_reachability_hint(const ip6_addr_t *ip6addr)
 {
   s8_t i;
   s16_t dst_idx;
+  struct nd6_destination_cache_entry *dest;
 
   /* Find destination in cache. */
   if (ip6_addr_cmp(ip6addr, &(destination_cache[nd6_cached_destination_index].destination_addr))) {
@@ -2354,11 +2360,12 @@ nd6_reachability_hint(const ip6_addr_t *ip6addr)
   }
 
   /* Find next hop neighbor in cache. */
-  if (ip6_addr_cmp(&(destination_cache[dst_idx].next_hop_addr), &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
+  dest = &destination_cache[dst_idx];
+  if (ip6_addr_cmp(&dest->next_hop_addr, &(neighbor_cache[nd6_cached_neighbor_index].next_hop_address))) {
     i = nd6_cached_neighbor_index;
     ND6_STATS_INC(nd6.cachehit);
   } else {
-    i = nd6_find_neighbor_cache_entry(&(destination_cache[dst_idx].next_hop_addr));
+    i = nd6_find_neighbor_cache_entry(&dest->next_hop_addr);
   }
   if (i < 0) {
     return;
