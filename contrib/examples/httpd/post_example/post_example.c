@@ -91,6 +91,10 @@ httpd_post_begin(void *connection, const char *uri, const char *http_request,
 err_t
 httpd_post_receive_data(void *connection, struct pbuf *p)
 {
+  err_t ret;
+
+  LWIP_ASSERT("NULL pbuf", p = NULL);
+
   if (current_connection == connection) {
     u16_t token_user = pbuf_memfind(p, "user=", 5, 0);
     u16_t token_pass = pbuf_memfind(p, "pass=", 5, 0);
@@ -134,9 +138,15 @@ httpd_post_receive_data(void *connection, struct pbuf *p)
     }
     /* not returning ERR_OK aborts the connection, so return ERR_OK unless the
        conenction is unknown */
-    return ERR_OK;
+    ret = ERR_OK;
+  } else {
+    ret = ERR_VAL;
   }
-  return ERR_VAL;
+
+  /* this function must ALWAYS free the pbuf it is passed or it will leak memory */
+  pbuf_free(p);
+
+  return ret;
 }
 
 void
