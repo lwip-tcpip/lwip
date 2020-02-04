@@ -93,7 +93,7 @@ httpd_post_receive_data(void *connection, struct pbuf *p)
 {
   err_t ret;
 
-  LWIP_ASSERT("NULL pbuf", p = NULL);
+  LWIP_ASSERT("NULL pbuf", p != NULL);
 
   if (current_connection == connection) {
     u16_t token_user = pbuf_memfind(p, "user=", 5, 0);
