@@ -2046,7 +2046,7 @@ static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	if (!eap_client_active(pcb)) {
 		ppp_dbglog(("EAP unexpected failure message in state %s (%d)",
 		    eap_state_name(pcb->eap.es_client.ea_state),
-		    pcb->eap.es_client.ea_state);
+		    pcb->eap.es_client.ea_state));
 	}
 
 	if (pcb->settings.eap_req_time > 0) {
