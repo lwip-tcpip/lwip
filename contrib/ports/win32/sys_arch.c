@@ -78,7 +78,7 @@ static DWORD netconn_sem_tls_index;
 
 static HCRYPTPROV hcrypt;
 
-u32_t
+unsigned int
 lwip_port_rand(void)
 {
   u32_t ret;
@@ -421,7 +421,7 @@ SetThreadName(DWORD dwThreadID, const char* threadName)
 }
 #endif /* _MSC_VER */
 
-static void
+static DWORD WINAPI
 sys_thread_function(void* arg)
 {
   struct threadlist* t = (struct threadlist*)arg;
@@ -432,6 +432,7 @@ sys_thread_function(void* arg)
 #if LWIP_NETCONN_SEM_PER_THREAD
   sys_arch_netconn_sem_free();
 #endif
+  return 0;
 }
 
 sys_thread_t
@@ -454,7 +455,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
     new_thread->next = lwip_win32_threads;
     lwip_win32_threads = new_thread;
 
-    h = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)sys_thread_function, new_thread, 0, &(new_thread->id));
+    h = CreateThread(0, 0, sys_thread_function, new_thread, 0, &(new_thread->id));
     LWIP_ASSERT("h != 0", h != 0);
     LWIP_ASSERT("h != -1", h != INVALID_HANDLE_VALUE);
     LWIP_UNUSED_ARG(h);

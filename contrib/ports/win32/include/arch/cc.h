@@ -103,7 +103,7 @@ void lwip_win32_platform_diag(const char *format, ...);
 #endif
 
 extern unsigned int lwip_port_rand(void);
-#define LWIP_RAND() (lwip_port_rand())
+#define LWIP_RAND() ((uint32_t)lwip_port_rand())
 
 #define PPP_INCLUDE_SETTINGS_HEADER
 
