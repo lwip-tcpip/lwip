@@ -1169,7 +1169,7 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
  * @param client MQTT client
  * @param topic topic to subscribe to
  * @param qos Quality of service, 0 1 or 2 (only used for subscribe)
- * @param cb Callback to call when subscribe/unsubscribe reponse is received
+ * @param cb Callback to call when subscribe/unsubscribe response is received
  * @param arg User supplied argument to publish callback
  * @param sub 1 for subscribe, 0 for unsubscribe
  * @return ERR_OK if successful, @see err_t enum for other results

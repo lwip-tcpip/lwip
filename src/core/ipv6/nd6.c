@@ -1176,7 +1176,7 @@ nd6_tmr(void)
 
 /** Send a neighbor solicitation message for a specific neighbor cache entry
  *
- * @param entry the neightbor cache entry for wich to send the message
+ * @param entry the neightbor cache entry for which to send the message
  * @param flags one of ND6_SEND_FLAG_*
  */
 static void

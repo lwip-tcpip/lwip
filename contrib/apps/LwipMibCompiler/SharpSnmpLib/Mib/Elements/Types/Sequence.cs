@@ -11,7 +11,7 @@
 namespace Lextm.SharpSnmpLib.Mib.Elements.Types
 {
     /// <summary>
-    /// The SEQUENCE type represents a set of specified types. This is roughtly analogous to a <code>struct</code> in C.
+    /// The SEQUENCE type represents a set of specified types. This is roughly analogous to a <code>struct</code> in C.
     /// </summary>
     public sealed class Sequence : BaseType
     {

@@ -472,7 +472,7 @@ err_tcp(void *arg, err_t err)
   }
   /* pass error message to acceptmbox to wake up pending accept */
   if (NETCONN_MBOX_VALID(conn, &conn->acceptmbox)) {
-    /* use trypost to preven deadlock */
+    /* use trypost to prevent deadlock */
     sys_mbox_trypost(&conn->acceptmbox, mbox_msg);
   }
 
@@ -495,7 +495,7 @@ err_tcp(void *arg, err_t err)
         conn->current_msg->err = err;
       }
       op_completed_sem = LWIP_API_MSG_SEM(conn->current_msg);
-      LWIP_ASSERT("inavlid op_completed_sem", sys_sem_valid(op_completed_sem));
+      LWIP_ASSERT("invalid op_completed_sem", sys_sem_valid(op_completed_sem));
       conn->current_msg = NULL;
       /* wake up the waiting task */
       sys_sem_signal(op_completed_sem);
@@ -979,7 +979,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
   /* Try to close the connection */
   if (shut_close) {
 #if LWIP_SO_LINGER
-    /* check linger possibilites before calling tcp_close */
+    /* check linger possibilities before calling tcp_close */
     err = ERR_OK;
     /* linger enabled/required at all? (i.e. is there untransmitted data left?) */
     if ((conn->linger >= 0) && (conn->pcb.tcp->unsent || conn->pcb.tcp->unacked)) {

@@ -579,7 +579,7 @@ dhcp6_handle_config_reply(struct netif *netif, struct pbuf *p_msg_in)
 }
 #endif /* LWIP_IPV6_DHCP6_STATELESS */
 
-/** This function is called from nd6 module when an RA messsage is received
+/** This function is called from nd6 module when an RA message is received
  * It triggers DHCPv6 requests (if enabled).
  */
 void
@@ -645,7 +645,7 @@ dhcp6_parse_reply(struct pbuf *p, struct dhcp6 *dhcp6)
       /* overflow */
       return ERR_BUF;
     }
-    /* copy option + length, might be split accross pbufs */
+    /* copy option + length, might be split across pbufs */
     op_len = (u8_t *)pbuf_get_contiguous(p, op_len_buf, 4, 4, offset);
     if (op_len == NULL) {
       /* failed to get option and length */

@@ -197,11 +197,11 @@ namespace Lextm.SharpSnmpLib.Mib
                 Symbol s = symbols.NextSymbol();
                 if (s != null)
                 {
-                    s.Assert(false, "Invalid Entitiy declaration");
+                    s.Assert(false, "Invalid Entity declaration");
                 }
                 else
                 {
-                    throw new MibException("Invalid Entitiy declaration");
+                    throw new MibException("Invalid Entity declaration");
                 }
             }
 

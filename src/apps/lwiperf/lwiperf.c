@@ -7,7 +7,7 @@
  * @defgroup iperf Iperf server
  * @ingroup apps
  *
- * This is a simple performance measuring client/server to check your bandwith using
+ * This is a simple performance measuring client/server to check your bandwidth using
  * iPerf2 on a PC as server/client.
  * It is currently a minimal implementation providing a TCP client/server only.
  *

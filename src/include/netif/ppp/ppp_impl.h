@@ -265,7 +265,7 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 #define PPP_OCTETS_DIRECTION_IN         1
 #define PPP_OCTETS_DIRECTION_OUT        2
 #define PPP_OCTETS_DIRECTION_MAXOVERAL  3
-/* same as previos, but little different on RADIUS side */
+/* same as previous, but little different on RADIUS side */
 #define PPP_OCTETS_DIRECTION_MAXSESSION 4
 #endif
 

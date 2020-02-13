@@ -133,7 +133,7 @@ altcp_proxyconnect_send_request(struct altcp_pcb *conn)
     /* overflow */
     return ERR_MEM;
   }
-  /* Allocate a bufer for the request string */
+  /* Allocate a buffer for the request string */
   buffer = (char *)mem_malloc(alloc_len);
   if (buffer == NULL) {
     return ERR_MEM;

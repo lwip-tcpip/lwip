@@ -73,7 +73,7 @@ typedef enum {
    * that stay active even if the netif has a routable address selected.
    * In such a case, we cannot defend our address */
   ACD_STATE_PASSIVE_ONGOING,
-  /* To many conflicts occured, we need to wait before restarting the selection
+  /* To many conflicts occurred, we need to wait before restarting the selection
    * process */
   ACD_STATE_RATE_LIMIT
 } acd_state_enum_t;

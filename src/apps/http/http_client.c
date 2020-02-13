@@ -338,7 +338,7 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
   if ((p != NULL) && (req->parse_state == HTTPC_PARSE_RX_DATA)) {
     req->rx_content_len += p->tot_len;
     if (req->recv_fn != NULL) {
-      /* directly return here: the connection migth already be aborted from the callback! */
+      /* directly return here: the connection might already be aborted from the callback! */
       return req->recv_fn(req->callback_arg, pcb, p, r);
     } else {
       altcp_recved(pcb, p->tot_len);
@@ -718,7 +718,7 @@ typedef struct _httpc_filestate
 static void httpc_fs_result(void *arg, httpc_result_t httpc_result, u32_t rx_content_len,
   u32_t srv_res, err_t err);
 
-/** Initalize http client state for download to file system */
+/** Initialize http client state for download to file system */
 static err_t
 httpc_fs_init(httpc_filestate_t **filestate_out, const char* local_file_name,
               const httpc_connection_t *settings, void* callback_arg)

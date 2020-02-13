@@ -94,7 +94,7 @@ extern "C" {
 void magic_init(void);
 
 /*
- * Randomize our random seed value.  To be called for truely random events
+ * Randomize our random seed value.  To be called for truly random events
  * such as user operations and network traffic.
  */
 void magic_randomize(void);

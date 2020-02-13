@@ -1537,7 +1537,7 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
     next = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
-	cip = p = next;			/* Remember begining of CI */
+	cip = p = next;			/* Remember beginning of CI */
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */
@@ -1589,7 +1589,7 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	     * If he doesn't know our address, or if we both have our address
 	     * but disagree about it, then NAK it with our idea.
 	     */
-	    GETLONG(tl, p);		/* Parse desination address (ours) */
+	    GETLONG(tl, p);		/* Parse destination address (ours) */
 	    ciaddr2 = lwip_htonl(tl);
 	    if (ciaddr2 != wo->ouraddr) {
 		if (ciaddr2 == 0 || !wo->accept_local) {

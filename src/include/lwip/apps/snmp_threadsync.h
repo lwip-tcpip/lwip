@@ -72,7 +72,7 @@ struct threadsync_data
   struct snmp_node_instance proxy_instance;
 };
 
-/** Thread sync instance. Needed EXCATLY once for every thread to be synced into. */
+/** Thread sync instance. Needed EXACTLY once for every thread to be synced into. */
 struct snmp_threadsync_instance
 {
   sys_sem_t                       sem;

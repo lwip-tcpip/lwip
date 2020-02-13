@@ -143,7 +143,7 @@ struct mdns_outmsg {
   /** If legacy query. (tx_id needed, and write
    *  question again in reply before answer) */
   u8_t legacy_query;
-  /** If the query is a probe msg we need to respond immediatly. Independent of
+  /** If the query is a probe msg we need to respond immediately. Independent of
    *  the QU or QM flag. */
   u8_t probe_query_recv;
   /* Question bitmask for host information */

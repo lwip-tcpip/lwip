@@ -97,7 +97,7 @@ udpl [local UDP port] [IP address] [remote port]: opens a UDP-Lite \"connection\
 static char help_msg2[] = "udpn [local UDP port] [IP address] [remote port]: opens a UDP \"connection\" without checksums."NEWLINE"\
 udpb [local port] [remote port]: opens a UDP broadcast \"connection\"."NEWLINE"\
 usnd [connection #] [message]: sends a message on a UDP connection."NEWLINE"\
-recv [connection #]: recieves data on a TCP or UDP connection."NEWLINE"\
+recv [connection #]: receives data on a TCP or UDP connection."NEWLINE"\
 clos [connection #]: closes a TCP or UDP connection."NEWLINE"\
 stat: prints out lwIP statistics."NEWLINE"\
 idxtoname [index]: outputs interface name from index."NEWLINE"\

@@ -1607,7 +1607,7 @@ START_TEST(test_tcp_persist_split)
 #if TCP_OVERSIZE_DBGCHECK
   /* Split segment already transmitted, should be at 0 */
   EXPECT(pcb->unacked->oversize_left == 0);
-  /* Remainder segement should match pcb value (which is 0) */
+  /* Remainder segment should match pcb value (which is 0) */
   EXPECT(pcb->unsent->oversize_left == pcb->unsent_oversize);
 #endif /* TCP_OVERSIZE_DBGCHECK */
 #endif /* TCP_OVERSIZE */

@@ -438,7 +438,7 @@ namespace Lextm.SharpSnmpLib.Mib
 
                 if (current == Symbol.DoubleDot)
                 {
-                    // its a continous range
+                    // its a continuous range
                     Symbol value2Symbol = symbols.NextNonEOLSymbol();
                     Int64? value2 = DecodeNumber(value2Symbol);
                     value2Symbol.Assert(value2.HasValue && (value2.Value >= value1.Value), "Invalid range declaration!");

@@ -502,7 +502,7 @@ tcp_close(struct tcp_pcb *pcb)
  * @ingroup tcp_raw
  * Causes all or part of a full-duplex connection of this PCB to be shut down.
  * This doesn't deallocate the PCB unless shutting down both sides!
- * Shutting down both sides is the same as calling tcp_close, so if it succeds
+ * Shutting down both sides is the same as calling tcp_close, so if it succeeds
  * (i.e. returns ER_OK), the PCB must not be referenced any more!
  *
  * @param pcb PCB to shutdown
@@ -1908,7 +1908,7 @@ tcp_alloc(u8_t prio)
     pcb->tmr = tcp_ticks;
     pcb->last_timer = tcp_timer_ctr;
 
-    /* RFC 5681 recommends setting ssthresh abritrarily high and gives an example
+    /* RFC 5681 recommends setting ssthresh arbitrarily high and gives an example
     of using the largest advertised receive window.  We've seen complications with
     receiving TCPs that use window scaling and/or window auto-tuning where the
     initial advertised window is very small and then grows rapidly once the

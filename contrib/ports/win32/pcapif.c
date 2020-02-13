@@ -172,7 +172,7 @@ struct pcapipf_pending_packet {
 };
 #endif /* PCAPIF_RECEIVE_PROMISCUOUS */
 
-/* Packet Adapter informations */
+/* Packet Adapter information */
 struct pcapif_private {
   void            *input_fn_arg;
   pcap_t          *adapter;

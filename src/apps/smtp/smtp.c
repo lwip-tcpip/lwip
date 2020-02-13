@@ -577,7 +577,7 @@ leave:
  * @param body email body (must be NULL-terminated)
  * @param callback_fn callback function
  * @param callback_arg user argument to callback_fn
- * @returns - ERR_OK if structures were allocated and no error occured starting the connection
+ * @returns - ERR_OK if structures were allocated and no error occurred starting the connection
  *            (this does not mean the email has been successfully sent!)
  *          - another err_t on error.
  */

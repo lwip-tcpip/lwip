@@ -6,7 +6,7 @@
  * @ingroup netconn
  * Network buffer descriptor for @ref netconn. Based on @ref pbuf internally
  * to avoid copying data around.<br>
- * Buffers must not be shared accross multiple threads, all functions except
+ * Buffers must not be shared across multiple threads, all functions except
  * netbuf_new() and netbuf_delete() are not thread-safe.
  */
 

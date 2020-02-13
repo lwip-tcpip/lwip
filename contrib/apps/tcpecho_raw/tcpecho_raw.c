@@ -236,7 +236,7 @@ tcpecho_raw_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
     }
     ret_err = ERR_OK;
   } else {
-    /* unkown es->state, trash data  */
+    /* unknown es->state, trash data  */
     tcp_recved(tpcb, p->tot_len);
     pbuf_free(p);
     ret_err = ERR_OK;

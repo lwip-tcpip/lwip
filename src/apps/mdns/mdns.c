@@ -894,7 +894,7 @@ mdns_handle_probe_tiebreaking(struct netif *netif, struct mdns_packet *pkt)
     myprobe_questions_left = myprobe_inpkt.questions_left;
     /* Reset match flag */
     match = 0;
-    /* Search for a matching probe in the incomming packet */
+    /* Search for a matching probe in the incoming packet */
     while (pkt->questions_left) {
       /* Read probe questions one by one */
       res = mdns_read_question(pkt, &pkt_q);
@@ -1062,7 +1062,7 @@ cleanup:
 }
 
 /**
- * Check the incomming packet and parse all questions
+ * Check the incoming packet and parse all questions
  *
  * @param netif network interface of incoming packet
  * @param pkt   incoming packet
@@ -1111,7 +1111,7 @@ mdns_parse_pkt_questions(struct netif *netif, struct mdns_packet *pkt,
 }
 
 /**
- * Check the incomming packet and parse all (known) answers
+ * Check the incoming packet and parse all (known) answers
  *
  * @param netif network interface of incoming packet
  * @param pkt   incoming packet
@@ -1283,7 +1283,7 @@ mdns_parse_pkt_known_answers(struct netif *netif, struct mdns_packet *pkt,
 }
 
 /**
- * Check the incomming packet and parse all authoritative answers to see if the
+ * Check the incoming packet and parse all authoritative answers to see if the
  * query is a probe query.
  *
  * @param netif network interface of incoming packet
@@ -1731,7 +1731,7 @@ mdns_handle_tc_question(void *arg)
  * Save time when a probe conflict occurs:
  *  - Check if we exceeded the maximum of 15 conflicts in 10seconds.
  *
- * @param netif network interface on which the conflict occured.
+ * @param netif network interface on which the conflict occurred.
  */
 static void
 mdns_conflict_save_time(struct netif *netif)
@@ -1741,7 +1741,7 @@ mdns_conflict_save_time(struct netif *netif)
   u32_t diff;
   u8_t index2;
 
-  /* Increase the number of conflicts occured */
+  /* Increase the number of conflicts occurred */
   mdns->num_conflicts++;
   mdns->conflict_time[mdns->index] = sys_now();
   /* Print timestamp list */
@@ -1770,8 +1770,8 @@ mdns_conflict_save_time(struct netif *netif)
  *  - Check if we exceeded the maximum of 15 conflicts in 10seconds.
  *  - Let the user know there is a conflict.
  *
- * @param netif network interface on which the conflict occured.
- * @param slot service index +1 on which the conflict occured (0 indicate hostname conflict).
+ * @param netif network interface on which the conflict occurred.
+ * @param slot service index +1 on which the conflict occurred (0 indicate hostname conflict).
  */
 static void
 mdns_probe_conflict(struct netif *netif, s8_t slot)
@@ -2319,7 +2319,7 @@ mdns_probe_and_announce(void* arg)
     case MDNS_STATE_ANNOUNCE_WAIT:
     case MDNS_STATE_ANNOUNCING:
       if (mdns->sent_num == 0) {
-        /* probing was succesful, announce all records */
+        /* probing was successful, announce all records */
         mdns->state = MDNS_STATE_ANNOUNCING;
         /* Reset rate limit max probe conflict timeout flag */
         mdns->rate_limit_activated = 0;

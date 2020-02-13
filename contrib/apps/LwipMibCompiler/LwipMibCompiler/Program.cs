@@ -361,7 +361,7 @@ namespace LwipMibCompiler
 			}
 			else
 			{
-				// not accessible or unsupported accress type
+				// not accessible or unsupported access type
 				return null;
 			}
 
@@ -434,7 +434,7 @@ namespace LwipMibCompiler
 				{
 					result.AugmentedTableRow = rot.Augments;
 
-					// the indeces from another table shall be used because this table is only an extension of it
+					// the indices from another table shall be used because this table is only an extension of it
 					rot = MibTypesResolver.ResolveDeclaration(rot.Module, rot.Augments) as ObjectType;
 				}
 

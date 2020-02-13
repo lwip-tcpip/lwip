@@ -7,7 +7,7 @@
  * requests from other machines for our physical address.
  *
  * This implementation complies with RFC 826 (Ethernet ARP). It supports
- * Gratuitious ARP from RFC3220 (IP Mobility Support for IPv4) section 4.6
+ * Gratuitous ARP from RFC3220 (IP Mobility Support for IPv4) section 4.6
  * if an interface calls etharp_gratuitous(our_netif) upon address change.
  */
 

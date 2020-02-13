@@ -10,7 +10,7 @@ namespace Lextm.SharpSnmpLib.Mib
 		}
 
 		/// <summary>
-		/// Returns the values of the map as continous range. At best as one range.
+		/// Returns the values of the map as continuous range. At best as one range.
 		/// </summary>
 		/// <returns></returns>
 		public ValueRanges GetContinousRanges()

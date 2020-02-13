@@ -1,5 +1,5 @@
 This port contains infrastructure and examples for running lwIP on Unix-like
-operating systems (Linux, OpenBSD, cygwin). Much of this is targetted towards
+operating systems (Linux, OpenBSD, cygwin). Much of this is targeted towards
 testing lwIP applications.
 
 * port/sys_arch.c, port/perf.c, port/include/arch/: Generic platform porting,

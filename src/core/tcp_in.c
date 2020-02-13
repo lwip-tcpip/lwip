@@ -592,7 +592,7 @@ dropped:
 }
 
 /** Called from tcp_input to check for TF_CLOSED flag. This results in closing
- * and deallocating a pcb at the correct place to ensure noone references it
+ * and deallocating a pcb at the correct place to ensure no one references it
  * any more.
  * @returns 1 if the pcb has been closed and deallocated, 0 otherwise
  */

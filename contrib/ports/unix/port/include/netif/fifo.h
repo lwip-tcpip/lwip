@@ -15,7 +15,7 @@ typedef struct fifo_t {
 
   sys_sem_t sem;		/* semaphore protecting simultaneous data manipulation */
   sys_sem_t getSem;		/* sepaphore used to signal new data if getWaiting is set */
-  u8_t getWaiting;		/* flag used to indicate that fifoget is waiting for data. fifoput is suposed to clear */
+  u8_t getWaiting;		/* flag used to indicate that fifoget is waiting for data. fifoput is supposed to clear */
   						/* this flag prior to signaling the getSem semaphore */
 } fifo_t;
 

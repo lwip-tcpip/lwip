@@ -430,7 +430,7 @@ acd_handle_arp_conflict(struct netif *netif, struct acd *acd)
      the netif but the LL address is still open in the background. */
 
   if (acd->state == ACD_STATE_PASSIVE_ONGOING) {
-    /* Imediatly back off on a conflict. */
+    /* Immediately back off on a conflict. */
     LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
       ("acd_handle_arp_conflict(): conflict when we are in passive mode -> back off\n"));
     acd_stop(acd);

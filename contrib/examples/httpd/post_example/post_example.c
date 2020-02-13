@@ -137,7 +137,7 @@ httpd_post_receive_data(void *connection, struct pbuf *p)
       }
     }
     /* not returning ERR_OK aborts the connection, so return ERR_OK unless the
-       conenction is unknown */
+       connection is unknown */
     ret = ERR_OK;
   } else {
     ret = ERR_VAL;

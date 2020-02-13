@@ -94,7 +94,7 @@
  *
  * To save memory, the maximum tag length is limited (@see LWIP_HTTPD_MAX_TAG_NAME_LEN).
  * To save memory, the maximum insertion string length is limited (@see
- * LWIP_HTTPD_MAX_TAG_INSERT_LEN). If this is not enought, @ref LWIP_HTTPD_SSI_MULTIPART
+ * LWIP_HTTPD_MAX_TAG_INSERT_LEN). If this is not enough, @ref LWIP_HTTPD_SSI_MULTIPART
  * can be used.
  */
 #if !defined LWIP_HTTPD_SSI || defined __DOXYGEN__

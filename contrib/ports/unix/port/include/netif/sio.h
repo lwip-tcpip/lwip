@@ -29,7 +29,7 @@ typedef enum sioBaudrates {
 s16_t sio_poll(sio_status_t * siostat);
 
 /**
-*	Parse incoming characters until a string str is recieved, blocking call
+*	Parse incoming characters until a string str is received, blocking call
 * @param	str		zero terminated string to expect
 * @param 	siostat siostatus struct, contains sio instance data, given by sio_open
 */
