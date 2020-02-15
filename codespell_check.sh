@@ -20,7 +20,7 @@ fi
 cd $LWIPBASE
 
 : "${LWIPTOOLS:=${LWIPBASE}}"
-. "${LWIPTOOLS}"/changed_files.sh
+. "${LWIPTOOLS}"/codespell_changed_files.sh
 
 FILEREGEX='\.([CcHh]|sh|py|md|txt)$'
 EXCLUDE='^(./contrib/apps/LwipMibCompiler/Mibs)'
@@ -39,7 +39,9 @@ CODESPELL_OPTS="-q 2"  # Disable "WARNING: Binary file"
 CODESPELL_OPTS+=" --check-hidden"
 # Disable false positives "nd  => and, 2nd", "ans => and", "tolen => token",
 # "ofo => of", "WAN => WANT", "mut => must, mutt, moot"
-CODESPELL_OPTS+=" --ignore-words-list=nd,ans,tolen,ofo,wan,mut"
+CODESPELL_OPTS+=" --ignore-words-list=nd,ans,tolen,ofo,wan,mut "
+# propagate all options to codespell -> pass "-w" to this script to write changes
+CODESPELL_OPTS+="$@"
 
 # Filter-out all false positive raising "disabled due to" messages.
 ERRORS=$(${CODESPELL_CMD} ${CODESPELL_OPTS} ${FILES} | grep -ve "disabled due to")
