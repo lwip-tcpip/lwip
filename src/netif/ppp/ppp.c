@@ -840,7 +840,9 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* MPPE_SUPPORT */
 
   if (protocol == PPP_COMP) {
+#if MPPE_SUPPORT
     u8_t *pl;
+#endif
 
     switch (pcb->ccp_receive_method) {
 #if MPPE_SUPPORT
@@ -855,6 +857,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       goto drop; /* Cannot really happen, we only negotiate what we are able to do */
     }
 
+#if MPPE_SUPPORT
     /* Assume no PFC */
     if (pb->len < 2) {
       goto drop;
@@ -869,6 +872,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       protocol = (pl[0] << 8) | pl[1];
       pbuf_remove_header(pb, 2);
     }
+#endif /* MPPE_SUPPORT */
   }
 #endif /* CCP_SUPPORT */
 
