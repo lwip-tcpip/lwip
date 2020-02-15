@@ -404,7 +404,7 @@ really know what you are doing, your move ;-)
 
 
 /*
- * Fonction to call for received data
+ * Function to call for received data
  *
  * ppp, PPP control block
  * buffer, input buffer

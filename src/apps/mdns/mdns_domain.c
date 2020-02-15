@@ -227,7 +227,7 @@ mdns_readname_loop(struct pbuf *p, u16_t offset, struct mdns_domain *domain, uns
         u16_t res;
         /* Recursive call, maximum depth will be checked */
         res = mdns_readname_loop(p, jumpaddr, domain, depth + 1);
-        /* Dont return offset since new bytes were not read (jumped to somewhere in packet) */
+        /* Don't return offset since new bytes were not read (jumped to somewhere in packet) */
         if (res == MDNS_READNAME_ERROR) {
           return res;
         }

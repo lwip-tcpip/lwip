@@ -40,7 +40,7 @@ http_server_netconn_serve(struct netconn *conn)
         buf[4]=='/' ) {
 
       /* Send the HTML header
-             * subtract 1 from the size, since we dont send the \0 in the string
+             * subtract 1 from the size, since we don't send the \0 in the string
              * NETCONN_NOCOPY: our data is const static, so no need to copy it
        */
       netconn_write(conn, http_html_hdr, sizeof(http_html_hdr)-1, NETCONN_NOCOPY);

@@ -66,7 +66,7 @@
 #define FALSE 0
 #endif
 
-/* for all of you who dont define SIO_DEBUG in debug.h */
+/* for all of you who don't define SIO_DEBUG in debug.h */
 #ifndef SIO_DEBUG
 #define SIO_DEBUG 0
 #endif

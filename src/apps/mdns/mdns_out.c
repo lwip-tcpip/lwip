@@ -1080,7 +1080,7 @@ mdns_start_multicast_timeouts_ipv6(struct netif *netif)
 /**
  *  This function clears the output message without changing the destination
  *  address or port. This is useful for clearing the delayed msg structs without
- *  loosing the set IP.
+ *  losing the set IP.
  *
  *  @param outmsg pointer to output message to clear.
  */

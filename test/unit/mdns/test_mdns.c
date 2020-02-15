@@ -830,7 +830,7 @@ START_TEST(compress_jump_to_jump)
 
   offset = 0x20;
   length = mdns_compress_domain(p, &offset, &domain);
-  /* Dont compress if jump would be to a jump */
+  /* Don't compress if jump would be to a jump */
   fail_unless(length == domain.length);
 
   offset = 0x10;

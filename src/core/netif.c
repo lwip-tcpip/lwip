@@ -741,7 +741,7 @@ netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *
     change_reason |= LWIP_NSC_IPV4_SETTINGS_CHANGED;
   }
   if (!remove) {
-    /* Isssue a callback even if the address hasn't changed, eg. DHCP reboot */
+    /* Issue a callback even if the address hasn't changed, eg. DHCP reboot */
     change_reason |= LWIP_NSC_IPV4_ADDR_VALID;
   }
   if (change_reason != LWIP_NSC_NONE) {

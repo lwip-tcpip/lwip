@@ -1067,7 +1067,7 @@ bad:
  * ipcp_nakci - Peer has sent a NAK for some of our CIs.
  * This should not modify any state if the Nak is bad
  * or if IPCP is in the OPENED state.
- * Calback from fsm_rconfnakrej - Receive Configure-Nak or Configure-Reject.
+ * Callback from fsm_rconfnakrej - Receive Configure-Nak or Configure-Reject.
  *
  * Returns:
  *	0 - Nak was bad.
@@ -1739,7 +1739,7 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	}
 endswitch:
 	if (orc == CONFACK &&		/* Good CI */
-	    rc != CONFACK)		/*  but prior CI wasnt? */
+	    rc != CONFACK)		/*  but prior CI wasn't? */
 	    continue;			/* Don't send this one */
 
 	if (orc == CONFNAK) {		/* Nak this CI? */

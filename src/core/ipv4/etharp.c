@@ -142,7 +142,7 @@ static err_t etharp_raw(struct netif *netif,
 /**
  * Free a complete queue of etharp entries
  *
- * @param q a qeueue of etharp_q_entry's to free
+ * @param q a queue of etharp_q_entry's to free
  */
 static void
 free_etharp_q(struct etharp_q_entry *q)
