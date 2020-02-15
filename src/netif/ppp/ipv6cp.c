@@ -67,7 +67,7 @@
     L'Institut d'Informatique et de Mathématiques Appliquées de Grenoble (IMAG)
     est une fédération d'unités mixtes de recherche du CNRS, de l'Institut National
     Polytechnique de Grenoble et de l'Université Joseph Fourier regroupant
-    sept laboratoires dont le laboratoire Logiciels, Systèmes, Réseaux (LSR).
+    sept laboratoires don't le laboratoire Logiciels, Systèmes, Réseaux (LSR).
 
     This work has been done in the context of GIE DYADE (joint R & D venture
     between BULL S.A. and INRIA).
@@ -1006,7 +1006,7 @@ endswitch:
 	IPV6CPDEBUG((" (%s)\n", CODENAME(orc)));
 
 	if (orc == CONFACK &&		/* Good CI */
-	    rc != CONFACK)		/*  but prior CI wasnt? */
+	    rc != CONFACK)		/*  but prior CI wasn't? */
 	    continue;			/* Don't send this one */
 
 	if (orc == CONFNAK) {		/* Nak this CI? */
