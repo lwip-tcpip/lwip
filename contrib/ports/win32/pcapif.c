@@ -113,6 +113,8 @@
 
 /** If 1, use PBUF_REF for RX (for testing purposes mainly).
  * For this, LWIP_SUPPORT_CUSTOM_PBUF must be enabled.
+ * Also, PBUF_POOL_BUFSIZE must be set high enough to ensure all rx packets
+ * fit into a single pbuf.
  */
 #ifndef PCAPIF_RX_REF
 #define PCAPIF_RX_REF                 0
@@ -125,6 +127,13 @@
  */
 #ifndef PCAPIF_GET_STATE_PTR
 #define PCAPIF_GET_STATE_PTR(netif)   ((netif)->state)
+#endif
+
+/** Define this to 1 to allocate readonly pbufs for RX (needs PCAPIF_RX_REF,
+ * only implemented for windows, for now)
+ */
+#ifndef PCAPIF_RX_READONLY
+#define PCAPIF_RX_READONLY            0
 #endif
 
 #if PCAPIF_HANDLE_LINKSTATE
@@ -320,7 +329,11 @@ pcaipf_is_tx_packet(struct netif *netif, const void *packet, int packet_len)
 struct pcapif_pbuf_custom
 {
    struct pbuf_custom pc;
+#if PCAPIF_RX_READONLY
+   void *ro_mem;
+#else
    struct pbuf* p;
+#endif
 };
 #endif /* PCAPIF_RX_REF */
 
@@ -961,9 +974,15 @@ pcapif_rx_pbuf_free_custom(struct pbuf *p)
   struct pcapif_pbuf_custom* ppc;
   LWIP_ASSERT("NULL pointer", p != NULL);
   ppc = (struct pcapif_pbuf_custom*)p;
+#if PCAPIF_RX_READONLY
+  LWIP_ASSERT("NULL pointer", ppc->ro_mem != NULL);
+  pcapifh_free_readonly_mem(ppc->ro_mem);
+  ppc->ro_mem = NULL;
+#else
   LWIP_ASSERT("NULL pointer", ppc->p != NULL);
   pbuf_free(ppc->p);
   ppc->p = NULL;
+#endif
   mem_free(p);
 }
 
@@ -972,6 +991,8 @@ pcapif_rx_ref(struct pbuf* p)
 {
   struct pcapif_pbuf_custom* ppc;
   struct pbuf* q;
+  u16_t len;
+  void *payload_mem;
 
   LWIP_ASSERT("NULL pointer", p != NULL);
   LWIP_ASSERT("chained pbuf not supported here", p->next == NULL);
@@ -979,9 +1000,18 @@ pcapif_rx_ref(struct pbuf* p)
   ppc = (struct pcapif_pbuf_custom*)mem_malloc(sizeof(struct pcapif_pbuf_custom));
   LWIP_ASSERT("out of memory for RX", ppc != NULL);
   ppc->pc.custom_free_function = pcapif_rx_pbuf_free_custom;
+  len = p->tot_len;
+#if PCAPIF_RX_READONLY
+  payload_mem = pcapifh_alloc_readonly_copy(p->payload, len);
+  LWIP_ASSERT("out of readonly memory for RX", payload_mem != NULL);
+  pbuf_free(p);
+  ppc->ro_mem = payload_mem;
+#else
   ppc->p = p;
+  payload_mem = p->payload;
+#endif
 
-  q = pbuf_alloced_custom(PBUF_RAW, p->tot_len, PBUF_REF, &ppc->pc, p->payload, p->tot_len);
+  q = pbuf_alloced_custom(PBUF_RAW, len, PBUF_REF, &ppc->pc, payload_mem, len);
   LWIP_ASSERT("pbuf_alloced_custom returned NULL", q != NULL);
   return q;
 }

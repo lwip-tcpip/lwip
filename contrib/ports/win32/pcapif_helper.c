@@ -78,6 +78,43 @@ void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
   }
 }
 
+/** Helper function for PCAPIF_RX_READONLY for windows: copy the date to a new
+ * page which is set to READONLY after copying.
+ * This is a helper to simulate hardware that receives to memory that cannot be
+ * written by the CPU.
+ */
+void *
+pcapifh_alloc_readonly_copy(void *data, size_t len)
+{
+  DWORD oldProtect;
+  void *ret;
+  if (len > 4096) {
+    lwip_win32_platform_diag("pcapifh_alloc_readonly_copy: invalid len: %d\n", len);
+    while(1);
+  }
+  ret = VirtualAlloc(NULL, 4096, MEM_COMMIT, PAGE_READWRITE);
+  if (ret == NULL) {
+    lwip_win32_platform_diag("VirtualAlloc failed: %d\n", GetLastError());
+    while(1);
+  }
+  memcpy(ret, data, len);
+  if (!VirtualProtect(ret, len, PAGE_READONLY, &oldProtect)) {
+    lwip_win32_platform_diag("VirtualProtect failed: %d\n", GetLastError());
+    while(1);
+  }
+  printf("pcapifh_alloc_readonly_copy(%d): 0x%08x\n", len, ret);
+  return ret;
+}
+
+void
+pcapifh_free_readonly_mem(void *data)
+{
+  if (!VirtualFree(data, 0, MEM_RELEASE)) {
+    lwip_win32_platform_diag("VirtualFree(0x%08x) failed: %d\n", data, GetLastError());
+    while(1);
+  }
+}
+
 #else /* WIN32 */
 
 /* @todo: add linux/unix implementation? */
