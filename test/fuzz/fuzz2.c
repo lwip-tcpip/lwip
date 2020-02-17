@@ -35,5 +35,5 @@
 
 int main(int argc, char** argv)
 {
-  return lwip_fuzztest(argc, argv, LWIP_FUZZ_SINGLE);
+  return lwip_fuzztest(argc, argv, LWIP_FUZZ_MULTIPACKET);
 }
