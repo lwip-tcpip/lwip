@@ -78,17 +78,6 @@ static DWORD netconn_sem_tls_index;
 
 static HCRYPTPROV hcrypt;
 
-unsigned int
-lwip_port_rand(void)
-{
-  u32_t ret;
-  if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
-    return ret;
-  }
-  LWIP_ASSERT("CryptGenRandom failed", 0);
-  return 0;
-}
-
 static void
 sys_win_rand_init(void)
 {
@@ -103,6 +92,22 @@ sys_win_rand_init(void)
       LWIP_ASSERT(errbuf, 0);
     }
   }
+}
+
+unsigned int
+lwip_port_rand(void)
+{
+  u32_t ret;
+  if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
+    return ret;
+  }
+  // maybe CryptAcquireContext has not been called...
+  sys_win_rand_init();
+  if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
+    return ret;
+  }
+  LWIP_ASSERT("CryptGenRandom failed", 0);
+  return 0;
 }
 
 static void
