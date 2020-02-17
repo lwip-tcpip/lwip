@@ -445,6 +445,11 @@ void sys_init(void);
 u32_t sys_jiffies(void);
 #endif
 
+#ifdef LWIP_FUZZ_SYS_NOW
+/* This offset should be added to the time 'sys_now()' returns */
+extern u32_t sys_now_offset;
+#endif
+
 /**
  * @ingroup sys_time
  * Returns the current time in milliseconds,

@@ -142,7 +142,11 @@ sys_jiffies(void)
 u32_t
 sys_now(void)
 {
-  return (u32_t)sys_get_ms_longlong();
+  u32_t now = (u32_t)sys_get_ms_longlong();
+#ifdef LWIP_FUZZ_SYS_NOW
+  now += sys_now_offset;
+#endif
+  return now;
 }
 
 CRITICAL_SECTION critSec;

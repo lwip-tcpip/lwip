@@ -670,9 +670,14 @@ u32_t
 sys_now(void)
 {
   struct timespec ts;
+  u32_t now;
 
   get_monotonic_time(&ts);
-  return (u32_t)(ts.tv_sec * 1000L + ts.tv_nsec / 1000000L);
+  now = (u32_t)(ts.tv_sec * 1000L + ts.tv_nsec / 1000000L);
+#ifdef LWIP_FUZZ_SYS_NOW
+  now += sys_now_offset;
+#endif
+  return now;
 }
 
 u32_t
