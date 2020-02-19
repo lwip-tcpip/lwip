@@ -29,7 +29,7 @@
 # Author: Adam Dunkels <adam@sics.se>
 #
 
-all compile: lwip_fuzz lwip_fuzz2
+all compile: lwip_fuzz lwip_fuzz2 lwip_fuzz3
 .PHONY: all clean
 
 CC=afl-gcc
@@ -42,13 +42,13 @@ CONTRIBDIR=../../contrib
 include $(CONTRIBDIR)/ports/unix/Common.mk
 
 clean:
-	rm -f *.o $(LWIPLIBCOMMON) $(APPLIB) lwip_fuzz lwip_fuzz2 *.s .depend* *.core core
+	rm -f *.o $(LWIPLIBCOMMON) $(APPLIB) lwip_fuzz lwip_fuzz2 lwip_fuzz3 *.s .depend* *.core core
 
 depend dep: .depend
 
 include .depend
 
-.depend: fuzz.c fuzz2.c fuzz_common.c $(LWIPFILES) $(APPFILES)
+.depend: fuzz.c fuzz2.c fuzz3.c fuzz_common.c $(LWIPFILES) $(APPFILES)
 	$(CCDEP) $(CFLAGS) -MM $^ > .depend || rm -f .depend
 
 lwip_fuzz: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz.o fuzz_common.o
@@ -56,3 +56,6 @@ lwip_fuzz: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz.o fuzz_common.o
 
 lwip_fuzz2: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz2.o fuzz_common.o
 	$(CC) $(CFLAGS) -o lwip_fuzz2 fuzz2.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
+
+lwip_fuzz3: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz3.o fuzz_common.o
+	$(CC) $(CFLAGS) -o lwip_fuzz3 fuzz3.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)

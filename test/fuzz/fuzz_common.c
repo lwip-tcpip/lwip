@@ -33,9 +33,13 @@
 
 #include "fuzz_common.h"
 
+#include "lwip/altcp_tcp.h"
+#include "lwip/dns.h"
 #include "lwip/init.h"
 #include "lwip/netif.h"
-#include "lwip/dns.h"
+#include "lwip/sys.h"
+#include "lwip/timeouts.h"
+#include "lwip/udp.h"
 #include "netif/etharp.h"
 #if LWIP_IPV6
 #include "lwip/ethip6.h"
@@ -50,14 +54,13 @@
 #include <string.h>
 #include <stdio.h>
 
-/* This define enables multi packet processing.
- * For this, the input is interpreted as 2 byte length + data + 2 byte length + data...
- * #define LWIP_FUZZ_MULTI_PACKET
-*/
-#ifdef LWIP_FUZZ_MULTI_PACKET
-u8_t pktbuf[20000];
-#else
-u8_t pktbuf[2000];
+static u8_t pktbuf[200000];
+static const u8_t *remfuzz_ptr; /* remaining fuzz pointer */
+static size_t     remfuzz_len;  /* remaining fuzz length  */
+
+#ifdef LWIP_FUZZ_SYS_NOW
+/* This offset should be added to the time 'sys_now()' returns */
+u32_t sys_now_offset;
 #endif
 
 /* no-op send function */
@@ -106,6 +109,8 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
     MEMCPY(q->payload, data, q->len);
     data += q->len;
   }
+  remfuzz_ptr += len;
+  remfuzz_len -= len;
   err = netif->input(p, netif);
   if (err != ERR_OK) {
     pbuf_free(p);
@@ -114,39 +119,367 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
 
 static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t *data, size_t len)
 {
+  remfuzz_ptr = data;
+  remfuzz_len = len;
+
   if (type == LWIP_FUZZ_SINGLE) {
     input_pkt(netif, data, len);
   } else {
     const u16_t max_packet_size = 1514;
-    const u8_t *ptr = data;
-    size_t rem_len = len;
+    const size_t minlen = sizeof(u16_t) + (type == LWIP_FUZZ_MULTIPACKET_TIME ? sizeof(u32_t) : 0);
   
-    while (rem_len > sizeof(u16_t)) {
+    while (remfuzz_len > minlen) {
       u16_t frame_len;
-      memcpy(&frame_len, ptr, sizeof(u16_t));
-      ptr += sizeof(u16_t);
-      rem_len -= sizeof(u16_t);
+#ifdef LWIP_FUZZ_SYS_NOW
+      u32_t external_delay = 0;
+#endif
+      if (type == LWIP_FUZZ_MULTIPACKET_TIME) {
+#ifdef LWIP_FUZZ_SYS_NOW
+        /* Extract external delay time from fuzz pool */
+        memcpy(&external_delay, remfuzz_ptr, sizeof(u32_t));
+        external_delay = htonl(external_delay);
+#endif
+        remfuzz_ptr += sizeof(u32_t);
+        remfuzz_len -= sizeof(u32_t);
+      }
+      memcpy(&frame_len, remfuzz_ptr, sizeof(u16_t));
+      remfuzz_ptr += sizeof(u16_t);
+      remfuzz_len -= sizeof(u16_t);
       frame_len = htons(frame_len) & 0x7FF;
       frame_len = LWIP_MIN(frame_len, max_packet_size);
-      if (frame_len > rem_len) {
-        frame_len = (u16_t)rem_len;
+      if (frame_len > remfuzz_len) {
+        frame_len = (u16_t)remfuzz_len;
       }
       if (frame_len != 0) {
-        input_pkt(netif, ptr, frame_len);
+        if (type == LWIP_FUZZ_MULTIPACKET_TIME) {
+#ifdef LWIP_FUZZ_SYS_NOW
+          /* Update total external delay time, and check timeouts */
+          sys_now_offset += external_delay;
+#endif
+          sys_check_timeouts();
+        }
+        input_pkt(netif, remfuzz_ptr, frame_len);
+        /* Check timeouts again */
+        sys_check_timeouts();
       }
-      ptr += frame_len;
-      rem_len -= frame_len;
     }
   }
 }
 
-int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type)
+#if LWIP_TCP
+static struct altcp_pcb *tcp_client_pcb;  /* a pcb for the TCP client */
+static struct altcp_pcb *tcp_server_pcb;  /* a pcb for the TCP server */
+static u16_t            tcp_remote_port;  /* a TCP port number of the destionation */
+static u16_t            tcp_local_port;   /* a TCP port number of the local server */
+
+/**
+ * tcp_app_fuzz_input
+ * Input fuzz with a write function for TCP.
+ */
+static void
+tcp_app_fuzz_input(struct altcp_pcb *pcb)
+{
+  if (remfuzz_len > sizeof(u16_t)) {
+    /*
+     * (max IP packet size) - ((minimum IP header size) + (minimum TCP header size))
+     * = 65535 - (20 + 20)
+     * = 65495
+     */
+    const u16_t max_data_size = 65495;
+    u16_t data_len;
+
+    memcpy(&data_len, remfuzz_ptr, sizeof(u16_t));
+    remfuzz_ptr += sizeof(u16_t);
+    remfuzz_len -= sizeof(u16_t);
+    data_len = htons(data_len);
+    data_len = LWIP_MIN(data_len, max_data_size);
+    if (data_len > remfuzz_len) {
+      data_len = (u16_t)remfuzz_len;
+    }
+
+    if (data_len != 0) {
+      altcp_write(pcb, remfuzz_ptr, data_len, TCP_WRITE_FLAG_COPY);
+      altcp_output(pcb);
+    } else {
+      altcp_close(pcb);
+    }
+
+    remfuzz_ptr += data_len;
+    remfuzz_len -= data_len;
+  }
+}
+
+/**
+ * tcp_client_connected
+ * A connected callback function (for the TCP client)
+ */
+static err_t
+tcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(err);
+
+  tcp_app_fuzz_input(pcb);
+
+  return ERR_OK;
+}
+
+/**
+ * tcp_client_recv
+ * A recv callback function (for the TCP client)
+ */
+static err_t
+tcp_client_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(err);
+
+  if (p == NULL) {
+    altcp_close(pcb);
+  } else {
+    altcp_recved(pcb, p->tot_len);
+    tcp_app_fuzz_input(pcb);
+    pbuf_free(p);
+  }
+
+  return ERR_OK;
+}
+
+/**
+ * tcp_client_sent
+ * A sent callback function (for the TCP client)
+ */
+static err_t
+tcp_client_sent(void *arg, struct altcp_pcb *pcb, u16_t len)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(len);
+  return ERR_OK;
+}
+
+/**
+ * tcp_client_poll
+ * A poll callback function (for the TCP client)
+ */
+static err_t
+tcp_client_poll(void *arg, struct altcp_pcb *pcb)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(pcb);
+  return ERR_OK;
+}
+
+/**
+ * tcp_client_err
+ * An err callback function (for the TCP client)
+ */
+static void
+tcp_client_err(void *arg, err_t err)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(err);
+}
+
+/**
+ * tcp_server_recv
+ * A recv callback function (for the TCP server)
+ */
+static err_t
+tcp_server_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(err);
+
+  if (p == NULL) {
+    altcp_close(pcb);
+  } else {
+    altcp_recved(pcb, p->tot_len);
+    tcp_app_fuzz_input(pcb);
+    pbuf_free(p);
+  }
+
+  return ERR_OK;
+}
+
+/**
+ * tcp_server_sent
+ * A sent callback function (for the TCP server)
+ */
+static err_t
+tcp_server_sent(void *arg, struct altcp_pcb *pcb, u16_t len)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(len);
+  return ERR_OK;
+}
+
+/**
+ * tcp_server_poll
+ * A poll callback function (for the TCP server)
+ */
+static err_t
+tcp_server_poll(void *arg, struct altcp_pcb *pcb)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(pcb);
+  return ERR_OK;
+}
+
+/**
+ * tcp_server_err
+ * An err callbuck function (for the TCP server)
+ */
+static void
+tcp_server_err(void *arg, err_t err)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(err);
+}
+
+/**
+ * tcp_server_accept
+ * An accept callbuck function (for the TCP server)
+ */
+static err_t
+tcp_server_accept(void *arg, struct altcp_pcb *pcb, err_t err)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(err);
+
+  if ((err != ERR_OK) || (pcb == NULL)) {
+    return ERR_VAL;
+  }
+
+  altcp_setprio(pcb, TCP_PRIO_MIN);
+
+  altcp_recv(pcb, tcp_server_recv);
+  altcp_err(pcb, tcp_server_err);
+  altcp_poll(pcb, tcp_server_poll, 10);
+  altcp_sent(pcb, tcp_server_sent);
+
+  return ERR_OK;
+}
+#endif /* LWIP_TCP */
+
+#if LWIP_UDP
+static struct udp_pcb   *udp_client_pcb;  /* a pcb for the UDP client */
+static struct udp_pcb   *udp_server_pcb;  /* a pcb for the UDP server */
+static u16_t            udp_remote_port;  /* a UDP port number of the destination */
+static u16_t            udp_local_port;   /* a UDP port number of the local server*/
+
+/**
+ * udp_app_fuzz_input
+ * Input fuzz with write functions for UDP.
+ */
+static void
+udp_app_fuzz_input(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
+{
+  if (remfuzz_len > sizeof(u16_t)) {
+    /*
+     * (max IP packet size) - ((minimum IP header size) - (minimum UDP header size))
+     * = 65535 - (20 + 8)
+     * = 65507
+     */
+    const u16_t max_data_size = 65507;
+    u16_t data_len;
+
+    memcpy(&data_len, remfuzz_ptr, sizeof(u16_t));
+    remfuzz_ptr += sizeof(u16_t);
+    remfuzz_len -= sizeof(u16_t);
+    data_len = htons(data_len);
+    data_len = LWIP_MIN(data_len, max_data_size);
+    if (data_len > remfuzz_len) {
+      data_len = (u16_t)remfuzz_len;
+    }
+
+    if (data_len != 0) {
+      struct pbuf *p, *q;
+
+      p = pbuf_alloc(PBUF_RAW, (u16_t)data_len, PBUF_POOL);
+      LWIP_ASSERT("alloc failed", p);
+
+      for (q = p; q != NULL; q = q->next) {
+        MEMCPY(q->payload, remfuzz_ptr, q->len);
+        remfuzz_ptr += q->len;
+      }
+      remfuzz_len -= data_len;
+
+      /*
+       * Trying input from ...
+       *
+       * client:
+       *     The pcb has information about the destination.
+       *     We use udp_send().
+       *
+       * server:
+       *     The pcb does NOT have infomation about the destionation.
+       *     We use udp_sendto().
+       */
+      if (addr == NULL) {
+        udp_send(pcb, p);
+      } else {
+        udp_sendto(pcb, p, addr, port);
+      }
+      pbuf_free(p);
+    }
+  }
+}
+
+/**
+ * udp_client_recv
+ * A recv callback function (for the UDP client)
+ */
+static void
+udp_client_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(addr);
+  LWIP_UNUSED_ARG(port);
+
+  if (p == NULL) {
+    udp_disconnect(pcb);
+  } else {
+    /*
+     * We call the function with 2nd argument set to NULL
+     * to input fuzz from udp_send.
+     */
+    udp_app_fuzz_input(pcb, NULL, port);
+    pbuf_free(p);
+  }
+}
+
+/**
+ * udp_server_recv
+ * A recv callback functyion (for the UDP server)
+ */
+static void
+udp_server_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(addr);
+  LWIP_UNUSED_ARG(port);
+
+  if (p != NULL) {
+    udp_app_fuzz_input(pcb, addr, port);
+    pbuf_free(p);
+  }
+}
+#endif /* LWIP_UDP */
+
+int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_apps)
 {
   struct netif net_test;
   ip4_addr_t addr;
   ip4_addr_t netmask;
   ip4_addr_t gw;
   size_t len;
+  err_t err;
+  ip_addr_t remote_addr;      /* a IPv4 addr of the destination */
+  struct eth_addr remote_mac = ETH_ADDR(0x28, 0x00, 0x00, 0x22, 0x2b, 0x38); /* a MAC addr of the destination */
 
   lwip_init();
 
@@ -158,17 +491,61 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type)
   netif_set_up(&net_test);
   netif_set_link_up(&net_test);
 
+  if (test_apps & LWIP_FUZZ_STATICARP) {
+    /* Add the ARP entry */
+    IP_ADDR4(&remote_addr, 172, 30, 115, 37);
+    etharp_add_static_entry(&(remote_addr.u_addr.ip4), &remote_mac);
+  }
+
 #if LWIP_IPV6
   nd6_tmr(); /* tick nd to join multicast groups */
 #endif
   dns_setserver(0, &net_test.gw);
 
-  /* initialize apps */
-  httpd_init();
-  lwiperf_start_tcp_server_default(NULL, NULL);
-  mdns_resp_init();
-  mdns_resp_add_netif(&net_test, "hostname");
-  snmp_init();
+  if (test_apps & LWIP_FUZZ_DEFAULT) {
+    /* initialize apps */
+    httpd_init();
+    lwiperf_start_tcp_server_default(NULL, NULL);
+    mdns_resp_init();
+    mdns_resp_add_netif(&net_test, "hostname");
+    snmp_init();
+  }
+  if (test_apps & LWIP_FUZZ_TCP_CLIENT) {
+    tcp_client_pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
+    LWIP_ASSERT("Error: altcp_new() failed", tcp_client_pcb != NULL);
+    tcp_remote_port = 80;
+    err = altcp_connect(tcp_client_pcb, &remote_addr, tcp_remote_port, tcp_client_connected);
+    LWIP_ASSERT("Error: altcp_connect() failed", err == ERR_OK);
+    altcp_recv(tcp_client_pcb, tcp_client_recv);
+    altcp_err(tcp_client_pcb, tcp_client_err);
+    altcp_poll(tcp_client_pcb, tcp_client_poll, 10);
+    altcp_sent(tcp_client_pcb, tcp_client_sent);
+  }
+  if (test_apps & LWIP_FUZZ_TCP_SERVER) {
+    tcp_server_pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
+    LWIP_ASSERT("Error: altcp_new() failed", tcp_server_pcb != NULL);
+    altcp_setprio(tcp_server_pcb, TCP_PRIO_MIN);
+    tcp_local_port = 80;
+    err = altcp_bind(tcp_server_pcb, IP_ANY_TYPE, tcp_local_port);
+    LWIP_ASSERT("Error: altcp_bind() failed", err == ERR_OK);
+    tcp_server_pcb = altcp_listen(tcp_server_pcb);
+    LWIP_ASSERT("Error: altcp_listen() failed", err == ERR_OK);
+    altcp_accept(tcp_server_pcb, tcp_server_accept);
+  }
+  if (test_apps & LWIP_FUZZ_UDP_CLIENT) {
+    udp_client_pcb = udp_new();
+    udp_new_ip_type(IPADDR_TYPE_ANY);
+    udp_recv(udp_client_pcb, udp_client_recv, NULL);
+    udp_remote_port = 161;
+    udp_connect(udp_client_pcb, &remote_addr, udp_remote_port);
+  }
+  if (test_apps & LWIP_FUZZ_UDP_SERVER) {
+    udp_server_pcb = udp_new();
+    udp_new_ip_type(IPADDR_TYPE_ANY);
+    udp_local_port = 161;
+    udp_bind(udp_server_pcb, IP_ANY_TYPE, udp_local_port);
+    udp_recv(udp_server_pcb, udp_server_recv, NULL);
+  }
 
   if(argc > 1) {
     FILE* f;
