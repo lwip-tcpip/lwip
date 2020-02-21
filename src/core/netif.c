@@ -179,9 +179,6 @@ netif_loopif_init(struct netif *netif)
 #if LWIP_LOOPIF_MULTICAST
   netif_set_flags(netif, NETIF_FLAG_IGMP);
 #endif
-#if LWIP_NETIF_LOOPBACK_MULTITHREADING
-  netif->reschedule_poll = 0;
-#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_DISABLE_ALL);
   return ERR_OK;
 }
@@ -362,10 +359,6 @@ netif_add(struct netif *netif,
 #if LWIP_IPV6 && LWIP_IPV6_MLD
   netif->mld_mac_filter = NULL;
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
-#if ENABLE_LOOPBACK
-  netif->loop_first = NULL;
-  netif->loop_last = NULL;
-#endif /* ENABLE_LOOPBACK */
 
   /* remember netif specific state information data */
   netif->state = state;
@@ -376,9 +369,16 @@ netif_add(struct netif *netif,
   netif->acd_list = NULL;
 #endif /* LWIP_ACD */
   NETIF_RESET_HINTS(netif);
-#if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
+#if ENABLE_LOOPBACK
+  netif->loop_first = NULL;
+  netif->loop_last = NULL;
+#if LWIP_LOOPBACK_MAX_PBUFS
   netif->loop_cnt_current = 0;
-#endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+  netif->reschedule_poll = 0;
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#endif /* ENABLE_LOOPBACK */
 
 #if LWIP_IPV4
   netif_set_addr(netif, ipaddr, netmask, gw);
