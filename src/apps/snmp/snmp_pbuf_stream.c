@@ -135,7 +135,7 @@ snmp_pbuf_stream_writeto(struct snmp_pbuf_stream *pbuf_stream, struct snmp_pbuf_
 err_t
 snmp_pbuf_stream_seek(struct snmp_pbuf_stream *pbuf_stream, s32_t offset)
 {
-  if ((offset < 0) || (offset > pbuf_stream->length)) {
+  if (((pbuf_stream->offset + offset) < 0) || (offset > pbuf_stream->length)) {
     /* we cannot seek backwards or forward behind stream end */
     return ERR_ARG;
   }
