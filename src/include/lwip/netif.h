@@ -398,6 +398,10 @@ struct netif {
 #if LWIP_LOOPBACK_MAX_PBUFS
   u16_t loop_cnt_current;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+  /* Used if the original scheduling failed. */
+  u8_t reschedule_poll;
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
 };
 

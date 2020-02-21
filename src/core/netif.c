@@ -179,6 +179,9 @@ netif_loopif_init(struct netif *netif)
 #if LWIP_LOOPIF_MULTICAST
   netif_set_flags(netif, NETIF_FLAG_IGMP);
 #endif
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+  netif->reschedule_poll = 0;
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_DISABLE_ALL);
   return ERR_OK;
 }
@@ -1102,11 +1105,12 @@ netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callb
 /**
  * @ingroup netif
  * Send an IP packet to be received on the same netif (loopif-like).
- * The pbuf is simply copied and handed back to netif->input.
- * In multithreaded mode, this is done directly since netif->input must put
- * the packet on a queue.
- * In callback mode, the packet is put on an internal queue and is fed to
+ * The pbuf is copied and added to an internal queue which is fed to 
  * netif->input by netif_poll().
+ * In multithreaded mode, the call to netif_poll() is queued to be done on the
+ * TCP/IP thread.
+ * In callback mode, the user has the responsibility to call netif_poll() in 
+ * the main loop of their application.
  *
  * @param netif the lwip network interface structure
  * @param p the (IP) packet to 'send'
@@ -1183,6 +1187,12 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
     LWIP_ASSERT("if first != NULL, last must also be != NULL", netif->loop_last != NULL);
     netif->loop_last->next = r;
     netif->loop_last = last;
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+    if (netif->reschedule_poll) {
+      schedule_poll = 1;
+      netif->reschedule_poll = 0;
+    }
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   } else {
     netif->loop_first = r;
     netif->loop_last = last;
@@ -1200,7 +1210,11 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
   if (schedule_poll) {
-    tcpip_try_callback((tcpip_callback_fn)netif_poll, netif);
+    if (tcpip_try_callback((tcpip_callback_fn)netif_poll, netif) != ERR_OK) {
+      SYS_ARCH_PROTECT(lev);
+      netif->reschedule_poll = 1;
+      SYS_ARCH_UNPROTECT(lev);
+    }
   }
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
