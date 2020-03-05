@@ -852,6 +852,13 @@ tcp_process(struct tcp_pcb *pcb)
 
   tcp_parseopt(pcb);
 
+  if (flags & TCP_SYN) {
+    /* accept SYN only in 2 states: */
+    if ((pcb->state != SYN_SENT) && (pcb->state != SYN_RCVD)) {
+      return ERR_OK;
+    }
+  }
+
   /* Do different things depending on the TCP state. */
   switch (pcb->state) {
     case SYN_SENT:
@@ -924,7 +931,12 @@ tcp_process(struct tcp_pcb *pcb)
       }
       break;
     case SYN_RCVD:
-      if (flags & TCP_ACK) {
+      if (flags & TCP_SYN) {
+        if (seqno == pcb->rcv_nxt - 1) {
+          /* Looks like another copy of the SYN - retransmit our SYN-ACK */
+          tcp_rexmit(pcb);
+        }
+      } else if (flags & TCP_ACK) {
         /* expected ACK number? */
         if (TCP_SEQ_BETWEEN(ackno, pcb->lastack + 1, pcb->snd_nxt)) {
           pcb->state = ESTABLISHED;
@@ -975,9 +987,6 @@ tcp_process(struct tcp_pcb *pcb)
           tcp_rst(pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
                   ip_current_src_addr(), tcphdr->dest, tcphdr->src);
         }
-      } else if ((flags & TCP_SYN) && (seqno == pcb->rcv_nxt - 1)) {
-        /* Looks like another copy of the SYN - retransmit our SYN-ACK */
-        tcp_rexmit(pcb);
       }
       break;
     case CLOSE_WAIT:
