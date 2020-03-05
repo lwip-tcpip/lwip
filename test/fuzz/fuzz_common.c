@@ -58,6 +58,10 @@ static u8_t pktbuf[200000];
 static const u8_t *remfuzz_ptr; /* remaining fuzz pointer */
 static size_t     remfuzz_len;  /* remaining fuzz length  */
 
+#ifndef FUZZ_DEBUG
+#define FUZZ_DEBUG LWIP_DBG_OFF
+#endif
+
 #ifdef LWIP_FUZZ_SYS_NOW
 /* This offset should be added to the time 'sys_now()' returns */
 u32_t sys_now_offset;
@@ -155,6 +159,7 @@ static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t
 #ifdef LWIP_FUZZ_SYS_NOW
           /* Update total external delay time, and check timeouts */
           sys_now_offset += external_delay;
+          LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: sys_now_offset += %u -> %u\n", external_delay, sys_now_offset));
 #endif
           sys_check_timeouts();
         }
@@ -198,9 +203,11 @@ tcp_app_fuzz_input(struct altcp_pcb *pcb)
     }
 
     if (data_len != 0) {
+      LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: tcp: write %u bytes\n", data_len));
       altcp_write(pcb, remfuzz_ptr, data_len, TCP_WRITE_FLAG_COPY);
       altcp_output(pcb);
     } else {
+      LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: tcp: close\n"));
       altcp_close(pcb);
     }
 
@@ -219,6 +226,7 @@ tcp_client_connected(void *arg, struct altcp_pcb *pcb, err_t err)
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(err);
 
+  LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: tcp: tcp_client_connected\n"));
   tcp_app_fuzz_input(pcb);
 
   return ERR_OK;
@@ -238,6 +246,7 @@ tcp_client_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
     altcp_close(pcb);
   } else {
     altcp_recved(pcb, p->tot_len);
+    LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: tcp: tcp_client_recv: %d\n", p->tot_len));
     tcp_app_fuzz_input(pcb);
     pbuf_free(p);
   }
@@ -295,6 +304,7 @@ tcp_server_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
     altcp_close(pcb);
   } else {
     altcp_recved(pcb, p->tot_len);
+    LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: tcp: tcp_server_recv: %d\n", p->tot_len));
     tcp_app_fuzz_input(pcb);
     pbuf_free(p);
   }
@@ -351,6 +361,7 @@ tcp_server_accept(void *arg, struct altcp_pcb *pcb, err_t err)
   if ((err != ERR_OK) || (pcb == NULL)) {
     return ERR_VAL;
   }
+  LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: accept from remote\n"));
 
   altcp_setprio(pcb, TCP_PRIO_MIN);
 
@@ -394,6 +405,7 @@ udp_app_fuzz_input(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
       data_len = (u16_t)remfuzz_len;
     }
 
+    LWIP_DEBUGF(FUZZ_DEBUG, ("fuzz: udp: send %u bytes\n", data_len));
     if (data_len != 0) {
       struct pbuf *p, *q;
 
