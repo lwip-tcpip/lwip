@@ -513,25 +513,27 @@ altcp_mbedtls_lower_sent(void *arg, struct altcp_pcb *inner_conn, u16_t len)
   struct altcp_pcb *conn = (struct altcp_pcb *)arg;
   LWIP_UNUSED_ARG(inner_conn); /* for LWIP_NOASSERT */
   if (conn) {
+    int overhead;
+    u16_t app_len;
     altcp_mbedtls_state_t *state = (altcp_mbedtls_state_t *)conn->state;
     LWIP_ASSERT("state", state != NULL);
     LWIP_ASSERT("pcb mismatch", conn->inner_conn == inner_conn);
     /* calculate TLS overhead part to not send it to application */
-    int overhead = state->overhead_bytes_adjust + state->ssl_context.out_left;
-    if ((unsigned)overhead > len)
+    overhead = state->overhead_bytes_adjust + state->ssl_context.out_left;
+    if ((unsigned)overhead > len) {
       overhead = len;
+    }
     /* remove ACKed bytes from overhead adjust counter */
     state->overhead_bytes_adjust -= len;
     /* try to send more if we failed before (may increase overhead adjust counter) */
     mbedtls_ssl_flush_output(&state->ssl_context);
     /* remove calculated overhead from ACKed bytes len */
-    len -= overhead;
+    app_len = len - (u16_t)overhead;
     /* update application write counter and inform application */
-    if (len)
-    {
-      state->overhead_bytes_adjust += len;
+    if (app_len) {
+      state->overhead_bytes_adjust += app_len;
       if (conn->sent)
-        return conn->sent(conn->arg, conn, len);
+        return conn->sent(conn->arg, conn, app_len);
     }
   }
   return ERR_OK;
