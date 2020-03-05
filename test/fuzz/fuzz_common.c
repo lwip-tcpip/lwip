@@ -67,9 +67,92 @@ static size_t     remfuzz_len;  /* remaining fuzz length  */
 u32_t sys_now_offset;
 #endif
 
+/** Set this to 1 and define FUZZ_DUMP_PCAP_FILE to dump tx and rx packets into
+ * a pcap file. At the same time, packet info is written via LWIP_DEBUGF so
+ * packets can be matched to other events for debugging them.
+ */
+#ifndef FUZZ_DUMP_PCAP
+#define FUZZ_DUMP_PCAP 0
+#endif
+
+#if FUZZ_DUMP_PCAP
+const u8_t pcap_file_header[24] = {
+  0xd4, 0xc3, 0xb2, 0xa1, 0x02, 0x00, 0x04, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00
+};
+
+static FILE* fpcap;
+static u32_t pcap_packet;
+
+static void pcap_dump_init(void)
+{
+  fpcap = fopen(FUZZ_DUMP_PCAP_FILE, "wb");
+  if (fpcap != NULL) {
+    /* write header */
+    fwrite(pcap_file_header, 1, sizeof(pcap_file_header), fpcap);
+  }
+}
+
+/* This function might have to be called from LWIP_PLATFORM_ASSERT()
+ * in order to produce correct pcap results on crash. */
+void pcap_dump_stop(void)
+{
+  if (fpcap != NULL) {
+    fclose(fpcap);
+    fpcap = NULL;
+  }
+}
+
+static void pcap_dump_packet(struct pbuf *p, int is_tx)
+{
+  if (fpcap != NULL) {
+    struct pbuf *q;
+    u32_t data;
+    pcap_packet++;
+    if (is_tx) {
+      LWIP_DEBUGF(FUZZ_DEBUG, ("> %d fuzz: netif: send %u bytes\n", pcap_packet, p->tot_len));
+    } else {
+      LWIP_DEBUGF(FUZZ_DEBUG, ("< %d fuzz: RX packet of %u bytes\n", pcap_packet, p->tot_len));
+      if (pcap_packet == 50 || pcap_packet == 33 || pcap_packet == 29) {
+        pcap_packet++;
+        pcap_packet--;
+      }
+    }
+    /* write packet header */
+    fwrite(&pcap_packet, 1, sizeof(pcap_packet), fpcap);
+    data = 0;
+    fwrite(&data, 1, sizeof(data), fpcap);
+    data = p->tot_len;
+    fwrite(&data, 1, sizeof(data), fpcap);
+    fwrite(&data, 1, sizeof(data), fpcap);
+    /* write packet data */
+    for(q = p; q != NULL; q = q->next) {
+      fwrite(q->payload, 1, q->len, fpcap);
+    }
+  }
+}
+
+static void pcap_dump_rx_packet(struct pbuf *p)
+{
+  pcap_dump_packet(p, 0);
+}
+
+static void pcap_dump_tx_packet(struct pbuf *p)
+{
+  pcap_dump_packet(p, 1);
+}
+#else /* FUZZ_DUMP_PCAP */
+#define pcap_dump_rx_packet(p)
+#define pcap_dump_tx_packet(p)
+#define pcap_dump_init()
+#define pcap_dump_stop()
+#endif /* FUZZ_DUMP_PCAP */
+
 /* no-op send function */
 static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
 {
+  pcap_dump_tx_packet(p);
   LWIP_UNUSED_ARG(netif);
   LWIP_UNUSED_ARG(p);
   return ERR_OK;
@@ -115,6 +198,7 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
   }
   remfuzz_ptr += len;
   remfuzz_len -= len;
+  pcap_dump_rx_packet(p);
   err = netif->input(p, netif);
   if (err != ERR_OK) {
     pbuf_free(p);
@@ -493,6 +577,7 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
   ip_addr_t remote_addr;      /* a IPv4 addr of the destination */
   struct eth_addr remote_mac = ETH_ADDR(0x28, 0x00, 0x00, 0x22, 0x2b, 0x38); /* a MAC addr of the destination */
 
+  pcap_dump_init();
   lwip_init();
 
   IP4_ADDR(&addr, 172, 30, 115, 84);
@@ -576,5 +661,6 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
   }
   input_pkts(type, &net_test, pktbuf, len);
 
+  pcap_dump_stop();
   return 0;
 }
