@@ -173,6 +173,8 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
     }
     for (;;) {
       if (lwip_isdigit(c)) {
+        if((base == 8) && ((u32_t)(c - '0') >= 8))
+          break;
         val = (val * base) + (u32_t)(c - '0');
         c = *++cp;
       } else if (base == 16 && lwip_isxdigit(c)) {
