@@ -219,6 +219,22 @@ START_TEST(test_127_0_0_1)
 }
 END_TEST
 
+START_TEST(test_ip4addr_aton)
+{
+  ip4_addr_t ip_addr;
+
+  LWIP_UNUSED_ARG(_i);
+
+  fail_unless(ip4addr_aton("192.168.0.1", &ip_addr) == 1);
+  fail_unless(ip4addr_aton("192.168.0.0001", &ip_addr) == 1);
+  fail_unless(ip4addr_aton("192.168.0.zzz", &ip_addr) == 0);
+  fail_unless(ip4addr_aton("192.168.1", &ip_addr) == 1);
+  fail_unless(ip4addr_aton("192.168.0xd3", &ip_addr) == 1);
+  fail_unless(ip4addr_aton("192.168.0xz5", &ip_addr) == 0);
+  fail_unless(ip4addr_aton("192.168.095", &ip_addr) == 0);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 ip4_suite(void)
@@ -226,6 +242,7 @@ ip4_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_ip4_reass),
     TESTFUNC(test_127_0_0_1),
+    TESTFUNC(test_ip4addr_aton),
   };
   return create_suite("IPv4", tests, sizeof(tests)/sizeof(testfunc), ip4_setup, ip4_teardown);
 }
