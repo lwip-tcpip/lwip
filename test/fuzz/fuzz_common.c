@@ -95,7 +95,10 @@ static void pcap_dump_init(void)
 }
 
 /* This function might have to be called from LWIP_PLATFORM_ASSERT()
- * in order to produce correct pcap results on crash. */
+ * in order to produce correct pcap results on crash.
+ * Define this global so that for a test, we can call this from anywhere...
+ */
+void pcap_dump_stop(void);
 void pcap_dump_stop(void)
 {
   if (fpcap != NULL) {
