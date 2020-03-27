@@ -34,6 +34,7 @@
 
 #define MEMP_NUM_SYS_TIMEOUT    17
 #define LWIP_FUZZ_SYS_NOW
+#define LWIP_RAND_FOR_FUZZ
 
 /* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
 #define NO_SYS                          1

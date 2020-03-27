@@ -667,3 +667,32 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
   pcap_dump_stop();
   return 0;
 }
+
+#ifdef LWIP_RAND_FOR_FUZZ
+u32_t lwip_fuzz_rand(void)
+{
+#ifdef LWIP_RAND_FOR_FUZZ_SIMULATE_GLIBC
+  /* this is what glibc rand() returns (first 20 numbers) */
+  static u32_t rand_nrs[] = {0x6b8b4567, 0x327b23c6, 0x643c9869, 0x66334873, 0x74b0dc51,
+    0x19495cff, 0x2ae8944a, 0x625558ec, 0x238e1f29, 0x46e87ccd,
+    0x3d1b58ba, 0x507ed7ab, 0x2eb141f2, 0x41b71efb, 0x79e2a9e3,
+    0x7545e146, 0x515f007c, 0x5bd062c2, 0x12200854, 0x4db127f8};
+  static int idx = 0;
+  u32_t ret = rand_nrs[idx];
+  idx++;
+  if (idx >= sizeof(rand_nrs)/sizeof((rand_nrs)[0])) {
+    idx = 0;
+  }
+  return ret;
+#else
+  /* a simple LCG, unsafe but should give the same result for every execution (best for fuzzing) */
+  u32_t result;
+  static s32_t state[1] = {0xdeadbeef};
+  s32_t val = state[0];
+  val = ((state[0] * 1103515245) + 12345) & 0x7fffffff;
+  state[0] = val;
+  result = val;
+  return result;
+#endif
+}
+#endif
