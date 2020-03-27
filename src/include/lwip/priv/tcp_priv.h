@@ -106,14 +106,11 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 #define tcp_output_nagle(tpcb) (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK)
 
 
-#define TCP_SEQ_LT(a,b)     ((s32_t)((u32_t)(a) - (u32_t)(b)) < 0)
-#define TCP_SEQ_LEQ(a,b)    ((s32_t)((u32_t)(a) - (u32_t)(b)) <= 0)
-#define TCP_SEQ_GT(a,b)     ((s32_t)((u32_t)(a) - (u32_t)(b)) > 0)
-#define TCP_SEQ_GEQ(a,b)    ((s32_t)((u32_t)(a) - (u32_t)(b)) >= 0)
+#define TCP_SEQ_LT(a,b)     (((u32_t)((u32_t)(a) - (u32_t)(b)) & 0x80000000u) != 0)
+#define TCP_SEQ_LEQ(a,b)    (!(TCP_SEQ_LT(b,a)))
+#define TCP_SEQ_GT(a,b)     TCP_SEQ_LT(b,a)
+#define TCP_SEQ_GEQ(a,b)    TCP_SEQ_LEQ(b,a)
 /* is b<=a<=c? */
-#if 0 /* see bug #10548 */
-#define TCP_SEQ_BETWEEN(a,b,c) ((c)-(b) >= (a)-(b))
-#endif
 #define TCP_SEQ_BETWEEN(a,b,c) (TCP_SEQ_GEQ(a,b) && TCP_SEQ_LEQ(a,c))
 
 #ifndef TCP_TMR_INTERVAL
