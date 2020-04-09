@@ -246,7 +246,6 @@ static const fsm_callbacks ccp_callbacks = {
  * Do we want / did we get any compression?
  */
 static int ccp_anycompress(ccp_options *opt) {
-    LWIP_UNUSED_ARG(opt);
     return (0
 #if DEFLATE_SUPPORT
 	|| (opt)->deflate
@@ -744,7 +743,6 @@ static void ccp_resetci(fsm *f) {
 static int ccp_cilen(fsm *f) {
     ppp_pcb *pcb = f->pcb;
     ccp_options *go = &pcb->ccp_gotoptions;
-    LWIP_UNUSED_ARG(go);
 
     return 0
 #if BSDCOMPRESS_SUPPORT
@@ -840,8 +838,6 @@ static int ccp_ackci(fsm *f, u_char *p, int len) {
 #if BSDCOMPRESS_SUPPORT || PREDICTOR_SUPPORT
     u_char *p0 = p;
 #endif /* BSDCOMPRESS_SUPPORT || PREDICTOR_SUPPORT */
-    LWIP_UNUSED_ARG(p);
-    LWIP_UNUSED_ARG(go);
 
 #if MPPE_SUPPORT
     if (go->mppe) {
@@ -1026,7 +1022,6 @@ static int ccp_rejci(fsm *f, u_char *p, int len) {
     ppp_pcb *pcb = f->pcb;
     ccp_options *go = &pcb->ccp_gotoptions;
     ccp_options try_;		/* options to request next time */
-    LWIP_UNUSED_ARG(p);
 
     try_ = *go;
 
@@ -1122,7 +1117,6 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
     u8_t rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
 				/* CI_MPPE, or due to other options?       */
 #endif /* MPPE_SUPPORT */
-    LWIP_UNUSED_ARG(ao);
 
     ret = CONFACK;
     retp = p0 = p;
