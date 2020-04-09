@@ -220,6 +220,9 @@ PACK_STRUCT_END
 #if PPP_SUPPORT && PPP_IPV6_SUPPORT && !LWIP_IPV6
 #error "PPP_IPV6_SUPPORT needs LWIP_IPV6 turned on"
 #endif
+#if PPP_SUPPORT && CCP_SUPPORT && !MPPE_SUPPORT
+#error "CCP_SUPPORT needs MPPE_SUPPORT turned on"
+#endif
 #if !LWIP_ETHERNET && (LWIP_ARP || PPPOE_SUPPORT)
 #error "LWIP_ETHERNET needs to be turned on for LWIP_ARP or PPPOE_SUPPORT"
 #endif
