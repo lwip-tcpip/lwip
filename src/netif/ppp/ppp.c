@@ -706,6 +706,8 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
     PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
     return NULL;
   }
+  /* FIXME: user application should be responsible to call netif_set_up(),
+   * remove it for next release with allowed behavior break */
   netif_set_up(pcb->netif);
 
   pcb->link_cb = callbacks;
