@@ -473,7 +473,6 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 #if PPP_IPV6_SUPPORT
   netif->output_ip6 = ppp_netif_output_ip6;
 #endif /* PPP_IPV6_SUPPORT */
-  netif->flags = NETIF_FLAG_UP;
 #if LWIP_NETIF_HOSTNAME
   /* @todo: Initialize interface hostname */
   /* netif_set_hostname(netif, "lwip"); */
@@ -707,6 +706,7 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
     PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
     return NULL;
   }
+  netif_set_up(pcb->netif);
 
   pcb->link_cb = callbacks;
   pcb->link_ctx_cb = link_ctx_cb;
