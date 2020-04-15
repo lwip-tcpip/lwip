@@ -1337,6 +1337,15 @@
 #define TCP_CALCULATE_EFF_SEND_MSS      1
 #endif
 
+/**
+ * LWIP_TCP_RTO_TIME: Initial TCP retransmission timeout (ms).
+ * This defaults to 3 seconds as traditionally defined in the TCP protocol.
+ * For improving timely recovery on faster networks, this value could
+ * be lowered down to 1 second (RFC 6298)
+ */
+#if !defined LWIP_TCP_RTO_TIME || defined __DOXYGEN__
+#define LWIP_TCP_RTO_TIME               3000
+#endif
 
 /**
  * TCP_SND_BUF: TCP sender buffer space (bytes).
