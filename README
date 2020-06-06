@@ -64,37 +64,34 @@ help improve lwIP by use of Savannah's interface, Git and the
 mailing list. A core team of developers will commit changes to the
 Git source tree.
 
-The lwIP TCP/IP stack is maintained in the 'lwip' Git module and
-contributions (such as platform ports) are in the 'contrib' Git module.
+The lwIP TCP/IP stack is maintained in the 'src' directory and
+contributions (such as platform ports and applications) are in
+the 'contrib' directory.
 
 See doc/savannah.txt for details on Git server access for users and
 developers.
 
-The current Git trees are web-browsable:
-  http://git.savannah.gnu.org/cgit/lwip.git
-  http://git.savannah.gnu.org/cgit/lwip/lwip-contrib.git
+The current Git tree is web-browsable:
+  https://git.savannah.gnu.org/cgit/lwip.git
 
 Submit patches and bugs via the lwIP project page:
-  http://savannah.nongnu.org/projects/lwip/
-
-Continuous integration builds (GCC, clang):
-  https://travis-ci.org/lwip-tcpip/lwip
+  https://savannah.nongnu.org/projects/lwip/
 
 
 DOCUMENTATION
 
 Self documentation of the source code is regularly extracted from the current
 Git sources and is available from this web page:
-  http://www.nongnu.org/lwip/
+  https://www.nongnu.org/lwip/
 
 Also, there are mailing lists you can subscribe at
-  http://savannah.nongnu.org/mail/?group=lwip
+  https://savannah.nongnu.org/mail/?group=lwip
 plus searchable archives:
-  http://lists.nongnu.org/archive/html/lwip-users/
-  http://lists.nongnu.org/archive/html/lwip-devel/
+  https://lists.nongnu.org/archive/html/lwip-users/
+  https://lists.nongnu.org/archive/html/lwip-devel/
 
 There is a wiki about lwIP at
-  http://lwip.wikia.com/wiki/LwIP_Wiki
+  https://lwip.wikia.com/wiki/LwIP_Wiki
 You might get questions answered there, but unfortunately, it is not as
 well maintained as it should be.
 
