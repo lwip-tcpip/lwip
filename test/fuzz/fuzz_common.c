@@ -677,7 +677,7 @@ u32_t lwip_fuzz_rand(void)
     0x19495cff, 0x2ae8944a, 0x625558ec, 0x238e1f29, 0x46e87ccd,
     0x3d1b58ba, 0x507ed7ab, 0x2eb141f2, 0x41b71efb, 0x79e2a9e3,
     0x7545e146, 0x515f007c, 0x5bd062c2, 0x12200854, 0x4db127f8};
-  static int idx = 0;
+  static unsigned idx = 0;
   u32_t ret = rand_nrs[idx];
   idx++;
   if (idx >= sizeof(rand_nrs)/sizeof((rand_nrs)[0])) {
