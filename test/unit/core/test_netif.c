@@ -9,7 +9,7 @@
 #error "This tests needs LWIP_NETIF_EXT_STATUS_CALLBACK enabled"
 #endif
 
-struct netif net_test;
+static struct netif net_test;
 
 
 /* Setups/teardown functions */
