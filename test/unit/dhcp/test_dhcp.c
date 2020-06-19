@@ -18,7 +18,7 @@
 #endif
 
 
-struct netif net_test;
+static struct netif net_test;
 
 static const u8_t broadcast[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 

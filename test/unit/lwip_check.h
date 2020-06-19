@@ -13,6 +13,7 @@
 #define EXPECT_RETX(x, y) do { fail_unless(x); if(!(x)) { return y; }} while(0)
 #define EXPECT_RETNULL(x) EXPECT_RETX(x, NULL)
 
+#if (CHECK_MAJOR_VERSION == 0 && CHECK_MINOR_VERSION < 13)
 typedef struct {
   TFun func;
   const char *name;
@@ -23,6 +24,15 @@ typedef struct {
 /* Modified function from check.h, supplying function name */
 #define tcase_add_named_test(tc,tf) \
    _tcase_add_test((tc),(tf).func,(tf).name,0, 0, 0, 1)
+
+#else
+/* From 0.13.0 check keeps track of the method name internally */
+typedef const TTest * testfunc;
+
+#define TESTFUNC(x) x
+
+#define tcase_add_named_test(tc,tf) tcase_add_test(tc,tf)
+#endif
 
 /** typedef for a function returning a test suite */
 typedef Suite* (suite_getter_fn)(void);
