@@ -913,6 +913,7 @@ tcp_split_unsent_seg(struct tcp_pcb *pcb, u16_t split)
 
   seg = tcp_create_segment(pcb, p, remainder_flags, lwip_ntohl(useg->tcphdr->seqno) + split, optflags);
   if (seg == NULL) {
+    p = NULL; /* Freed by tcp_create_segment */
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                 ("tcp_split_unsent_seg: could not create new TCP segment\n"));
     goto memerr;
