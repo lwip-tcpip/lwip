@@ -410,7 +410,7 @@ icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, 
   offset = sizeof(struct icmp6_hdr);
   while (p && datalen) {
     u16_t len = LWIP_MIN(datalen, p->len);
-    err_t res = pbuf_take_at(q, p->payload, datalen, offset);
+    err_t res = pbuf_take_at(q, p->payload, len, offset);
     if (res != ERR_OK) break;
     datalen -= len;
     offset += len;
