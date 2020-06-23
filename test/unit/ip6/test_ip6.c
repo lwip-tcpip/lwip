@@ -2,6 +2,7 @@
 
 #include "lwip/ethip6.h"
 #include "lwip/ip6.h"
+#include "lwip/icmp6.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/nd6.h"
 #include "lwip/stats.h"
@@ -287,6 +288,71 @@ START_TEST(test_ip6_lladdr)
 }
 END_TEST
 
+static struct pbuf *cloned_pbuf = NULL;
+static err_t clone_output(struct netif *netif, struct pbuf *p, const ip6_addr_t *addr) {
+  LWIP_UNUSED_ARG(netif);
+  LWIP_UNUSED_ARG(addr);
+  cloned_pbuf = pbuf_clone(PBUF_RAW, PBUF_RAM, p);
+  return ERR_OK;
+}
+
+/* Reproduces bug #58553 */
+START_TEST(test_ip6_dest_unreachable_chained_pbuf)
+{
+
+  ip_addr_t my_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x1);
+  ip_addr_t peer_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x4);
+  /* Create chained pbuf with UDP data that will get destination unreachable */
+  u8_t udp_hdr[] = {
+    0x60, 0x00, 0x27, 0x03, 0x00, 0x2d, 0x11, 0x40,
+    0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+    0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    0x01, 0xff, 0x03, 0xff, 0x00, 0x2d, 0x00, 0x00,
+  };
+  struct pbuf *main = pbuf_alloc(PBUF_RAW, sizeof(udp_hdr), PBUF_ROM);
+  u8_t udp_payload[] = "abcdefghijklmnopqrstuvwxyz0123456789";
+  struct pbuf *data = pbuf_alloc(PBUF_RAW, sizeof(udp_payload), PBUF_ROM);
+  u8_t *icmpptr;
+  struct ip6_hdr *outhdr;
+  struct icmp6_hdr *icmp6hdr;
+  fail_unless(main);
+  main->payload = udp_hdr;
+  fail_unless(data);
+  data->payload = udp_payload;
+  pbuf_cat(main, data);
+  data = NULL;
+
+  /* Configure and enable local address */
+  netif_set_up(&test_netif6);
+  netif_ip6_addr_set(&test_netif6, 0, ip_2_ip6(&my_addr));
+  netif_ip6_addr_set_state(&test_netif6, 0, IP6_ADDR_VALID);
+  test_netif6.output_ip6 = clone_output;
+
+  /* Process packet and send ICMPv6 reply for unreachable UDP port */
+  ip6_input(main, &test_netif6);
+  main = NULL;
+
+  /* Verify ICMP reply packet contents */
+  fail_unless(cloned_pbuf);
+  fail_unless(cloned_pbuf->len == IP6_HLEN + ICMP6_HLEN + sizeof(udp_hdr) + sizeof(udp_payload));
+  outhdr = (struct ip6_hdr*) cloned_pbuf->payload;
+  fail_unless(ip6_addr_cmp_packed(ip_2_ip6(&my_addr), &outhdr->src, IP6_NO_ZONE));
+  fail_unless(ip6_addr_cmp_packed(ip_2_ip6(&peer_addr), &outhdr->dest, IP6_NO_ZONE));
+  icmpptr = &((u8_t*)cloned_pbuf->payload)[IP6_HLEN];
+  icmp6hdr = (struct icmp6_hdr*) icmpptr;
+  fail_unless(icmp6hdr->type == ICMP6_TYPE_DUR);
+  fail_unless(icmp6hdr->code == ICMP6_DUR_PORT);
+  fail_unless(icmp6hdr->data == lwip_htonl(0));
+  icmpptr += ICMP6_HLEN;
+  fail_unless(memcmp(icmpptr, udp_hdr, sizeof(udp_hdr)) == 0, "mismatch in copied ip6/udp header");
+  icmpptr += sizeof(udp_hdr);
+  fail_unless(memcmp(icmpptr, udp_payload, sizeof(udp_payload)) == 0, "mismatch in copied udp payload");
+  pbuf_free(cloned_pbuf);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 ip6_suite(void)
@@ -296,7 +362,8 @@ ip6_suite(void)
     TESTFUNC(test_ip6_aton_ipv4mapped),
     TESTFUNC(test_ip6_ntoa_ipv4mapped),
     TESTFUNC(test_ip6_ntoa),
-    TESTFUNC(test_ip6_lladdr)
+    TESTFUNC(test_ip6_lladdr),
+    TESTFUNC(test_ip6_dest_unreachable_chained_pbuf)
   };
   return create_suite("IPv6", tests, sizeof(tests)/sizeof(testfunc), ip6_setup, ip6_teardown);
 }
