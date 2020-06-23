@@ -99,10 +99,6 @@ START_TEST(test_pbuf_copy_zero_pbuf)
 
   pbuf_free(p1);
   pbuf_free(p3);
-  fail_unless(lwip_stats.mem.used == 0);
-
-  fail_unless(lwip_stats.mem.used == 0);
-  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
 }
 END_TEST
 
