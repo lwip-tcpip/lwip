@@ -388,6 +388,7 @@ icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, 
   struct pbuf *q;
   struct icmp6_hdr *icmp6hdr;
   u16_t datalen = LWIP_MIN(p->tot_len, LWIP_ICMP6_DATASIZE);
+  u16_t offset;
 
   /* ICMPv6 header + datalen (as much of the offending packet as possible) */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + datalen,
@@ -405,8 +406,16 @@ icmp6_send_response_with_addrs_and_netif(struct pbuf *p, u8_t code, u32_t data, 
   icmp6hdr->code = code;
   icmp6hdr->data = lwip_htonl(data);
 
-  /* copy fields from original packet */
-  pbuf_take_at(q, p->payload, datalen, sizeof(struct icmp6_hdr));
+  /* copy fields from original packet (which may be a chain of pbufs) */
+  offset = sizeof(struct icmp6_hdr);
+  while (p && datalen) {
+    u16_t len = LWIP_MIN(datalen, p->len);
+    err_t res = pbuf_take_at(q, p->payload, datalen, offset);
+    if (res != ERR_OK) break;
+    datalen -= len;
+    offset += len;
+    p = p->next;
+  }
 
   /* calculate checksum */
   icmp6hdr->chksum = 0;
