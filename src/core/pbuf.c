@@ -941,12 +941,7 @@ pbuf_dechain(struct pbuf *p)
 
 /**
  * @ingroup pbuf
- * Create PBUF_RAM copies of pbufs.
- *
- * Used to queue packets on behalf of the lwIP stack, such as
- * ARP based queueing.
- *
- * @note You MUST explicitly use p = pbuf_take(p);
+ * Copy the contents of one packet buffer into another.
  *
  * @note Only one packet is copied, no packet queue!
  *
@@ -956,6 +951,7 @@ pbuf_dechain(struct pbuf *p)
  * @return ERR_OK if pbuf was copied
  *         ERR_ARG if one of the pbufs is NULL or p_to is not big
  *                 enough to hold p_from
+ *         ERR_VAL if any of the pbufs are part of a queue
  */
 err_t
 pbuf_copy(struct pbuf *p_to, const struct pbuf *p_from)
