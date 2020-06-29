@@ -287,6 +287,43 @@ START_TEST(test_ip6_lladdr)
 }
 END_TEST
 
+/* Reproduces bug #57374 */
+START_TEST(test_ip6_frag_pbuf_len_assert)
+{
+  ip_addr_t my_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x1);
+  ip_addr_t peer_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x4);
+  struct pbuf *payload, *hdr;
+  err_t err;
+  int i;
+
+  /* Configure and enable local address */
+  test_netif6.mtu = 1500;
+  netif_set_up(&test_netif6);
+  netif_ip6_addr_set(&test_netif6, 0, ip_2_ip6(&my_addr));
+  netif_ip6_addr_set_state(&test_netif6, 0, IP6_ADDR_VALID);
+
+  /* Create packet with lots of small pbufs around mtu limit */
+  payload = pbuf_alloc(PBUF_RAW, 1400, PBUF_POOL);
+  fail_unless(payload != NULL);
+  for (i = 0; i < 16; i++) {
+    struct pbuf *p = pbuf_alloc(PBUF_RAW, 32, PBUF_RAM);
+    fail_unless(p != NULL);
+    pbuf_cat(payload, p);
+  }
+  /* Prefix with header like UDP would */
+  hdr = pbuf_alloc(PBUF_IP, 8, PBUF_RAM);
+  fail_unless(hdr != NULL);
+  pbuf_chain(hdr, payload);
+
+  /* Send it and don't crash while fragmenting */
+  err = ip6_output_if_src(hdr, ip_2_ip6(&my_addr), ip_2_ip6(&peer_addr), 15, 0, IP_PROTO_UDP, &test_netif6);
+  fail_unless(err == ERR_OK);
+
+  pbuf_free(hdr);
+  pbuf_free(payload);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 ip6_suite(void)
@@ -296,7 +333,8 @@ ip6_suite(void)
     TESTFUNC(test_ip6_aton_ipv4mapped),
     TESTFUNC(test_ip6_ntoa_ipv4mapped),
     TESTFUNC(test_ip6_ntoa),
-    TESTFUNC(test_ip6_lladdr)
+    TESTFUNC(test_ip6_lladdr),
+    TESTFUNC(test_ip6_frag_pbuf_len_assert)
   };
   return create_suite("IPv6", tests, sizeof(tests)/sizeof(testfunc), ip6_setup, ip6_teardown);
 }
