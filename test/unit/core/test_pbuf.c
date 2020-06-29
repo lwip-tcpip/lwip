@@ -77,9 +77,6 @@ START_TEST(test_pbuf_copy_zero_pbuf)
   err_t err;
   LWIP_UNUSED_ARG(_i);
 
-  fail_unless(lwip_stats.mem.used == 0);
-  fail_unless(MEMP_STATS_GET(used, MEMP_PBUF_POOL) == 0);
-
   p1 = pbuf_alloc(PBUF_RAW, 1024, PBUF_RAM);
   fail_unless(p1 != NULL);
   fail_unless(p1->ref == 1);
@@ -99,6 +96,53 @@ START_TEST(test_pbuf_copy_zero_pbuf)
 
   pbuf_free(p1);
   pbuf_free(p3);
+}
+END_TEST
+
+/** Call pbuf_copy on pbufs with chains of different sizes */
+START_TEST(test_pbuf_copy_unmatched_chains)
+{
+  int i, j;
+  err_t err;
+  struct pbuf *source, *dest, *p;
+  source = NULL;
+  /* Build source pbuf from linked 16 byte parts,
+   * with payload bytes containing their offset */
+  for (i = 0; i < 8; i++) {
+    p = pbuf_alloc(PBUF_RAW, 16, PBUF_RAM);
+    fail_unless(p != NULL);
+    for (j = 0; j < p->len; j++) {
+        ((unsigned char*)p->payload)[j] = (i << 4) | j;
+    }
+    if (source) {
+        pbuf_cat(source, p);
+    } else {
+        source = p;
+    }
+  }
+  for (i = 0; i < source->tot_len; i++) {
+    fail_unless(pbuf_get_at(source, i) == i);
+  }
+
+  /* Build dest pbuf from other lengths */
+  dest = pbuf_alloc(PBUF_RAW, 35, PBUF_RAM);
+  fail_unless(dest != NULL);
+  p = pbuf_alloc(PBUF_RAW, 81, PBUF_RAM);
+  fail_unless(p != NULL);
+  pbuf_cat(dest, p);
+  p = pbuf_alloc(PBUF_RAW, 27, PBUF_RAM);
+  fail_unless(p != NULL);
+  pbuf_cat(dest, p);
+
+  /* Copy contents and verify data */
+  err = pbuf_copy(dest, source);
+  fail_unless(err == ERR_OK);
+  for (i = 0; i < source->tot_len; i++) {
+    fail_unless(pbuf_get_at(dest, i) == i);
+  }
+
+  pbuf_free(source);
+  pbuf_free(dest);
 }
 END_TEST
 
@@ -258,6 +302,7 @@ pbuf_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_pbuf_alloc_zero_pbufs),
     TESTFUNC(test_pbuf_copy_zero_pbuf),
+    TESTFUNC(test_pbuf_copy_unmatched_chains),
     TESTFUNC(test_pbuf_split_64k_on_small_pbufs),
     TESTFUNC(test_pbuf_queueing_bigger_than_64k),
     TESTFUNC(test_pbuf_take_at_edge),
