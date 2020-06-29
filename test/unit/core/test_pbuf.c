@@ -146,6 +146,53 @@ START_TEST(test_pbuf_copy_unmatched_chains)
 }
 END_TEST
 
+START_TEST(test_pbuf_copy_partial_pbuf)
+{
+  struct pbuf *a, *b, *dest;
+  char lwip[] = "lwip ";
+  char packet[] = "packet";
+  err_t err;
+  LWIP_UNUSED_ARG(_i);
+
+  a = pbuf_alloc(PBUF_RAW, 5, PBUF_REF);
+  fail_unless(a != NULL);
+  a->payload = lwip;
+  b = pbuf_alloc(PBUF_RAW, 7, PBUF_REF);
+  fail_unless(b != NULL);
+  b->payload = packet;
+  pbuf_cat(a, b);
+  dest = pbuf_alloc(PBUF_RAW, 14, PBUF_RAM);
+  memset(dest->payload, 0, dest->len);
+  fail_unless(dest != NULL);
+
+  /* Don't copy if data will not fit */
+  err = pbuf_copy_partial_pbuf(dest, a, a->tot_len, 4);
+  fail_unless(err == ERR_ARG);
+  /* Don't copy if length is longer than source */
+  err = pbuf_copy_partial_pbuf(dest, a, a->tot_len + 1, 0);
+  fail_unless(err == ERR_ARG);
+  /* Normal copy */
+  err = pbuf_copy_partial_pbuf(dest, a, a->tot_len, 0);
+  fail_unless(err == ERR_OK);
+  fail_unless(strcmp("lwip packet", (char*)dest->payload) == 0);
+  /* Copy at offset */
+  err = pbuf_copy_partial_pbuf(dest, a, a->tot_len, 1);
+  fail_unless(err == ERR_OK);
+  fail_unless(strcmp("llwip packet", (char*)dest->payload) == 0);
+  /* Copy at offset with shorter length */
+  err = pbuf_copy_partial_pbuf(dest, a, 6, 6);
+  fail_unless(err == ERR_OK);
+  fail_unless(strcmp("llwip lwip p", (char*)dest->payload) == 0);
+  /* Copy with shorter length */
+  err = pbuf_copy_partial_pbuf(dest, a, 5, 0);
+  fail_unless(err == ERR_OK);
+  fail_unless(strcmp("lwip  lwip p", (char*)dest->payload) == 0);
+
+  pbuf_free(dest);
+  pbuf_free(a);
+}
+END_TEST
+
 START_TEST(test_pbuf_split_64k_on_small_pbufs)
 {
   struct pbuf *p, *rest=NULL;
@@ -303,6 +350,7 @@ pbuf_suite(void)
     TESTFUNC(test_pbuf_alloc_zero_pbufs),
     TESTFUNC(test_pbuf_copy_zero_pbuf),
     TESTFUNC(test_pbuf_copy_unmatched_chains),
+    TESTFUNC(test_pbuf_copy_partial_pbuf),
     TESTFUNC(test_pbuf_split_64k_on_small_pbufs),
     TESTFUNC(test_pbuf_queueing_bigger_than_64k),
     TESTFUNC(test_pbuf_take_at_edge),
