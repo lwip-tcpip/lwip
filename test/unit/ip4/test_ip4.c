@@ -16,6 +16,7 @@
 static struct netif test_netif;
 static ip4_addr_t test_ipaddr, test_netmask, test_gw;
 static int linkoutput_ctr;
+static int linkoutput_byte_ctr;
 
 /* reference internal lwip variable in netif.c */
 
@@ -25,6 +26,7 @@ test_netif_linkoutput(struct netif *netif, struct pbuf *p)
   fail_unless(netif == &test_netif);
   fail_unless(p != NULL);
   linkoutput_ctr++;
+  linkoutput_byte_ctr += p->tot_len;
   return ERR_OK;
 }
 
@@ -102,6 +104,12 @@ create_ip4_input_fragment(u16_t ip_id, u16_t start, u16_t len, int last)
   }
 }
 
+static err_t arpless_output(struct netif *netif, struct pbuf *p,
+                            const ip4_addr_t *ipaddr) {
+  LWIP_UNUSED_ARG(ipaddr);
+  return netif->linkoutput(netif, p);
+}
+
 /* Setups/teardown functions */
 
 static void
@@ -126,6 +134,26 @@ ip4_teardown(void)
 }
 
 /* Test functions */
+START_TEST(test_ip4_frag)
+{
+  struct pbuf *data = pbuf_alloc(PBUF_IP, 8000, PBUF_RAM);
+  ip_addr_t peer_ip = IPADDR4_INIT_BYTES(192,168,0,5);
+  err_t err;
+  LWIP_UNUSED_ARG(_i);
+
+  /* Verify that 8000 byte payload is split into six packets */
+  fail_unless(data != NULL);
+  test_netif_add();
+  test_netif.output = arpless_output;
+  err = ip4_output_if_src(data, &test_ipaddr, ip_2_ip4(&peer_ip),
+                          16, 0, IP_PROTO_UDP, &test_netif);
+  fail_unless(err == ERR_OK);
+  fail_unless(linkoutput_ctr == 6);
+  fail_unless(linkoutput_byte_ctr == (8000 + (6 * IP_HLEN)));
+  pbuf_free(data);
+  test_netif_remove();
+}
+
 START_TEST(test_ip4_reass)
 {
   const u16_t ip_id = 128;
@@ -240,6 +268,7 @@ Suite *
 ip4_suite(void)
 {
   testfunc tests[] = {
+    TESTFUNC(test_ip4_frag),
     TESTFUNC(test_ip4_reass),
     TESTFUNC(test_127_0_0_1),
     TESTFUNC(test_ip4addr_aton),
