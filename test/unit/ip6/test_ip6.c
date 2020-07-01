@@ -311,17 +311,17 @@ START_TEST(test_ip6_dest_unreachable_chained_pbuf)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
     0x01, 0xff, 0x03, 0xff, 0x00, 0x2d, 0x00, 0x00,
   };
-  struct pbuf *main = pbuf_alloc(PBUF_RAW, sizeof(udp_hdr), PBUF_ROM);
+  struct pbuf *header = pbuf_alloc(PBUF_RAW, sizeof(udp_hdr), PBUF_ROM);
   u8_t udp_payload[] = "abcdefghijklmnopqrstuvwxyz0123456789";
   struct pbuf *data = pbuf_alloc(PBUF_RAW, sizeof(udp_payload), PBUF_ROM);
   u8_t *icmpptr;
   struct ip6_hdr *outhdr;
   struct icmp6_hdr *icmp6hdr;
-  fail_unless(main);
-  main->payload = udp_hdr;
+  fail_unless(header);
+  header->payload = udp_hdr;
   fail_unless(data);
   data->payload = udp_payload;
-  pbuf_cat(main, data);
+  pbuf_cat(header, data);
   data = NULL;
 
   /* Configure and enable local address */
@@ -331,8 +331,8 @@ START_TEST(test_ip6_dest_unreachable_chained_pbuf)
   test_netif6.output_ip6 = clone_output;
 
   /* Process packet and send ICMPv6 reply for unreachable UDP port */
-  ip6_input(main, &test_netif6);
-  main = NULL;
+  ip6_input(header, &test_netif6);
+  header = NULL;
 
   /* Verify ICMP reply packet contents */
   fail_unless(cloned_pbuf);
