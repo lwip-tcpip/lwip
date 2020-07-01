@@ -16,6 +16,7 @@
 
 static struct netif test_netif6;
 static int linkoutput_ctr;
+static int linkoutput_byte_ctr;
 
 static err_t
 default_netif_linkoutput(struct netif *netif, struct pbuf *p)
@@ -23,6 +24,7 @@ default_netif_linkoutput(struct netif *netif, struct pbuf *p)
   fail_unless(netif == &test_netif6);
   fail_unless(p != NULL);
   linkoutput_ctr++;
+  linkoutput_byte_ctr += p->tot_len;
   return ERR_OK;
 }
 
@@ -390,6 +392,40 @@ START_TEST(test_ip6_frag_pbuf_len_assert)
 }
 END_TEST
 
+static err_t direct_output(struct netif *netif, struct pbuf *p, const ip6_addr_t *addr) {
+  LWIP_UNUSED_ARG(addr);
+  return netif->linkoutput(netif, p);
+}
+
+START_TEST(test_ip6_frag)
+{
+  ip_addr_t my_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x1);
+  ip_addr_t peer_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x4);
+  struct pbuf *data;
+  err_t err;
+
+  /* Configure and enable local address */
+  test_netif6.mtu = 1500;
+  netif_set_up(&test_netif6);
+  netif_ip6_addr_set(&test_netif6, 0, ip_2_ip6(&my_addr));
+  netif_ip6_addr_set_state(&test_netif6, 0, IP6_ADDR_VALID);
+  test_netif6.output_ip6 = direct_output;
+  /* Reset counters after multicast traffic */
+  linkoutput_ctr = 0;
+  linkoutput_byte_ctr = 0;
+
+  /* Verify that 8000 byte payload is split into six packets */
+  data = pbuf_alloc(PBUF_IP, 8000, PBUF_RAM);
+  fail_unless(data != NULL);
+  err = ip6_output_if_src(data, ip_2_ip6(&my_addr), ip_2_ip6(&peer_addr),
+                          15, 0, IP_PROTO_UDP, &test_netif6);
+  fail_unless(err == ERR_OK);
+  fail_unless(linkoutput_ctr == 6);
+  fail_unless(linkoutput_byte_ctr == (8000 + (6 * (IP6_HLEN + IP6_FRAG_HLEN))));
+  pbuf_free(data);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 ip6_suite(void)
@@ -401,7 +437,8 @@ ip6_suite(void)
     TESTFUNC(test_ip6_ntoa),
     TESTFUNC(test_ip6_lladdr),
     TESTFUNC(test_ip6_dest_unreachable_chained_pbuf),
-    TESTFUNC(test_ip6_frag_pbuf_len_assert)
+    TESTFUNC(test_ip6_frag_pbuf_len_assert),
+    TESTFUNC(test_ip6_frag)
   };
   return create_suite("IPv6", tests, sizeof(tests)/sizeof(testfunc), ip6_setup, ip6_teardown);
 }
