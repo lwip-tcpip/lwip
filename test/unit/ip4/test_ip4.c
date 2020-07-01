@@ -153,6 +153,7 @@ START_TEST(test_ip4_frag)
   pbuf_free(data);
   test_netif_remove();
 }
+END_TEST
 
 START_TEST(test_ip4_reass)
 {
