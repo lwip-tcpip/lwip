@@ -732,7 +732,7 @@ pcapif_low_level_init(struct netif *netif)
     adapter_num = (LWIP_PTR_NUMERIC_CAST(int, netif->state)) - 1;
     if (adapter_num < 0) {
       printf("ERROR: invalid adapter index \"%d\"!\n", adapter_num);
-      LWIP_ASSERT("ERROR initializing network adapter!\n", 0);
+      LWIP_ASSERT("ERROR initializing network adapter!", 0);
       return;
     }
   }
@@ -758,7 +758,7 @@ pcapif_low_level_init(struct netif *netif)
   adapter_num = get_adapter_index(PACKET_LIB_ADAPTER_GUID);
   if (adapter_num < 0) {
     printf("ERROR finding network adapter with GUID \"%s\"!\n", PACKET_LIB_ADAPTER_GUID);
-    LWIP_ASSERT("ERROR initializing network adapter!\n", 0);
+    LWIP_ASSERT("ERROR initializing network adapter!", 0);
     return;
   }
 #endif /* PACKET_LIB_ADAPTER_GUID */

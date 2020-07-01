@@ -166,7 +166,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
     /* Then, move back to the original ipv6 header (we are now pointing to Fragment header).
        This cannot fail since we already checked when receiving this fragment. */
     if (pbuf_header_force(p, (s16_t)((u8_t*)p->payload - (u8_t*)ipr->iphdr))) {
-      LWIP_ASSERT("ip6_reass_free: moving p->payload to ip6 header failed\n", 0);
+      LWIP_ASSERT("ip6_reass_free: moving p->payload to ip6 header failed", 0);
     }
     else {
       /* Reconstruct the zoned source and destination addresses, so that we do
@@ -652,7 +652,7 @@ ip6_reass(struct pbuf *p)
 
     /* Move pbuf back to IPv6 header. This should never fail. */
     if (pbuf_header_force(p, (s16_t)((u8_t*)p->payload - (u8_t*)iphdr_ptr))) {
-      LWIP_ASSERT("ip6_reass: moving p->payload to ip6 header failed\n", 0);
+      LWIP_ASSERT("ip6_reass: moving p->payload to ip6 header failed", 0);
       pbuf_free(p);
       return NULL;
     }

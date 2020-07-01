@@ -719,7 +719,7 @@ static void pppos_input_callback(void *arg) {
 
   ppp = ((struct pppos_input_header*)pb->payload)->ppp;
   if(pbuf_remove_header(pb, sizeof(struct pppos_input_header))) {
-    LWIP_ASSERT("pbuf_remove_header failed\n", 0);
+    LWIP_ASSERT("pbuf_remove_header failed", 0);
     goto drop;
   }
 
