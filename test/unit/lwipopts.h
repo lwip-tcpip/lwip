@@ -51,8 +51,12 @@
 #define LWIP_HAVE_LOOPIF                1
 #define TCPIP_THREAD_TEST
 
-/* Enable DHCP to test it, disable UDP checksum to easier inject packets */
+/* Enable DHCP to test it */
 #define LWIP_DHCP                       1
+
+/* Enable DNS, with random source port to avoid alloc in dns_init */
+#define LWIP_DNS                        1
+#define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_RAND_SRC_PORT)
 
 /* Minimal changes to opt.h required for tcp unit tests: */
 #define MEM_SIZE                        16000

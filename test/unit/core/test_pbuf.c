@@ -6,9 +6,6 @@
 #if !LWIP_STATS || !MEM_STATS ||!MEMP_STATS
 #error "This tests needs MEM- and MEMP-statistics enabled"
 #endif
-#if LWIP_DNS
-#error "This test needs DNS turned off (as it mallocs on init)"
-#endif
 #if !LWIP_TCP || !TCP_QUEUE_OOSEQ || !LWIP_WND_SCALE
 #error "This test needs TCP OOSEQ queueing and window scaling enabled"
 #endif
