@@ -6,6 +6,7 @@
 #include "tcp/test_tcp.h"
 #include "tcp/test_tcp_oos.h"
 #include "core/test_def.h"
+#include "core/test_dns.h"
 #include "core/test_mem.h"
 #include "core/test_netif.h"
 #include "core/test_pbuf.h"
@@ -78,6 +79,7 @@ int main(void)
     tcp_suite,
     tcp_oos_suite,
     def_suite,
+    dns_suite,
     mem_suite,
     netif_suite,
     pbuf_suite,

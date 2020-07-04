@@ -34,6 +34,7 @@ TESTFILES=$(TESTDIR)/lwip_unittests.c \
 	$(TESTDIR)/api/test_sockets.c \
 	$(TESTDIR)/arch/sys_arch.c \
 	$(TESTDIR)/core/test_def.c \
+	$(TESTDIR)/core/test_dns.c \
 	$(TESTDIR)/core/test_mem.c \
 	$(TESTDIR)/core/test_netif.c \
 	$(TESTDIR)/core/test_pbuf.c \

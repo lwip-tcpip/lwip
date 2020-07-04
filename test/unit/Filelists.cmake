@@ -18,6 +18,7 @@ set(LWIP_TESTFILES
 	${LWIP_TESTDIR}/api/test_sockets.c
 	${LWIP_TESTDIR}/arch/sys_arch.c
 	${LWIP_TESTDIR}/core/test_def.c
+	${LWIP_TESTDIR}/core/test_dns.c
 	${LWIP_TESTDIR}/core/test_mem.c
 	${LWIP_TESTDIR}/core/test_netif.c
 	${LWIP_TESTDIR}/core/test_pbuf.c
