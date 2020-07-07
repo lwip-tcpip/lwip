@@ -116,7 +116,9 @@ PACK_STRUCT_END
 #define LL_IP6_MULTICAST_ADDR_0 0x33
 #define LL_IP6_MULTICAST_ADDR_1 0x33
 
-#define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0)
+/* eth_addr_cmp is deprecated, use eth_addr_eq */
+#define eth_addr_cmp(addr1, addr2) eth_addr_eq((addr1), (addr2))
+#define eth_addr_eq(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETH_HWADDR_LEN) == 0)
 
 #ifdef __cplusplus
 }

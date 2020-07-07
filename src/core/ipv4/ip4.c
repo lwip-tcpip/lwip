@@ -171,12 +171,12 @@ ip4_route(const ip4_addr_t *dest)
     /* is the netif up, does it have a link and a valid address? */
     if (netif_is_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
       /* network mask matches? */
-      if (ip4_addr_netcmp(dest, netif_ip4_addr(netif), netif_ip4_netmask(netif))) {
+      if (ip4_addr_net_eq(dest, netif_ip4_addr(netif), netif_ip4_netmask(netif))) {
         /* return netif on which to forward IP packet */
         return netif;
       }
       /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
-      if (((netif->flags & NETIF_FLAG_BROADCAST) == 0) && ip4_addr_cmp(dest, netif_ip4_gw(netif))) {
+      if (((netif->flags & NETIF_FLAG_BROADCAST) == 0) && ip4_addr_eq(dest, netif_ip4_gw(netif))) {
         /* return netif on which to forward IP packet */
         return netif;
       }
@@ -416,7 +416,7 @@ ip4_input_accept(struct netif *netif)
   /* interface is up and configured? */
   if ((netif_is_up(netif)) && (!ip4_addr_isany_val(*netif_ip4_addr(netif)))) {
     /* unicast to this interface address? */
-    if (ip4_addr_cmp(ip4_current_dest_addr(), netif_ip4_addr(netif)) ||
+    if (ip4_addr_eq(ip4_current_dest_addr(), netif_ip4_addr(netif)) ||
         /* or broadcast on this interface network address? */
         ip4_addr_isbroadcast(ip4_current_dest_addr(), netif)
 #if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
@@ -556,7 +556,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
       /* IGMP snooping switches need 0.0.0.0 to be allowed as source address (RFC 4541) */
       ip4_addr_t allsystems;
       IP4_ADDR(&allsystems, 224, 0, 0, 1);
-      if (ip4_addr_cmp(ip4_current_dest_addr(), &allsystems) &&
+      if (ip4_addr_eq(ip4_current_dest_addr(), &allsystems) &&
           ip4_addr_isany(ip4_current_src_addr())) {
         check_ip_src = 0;
       }
@@ -1015,7 +1015,7 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
   ip4_debug_print(p);
 
 #if ENABLE_LOOPBACK
-  if (ip4_addr_cmp(dest, netif_ip4_addr(netif))
+  if (ip4_addr_eq(dest, netif_ip4_addr(netif))
 #if !LWIP_HAVE_LOOPIF
       || ip4_addr_isloopback(dest)
 #endif /* !LWIP_HAVE_LOOPIF */

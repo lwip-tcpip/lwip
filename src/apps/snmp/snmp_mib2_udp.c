@@ -147,9 +147,9 @@ udp_endpointTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_t
   /* find udp_pcb with requested ip and port*/
   pcb = udp_pcbs;
   while (pcb != NULL) {
-    if (ip_addr_cmp(&local_ip, &pcb->local_ip) &&
+    if (ip_addr_eq(&local_ip, &pcb->local_ip) &&
         (local_port == pcb->local_port) &&
-        ip_addr_cmp(&remote_ip, &pcb->remote_ip) &&
+        ip_addr_eq(&remote_ip, &pcb->remote_ip) &&
         (remote_port == pcb->remote_port)) {
       /* fill in object properties */
       return udp_endpointTable_get_cell_value_core(column, value);
@@ -263,7 +263,7 @@ udp_Table_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_t row_oid
   pcb = udp_pcbs;
   while (pcb != NULL) {
     if (IP_IS_V4_VAL(pcb->local_ip)) {
-      if (ip4_addr_cmp(&ip, ip_2_ip4(&pcb->local_ip)) && (port == pcb->local_port)) {
+      if (ip4_addr_eq(&ip, ip_2_ip4(&pcb->local_ip)) && (port == pcb->local_port)) {
         /* fill in object properties */
         return udp_Table_get_cell_value_core(pcb, column, value, value_len);
       }

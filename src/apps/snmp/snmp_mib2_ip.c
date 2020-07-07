@@ -263,7 +263,7 @@ ip_AddrTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_t row_
 
   /* find netif with requested ip */
   NETIF_FOREACH(netif) {
-    if (ip4_addr_cmp(&ip, netif_ip4_addr(netif))) {
+    if (ip4_addr_eq(&ip, netif_ip4_addr(netif))) {
       /* fill in object properties */
       return ip_AddrTable_get_cell_value_core(netif, column, value, value_len);
     }
@@ -417,7 +417,7 @@ ip_RouteTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_t row
     ip4_addr_t dst;
     ip4_addr_get_network(&dst, netif_ip4_addr(netif), netif_ip4_netmask(netif));
 
-    if (ip4_addr_cmp(&dst, &test_ip)) {
+    if (ip4_addr_eq(&dst, &test_ip)) {
       /* fill in object properties */
       return ip_RouteTable_get_cell_value_core(netif, 0, column, value, value_len);
     }
@@ -535,7 +535,7 @@ ip_NetToMediaTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_
     struct eth_addr *ethaddr;
 
     if (etharp_get_entry(i, &ip, &netif, &ethaddr)) {
-      if ((netif_index == netif_to_num(netif)) && ip4_addr_cmp(&ip_in, ip)) {
+      if ((netif_index == netif_to_num(netif)) && ip4_addr_eq(&ip_in, ip)) {
         /* fill in object properties */
         return ip_NetToMediaTable_get_cell_value_core(i, column, value, value_len);
       }

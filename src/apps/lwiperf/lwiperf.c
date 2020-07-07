@@ -603,7 +603,7 @@ lwiperf_tcp_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
   LWIP_ASSERT("invalid conn pcb", s->conn_pcb == NULL);
   if (s->specific_remote) {
     LWIP_ASSERT("s->base.related_master_state != NULL", s->base.related_master_state != NULL);
-    if (!ip_addr_cmp(&newpcb->remote_ip, &s->remote_addr)) {
+    if (!ip_addr_eq(&newpcb->remote_ip, &s->remote_addr)) {
       /* this listener belongs to a client session, and this is not the correct remote */
       return ERR_VAL;
     }

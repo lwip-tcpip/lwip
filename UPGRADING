@@ -7,6 +7,8 @@ with newer versions.
 (git master)
 
   * [Enter new changes just after this line - do not remove this line]
+  * The eth_addr_cmp and ip_addr_cmp set of functions have been renamed to eth_addr_eq, ip_addr_eq
+    and so on, since they return non-zero on equality. Macros for the old names exist.
 
 (2.1.0)
 

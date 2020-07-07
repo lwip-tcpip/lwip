@@ -73,7 +73,7 @@ ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
   } else if (addr == ip4_addr_get_u32(netif_ip4_addr(netif))) {
     return 0;
     /*  on the same (sub) network... */
-  } else if (ip4_addr_netcmp(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
+  } else if (ip4_addr_net_eq(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
              /* ...and host identifier bits are all ones? =>... */
              && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
                  (IPADDR_BROADCAST & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {

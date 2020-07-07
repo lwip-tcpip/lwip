@@ -227,17 +227,17 @@ tcp_ConnTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_t row
     while (pcb != NULL) {
       /* do local IP and local port match? */
       if (IP_IS_V4_VAL(pcb->local_ip) &&
-          ip4_addr_cmp(&local_ip, ip_2_ip4(&pcb->local_ip)) && (local_port == pcb->local_port)) {
+          ip4_addr_eq(&local_ip, ip_2_ip4(&pcb->local_ip)) && (local_port == pcb->local_port)) {
 
         /* PCBs in state LISTEN are not connected and have no remote_ip or remote_port */
         if (pcb->state == LISTEN) {
-          if (ip4_addr_cmp(&remote_ip, IP4_ADDR_ANY4) && (remote_port == 0)) {
+          if (ip4_addr_eq(&remote_ip, IP4_ADDR_ANY4) && (remote_port == 0)) {
             /* fill in object properties */
             return tcp_ConnTable_get_cell_value_core(pcb, column, value, value_len);
           }
         } else {
           if (IP_IS_V4_VAL(pcb->remote_ip) &&
-              ip4_addr_cmp(&remote_ip, ip_2_ip4(&pcb->remote_ip)) && (remote_port == pcb->remote_port)) {
+              ip4_addr_eq(&remote_ip, ip_2_ip4(&pcb->remote_ip)) && (remote_port == pcb->remote_port)) {
             /* fill in object properties */
             return tcp_ConnTable_get_cell_value_core(pcb, column, value, value_len);
           }
@@ -355,9 +355,9 @@ tcp_ConnectionTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8
     pcb = *tcp_pcb_nonlisten_lists[i];
 
     while (pcb != NULL) {
-      if (ip_addr_cmp(&local_ip, &pcb->local_ip) &&
+      if (ip_addr_eq(&local_ip, &pcb->local_ip) &&
           (local_port == pcb->local_port) &&
-          ip_addr_cmp(&remote_ip, &pcb->remote_ip) &&
+          ip_addr_eq(&remote_ip, &pcb->remote_ip) &&
           (remote_port == pcb->remote_port)) {
         /* fill in object properties */
         return tcp_ConnectionTable_get_cell_value_core(column, pcb, value);
@@ -454,7 +454,7 @@ tcp_ListenerTable_get_cell_value(const u32_t *column, const u32_t *row_oid, u8_t
   /* find tcp_pcb with requested ip and port*/
   pcb = tcp_listen_pcbs.listen_pcbs;
   while (pcb != NULL) {
-    if (ip_addr_cmp(&local_ip, &pcb->local_ip) &&
+    if (ip_addr_eq(&local_ip, &pcb->local_ip) &&
         (local_port == pcb->local_port)) {
       /* fill in object properties */
       return tcp_ListenerTable_get_cell_value_core(column, value);

@@ -353,7 +353,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
     goto free_and_return;
   }
 
-  if (!ip_addr_cmp(&l2tp->remote_ip, addr)) {
+  if (!ip_addr_eq(&l2tp->remote_ip, addr)) {
     goto free_and_return;
   }
 

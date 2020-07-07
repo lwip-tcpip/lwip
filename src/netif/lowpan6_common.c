@@ -117,7 +117,7 @@ lowpan6_context_lookup(const ip6_addr_t *lowpan6_contexts, const ip6_addr_t *ip6
   s8_t i;
 
   for (i = 0; i < LWIP_6LOWPAN_NUM_CONTEXTS; i++) {
-    if (ip6_addr_netcmp(&lowpan6_contexts[i], ip6addr)) {
+    if (ip6_addr_net_eq(&lowpan6_contexts[i], ip6addr)) {
       return i;
     }
   }

@@ -2118,7 +2118,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 #if LWIP_IPV6
   if (IP_IS_V6(ip_current_dest_addr())) {
     /* instead of having one 'v6group' per netif, just compare zoneless here */
-    if (!ip_addr_cmp_zoneless(ip_current_dest_addr(), &v6group)) {
+    if (!ip_addr_zoneless_eq(ip_current_dest_addr(), &v6group)) {
       packet.recv_unicast = 1;
 
       if (ip6_addr_ismulticast_global(ip_2_ip6(ip_current_src_addr()))
@@ -2130,10 +2130,10 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
 #endif
 #if LWIP_IPV4
   if (!IP_IS_V6(ip_current_dest_addr())) {
-    if (!ip_addr_cmp(ip_current_dest_addr(), &v4group)) {
+    if (!ip_addr_eq(ip_current_dest_addr(), &v4group)) {
       packet.recv_unicast = 1;
 
-      if (!ip4_addr_netcmp(ip_2_ip4(ip_current_src_addr()),
+      if (!ip4_addr_net_eq(ip_2_ip4(ip_current_src_addr()),
                           netif_ip4_addr(recv_netif),
                           netif_ip4_netmask(recv_netif))){
            goto dealloc;
@@ -2164,7 +2164,7 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
       struct mdns_packet *q = pending_tc_questions;
       while (q) {
         if ((packet.source_port == q->source_port) &&
-            ip_addr_cmp(&packet.source_addr, &q->source_addr))
+            ip_addr_eq(&packet.source_addr, &q->source_addr))
           break;
         q = q->next_tc_question;
       }

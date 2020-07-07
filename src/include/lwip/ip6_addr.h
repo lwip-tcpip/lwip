@@ -146,10 +146,17 @@ typedef struct ip6_addr ip6_addr_t;
                                         ip6_addr_set_zone((dest), (src) == NULL ? IP6_NO_ZONE : ip6_addr_zone(src));}while(0)
 
 
+/** @deprecated Renamed to @ref ip6_addr_net_zoneless_eq */
+#define ip6_addr_netcmp_zoneless(addr1, addr2) ip6_addr_net_zoneless_eq(addr1, addr2)
 /** Compare IPv6 networks, ignoring zone information. To be used sparingly! */
-#define ip6_addr_netcmp_zoneless(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
+#define ip6_addr_net_zoneless_eq(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
                                                ((addr1)->addr[1] == (addr2)->addr[1]))
 
+/**
+ * Determine if two IPv6 address are on the same network.
+ * @deprecated Renamed to @ref ip6_addr_net_eq
+ */
+#define ip6_addr_netcmp(addr1, addr2) ip6_addr_net_eq(addr1, addr2)
 /**
  * Determine if two IPv6 address are on the same network.
  *
@@ -157,18 +164,23 @@ typedef struct ip6_addr ip6_addr_t;
  * @param addr2 IPv6 address 2
  * @return 1 if the network identifiers of both address match, 0 if not
  */
-#define ip6_addr_netcmp(addr1, addr2) (ip6_addr_netcmp_zoneless((addr1), (addr2)) && \
-                                       ip6_addr_cmp_zone((addr1), (addr2)))
+#define ip6_addr_net_eq(addr1, addr2) (ip6_addr_net_zoneless_eq((addr1), (addr2)) && \
+                                       ip6_addr_zone_eq((addr1), (addr2)))
 
-/* Exact-host comparison *after* ip6_addr_netcmp() succeeded, for efficiency. */
-#define ip6_addr_nethostcmp(addr1, addr2) (((addr1)->addr[2] == (addr2)->addr[2]) && \
+#define ip6_addr_nethostcmp(addr1, addr2) ip6_addr_nethost_eq(addr1, addr2)
+/* Exact-host comparison *after* ip6_addr_net_eq() succeeded, for efficiency. */
+#define ip6_addr_nethost_eq(addr1, addr2) (((addr1)->addr[2] == (addr2)->addr[2]) && \
                                            ((addr1)->addr[3] == (addr2)->addr[3]))
 
+/** @deprecated Renamed to @ref ip6_addr_zoneless_eq */
+#define ip6_addr_cmp_zoneless(addr1, addr2) ip6_addr_zoneless_eq(addr1, addr2)
 /** Compare IPv6 addresses, ignoring zone information. To be used sparingly! */
-#define ip6_addr_cmp_zoneless(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
+#define ip6_addr_zoneless_eq(addr1, addr2) (((addr1)->addr[0] == (addr2)->addr[0]) && \
                                     ((addr1)->addr[1] == (addr2)->addr[1]) && \
                                     ((addr1)->addr[2] == (addr2)->addr[2]) && \
                                     ((addr1)->addr[3] == (addr2)->addr[3]))
+/** @deprecated Renamed to @ref ip6_addr_eq */
+#define ip6_addr_cmp(addr1, addr2) ip6_addr_eq(addr1, addr2)
 /**
  * Determine if two IPv6 addresses are the same. In particular, the address
  * part of both must be the same, and the zone must be compatible.
@@ -177,11 +189,13 @@ typedef struct ip6_addr ip6_addr_t;
  * @param addr2 IPv6 address 2
  * @return 1 if the addresses are considered equal, 0 if not
  */
-#define ip6_addr_cmp(addr1, addr2) (ip6_addr_cmp_zoneless((addr1), (addr2)) && \
-                                    ip6_addr_cmp_zone((addr1), (addr2)))
+#define ip6_addr_eq(addr1, addr2) (ip6_addr_zoneless_eq((addr1), (addr2)) && \
+                                    ip6_addr_zone_eq((addr1), (addr2)))
 
+/** @deprecated Renamed to @ref ip6_addr_packed_eq */
+#define ip6_addr_cmp_packed(ip6addr, paddr, zone_idx) ip6_addr_packed_eq(ip6addr, paddr, zone_idx)
 /** Compare IPv6 address to packed address and zone */
-#define ip6_addr_cmp_packed(ip6addr, paddr, zone_idx) (((ip6addr)->addr[0] == (paddr)->addr[0]) && \
+#define ip6_addr_packed_eq(ip6addr, paddr, zone_idx) (((ip6addr)->addr[0] == (paddr)->addr[0]) && \
                                     ((ip6addr)->addr[1] == (paddr)->addr[1]) && \
                                     ((ip6addr)->addr[2] == (paddr)->addr[2]) && \
                                     ((ip6addr)->addr[3] == (paddr)->addr[3]) && \
@@ -279,7 +293,8 @@ typedef struct ip6_addr ip6_addr_t;
                 (ip6addr)->addr[3] = (PP_HTONL(0xff000000UL) | (if_id)); \
                 ip6_addr_clear_zone(ip6addr); }while(0)
 
-#define ip6_addr_cmp_solicitednode(ip6addr, sn_addr) (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) && \
+#define ip6_addr_cmp_solicitednode(ip6addr, sn_addr) ip6_addr_solicitednode_eq(ip6addr, sn_addr)
+#define ip6_addr_solicitednode_eq(ip6addr, sn_addr) (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) && \
                                     ((ip6addr)->addr[1] == 0) && \
                                     ((ip6addr)->addr[2] == PP_HTONL(0x00000001UL)) && \
                                     ((ip6addr)->addr[3] == (PP_HTONL(0xff000000UL) | (sn_addr)->addr[3])))

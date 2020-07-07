@@ -4063,8 +4063,8 @@ lwip_socket_unregister_membership(int s, const ip4_addr_t *if_addr, const ip4_ad
 
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
     if ((socket_ipv4_multicast_memberships[i].sock == sock) &&
-        ip4_addr_cmp(&socket_ipv4_multicast_memberships[i].if_addr, if_addr) &&
-        ip4_addr_cmp(&socket_ipv4_multicast_memberships[i].multi_addr, multi_addr)) {
+        ip4_addr_eq(&socket_ipv4_multicast_memberships[i].if_addr, if_addr) &&
+        ip4_addr_eq(&socket_ipv4_multicast_memberships[i].multi_addr, multi_addr)) {
       socket_ipv4_multicast_memberships[i].sock = NULL;
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
       ip4_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
@@ -4152,7 +4152,7 @@ lwip_socket_unregister_mld6_membership(int s, unsigned int if_idx, const ip6_add
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
     if ((socket_ipv6_multicast_memberships[i].sock   == sock) &&
         (socket_ipv6_multicast_memberships[i].if_idx == if_idx) &&
-        ip6_addr_cmp(&socket_ipv6_multicast_memberships[i].multi_addr, multi_addr)) {
+        ip6_addr_eq(&socket_ipv6_multicast_memberships[i].multi_addr, multi_addr)) {
       socket_ipv6_multicast_memberships[i].sock   = NULL;
       socket_ipv6_multicast_memberships[i].if_idx = NETIF_NO_INDEX;
       ip6_addr_set_zero(&socket_ipv6_multicast_memberships[i].multi_addr);

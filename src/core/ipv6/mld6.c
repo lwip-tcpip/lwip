@@ -146,7 +146,7 @@ mld6_lookfor_group(struct netif *ifp, const ip6_addr_t *addr)
   struct mld_group *group = netif_mld6_data(ifp);
 
   while (group != NULL) {
-    if (ip6_addr_cmp(&(group->group_address), addr)) {
+    if (ip6_addr_eq(&(group->group_address), addr)) {
       return group;
     }
     group = group->next;

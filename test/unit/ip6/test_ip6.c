@@ -340,8 +340,8 @@ START_TEST(test_ip6_dest_unreachable_chained_pbuf)
   fail_unless(cloned_pbuf);
   fail_unless(cloned_pbuf->len == IP6_HLEN + ICMP6_HLEN + sizeof(udp_hdr) + sizeof(udp_payload));
   outhdr = (struct ip6_hdr*) cloned_pbuf->payload;
-  fail_unless(ip6_addr_cmp_packed(ip_2_ip6(&my_addr), &outhdr->src, IP6_NO_ZONE));
-  fail_unless(ip6_addr_cmp_packed(ip_2_ip6(&peer_addr), &outhdr->dest, IP6_NO_ZONE));
+  fail_unless(ip6_addr_packed_eq(ip_2_ip6(&my_addr), &outhdr->src, IP6_NO_ZONE));
+  fail_unless(ip6_addr_packed_eq(ip_2_ip6(&peer_addr), &outhdr->dest, IP6_NO_ZONE));
   icmpptr = &((u8_t*)cloned_pbuf->payload)[IP6_HLEN];
   icmp6hdr = (struct icmp6_hdr*) icmpptr;
   fail_unless(icmp6hdr->type == ICMP6_TYPE_DUR);

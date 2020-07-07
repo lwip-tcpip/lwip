@@ -378,10 +378,10 @@ acd_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
          * OR
          * ip.dst == ipaddr && hw.src != own hwaddr (someone else is probing it)
          */
-        if ((ip4_addr_cmp(&sipaddr, &acd->ipaddr)) ||
+        if ((ip4_addr_eq(&sipaddr, &acd->ipaddr)) ||
             (ip4_addr_isany_val(sipaddr) &&
-             ip4_addr_cmp(&dipaddr, &acd->ipaddr) &&
-             !eth_addr_cmp(&netifaddr, &hdr->shwaddr))) {
+             ip4_addr_eq(&dipaddr, &acd->ipaddr) &&
+             !eth_addr_eq(&netifaddr, &hdr->shwaddr))) {
           LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
                       ("acd_arp_reply(): Probe Conflict detected\n"));
           acd_restart(netif, acd);
@@ -395,8 +395,8 @@ acd_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
          * in any state we have a conflict if
          * ip.src == ipaddr && hw.src != own hwaddr (someone is using our address)
          */
-        if (ip4_addr_cmp(&sipaddr, &acd->ipaddr) &&
-            !eth_addr_cmp(&netifaddr, &hdr->shwaddr)) {
+        if (ip4_addr_eq(&sipaddr, &acd->ipaddr) &&
+            !eth_addr_eq(&netifaddr, &hdr->shwaddr)) {
           LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
                       ("acd_arp_reply(): Conflicting ARP-Packet detected\n"));
           acd_handle_arp_conflict(netif, acd);
@@ -513,7 +513,7 @@ acd_netif_ip_addr_changed(struct netif *netif, const ip_addr_t *old_addr,
 
   ACD_FOREACH(acd, netif->acd_list) {
     /* Find ACD module of old address */
-    if(ip4_addr_cmp(&acd->ipaddr, ip_2_ip4(old_addr))) {
+    if(ip4_addr_eq(&acd->ipaddr, ip_2_ip4(old_addr))) {
       /* Did we change from a LL address to a routable address? */
       if (ip_addr_islinklocal(old_addr) && !ip_addr_islinklocal(new_addr)) {
         LWIP_DEBUGF(ACD_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,

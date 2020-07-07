@@ -218,8 +218,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
    * again & we don't have to do any reordering if it's used.
    */
   INCR(vjs_packets);
-  if (!ip4_addr_cmp(&ip->src, &cs->cs_ip.src)
-      || !ip4_addr_cmp(&ip->dest, &cs->cs_ip.dest)
+  if (!ip4_addr_eq(&ip->src, &cs->cs_ip.src)
+      || !ip4_addr_eq(&ip->dest, &cs->cs_ip.dest)
       || (*(struct vj_u32_t*)th).v != (((struct vj_u32_t*)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]).v) {
     /*
      * Wasn't the first -- search for it.
@@ -239,8 +239,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
     do {
       lcs = cs; cs = cs->cs_next;
       INCR(vjs_searches);
-      if (ip4_addr_cmp(&ip->src, &cs->cs_ip.src)
-          && ip4_addr_cmp(&ip->dest, &cs->cs_ip.dest)
+      if (ip4_addr_eq(&ip->src, &cs->cs_ip.src)
+          && ip4_addr_eq(&ip->dest, &cs->cs_ip.dest)
           && (*(struct vj_u32_t*)th).v == (((struct vj_u32_t*)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]).v) {
         goto found;
       }

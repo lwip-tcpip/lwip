@@ -128,7 +128,7 @@ tcp_md5_get_info(const struct tcp_pcb *pcb, const ip_addr_t *remote_ip, u16_t re
   if (pcb != NULL) {
     struct tcp_md5_conn_info *info = (struct tcp_md5_conn_info *)tcp_ext_arg_get(pcb, tcp_md5_extarg_id);
     while (info != NULL) {
-      if (ip_addr_cmp(&info->remote_addr, remote_ip)) {
+      if (ip_addr_eq(&info->remote_addr, remote_ip)) {
         if (info->remote_port == remote_port) {
           return info;
         }
@@ -157,7 +157,7 @@ tcp_md5_extarg_passive_open(u8_t id, struct tcp_pcb_listen *lpcb, struct tcp_pcb
   iter = (struct tcp_md5_conn_info *)tcp_ext_arg_get((struct tcp_pcb *)lpcb, id);
   while (iter != NULL) {
     if (iter->remote_port == cpcb->remote_port) {
-      if (ip_addr_cmp(&iter->remote_addr, &cpcb->remote_ip)) {
+      if (ip_addr_eq(&iter->remote_addr, &cpcb->remote_ip)) {
         struct tcp_md5_conn_info *info = tcp_md5_conn_info_alloc();
         if (info != NULL) {
           memcpy(info, iter, sizeof(struct tcp_md5_conn_info));

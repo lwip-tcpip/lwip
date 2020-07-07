@@ -32,8 +32,7 @@ START_TEST(test_dns_set_get_server)
     dns_setserver(i, &server);
     fail_unless(dns_getserver(i));
     if (i < DNS_MAX_SERVERS) {
-      /* ip_addr_cmp returns 1 if they match. */
-      fail_unless(ip_addr_cmp(dns_getserver(i), &server) == 1);
+      fail_unless(ip_addr_eq(dns_getserver(i), &server) == 1);
     } else {
       fail_unless(ip_addr_isany(dns_getserver(i)));
     }

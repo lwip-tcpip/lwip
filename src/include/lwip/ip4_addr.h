@@ -132,17 +132,26 @@ struct netif;
 
 /**
  * Determine if two address are on the same network.
+ * @deprecated Renamed to @ref ip4_addr_net_eq
+ */
+#define ip4_addr_netcmp(addr1, addr2, mask) ip4_addr_net_eq(addr1, addr2, mask)
+/**
+ * Determine if two address are on the same network.
  *
  * @arg addr1 IP address 1
  * @arg addr2 IP address 2
  * @arg mask network identifier mask
  * @return !0 if the network identifiers of both address match
  */
-#define ip4_addr_netcmp(addr1, addr2, mask) (((addr1)->addr & \
+#define ip4_addr_net_eq(addr1, addr2, mask) (((addr1)->addr & \
                                               (mask)->addr) == \
                                              ((addr2)->addr & \
                                               (mask)->addr))
-#define ip4_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
+/**
+ * @deprecated Renamed to @ref ip4_addr_eq
+ */
+#define ip4_addr_cmp(addr1, addr2) ip4_addr_eq(addr1, addr2)
+#define ip4_addr_eq(addr1, addr2) ((addr1)->addr == (addr2)->addr)
 
 #define ip4_addr_isany_val(addr1)   ((addr1).addr == IPADDR_ANY)
 #define ip4_addr_isany(addr1) ((addr1) == NULL || ip4_addr_isany_val(*(addr1)))

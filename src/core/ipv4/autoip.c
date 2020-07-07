@@ -363,7 +363,7 @@ autoip_supplied_address(struct netif *netif)
 {
   struct autoip *autoip = netif_autoip_data(netif);
   return     (autoip != NULL)
-          && (ip4_addr_cmp(netif_ip4_addr(netif), &(autoip->llipaddr)))
+          && (ip4_addr_eq(netif_ip4_addr(netif), &(autoip->llipaddr)))
           && (autoip->state == AUTOIP_STATE_BOUND);
 }
 
@@ -372,7 +372,7 @@ autoip_accept_packet(struct netif *netif, const ip4_addr_t *addr)
 {
   struct autoip *autoip = netif_autoip_data(netif);
   return     (autoip != NULL)
-          && (ip4_addr_cmp(addr, &(autoip->llipaddr)))
+          && (ip4_addr_eq(addr, &(autoip->llipaddr)))
           && (autoip->state == AUTOIP_STATE_BOUND);
 }
 

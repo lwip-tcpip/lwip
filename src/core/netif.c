@@ -477,7 +477,7 @@ netif_do_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr, ip_addr_t *ol
   LWIP_ASSERT("invalid pointer", old_addr != NULL);
 
   /* address is actually being changed? */
-  if (ip4_addr_cmp(ipaddr, netif_ip4_addr(netif)) == 0) {
+  if (ip4_addr_eq(ipaddr, netif_ip4_addr(netif)) == 0) {
     ip_addr_t new_addr;
     *ip_2_ip4(&new_addr) = *ipaddr;
     IP_SET_TYPE_VAL(new_addr, IPADDR_TYPE_V4);
@@ -544,7 +544,7 @@ static int
 netif_do_set_netmask(struct netif *netif, const ip4_addr_t *netmask, ip_addr_t *old_nm)
 {
   /* address is actually being changed? */
-  if (ip4_addr_cmp(netmask, netif_ip4_netmask(netif)) == 0) {
+  if (ip4_addr_eq(netmask, netif_ip4_netmask(netif)) == 0) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
     LWIP_ASSERT("invalid pointer", old_nm != NULL);
     ip_addr_copy(*old_nm, *netif_ip_netmask4(netif));
@@ -608,7 +608,7 @@ static int
 netif_do_set_gw(struct netif *netif, const ip4_addr_t *gw, ip_addr_t *old_gw)
 {
   /* address is actually being changed? */
-  if (ip4_addr_cmp(gw, netif_ip4_gw(netif)) == 0) {
+  if (ip4_addr_eq(gw, netif_ip4_gw(netif)) == 0) {
 #if LWIP_NETIF_EXT_STATUS_CALLBACK
     LWIP_ASSERT("invalid pointer", old_gw != NULL);
     ip_addr_copy(*old_gw, *netif_ip_gw4(netif));
@@ -1532,7 +1532,7 @@ netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
 
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
-        ip6_addr_cmp_zoneless(netif_ip6_addr(netif, i), ip6addr)) {
+        ip6_addr_zoneless_eq(netif_ip6_addr(netif, i), ip6addr)) {
       return i;
     }
   }
@@ -1588,7 +1588,7 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
   /* Set a link-local zone. Even though the zone is implied by the owning
    * netif, setting the zone anyway has two important conceptual advantages:
    * 1) it avoids the need for a ton of exceptions in internal code, allowing
-   *    e.g. ip6_addr_cmp() to be used on local addresses;
+   *    e.g. ip6_addr_eq() to be used on local addresses;
    * 2) the properly zoned address is visible externally, e.g. when any outside
    *    code enumerates available addresses or uses one to bind a socket.
    * Any external code unaware of address scoping is likely to just ignore the

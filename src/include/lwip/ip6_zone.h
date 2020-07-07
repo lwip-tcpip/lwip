@@ -123,9 +123,11 @@ extern "C" {
 /** Is the zone field of the given IPv6 address equal to the given zone index? (0/1) */
 #define ip6_addr_equals_zone(ip6addr, zone_idx) ((ip6addr)->zone == (zone_idx))
 
+/** @deprecated Renamed to @ref ip6_addr_zone_eq */
+#define ip6_addr_cmp_zone(addr1, addr2) ip6_addr_zone_eq(ip6addr1, ip6addr2)
 /** Are the zone fields of the given IPv6 addresses equal? (0/1)
  * This macro must only be used on IPv6 addresses of the same scope. */
-#define ip6_addr_cmp_zone(ip6addr1, ip6addr2) ((ip6addr1)->zone == (ip6addr2)->zone)
+#define ip6_addr_zone_eq(ip6addr1, ip6addr2) ((ip6addr1)->zone == (ip6addr2)->zone)
 
 /** Symbolic constants for the 'type' parameters in some of the macros.
  * These exist for efficiency only, allowing the macros to avoid certain tests
@@ -265,7 +267,7 @@ enum lwip_ipv6_scope_type
 #define ip6_addr_clear_zone(ip6addr)
 #define ip6_addr_copy_zone(ip6addr1, ip6addr2)
 #define ip6_addr_equals_zone(ip6addr, zone_idx) (1)
-#define ip6_addr_cmp_zone(ip6addr1, ip6addr2) (1)
+#define ip6_addr_zone_eq(ip6addr1, ip6addr2) (1)
 #define IPV6_CUSTOM_SCOPES 0
 #define ip6_addr_has_scope(ip6addr, type) (0)
 #define ip6_addr_assign_zone(ip6addr, type, netif)
