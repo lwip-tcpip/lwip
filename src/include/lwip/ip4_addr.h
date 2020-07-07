@@ -148,7 +148,7 @@ struct netif;
                                              ((addr2)->addr & \
                                               (mask)->addr))
 /**
- * @deprecated Renamed to @ref ip4_addr_eq
+ * @deprecated Renamed to ip4_addr_eq
  */
 #define ip4_addr_cmp(addr1, addr2) ip4_addr_eq(addr1, addr2)
 #define ip4_addr_eq(addr1, addr2) ((addr1)->addr == (addr2)->addr)
