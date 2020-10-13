@@ -90,7 +90,7 @@ for($i = 0; $i < @fvars; $i++) {
     }
     print(OUTPUT "const struct fsdata_file file".$fvar."[] = {{$prevfile, data$fvar, ");
     print(OUTPUT "data$fvar + ". (length($file) + 1) .", ");
-    print(OUTPUT "sizeof(data$fvar) - ". (length($file) + 1) ."}};\n\n");
+    print(OUTPUT "sizeof(data$fvar) - ". (length($file) + 1) .", FS_FILE_FLAGS_HEADER_INCLUDED | FS_FILE_FLAGS_HEADER_PERSISTENT}};\n\n");
 }
 
 print(OUTPUT "#define FS_ROOT file$fvars[$i - 1]\n\n");
