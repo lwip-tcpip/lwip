@@ -753,20 +753,20 @@ pppoe_send_padi(struct pppoe_softc *sc)
 {
   struct pbuf *pb;
   u8_t *p;
-  int len;
+  size_t len;
 #if PPPOE_SCNAME_SUPPORT
-  int l1 = 0, l2 = 0; /* XXX: gcc */
+  size_t l1 = 0, l2 = 0; /* XXX: gcc */
 #endif /* PPPOE_SCNAME_SUPPORT */
 
   /* calculate length of frame (excluding ethernet header + pppoe header) */
   len = 2 + 2 + 2 + 2 + sizeof sc;  /* service name tag is required, host unique is send too */
 #if PPPOE_SCNAME_SUPPORT
   if (sc->sc_service_name != NULL) {
-    l1 = (int)strlen(sc->sc_service_name);
+    l1 = strlen(sc->sc_service_name);
     len += l1;
   }
   if (sc->sc_concentrator_name != NULL) {
-    l2 = (int)strlen(sc->sc_concentrator_name);
+    l2 = strlen(sc->sc_concentrator_name);
     len += 2 + 2 + l2;
   }
 #endif /* PPPOE_SCNAME_SUPPORT */
