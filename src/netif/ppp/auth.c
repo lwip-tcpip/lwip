@@ -1003,13 +1003,13 @@ void continue_networks(ppp_pcb *pcb) {
  *      1: Authentication succeeded.
  * In either case, msg points to an appropriate message and msglen to the message len.
  */
-int auth_check_passwd(ppp_pcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen) {
-  int secretuserlen;
-  int secretpasswdlen;
+int auth_check_passwd(ppp_pcb *pcb, char *auser, unsigned int userlen, char *apasswd, unsigned int passwdlen, const char **msg, int *msglen) {
+  size_t secretuserlen;
+  size_t secretpasswdlen;
 
   if (pcb->settings.user && pcb->settings.passwd) {
-    secretuserlen = (int)strlen(pcb->settings.user);
-    secretpasswdlen = (int)strlen(pcb->settings.passwd);
+    secretuserlen = strlen(pcb->settings.user);
+    secretpasswdlen = strlen(pcb->settings.passwd);
     if (secretuserlen == userlen
         && secretpasswdlen == passwdlen
         && !memcmp(auser, pcb->settings.user, userlen)
@@ -1902,7 +1902,7 @@ have_srp_secret(client, server, need_ip, lacks_ipp)
  * (We could be either client or server).
  */
 int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server) {
-  int len;
+  size_t len;
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
 
@@ -1910,7 +1910,7 @@ int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secre
     return 0;
   }
 
-  len = (int)strlen(pcb->settings.passwd);
+  len = strlen(pcb->settings.passwd);
   if (len > MAXSECRETLEN) {
     ppp_error(("Secret for %s on %s is too long", client, server));
     len = MAXSECRETLEN;
@@ -1922,7 +1922,8 @@ int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secre
 
 #if 0 /* UNUSED */
     FILE *f;
-    int ret, len;
+    int ret;
+    size_t len;
     char *filename;
     struct wordlist *addrs, *opts;
     char secbuf[MAXWORDLEN];
