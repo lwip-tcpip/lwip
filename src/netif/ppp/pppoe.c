@@ -175,11 +175,28 @@ ppp_pcb *pppoe_create(struct netif *pppif,
 {
   ppp_pcb *ppp;
   struct pppoe_softc *sc;
-#if !PPPOE_SCNAME_SUPPORT
+#if PPPOE_SCNAME_SUPPORT
+  size_t l;
+#else /* PPPOE_SCNAME_SUPPORT */
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
-#endif /* !PPPOE_SCNAME_SUPPORT */
+#endif /* PPPOE_SCNAME_SUPPORT */
   LWIP_ASSERT_CORE_LOCKED();
+
+#if PPPOE_SCNAME_SUPPORT
+  /*
+   * Check that service_name and concentrator_name strings length will
+   * not trigger integer overflows when computing packets length.
+   */
+  l = strlen(service_name);
+  if (l > 1024) {
+    return NULL;
+  }
+  l = strlen(concentrator_name);
+  if (l > 1024) {
+    return NULL;
+  }
+#endif /* PPPOE_SCNAME_SUPPORT */
 
   sc = (struct pppoe_softc *)LWIP_MEMPOOL_ALLOC(PPPOE_IF);
   if (sc == NULL) {
