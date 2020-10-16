@@ -311,9 +311,11 @@
 
 /**
  * VJ_SUPPORT==1: Support VJ header compression.
+ *
+ * BEWARE: It is known to be broken when built with some compiler optimizations enabled.
  */
 #ifndef VJ_SUPPORT
-#define VJ_SUPPORT                      1
+#define VJ_SUPPORT                      0
 #endif
 /* VJ compression is only supported for TCP over IPv4 over PPPoS. */
 #if !PPPOS_SUPPORT || !PPP_IPV4_SUPPORT || !LWIP_TCP

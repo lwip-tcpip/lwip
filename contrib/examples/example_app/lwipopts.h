@@ -303,7 +303,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define MSCHAP_SUPPORT          0      /* Set > 0 for MSCHAP */
 #define CBCP_SUPPORT            0      /* Set > 0 for CBCP (NOT FUNCTIONAL!) */
 #define CCP_SUPPORT             0      /* Set > 0 for CCP */
-#define VJ_SUPPORT              1      /* Set > 0 for VJ header compression. */
+#define VJ_SUPPORT              0      /* Set > 0 for VJ header compression. */
 #define MD5_SUPPORT             1      /* Set > 0 for MD5 (see also CHAP) */
 
 #endif /* PPP_SUPPORT */
