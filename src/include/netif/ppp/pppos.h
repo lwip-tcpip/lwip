@@ -50,7 +50,6 @@ extern "C" {
  * completed. */
 enum {
   PDIDLE = 0,  /* Idle state - waiting. */
-  PDSTART,     /* Process start flag. */
   PDADDRESS,   /* Process address field. */
   PDCONTROL,   /* Process control field. */
   PDPROTOCOL1, /* Process protocol field 1. */

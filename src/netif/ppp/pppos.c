@@ -593,17 +593,8 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 
       /* Process character relative to current state. */
       switch (pppos->in_state) {
-        case PDIDLE:                    /* Idle state - waiting. */
-          /* Drop the character if it's not 0xff
-           * we would have processed a flag character above. */
-          if (cur_char != PPP_ALLSTATIONS) {
-            break;
-          }
-          /* Fall through */
-        case PDSTART:                   /* Process start flag. */
-          /* Prepare for a new packet. */
-          pppos->in_fcs = PPP_INITFCS;
-          /* Fall through */
+        case PDIDLE:                    /* Idle state - wait for flag character. */
+          break;
         case PDADDRESS:                 /* Process address field. */
           if (cur_char == PPP_ALLSTATIONS) {
             pppos->in_state = PDCONTROL;
@@ -664,7 +655,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
               PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", ppp->netif->num));
               LINK_STATS_INC(link.memerr);
               pppos_input_drop(pppos);
-              pppos->in_state = PDSTART;  /* Wait for flag sequence. */
+              pppos->in_state = PDIDLE;  /* Wait for flag character. */
               break;
             }
             if (pppos->in_head == NULL) {
