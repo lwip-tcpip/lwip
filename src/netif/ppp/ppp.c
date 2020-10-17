@@ -874,7 +874,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   }
 #endif /* CCP_SUPPORT */
 
-  switch(protocol) {
+  switch (protocol) {
 
 #if PPP_IPV4_SUPPORT
     case PPP_IP:            /* Internet Protocol */
@@ -963,13 +963,14 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* PPP_PROTOCOLNAME */
         ppp_warn(("Unsupported protocol 0x%x received", protocol));
 #endif /* PPP_DEBUG */
-        if (pbuf_add_header(pb, sizeof(protocol))) {
-          PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));
-          goto drop;
-        }
-        lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
+
+      if (pbuf_add_header(pb, sizeof(protocol))) {
+        PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_add_header failed)\n", pcb->netif->num));
+        goto drop;
       }
-      break;
+      lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
+    }
+    break;
   }
 
 drop:

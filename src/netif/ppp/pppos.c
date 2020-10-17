@@ -502,6 +502,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
     }
     escaped = ESCAPE_P(pppos->in_accm, cur_char);
     PPPOS_UNPROTECT(lev);
+
     /* Handle special characters. */
     if (escaped) {
       /* Check for escape sequences. */
@@ -591,50 +592,33 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
       }
 
       /* Process character relative to current state. */
-      switch(pppos->in_state) {
+      switch (pppos->in_state) {
         case PDIDLE:                    /* Idle state - waiting. */
           /* Drop the character if it's not 0xff
            * we would have processed a flag character above. */
           if (cur_char != PPP_ALLSTATIONS) {
             break;
           }
-          /* no break */
           /* Fall through */
-
         case PDSTART:                   /* Process start flag. */
           /* Prepare for a new packet. */
           pppos->in_fcs = PPP_INITFCS;
-          /* no break */
           /* Fall through */
-
         case PDADDRESS:                 /* Process address field. */
           if (cur_char == PPP_ALLSTATIONS) {
             pppos->in_state = PDCONTROL;
             break;
           }
-          /* no break */
-
           /* Else assume compressed address and control fields so
            * fall through to get the protocol... */
           /* Fall through */
         case PDCONTROL:                 /* Process control field. */
-          /* If we don't get a valid control code, restart. */
           if (cur_char == PPP_UI) {
             pppos->in_state = PDPROTOCOL1;
             break;
           }
-          /* no break */
-
-#if 0
-          else {
-            PPPDEBUG(LOG_WARNING,
-                     ("pppos_input[%d]: Invalid control <%d>\n", ppp->netif->num, cur_char));
-            pppos->in_state = PDSTART;
-          }
-#endif
           /* Fall through */
-
-      case PDPROTOCOL1:               /* Process protocol field 1. */
+        case PDPROTOCOL1:               /* Process protocol field 1. */
           /* If the lower bit is set, this is the end of the protocol
            * field. */
           if (cur_char & 1) {
