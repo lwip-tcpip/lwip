@@ -82,6 +82,12 @@ extern "C" {
 #define	PPP_TRANS	0x20	/* Asynchronous transparency modifier */
 
 /*
+ * PPP_DEFMRU: MRU value used prior negotiation and unless negotiated later.
+ * Must be 1500.
+ */
+#define PPP_DEFMRU      1500
+
+/*
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */

@@ -502,13 +502,6 @@
 #endif
 
 /**
- * PPP_DEFMRU: Default MRU to try
- */
-#ifndef PPP_DEFMRU
-#define PPP_DEFMRU                      1500
-#endif
-
-/**
  * PPP_MAXMRU: Normally limit MRU to this (pppd default = 16384)
  */
 #ifndef PPP_MAXMRU
