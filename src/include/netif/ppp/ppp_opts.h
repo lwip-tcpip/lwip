@@ -495,21 +495,33 @@
  */
 
 /**
- * PPP_MRU: Default MRU
+ * PPP_MRU: MRU value we want to negotiate (peer MTU)
+ *
+ * It only affects PPPoS because PPPoE value is derived from the
+ * Ethernet interface MTU and PPPoL2TP have a separate setting.
  */
 #ifndef PPP_MRU
 #define PPP_MRU                         1500
 #endif
 
 /**
- * PPP_MAXMRU: Normally limit MRU to this (pppd default = 16384)
+ * PPP_MAXMRU: Normally limit peer MRU to this
+ *
+ * This is the upper limit value to which we set our interface MTU.
+ * If the peer sends a larger number, we will just ignore it as we
+ * are not required to maximize the use of the peer capacity.
+ *
+ * It only affects PPPoS because PPPoE value is derived from the
+ * Ethernet interface MTU and PPPoL2TP have a separate setting.
  */
 #ifndef PPP_MAXMRU
 #define PPP_MAXMRU                      1500
 #endif
 
 /**
- * PPP_MINMRU: No MRUs below this
+ * PPP_MINMRU: No peer MRUs below this
+ *
+ * Peer must be able to receive at least our minimum MTU.
  */
 #ifndef PPP_MINMRU
 #define PPP_MINMRU                      128

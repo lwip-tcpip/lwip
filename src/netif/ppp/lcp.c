@@ -373,7 +373,7 @@ static void lcp_init(ppp_pcb *pcb) {
 
     BZERO(wo, sizeof(*wo));
     wo->neg_mru = 1;
-    wo->mru = PPP_DEFMRU;
+    wo->mru = PPP_MRU;
     wo->neg_asyncmap = 1;
     wo->neg_magicnumber = 1;
     wo->neg_pcompression = 1;
