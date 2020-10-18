@@ -60,16 +60,10 @@ extern "C" {
 /*
  * Memory used for control packets.
  *
- * PPP_CTRL_PBUF_MAX_SIZE is the amount of memory we allocate when we
+ * PPP_CTRL_PBUF_UNKNOWN_SIZE is the amount of memory we allocate when we
  * cannot figure out how much we are going to use before filling the buffer.
  */
-#if PPP_USE_PBUF_RAM
-#define PPP_CTRL_PBUF_TYPE       PBUF_RAM
-#define PPP_CTRL_PBUF_MAX_SIZE   512
-#else /* PPP_USE_PBUF_RAM */
-#define PPP_CTRL_PBUF_TYPE       PBUF_POOL
-#define PPP_CTRL_PBUF_MAX_SIZE   PBUF_POOL_BUFSIZE
-#endif /* PPP_USE_PBUF_RAM */
+#define PPP_CTRL_PBUF_UNKNOWN_SIZE   512
 
 /*
  * The basic PPP frame.

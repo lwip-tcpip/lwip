@@ -185,20 +185,6 @@
 #endif
 
 /**
- * pbuf_type PPP is using for LCP, PAP, CHAP, EAP, CCP, IPCP and IP6CP packets.
- *
- * Memory allocated must be single buffered for PPP to works, it requires pbuf
- * that are not going to be chained when allocated. This requires setting
- * PBUF_POOL_BUFSIZE to at least 512 bytes, which is quite huge for small systems.
- *
- * Setting PPP_USE_PBUF_RAM to 1 makes PPP use memory from heap where buffers are
- * continuous by design, allowing you to use a smaller PBUF_POOL_BUFSIZE.
- */
-#ifndef PPP_USE_PBUF_RAM
-#define PPP_USE_PBUF_RAM                1
-#endif
-
-/**
  * PPP_FCS_TABLE: Keep a 256*2 byte table to speed up FCS calculation for PPPoS
  */
 #ifndef PPP_FCS_TABLE
