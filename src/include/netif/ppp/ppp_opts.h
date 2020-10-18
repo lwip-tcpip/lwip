@@ -191,11 +191,11 @@
  * that are not going to be chained when allocated. This requires setting
  * PBUF_POOL_BUFSIZE to at least 512 bytes, which is quite huge for small systems.
  *
- * Setting PPP_USE_PBUF_RAM to 1 makes PPP use memory from heap where continuous
- * buffers are required, allowing you to use a smaller PBUF_POOL_BUFSIZE.
+ * Setting PPP_USE_PBUF_RAM to 1 makes PPP use memory from heap where buffers are
+ * continuous by design, allowing you to use a smaller PBUF_POOL_BUFSIZE.
  */
 #ifndef PPP_USE_PBUF_RAM
-#define PPP_USE_PBUF_RAM                0
+#define PPP_USE_PBUF_RAM                1
 #endif
 
 /**
