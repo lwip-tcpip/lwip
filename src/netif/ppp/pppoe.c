@@ -869,7 +869,6 @@ pppoe_timeout(void *arg)
       /* initialize for quick retry mode */
       retry_wait = LWIP_MIN(PPPOE_DISC_TIMEOUT * sc->sc_padi_retried, PPPOE_SLOW_RETRY);
       if ((err = pppoe_send_padi(sc)) != 0) {
-        sc->sc_padi_retried--;
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
       }
@@ -890,7 +889,6 @@ pppoe_timeout(void *arg)
         return;
       }
       if ((err = pppoe_send_padr(sc)) != 0) {
-        sc->sc_padr_retried--;
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         LWIP_UNUSED_ARG(err); /* if PPPDEBUG is disabled */
       }
