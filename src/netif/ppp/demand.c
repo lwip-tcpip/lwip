@@ -98,7 +98,7 @@ demand_conf()
     flush_flag = 0;
     fcs = PPP_INITFCS;
 
-    netif_set_mtu(pcb, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
+    ppp_netif_set_mtu(pcb, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
     if (ppp_send_config(pcb, PPP_MRU, (u32_t) 0, 0, 0) < 0
 	|| ppp_recv_config(pcb, PPP_MRU, (u32_t) 0, 0, 0) < 0)
 	    fatal("Couldn't set up demand-dialled PPP interface: %m");

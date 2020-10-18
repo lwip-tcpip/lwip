@@ -1031,13 +1031,13 @@ void new_phase(ppp_pcb *pcb, int p) {
  */
 int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
   LWIP_UNUSED_ARG(mtu);
-  /* pcb->mtu = mtu; -- set correctly with netif_set_mtu */
+
+  PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->netif->num));
 
   if (pcb->link_cb->send_config) {
     pcb->link_cb->send_config(pcb, pcb->link_ctx_cb, accm, pcomp, accomp);
   }
 
-  PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->netif->num) );
   return 0;
 }
 
@@ -1048,11 +1048,12 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
 int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
   LWIP_UNUSED_ARG(mru);
 
+  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->netif->num));
+
   if (pcb->link_cb->recv_config) {
     pcb->link_cb->recv_config(pcb, pcb->link_ctx_cb, accm, pcomp, accomp);
   }
 
-  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->netif->num));
   return 0;
 }
 
@@ -1317,18 +1318,18 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
 #endif /* DEMAND_SUPPORT */
 
 /*
- * netif_set_mtu - set the MTU on the PPP network interface.
+ * ppp_netif_set_mtu - set the MTU on the PPP network interface.
  */
-void netif_set_mtu(ppp_pcb *pcb, int mtu) {
+void ppp_netif_set_mtu(ppp_pcb *pcb, int mtu) {
 
   pcb->netif->mtu = mtu;
-  PPPDEBUG(LOG_INFO, ("netif_set_mtu[%d]: mtu=%d\n", pcb->netif->num, mtu));
+  PPPDEBUG(LOG_INFO, ("ppp_netif_set_mtu[%d]: mtu=%d\n", pcb->netif->num, mtu));
 }
 
 /*
- * netif_get_mtu - get PPP interface MTU
+ * ppp_netif_get_mtu - get PPP interface MTU
  */
-int netif_get_mtu(ppp_pcb *pcb) {
+int ppp_netif_get_mtu(ppp_pcb *pcb) {
 
   return pcb->netif->mtu;
 }

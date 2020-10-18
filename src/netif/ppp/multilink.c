@@ -148,12 +148,12 @@ mp_join_bundle()
 		if (demand) {
 			/* already have a bundle */
 			cfg_bundle(0, 0, 0, 0);
-			netif_set_mtu(pcb, mtu);
+			ppp_netif_set_mtu(pcb, mtu);
 			return 0;
 		}
 		make_new_bundle(0, 0, 0, 0);
 		set_ifunit(1);
-		netif_set_mtu(pcb, mtu);
+		ppp_netif_set_mtu(pcb, mtu);
 		return 0;
 	}
 
@@ -198,7 +198,7 @@ mp_join_bundle()
 	mtu = LWIP_MIN(ho->mrru, ao->mru);
 	if (demand) {
 		cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
-		netif_set_mtu(pcb, mtu);
+		ppp_netif_set_mtu(pcb, mtu);
 		script_setenv("BUNDLE", bundle_id + 7, 1);
 		return 0;
 	}
@@ -245,7 +245,7 @@ mp_join_bundle()
 	/* we have to make a new bundle */
 	make_new_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
 	set_ifunit(1);
-	netif_set_mtu(pcb, mtu);
+	ppp_netif_set_mtu(pcb, mtu);
 	script_setenv("BUNDLE", bundle_id + 7, 1);
 	make_bundle_links(pcb);
 	unlock_db();

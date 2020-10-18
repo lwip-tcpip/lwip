@@ -450,8 +450,8 @@ int sif6down (ppp_pcb *pcb);
 int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 #endif /* DEMAND_SUPPORt */
 
-void netif_set_mtu(ppp_pcb *pcb, int mtu);
-int netif_get_mtu(ppp_pcb *pcb);
+void ppp_netif_set_mtu(ppp_pcb *pcb, int mtu);
+int ppp_netif_get_mtu(ppp_pcb *pcb);
 
 #if CCP_SUPPORT
 #if 0 /* unused */
