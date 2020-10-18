@@ -462,11 +462,11 @@ void lcp_lowerup(ppp_pcb *pcb) {
      * but accept A/C and protocol compressed packets
      * if we are going to ask for A/C and protocol compression.
      */
-    if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
-	|| ppp_recv_config(pcb, PPP_MRU, (pcb->settings.lax_recv? 0: 0xffffffff),
+    if (ppp_send_config(pcb, PPP_DEFMRU, 0xffffffff, 0, 0) < 0
+	|| ppp_recv_config(pcb, PPP_DEFMRU, (pcb->settings.lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
-    pcb->peer_mru = PPP_MRU;
+    pcb->peer_mru = PPP_DEFMRU;
 
     if (pcb->settings.listen_time != 0) {
 	f->flags |= DELAYED_UP;
@@ -757,7 +757,7 @@ static void lcp_resetci(fsm *f) {
 #endif /* HAVE_MULTILINK */
     if (pcb->settings.noendpoint)
 	ao->neg_endpoint = 0;
-    pcb->peer_mru = PPP_MRU;
+    pcb->peer_mru = PPP_DEFMRU;
 #if 0 /* UNUSED */
     auth_reset(pcb);
 #endif /* UNUSED */
@@ -2309,8 +2309,8 @@ static void lcp_up(fsm *f) {
      * the interface MTU is set to the lowest of that, the
      * MTU we want to use, and our link MRU.
      */
-    mtu = ho->neg_mru? ho->mru: PPP_MRU;
-    mru = go->neg_mru? LWIP_MAX(wo->mru, go->mru): PPP_MRU;
+    mtu = ho->neg_mru? ho->mru: PPP_DEFMRU;
+    mru = go->neg_mru? LWIP_MAX(wo->mru, go->mru): PPP_DEFMRU;
 #ifdef HAVE_MULTILINK
     if (!(multilink && go->neg_mrru && ho->neg_mrru))
 #endif /* HAVE_MULTILINK */
@@ -2344,11 +2344,11 @@ static void lcp_down(fsm *f) {
 
     link_down(pcb);
 
-    ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(pcb, PPP_MRU,
+    ppp_send_config(pcb, PPP_DEFMRU, 0xffffffff, 0, 0);
+    ppp_recv_config(pcb, PPP_DEFMRU,
 		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
-    pcb->peer_mru = PPP_MRU;
+    pcb->peer_mru = PPP_DEFMRU;
 }
 
 
