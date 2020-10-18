@@ -530,6 +530,11 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   l2tp->peer_ns = ns+1;
 
   p = pbuf_coalesce(p, PBUF_RAW);
+  if (p->next != NULL) {
+    PPPDEBUG(LOG_DEBUG, ("pppol2tp: pbuf_coalesce failed: %d\n", p->tot_len));
+    return;
+  }
+
   inp = (u8_t*)p->payload;
   /* Decode AVPs */
   while (p->len > 0) {

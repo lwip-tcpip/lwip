@@ -930,6 +930,10 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       for (i = 0; (protp = protocols[i]) != NULL; ++i) {
         if (protp->protocol == protocol) {
           pb = pbuf_coalesce(pb, PBUF_RAW);
+          if (pb->next != NULL) {
+            PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping (pbuf_coalesce failed), len=%d\n", pcb->netif->num, pb->tot_len));
+            goto drop;
+          }
           (*protp->input)(pcb, (u8_t*)pb->payload, pb->len);
           goto out;
         }

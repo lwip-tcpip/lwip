@@ -410,6 +410,10 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   }
 
   pb = pbuf_coalesce(pb, PBUF_RAW);
+  if (pb->next != NULL) {
+    PPPDEBUG(LOG_DEBUG, ("pppoe: pbuf_coalesce failed: %d\n", pb->tot_len));
+    goto done;
+  }
 
   ethhdr = (struct eth_hdr *)pb->payload;
 
