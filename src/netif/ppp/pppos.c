@@ -631,11 +631,36 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
           if (pppos->in_tail == NULL || pppos->in_tail->len == PBUF_POOL_BUFSIZE) {
             u16_t pbuf_alloc_len;
             if (pppos->in_tail != NULL) {
+              u16_t mru;
               pppos->in_tail->tot_len = pppos->in_tail->len;
               if (pppos->in_tail != pppos->in_head) {
                 pbuf_cat(pppos->in_head, pppos->in_tail);
                 /* give up the in_tail reference now */
                 pppos->in_tail = NULL;
+              }
+              /* Compute MRU including headers length.  If smaller packets are
+               * requested, we must still be able to receive packets of the
+               * default MRU for control packets. */
+              mru = LWIP_MAX(PPP_MRU, PPP_DEFMRU)
+                /* Add 10% more. We only want to avoid filling all PBUFs with garbage,
+                 * we don't have to be pedantic. */
+                + LWIP_MAX(PPP_MRU, PPP_DEFMRU)/10
+#if IP_FORWARD || LWIP_IPV6_FORWARD
+                + PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN
+#endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
+#if PPP_INPROC_IRQ_SAFE
+                + sizeof(struct pppos_input_header)
+#endif /* PPP_INPROC_IRQ_SAFE */
+                + sizeof(pppos->in_protocol);
+              if (pppos->in_head->tot_len > mru) {
+                /* Packet too big. Drop the input packet and let the
+                 * higher layers deal with it.  Continue processing
+                 * received characters in case a new packet starts. */
+                PPPDEBUG(LOG_ERR, ("pppos_input[%d]: packet too big, max_len=%d, dropping packet\n", ppp->netif->num, mru));
+                LINK_STATS_INC(link.lenerr);
+                pppos_input_drop(pppos);
+                pppos->in_state = PDIDLE;  /* Wait for flag character. */
+                break;
               }
             }
             /* If we haven't started a packet, we need a packet header. */
@@ -653,7 +678,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
             if (next_pbuf == NULL) {
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
-               * the received pbuf chain in case a new packet starts. */
+               * received characters in case a new packet starts. */
               PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", ppp->netif->num));
               LINK_STATS_INC(link.memerr);
               pppos_input_drop(pppos);
