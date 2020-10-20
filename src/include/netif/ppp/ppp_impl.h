@@ -90,7 +90,9 @@ extern "C" {
 /*
  * Protocol field values.
  */
+#if PPP_IPV4_SUPPORT
 #define PPP_IP		0x21	/* Internet Protocol */
+#endif /* PPP_IPV4_SUPPORT */
 #if 0 /* UNUSED */
 #define PPP_AT		0x29	/* AppleTalk Protocol */
 #define PPP_IPX		0x2b	/* IPX protocol */
