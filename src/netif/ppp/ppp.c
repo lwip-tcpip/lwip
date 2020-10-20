@@ -1323,6 +1323,9 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
 void ppp_netif_set_mtu(ppp_pcb *pcb, int mtu) {
 
   pcb->netif->mtu = mtu;
+#if PPP_IPV6_SUPPORT && LWIP_ND6_ALLOW_RA_UPDATES
+  pcb->netif->mtu6 = mtu;
+#endif /* PPP_IPV6_SUPPORT && LWIP_ND6_ALLOW_RA_UPDATES */
   PPPDEBUG(LOG_INFO, ("ppp_netif_set_mtu[%d]: mtu=%d\n", pcb->netif->num, mtu));
 }
 
