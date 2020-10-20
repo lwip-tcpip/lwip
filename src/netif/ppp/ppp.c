@@ -251,6 +251,7 @@ void ppp_set_mppe(ppp_pcb *pcb, u8_t flags) {
 
 #if PPP_NOTIFY_PHASE
 void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
+  LWIP_ASSERT_CORE_LOCKED();
   pcb->notify_phase_cb = notify_phase_cb;
   notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
 }
