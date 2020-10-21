@@ -216,6 +216,8 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
 /***********************************/
 #if PPP_AUTH_SUPPORT
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
+  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD", pcb->phase == PPP_PHASE_DEAD);
+
 #if PAP_SUPPORT
   pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
 #endif /* PAP_SUPPORT */
@@ -237,6 +239,8 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 #if MPPE_SUPPORT
 /* Set MPPE configuration */
 void ppp_set_mppe(ppp_pcb *pcb, u8_t flags) {
+  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD", pcb->phase == PPP_PHASE_DEAD);
+
   if (flags == PPP_MPPE_DISABLE) {
     pcb->settings.require_mppe = 0;
     return;
