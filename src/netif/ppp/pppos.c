@@ -489,20 +489,21 @@ pppos_input(ppp_pcb *ppp, const void *s, int l)
   LWIP_ASSERT_CORE_LOCKED();
 #endif
 
+  /* Don't even bother parsing data if we are disconnected.
+   * Added to that, ppp_input must never be called if the upper layer is down.
+   */
+  PPPOS_PROTECT(lev);
+  if (!pppos->open) {
+    PPPOS_UNPROTECT(lev);
+    return;
+  }
+  PPPOS_UNPROTECT(lev);
+
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
     cur_char = *s_u8++;
 
     PPPOS_PROTECT(lev);
-    /* ppp_input can disconnect the interface, we need to abort to prevent a memory
-     * leak if there are remaining bytes because pppos_connect and pppos_listen
-     * functions expect input buffer to be free. Furthermore there are no real
-     * reason to continue reading bytes if we are disconnected.
-     */
-    if (!pppos->open) {
-      PPPOS_UNPROTECT(lev);
-      return;
-    }
     escaped = ESCAPE_P(pppos->in_accm, cur_char);
     PPPOS_UNPROTECT(lev);
 
@@ -582,6 +583,14 @@ pppos_input(ppp_pcb *ppp, const void *s, int l)
           }
 #else /* PPP_INPROC_IRQ_SAFE */
           ppp_input(ppp, inp);
+          /* ppp_input can disconnect the interface, we need to abort to prevent a memory
+           * leak if there are remaining bytes because pppos_connect and pppos_listen
+           * functions expect input buffer to be free. Furthermore there are no real
+           * reason to continue reading bytes if we are disconnected.
+           */
+          if (!pppos->open) {
+            break;
+          }
 #endif /* PPP_INPROC_IRQ_SAFE */
         }
 
