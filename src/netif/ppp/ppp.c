@@ -779,8 +779,10 @@ void ppp_link_end(ppp_pcb *pcb) {
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   u16_t protocol;
 #if PPP_DEBUG && PPP_PROTOCOLNAME
-    const char *pname;
+  const char *pname;
 #endif /* PPP_DEBUG && PPP_PROTOCOLNAME */
+  LWIP_ASSERT("pcb->phase >= PPP_PHASE_ESTABLISH && pcb->phase <= PPP_PHASE_TERMINATE",
+    pcb->phase >= PPP_PHASE_ESTABLISH && pcb->phase <= PPP_PHASE_TERMINATE);
 
   magic_randomize();
 

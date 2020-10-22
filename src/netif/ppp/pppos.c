@@ -744,10 +744,21 @@ pppos_input(ppp_pcb *ppp, const void *s, int l)
 static void pppos_input_callback(void *arg) {
   struct pbuf *pb = (struct pbuf*)arg;
   ppp_pcb *ppp;
+  pppos_pcb *pppos;
 
   ppp = ((struct pppos_input_header*)pb->payload)->ppp;
   if(pbuf_remove_header(pb, sizeof(struct pppos_input_header))) {
     LWIP_ASSERT("pbuf_remove_header failed", 0);
+    goto drop;
+  }
+
+  /* A previous call to ppp_input might have disconnected the session
+   * while there were still packets in flight in the tcpip mailbox.
+   * Drop incoming packets because ppp_input must never be called if
+   * the upper layer is down.
+   */
+  pppos = (pppos_pcb *)ppp->link_ctx_cb;
+  if (!pppos->open) {
     goto drop;
   }
 
