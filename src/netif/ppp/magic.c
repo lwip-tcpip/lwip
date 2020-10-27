@@ -254,7 +254,7 @@ void magic_randomize(void) {
  */
 u32_t magic(void) {
 #ifdef LWIP_RAND
-  return LWIP_RAND() + magic_randomseed;
+  return (LWIP_RAND() << 16) + LWIP_RAND() + magic_randomseed;
 #else /* LWIP_RAND */
   return ((u32_t)rand() << 16) + (u32_t)rand() + magic_randomseed;
 #endif /* LWIP_RAND */
