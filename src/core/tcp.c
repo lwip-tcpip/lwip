@@ -890,7 +890,7 @@ tcp_listen_with_backlog_and_err(struct tcp_pcb *pcb, u8_t backlog, err_t *err)
   lpcb->state = LISTEN;
   lpcb->prio = pcb->prio;
   lpcb->so_options = pcb->so_options;
-  lpcb->netif_idx = NETIF_NO_INDEX;
+  lpcb->netif_idx = pcb->netif_idx;
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
 #if LWIP_VLAN_PCP
