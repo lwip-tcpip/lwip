@@ -114,12 +114,12 @@ static void magic_churnrand(char *rand_data, u32_t rand_len) {
       u32_t rand;
 #endif /* LWIP_RAND */
     } sys_data;
+    /* Load sys_data fields here. */
     magic_randomseed += sys_jiffies();
     sys_data.jiffies = magic_randomseed;
 #ifdef LWIP_RAND
     sys_data.rand = LWIP_RAND();
 #endif /* LWIP_RAND */
-    /* Load sys_data fields here. */
     lwip_md5_update(&md5_ctx, (u_char *)&sys_data, sizeof(sys_data));
   }
   lwip_md5_finish(&md5_ctx, (u_char *)magic_randpool);
@@ -142,7 +142,7 @@ void magic_randomize(void) {
 }
 
 /*
- * magic_random_bytes - Fill a buffer with random bytes.
+ * Fill a buffer with random bytes.
  *
  * Use the random pool to generate random data.  This degrades to pseudo
  *  random when used faster than randomness is supplied using magic_churnrand().
@@ -180,30 +180,21 @@ void magic_random_bytes(unsigned char *buf, u32_t buf_len) {
 }
 
 /*
- * Return a new random number.
+ * Return a new 32-bit random number.
  */
 u32_t magic(void) {
   u32_t new_rand;
 
   magic_random_bytes((unsigned char *)&new_rand, sizeof(new_rand));
-
   return new_rand;
 }
 
 #else /* PPP_MD5_RANDM */
 
-/*****************************/
-/*** LOCAL DATA STRUCTURES ***/
-/*****************************/
 #ifndef LWIP_RAND
 static int  magic_randomized;       /* Set when truly randomized. */
 #endif /* LWIP_RAND */
 static u32_t magic_randomseed;      /* Seed used for random number generation. */
-
-
-/***********************************/
-/*** PUBLIC FUNCTION DEFINITIONS ***/
-/***********************************/
 
 /*
  * Initialize the random number generator.
@@ -211,25 +202,23 @@ static u32_t magic_randomseed;      /* Seed used for random number generation. *
  * Here we attempt to compute a random number seed but even if
  * it isn't random, we'll randomize it later.
  *
- * The current method uses the fields from the real time clock,
- * the idle process counter, the millisecond counter, and the
- * hardware timer tick counter.  When this is invoked
- * in startup(), then the idle counter and timer values may
- * repeat after each boot and the real time clock may not be
- * operational.  Thus we call it again on the first random
- * event.
+ * The current method uses the jiffies counter.  When this is
+ * invoked at startup the jiffies counter value may repeat
+ * after each boot.  Thus we call it again on the first
+ * random event.
+ *
+ * If LWIP_RAND if available, we do not call srand() as we are
+ * not going to call rand().
  */
 void magic_init(void) {
   magic_randomseed += sys_jiffies();
 #ifndef LWIP_RAND
-  /* Initialize the Borland random number generator. */
+  /* Initialize the random number generator. */
   srand((unsigned)magic_randomseed);
 #endif /* LWIP_RAND */
 }
 
 /*
- * magic_init - Initialize the magic number generator.
- *
  * Randomize our random seed value.  Here we use the fact that
  * this function is called at *truly random* times by the polling
  * and network functions.  Here we only get 16 bits of new random
@@ -242,23 +231,26 @@ void magic_randomize(void) {
     magic_randomized = !0;
     magic_init();
     /* The initialization function also updates the seed. */
-  } else {
-#endif /* LWIP_RAND */
-    magic_randomseed += sys_jiffies();
-#ifndef LWIP_RAND
+    return;
   }
 #endif /* LWIP_RAND */
+  magic_randomseed += sys_jiffies();
 }
 
 /*
- * Return a new random number.
+ * Return a new 32-bit random number.
  *
- * Here we use the Borland rand() function to supply a pseudo random
+ * Here we use the rand() function to supply a pseudo random
  * number which we make truly random by combining it with our own
  * seed which is randomized by truly random events.
  * Thus the numbers will be truly random unless there have been no
  * operator or network events in which case it will be pseudo random
- * seeded by the real time clock.
+ * seeded by srand().
+ *
+ * Alternatively, use LWIP_RAND if available, but we do not assume
+ * it is returning 32 bits of random data because it is probably
+ * going to be defined to directly return the rand() value. For
+ * example, LCP magic numbers are 32-bit random values.
  */
 u32_t magic(void) {
 #ifdef LWIP_RAND
@@ -269,7 +261,7 @@ u32_t magic(void) {
 }
 
 /*
- * magic_random_bytes - Fill a buffer with random bytes.
+ * Fill a buffer with random bytes.
  */
 void magic_random_bytes(unsigned char *buf, u32_t buf_len) {
   u32_t new_rand, n;
