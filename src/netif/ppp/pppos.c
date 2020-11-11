@@ -536,6 +536,12 @@ pppos_input(ppp_pcb *ppp, const void *s, int l)
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
           pppos_input_drop(pppos);
+        } else if (!pppos->in_tail) {
+          PPPDEBUG(LOG_INFO,
+                   ("pppos_input[%d]: Dropping null in_tail\n",
+                    ppp->netif->num));
+          LINK_STATS_INC(link.drop);
+          pppos_input_drop(pppos);
         /* Otherwise it's a good packet so pass it on. */
         } else {
           struct pbuf *inp;
