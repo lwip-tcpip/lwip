@@ -1049,6 +1049,7 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, const char *
     LWIP_UNUSED_ARG(name);
     LWIP_UNUSED_ARG(namelen);
 #endif /* HAVE_MULTILINK */
+    LWIP_UNUSED_ARG(prot_flavor); /* if CHAP_SUPPORT is disabled */
 
     switch (protocol) {
 #if CHAP_SUPPORT
@@ -1136,6 +1137,7 @@ void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
 void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
     int bit;
     const char *prot = "";
+    LWIP_UNUSED_ARG(prot_flavor); /* if CHAP_SUPPORT is disabled */
 
     switch (protocol) {
 #if CHAP_SUPPORT
