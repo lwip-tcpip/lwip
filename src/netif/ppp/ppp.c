@@ -674,9 +674,9 @@ ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, vo
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
+#if PPP_SERVER
   pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
   pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
-#if PPP_SERVER
   pcb->settings.chap_rechallenge_time = CHAP_DEFRECHALLENGETIME;
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */

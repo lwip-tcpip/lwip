@@ -266,9 +266,9 @@ typedef struct ppp_settings_s {
 #endif /* PAP_SUPPPORT */
 
 #if CHAP_SUPPORT
+#if PPP_SERVER
   u8_t  chap_timeout_time;       /* Timeout (seconds) for retransmitting req */
   u8_t  chap_max_transmits;      /* max # times to send challenge */
-#if PPP_SERVER
   u8_t  chap_rechallenge_time;   /* Time to wait for auth-req from peer */
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */
