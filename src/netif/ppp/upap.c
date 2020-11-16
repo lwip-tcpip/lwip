@@ -481,6 +481,7 @@ static void upap_rauthack(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	}
     }
 
+    UNTIMEOUT(upap_timeout, pcb);
     pcb->upap.us_clientstate = UPAPCS_OPEN;
 
     auth_withpeer_success(pcb, PPP_PAP, 0);
@@ -516,6 +517,7 @@ static void upap_rauthnak(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	}
     }
 
+    UNTIMEOUT(upap_timeout, pcb);
     pcb->upap.us_clientstate = UPAPCS_BADAUTH;
 
     ppp_error(("PAP authentication failed"));
