@@ -95,7 +95,7 @@
  * timers analysis.
  */
 #ifndef PPP_NUM_TIMEOUTS_PER_PCB
-#define PPP_NUM_TIMEOUTS_PER_PCB        (1 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT)
+#define PPP_NUM_TIMEOUTS_PER_PCB        (2 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT)
 #endif
 
 /* The number of sys_timeouts required for the PPP module */
