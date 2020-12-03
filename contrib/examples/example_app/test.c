@@ -262,7 +262,7 @@ ppp_output_cb(ppp_pcb *pcb, const void *data, u32_t len, void *ctx)
 {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(ctx);
-  return sio_write(ppp_sio, (u8_t*)data, len);
+  return sio_write(ppp_sio, (const u8_t*)data, len);
 }
 #endif /* PPPOS_SUPPORT */
 #endif /* USE_PPP */
