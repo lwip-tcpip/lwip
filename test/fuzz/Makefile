@@ -41,21 +41,30 @@ LWIPDIR=../../src
 CONTRIBDIR=../../contrib
 include $(CONTRIBDIR)/ports/unix/Common.mk
 
+DEPFILES=.depend_fuzz .depend_lwip .depend_app
+
 clean:
-	rm -f *.o $(LWIPLIBCOMMON) $(APPLIB) lwip_fuzz lwip_fuzz2 lwip_fuzz3 *.s .depend* *.core core
+	rm -f *.o $(LWIPLIBCOMMON) $(APPLIB) lwip_fuzz lwip_fuzz2 lwip_fuzz3 *.s $(DEPFILES) *.core core
 
-depend dep: .depend
+depend dep: $(DEPFILES)
+	@true
 
-include .depend
+ifneq ($(MAKECMDGOALS),clean)
+include $(DEPFILES)
+endif
 
-.depend: fuzz.c fuzz2.c fuzz3.c fuzz_common.c $(LWIPFILES) $(APPFILES)
-	$(CCDEP) $(CFLAGS) -MM $^ > .depend || rm -f .depend
+.depend_fuzz: fuzz.c fuzz2.c fuzz3.c fuzz_common.c
+	$(CCDEP) $(CFLAGS) -MM $^ > .depend_fuzz || rm -f .depend_fuzz
+.depend_lwip: $(LWIPFILES)
+	$(CCDEP) $(CFLAGS) -MM $^ > .depend_lwip || rm -f .depend_lwip
+.depend_app: $(APPFILES)
+	$(CCDEP) $(CFLAGS) -MM $^ > .depend_app || rm -f .depend_app
 
-lwip_fuzz: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz.o fuzz_common.o
+lwip_fuzz: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz.o fuzz_common.o
 	$(CC) $(CFLAGS) -o lwip_fuzz fuzz.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
 
-lwip_fuzz2: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz2.o fuzz_common.o
+lwip_fuzz2: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz2.o fuzz_common.o
 	$(CC) $(CFLAGS) -o lwip_fuzz2 fuzz2.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
 
-lwip_fuzz3: .depend $(LWIPLIBCOMMON) $(APPLIB) fuzz3.o fuzz_common.o
+lwip_fuzz3: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz3.o fuzz_common.o
 	$(CC) $(CFLAGS) -o lwip_fuzz3 fuzz3.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
