@@ -1610,6 +1610,11 @@ http_send(struct altcp_pcb *pcb, struct http_state *hs)
   }
 #endif /* LWIP_HTTPD_DYNAMIC_HEADERS */
 
+#if LWIP_HTTPD_SSI
+  if (hs->ssi && (hs->ssi->tag_state == TAG_SENDING)) {
+    /* do not check the condition below */
+  } else
+#endif
   /* Have we run out of file data to send? If so, we need to read the next
    * block from the file. */
   if (hs->left == 0) {
@@ -1621,6 +1626,9 @@ http_send(struct altcp_pcb *pcb, struct http_state *hs)
 #if LWIP_HTTPD_SSI
   if (hs->ssi) {
     data_to_send = http_send_data_ssi(pcb, hs);
+    if (hs->ssi->tag_state == TAG_SENDING) {
+      return data_to_send;
+    }
   } else
 #endif /* LWIP_HTTPD_SSI */
   {
