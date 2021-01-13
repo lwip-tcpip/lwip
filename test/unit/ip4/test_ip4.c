@@ -18,7 +18,7 @@ static struct netif test_netif;
 static ip4_addr_t test_ipaddr, test_netmask, test_gw;
 static int linkoutput_ctr;
 static int linkoutput_byte_ctr;
-static int linkoutput_pkt_len;
+static u16_t linkoutput_pkt_len;
 static u8_t linkoutput_pkt[100];
 
 /* reference internal lwip variable in netif.c */
@@ -288,7 +288,7 @@ START_TEST(test_ip4_icmp_replylen_short)
 
   fail_unless(linkoutput_ctr == 1);
   /* Verify outgoing ICMP packet has no extra data */
-  fail_unless(linkoutput_byte_ctr == icmp_len + sizeof(unknown_proto));
+  fail_unless(linkoutput_pkt_len == icmp_len + sizeof(unknown_proto));
   fail_if(memcmp(&linkoutput_pkt[icmp_len], unknown_proto, sizeof(unknown_proto)));
 }
 END_TEST
@@ -312,8 +312,8 @@ START_TEST(test_ip4_icmp_replylen_first_8)
   fail_unless(ip4_input(p, &test_netif) == ERR_OK);
 
   fail_unless(linkoutput_ctr == 1);
-  fail_unless(linkoutput_byte_ctr == icmp_len + unreach_len);
-  fail_if(memcmp(&linkoutput_pkt[icmp_len], unknown_proto, IP_HLEN + 8));
+  fail_unless(linkoutput_pkt_len == icmp_len + unreach_len);
+  fail_if(memcmp(&linkoutput_pkt[icmp_len], unknown_proto, unreach_len));
 }
 END_TEST
 
