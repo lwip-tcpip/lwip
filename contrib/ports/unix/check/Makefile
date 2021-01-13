@@ -37,6 +37,11 @@ LWIPDIR=../../../../src
 # The include path to sys_arch.h and lwipopts.h must be first, so this must be before Common.mk
 CFLAGS=-DLWIP_NOASSERT_ON_ERROR -I/usr/include/check -I$(LWIPDIR)/../test/unit
 
+# Ignore 'too many arguments for format' warnings which happen with GCCs
+# from check 0.15.2 on fail_if/fail_unless macros with text.
+# See https://github.com/libcheck/check/pull/298/commits/82540c5428d3818b64d
+CFLAGS+=-Wno-error=format-extra-args
+
 ifeq (clang,$(findstring clang,$(CC)))
 # check.h causes 'error: token pasting of ',' and __VA_ARGS__ is a GNU extension' with clang 9.0.0
 CFLAGS+=-Wno-gnu-zero-variadic-macro-arguments
