@@ -6,3 +6,6 @@ all:
 
 check:
 	cd ../../contrib/ports/unix/check/ && $(MAKE) check
+
+clean:
+	cd ../../contrib/ports/unix/check/ && $(MAKE) clean
