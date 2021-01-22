@@ -306,7 +306,11 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     /* service name specified: convert to port number
      * @todo?: currently, only ASCII integers (port numbers) are supported (AI_NUMERICSERV)! */
     port_nr = atoi(servname);
-    if ((port_nr <= 0) || (port_nr > 0xffff)) {
+    if (port_nr == 0 && (servname[0] != '0')) {
+      /* atoi failed - service was not numeric */
+      return EAI_SERVICE;
+    }
+    if ((port_nr < 0) || (port_nr > 0xffff)) {
       return EAI_SERVICE;
     }
   }
