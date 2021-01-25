@@ -54,6 +54,7 @@ struct fsdata_chksum {
 #define FS_FILE_FLAGS_HEADER_PERSISTENT   0x02
 #define FS_FILE_FLAGS_HEADER_HTTPVER_1_1  0x04
 #define FS_FILE_FLAGS_SSI                 0x08
+#define FS_FILE_FLAGS_CUSTOM              0x10
 
 /** Define FS_FILE_EXTENSION_T_DEFINED if you have typedef'ed to your private
  * pointer type (defaults to 'void' so the default usage is 'void*')
@@ -74,9 +75,6 @@ struct fs_file {
   u16_t chksum_count;
 #endif /* HTTPD_PRECALCULATED_CHECKSUM */
   u8_t flags;
-#if LWIP_HTTPD_CUSTOM_FILES
-  u8_t is_custom_file;
-#endif /* LWIP_HTTPD_CUSTOM_FILES */
 #if LWIP_HTTPD_FILE_STATE
   void *state;
 #endif /* LWIP_HTTPD_FILE_STATE */
