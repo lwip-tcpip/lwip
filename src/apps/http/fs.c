@@ -74,7 +74,6 @@ fs_open(struct fs_file *file, const char *name)
       file->data = (const char *)f->data;
       file->len = f->len;
       file->index = f->len;
-      file->pextension = NULL;
       file->flags = f->flags;
 #if HTTPD_PRECALCULATED_CHECKSUM
       file->chksum_count = f->chksum_count;
