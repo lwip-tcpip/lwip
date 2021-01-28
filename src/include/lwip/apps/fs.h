@@ -67,9 +67,11 @@ struct fs_file {
   const char *data;
   int len;
   int index;
+#if LWIP_HTTPD_FILE_EXTENSION
   /* pextension is free for implementations to hold private (extensional)
      arbitrary data, e.g. holding some file state or file system handle */
   fs_file_extension *pextension;
+#endif /* LWIP_HTTPD_FILE_EXTENSION */
 #if HTTPD_PRECALCULATED_CHECKSUM
   const struct fsdata_chksum *chksum;
   u16_t chksum_count;

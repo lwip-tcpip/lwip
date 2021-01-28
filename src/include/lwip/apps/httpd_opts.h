@@ -375,6 +375,16 @@
 #define LWIP_HTTPD_FILE_STATE         0
 #endif
 
+/** Set this to 1 to add the pextension field to the fs_file structure.
+ * This is included here to retain compatibility with legacy code that
+ * relies on the presence of the pextension field.
+ * New code should use LWIP_HTTPD_FILE_STATE instead.
+ * This option may be removed in a future version of lwip.
+ */
+#if !defined LWIP_HTTPD_FILE_EXTENSION || defined __DOXYGEN__
+#define LWIP_HTTPD_FILE_EXTENSION     0
+#endif
+
 /** HTTPD_PRECALCULATED_CHECKSUM==1: include precompiled checksums for
  * predefined (MSS-sized) chunks of the files to prevent having to calculate
  * the checksums at runtime. */
