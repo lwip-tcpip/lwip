@@ -79,6 +79,9 @@ fs_open(struct fs_file *file, const char *name)
       file->chksum_count = f->chksum_count;
       file->chksum = f->chksum;
 #endif /* HTTPD_PRECALCULATED_CHECKSUM */
+#if LWIP_HTTPD_FILE_EXTENSION
+      file->pextension = NULL;
+#endif /* LWIP_HTTPD_FILE_EXTENSION */
 #if LWIP_HTTPD_FILE_STATE
       file->state = fs_state_init(file, name);
 #endif /* #if LWIP_HTTPD_FILE_STATE */
