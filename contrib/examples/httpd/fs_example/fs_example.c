@@ -86,6 +86,9 @@
 #if !LWIP_HTTPD_FS_ASYNC_READ
 #error This needs LWIP_HTTPD_FS_ASYNC_READ
 #endif
+#if !LWIP_HTTPD_FILE_EXTENSION
+#error This needs LWIP_HTTPD_FILE_EXTENSION
+#endif
 
 #if LWIP_HTTPD_EXAMPLE_CUSTOMFILES_DELAYED
 #include "lwip/tcpip.h"
@@ -233,8 +236,8 @@ fs_wait_read_custom(struct fs_file *file, fs_wait_cb callback_fn, void *callback
   LWIP_UNUSED_ARG(callback_fn);
   LWIP_UNUSED_ARG(callback_arg);
   /* Return
-     - 1 if ready to read (at least one byte)
-     - 0 if reading should be delayed (call 'tcpip_callback(callback_fn, callback_arg)' when ready) */
+     - 0 if ready to read (at least one byte)
+     - 1 if reading should be delayed (call 'tcpip_callback(callback_fn, callback_arg)' when ready) */
   return 1;
 }
 
