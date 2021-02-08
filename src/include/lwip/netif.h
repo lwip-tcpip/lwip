@@ -469,7 +469,7 @@ void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
 
 #define netif_set_flags(netif, set_flags)     do { (netif)->flags = (u8_t)((netif)->flags |  (set_flags)); } while(0)
 #define netif_clear_flags(netif, clr_flags)   do { (netif)->flags = (u8_t)((netif)->flags & (u8_t)(~(clr_flags) & 0xff)); } while(0)
-#define netif_is_flag_set(nefif, flag)        (((netif)->flags & (flag)) != 0)
+#define netif_is_flag_set(netif, flag)        (((netif)->flags & (flag)) != 0)
 
 void netif_set_up(struct netif *netif);
 void netif_set_down(struct netif *netif);
