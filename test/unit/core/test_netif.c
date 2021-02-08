@@ -215,13 +215,38 @@ START_TEST(test_netif_extcallbacks)
 }
 END_TEST
 
+START_TEST(test_netif_flag_set)
+{
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
+  LWIP_UNUSED_ARG(_i);
+
+  IP4_ADDR(&addr, 0, 0, 0, 0);
+  IP4_ADDR(&netmask, 0, 0, 0, 0);
+  IP4_ADDR(&gw, 0, 0, 0, 0);
+
+  netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+
+  fail_if(netif_is_flag_set(&net_test, NETIF_FLAG_UP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_BROADCAST));
+  fail_if(netif_is_flag_set(&net_test, NETIF_FLAG_LINK_UP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_ETHARP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_ETHERNET));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_IGMP));
+  fail_unless(netif_is_flag_set(&net_test, NETIF_FLAG_MLD6));
+
+  netif_remove(&net_test);
+}
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
 netif_suite(void)
 {
   testfunc tests[] = {
-    TESTFUNC(test_netif_extcallbacks)
+    TESTFUNC(test_netif_extcallbacks),
+    TESTFUNC(test_netif_flag_set)
   };
   return create_suite("NETIF", tests, sizeof(tests)/sizeof(testfunc), netif_setup, netif_teardown);
 }
