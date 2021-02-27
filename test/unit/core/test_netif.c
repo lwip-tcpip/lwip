@@ -240,13 +240,42 @@ START_TEST(test_netif_flag_set)
 }
 END_TEST
 
+START_TEST(test_netif_find)
+{
+  struct netif net0;
+  struct netif net1;
+  LWIP_UNUSED_ARG(_i);
+
+  /* No netifs available */
+  fail_unless(netif_find("ch0") == NULL);
+
+  /* Add netifs with known names */
+  fail_unless(netif_add_noaddr(&net0, NULL, testif_init, ethernet_input) == &net0);
+  net0.num = 0;
+  fail_unless(netif_add_noaddr(&net1, NULL, testif_init, ethernet_input) == &net1);
+  net1.num = 1;
+
+  fail_unless(netif_find("ch0") == &net0);
+  fail_unless(netif_find("CH0") == NULL);
+  fail_unless(netif_find("ch1") == &net1);
+  fail_unless(netif_find("ch3") == NULL);
+  /* atoi failure is not treated as zero */
+  fail_unless(netif_find("chX") == NULL);
+  fail_unless(netif_find("ab0") == NULL);
+
+  netif_remove(&net0);
+  netif_remove(&net1);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 netif_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_netif_extcallbacks),
-    TESTFUNC(test_netif_flag_set)
+    TESTFUNC(test_netif_flag_set),
+    TESTFUNC(test_netif_find)
   };
   return create_suite("NETIF", tests, sizeof(tests)/sizeof(testfunc), netif_setup, netif_teardown);
 }
