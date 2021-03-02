@@ -1354,6 +1354,7 @@ dhcp_release_and_stop(struct netif *netif)
     /* create and initialize the DHCP message header */
     struct pbuf *p_out;
     u16_t options_out_len;
+    dhcp_set_state(dhcp, DHCP_STATE_OFF);
     p_out = dhcp_create_msg(netif, dhcp, DHCP_RELEASE, &options_out_len);
     if (p_out != NULL) {
       struct dhcp_msg *msg_out = (struct dhcp_msg *)p_out->payload;
@@ -1373,6 +1374,8 @@ dhcp_release_and_stop(struct netif *netif)
 
     /* remove IP address from interface (prevents routing from selecting this interface) */
     netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
+  } else {
+     dhcp_set_state(dhcp, DHCP_STATE_OFF);
   }
 
 #if LWIP_DHCP_AUTOIP_COOP
@@ -1381,8 +1384,6 @@ dhcp_release_and_stop(struct netif *netif)
     dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
   }
 #endif /* LWIP_DHCP_AUTOIP_COOP */
-
-  dhcp_set_state(dhcp, DHCP_STATE_OFF);
 
   if (dhcp->pcb_allocated != 0) {
     dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
