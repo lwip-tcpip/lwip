@@ -183,7 +183,7 @@ void mqtt_client_free(mqtt_client_t* client);
 
 u8_t mqtt_client_is_connected(mqtt_client_t *client);
 
-void mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t,
+void mqtt_set_inpub_callback(mqtt_client_t *client, mqtt_incoming_publish_cb_t pub_cb,
                              mqtt_incoming_data_cb_t data_cb, void *arg);
 
 err_t mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_cb_t cb, void *arg, u8_t sub);
