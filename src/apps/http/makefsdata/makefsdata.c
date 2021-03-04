@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
   memset(path, 0, sizeof(path));
   memset(appPath, 0, sizeof(appPath));
 
-  printf(NEWLINE " makefsdata - HTML to C source converter" NEWLINE);
+  printf(NEWLINE " makefsdata v" LWIP_VERSION_STRING " - HTML to C source converter" NEWLINE);
   printf("     by Jim Pettinato               - circa 2003 " NEWLINE);
   printf("     extended by Simon Goldschmidt  - 2009 " NEWLINE NEWLINE);
 
