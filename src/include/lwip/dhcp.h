@@ -63,6 +63,7 @@ extern "C" {
 #define DHCP_BOOT_FILE_LEN      128U
 
 #define DHCP_FLAG_SUBNET_MASK_GIVEN 0x01
+#define DHCP_FLAG_EXTERNAL_MEM      0x02
 
 /* AutoIP cooperation flags (struct dhcp.autoip_coop_state) */
 typedef enum {
