@@ -126,6 +126,9 @@
 
 /* Forward declarations.*/
 static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif);
+static err_t tcp_output_control_segment_netif(const struct tcp_pcb *pcb, struct pbuf *p,
+                                              const ip_addr_t *src, const ip_addr_t *dst,
+                                              struct netif *netif);
 
 /* tcp_route: common code that returns a fixed bound netif or calls ip_route */
 static struct netif *
@@ -1922,65 +1925,61 @@ static err_t
 tcp_output_control_segment(const struct tcp_pcb *pcb, struct pbuf *p,
                            const ip_addr_t *src, const ip_addr_t *dst)
 {
-  err_t err;
   struct netif *netif;
 
   LWIP_ASSERT("tcp_output_control_segment: invalid pbuf", p != NULL);
 
   netif = tcp_route(pcb, src, dst);
   if (netif == NULL) {
-    err = ERR_RTE;
-  } else {
-    u8_t ttl, tos;
-#if CHECKSUM_GEN_TCP
-    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
-      struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
-      tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
-                                        src, dst);
-    }
-#endif
-    if (pcb != NULL) {
-      NETIF_SET_HINTS(netif, LWIP_CONST_CAST(struct netif_hint*, &(pcb->netif_hints)));
-      ttl = pcb->ttl;
-      tos = pcb->tos;
-    } else {
-      /* Send output with hardcoded TTL/HL since we have no access to the pcb */
-      ttl = TCP_TTL;
-      tos = 0;
-    }
-    TCP_STATS_INC(tcp.xmit);
-    err = ip_output_if(p, src, dst, ttl, tos, IP_PROTO_TCP, netif);
-    NETIF_RESET_HINTS(netif);
+    pbuf_free(p);
+    return ERR_RTE;
   }
+  return tcp_output_control_segment_netif(pcb, p, src, dst, netif);
+}
+
+/** Output a control segment pbuf to IP.
+ *
+ * Called instead of tcp_output_control_segment when we don't have a pcb but we
+ * do know the interface to send to.
+ */
+static err_t
+tcp_output_control_segment_netif(const struct tcp_pcb *pcb, struct pbuf *p,
+                                 const ip_addr_t *src, const ip_addr_t *dst,
+                                 struct netif *netif)
+{
+  err_t err;
+  u8_t ttl, tos;
+
+  LWIP_ASSERT("tcp_output_control_segment_netif: no netif given", netif != NULL);
+
+#if CHECKSUM_GEN_TCP
+  IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_TCP) {
+    struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
+    tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
+                                      src, dst);
+  }
+#endif
+  if (pcb != NULL) {
+    NETIF_SET_HINTS(netif, LWIP_CONST_CAST(struct netif_hint*, &(pcb->netif_hints)));
+    ttl = pcb->ttl;
+    tos = pcb->tos;
+  } else {
+    /* Send output with hardcoded TTL/HL since we have no access to the pcb */
+    ttl = TCP_TTL;
+    tos = 0;
+  }
+  TCP_STATS_INC(tcp.xmit);
+  err = ip_output_if(p, src, dst, ttl, tos, IP_PROTO_TCP, netif);
+  NETIF_RESET_HINTS(netif);
+
   pbuf_free(p);
   return err;
 }
 
-/**
- * Send a TCP RESET packet (empty segment with RST flag set) either to
- * abort a connection or to show that there is no matching local connection
- * for a received segment.
- *
- * Called by tcp_abort() (to abort a local connection), tcp_input() (if no
- * matching local pcb was found), tcp_listen_input() (if incoming segment
- * has ACK flag set) and tcp_process() (received segment in the wrong state)
- *
- * Since a RST segment is in most cases not sent for an active connection,
- * tcp_rst() has a number of arguments that are taken from a tcp_pcb for
- * most other segment output functions.
- *
- * @param pcb TCP pcb (may be NULL if no pcb is available)
- * @param seqno the sequence number to use for the outgoing segment
- * @param ackno the acknowledge number to use for the outgoing segment
- * @param local_ip the local IP address to send the segment from
- * @param remote_ip the remote IP address to send the segment to
- * @param local_port the local TCP port to send the segment from
- * @param remote_port the remote TCP port to send the segment to
- */
-void
-tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
-        const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
-        u16_t local_port, u16_t remote_port)
+static struct pbuf *
+tcp_rst_common(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
+               const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
+               u16_t local_port, u16_t remote_port)
 {
   struct pbuf *p;
   u16_t wnd;
@@ -2001,14 +2000,81 @@ tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
     remote_port, TCP_RST | TCP_ACK, wnd);
   if (p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_rst: could not allocate memory for pbuf\n"));
-    return;
+    return NULL;
   }
   tcp_output_fill_options(pcb, p, 0, 0);
 
   MIB2_STATS_INC(mib2.tcpoutrsts);
 
-  tcp_output_control_segment(pcb, p, local_ip, remote_ip);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));
+  return p;
+}
+
+/**
+ * Send a TCP RESET packet (empty segment with RST flag set) to abort a
+ * connection.
+ *
+ * Called by tcp_abort() (to abort a local connection), tcp_closen() (if not
+ * all data has been received by the application), tcp_timewait_input() (if a
+ * SYN is received) and tcp_process() (received segment in the wrong state).
+ *
+ * Since a RST segment is in most cases not sent for an active connection,
+ * tcp_rst() has a number of arguments that are taken from a tcp_pcb for
+ * most other segment output functions.
+ *
+ * @param pcb TCP pcb (may be NULL if no pcb is available)
+ * @param seqno the sequence number to use for the outgoing segment
+ * @param ackno the acknowledge number to use for the outgoing segment
+ * @param local_ip the local IP address to send the segment from
+ * @param remote_ip the remote IP address to send the segment to
+ * @param local_port the local TCP port to send the segment from
+ * @param remote_port the remote TCP port to send the segment to
+ */
+void
+tcp_rst(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
+        const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
+        u16_t local_port, u16_t remote_port)
+{
+  struct pbuf *p;
+  
+  p = tcp_rst_common(pcb, seqno, ackno, local_ip, remote_ip, local_port, remote_port);
+  if (p != NULL) {
+    tcp_output_control_segment(pcb, p, local_ip, remote_ip);
+  }
+}
+
+/**
+ * Send a TCP RESET packet (empty segment with RST flag set) to show that there
+ * is no matching local connection for a received segment.
+ *
+ * Called by tcp_input() (if no matching local pcb was found) and
+ * tcp_listen_input() (if incoming segment has ACK flag set).
+ *
+ * Since a RST segment is in most cases not sent for an active connection,
+ * tcp_rst() has a number of arguments that are taken from a tcp_pcb for
+ * most other segment output functions.
+ *
+ * @param netif the netif on which to send the RST (since we have no pcb)
+ * @param seqno the sequence number to use for the outgoing segment
+ * @param ackno the acknowledge number to use for the outgoing segment
+ * @param local_ip the local IP address to send the segment from
+ * @param remote_ip the remote IP address to send the segment to
+ * @param local_port the local TCP port to send the segment from
+ * @param remote_port the remote TCP port to send the segment to
+ */
+void
+tcp_rst_netif(struct netif *netif, u32_t seqno, u32_t ackno,
+              const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
+              u16_t local_port, u16_t remote_port)
+{
+  if (netif) {
+    struct pbuf *p = tcp_rst_common(NULL, seqno, ackno, local_ip, remote_ip, local_port, remote_port);
+    if (p != NULL) {
+      tcp_output_control_segment_netif(NULL, p, local_ip, remote_ip, netif);
+    }
+  } else {
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_rst_netif: no netif given\n"));
+  }
 }
 
 /**
