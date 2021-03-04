@@ -102,6 +102,9 @@ Archive the current directory using tar, gzip'd, bzip2'd and zip'd.
  tar cjvf lwip-1.4.1.tar.bz2 lwip-1.4.1
  zip -r lwip-1.4.1.zip lwip-1.4.1
 
+Alterntively, archive the current directory using git
+ git archive -o lwip-1.4.1.tar.gz --prefix lwip-1.4.1/ STABLE-1_4_1
+
 Now, sign the archives with a detached GPG binary signature as follows:
  gpg -b lwip-1.4.1.tar.gz
  gpg -b lwip-1.4.1.tar.bz2
