@@ -11,3 +11,13 @@ Usage: htmlgen [targetdir] [-s] [-i]s
 
   if targetdir not specified, makefsdata will attempt to
   process files in subdirectory 'fs'.
+
+The C version of this program can optionally store the none-SSI files in
+a compressed form in which they are also sent to the web client (which
+must support the Deflate content encoding). Files that grow during compression
+(due to being not compressible well), will stored umcompressed automatically.
+In order to do so, compile the program with MAKEFS_SUPPORT_DEFLATE set to 1. You must
+manually download minizip.c for this to work. As an alternative, you can additionally
+define MAKEFS_SUPPORT_DEFLATE_ZLIB to use your system's zlib instead.
+Compression of .html, .js, .css and .svg files usually yields very good compression
+rates and is a great way of reducing your program's size.
