@@ -143,6 +143,34 @@ acd_add(struct netif *netif, struct acd *acd,
 
 /**
  * @ingroup acd
+ * Remvoe ACD client from the client list
+ *
+ * @param netif network interface from which to remove the acd client
+ * @param acd   acd module to be removed from the list
+ */
+void
+acd_remove(struct netif *netif, struct acd *acd)
+{
+  struct acd *acd2, *prev = NULL;
+
+  LWIP_ASSERT_CORE_LOCKED();
+
+  for (acd2 = netif->acd_list; acd2 != NULL; acd2 = acd2->next) {
+    if (acd2 == acd) {
+      if (prev) {
+        prev->next = acd->next;
+      } else {
+        netif->acd_list = acd->next;
+      }
+      return;
+    }
+  }
+  LWIP_ASSERT(0, ("acd_remove(): acd not on list\n"));
+}
+
+
+/**
+ * @ingroup acd
  * Start ACD client
  *
  * @param netif   network interface on which to start the acd client

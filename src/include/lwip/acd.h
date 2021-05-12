@@ -91,17 +91,12 @@ struct acd
 
 err_t acd_add(struct netif *netif, struct acd *acd,
               acd_conflict_callback_t acd_conflict_callback);
-
+void acd_remove(struct netif *netif, struct acd *acd);
 err_t acd_start(struct netif *netif, struct acd *acd, ip4_addr_t ipaddr);
-
 err_t acd_stop(struct acd *acd);
-
 void acd_arp_reply(struct netif *netif, struct etharp_hdr *hdr);
-
 void acd_tmr(void);
-
 void acd_network_changed_link_down(struct netif *netif);
-
 void acd_netif_ip_addr_changed(struct netif *netif, const ip_addr_t *old_addr,
                                const ip_addr_t *new_addr);
 

@@ -308,6 +308,9 @@ dhcp_conflict_callback(struct netif *netif, acd_callback_enum_t state)
   struct dhcp *dhcp = netif_dhcp_data(netif);
   u16_t msecs;
 
+  LWIP_ASSERT("DHCP should be enabled at this point, but it is not!",
+              (dhcp != NULL) && (dhcp->state != DHCP_STATE_OFF));
+
   switch (state) {
     case ACD_IP_OK:
       dhcp_bind(netif);
@@ -1360,6 +1363,11 @@ dhcp_release_and_stop(struct netif *netif)
   } else {
      dhcp_set_state(dhcp, DHCP_STATE_OFF);
   }
+
+#if LWIP_DHCP_DOES_ACD_CHECK
+  /* stop acd because we may be in checking state and the callback would trigger a bind */
+  acd_remove(netif, &dhcp->acd);
+#endif
 
   if (dhcp->pcb_allocated != 0) {
     dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
