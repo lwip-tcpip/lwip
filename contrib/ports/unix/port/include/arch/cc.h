@@ -55,7 +55,7 @@
 #define LWIP_ERRNO_INCLUDE <errno.h>
 
 #if defined(LWIP_UNIX_LINUX) || defined(LWIP_UNIX_HURD) || defined(LWIP_UNIX_KFREEBSD)
-#define LWIP_ERRNO_STDINCLUDE	1
+#define LWIP_ERRNO_STDINCLUDE   1
 #endif
 
 extern unsigned int lwip_port_rand(void);

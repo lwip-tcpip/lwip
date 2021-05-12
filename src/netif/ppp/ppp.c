@@ -636,7 +636,7 @@ int ppp_init(void)
 
   return 0;
 }
- 
+
 /*
  * Create a new PPP control block.
  *

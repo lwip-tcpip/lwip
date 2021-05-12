@@ -121,7 +121,7 @@ static void
 snmpv3_enginetime_timer(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
-  
+
   enginetime++;
 
   /* This handles the engine time reset */
@@ -286,20 +286,20 @@ err_t
 snmpv3_get_user(const char* username, snmpv3_auth_algo_t *auth_algo, u8_t *auth_key, snmpv3_priv_algo_t *priv_algo, u8_t *priv_key)
 {
   const struct user_table_entry *p;
-  
+
   /* The msgUserName specifies the user (principal) on whose behalf the
      message is being exchanged. Note that a zero-length userName will
      not match any user, but it can be used for snmpEngineID discovery. */
   if(strlen(username) == 0) {
     return ERR_OK;
   }
-  
+
   p = get_user(username);
 
   if (!p) {
     return ERR_VAL;
   }
-  
+
   if (auth_algo != NULL) {
     *auth_algo = p->auth_algo;
   }
@@ -348,7 +348,7 @@ snmpv3_get_engine_boots(void)
 /**
  * Store engine boots in persistence
  */
-void 
+void
 snmpv3_set_engine_boots(u32_t boots)
 {
   engineboots = boots;

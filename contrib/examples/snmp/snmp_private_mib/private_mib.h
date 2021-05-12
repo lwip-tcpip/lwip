@@ -1,6 +1,6 @@
 /**
  * @file
- * Exports Private lwIP MIB 
+ * Exports Private lwIP MIB
  */
 
 #ifndef LWIP_HDR_PRIVATE_MIB_H

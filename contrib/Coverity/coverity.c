@@ -20,11 +20,11 @@ void mem_free(void* mem)
 
 void* memp_malloc(memp_t type)
 {
-  __coverity_alloc_nosize__();  
+  __coverity_alloc_nosize__();
 }
 void memp_free(memp_t type, void* mem)
 {
-  __coverity_free__(mem);  
+  __coverity_free__(mem);
 }
 
 void sys_mutex_lock(sys_mutex_t* mutex)
@@ -47,23 +47,23 @@ void sys_sem_signal(sys_sem_t *sem)
 
 err_t ethernet_input(struct pbuf *p, struct netif *inp)
 {
-  __coverity_tainted_string_sink_content__(p); 
+  __coverity_tainted_string_sink_content__(p);
 }
 err_t tcpip_input(struct pbuf *p, struct netif *inp)
 {
-  __coverity_tainted_string_sink_content__(p); 
+  __coverity_tainted_string_sink_content__(p);
 }
 err_t ip_input(struct pbuf *p, struct netif *inp)
 {
-  __coverity_tainted_string_sink_content__(p); 
+  __coverity_tainted_string_sink_content__(p);
 }
 err_t ip4_input(struct pbuf *p, struct netif *inp)
 {
-  __coverity_tainted_string_sink_content__(p); 
+  __coverity_tainted_string_sink_content__(p);
 }
 err_t ip6_input(struct pbuf *p, struct netif *inp)
 {
-  __coverity_tainted_string_sink_content__(p); 
+  __coverity_tainted_string_sink_content__(p);
 }
 
 err_t pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
