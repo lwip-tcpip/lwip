@@ -164,6 +164,7 @@ acd_remove(struct netif *netif, struct acd *acd)
       }
       return;
     }
+    prev = acd2;
   }
   LWIP_ASSERT(("acd_remove(): acd not on list\n"), 0);
 }
