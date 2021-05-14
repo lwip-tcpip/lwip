@@ -1120,13 +1120,6 @@ dhcp_bind(struct netif *netif)
   }
 
   ip4_addr_copy(gw_addr, dhcp->offered_gw_addr);
-  /* gateway address not given? */
-  if (ip4_addr_isany_val(gw_addr)) {
-    /* copy network address */
-    ip4_addr_get_network(&gw_addr, &dhcp->offered_ip_addr, &sn_mask);
-    /* use first host address on network as gateway */
-    ip4_addr_set_u32(&gw_addr, ip4_addr_get_u32(&gw_addr) | PP_HTONL(0x00000001UL));
-  }
 
 #if LWIP_DHCP_AUTOIP_COOP
   if (dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
