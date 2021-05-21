@@ -146,6 +146,8 @@ START_TEST(test_ip4_frag)
   err_t err;
   LWIP_UNUSED_ARG(_i);
 
+  linkoutput_ctr = 0;
+
   /* Verify that 8000 byte payload is split into six packets */
   fail_unless(data != NULL);
   test_netif_add();
@@ -237,8 +239,9 @@ START_TEST(test_127_0_0_1)
 {
   ip4_addr_t localhost;
   struct pbuf* p;
-
   LWIP_UNUSED_ARG(_i);
+
+  linkoutput_ctr = 0;
 
   test_netif_add();
   netif_set_down(netif_get_loopif());
@@ -279,6 +282,9 @@ START_TEST(test_ip4_icmp_replylen_short)
     0xaa };
   struct pbuf *p;
   const int icmp_len = IP_HLEN + sizeof(struct icmp_hdr);
+  LWIP_UNUSED_ARG(_i);
+
+  linkoutput_ctr = 0;
 
   test_netif_add();
   test_netif.output = arpless_output;
@@ -304,6 +310,9 @@ START_TEST(test_ip4_icmp_replylen_first_8)
   struct pbuf *p;
   const int icmp_len = IP_HLEN + sizeof(struct icmp_hdr);
   const int unreach_len = IP_HLEN + 8;
+  LWIP_UNUSED_ARG(_i);
+
+  linkoutput_ctr = 0;
 
   test_netif_add();
   test_netif.output = arpless_output;

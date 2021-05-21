@@ -84,6 +84,7 @@
     <ClCompile Include="..\..\..\..\test\unit\api\test_sockets.c" />
     <ClCompile Include="..\..\..\..\test\unit\arch\sys_arch.c" />
     <ClCompile Include="..\..\..\..\test\unit\core\test_def.c" />
+    <ClCompile Include="..\..\..\..\test\unit\core\test_dns.c" />
     <ClCompile Include="..\..\..\..\test\unit\core\test_mem.c" />
     <ClCompile Include="..\..\..\..\test\unit\core\test_netif.c" />
     <ClCompile Include="..\..\..\..\test\unit\core\test_pbuf.c" />
@@ -104,6 +105,7 @@
     <ClInclude Include="..\..\..\..\test\unit\api\test_sockets.h" />
     <ClInclude Include="..\..\..\..\test\unit\arch\sys_arch.h" />
     <ClInclude Include="..\..\..\..\test\unit\core\test_def.h" />
+    <ClInclude Include="..\..\..\..\test\unit\core\test_dns.h" />
     <ClInclude Include="..\..\..\..\test\unit\core\test_mem.h" />
     <ClInclude Include="..\..\..\..\test\unit\core\test_netif.h" />
     <ClInclude Include="..\..\..\..\test\unit\core\test_pbuf.h" />

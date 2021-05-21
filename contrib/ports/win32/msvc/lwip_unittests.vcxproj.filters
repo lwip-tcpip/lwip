@@ -88,6 +88,9 @@
     <ClCompile Include="..\..\..\..\test\unit\ip6\test_ip6.c">
       <Filter>ipv6</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\test\unit\core\test_dns.c">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\test\unit\core\test_mem.h">
@@ -142,6 +145,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\test\unit\ip6\test_ip6.h">
       <Filter>ipv6</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\test\unit\core\test_dns.h">
+      <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

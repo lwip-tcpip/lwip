@@ -135,6 +135,8 @@ START_TEST(test_ip6_ll_addr)
 {
   LWIP_UNUSED_ARG(_i);
 
+  linkoutput_ctr = 0;
+
   /* test without link-local address */
   test_ip6_ll_addr_iter(0, 0);
 
@@ -319,6 +321,8 @@ START_TEST(test_ip6_dest_unreachable_chained_pbuf)
   u8_t *icmpptr;
   struct ip6_hdr *outhdr;
   struct icmp6_hdr *icmp6hdr;
+  LWIP_UNUSED_ARG(_i);
+
   fail_unless(header);
   header->payload = udp_hdr;
   fail_unless(data);
@@ -363,6 +367,7 @@ START_TEST(test_ip6_frag_pbuf_len_assert)
   struct pbuf *payload, *hdr;
   err_t err;
   int i;
+  LWIP_UNUSED_ARG(_i);
 
   /* Configure and enable local address */
   test_netif6.mtu = 1500;
@@ -403,6 +408,7 @@ START_TEST(test_ip6_frag)
   ip_addr_t peer_addr = IPADDR6_INIT_HOST(0x20010db8, 0x0, 0x0, 0x4);
   struct pbuf *data;
   err_t err;
+  LWIP_UNUSED_ARG(_i);
 
   /* Configure and enable local address */
   test_netif6.mtu = 1500;

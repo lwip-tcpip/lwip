@@ -18,10 +18,11 @@ dns_teardown(void)
 
 START_TEST(test_dns_set_get_server)
 {
-  int i;
+  int n;
   LWIP_UNUSED_ARG(_i);
 
-  for (i = 0; i < 256; i++) {
+  for (n = 0; n < 256; n++) {
+    u8_t i = (u8_t)n;
     ip_addr_t server;
     /* Should return a zeroed address for any index */
     fail_unless(dns_getserver(i));

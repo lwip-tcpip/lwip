@@ -99,9 +99,11 @@ END_TEST
 /** Call pbuf_copy on pbufs with chains of different sizes */
 START_TEST(test_pbuf_copy_unmatched_chains)
 {
-  int i, j;
+  uint16_t i, j;
   err_t err;
   struct pbuf *source, *dest, *p;
+  LWIP_UNUSED_ARG(_i);
+
   source = NULL;
   /* Build source pbuf from linked 16 byte parts,
    * with payload bytes containing their offset */
@@ -109,7 +111,7 @@ START_TEST(test_pbuf_copy_unmatched_chains)
     p = pbuf_alloc(PBUF_RAW, 16, PBUF_RAM);
     fail_unless(p != NULL);
     for (j = 0; j < p->len; j++) {
-        ((unsigned char*)p->payload)[j] = (i << 4) | j;
+        ((u8_t*)p->payload)[j] = (u8_t)((i << 4) | j);
     }
     if (source) {
         pbuf_cat(source, p);
