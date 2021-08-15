@@ -62,7 +62,7 @@
 #define LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN 1
 #endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN */
 
-/* The amount of data from the original packet to return in a dest-unreachable */
+/* The maximum amount of data from the original packet to return in a dest-unreachable */
 #define ICMP_DEST_UNREACH_DATASIZE 8
 
 static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
@@ -345,20 +345,26 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   struct icmp_echo_hdr *icmphdr;
   ip4_addr_t iphdr_src;
   struct netif *netif;
+  u16_t response_pkt_len;
 
   /* increase number of messages attempted to send */
   MIB2_STATS_INC(mib2.icmpoutmsgs);
 
-  /* ICMP header + IP header + 8 bytes of data */
-  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
-                 PBUF_RAM);
+  /* Keep IP header + up to 8 bytes */
+  response_pkt_len = IP_HLEN + ICMP_DEST_UNREACH_DATASIZE;
+  if (p->tot_len < response_pkt_len) {
+    response_pkt_len = p->tot_len;
+  }
+
+  /* ICMP header + part of original packet */
+  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + response_pkt_len, PBUF_RAM);
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMP packet.\n"));
     MIB2_STATS_INC(mib2.icmpouterrors);
     return;
   }
   LWIP_ASSERT("check that first pbuf can hold icmp message",
-              (q->len >= (sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
+              (q->len >= (sizeof(struct icmp_echo_hdr) + response_pkt_len)));
 
   iphdr = (struct ip_hdr *)p->payload;
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
@@ -375,7 +381,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 
   /* copy fields from original packet */
   SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_echo_hdr), (u8_t *)p->payload,
-          IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
+          response_pkt_len);
 
   ip4_addr_copy(iphdr_src, iphdr->src);
 #ifdef LWIP_HOOK_IP4_ROUTE_SRC
