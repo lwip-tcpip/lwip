@@ -523,6 +523,10 @@ pbuf_add_header_impl(struct pbuf *p, size_t header_size_increment, u8_t force)
   p->len = (u16_t)(p->len + increment_magnitude);
   p->tot_len = (u16_t)(p->tot_len + increment_magnitude);
 
+#if LWIP_CHECKSUM_PARTIAL
+  if (p->flags & PBUF_FLAG_CSUM_PARTIAL)
+    p->csum_start += increment_magnitude;
+#endif /* LWIP_CHECKSUM_PARTIAL */
 
   return 0;
 }
@@ -605,6 +609,17 @@ pbuf_remove_header(struct pbuf *p, size_t header_size_decrement)
   /* modify pbuf length fields */
   p->len = (u16_t)(p->len - increment_magnitude);
   p->tot_len = (u16_t)(p->tot_len - increment_magnitude);
+
+#if LWIP_CHECKSUM_PARTIAL
+  if (p->flags & PBUF_FLAG_CSUM_PARTIAL) {
+    if (p->csum_start < increment_magnitude) {
+      /* delete csum partial flag because the header got removed */
+      p->flags &= ~PBUF_FLAG_CSUM_PARTIAL;
+    } else {
+      p->csum_start -= increment_magnitude;
+    }
+  }
+#endif /* LWIP_CHECKSUM_PARTIAL */
 
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_remove_header: old %p new %p (%"U16_F")\n",
               (void *)payload, (void *)p->payload, increment_magnitude));

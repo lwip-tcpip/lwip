@@ -181,6 +181,10 @@ typedef enum {
 #define PBUF_FLAG_LLMCAST   0x10U
 /** indicates this pbuf includes a TCP FIN flag */
 #define PBUF_FLAG_TCP_FIN   0x20U
+#if LWIP_CHECKSUM_PARTIAL
+/**  indicates this pbuf contains a partially computed checksum */
+#define PBUF_FLAG_CSUM_PARTIAL 0x40U
+#endif /* LWIP_CHECKSUM_PARTIAL */
 
 /** Main packet buffer struct */
 struct pbuf {
@@ -209,6 +213,17 @@ struct pbuf {
 
   /** misc flags */
   u8_t flags;
+
+#if LWIP_CHECKSUM_PARTIAL
+  /** when PBUF_FLAG_CSUM_PARTIAL is set, csum_start points to where
+      checksum computation needs to continue (e.g., offloaded by hardware).
+      csum_offset points to the checksum field within the pbuf. It is the
+      offset from csum_start. Please note that the flag can only be set once
+      for a pbuf chain.
+   */
+  u16_t csum_start;
+  u16_t csum_offset;
+#endif /* LWIP_CHECKSUM_PARTIAL */
 
   /**
    * the reference count always equals the number of pointers
