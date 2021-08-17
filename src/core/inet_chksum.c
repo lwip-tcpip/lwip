@@ -606,3 +606,129 @@ lwip_chksum_copy(void *dst, const void *src, u16_t len)
   return LWIP_CHKSUM(dst, len);
 }
 #endif /* (LWIP_CHKSUM_COPY_ALGORITHM == 1) */
+
+#if LWIP_CHECKSUM_PARTIAL
+#if LWIP_IPV4
+/**
+ * inet_chksum_pseudohdr_base
+ *
+ * Computes the static part of a partial IPv4 internet checksum.
+ *
+ * @param proto ip protocol (pseudo header)
+ * @param src source ip address (pseudo header)
+ * @param dest destination ip address (pseudo header)
+ * @return base of partial checksum
+ *         (to be completed with ip_chksum_partial_calc())
+ */
+u16_t
+inet_chksum_pseudohdr_base(u8_t proto,
+			   const ip4_addr_t *src, const ip4_addr_t *dest)
+{
+  u32_t acc;
+  u32_t addr;
+
+  addr = ip4_addr_get_u32(src);
+  acc = (addr & 0xffffUL);
+  acc += ((addr >> 16) & 0xffffUL);
+  addr = ip4_addr_get_u32(dest);
+  acc += (addr & 0xffffUL);
+  acc += ((addr >> 16) & 0xffffUL);
+  acc += ((u16_t)htons((u16_t)proto & 0x00ff));
+
+  /* Fold 32-bit sum to 16 bits
+     calling this twice is probably faster than if statements... */
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
+  return (acc & 0xffffUL);
+}
+#endif /* LWIP_IPV4 */
+
+#if LWIP_IPV6
+/**
+ * ip6_chksum_pseudohdr_base
+ *
+ * Computes the static part of a partial IPv6 internet checksum.
+ *
+ * @param proto ip protocol (pseudo header)
+ * @param src source ip address (pseudo header)
+ * @param dest destination ip address (pseudo header)
+ * @return base of partial checksum
+ *         (to be completed with ip_chksum_partial_calc())
+ */
+u16_t
+ip6_chksum_pseudohdr_base(u8_t proto,
+			  const ip6_addr_t *src, const ip6_addr_t *dest)
+{
+  u32_t acc;
+  u32_t addr;
+
+  for (addr_part = 0; addr_part < 4; addr_part++) {
+    addr = src->addr[addr_part];
+    acc += (addr & 0xffffUL);
+    acc += ((addr >> 16) & 0xffffUL);
+    addr = dest->addr[addr_part];
+    acc += (addr & 0xffffUL);
+    acc += ((addr >> 16) & 0xffffUL);
+  }
+  acc += ((u16_t)htons((u16_t)proto & 0x00ff));
+
+  /* Fold 32-bit sum to 16 bits
+     calling this twice is probably faster than if statements... */
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
+  return (acc & 0xffffUL);
+}
+#endif /* LWIP_IPV6 */
+
+/**
+ * ip_chksum_pseudohdr_base
+ *
+ * Computes the static part of a partial IPv4/IPv6 internet checksum.
+ *
+ * @param proto ip protocol (pseudo header)
+ * @param src source ip address (pseudo header)
+ * @param dest destination ip address (pseudo header)
+ * @return base of partial checksum
+ *         (to be completed with ip_chksum_partial_calc())
+ */
+u16_t
+ip_chksum_pseudohdr_base(u8_t proto,
+			 const ip_addr_t *src, const ip_addr_t *dest)
+{
+#if LWIP_IPV6
+  if (IP_IS_V6(dest)) {
+    return ip6_chksum_pseudohdr_base(proto, ip_2_ip6(src), ip_2_ip6(dest));
+  }
+#endif /* LWIP_IPV6 */
+#if LWIP_IPV4 && LWIP_IPV6
+  else
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+#if LWIP_IPV4
+  {
+    return inet_chksum_pseudohdr_base(proto, ip_2_ip4(src), ip_2_ip4(dest));
+  }
+#endif /* LWIP_IPV4 */
+}
+
+/**
+ * ip_chksum_pseudohdr_complete
+ *
+ * Completes the computation of a partial IPv4/IPv6 internet checksum which
+ * covers the pseudo header only. This checksum is used for offloading
+ * the checksum computation of the rest of the payload to hardware.
+ *
+ * @param base Initialized checksum base value (via ip_chksum_pseudohdr_base())
+ * @param proto_len length of the data part
+ * @return partial checksum
+ */
+u16_t
+ip_chksum_pseudohdr_complete(u16_t base, u16_t proto_len)
+{
+  u32_t acc = base;
+
+  acc += ((u16_t)htons(proto_len));
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
+  return (acc & 0xffffUL);
+}
+#endif /* LWIP_CHECKSUM_PARTIAL */
