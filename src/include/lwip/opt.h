@@ -2365,6 +2365,18 @@
 #if !defined LWIP_CHECKSUM_PARTIAL || defined __DOXYGEN__
 #define LWIP_CHECKSUM_PARTIAL           0
 #endif
+
+/**
+ * Turn on partial checksum generation for TCP headers when LWIP_CHECKSUM_PARTIAL is on
+ * and CHECKSUM_GEN_TCP is set. Otherwise, we disable partial checksumming.
+ */
+#if !defined CHECKSUM_PARTIAL_TCP || defined __DOXYGEN__
+#if LWIP_CHECKSUM_PARTIAL && (CHECKSUM_GEN_TCP || LWIP_CHECKSUM_CTRL_PER_NETIF)
+#define CHECKSUM_PARTIAL_TCP            1
+#else
+#define CHECKSUM_PARTIAL_TCP            0
+#endif
+#endif
 /**
  * @}
  */

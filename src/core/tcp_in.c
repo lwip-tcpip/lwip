@@ -675,6 +675,9 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* Set up the new PCB. */
     ip_addr_copy(npcb->local_ip, *ip_current_dest_addr());
     ip_addr_copy(npcb->remote_ip, *ip_current_src_addr());
+#if TCP_CHECKSUM_PARTIAL
+    npcb->chksum_base = ip_chksum_pseudohdr_base(IP_PROTO_TCP, &npcb->local_ip, &npcb->remote_ip);
+#endif /* TCP_CHECKSUM_PARTIAL */
     npcb->local_port = pcb->local_port;
     npcb->remote_port = tcphdr->src;
     npcb->state = SYN_RCVD;

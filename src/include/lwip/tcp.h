@@ -372,6 +372,10 @@ struct tcp_pcb {
   u32_t keep_cnt;
 #endif /* LWIP_TCP_KEEPALIVE */
 
+#if CHECKSUM_PARTIAL_TCP
+  u16_t chksum_base;
+#endif
+
   /* Persist timer counter */
   u8_t persist_cnt;
   /* Persist timer back-off */

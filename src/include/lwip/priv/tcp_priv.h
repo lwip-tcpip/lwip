@@ -246,8 +246,11 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 #define TCP_OVERSIZE_DBGCHECK 0
 #endif
 
-/** Don't generate checksum on copy if CHECKSUM_GEN_TCP is disabled */
-#define TCP_CHECKSUM_ON_COPY  (LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_TCP)
+/** Don't generate checksum on copy if CHECKSUM_GEN_TCP is disabled or partial checksumming is enabled */
+#define TCP_CHECKSUM_ON_COPY  (LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_TCP && !CHECKSUM_PARTIAL_TCP)
+
+/** Enable partial checksumming for TCP when selected by the options */
+#define TCP_CHECKSUM_PARTIAL  (LWIP_CHECKSUM_PARTIAL && CHECKSUM_GEN_TCP && CHECKSUM_PARTIAL_TCP)
 
 /* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
 struct tcp_seg {
