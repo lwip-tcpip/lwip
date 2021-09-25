@@ -37,8 +37,8 @@
 #ifndef LWIP_HDR_DEBUG_H
 #define LWIP_HDR_DEBUG_H
 
-#include "lwip/arch.h"
 #include "lwip/opt.h"
+#include "lwip/arch.h"
 
 /**
  * @defgroup debugging_levels LWIP_DBG_MIN_LEVEL and LWIP_DBG_TYPES_ON values
