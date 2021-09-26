@@ -96,10 +96,6 @@ ethernet_input(struct pbuf *p, struct netif *netif)
     goto free_and_return;
   }
 
-  if (p->if_idx == NETIF_NO_INDEX) {
-    p->if_idx = netif_get_index(netif);
-  }
-
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = (struct eth_hdr *)p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
@@ -142,6 +138,10 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_ARP_FILTER_NETIF
   netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, lwip_htons(type));
 #endif /* LWIP_ARP_FILTER_NETIF*/
+
+  if (p->if_idx == NETIF_NO_INDEX) {
+    p->if_idx = netif_get_index(netif);
+  }
 
   if (ethhdr->dest.addr[0] & 1) {
     /* this might be a multicast or broadcast packet */
