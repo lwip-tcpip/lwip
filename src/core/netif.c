@@ -1825,11 +1825,11 @@ netif_remove_ext_callback(netif_ext_callback_t* callback)
       if (iter == callback) {
         LWIP_ASSERT("last != NULL", last != NULL);
         last->next = callback->next;
-        callback->next = NULL;
-        return;
+        break;
       }
     }
   }
+  callback->next = NULL;
 }
 
 /**
@@ -1846,8 +1846,10 @@ netif_invoke_ext_callback(struct netif *netif, netif_nsc_reason_t reason, const 
   LWIP_ASSERT("netif must be != NULL", netif != NULL);
 
   while (callback != NULL) {
+    /* cache next pointer: the callback might unregister itself */
+    netif_ext_callback_t *next = callback->next;
     callback->callback_fn(netif, reason, args);
-    callback = callback->next;
+    callback = next;
   }
 }
 #endif /* LWIP_NETIF_EXT_STATUS_CALLBACK */
