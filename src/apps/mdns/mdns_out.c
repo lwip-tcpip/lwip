@@ -54,7 +54,7 @@
 
 /* Function prototypes */
 static void mdns_clear_outmsg(struct mdns_outmsg *outmsg);
-
+mdns_add_service_subtype_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, struct mdns_service *service);
 /**
  * Call user supplied function to setup TXT data
  * @param service The service to build TXT record for
@@ -660,6 +660,8 @@ mdns_create_outpacket(struct netif *netif, struct mdns_outmsg *msg,
 
     if (msg->serv_replies[i] & REPLY_SERVICE_NAME_PTR) {
       res = mdns_add_servicename_ptr_answer(outpkt, msg, service);
+      /*if a subtype is used, that following function write answer of the subtype service PTR RR to outpacket*/
+      res = mdns_add_service_subtype_ptr_answer(outpkt, msg, service);
       if (res != ERR_OK) {
         return res;
       }
@@ -1160,4 +1162,39 @@ mdns_send_request(struct mdns_request *req, struct netif *netif, const ip_addr_t
 }
 #endif
 
+/** Write an all subtype services ->  PTR RR to outpacket */
+static err_t
+mdns_add_service_subtype_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
+                                struct mdns_service *service)
+{
+  err_t res = ERR_OK;
+  u8_t subtyes_index;
+  u32_t ttl = MDNS_TTL_4500;
+  struct mdns_domain service_type, sub_service;
+  for(subtyes_index=0;subtyes_index < LWIP_MIN(service->subtypes_nbr,MDNS_MAX_SERVICES_SUBTYPES); subtyes_index++)
+  {
+    res =mdns_build_subtype_service_domain(&sub_service, service,subtyes_index);
+    res =mdns_build_service_domain(&service_type, service, 1);
+  /* When answering to a legacy querier, we need to repeat the question and
+   * limit the ttl to the short legacy ttl */
+  if(msg->legacy_query) {
+    /* Repeating the question only needs to be done for the question asked
+     * (max one question), not for the additional records. */
+    if(reply->questions < 1) {
+      LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Add question for legacy query\n"));
+      res = mdns_add_question(reply, &sub_service, DNS_RRTYPE_PTR, DNS_RRCLASS_IN, 0);
+      if (res != ERR_OK) {
+        return res;
+      }
+      reply->questions = 1;
+    }
+    /* ttl of legacy answer may not be greater then 10 seconds */
+    ttl = MDNS_TTL_10;
+  }
+  LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with service type PTR record\n"));
+  res =mdns_add_answer(reply, &sub_service, DNS_RRTYPE_PTR, DNS_RRCLASS_IN,
+                         0, ttl, NULL, 0, &service_type);
+  }
+  return res;
+}
 #endif /* LWIP_MDNS_RESPONDER */
