@@ -2507,10 +2507,12 @@ mdns_resp_netif_active(struct netif *netif)
  * @param txt_fn Callback to get TXT data. Will be called each time a TXT reply is created to
  *               allow dynamic replies.
  * @param txt_data Userdata pointer for txt_fn
+ * @param subTypes table contanins all subtypes of the service
+ * param subtypes_nbr the number of the subtypes linked to that service, it should be <=MDNS_MAX_SERVICES_SUBTYPES
  * @return service_id if the service was added to the netif, an err_t otherwise
  */
 s8_t
-mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, service_get_txt_fn_t txt_fn, void *txt_data)
+mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, service_get_txt_fn_t txt_fn, void *txt_data, char **subTypes,  u8_t subtypes_nbr )
 {
   u8_t slot;
   struct mdns_service *srv;
@@ -2537,10 +2539,13 @@ mdns_resp_add_service(struct netif *netif, const char *name, const char *service
 
   MEMCPY(&srv->name, name, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(name)));
   MEMCPY(&srv->service, service, LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(service)));
+  for(i=0;i<LWIP_MIN(subtypes_nbr,MDNS_MAX_SERVICES_SUBTYPES);i++)
+      MEMCPY(&srv->subTypes[i], subTypes[i], LWIP_MIN(MDNS_LABEL_MAXLEN, strlen(subTypes[i])));
   srv->txt_fn = txt_fn;
   srv->txt_userdata = txt_data;
   srv->proto = (u16_t)proto;
   srv->port = port;
+  srv->subtypes_nbr = subtypes_nbr;
 
   mdns->services[slot] = srv;
 
