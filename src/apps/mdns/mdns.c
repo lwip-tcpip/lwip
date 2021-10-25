@@ -2514,7 +2514,7 @@ mdns_resp_netif_active(struct netif *netif)
 s8_t
 mdns_resp_add_service(struct netif *netif, const char *name, const char *service, enum mdns_sd_proto proto, u16_t port, service_get_txt_fn_t txt_fn, void *txt_data, char **subTypes,  u8_t subtypes_nbr )
 {
-  u8_t slot;
+  u8_t slot,i;
   struct mdns_service *srv;
   struct mdns_host *mdns;
 

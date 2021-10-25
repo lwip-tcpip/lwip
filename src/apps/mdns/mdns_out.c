@@ -54,7 +54,7 @@
 
 /* Function prototypes */
 static void mdns_clear_outmsg(struct mdns_outmsg *outmsg);
-mdns_add_service_subtype_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, struct mdns_service *service);
+static err_t mdns_add_service_subtype_ptr_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg, struct mdns_service *service);
 /**
  * Call user supplied function to setup TXT data
  * @param service The service to build TXT record for
