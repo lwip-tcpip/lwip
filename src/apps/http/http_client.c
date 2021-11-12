@@ -337,6 +337,8 @@ httpc_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t r)
   }
   if ((p != NULL) && (req->parse_state == HTTPC_PARSE_RX_DATA)) {
     req->rx_content_len += p->tot_len;
+    /* received valid data: reset timeout */
+    req->timeout_ticks = HTTPC_POLL_TIMEOUT;
     if (req->recv_fn != NULL) {
       /* directly return here: the connection might already be aborted from the callback! */
       return req->recv_fn(req->callback_arg, pcb, p, r);
