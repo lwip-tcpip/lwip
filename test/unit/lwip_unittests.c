@@ -26,7 +26,7 @@
 unsigned int
 lwip_port_rand(void)
 {
-  return rand();
+  return (unsigned int)rand();
 }
 
 Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, SFun setup, SFun teardown)
