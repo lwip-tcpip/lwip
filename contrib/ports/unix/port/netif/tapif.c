@@ -153,9 +153,9 @@ low_level_init(struct netif *netif)
     memset(&ifr, 0, sizeof(ifr));
 
     if (preconfigured_tapif) {
-      strncpy(ifr.ifr_name, preconfigured_tapif, sizeof(ifr.ifr_name));
+      strncpy(ifr.ifr_name, preconfigured_tapif, sizeof(ifr.ifr_name) - 1);
     } else {
-      strncpy(ifr.ifr_name, DEVTAP_DEFAULT_IF, sizeof(ifr.ifr_name));
+      strncpy(ifr.ifr_name, DEVTAP_DEFAULT_IF, sizeof(ifr.ifr_name) - 1);
     }
     ifr.ifr_name[sizeof(ifr.ifr_name)-1] = 0; /* ensure \0 termination */
 
