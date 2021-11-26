@@ -149,30 +149,30 @@
 #define USE_AUTOIP  LWIP_AUTOIP
 #endif
 
-/* globales variables for netifs */
+/* global variables for netifs */
 #if USE_ETHERNET
 #if LWIP_DHCP
 /* dhcp struct for the ethernet netif */
-struct dhcp netif_dhcp;
+static struct dhcp netif_dhcp;
 #endif /* LWIP_DHCP */
 #if LWIP_AUTOIP
 /* autoip struct for the ethernet netif */
-struct autoip netif_autoip;
+static struct autoip netif_autoip;
 #endif /* LWIP_AUTOIP */
 #endif /* USE_ETHERNET */
 #if USE_PPP
 /* THE PPP PCB */
-ppp_pcb *ppp;
+static ppp_pcb *ppp;
 /* THE PPP interface */
-struct netif ppp_netif;
+static struct netif ppp_netif;
 /* THE PPP descriptor */
-u8_t sio_idx = 0;
-sio_fd_t ppp_sio;
+static u8_t sio_idx = 0;
+static sio_fd_t ppp_sio;
 #endif /* USE_PPP */
 #if USE_SLIPIF
-struct netif slipif1;
+static struct netif slipif1;
 #if USE_SLIPIF > 1
-struct netif slipif2;
+static struct netif slipif2;
 #endif /* USE_SLIPIF > 1 */
 #endif /* USE_SLIPIF */
 
@@ -490,8 +490,8 @@ dns_dorequest(void *arg)
   ip_addr_t dnsresp;
   LWIP_UNUSED_ARG(arg);
 
-  if (dns_gethostbyname(dnsname, &dnsresp, dns_found, 0) == ERR_OK) {
-    dns_found(dnsname, &dnsresp, 0);
+  if (dns_gethostbyname(dnsname, &dnsresp, dns_found, NULL) == ERR_OK) {
+    dns_found(dnsname, &dnsresp, NULL);
   }
 }
 #endif /* LWIP_DNS_APP && LWIP_DNS */
