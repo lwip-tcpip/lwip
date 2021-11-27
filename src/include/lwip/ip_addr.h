@@ -453,8 +453,9 @@ extern const ip_addr_t ip6_addr_any;
 
 #endif
 
+/** @ingroup ipaddr
+ *  Macro representing the 'any' address. */
 #if LWIP_IPV4 && LWIP_IPV6
-/** @ingroup ipaddr */
 #define IP_ANY_TYPE    (&ip_addr_any_type)
 #else
 #define IP_ANY_TYPE    IP_ADDR_ANY
