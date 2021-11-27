@@ -2079,7 +2079,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
       }
 #endif /* LWIP_HTTPD_SUPPORT_V09 */
       uri_len = (u16_t)(sp2 - (sp1 + 1));
-      if ((sp2 != 0) && (sp2 > sp1)) {
+      if ((sp2 != NULL) && (sp2 > sp1)) {
         /* wait for CRLFCRLF (indicating end of HTTP headers) before parsing anything */
         if (lwip_strnstr(data, CRLF CRLF, data_len) != NULL) {
           char *uri = sp1 + 1;

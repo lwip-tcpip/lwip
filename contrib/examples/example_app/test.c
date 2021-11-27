@@ -610,7 +610,7 @@ test_init(void * arg)
 #endif /* NO_SYS */
 
   /* init randomizer again (seed per thread) */
-  srand((unsigned int)time(0));
+  srand((unsigned int)time(NULL));
 
   /* init network interfaces */
   test_netif_init();

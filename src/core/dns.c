@@ -1421,7 +1421,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
       /* this is a duplicate entry, find a free request entry */
       for (r = 0; r < DNS_MAX_REQUESTS; r++) {
-        if (dns_requests[r].found == 0) {
+        if (dns_requests[r].found == NULL) {
           dns_requests[r].found = found;
           dns_requests[r].arg = callback_arg;
           dns_requests[r].dns_table_idx = i;

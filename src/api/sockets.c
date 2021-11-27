@@ -2115,7 +2115,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
           set_errno(EBADF);
         } else if (!nready) {
           /* Still none ready, just wait to be woken */
-          if (timeout == 0) {
+          if (timeout == NULL) {
             /* Wait forever */
             msectimeout = 0;
           } else {

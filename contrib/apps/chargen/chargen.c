@@ -73,7 +73,7 @@ struct charcb {
   char nextchar;
 };
 
-static struct charcb *charcb_list = 0;
+static struct charcb *charcb_list = NULL;
 
 /**************************************************************
  * void close_chargen(struct charcb *p_charcb)
@@ -190,7 +190,7 @@ chargen_thread(void *arg)
     }
 
     /* Wait for data or a new connection */
-    i = lwip_select(maxfdp1, &readset, &writeset, 0, 0);
+    i = lwip_select(maxfdp1, &readset, &writeset, NULL, NULL);
 
     if (i == 0) {
       continue;
@@ -268,7 +268,7 @@ chargen_thread(void *arg)
 void
 chargen_init(void)
 {
-  sys_thread_new(CHARGEN_THREAD_NAME, chargen_thread, 0, CHARGEN_THREAD_STACKSIZE, CHARGEN_PRIORITY);
+  sys_thread_new(CHARGEN_THREAD_NAME, chargen_thread, NULL, CHARGEN_THREAD_STACKSIZE, CHARGEN_PRIORITY);
 }
 
 #endif /* LWIP_SOCKET && LWIP_SOCKET_SELECT */

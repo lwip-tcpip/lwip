@@ -680,7 +680,7 @@ pbuf_free_header(struct pbuf *q, u16_t size)
       struct pbuf *f = p;
       free_left = (u16_t)(free_left - p->len);
       p = p->next;
-      f->next = 0;
+      f->next = NULL;
       pbuf_free(f);
     } else {
       pbuf_remove_header(p, free_left);

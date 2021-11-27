@@ -1015,7 +1015,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
      * new PBUF_RAM. See the definition of PBUF_NEEDS_COPY for details. */
     p = q;
     while (p) {
-      LWIP_ASSERT("no packet queues allowed!", (p->len != p->tot_len) || (p->next == 0));
+      LWIP_ASSERT("no packet queues allowed!", (p->len != p->tot_len) || (p->next == NULL));
       if (PBUF_NEEDS_COPY(p)) {
         copy_needed = 1;
         break;
@@ -1039,7 +1039,7 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
       new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);
       if (new_entry != NULL) {
         unsigned int qlen = 0;
-        new_entry->next = 0;
+        new_entry->next = NULL;
         new_entry->p = p;
         if (arp_table[i].q != NULL) {
           /* queue was already existent, append the new entry to the end */

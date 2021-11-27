@@ -695,7 +695,7 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
         client->cyclic_tick = 0;
         client->conn_state = MQTT_CONNECTED;
         /* Notify upper layer */
-        if (client->connect_cb != 0) {
+        if (client->connect_cb != NULL) {
           client->connect_cb(client, client->connect_arg, res);
         }
       }
@@ -1020,7 +1020,7 @@ mqtt_tcp_err_cb(void *arg, err_t err)
   LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_tcp_err_cb: TCP error callback: error %d, arg: %p\n", err, arg));
   LWIP_ASSERT("mqtt_tcp_err_cb: client != NULL", client != NULL);
   /* Set conn to null before calling close as pcb is already deallocated*/
-  client->conn = 0;
+  client->conn = NULL;
   mqtt_close(client, MQTT_CONNECT_DISCONNECTED);
 }
 
