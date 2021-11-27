@@ -76,7 +76,16 @@ enum lwiperf_client_type
 
 /** Prototype of a report function that is called when a session is finished.
     This report function can show the test results.
-    @param report_type contains the test result */
+    @param arg Report_arg from when the test was started.
+    @param report_type contains the test result
+    @param local_addr The local address from the session
+    @param local_port The local port
+    @param remote_addr The remote address from the session
+    @param remote_port The remote port
+    @param bytes_transferred Total transferred bytes
+    @param ms_duration Total session duration, in milliseconds
+    @param bandwidth_kbitpsec Average bandwidth during the session, in kbps
+*/
 typedef void (*lwiperf_report_fn)(void *arg, enum lwiperf_report_type report_type,
   const ip_addr_t* local_addr, u16_t local_port, const ip_addr_t* remote_addr, u16_t remote_port,
   u32_t bytes_transferred, u32_t ms_duration, u32_t bandwidth_kbitpsec);
