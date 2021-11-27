@@ -95,6 +95,7 @@ typedef struct
     tCGIHandler pfnCGIHandler;
 } tCGI;
 
+/** Set the array of cgi handlers. */
 void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
 
 #endif /* LWIP_HTTPD_CGI */
