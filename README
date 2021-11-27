@@ -78,7 +78,7 @@ Submit patches and bugs via the lwIP project page:
   https://savannah.nongnu.org/projects/lwip/
 
 Continuous integration builds (GCC, clang):
-  https://travis-ci.org/lwip-tcpip/lwip
+  https://github.com/lwip-tcpip/lwip/actions
 
 
 DOCUMENTATION
