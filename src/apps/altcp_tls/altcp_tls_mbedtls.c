@@ -89,6 +89,9 @@
 #ifndef ALTCP_MBEDTLS_ENTROPY_LEN
 #define ALTCP_MBEDTLS_ENTROPY_LEN   0
 #endif
+#ifndef ALTCP_MBEDTLS_RNG_FN
+#define ALTCP_MBEDTLS_RNG_FN   mbedtls_entropy_func
+#endif
 
 /* Variable prototype, the actual declaration is at the end of this file
    since it contains pointers to static functions declared here */
@@ -1042,7 +1045,7 @@ altcp_tls_free_config(struct altcp_tls_config *conf)
   if (conf->ca) {
     mbedtls_x509_crt_free(conf->ca);
   }
-  mbedtls_ssl_config_free(&conf->conf)
+  mbedtls_ssl_config_free(&conf->conf);
   altcp_mbedtls_free_config(conf);
   altcp_mbedtls_unref_entropy();
 }
