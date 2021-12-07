@@ -160,7 +160,7 @@ static struct stats_proto* shell_stat_proto_stats[] = {
   &lwip_stats.tcp,
 #endif
 };
-const size_t num_protostats = sizeof(shell_stat_proto_stats)/sizeof(struct stats_proto*);
+static const size_t num_protostats = sizeof(shell_stat_proto_stats)/sizeof(struct stats_proto*);
 
 static const char *stat_msgs_proto[] = {
   " * transmitted ",

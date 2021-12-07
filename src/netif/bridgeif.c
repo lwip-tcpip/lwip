@@ -120,7 +120,7 @@ typedef struct bridgeif_private_s {
 } bridgeif_private_t;
 
 /* netif data index to get the bridge on input */
-u8_t bridgeif_netif_client_id = 0xff;
+static u8_t bridgeif_netif_client_id = 0xff;
 
 /**
  * @ingroup bridgeif

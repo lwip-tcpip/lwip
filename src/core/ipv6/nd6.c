@@ -96,7 +96,7 @@ u32_t reachable_time = LWIP_ND6_REACHABLE_TIME;
 u32_t retrans_timer = LWIP_ND6_RETRANS_TIMER; /* @todo implement this value in timer */
 
 #if LWIP_ND6_QUEUEING
-u8_t nd6_queue_size = 0;
+static u8_t nd6_queue_size = 0;
 #endif
 
 /* Index for cache entries. */

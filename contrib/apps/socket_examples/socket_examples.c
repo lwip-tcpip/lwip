@@ -31,7 +31,7 @@
 #define SOCKET_EXAMPLES_RUN_PARALLEL 0
 #endif
 
-const u8_t cmpbuf[8] = {0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab};
+static const u8_t cmpbuf[8] = {0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab, 0xab};
 
 /* a helper struct to ensure memory before/after fd_set is not touched */
 typedef struct _xx

@@ -108,8 +108,8 @@ static int deflate_level; /* default compression level, can be changed via comma
 #include "../core/def.c"
 
 /** (Your server name here) */
-const char *serverID = "Server: "HTTPD_SERVER_AGENT"\r\n";
-char serverIDBuffer[1024];
+static const char *serverID = "Server: "HTTPD_SERVER_AGENT"\r\n";
+static char serverIDBuffer[1024];
 
 /* change this to suit your MEM_ALIGNMENT */
 #define PAYLOAD_ALIGNMENT 4
@@ -144,26 +144,26 @@ static int file_can_be_compressed(const char* filename);
 /* 5 bytes per char + 3 bytes per line */
 static char file_buffer_c[COPY_BUFSIZE * 5 + ((COPY_BUFSIZE / HEX_BYTES_PER_LINE) * 3)];
 
-char curSubdir[MAX_PATH_LEN-3];
-char lastFileVar[MAX_PATH_LEN];
-char hdr_buf[4096];
+static char curSubdir[MAX_PATH_LEN-3];
+static char lastFileVar[MAX_PATH_LEN];
+static char hdr_buf[4096];
 
-unsigned char processSubs = 1;
-unsigned char includeHttpHeader = 1;
-unsigned char useHttp11 = 0;
-unsigned char supportSsi = 1;
-unsigned char precalcChksum = 0;
-unsigned char includeLastModified = 0;
+static unsigned char processSubs = 1;
+static unsigned char includeHttpHeader = 1;
+static unsigned char useHttp11 = 0;
+static unsigned char supportSsi = 1;
+static unsigned char precalcChksum = 0;
+static unsigned char includeLastModified = 0;
 #if MAKEFS_SUPPORT_DEFLATE
-unsigned char deflateNonSsiFiles = 0;
-size_t deflatedBytesReduced = 0;
-size_t overallDataBytes = 0;
+static unsigned char deflateNonSsiFiles = 0;
+static size_t deflatedBytesReduced = 0;
+static size_t overallDataBytes = 0;
 #endif
-const char *exclude_list = NULL;
-const char *ncompress_list = NULL;
+static const char *exclude_list = NULL;
+static const char *ncompress_list = NULL;
 
-struct file_entry *first_file = NULL;
-struct file_entry *last_file = NULL;
+static struct file_entry *first_file = NULL;
+static struct file_entry *last_file = NULL;
 
 static char *ssi_file_buffer;
 static char **ssi_file_lines;
