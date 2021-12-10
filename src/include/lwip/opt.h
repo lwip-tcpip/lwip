@@ -976,6 +976,13 @@
 #if !defined LWIP_DHCP_DISCOVER_ADD_HOSTNAME || defined __DOXYGEN__
 #define LWIP_DHCP_DISCOVER_ADD_HOSTNAME 0
 #endif /* LWIP_DHCP_DISCOVER_ADD_HOSTNAME */
+
+/**
+ * LWIP_DHCP_MUD_URL == 1: Emit Manufacturer Usage Description (MUD) URL (RFC 8520) via DHCP.
+ */
+#if !defined LWIP_DHCP_MUD_URL || defined __DOXYGEN__
+#define LWIP_DHCP_MUD_URL               0
+#endif
 /**
  * @}
  */
