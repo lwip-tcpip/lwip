@@ -164,6 +164,8 @@ typedef enum {
 #define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE        67
 
+#define DHCP_OPTION_MUD_URL_V4      116 /* RFC 8520 10., MUD URL Option */
+
 /* possible combinations of overloading the file and sname fields with options */
 #define DHCP_OVERLOAD_NONE          0
 #define DHCP_OVERLOAD_FILE          1
