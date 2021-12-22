@@ -688,8 +688,8 @@ u32_t lwip_fuzz_rand(void)
   /* a simple LCG, unsafe but should give the same result for every execution (best for fuzzing) */
   u32_t result;
   static s32_t state[1] = {0xdeadbeef};
-  s32_t val = state[0];
-  val = ((state[0] * 1103515245) + 12345) & 0x7fffffff;
+  uint64_t val = state[0] & 0xffffffff;
+  val = ((val * 1103515245) + 12345) & 0x7fffffff;
   state[0] = val;
   result = val;
   return result;
