@@ -47,3 +47,14 @@
 /contrib/ports/win32/mingw/*.map
 /contrib/ports/win32/mingw/cov-int
 /contrib/ports/win32/msvc/.vs
+/contrib/apps/LwipMibCompiler/.vs
+/contrib/apps/LwipMibCompiler/CCodeGeneration/bin
+/contrib/apps/LwipMibCompiler/CCodeGeneration/obj
+/contrib/apps/LwipMibCompiler/LwipMibCompiler/bin
+/contrib/apps/LwipMibCompiler/LwipMibCompiler/obj
+/contrib/apps/LwipMibCompiler/LwipSnmpCodeGeneration/bin
+/contrib/apps/LwipMibCompiler/LwipSnmpCodeGeneration/obj
+/contrib/apps/LwipMibCompiler/MibViewer/bin
+/contrib/apps/LwipMibCompiler/MibViewer/obj
+/contrib/apps/LwipMibCompiler/SharpSnmpLib/bin
+/contrib/apps/LwipMibCompiler/SharpSnmpLib/obj
