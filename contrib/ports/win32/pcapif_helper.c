@@ -102,7 +102,6 @@ pcapifh_alloc_readonly_copy(void *data, size_t len)
     lwip_win32_platform_diag("VirtualProtect failed: %d\n", GetLastError());
     while(1);
   }
-  printf("pcapifh_alloc_readonly_copy(%d): 0x%08x\n", len, ret);
   return ret;
 }
 

@@ -50,6 +50,11 @@
 #define LWIP_PROVIDE_ERRNO /* provide errno for non-MSVC */
 #endif /* _MSC_VER */
 
+#ifdef __GNUC__
+#define LWIP_TIMEVAL_PRIVATE 0
+#include <sys/time.h>
+#endif
+
 /* Define platform endianness (might already be defined) */
 #ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN
