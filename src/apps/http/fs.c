@@ -39,20 +39,6 @@
 #include HTTPD_FSDATA_FILE
 
 /*-----------------------------------------------------------------------------------*/
-
-#if LWIP_HTTPD_CUSTOM_FILES
-int fs_open_custom(struct fs_file *file, const char *name);
-void fs_close_custom(struct fs_file *file);
-#if LWIP_HTTPD_FS_ASYNC_READ
-u8_t fs_canread_custom(struct fs_file *file);
-u8_t fs_wait_read_custom(struct fs_file *file, fs_wait_cb callback_fn, void *callback_arg);
-int fs_read_async_custom(struct fs_file *file, char *buffer, int count, fs_wait_cb callback_fn, void *callback_arg);
-#else /* LWIP_HTTPD_FS_ASYNC_READ */
-int fs_read_custom(struct fs_file *file, char *buffer, int count);
-#endif /* LWIP_HTTPD_FS_ASYNC_READ */
-#endif /* LWIP_HTTPD_CUSTOM_FILES */
-
-/*-----------------------------------------------------------------------------------*/
 err_t
 fs_open(struct fs_file *file, const char *name)
 {
