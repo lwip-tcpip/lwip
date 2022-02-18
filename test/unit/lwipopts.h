@@ -73,6 +73,10 @@
 #define LWIP_MDNS_RESPONDER             1
 #define LWIP_NUM_NETIF_CLIENT_DATA      (LWIP_MDNS_RESPONDER)
 
+/* Enable PPP and PPPOS support for PPPOS test suites */
+#define PPP_SUPPORT                     1
+#define PPPOS_SUPPORT                   1
+
 /* Minimal changes to opt.h required for etharp unit tests: */
 #define ETHARP_SUPPORT_STATIC_ENTRIES   1
 

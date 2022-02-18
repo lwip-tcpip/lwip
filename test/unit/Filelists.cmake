@@ -33,4 +33,5 @@ set(LWIP_TESTFILES
 	${LWIP_TESTDIR}/tcp/test_tcp_oos.c
 	${LWIP_TESTDIR}/tcp/test_tcp.c
 	${LWIP_TESTDIR}/udp/test_udp.c
+	${LWIP_TESTDIR}/ppp/test_pppos.c
 )

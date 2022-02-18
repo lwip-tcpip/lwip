@@ -1498,7 +1498,11 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		goto bad;
 	    break;
 	case CI_AUTHTYPE:
-	    if (0
+		/* This is potentially dead code (#if !PPP_AUTH_SUPPORT)
+		 * Thus the double parantheses to mark the code explicitely
+		 * disabled when building with clang
+		 */
+	    if ((0
 #if CHAP_SUPPORT
                 || go->neg_chap || no.neg_chap
 #endif /* CHAP_SUPPORT */
@@ -1508,7 +1512,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 #if EAP_SUPPORT
 		|| go->neg_eap || no.neg_eap
 #endif /* EAP_SUPPORT */
-		)
+		))
 		goto bad;
 	    break;
 	case CI_MAGICNUMBER:

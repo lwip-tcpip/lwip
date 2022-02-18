@@ -16,6 +16,7 @@
 #include "mdns/test_mdns.h"
 #include "mqtt/test_mqtt.h"
 #include "api/test_sockets.h"
+#include "ppp/test_pppos.h"
 
 #include "lwip/init.h"
 #if !NO_SYS
@@ -89,6 +90,9 @@ int main(void)
     mdns_suite,
     mqtt_suite,
     sockets_suite
+#if PPP_SUPPORT && PPPOS_SUPPORT
+    , pppos_suite
+#endif /* PPP_SUPPORT && PPPOS_SUPPORT */
   };
   size_t num = sizeof(suites)/sizeof(void*);
   LWIP_ASSERT("No suites defined", num > 0);
