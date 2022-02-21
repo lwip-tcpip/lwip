@@ -160,7 +160,14 @@ typedef enum {
 #define DHCP_OPTION_T1              58 /* T1 renewal time */
 #define DHCP_OPTION_T2              59 /* T2 rebinding time */
 #define DHCP_OPTION_US              60
-#define DHCP_OPTION_CLIENT_ID       61
+
+#if LWIP_DHCP_OPTION_CLIENT_IDENTIFIER
+#define DHCP_OPTION_CLIENT_ID       61 /* RFC 2132 9.14, Client Identifier */
+
+#define DHCP_OPTION_CLIENT_ID_MAC       0x01 /* Ethernet */
+#define DHCP_OPTION_CLIENT_ID_MAC_LEN   7
+#endif
+
 #define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE        67
 
@@ -169,6 +176,7 @@ typedef enum {
 #define DHCP_OVERLOAD_FILE          1
 #define DHCP_OVERLOAD_SNAME         2
 #define DHCP_OVERLOAD_SNAME_FILE    3
+
 
 
 #ifdef __cplusplus

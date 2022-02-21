@@ -970,6 +970,16 @@
  * @}
  */
 
+/**
+ * LWIP_DHCP_OPTION_CLIENT_IDENTIFIER > 0: Send client identifier option with dhcp requests
+ */
+#if !defined LWIP_DHCP_OPTION_CLIENT_IDENTIFIER || defined __DOXYGEN__
+#define LWIP_DHCP_OPTION_CLIENT_IDENTIFIER      0
+#endif
+/**
+ * @}
+ */
+
 /*
    ------------------------------------
    ---------- AUTOIP options ----------
