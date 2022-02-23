@@ -1,6 +1,6 @@
 /**
  * @file
- * MDNS responder - domain related functionalities 
+ * MDNS responder - domain related functionalities
  */
 
  /*

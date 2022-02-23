@@ -1,6 +1,6 @@
 /**
  * @file
- * lwip Private MIB 
+ * lwip Private MIB
  *
  * @todo create MIB file for this example
  * @note the lwip enterprise tree root (26381) is owned by the lwIP project.
@@ -8,11 +8,11 @@
  * the lwip developers, permission!
  *
  * Please apply for your own ID with IANA: http://www.iana.org/numbers.html
- *  
+ *
  * lwip        OBJECT IDENTIFIER ::= { enterprises 26381 }
  * example     OBJECT IDENTIFIER ::= { lwip 1 }
  */
- 
+
 /*
  * Copyright (c) 2006 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
@@ -78,15 +78,15 @@
   Sensors may and can not be added or removed after agent
   has started. Note this is only a limitation of this crude example,
   the agent does support dynamic object insertions and removals.
-   
+
   You'll need to manually create a directory called "sensors" and
   a few single line text files with an integer temperature value.
-  The files must be called [0..9].txt. 
-   
+  The files must be called [0..9].txt.
+
   ./sensors/0.txt [content: 20]
   ./sensors/3.txt [content: 75]
-    
-  The sensor values may be changed in runtime by editing the 
+
+  The sensor values may be changed in runtime by editing the
   text files in the "sensors" directory.
 */
 
@@ -123,13 +123,13 @@ static const struct snmp_table_col_def sensor_table_columns[] = {
 
 /* sensortable .1.3.6.1.4.1.26381.1.1 */
 static const struct snmp_table_node sensor_table = SNMP_TABLE_CREATE(
-  1, sensor_table_columns, 
-  sensor_table_get_cell_instance, sensor_table_get_next_cell_instance, 
+  1, sensor_table_columns,
+  sensor_table_get_cell_instance, sensor_table_get_next_cell_instance,
   sensor_table_get_value, snmp_set_test_ok, sensor_table_set_value);
 
 /* sensorcount .1.3.6.1.4.1.26381.1.2 */
 static const struct snmp_scalar_node sensor_count = SNMP_SCALAR_CREATE_NODE_READONLY(
-  2, SNMP_ASN1_TYPE_INTEGER, sensor_count_get_value); 
+  2, SNMP_ASN1_TYPE_INTEGER, sensor_count_get_value);
 
 /* example .1.3.6.1.4.1.26381.1 */
 static const struct snmp_node* const example_nodes[] = {
@@ -185,7 +185,7 @@ lwip_privmib_init(void)
 #endif /* SENSORS_USE_FILES && SENSORS_SEARCH_FILES */
 
   memset(sensors, 0, sizeof(sensors));
-  
+
   printf("SNMP private MIB start, detecting sensors.\n");
 
 #if SENSORS_USE_FILES && SENSORS_SEARCH_FILES
@@ -205,7 +205,7 @@ lwip_privmib_init(void)
       do
       {
         long base;
-        
+
         nbytes = getdirentries(fd, buf, bufsize, &base);
         if (nbytes > 0)
         {
@@ -224,10 +224,10 @@ lwip_privmib_init(void)
             }
             cp += dp->d_reclen;
           }
-        } 
+        }
       }
       while (nbytes > 0);
-    
+
       free(buf);
     }
     close(fd);
@@ -253,7 +253,7 @@ sensor_count_get_value(struct snmp_node_instance* instance, void* value)
   u32_t *uint_ptr = (u32_t*)value;
 
   LWIP_UNUSED_ARG(instance);
-  
+
   for(count=0; count<LWIP_ARRAYSIZE(sensors); count++) {
     if(sensors[count].num == 0) {
       *uint_ptr = (u32_t)count;
@@ -261,7 +261,7 @@ sensor_count_get_value(struct snmp_node_instance* instance, void* value)
     }
   }
 
-  return 0;  
+  return 0;
 }
 
 /* sensortable .1.3.6.1.4.1.26381.1.1 */
@@ -309,7 +309,7 @@ sensor_table_get_next_cell_instance(const u32_t* column, struct snmp_obj_id* row
   u32_t result_temp[LWIP_ARRAYSIZE(sensor_table_oid_ranges)];
 
   LWIP_UNUSED_ARG(column);
-  
+
   /* init struct to search next oid */
   snmp_next_oid_init(&state, row_oid->id, row_oid->len, result_temp, LWIP_ARRAYSIZE(sensor_table_oid_ranges));
 
@@ -391,7 +391,7 @@ sensor_table_set_value(struct snmp_node_instance* instance, u16_t len, void *val
   }
 #else /* SENSORS_USE_FILES */
   sensors[i].value = *temperature;
-#endif /* SENSORS_USE_FILES */  
+#endif /* SENSORS_USE_FILES */
 
   LWIP_UNUSED_ARG(len);
 
