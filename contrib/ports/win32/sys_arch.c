@@ -101,7 +101,7 @@ lwip_port_rand(void)
   if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
     return ret;
   }
-  // maybe CryptAcquireContext has not been called...
+  /* maybe CryptAcquireContext has not been called... */
   sys_win_rand_init();
   if (CryptGenRandom(hcrypt, sizeof(ret), (BYTE*)&ret)) {
     return ret;
