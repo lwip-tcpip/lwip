@@ -28,6 +28,7 @@
             "windows": {
                 "cwd": "${workspaceFolder}/build/contrib/ports/win32/example_app",
                 "program": "${workspaceFolder}/build/contrib/ports/win32/example_app/example_app",
+                "miDebuggerPath": "gdb.exe",
             }
         },
         {
@@ -54,6 +55,7 @@
             "windows": {
                 "cwd": "${workspaceFolder}/contrib/ports/win32/check/build",
                 "program": "${workspaceFolder}/contrib/ports/win32/check/build/lwip_unittests",
+                "miDebuggerPath": "gdb.exe",
             }
         }
     ]
