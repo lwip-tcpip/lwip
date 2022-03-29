@@ -93,6 +93,17 @@
 #define LWIP_HOOK_DHCP_PARSE_OPTION(netif, dhcp, state, msg, msg_type, option, len, pbuf, offset) do { LWIP_UNUSED_ARG(msg); } while(0)
 #endif
 
+/** DHCP_ADD_EXTRA_REQUEST_OPTIONS: Additional options added to the list of options
+ * that the client requests from the servers (opt 55: DHCP_OPTION_PARAMETER_REQUEST_LIST)
+ * If additional options are requested, define this macro as a comma separated list, with leading comma.
+ * This macro is useful for example when requested vendor specific ids (VCI/VSI options), here is an example
+ * of requesting the VSI option (option 43) (yes, the notation is a bit strange, but it works :)
+ * #define DHCP_ADD_EXTRA_REQUEST_OPTIONS ,43
+ */
+#ifndef DHCP_ADD_EXTRA_REQUEST_OPTIONS
+#define DHCP_ADD_EXTRA_REQUEST_OPTIONS
+#endif
+
 /** DHCP_DEFINE_CUSTOM_TIMEOUTS: if this is defined then you can customize various DHCP timeouts using these macros:
       - DHCP_SET_TIMEOUT_FROM_OFFERED_T0_LEASE() to adjust the t0 lease timeout from the offered value
       - DHCP_SET_TIMEOUT_FROM_OFFERED_T1_RENEW() same for t1 renew
@@ -204,6 +215,7 @@ static u8_t dhcp_discover_request_options[] = {
 #if LWIP_DHCP_GET_NTP_SRV
   , DHCP_OPTION_NTP
 #endif /* LWIP_DHCP_GET_NTP_SRV */
+  DHCP_ADD_EXTRA_REQUEST_OPTIONS
 };
 
 #ifdef DHCP_GLOBAL_XID
