@@ -37,3 +37,7 @@ jobs:
     - name: Validate combinations of options
       run: cd contrib/ports/unix/example_app && ./iteropts.sh
 
+    - name: Build the default example app
+      run: |
+        cp contrib/examples/example_app/lwipcfg.h.example contrib/examples/example_app/lwipcfg.h
+        make -C contrib/ports/unix/example_app TESTFLAGS="-Wno-documentation" -j 4
