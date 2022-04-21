@@ -59,6 +59,15 @@ typedef struct sys_mbox * sys_mbox_t;
 struct sys_thread;
 typedef struct sys_thread * sys_thread_t;
 
+#if LWIP_NETCONN_SEM_PER_THREAD
+sys_sem_t* sys_arch_netconn_sem_get(void);
+void sys_arch_netconn_sem_alloc(void);
+void sys_arch_netconn_sem_free(void);
+#define LWIP_NETCONN_THREAD_SEM_GET()   sys_arch_netconn_sem_get()
+#define LWIP_NETCONN_THREAD_SEM_ALLOC() sys_arch_netconn_sem_alloc()
+#define LWIP_NETCONN_THREAD_SEM_FREE()  sys_arch_netconn_sem_free()
+#endif /* #if LWIP_NETCONN_SEM_PER_THREAD */
+
 #define LWIP_EXAMPLE_APP_ABORT() lwip_unix_keypressed()
 int lwip_unix_keypressed(void);
 
