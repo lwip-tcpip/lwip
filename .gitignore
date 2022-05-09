@@ -1,6 +1,7 @@
 *.o
 *.so
 *.a
+*.exe
 *lwip_unittests.xml
 *.suo
 *.log
@@ -43,7 +44,6 @@
 /contrib/ports/win32/msvc/ipch
 /contrib/ports/win32/msvc/*.opensdf
 /contrib/ports/win32/msvc/*.sdf
-/contrib/ports/win32/mingw/*.exe
 /contrib/ports/win32/mingw/*.map
 /contrib/ports/win32/mingw/cov-int
 /contrib/ports/win32/msvc/.vs
