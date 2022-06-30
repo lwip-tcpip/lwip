@@ -68,6 +68,9 @@ typedef struct ip4_addr_packed ip4_addr_p_t;
 /* Minimal fragment size in bytes (c.f. RFC 791) */
 #define IP_MIN_FRAG_LENGTH 8U
 
+/* Minimal IPv4 MTU (c.f. RFC 791) */
+#define IP4_MIN_MTU_LENGTH (IP_HLEN_MAX + IP_MIN_FRAG_LENGTH)
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
