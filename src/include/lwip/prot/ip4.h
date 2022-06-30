@@ -65,6 +65,9 @@ typedef struct ip4_addr_packed ip4_addr_p_t;
 /* Maximum size of the IPv4 header with options. */
 #define IP_HLEN_MAX 60
 
+/* Minimal fragment size in bytes (c.f. RFC 791) */
+#define IP_MIN_FRAG_LENGTH 8U
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -108,7 +111,7 @@ PACK_STRUCT_END
 #define IPH_LEN(hdr) ((hdr)->_len)
 #define IPH_ID(hdr) ((hdr)->_id)
 #define IPH_OFFSET(hdr) ((hdr)->_offset)
-#define IPH_OFFSET_BYTES(hdr) ((u16_t)((lwip_ntohs(IPH_OFFSET(hdr)) & IP_OFFMASK) * 8U))
+#define IPH_OFFSET_BYTES(hdr) ((u16_t)((lwip_ntohs(IPH_OFFSET(hdr)) & IP_OFFMASK) * IP_MIN_FRAG_LENGTH))
 #define IPH_TTL(hdr) ((hdr)->_ttl)
 #define IPH_PROTO(hdr) ((hdr)->_proto)
 #define IPH_CHKSUM(hdr) ((hdr)->_chksum)
