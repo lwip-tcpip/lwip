@@ -122,7 +122,63 @@
     "Host: %s\r\n" /* server name */ \
     "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
     "\r\n"
+
 #define HTTPC_REQ_11_PROXY_PORT_FORMAT(host, host_port, uri, srv_name) HTTPC_REQ_11_PROXY_PORT, host, host_port, uri, HTTPC_CLIENT_AGENT, srv_name
+
+/* POST request basic */
+#define HTTPC_POST_REQ_11 "POST %s HTTP/1.1\r\n" /* URI */\
+    "User-Agent: %s\r\n" /* User-Agent */ \
+    "Accept: */*\r\n" \
+    "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
+    "Content-Type: application/%s\r\n" \
+    "Content-Length: %d\r\n" \
+    "\r\n" \
+    "%s\r\n" \
+    "\r\n"
+
+#define HTTPC_POST_REQ_11_FORMAT(uri, application_type, length, data) HTTPC_POST_REQ_11, uri, HTTPC_CLIENT_AGENT, application_type, length, data
+
+/* POST request with host */
+#define HTTPC_POST_REQ_11_HOST "POST %s HTTP/1.1\r\n" /* URI */\
+    "User-Agent: %s\r\n" /* User-Agent */ \
+    "Accept: */*\r\n" \
+    "Host: %s\r\n" /* server name */ \
+    "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
+    "Content-Type: application/%s\r\n" \
+    "Content-Length: %d\r\n" \
+    "\r\n" \
+    "%s\r\n" \
+    "\r\n"
+
+#define HTTPC_POST_REQ_11_HOST_FORMAT(uri, srv_name, application_type, length, data) HTTPC_POST_REQ_11_HOST, uri, HTTPC_CLIENT_AGENT, srv_name, application_type, length, data
+
+/* POST request with proxy */
+#define HTTPC_POST_REQ_11_PROXY "POST http://%s%s HTTP/1.1\r\n" /* HOST, URI */\
+    "User-Agent: %s\r\n" /* User-Agent */ \
+    "Accept: */*\r\n" \
+    "Host: %s\r\n" /* server name */ \
+    "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
+    "Content-Type: application/%s\r\n" \
+    "Content-Length: %d\r\n" \
+    "\r\n" \
+    "%s\r\n" \
+    "\r\n"
+
+#define HTTPC_POST_REQ_11_PROXY_FORMAT(host, uri, srv_name, application_type, length, data) HTTPC_POST_REQ_11_PROXY, host, uri, HTTPC_CLIENT_AGENT, srv_name, application_type, length, data
+
+/* POST request with proxy (non-default server port) */
+#define HTTPC_POST_REQ_11_PROXY_PORT "POST http://%s:%d%s HTTP/1.1\r\n" /* HOST, host-port, URI */\
+    "User-Agent: %s\r\n" /* User-Agent */ \
+    "Accept: */*\r\n" \
+    "Host: %s\r\n" /* server name */ \
+    "Connection: Close\r\n" /* we don't support persistent connections, yet */ \
+    "Content-Type: application/%s\r\n" \
+    "Content-Length: %d\r\n" \
+    "\r\n" \
+    "%s\r\n" \
+    "\r\n"
+
+#define HTTPC_POST_REQ_11_PROXY_PORT_FORMAT(host, host_port, uri, srv_name, application_type, length, data) HTTPC_POST_REQ_11_PROXY_PORT, host, host_port, uri, HTTPC_CLIENT_AGENT, srv_name, application_type, length, data
 
 typedef enum ehttpc_parse_state {
   HTTPC_PARSE_WAIT_FIRST_LINE = 0,
@@ -151,6 +207,20 @@ typedef struct _httpc_state
   char* uri;
 #endif
 } httpc_state_t;
+
+char * get_application_type(httpc_post_application_t post_application_type)
+{
+  switch (post_application_type)
+  {
+    case HTTPC_JSON:
+      return "json";
+    default:
+      LWIP_ASSERT("Not supported application type", 0);
+      // Default to json application?
+      return "json";
+    break;
+  }
+}
 
 /** Free http client state and deallocate all resources within */
 static err_t
@@ -484,8 +554,8 @@ httpc_get_internal_dns(httpc_state_t* req, const char* server_name)
 }
 
 static int
-httpc_create_request_string(const httpc_connection_t *settings, const char* server_name, int server_port, const char* uri,
-                            int use_host, char *buffer, size_t buffer_size)
+httpc_create_get_request(const httpc_connection_t *settings, const char* server_name, int server_port, const char* uri,
+                            const httpc_request_info_t* request_info, int use_host, char *buffer, size_t buffer_size)
 {
   if (settings->use_proxy) {
     LWIP_ASSERT("server_name != NULL", server_name != NULL);
@@ -499,13 +569,70 @@ httpc_create_request_string(const httpc_connection_t *settings, const char* serv
     return snprintf(buffer, buffer_size, HTTPC_REQ_11_HOST_FORMAT(uri, server_name));
   } else {
     return snprintf(buffer, buffer_size, HTTPC_REQ_11_FORMAT(uri));
+  }  
+}
+
+static int
+httpc_create_post_request(const httpc_connection_t *settings, const char* server_name, int server_port, const char* uri,
+                            const httpc_request_info_t* request_info, int use_host, char *buffer, size_t buffer_size)
+{
+  if (settings->use_proxy) {
+    LWIP_ASSERT("server_name != NULL", server_name != NULL);
+    if (server_port != HTTP_DEFAULT_PORT) {
+      return snprintf(buffer, buffer_size, HTTPC_POST_REQ_11_PROXY_PORT_FORMAT(
+        server_name, 
+        server_port, 
+        uri, 
+        server_name,
+        get_application_type(request_info->application_type),
+        strlen(request_info->payload),
+        request_info->payload));
+    } else {
+      return snprintf(buffer, buffer_size, HTTPC_POST_REQ_11_PROXY_FORMAT(
+        server_name, 
+        uri, 
+        server_name,
+        get_application_type(request_info->application_type),
+        strlen(request_info->payload),
+        request_info->payload));
+    }
+  } else if (use_host) {
+    LWIP_ASSERT("server_name != NULL", server_name != NULL);
+    return snprintf(buffer, buffer_size, HTTPC_POST_REQ_11_HOST_FORMAT(
+      uri, 
+      server_name,
+      get_application_type(request_info->application_type),
+      strlen(request_info->payload),
+      request_info->payload));
+  } else {
+    return snprintf(buffer, buffer_size, HTTPC_POST_REQ_11_FORMAT(
+      uri,
+      get_application_type(request_info->application_type),
+      strlen(request_info->payload),
+      request_info->payload));
+  }
+}
+
+static int
+httpc_create_request_string(const httpc_connection_t *settings, const char* server_name, int server_port, const char* uri,
+                            const httpc_request_info_t* request_info, int use_host, char *buffer, size_t buffer_size)
+{
+  LWIP_ASSERT("request_info != NULL", request_info != NULL);
+
+  if (request_info->request_type == HTTPC_GET) {
+    httpc_create_get_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
+  } else if (request_info->request_type == HTTPC_POST) {
+    httpc_create_post_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
+  } else {
+    LWIP_ASSERT("request_type not supported", 0);
   }
 }
 
 /** Initialize the connection struct */
 static err_t
 httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_t *settings, const char* server_name,
-                      u16_t server_port, const char* uri, altcp_recv_fn recv_fn, void* callback_arg, int use_host)
+                      u16_t server_port, const char* uri, const httpc_request_info_t* request_info, altcp_recv_fn recv_fn, 
+                      void* callback_arg, int use_host)
 {
   size_t alloc_len;
   mem_size_t mem_alloc_len;
@@ -518,7 +645,7 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   LWIP_ASSERT("uri != NULL", uri != NULL);
 
   /* get request len */
-  req_len = httpc_create_request_string(settings, server_name, server_port, uri, use_host, NULL, 0);
+  req_len = httpc_create_request_string(settings, server_name, server_port, uri, request_info, use_host, NULL, 0);
   if ((req_len < 0) || (req_len > 0xFFFF)) {
     return ERR_VAL;
   }
@@ -572,8 +699,8 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   altcp_sent(req->pcb, httpc_tcp_sent);
 
   /* set up request buffer */
-  req_len2 = httpc_create_request_string(settings, server_name, server_port, uri, use_host,
-    (char *)req->request->payload, req_len + 1);
+  req_len2 = httpc_create_request_string(settings, server_name, server_port, uri, request_info, 
+  use_host, (char *)req->request->payload, req_len + 1);
   if (req_len2 != req_len) {
     httpc_free_state(req);
     return ERR_VAL;
@@ -592,9 +719,9 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
  */
 static err_t
 httpc_init_connection(httpc_state_t **connection, const httpc_connection_t *settings, const char* server_name,
-                      u16_t server_port, const char* uri, altcp_recv_fn recv_fn, void* callback_arg)
+                      u16_t server_port, const char* uri, const httpc_request_info_t* request_info, altcp_recv_fn recv_fn, void* callback_arg)
 {
-  return httpc_init_connection_common(connection, settings, server_name, server_port, uri, recv_fn, callback_arg, 1);
+  return httpc_init_connection_common(connection, settings, server_name, server_port, uri, request_info, recv_fn, callback_arg, 1);
 }
 
 
@@ -604,14 +731,14 @@ httpc_init_connection(httpc_state_t **connection, const httpc_connection_t *sett
 static err_t
 httpc_init_connection_addr(httpc_state_t **connection, const httpc_connection_t *settings,
                            const ip_addr_t* server_addr, u16_t server_port, const char* uri,
-                           altcp_recv_fn recv_fn, void* callback_arg)
+                           const httpc_request_info_t* request_info, altcp_recv_fn recv_fn, void* callback_arg)
 {
   char *server_addr_str = ipaddr_ntoa(server_addr);
   if (server_addr_str == NULL) {
     return ERR_VAL;
   }
   return httpc_init_connection_common(connection, settings, server_addr_str, server_port, uri,
-    recv_fn, callback_arg, 1);
+    request_info, recv_fn, callback_arg, 1);
 }
 
 /**
@@ -634,11 +761,13 @@ httpc_get_file(const ip_addr_t* server_addr, u16_t port, const char* uri, const 
 {
   err_t err;
   httpc_state_t* req;
+  httpc_request_info_t request_info;
+  request_info.request_type = HTTPC_GET;
 
   LWIP_ERROR("invalid parameters", (server_addr != NULL) && (uri != NULL) && (recv_fn != NULL), return ERR_ARG;);
 
   err = httpc_init_connection_addr(&req, settings, server_addr, port,
-    uri, recv_fn, callback_arg);
+    uri, &request_info, recv_fn, callback_arg);
   if (err != ERR_OK) {
     return err;
   }
@@ -679,10 +808,106 @@ httpc_get_file_dns(const char* server_name, u16_t port, const char* uri, const h
 {
   err_t err;
   httpc_state_t* req;
+  httpc_request_info_t request_info;
+  request_info.request_type = HTTPC_GET;
 
   LWIP_ERROR("invalid parameters", (server_name != NULL) && (uri != NULL) && (recv_fn != NULL), return ERR_ARG;);
 
-  err = httpc_init_connection(&req, settings, server_name, port, uri, recv_fn, callback_arg);
+  err = httpc_init_connection(&req, settings, server_name, port, uri, &request_info, recv_fn, callback_arg);
+  if (err != ERR_OK) {
+    return err;
+  }
+
+  if (settings->use_proxy) {
+    err = httpc_get_internal_addr(req, &settings->proxy_addr);
+  } else {
+    err = httpc_get_internal_dns(req, server_name);
+  }
+  if(err != ERR_OK) {
+    httpc_free_state(req);
+    return err;
+  }
+
+  if (connection != NULL) {
+    *connection = req;
+  }
+  return ERR_OK;
+}
+
+/**
+ * @ingroup httpc 
+ * HTTP client API: get a file by passing server IP address
+ *
+ * @param server_addr IP address of the server to connect
+ * @param port tcp port of the server
+ * @param uri uri to get from the server, remember leading "/"!
+ * @param request_info http request info
+ * @param settings connection settings (callbacks, proxy, etc.)
+ * @param recv_fn the http body (not the headers) are passed to this callback
+ * @param callback_arg argument passed to all the callbacks
+ * @param connection retreives the connection handle (to match in callbacks)
+ * @return ERR_OK if starting the request succeeds (callback_fn will be called later)
+ *         or an error code
+ */
+err_t
+httpc_post_file(const ip_addr_t* server_addr, u16_t port, const char* uri, httpc_request_info_t* request_info, const httpc_connection_t *settings,
+               altcp_recv_fn recv_fn, void* callback_arg, httpc_state_t **connection)
+{
+  err_t err;
+  httpc_state_t* req;
+
+  LWIP_ERROR("invalid parameters", (server_addr != NULL) && (uri != NULL) && (request_info != NULL) && (recv_fn != NULL), return ERR_ARG;);
+
+  request_info->request_type = HTTPC_POST;
+
+  err = httpc_init_connection_addr(&req, settings, server_addr, port,
+    uri, request_info, recv_fn, callback_arg);
+  if (err != ERR_OK) {
+    return err;
+  }
+
+  if (settings->use_proxy) {
+    err = httpc_get_internal_addr(req, &settings->proxy_addr);
+  } else {
+    err = httpc_get_internal_addr(req, server_addr);
+  }
+  if(err != ERR_OK) {
+    httpc_free_state(req);
+    return err;
+  }
+
+  if (connection != NULL) {
+    *connection = req;
+  }
+  return ERR_OK;
+}
+
+/**
+ * @ingroup httpc 
+ * HTTP client API: get a file by passing server name as string (DNS name or IP address string)
+ *
+ * @param server_name server name as string (DNS name or IP address string)
+ * @param port tcp port of the server
+ * @param uri uri to get from the server, remember leading "/"!
+ * @param request_info http request info to server
+ * @param settings connection settings (callbacks, proxy, etc.)
+ * @param recv_fn the http body (not the headers) are passed to this callback
+ * @param callback_arg argument passed to all the callbacks
+ * @param connection retreives the connection handle (to match in callbacks)
+ * @return ERR_OK if starting the request succeeds (callback_fn will be called later)
+ *         or an error code
+ */
+err_t
+httpc_post_file_dns(const char* server_name, u16_t port, const char* uri, httpc_request_info_t* request_info, const httpc_connection_t *settings,
+                   altcp_recv_fn recv_fn, void* callback_arg, httpc_state_t **connection)
+{
+  err_t err;
+  httpc_state_t* req;
+
+  LWIP_ERROR("invalid parameters", (server_name != NULL) && (uri != NULL) && (request_info != NULL) && (recv_fn != NULL), return ERR_ARG;);
+
+  request_info->request_type = HTTPC_POST;
+  err = httpc_init_connection(&req, settings, server_name, port, uri, request_info, recv_fn, callback_arg);
   if (err != ERR_OK) {
     return err;
   }
@@ -821,6 +1046,8 @@ httpc_get_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri
   err_t err;
   httpc_state_t* req;
   httpc_filestate_t *filestate;
+  httpc_request_info_t request_info;
+  request_info.request_type = HTTPC_GET;
 
   LWIP_ERROR("invalid parameters", (server_addr != NULL) && (uri != NULL) && (local_file_name != NULL), return ERR_ARG;);
 
@@ -828,9 +1055,8 @@ httpc_get_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri
   if (err != ERR_OK) {
     return err;
   }
-
   err = httpc_init_connection_addr(&req, &filestate->settings, server_addr, port,
-    uri, httpc_fs_tcp_recv, filestate);
+    uri, &request_info, httpc_fs_tcp_recv, filestate);
   if (err != ERR_OK) {
     httpc_fs_free(filestate);
     return err;
@@ -873,6 +1099,8 @@ httpc_get_file_dns_to_disk(const char* server_name, u16_t port, const char* uri,
   err_t err;
   httpc_state_t* req;
   httpc_filestate_t *filestate;
+  httpc_request_info_t request_info;
+  request_info.request_type = HTTPC_GET;
 
   LWIP_ERROR("invalid parameters", (server_name != NULL) && (uri != NULL) && (local_file_name != NULL), return ERR_ARG;);
 
@@ -882,7 +1110,7 @@ httpc_get_file_dns_to_disk(const char* server_name, u16_t port, const char* uri,
   }
 
   err = httpc_init_connection(&req, &filestate->settings, server_name, port,
-    uri, httpc_fs_tcp_recv, filestate);
+    uri, &request_info, httpc_fs_tcp_recv, filestate);
   if (err != ERR_OK) {
     httpc_fs_free(filestate);
     return err;

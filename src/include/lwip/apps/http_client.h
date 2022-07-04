@@ -96,6 +96,30 @@ typedef enum ehttpc_result {
 
 typedef struct _httpc_state httpc_state_t;
 
+typedef enum ehttpc_post_application {
+  /** JSON application type request */
+  HTTPC_JSON           = 0,
+  /** add other post types, like... ? */
+} httpc_post_application_t;
+
+typedef enum ehttpc_request {
+  /** GET request */
+  HTTPC_GET            = 0,
+  /** POST request */
+  HTTPC_POST           = 1,
+} httpc_request_t;
+
+/** post data info */
+typedef struct ehttpc_request_info {
+  /** type of request (GET/POST) */
+  httpc_request_t request_type; 
+  /** type of post application */
+  httpc_post_application_t application_type;
+
+  /** pointer to the actual data to post */
+  const char * payload;
+} httpc_request_info_t;
+
 /**
  * @ingroup httpc 
  * Prototype of a http client callback function
@@ -144,10 +168,20 @@ err_t httpc_get_file(const ip_addr_t* server_addr, u16_t port, const char* uri, 
 err_t httpc_get_file_dns(const char* server_name, u16_t port, const char* uri, const httpc_connection_t *settings,
                      altcp_recv_fn recv_fn, void* callback_arg, httpc_state_t **connection);
 
+err_t httpc_post_file(const ip_addr_t* server_addr, u16_t port, const char* uri, httpc_request_info_t* post_info, 
+                      const httpc_connection_t *settings, altcp_recv_fn recv_fn, void* callback_arg, httpc_state_t **connection);
+err_t httpc_post_file_dns(const char* server_name, u16_t port, const char* uri, httpc_request_info_t* post_info, 
+                          const httpc_connection_t *settings, altcp_recv_fn recv_fn, void* callback_arg, httpc_state_t **connection);
+
 #if LWIP_HTTPC_HAVE_FILE_IO
 err_t httpc_get_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri, const httpc_connection_t *settings,
                      void* callback_arg, const char* local_file_name, httpc_state_t **connection);
 err_t httpc_get_file_dns_to_disk(const char* server_name, u16_t port, const char* uri, const httpc_connection_t *settings,
+                     void* callback_arg, const char* local_file_name, httpc_state_t **connection);
+
+err_t httpc_post_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri, char * data, const httpc_connection_t *settings,
+                     void* callback_arg, const char* local_file_name, httpc_state_t **connection);
+err_t httpc_post_file_dns_to_disk(const char* server_name, u16_t port, const char* uri, char * data, const httpc_connection_t *settings,
                      void* callback_arg, const char* local_file_name, httpc_state_t **connection);
 #endif /* LWIP_HTTPC_HAVE_FILE_IO */
 
