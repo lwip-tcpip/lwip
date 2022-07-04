@@ -620,11 +620,12 @@ httpc_create_request_string(const httpc_connection_t *settings, const char* serv
   LWIP_ASSERT("request_info != NULL", request_info != NULL);
 
   if (request_info->request_type == HTTPC_GET) {
-    httpc_create_get_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
+    return httpc_create_get_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
   } else if (request_info->request_type == HTTPC_POST) {
-    httpc_create_post_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
+    return httpc_create_post_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
   } else {
     LWIP_ASSERT("request_type not supported", 0);
+    return httpc_create_post_request(settings, server_name, server_port, uri, request_info, use_host, buffer, buffer_size);
   }
 }
 
