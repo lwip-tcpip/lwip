@@ -245,10 +245,28 @@
 /**
  * MEM_LIBC_MALLOC==1: Use malloc/free/realloc provided by your C-library
  * instead of the lwip internal allocator. Can save code size if you
- * already use it.
+ * already use it. Specialized case of MEM_CUSTOM_ALLOCATOR.
+ * @see MEM_CUSTOM_ALLOCATOR
  */
 #if !defined MEM_LIBC_MALLOC || defined __DOXYGEN__
 #define MEM_LIBC_MALLOC                 0
+#elif MEM_LIBC_MALLOC
+#define MEM_CUSTOM_ALLOCATOR            1
+#define MEM_CUSTOM_FREE                 free
+#define MEM_CUSTOM_MALLOC               malloc
+#define MEM_CUSTOM_CALLOC               calloc
+#endif
+
+/**
+ * MEM_CUSTOM_ALLOCATOR==1: Use malloc/free/realloc provided by a custom
+ * implementation instead of the lwip internal allocator. Can save code size if
+ * you already use it. If enabled, you have to define those functions:
+ *  \#define MEM_CUSTOM_FREE   my_free
+ *  \#define MEM_CUSTOM_MALLOC my_malloc
+ *  \#define MEM_CUSTOM_CALLOC my_calloc
+ */
+#if !defined MEM_CUSTOM_ALLOCATOR || defined __DOXYGEN__
+#define MEM_CUSTOM_ALLOCATOR            0
 #endif
 
 /**
@@ -2238,7 +2256,7 @@
  * MEM_STATS==1: Enable mem.c stats.
  */
 #if !defined MEM_STATS || defined __DOXYGEN__
-#define MEM_STATS                       ((MEM_LIBC_MALLOC == 0) && (MEM_USE_POOLS == 0))
+#define MEM_STATS                       ((MEM_CUSTOM_ALLOCATOR == 0) && (MEM_USE_POOLS == 0))
 #endif
 
 /**
