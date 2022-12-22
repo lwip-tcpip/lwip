@@ -1,6 +1,6 @@
 /**
- * Additional settings for the win32 port.
- * Copy this to lwipcfg_msvc.h and make the config changes you need.
+ * Additional settings for the example app.
+ * Copy this to lwipcfg.h and make the config changes you need.
  */
 
 /* configuration for this port */

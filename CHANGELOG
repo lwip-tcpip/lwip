@@ -12,6 +12,22 @@ HISTORY
   2018-10-02: Dirk Ziegelmeier
   * Integrate contrib repository into main lwIP rep, tag STABLE-2_1_0_RELEASE
 
+(STABLE-2.1.2):
+
+  ++ Bugfixes:
+
+  2018-11-21: Jens Nielsen
+  * netbiosns.c: fix expecting too large packet (bug #55069)
+
+  2018-11-19: Dirk Ziegelmeier
+  * smtp.c: fix compiling with strict C compatibility because of strnlen (bug #55034)
+
+  2018-11-12: Simon Goldschmidt
+  * tcp.c: fix overflow check in tcp_recved triggering invalid assertion (bug #55015)
+
+  2018-11-12: Simon Goldschmidt
+  * tcp.c: fix a bug in sending RST segments (sent from port 0)
+
 (STABLE-2.1.1):
 
   ++ Bugfixes:
