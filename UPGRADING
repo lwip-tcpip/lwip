@@ -11,6 +11,13 @@ with newer versions.
     and so on, since they return non-zero on equality. Macros for the old names exist.
   * The sio_write function used by PPP now takes the data argument as const.
 
+(2.2.0)
+
+  ++ Repository changes:
+
+  * The contrib repository has been added into the main repository in the subdirectory 'contrib'
+    (the old contrib repository remains online for reference but is not used any more)
+
 (2.1.0)
 
   ++ Application changes:
