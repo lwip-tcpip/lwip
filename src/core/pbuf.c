@@ -1011,7 +1011,7 @@ pbuf_copy_partial_pbuf(struct pbuf *p_to, const struct pbuf *p_from, u16_t copy_
     MEMCPY((u8_t *)p_to->payload + offset_to, (u8_t *)p_from->payload + offset_from, len);
     offset_to += len;
     offset_from += len;
-    copy_len -= len;
+    copy_len = (u16_t)(copy_len - len);
     LWIP_ASSERT("offset_to <= p_to->len", offset_to <= p_to->len);
     LWIP_ASSERT("offset_from <= p_from->len", offset_from <= p_from->len);
     if (offset_from >= p_from->len) {
