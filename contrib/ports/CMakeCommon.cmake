@@ -122,7 +122,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     set(LWIP_COMPILER_FLAGS
         $<$<CONFIG:Debug>:/Od>
         $<$<CONFIG:Release>:/Ox>
-        /Wall
+        /W4
         /WX
     )
 endif()
