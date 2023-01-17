@@ -98,8 +98,11 @@ set(lwipnetif_SRCS
     ${LWIP_DIR}/src/netif/ethernet.c
     ${LWIP_DIR}/src/netif/bridgeif.c
     ${LWIP_DIR}/src/netif/bridgeif_fdb.c
-    ${LWIP_DIR}/src/netif/slipif.c
 )
+
+if (NOT ${LWIP_EXCLUDE_SLIPIF})
+	list(APPEND lwipnetif_SRCS ${LWIP_DIR}/src/netif/slipif.c)
+endif()
 
 # 6LoWPAN
 set(lwipsixlowpan_SRCS

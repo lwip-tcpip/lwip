@@ -19,6 +19,7 @@ set (LWIP_INCLUDE_DIRS
     "${CMAKE_CURRENT_SOURCE_DIR}/"
 )
 
+set (LWIP_EXCLUDE_SLIPIF TRUE)
 include(${LWIP_CONTRIB_DIR}/ports/unix/Filelists.cmake)
 include(${LWIP_DIR}/src/Filelists.cmake)
 
