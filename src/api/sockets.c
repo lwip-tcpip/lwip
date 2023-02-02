@@ -699,25 +699,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   LWIP_ASSERT("invalid socket index", (newsock >= LWIP_SOCKET_OFFSET) && (newsock < NUM_SOCKETS + LWIP_SOCKET_OFFSET));
   nsock = &sockets[newsock - LWIP_SOCKET_OFFSET];
 
-  /* See event_callback: If data comes in right away after an accept, even
-   * though the server task might not have created a new socket yet.
-   * In that case, newconn->socket is counted down (newconn->socket--),
-   * so nsock->rcvevent is >= 1 here!
-   */
-  SYS_ARCH_PROTECT(lev);
-  recvevent = (s16_t)(-1 - newconn->callback_arg.socket);
-  newconn->callback_arg.socket = newsock;
-  SYS_ARCH_UNPROTECT(lev);
-
-  if (newconn->callback) {
-    LOCK_TCPIP_CORE();
-    while (recvevent > 0) {
-      recvevent--;
-      newconn->callback(newconn, NETCONN_EVT_RCVPLUS, 0);
-    }
-    UNLOCK_TCPIP_CORE();
-  }
-
   /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
    * not be NULL if addr is valid.
    */
@@ -738,7 +719,28 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
       *addrlen = IPADDR_SOCKADDR_GET_LEN(&tempaddr);
     }
     MEMCPY(addr, &tempaddr, *addrlen);
+  }
 
+  /* See event_callback: If data comes in right away after an accept, even
+   * though the server task might not have created a new socket yet.
+   * In that case, newconn->socket is counted down (newconn->socket--),
+   * so nsock->rcvevent is >= 1 here!
+   */
+  SYS_ARCH_PROTECT(lev);
+  recvevent = (s16_t)(-1 - newconn->callback_arg.socket);
+  newconn->callback_arg.socket = newsock;
+  SYS_ARCH_UNPROTECT(lev);
+
+  if (newconn->callback) {
+    LOCK_TCPIP_CORE();
+    while (recvevent > 0) {
+      recvevent--;
+      newconn->callback(newconn, NETCONN_EVT_RCVPLUS, 0);
+    }
+    UNLOCK_TCPIP_CORE();
+  }
+
+  if ((addr != NULL) && (addrlen != NULL)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d addr=", s, newsock));
     ip_addr_debug_print_val(SOCKETS_DEBUG, naddr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", port));
