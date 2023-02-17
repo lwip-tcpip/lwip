@@ -16,6 +16,14 @@ endif()
 
 set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../..)
 
+find_library(LIB_VDEPLUGOK vdeplug)
+check_include_file(libvdeplug.h INCLUDE_VDEPLUGOK)
+if (LIB_VDEPLUGOK AND INCLUDE_VDEPLUGOK)
+	message(STATUS "Found libvdeplug: vde support added")
+else()
+	message(STATUS "Libvdeplug needs to be installed to add vde support")
+endif()
+
 include(${LWIP_DIR}/contrib/ports/CMakeCommon.cmake)
 
 set (LWIP_DEFINITIONS -DLWIP_DEBUG)
@@ -30,12 +38,20 @@ set (LWIP_INCLUDE_DIRS
 set (LWIP_EXCLUDE_SLIPIF TRUE)
 include(${LWIP_CONTRIB_DIR}/ports/unix/Filelists.cmake)
 include(${LWIP_DIR}/src/Filelists.cmake)
+if (LIB_VDEPLUGOK AND INCLUDE_VDEPLUGOK)
+set(lwipnoapps_SRCS ${lwipnoapps_SRCS}
+   ${LWIP_DIR}/contrib/ports/unix/port/netif/vdeif.c)
+endif()
 
 add_library(lwip ${lwipnoapps_SRCS} ${lwipcontribportunix_SRCS} ${lwipcontribportunixnetifs_SRCS})
 target_compile_options(lwip PRIVATE ${LWIP_COMPILER_FLAGS})
 target_compile_definitions(lwip PRIVATE ${LWIP_DEFINITIONS} ${LWIP_MBEDTLS_DEFINITIONS})
 target_include_directories(lwip PRIVATE ${LWIP_INCLUDE_DIRS} ${LWIP_MBEDTLS_INCLUDE_DIRS})
-target_link_libraries(lwip ${LWIP_SANITIZER_LIBS})
+if (LIB_VDEPLUGOK AND INCLUDE_VDEPLUGOK)
+   target_link_libraries(lwip ${LWIP_SANITIZER_LIBS} vdeplug)
+else()
+   target_link_libraries(lwip ${LWIP_SANITIZER_LIBS})
+endif()
 
 find_library(LIBPTHREAD pthread)
 target_link_libraries(lwip ${LIBPTHREAD})
