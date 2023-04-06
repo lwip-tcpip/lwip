@@ -192,7 +192,11 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
   struct pbuf *p, *q;
   err_t err;
 
-  LWIP_ASSERT("pkt too big", len <= 0xFFFF);
+  if (len > 0xFFFF) {
+    printf("pkt too big (%#zX bytes)\n", len);
+    return;
+  }
+
   p = pbuf_alloc(PBUF_RAW, (u16_t)len, PBUF_POOL);
   LWIP_ASSERT("alloc failed", p);
   for(q = p; q != NULL; q = q->next) {
