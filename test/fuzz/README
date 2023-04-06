@@ -3,7 +3,8 @@ Fuzzing the lwIP stack (afl-fuzz requires linux/unix or similar)
 
 This directory contains small apps that read Ethernet frames from stdin and
 process them. They are used together with the 'american fuzzy lop' tool (found
-at http://lcamtuf.coredump.cx/afl/) and the sample inputs to test how
+at https://lcamtuf.coredump.cx/afl/) or its successor AFL++
+(https://github.com/AFLplusplus/AFLplusplus) and the sample inputs to test how
 unexpected inputs are handled. The afl tool will read the known inputs, and
 try to modify them to exercise as many code paths as possible, by instrumenting
 the code and keeping track of which code is executed.
