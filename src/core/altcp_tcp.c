@@ -75,7 +75,7 @@ static err_t
 altcp_tcp_accept(void *arg, struct tcp_pcb *new_tpcb, err_t err)
 {
   struct altcp_pcb *listen_conn = (struct altcp_pcb *)arg;
-  if (listen_conn && listen_conn->accept) {
+  if (new_tpcb && listen_conn && listen_conn->accept) {
     /* create a new altcp_conn to pass to the next 'accept' callback */
     struct altcp_pcb *new_conn = altcp_alloc();
     if (new_conn == NULL) {
