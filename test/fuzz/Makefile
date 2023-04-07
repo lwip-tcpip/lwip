@@ -38,7 +38,7 @@ endif
 
 LDFLAGS=-lm
 # use 'make D=-DUSER_DEFINE' to pass a user define to gcc
-CFLAGS=-O0 $(D)
+CFLAGS=-O2 $(D)
 
 LWIPDIR=../../src
 CONTRIBDIR=../../contrib
