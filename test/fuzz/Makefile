@@ -32,7 +32,10 @@
 all compile: lwip_fuzz lwip_fuzz2 lwip_fuzz3
 .PHONY: all clean
 
-CC?=afl-gcc
+ifeq ($(origin CC), default)
+CC=afl-gcc
+endif
+
 LDFLAGS=-lm
 # use 'make D=-DUSER_DEFINE' to pass a user define to gcc
 CFLAGS=-O0 $(D)
