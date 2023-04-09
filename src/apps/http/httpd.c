@@ -2450,7 +2450,7 @@ http_err(void *arg, err_t err)
   struct http_state *hs = (struct http_state *)arg;
   LWIP_UNUSED_ARG(err);
 
-  LWIP_DEBUGF(HTTPD_DEBUG, ("http_err: %s", lwip_strerr(err)));
+  LWIP_DEBUGF(HTTPD_DEBUG, ("http_err: %s\n", lwip_strerr(err)));
 
   if (hs != NULL) {
     http_state_free(hs);

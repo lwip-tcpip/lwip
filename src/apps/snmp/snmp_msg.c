@@ -647,7 +647,7 @@ snmp_process_getbulk_request(struct snmp_request *request)
         /* no more varbinds in request */
         break;
       } else {
-        LWIP_DEBUGF(SNMP_DEBUG, ("Very strange, we cannot parse the varbind output that we created just before!"));
+        LWIP_DEBUGF(SNMP_DEBUG, ("Very strange, we cannot parse the varbind output that we created just before!\n"));
         request->error_status = SNMP_ERR_GENERROR;
         request->error_index  = request->non_repeaters + repetition_varbind_enumerator.varbind_count;
       }
@@ -765,6 +765,7 @@ snmp_process_set_request(struct snmp_request *request)
 #define PARSE_ASSERT(cond, retValue) \
   if (!(cond)) { \
     LWIP_DEBUGF(SNMP_DEBUG, ("SNMP parse assertion failed!: " # cond)); \
+    LWIP_DEBUGF(SNMP_DEBUG, ("\n")); \
     snmp_stats.inasnparseerrs++; \
     return retValue; \
   }
@@ -772,6 +773,7 @@ snmp_process_set_request(struct snmp_request *request)
 #define BUILD_EXEC(code, retValue) \
   if ((code) != ERR_OK) { \
     LWIP_DEBUGF(SNMP_DEBUG, ("SNMP error during creation of outbound frame!: " # code)); \
+    LWIP_DEBUGF(SNMP_DEBUG, ("\n")); \
     return retValue; \
   }
 
@@ -1204,7 +1206,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       break;
     default:
       /* unsupported input PDU for this agent (no parse error) */
-      LWIP_DEBUGF(SNMP_DEBUG, ("Unknown/Invalid SNMP PDU type received: %d", tlv.type)); \
+      LWIP_DEBUGF(SNMP_DEBUG, ("Unknown/Invalid SNMP PDU type received: %d\n", tlv.type)); \
       return ERR_ARG;
   }
   request->request_type = tlv.type & SNMP_ASN1_DATATYPE_MASK;

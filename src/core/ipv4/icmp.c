@@ -171,7 +171,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
           goto icmperr;
         }
         if (r->len < hlen + sizeof(struct icmp_echo_hdr)) {
-          LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("first pbuf cannot hold the ICMP header"));
+          LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("first pbuf cannot hold the ICMP header\n"));
           pbuf_free(r);
           goto icmperr;
         }
@@ -185,7 +185,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
         }
         /* copy the rest of the packet without ip header */
         if (pbuf_copy(r, p) != ERR_OK) {
-          LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("icmp_input: copying to new pbuf failed"));
+          LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("icmp_input: copying to new pbuf failed\n"));
           pbuf_free(r);
           goto icmperr;
         }
@@ -206,7 +206,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
        * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
       iecho = (struct icmp_echo_hdr *)p->payload;
       if (pbuf_add_header(p, hlen)) {
-        LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Can't move over header in packet"));
+        LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Can't move over header in packet\n"));
       } else {
         err_t ret;
         struct ip_hdr *iphdr = (struct ip_hdr *)p->payload;

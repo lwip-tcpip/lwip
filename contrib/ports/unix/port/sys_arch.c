@@ -215,7 +215,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   }
 
   if (NULL == st) {
-    LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: pthread_create %d, st = 0x%lx",
+    LWIP_DEBUGF(SYS_DEBUG, ("sys_thread_new: pthread_create %d, st = 0x%lx\n",
                        code, (unsigned long)st));
     abort();
   }

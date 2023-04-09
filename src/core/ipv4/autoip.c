@@ -260,7 +260,7 @@ autoip_start(struct netif *netif)
     }
     /* store this AutoIP client in the netif */
     netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_AUTOIP, autoip);
-    LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip"));
+    LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip\n"));
   }
 
   if (autoip->state == AUTOIP_STATE_OFF) {
@@ -304,7 +304,7 @@ autoip_network_changed_link_up(struct netif *netif)
 
   if (autoip && (autoip->state != AUTOIP_STATE_OFF) && !LWIP_DHCP_AUTOIP_COOP) {
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
-                ("autoip_network_changed_link_up(): start acd"));
+                ("autoip_network_changed_link_up(): start acd\n"));
     autoip->state = AUTOIP_STATE_CHECKING;
     /* Start acd check again for the last used address */
     acd_start(netif, &autoip->acd, autoip->llipaddr);
@@ -325,7 +325,7 @@ autoip_network_changed_link_down(struct netif *netif)
 
   if (autoip && (autoip->state != AUTOIP_STATE_OFF) && LWIP_DHCP_AUTOIP_COOP) {
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
-                ("autoip_network_changed_link_down(): stop autoip"));
+                ("autoip_network_changed_link_down(): stop autoip\n"));
     autoip_stop(netif);
   }
 }
@@ -347,7 +347,7 @@ autoip_stop(struct netif *netif)
     if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
       netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
     }
-    LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,("autoip_stop()"));
+    LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,("autoip_stop()\n"));
   }
   return ERR_OK;
 }

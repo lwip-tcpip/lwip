@@ -87,7 +87,7 @@ http_server_netconn_thread(void *arg)
     }
   } while(err == ERR_OK);
   LWIP_DEBUGF(HTTPD_DEBUG,
-    ("http_server_netconn_thread: netconn_accept received error %d, shutting down",
+    ("http_server_netconn_thread: netconn_accept received error %d, shutting down\n",
     err));
   netconn_close(conn);
   netconn_delete(conn);
