@@ -1749,7 +1749,7 @@ mdns_conflict_save_time(struct netif *netif)
   /* Print timestamp list */
   LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: conflict timestamp list, insert index = %d\n", mdns->index));
   for(i = 0; i < MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT; i++) {
-    LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: time no. %d = %d\n", i, mdns->conflict_time[i]));
+    LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: time no. %d = %"U32_F"\n", i, mdns->conflict_time[i]));
   }
   /* Check if we had enough conflicts, minimum 15 */
   if (mdns->num_conflicts >= MDNS_PROBE_MAX_CONFLICTS_BEFORE_RATE_LIMIT) {
