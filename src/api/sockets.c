@@ -1012,7 +1012,7 @@ lwip_recv_tcp(struct lwip_sock *sock, void *mem, size_t len, int flags)
     } else {
       copylen = (u16_t)recv_left;
     }
-    if (recvd + copylen < recvd) {
+    if (recvd > SSIZE_MAX - copylen) {
       /* overflow */
       copylen = (u16_t)(SSIZE_MAX - recvd);
     }
