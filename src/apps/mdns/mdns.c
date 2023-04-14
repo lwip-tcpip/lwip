@@ -1889,6 +1889,10 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
           flags = MDNS_SEARCH_RESULT_FIRST | MDNS_SEARCH_RESULT_LAST;
       }
       p = pbuf_skip(pkt->pbuf, ans.rd_offset, &offset);
+      if (p == NULL) {
+        LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Malformed response packet, aborting\n"));
+        return;
+      }
       if (ans.info.type == DNS_RRTYPE_PTR || ans.info.type == DNS_RRTYPE_SRV) {
         /* Those RR types have compressed domain name. Must uncompress here,
            since cannot be done without pbuf. */

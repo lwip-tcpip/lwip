@@ -1203,7 +1203,7 @@ pbuf_skip_const(const struct pbuf *in, u16_t in_offset, u16_t *out_offset)
  * @param in input pbuf
  * @param in_offset offset to skip
  * @param out_offset resulting offset in the returned pbuf
- * @return the pbuf in the queue where the offset is
+ * @return the pbuf in the queue where the offset is or NULL when the offset is too high
  */
 struct pbuf *
 pbuf_skip(struct pbuf *in, u16_t in_offset, u16_t *out_offset)
