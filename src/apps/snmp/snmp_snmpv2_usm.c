@@ -62,7 +62,7 @@ static const struct snmp_obj_id *snmp_auth_algo_to_oid(snmpv3_auth_algo_t algo)
   if (algo == SNMP_V3_AUTH_ALGO_MD5) {
     return &usmHMACMD5AuthProtocol;
   } else if (algo ==  SNMP_V3_AUTH_ALGO_SHA) {
-    return &usmHMACMD5AuthProtocol;
+    return &usmHMACSHAAuthProtocol;
   }
 
   return &usmNoAuthProtocol;
