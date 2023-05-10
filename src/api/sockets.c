@@ -3181,6 +3181,14 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY) = %d\n",
                                       s, *(int *)optval));
           break;
+#if LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP
+        case IPV6_MULTICAST_IF:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, int, NETCONN_UDP);
+          *(int *)optval = udp_get_multicast_netif_index(sock->conn->pcb.udp);
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_MULTICAST_IF) = %d\n",
+                                      s, *(int *)optval));
+          break;
+#endif /* LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP */
         default:
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
                                       s, optname));
@@ -3668,6 +3676,14 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY, ..) -> %d\n",
                                       s, (netconn_get_ipv6only(sock->conn) ? 1 : 0)));
           break;
+#if LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP
+        case IPV6_MULTICAST_IF:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);
+          udp_set_multicast_netif_index(sock->conn->pcb.udp, (u8_t)(*(int *)optval));
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_MULTICAST_IF, ..) -> %d\n",
+                                      s, *(int *)optval));
+          break;
+#endif /* LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP */
 #if LWIP_IPV6_MLD
         case IPV6_JOIN_GROUP:
         case IPV6_LEAVE_GROUP: {

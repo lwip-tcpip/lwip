@@ -317,6 +317,8 @@ struct linger {
 #define IP_MULTICAST_TTL   5
 #define IP_MULTICAST_IF    6
 #define IP_MULTICAST_LOOP  7
+
+#define IPV6_MULTICAST_IF    17 /* RFC3493: interface for outgoing multicast packets */
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
 #if LWIP_IGMP
