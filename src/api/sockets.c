@@ -1214,6 +1214,23 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
         }
 #endif /* LWIP_IPV4 */
       }
+#if LWIP_IPV6
+      else if (IP_IS_V6(&buf->toaddr)) {
+        if (msg->msg_controllen >= CMSG_SPACE(sizeof(struct in6_pktinfo))) {
+          struct cmsghdr *chdr = CMSG_FIRSTHDR(msg); /* This will always return a header!! */
+          struct in6_pktinfo *pkti = (struct in6_pktinfo *)CMSG_DATA(chdr);
+          chdr->cmsg_level = IPPROTO_IPV6;
+          chdr->cmsg_type = IPV6_PKTINFO;
+          chdr->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+          pkti->ipi6_ifindex = buf->p->if_idx;
+          inet6_addr_from_ip6addr(&pkti->ipi6_addr, ip_2_ip6(netbuf_destaddr(buf)));
+          msg->msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
+          wrote_msg = 1;
+        } else {
+          msg->msg_flags |= MSG_CTRUNC;
+        }
+      }
+#endif /* LWIP_IPV6 */
     }
 #endif /* LWIP_NETBUF_RECVINFO */
 
@@ -3676,6 +3693,18 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY, ..) -> %d\n",
                                       s, (netconn_get_ipv6only(sock->conn) ? 1 : 0)));
           break;
+#if LWIP_NETBUF_RECVINFO
+        case IPV6_RECVPKTINFO:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);
+          if (*(const int *)optval) {
+            netconn_set_flags(sock->conn, NETCONN_FLAG_PKTINFO);
+          } else {
+            netconn_clear_flags(sock->conn, NETCONN_FLAG_PKTINFO);
+          }
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_RECVPKTINFO, ..) -> %d\n",
+                                      s, *(const int *)optval));
+          break;
+#endif /* LWIP_NETBUF_RECVINFO */
 #if LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP
         case IPV6_MULTICAST_IF:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);
