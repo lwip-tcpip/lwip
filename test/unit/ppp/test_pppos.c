@@ -8,7 +8,7 @@
 static struct netif pppos_netif;
 static ppp_pcb *ppp;
 
-static u32_t ppp_output_cb(struct ppp_pcb_s *pcb, u8_t *data, u32_t len, void *ctx)
+static u32_t ppp_output_cb(ppp_pcb *pcb, const void *data, u32_t len, void *ctx)
 {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(data);
@@ -42,6 +42,9 @@ START_TEST(test_pppos_empty_packet_with_valid_fcs)
   u8_t other_packet[] = { 0x7e, 0x7d, 0x20, 0x00, 0x7e };
   /* Set internal states of the underlying pcb */
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
+ 
+  LWIP_UNUSED_ARG(_i);
+
   pppos->open = 1;  /* Pretend the connection is open already */
   pppos->in_accm[0] = 0xf0;  /* Make sure 0x0's are not escaped chars */
 
