@@ -3169,6 +3169,12 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
     /* Level: IPPROTO_IPV6 */
     case IPPROTO_IPV6:
       switch (optname) {
+        case IPV6_UNICAST_HOPS:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, int);
+          *(int *)optval = sock->conn->pcb.ip->ttl;
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_UNICAST_HOPS) = %d\n",
+                                      s, *(int *)optval));
+          break;
         case IPV6_V6ONLY:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, *optlen, int);
           *(int *)optval = (netconn_get_ipv6only(sock->conn) ? 1 : 0);
@@ -3646,6 +3652,12 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
     /* Level: IPPROTO_IPV6 */
     case IPPROTO_IPV6:
       switch (optname) {
+        case IPV6_UNICAST_HOPS:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, int);
+          sock->conn->pcb.ip->ttl = *(int *)optval;
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_UNICAST_HOPS, ...) -> %d\n",
+                                      s, *(int *)optval));
+          break;
         case IPV6_V6ONLY:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, optlen, int);
           if (*(const int *)optval) {
