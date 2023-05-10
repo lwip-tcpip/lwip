@@ -3092,14 +3092,10 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
                                       s, *(u32_t *)optval));
           break;
         case IP_MULTICAST_LOOP:
-          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, u8_t);
-          if ((sock->conn->pcb.udp->flags & UDP_FLAGS_MULTICAST_LOOP) != 0) {
-            *(u8_t *)optval = 1;
-          } else {
-            *(u8_t *)optval = 0;
-          }
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, u8_t, NETCONN_UDP);
+          *(u8_t *)optval = udp_is_flag_set(sock->conn->pcb.udp, UDP_FLAGS_MULTICAST_LOOP) ? 1 : 0;
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_LOOP) = %d\n",
-                                      s, *(int *)optval));
+                                      s, *(u8_t *)optval));
           break;
 #endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP */
         default:
