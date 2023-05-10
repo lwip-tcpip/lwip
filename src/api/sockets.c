@@ -3541,9 +3541,9 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         case IP_PKTINFO:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);
           if (*(const int *)optval) {
-            sock->conn->flags |= NETCONN_FLAG_PKTINFO;
+            netconn_set_flags(sock->conn, NETCONN_FLAG_PKTINFO);
           } else {
-            sock->conn->flags &= ~NETCONN_FLAG_PKTINFO;
+            netconn_clear_flags(sock->conn, NETCONN_FLAG_PKTINFO);
           }
           break;
 #endif /* LWIP_NETBUF_RECVINFO */
