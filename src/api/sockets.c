@@ -3083,7 +3083,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, u8_t, NETCONN_UDP);
           *(u8_t *)optval = udp_get_multicast_ttl(sock->conn->pcb.udp);
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_TTL) = %d\n",
-                                      s, *(int *)optval));
+                                      s, *(u8_t *)optval));
           break;
         case IP_MULTICAST_IF:
           LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, struct in_addr, NETCONN_UDP);
@@ -3179,6 +3179,12 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
           *(int *)optval = udp_get_multicast_netif_index(sock->conn->pcb.udp);
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_MULTICAST_IF) = %d\n",
                                       s, *(int *)optval));
+          break;
+        case IPV6_MULTICAST_HOPS:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, u8_t, NETCONN_UDP);
+          *(u8_t *)optval = udp_get_multicast_ttl(sock->conn->pcb.udp);
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_MULTICAST_HOPS) = %d\n",
+                                      s, *(u8_t *)optval));
           break;
 #endif /* LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP */
         default:
@@ -3674,6 +3680,10 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
           udp_set_multicast_netif_index(sock->conn->pcb.udp, (u8_t)(*(int *)optval));
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_MULTICAST_IF, ..) -> %d\n",
                                       s, *(int *)optval));
+          break;
+        case IPV6_MULTICAST_HOPS:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, u8_t, NETCONN_UDP);
+          udp_set_multicast_ttl(sock->conn->pcb.udp, (u8_t)(*(const u8_t *)optval));
           break;
 #endif /* LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP */
 #if LWIP_IPV6_MLD
