@@ -55,6 +55,8 @@ extern "C" {
 #define NETBUF_FLAG_DESTADDR    0x01
 /** This netbuf includes a checksum */
 #define NETBUF_FLAG_CHKSUM      0x02
+/** This netbuf has hop limit set */
+#define NETBUF_FLAG_HOPLIMIT    0x04
 
 /** "Network buffer" - contains data and addressing info */
 struct netbuf {
@@ -66,6 +68,9 @@ struct netbuf {
   u16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
   ip_addr_t toaddr;
+#if LWIP_IPV6
+  u8_t hoplim;
+#endif /* LWIP_IPV6 */
 #endif /* LWIP_NETBUF_RECVINFO */
 #endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
 };

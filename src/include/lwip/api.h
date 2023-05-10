@@ -92,6 +92,10 @@ extern "C" {
 #endif /* LWIP_NETBUF_RECVINFO */
 /** A FIN has been received but not passed to the application yet */
 #define NETCONN_FIN_RX_PENDING                0x80
+#if LWIP_NETBUF_RECVINFO
+/** The hop limit will be stored for incoming packets */
+#define NETCONN_FLAG_HOPLIMIT                 0x100
+#endif /* LWIP_NETBUF_RECVINFO */
 
 /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)         ((t)&0xF0)
@@ -274,7 +278,7 @@ struct netconn {
   s16_t linger;
 #endif /* LWIP_SO_LINGER */
   /** flags holding more netconn-internal state, see NETCONN_FLAG_* defines */
-  u8_t flags;
+  u16_t flags;
 #if LWIP_TCP
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores the message.
@@ -369,8 +373,8 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 err_t   netconn_err(struct netconn *conn);
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 
-#define netconn_set_flags(conn, set_flags)     do { (conn)->flags = (u8_t)((conn)->flags |  (set_flags)); } while(0)
-#define netconn_clear_flags(conn, clr_flags)   do { (conn)->flags = (u8_t)((conn)->flags & (u8_t)(~(clr_flags) & 0xff)); } while(0)
+#define netconn_set_flags(conn, set_flags)     do { (conn)->flags = (u16_t)((conn)->flags |  (set_flags)); } while(0)
+#define netconn_clear_flags(conn, clr_flags)   do { (conn)->flags = (u16_t)((conn)->flags & (u16_t)(~(clr_flags) & 0xffff)); } while(0)
 #define netconn_is_flag_set(conn, flag)        (((conn)->flags & (flag)) != 0)
 
 #define netconn_set_callback_arg(conn, arg)   do { (conn)->callback_arg.ptr = (arg); } while(0)

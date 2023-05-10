@@ -301,6 +301,8 @@ struct linger {
 #define IPV6_V6ONLY         27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
 #define IPV6_RECVPKTINFO    49 /* RFC3542: receive ancillary data for packet */
 #define IPV6_PKTINFO        50 /* RFC3542: ancillary data for a packet */
+#define IPV6_RECVHOPLIMIT   51 /* RFC3542: receive hop limit for packet */
+#define IPV6_HOPLIMIT       52 /* RFC3542: ancillary data containing hop limit for packet */
 #endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE

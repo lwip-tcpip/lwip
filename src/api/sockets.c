@@ -1193,22 +1193,22 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
   msg->msg_flags = 0;
 
   if (msg->msg_control) {
-    u8_t wrote_msg = 0;
+    socklen_t msg_controllen_in = msg->msg_controllen;
+    msg->msg_controllen = 0;
 #if LWIP_NETBUF_RECVINFO
     /* Check if packet info was recorded */
     if (buf->flags & NETBUF_FLAG_DESTADDR) {
       if (IP_IS_V4(&buf->toaddr)) {
 #if LWIP_IPV4
-        if (msg->msg_controllen >= CMSG_SPACE(sizeof(struct in_pktinfo))) {
-          struct cmsghdr *chdr = CMSG_FIRSTHDR(msg); /* This will always return a header!! */
+        if (msg_controllen_in >= msg->msg_controllen + CMSG_SPACE(sizeof(struct in_pktinfo))) {
+          struct cmsghdr *chdr = ((u8_t *)msg->msg_control + msg->msg_controllen);
           struct in_pktinfo *pkti = (struct in_pktinfo *)CMSG_DATA(chdr);
           chdr->cmsg_level = IPPROTO_IP;
           chdr->cmsg_type = IP_PKTINFO;
           chdr->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
           pkti->ipi_ifindex = buf->p->if_idx;
           inet_addr_from_ip4addr(&pkti->ipi_addr, ip_2_ip4(netbuf_destaddr(buf)));
-          msg->msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
-          wrote_msg = 1;
+          msg->msg_controllen += CMSG_SPACE(sizeof(struct in_pktinfo));
         } else {
           msg->msg_flags |= MSG_CTRUNC;
         }
@@ -1216,27 +1216,39 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
       }
 #if LWIP_IPV6
       else if (IP_IS_V6(&buf->toaddr)) {
-        if (msg->msg_controllen >= CMSG_SPACE(sizeof(struct in6_pktinfo))) {
-          struct cmsghdr *chdr = CMSG_FIRSTHDR(msg); /* This will always return a header!! */
+        if (msg_controllen_in >= msg->msg_controllen + CMSG_SPACE(sizeof(struct in6_pktinfo))) {
+          struct cmsghdr *chdr = ((u8_t *)msg->msg_control + msg->msg_controllen);
           struct in6_pktinfo *pkti = (struct in6_pktinfo *)CMSG_DATA(chdr);
           chdr->cmsg_level = IPPROTO_IPV6;
           chdr->cmsg_type = IPV6_PKTINFO;
           chdr->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
           pkti->ipi6_ifindex = buf->p->if_idx;
           inet6_addr_from_ip6addr(&pkti->ipi6_addr, ip_2_ip6(netbuf_destaddr(buf)));
-          msg->msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
-          wrote_msg = 1;
+          msg->msg_controllen += CMSG_SPACE(sizeof(struct in6_pktinfo));
         } else {
           msg->msg_flags |= MSG_CTRUNC;
         }
       }
 #endif /* LWIP_IPV6 */
     }
-#endif /* LWIP_NETBUF_RECVINFO */
-
-    if (!wrote_msg) {
-      msg->msg_controllen = 0;
+#if LWIP_IPV6
+    if (buf->flags & NETBUF_FLAG_HOPLIMIT) {
+      if (IP_IS_V6(&buf->toaddr)) {
+        if (msg_controllen_in >= msg->msg_controllen + CMSG_SPACE(sizeof(int))) {
+          struct cmsghdr *chdr = ((u8_t *)msg->msg_control + msg->msg_controllen);
+          int *hoplim = (int *)CMSG_DATA(chdr);
+          chdr->cmsg_level = IPPROTO_IPV6;
+          chdr->cmsg_type = IPV6_HOPLIMIT;
+          chdr->cmsg_len = CMSG_LEN(sizeof(int));
+          *hoplim = buf->hoplim;
+          msg->msg_controllen += CMSG_SPACE(sizeof(int));
+        } else {
+          msg->msg_flags |= MSG_CTRUNC;
+        }
+      }
     }
+#endif /* LWIP_IPV6 */
+#endif /* LWIP_NETBUF_RECVINFO */
   }
 
   /* If we don't peek the incoming message: zero lastdata pointer and free the netbuf */
@@ -3702,6 +3714,16 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
             netconn_clear_flags(sock->conn, NETCONN_FLAG_PKTINFO);
           }
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_RECVPKTINFO, ..) -> %d\n",
+                                      s, *(const int *)optval));
+          break;
+        case IPV6_RECVHOPLIMIT:
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);
+          if (*(const int *)optval) {
+            netconn_set_flags(sock->conn, NETCONN_FLAG_HOPLIMIT);
+          } else {
+            netconn_clear_flags(sock->conn, NETCONN_FLAG_HOPLIMIT);
+          }
+          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, ..) -> %d\n",
                                       s, *(const int *)optval));
           break;
 #endif /* LWIP_NETBUF_RECVINFO */
