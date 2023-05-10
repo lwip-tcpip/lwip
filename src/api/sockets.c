@@ -3080,21 +3080,13 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
           break;
 #if LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS && LWIP_UDP
         case IP_MULTICAST_TTL:
-          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, u8_t);
-          if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
-            done_socket(sock);
-            return ENOPROTOOPT;
-          }
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, u8_t, NETCONN_UDP);
           *(u8_t *)optval = udp_get_multicast_ttl(sock->conn->pcb.udp);
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_TTL) = %d\n",
                                       s, *(int *)optval));
           break;
         case IP_MULTICAST_IF:
-          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, struct in_addr);
-          if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
-            done_socket(sock);
-            return ENOPROTOOPT;
-          }
+          LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, struct in_addr, NETCONN_UDP);
           inet_addr_from_ip4addr((struct in_addr *)optval, udp_get_multicast_netif_addr(sock->conn->pcb.udp));
           LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_IF) = 0x%"X32_F"\n",
                                       s, *(u32_t *)optval));
