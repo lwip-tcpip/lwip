@@ -34,6 +34,9 @@
     <Filter Include="ipv6">
       <UniqueIdentifier>{924d29be-e5e4-4b25-8bc4-92db91ce4c49}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ppp">
+      <UniqueIdentifier>{4d24c808-c024-4aba-a214-e5bc276e124d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\test\unit\core\test_mem.c">
@@ -90,6 +93,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\test\unit\core\test_dns.c">
       <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\test\unit\ppp\test_pppos.c">
+      <Filter>ppp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\test\unit\core\test_dns.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\test\unit\ppp\test_pppos.h">
+      <Filter>ppp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
