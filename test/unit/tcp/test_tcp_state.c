@@ -157,6 +157,7 @@ START_TEST(test_tcp_new_max_num_remove_TIME_WAIT)
   struct tcp_pcb* pcb;
   struct tcp_pcb* pcb_list[MEMP_NUM_TCP_PCB + 1];
   int i;
+  LWIP_UNUSED_ARG(_i);
 
   /* create a pcb in TIME_WAIT state */
   pcb = tcp_new();
@@ -196,6 +197,7 @@ START_TEST(test_tcp_connect_active_open)
   err_t err;
   u16_t test_port = 1234;
   u32_t seqno = 0;
+  LWIP_UNUSED_ARG(_i);
 
   /* create and initialize the pcb */
   tcp_ticks = SEQNO1 - ISS;

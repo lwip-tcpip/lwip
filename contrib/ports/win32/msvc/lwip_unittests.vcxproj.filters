@@ -97,6 +97,9 @@
     <ClCompile Include="..\..\..\..\test\unit\ppp\test_pppos.c">
       <Filter>ppp</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp_state.c">
+      <Filter>tcp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\test\unit\core\test_mem.h">
@@ -157,6 +160,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\test\unit\ppp\test_pppos.h">
       <Filter>ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp_state.h">
+      <Filter>tcp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
