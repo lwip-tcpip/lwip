@@ -6,7 +6,6 @@ typedef unsigned int pid_t;
 typedef unsigned int uint32_t;
 
 typedef int ssize_t;
-#define snprintf _snprintf
 
 #define HAVE_DECL_STRDUP 1
 #define HAVE_DECL_FILENO 1
@@ -24,7 +23,7 @@ typedef int ssize_t;
 #define LWIP_UNITTESTS_NOFORK
 
 #include <io.h>
+#include <stdint.h>
 
 typedef unsigned int clockid_t;
 typedef unsigned int timer_t;
-#define STRUCT_TIMESPEC_DEFINITION_MISSING
