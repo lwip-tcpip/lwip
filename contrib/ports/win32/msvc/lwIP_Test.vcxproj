@@ -85,6 +85,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateMapFile>true</GenerateMapFile>
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
+      <DelayLoadDLLs>Packet.dll;wpcap.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -125,6 +126,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <GenerateMapFile>false</GenerateMapFile>
       <MapFileName>$(TargetDir)$(TargetName).map</MapFileName>
+      <DelayLoadDLLs>Packet.dll;wpcap.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

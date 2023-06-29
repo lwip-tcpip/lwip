@@ -114,6 +114,33 @@ pcapifh_free_readonly_mem(void *data)
   }
 }
 
+/**
+ * Npcap keeps its DLLs in a different directory for compatiblity with winpcap.
+ * Make sure they get found by adding that directory to the DLL search path.
+ */
+void pcapifh_init_npcap(void)
+{
+  char npcap_dir[512];
+  unsigned int len;
+  static char npcap_initialized = 0;
+
+  if (!npcap_initialized)
+  {
+    npcap_initialized = 1;
+
+    len = GetSystemDirectory(npcap_dir, 480);
+    if (!len) {
+      lwip_win32_platform_diag("Error in GetSystemDirectory: %x", GetLastError());
+      return;
+    }
+    strcat_s(npcap_dir, 512, "\\Npcap");
+    if (SetDllDirectory(npcap_dir) == 0) {
+      lwip_win32_platform_diag("Error in SetDllDirectory: %x", GetLastError());
+      return;
+    }
+  }
+}
+
 #else /* WIN32 */
 
 /* @todo: add linux/unix implementation? */
@@ -136,6 +163,10 @@ enum pcapifh_link_event pcapifh_linkstate_get(struct pcapifh_linkstate* state)
 void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
 {
   LWIP_UNUSED_ARG(state);
+}
+
+void pcapifh_init_npcap(void)
+{
 }
 
 #endif /* WIN32 */

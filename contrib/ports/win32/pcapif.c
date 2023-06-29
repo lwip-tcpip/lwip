@@ -1057,6 +1057,9 @@ pcapif_init(struct netif *netif)
 
   int local_index;
   SYS_ARCH_DECL_PROTECT(lev);
+
+  pcapifh_init_npcap();
+
   SYS_ARCH_PROTECT(lev);
   local_index = ethernetif_index++;
   SYS_ARCH_UNPROTECT(lev);

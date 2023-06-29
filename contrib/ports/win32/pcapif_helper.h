@@ -22,6 +22,8 @@ void pcapifh_linkstate_close(struct pcapifh_linkstate* state);
 void *pcapifh_alloc_readonly_copy(void *data, size_t len);
 void pcapifh_free_readonly_mem(void *data);
 
+void pcapifh_init_npcap(void);
+
 #ifdef __cplusplus
 }
 #endif
