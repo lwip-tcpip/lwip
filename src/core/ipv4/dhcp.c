@@ -98,7 +98,8 @@
  * If additional options are requested, define this macro as a comma separated list, with leading comma.
  * This macro is useful for example when requested vendor specific ids (VCI/VSI options), here is an example
  * of requesting the VSI option (option 43) (yes, the notation is a bit strange, but it works :)
- * #define DHCP_ADD_EXTRA_REQUEST_OPTIONS ,43
+ * (NOTE: the space between # and define is required because of doxygen...)
+ * # define DHCP_ADD_EXTRA_REQUEST_OPTIONS ,43
  */
 #ifndef DHCP_ADD_EXTRA_REQUEST_OPTIONS
 #define DHCP_ADD_EXTRA_REQUEST_OPTIONS
