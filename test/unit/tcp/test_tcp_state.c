@@ -68,7 +68,9 @@ create_listening_pcb(u16_t local_port, struct test_tcp_counters *counters)
   return lpcb;
 }
 
-/* Setups/teardown functions */
+/* Setup/teardown functions */
+static struct netif* old_netif_list;
+static struct netif* old_netif_default;
 
 static void
 tcp_state_setup(void)
@@ -82,16 +84,25 @@ tcp_state_setup(void)
   tcp_ticks = 0;
 
   test_tcp_timer = 0;
-  /* initialize local vars */
-  test_tcp_init_netif(&test_netif, &test_txcounters, &test_local_ip, &test_netmask);
+
+  old_netif_list = netif_list;
+  old_netif_default = netif_default;
+  netif_list = NULL;
+  netif_default = NULL;
   tcp_remove_all();
+  test_tcp_init_netif(&test_netif, &test_txcounters, &test_local_ip, &test_netmask);
   lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
 static void
 tcp_state_teardown(void)
 {
+  netif_list = NULL;
+  netif_default = NULL;
   tcp_remove_all();
+  /* restore netif_list for next tests (e.g. loopif) */
+  netif_list = old_netif_list;
+  netif_default = old_netif_default;
   lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
