@@ -19,10 +19,12 @@
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -47,7 +49,7 @@
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <DisableSpecificWarnings>4820</DisableSpecificWarnings>
     </ClCompile>
@@ -97,6 +99,7 @@
     <ClCompile Include="..\..\..\..\test\unit\tcp\tcp_helper.c" />
     <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp.c" />
     <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp_oos.c" />
+    <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp_state.c" />
     <ClCompile Include="..\..\..\..\test\unit\udp\test_udp.c" />
     <ClCompile Include="..\..\..\..\test\unit\etharp\test_etharp.c" />
     <ClCompile Include="..\..\..\..\test\unit\dhcp\test_dhcp.c" />
@@ -119,6 +122,7 @@
     <ClInclude Include="..\..\..\..\test\unit\tcp\tcp_helper.h" />
     <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp.h" />
     <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp_oos.h" />
+    <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp_state.h" />
     <ClInclude Include="..\..\..\..\test\unit\udp\test_udp.h" />
     <ClInclude Include="..\..\..\..\test\unit\etharp\test_etharp.h" />
     <ClInclude Include="..\..\..\..\test\unit\dhcp\test_dhcp.h" />
