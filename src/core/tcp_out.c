@@ -477,7 +477,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 
   /* Find the tail of the unsent queue. */
   if (pcb->unsent != NULL) {
-    u16_t space;
+    int16_t space;
     u16_t unsent_optlen;
 
     /* @todo: this could be sped up by keeping last_unsent in the pcb */
