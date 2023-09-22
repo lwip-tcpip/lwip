@@ -610,6 +610,7 @@ raw_new(u8_t proto)
 #if LWIP_MULTICAST_TX_OPTIONS
     raw_set_multicast_ttl(pcb, RAW_TTL);
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
+    pcb_tci_init(pcb);
     pcb->next = raw_pcbs;
     raw_pcbs = pcb;
   }

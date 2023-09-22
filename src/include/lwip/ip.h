@@ -93,6 +93,17 @@ struct ip_pcb {
   IP_PCB;
 };
 
+#if LWIP_VLAN_PCP
+#define pcb_has_tci(pcb) ((pcb)->netif_hints.tci >= 0)
+#define pcb_tci_get(pcb) ((pcb)->netif_hints.tci)
+#define pcb_tci_clear(pcb) do { (pcb)->netif_hints.tci = -1; } while(0)
+#define pcb_tci_set(pcb, tci_val) do { (pcb)->netif_hints.tci = (tci_val) & 0xffff; } while(0)
+#define pcb_tci_set_pcp_dei_vid(pcb, pcp, dei, vid) pcb_tci_set(pcb, (((pcp) & 7) << 13) | (((dei) & 1) << 12) | ((vid) & 0xFFF))
+#define pcb_tci_init(pcb) pcb_tci_clear(pcb)
+#else
+#define pcb_tci_init(pcb)
+#endif
+
 /*
  * Option flags per-socket. These are the same like SO_XXX in sockets.h
  */
