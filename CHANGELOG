@@ -6,11 +6,92 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
+(STABLE-2.2.0):
+
+  2018-10-02: Dirk Ziegelmeier
+  * Integrate contrib repository into main lwIP repository
+
+  ++ New features:
+
+  2022-04-05: David Cermak
+  * contrib/addons: Add example of using DHCP extra options hooks
+
+  2023-05-11: David Cermak
+  * dhcp: Add macro for appending extra client's request options
+
+  2023-05-11: xueyunfei
+  * dhcp: Enable custom config for timeouts, thresholds, backoff time
+
+  2021-04-26
+  * test/unit: added more unit tests
+
+  2020-03-27: Simon Goldschmidt
+  * test/fuzz: improve fuzz test
+
+  2019-12-11: Simon Goldschmidt
+  * ip6addr_aton: support scoped address strings (via '%')
+
+  2019-08-28: Joan Lledó
+  * Contrib: Add kFreeBSD to the Unix port
+
+  2019-07-14: Joan Lledó
+  * Unix port: improve support for the Hurd
+
+  ++ Bugfixes:
+
+  2019-12-11: David Girault
+  * altcp_tls: support for saving/restoring session information
+
+  2018-11-16: Craig McQUeen
+  * dns: allow a DNS look-up with a trailing dot in the name
+
+  2018-10-19: Timmy Brolin
+  * Add outgoing VLAN PCP support for Ethernet level QoS
+
+  2018-10-08: Ben Wijen
+  * apps/tftp: added TFTP client
+
   2018-10-04: Jasper Verschueren
   * Implement IPv4 ACD (Address Conflict Detection)
 
-  2018-10-02: Dirk Ziegelmeier
-  * Integrate contrib repository into main lwIP rep, tag STABLE-2_1_0_RELEASE
+  2023-05-10
+  * altcp_tls_mbedtls: note which version of mbedtls we are compatible to
+  * altcp_tls_mbedtls: multiple compatibility fixes
+
+  2023-04-26: Jan Breuer, Harrold Spier, Ognjen Bjelica, Dirk Ziegelmeier, Simon Goldschmidt
+  * apps/snmp: multiple fixes and improvements to snmp
+
+  2022-01-12: Simon Goldschmidt
+  * httpd: clean up custom file handling
+
+  2021-11-25: quanjia
+  * ping: fix sockaddr len in ping_send() for PING_USE_SOCKETS==1
+
+  2021-11-12: Bas Prins
+  * http_client: reset timeout when receiving data
+
+  2020-07-07: Erik Ekman
+  * Rename IP and Ethernet equality checkers from _cmp to _eq
+
+  2020-03-05: Simon Goldschmidt
+  * tcp: tighten up checks for received SYN
+
+  2020-01-30: Simon Goldschmidt, David Girault, David J. Fiddes, Tom Ferrin
+  * apps/sntp: multiple fixes and improvements for sntp
+
+  2020-01-30: Simon Goldschmidt
+  * ip_forward: fix IPv4 forwarding with multiple netifs/offloading
+
+  2019-06-11: David Girault, Giuseppe Modugno
+  * apps/mqtt: multiple fixes for mqtt
+
+  2019-05-19: Joan Lledó
+  * New function tcpip_callback_wait()
+    Call a function inside the tcpip thread and block the calling thread until
+    the callback finishes
+
+  2018-08-15: Jasper Verschueren, David Girault, Our Air Quality
+  * apps/mdns: greatly improved the mdns client
 
 (STABLE-2.1.2):
 
