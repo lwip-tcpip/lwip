@@ -351,7 +351,9 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 
   /* Keep IP header + up to 8 bytes */
   response_pkt_len = IP_HLEN + ICMP_DEST_UNREACH_DATASIZE;
-  if (p->tot_len < response_pkt_len) response_pkt_len = p->tot_len;
+  if (p->tot_len < response_pkt_len) {
+    response_pkt_len = p->tot_len;
+  }
 
   /* ICMP header + part of original packet */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_hdr) + response_pkt_len, PBUF_RAM);
