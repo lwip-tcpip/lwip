@@ -687,11 +687,12 @@ nd6_input(struct pbuf *p, struct netif *inp)
       case ND6_OPTION_TYPE_SOURCE_LLADDR:
       {
         struct lladdr_option *lladdr_opt;
-        if (option_len < sizeof(struct lladdr_option)) {
+        if (option_len < ND6_LLADDR_OPTION_MIN_LENGTH) {
           goto lenerr_drop_free_return;
         }
         lladdr_opt = (struct lladdr_option *)buffer;
-        if ((default_router_list[i].neighbor_entry != NULL) &&
+        if ((lladdr_opt->length == inp->hwaddr_len) &&
+            (default_router_list[i].neighbor_entry != NULL) &&
             (default_router_list[i].neighbor_entry->state == ND6_INCOMPLETE)) {
           SMEMCPY(default_router_list[i].neighbor_entry->lladdr, lladdr_opt->addr, inp->hwaddr_len);
           default_router_list[i].neighbor_entry->state = ND6_REACHABLE;
