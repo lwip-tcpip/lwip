@@ -60,6 +60,7 @@
 #include "lwip/stats.h"
 #include "lwip/err.h"
 
+#include <stdio.h>  /* snprintf */
 #include <string.h>
 
 #if MEM_LIBC_MALLOC
