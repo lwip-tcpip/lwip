@@ -671,7 +671,7 @@
 #endif
 
 /**
- * LWIP_VLAN_PCP==1: Enable outgoing VLAN taggning of frames on a per-PCB basis
+ * LWIP_VLAN_PCP==1: Enable outgoing VLAN tagging of frames on a per-PCB basis
  * for QoS purposes. With this feature enabled, each PCB has a new variable:
  * "netif_hints.tci" (Tag Control Identifier).
  * The TCI contains three fields: VID, CFI and PCP.
