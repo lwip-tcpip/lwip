@@ -1818,7 +1818,7 @@ http_post_request(struct pbuf *inp, struct http_state *hs,
 #define HTTP_HDR_CONTENT_LEN                "Content-Length: "
 #define HTTP_HDR_CONTENT_LEN_LEN            16
 #define HTTP_HDR_CONTENT_LEN_DIGIT_MAX_LEN  10
-    char *scontent_len = lwip_strnstr(uri_end + 1, HTTP_HDR_CONTENT_LEN, crlfcrlf - (uri_end + 1));
+    char *scontent_len = lwip_strnistr(uri_end + 1, HTTP_HDR_CONTENT_LEN, crlfcrlf - (uri_end + 1));
     if (scontent_len != NULL) {
       char *scontent_len_end = lwip_strnstr(scontent_len + HTTP_HDR_CONTENT_LEN_LEN, CRLF, HTTP_HDR_CONTENT_LEN_DIGIT_MAX_LEN);
       if (scontent_len_end != NULL) {
@@ -2086,8 +2086,8 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
           /* This is HTTP/1.0 compatible: for strict 1.1, a connection
              would always be persistent unless "close" was specified. */
-          if (!is_09 && (lwip_strnstr(data, HTTP11_CONNECTIONKEEPALIVE, data_len) ||
-                         lwip_strnstr(data, HTTP11_CONNECTIONKEEPALIVE2, data_len))) {
+          if (!is_09 && (lwip_strnistr(data, HTTP11_CONNECTIONKEEPALIVE, data_len) ||
+                         lwip_strnistr(data, HTTP11_CONNECTIONKEEPALIVE2, data_len))) {
             hs->keepalive = 1;
           } else {
             hs->keepalive = 0;
