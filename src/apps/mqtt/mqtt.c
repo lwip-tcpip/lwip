@@ -1337,9 +1337,16 @@ mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port,
     LWIP_ERROR("mqtt_client_connect: client_info->will_topic length overflow", len <= 0xFF, return ERR_VAL);
     LWIP_ERROR("mqtt_client_connect: client_info->will_topic length must be > 0", len > 0, return ERR_VAL);
     will_topic_len = (u8_t)len;
-    len = strlen(client_info->will_msg);
-    LWIP_ERROR("mqtt_client_connect: client_info->will_msg length overflow", len <= 0xFF, return ERR_VAL);
-    will_msg_len = (u8_t)len;
+    if (client_info->will_msg_len == 0)
+    {
+        len = strlen(client_info->will_msg);
+        LWIP_ERROR("mqtt_client_connect: client_info->will_msg length overflow", len <= 0xFF, return ERR_VAL);
+        will_msg_len = (u8_t)len;
+    }
+    else
+    {
+        will_msg_len = client_info->will_msg_len;
+    }
     len = remaining_length + 2 + will_topic_len + 2 + will_msg_len;
     LWIP_ERROR("mqtt_client_connect: remaining_length overflow", len <= 0xFFFF, return ERR_VAL);
     remaining_length = (u16_t)len;
