@@ -401,10 +401,10 @@ ping_raw_stop(void)
 void
 ping_init(const ip_addr_t* ping_addr)
 {
+  ping_stop();
+
   LWIP_ASSERT("ping_target != NULL", ping_target != NULL);
   ping_target = ping_addr;
-
-  ping_stop();
 
 #if PING_USE_SOCKETS
   sys_thread_new("ping_thread", ping_thread, NULL, DEFAULT_THREAD_STACKSIZE, DEFAULT_THREAD_PRIO);
