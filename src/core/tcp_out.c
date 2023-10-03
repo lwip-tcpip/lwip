@@ -1987,6 +1987,9 @@ tcp_rst_common(const struct tcp_pcb *pcb, u32_t seqno, u32_t ackno,
 
   LWIP_ASSERT("tcp_rst: invalid local_ip", local_ip != NULL);
   LWIP_ASSERT("tcp_rst: invalid remote_ip", remote_ip != NULL);
+  /* these two are passed only for checks, disable warnings without asserts */
+  LWIP_UNUSED_ARG(local_ip);
+  LWIP_UNUSED_ARG(remote_ip);
 
   optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(0, pcb);
 
