@@ -1099,7 +1099,7 @@ pbuf_copy_partial(const struct pbuf *buf, void *dataptr, u16_t len, u16_t offset
  * @param len length of data to copy (dataptr must be big enough). No more
  * than buf->tot_len will be copied, irrespective of len
  * @param offset offset into the packet buffer from where to begin copying len bytes
- * @return the number of bytes copied, or 0 on failure
+ * @return pointer to 'buffer' on success or NULL on error
  */
 void *
 pbuf_get_contiguous(const struct pbuf *p, void *buffer, size_t bufsize, u16_t len, u16_t offset)
