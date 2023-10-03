@@ -214,6 +214,7 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
 
 static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t *data, size_t len)
 {
+  size_t packet_nr = 0;
   remfuzz_ptr = data;
   remfuzz_len = len;
 
@@ -228,6 +229,7 @@ static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t
 #ifdef LWIP_FUZZ_SYS_NOW
       u32_t external_delay = 0;
 #endif
+      packet_nr++;
       if (type == LWIP_FUZZ_MULTIPACKET_TIME) {
 #ifdef LWIP_FUZZ_SYS_NOW
         /* Extract external delay time from fuzz pool */
