@@ -162,7 +162,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
     ipr->p = iprh->next_pbuf;
     /* Restore the part that we've overwritten with our helper structure, or we
      * might send garbage (and disclose a pointer) in the ICMPv6 reply. */
-    MEMCPY(p->payload, ipr->orig_hdr, sizeof(iprh));
+    MEMCPY(p->payload, ipr->orig_hdr, sizeof(*iprh));
     /* Then, move back to the original ipv6 header (we are now pointing to Fragment header).
        This cannot fail since we already checked when receiving this fragment. */
     if (pbuf_header_force(p, (s16_t)((u8_t*)p->payload - (u8_t*)ipr->iphdr))) {
