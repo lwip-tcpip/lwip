@@ -694,8 +694,8 @@ u32_t lwip_fuzz_rand(void)
   static s32_t state[1] = {0xdeadbeef};
   uint64_t val = state[0] & 0xffffffff;
   val = ((val * 1103515245) + 12345) & 0x7fffffff;
-  state[0] = val;
-  result = val;
+  state[0] = (s32_t)val;
+  result = (u32_t)val;
   return result;
 #endif
 }
