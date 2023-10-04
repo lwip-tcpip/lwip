@@ -229,12 +229,15 @@ http_parse_response_status(struct pbuf *p, u16_t *http_version, u16_t *http_stat
         } else {
           status_num_len = end1 - space1 - 1;
         }
-        memset(status_num, 0, sizeof(status_num));
-        if (pbuf_copy_partial(p, status_num, (u16_t)status_num_len, space1 + 1) == status_num_len) {
-          int status = atoi(status_num);
-          if ((status > 0) && (status <= 0xFFFF)) {
-            *http_status = (u16_t)status;
-            return ERR_OK;
+        if (status_num_len < sizeof(status_num)) {
+          if (pbuf_copy_partial(p, status_num, (u16_t)status_num_len, space1 + 1) == status_num_len) {
+            int status;
+            status_num[status_num_len] = 0;
+            status = atoi(status_num);
+            if ((status > 0) && (status <= 0xFFFF)) {
+              *http_status = (u16_t)status;
+              return ERR_OK;
+            }
           }
         }
       }
@@ -261,11 +264,14 @@ http_wait_headers(struct pbuf *p, u32_t *content_length, u16_t *total_header_len
       if (content_len_line_end != 0xFFFF) {
         char content_len_num[16];
         u16_t content_len_num_len = (u16_t)(content_len_line_end - content_len_hdr - 16);
-        memset(content_len_num, 0, sizeof(content_len_num));
-        if (pbuf_copy_partial(p, content_len_num, content_len_num_len, content_len_hdr + 16) == content_len_num_len) {
-          int len = atoi(content_len_num);
-          if ((len >= 0) && ((u32_t)len < HTTPC_CONTENT_LEN_INVALID)) {
-            *content_length = (u32_t)len;
+        if (content_len_num_len < sizeof(content_len_num)) {
+          if (pbuf_copy_partial(p, content_len_num, content_len_num_len, content_len_hdr + 16) == content_len_num_len) {
+            int len;
+            content_len_num[content_len_num_len] = 0;
+            len = atoi(content_len_num);
+            if ((len >= 0) && ((u32_t)len < HTTPC_CONTENT_LEN_INVALID)) {
+              *content_length = (u32_t)len;
+            }
           }
         }
       }
@@ -489,7 +495,7 @@ static int
 httpc_create_request_string(const httpc_connection_t *settings, const char* server_name, int server_port, const char* uri,
                             int use_host, char *buffer, size_t buffer_size)
 {
-  if (settings->use_proxy) {
+  if (settings && settings->use_proxy) {
     LWIP_ASSERT("server_name != NULL", server_name != NULL);
     if (server_port != HTTP_DEFAULT_PORT) {
       return snprintf(buffer, buffer_size, HTTPC_REQ_11_PROXY_PORT_FORMAT(server_name, server_port, uri, server_name));
@@ -517,6 +523,7 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   size_t server_name_len, uri_len;
 #endif
 
+  LWIP_ERROR("httpc connection settings not give", settings != NULL, return ERR_ARG;);
   LWIP_ASSERT("uri != NULL", uri != NULL);
 
   /* get request len */
@@ -561,12 +568,12 @@ httpc_init_connection_common(httpc_state_t **connection, const httpc_connection_
   req->uri = req->server_name + server_name_len + 1;
   memcpy(req->uri, uri, uri_len + 1);
 #endif
-  req->pcb = altcp_new(settings->altcp_allocator);
+  req->pcb = altcp_new(settings ? settings->altcp_allocator : NULL);
   if(req->pcb == NULL) {
     httpc_free_state(req);
     return ERR_MEM;
   }
-  req->remote_port = settings->use_proxy ? settings->proxy_port : server_port;
+  req->remote_port = (settings && settings->use_proxy) ? settings->proxy_port : server_port;
   altcp_arg(req->pcb, req);
   altcp_recv(req->pcb, httpc_tcp_recv);
   altcp_err(req->pcb, httpc_tcp_err);
@@ -689,12 +696,12 @@ httpc_get_file_dns(const char* server_name, u16_t port, const char* uri, const h
     return err;
   }
 
-  if (settings->use_proxy) {
+  if (settings && settings->use_proxy) {
     err = httpc_get_internal_addr(req, &settings->proxy_addr);
   } else {
     err = httpc_get_internal_dns(req, server_name);
   }
-  if(err != ERR_OK) {
+  if (err != ERR_OK) {
     httpc_free_state(req);
     return err;
   }
