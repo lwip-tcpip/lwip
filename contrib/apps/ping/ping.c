@@ -403,7 +403,7 @@ ping_init(const ip_addr_t* ping_addr)
 {
   ping_stop();
 
-  LWIP_ASSERT("ping_target != NULL", ping_target != NULL);
+  LWIP_ASSERT("ping_addr != NULL", ping_addr != NULL);
   ping_target = ping_addr;
 
 #if PING_USE_SOCKETS
