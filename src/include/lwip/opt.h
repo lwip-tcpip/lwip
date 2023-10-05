@@ -983,6 +983,19 @@
 #if !defined LWIP_DHCP_MUD_URL || defined __DOXYGEN__
 #define LWIP_DHCP_MUD_URL               0
 #endif
+
+/**
+ * LWIP_MUD_URL_STRING: Specifies a URL that points to a Manufacturer Usage Description (MUD)
+ * file describing this device.
+ * This URL will only be emitted via DHCP or DHCPv6 if LWIP_DHCP_MUD_URL or LWIP_DHCP6_MUD_URL are set
+ * to 1, respectively.
+ * The URL MUST start with https://.
+ *
+ * See RFC 8520 for more information.
+ */
+#ifdef __DOXYGEN__
+#define LWIP_MUD_URL_STRING             "https://example.org/mud-file"
+#endif
 /**
  * @}
  */
