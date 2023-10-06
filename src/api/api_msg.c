@@ -258,14 +258,24 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     buf->ptr = p;
     ip_addr_set(&buf->addr, addr);
     buf->port = port;
+    buf->flags = 0;
 #if LWIP_NETBUF_RECVINFO
     if (conn->flags & NETCONN_FLAG_PKTINFO) {
       /* get the UDP header - always in the first pbuf, ensured by udp_input */
       const struct udp_hdr *udphdr = (const struct udp_hdr *)ip_next_header_ptr();
-      buf->flags = NETBUF_FLAG_DESTADDR;
+      buf->flags |= NETBUF_FLAG_DESTADDR;
       ip_addr_set(&buf->toaddr, ip_current_dest_addr());
       buf->toport_chksum = udphdr->dest;
     }
+#if LWIP_IPV6
+    if (netconn_is_flag_set(conn, NETCONN_FLAG_HOPLIMIT)) {
+      if (ip_current_is_v6()) {
+        struct ip6_hdr *ip6hdr = (struct ip6_hdr *)ip6_current_header();
+        buf->flags |= NETBUF_FLAG_HOPLIMIT;
+        buf->hoplim = IP6H_HOPLIM(ip6hdr);
+      }
+    }
+#endif /* LWIP_IPV6 */
 #endif /* LWIP_NETBUF_RECVINFO */
   }
 

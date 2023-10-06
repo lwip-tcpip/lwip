@@ -1343,6 +1343,7 @@ pbuf_clone(pbuf_layer layer, pbuf_type type, struct pbuf *p)
     return NULL;
   }
   err = pbuf_copy(q, p);
+  q->if_idx = p->if_idx;
   LWIP_UNUSED_ARG(err); /* in case of LWIP_NOASSERT */
   LWIP_ASSERT("pbuf_copy failed", err == ERR_OK);
   return q;

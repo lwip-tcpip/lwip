@@ -57,7 +57,7 @@
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
 const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
-#define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
+#define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'a' + (i) - 10))
 
 /**
  * Check whether "cp" is a valid ascii representation

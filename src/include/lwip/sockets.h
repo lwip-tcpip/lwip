@@ -297,7 +297,12 @@ struct linger {
  * Options for level IPPROTO_IPV6
  */
 #define IPV6_CHECKSUM       7  /* RFC3542: calculate and insert the ICMPv6 checksum for raw sockets. */
+#define IPV6_UNICAST_HOPS   16 /* RFC3493: hop limit in outgoing unicast IPv6 packets */
 #define IPV6_V6ONLY         27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
+#define IPV6_RECVPKTINFO    49 /* RFC3542: receive ancillary data for packet */
+#define IPV6_PKTINFO        50 /* RFC3542: ancillary data for a packet */
+#define IPV6_RECVHOPLIMIT   51 /* RFC3542: receive hop limit for packet */
+#define IPV6_HOPLIMIT       52 /* RFC3542: ancillary data containing hop limit for packet */
 #endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
@@ -316,6 +321,10 @@ struct linger {
 #define IP_MULTICAST_TTL   5
 #define IP_MULTICAST_IF    6
 #define IP_MULTICAST_LOOP  7
+
+#define IPV6_MULTICAST_IF    17 /* RFC3493: interface for outgoing multicast packets */
+#define IPV6_MULTICAST_HOPS  18 /* RFC3493: hop limit for outgoing multicast packets */
+#define IPV6_MULTICAST_LOOP  19 /* RFC3493: a copy of the packet is looped back for local delivery */
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
 #if LWIP_IGMP
@@ -337,6 +346,13 @@ struct in_pktinfo {
   struct in_addr ipi_addr;     /* Destination (from header) address */
 };
 #endif /* LWIP_IPV4 */
+
+#if LWIP_IPV6
+struct in6_pktinfo {
+  struct in6_addr ipi6_addr;
+  int             ipi6_ifindex;
+};
+#endif /* LWIP_IPV6 */
 
 #if LWIP_IPV6_MLD
 /*
