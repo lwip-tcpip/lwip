@@ -447,6 +447,19 @@ ip6_reass(struct pbuf *p)
         }
       }
 #endif /* IP_REASS_CHECK_OVERLAP */
+      /* Check if the fragments received so far have no gaps. */
+      if (iprh_prev != NULL) {
+        if (iprh_prev->end != start) {
+          /* There is a fragment missing between the current
+           * and the previous fragment */
+          valid = 0;
+        }
+      }
+      if (end != iprh_tmp->start) {
+        /* There is a fragment missing between the current
+         * and the following fragment */
+        valid = 0;
+      }
       /* the new pbuf should be inserted before this */
       next_pbuf = q;
       if (iprh_prev != NULL) {
@@ -658,6 +671,7 @@ ip6_reass(struct pbuf *p)
     }
 
     /* Return the pbuf chain */
+    MIB2_STATS_INC(mib2.ip6reasmoks);
     return p;
   }
   /* the datagram is not (yet?) reassembled completely */
