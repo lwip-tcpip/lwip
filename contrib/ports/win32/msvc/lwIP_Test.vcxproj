@@ -148,7 +148,7 @@
     <Link>
       <AdditionalDependencies>Packet.lib;wpcap.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(PCAP_DIR)\Lib;..\..\..\..\..\winpcap\WpdPack\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(PCAP_DIR)\Lib;..\..\..\..\..\winpcap\WpdPack\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>.\Release/test.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -230,7 +230,7 @@
     <Link>
       <AdditionalDependencies>Packet.lib;wpcap.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(PCAP_DIR)\Lib;..\..\..\..\..\winpcap\WpdPack\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(PCAP_DIR)\Lib;..\..\..\..\..\winpcap\WpdPack\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
