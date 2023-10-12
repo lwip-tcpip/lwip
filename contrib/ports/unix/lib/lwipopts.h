@@ -341,7 +341,7 @@
  */
 #define LWIP_TCP                        1
 
-#define LWIP_LISTEN_BACKLOG             0
+#define TCP_LISTEN_BACKLOG              0
 
 /*
    ----------------------------------
