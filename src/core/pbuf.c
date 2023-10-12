@@ -860,6 +860,7 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 
   LWIP_ERROR("(h != NULL) && (t != NULL) (programmer violates API)",
              ((h != NULL) && (t != NULL)), return;);
+  LWIP_ASSERT("Creating an infinite loop", h != t);
 
   /* proceed to last pbuf of chain */
   for (p = h; p->next != NULL; p = p->next) {
