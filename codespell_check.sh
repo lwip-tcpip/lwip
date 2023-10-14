@@ -41,6 +41,7 @@ CODESPELL_OPTS+=" --check-hidden"
 # "ofo => of", "WAN => WANT", "mut => must, mutt, moot"
 CODESPELL_OPTS+=" --ignore-words-list=nd,ans,tolen,ofo,wan,mut,clen,useg,clos "
 CODESPELL_OPTS+=" --ignore-words-list=devine,clinet,linz,garantie,explicite,numer "
+CODESPELL_OPTS+=" --ignore-words-list=skool "
 # propagate all options to codespell -> pass "-w" to this script to write changes
 CODESPELL_OPTS+="$@"
 

@@ -1564,7 +1564,7 @@ tcp_receive(struct tcp_pcb *pcb)
           recv_data = inseg.p;
           /* Since this pbuf now is the responsibility of the
              application, we delete our reference to it so that we won't
-             (mistakingly) deallocate it. */
+             (mistakenly) deallocate it. */
           inseg.p = NULL;
         }
         if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
