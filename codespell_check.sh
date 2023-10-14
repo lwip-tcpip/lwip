@@ -40,7 +40,7 @@ CODESPELL_OPTS+=" --check-hidden"
 # Disable false positives "nd  => and, 2nd", "ans => and", "tolen => token",
 # "ofo => of", "WAN => WANT", "mut => must, mutt, moot"
 CODESPELL_OPTS+=" --ignore-words-list=nd,ans,tolen,ofo,wan,mut,clen,useg,clos "
-CODESPELL_OPTS+=" --ignore-words-list=devine,clinet,linz,garantie,explicite "
+CODESPELL_OPTS+=" --ignore-words-list=devine,clinet,linz,garantie,explicite,numer "
 # propagate all options to codespell -> pass "-w" to this script to write changes
 CODESPELL_OPTS+="$@"
 

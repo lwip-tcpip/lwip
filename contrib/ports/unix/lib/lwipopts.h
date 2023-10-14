@@ -109,7 +109,7 @@
 #define MEMP_NUM_UDP_PCB                4
 
 /**
- * MEMP_NUM_TCP_PCB: the number of simulatenously active TCP connections.
+ * MEMP_NUM_TCP_PCB: the number of simultaneously active TCP connections.
  * (requires the LWIP_TCP option)
  */
 #define MEMP_NUM_TCP_PCB                4
@@ -133,7 +133,7 @@
 #define MEMP_NUM_REASSDATA              1
 
 /**
- * MEMP_NUM_ARP_QUEUE: the number of simulateously queued outgoing
+ * MEMP_NUM_ARP_QUEUE: the number of simultaneously queued outgoing
  * packets (pbufs) that are waiting for an ARP request (to resolve
  * their destination address) to finish.
  * (requires the ARP_QUEUEING option)
@@ -141,7 +141,7 @@
 #define MEMP_NUM_ARP_QUEUE              2
 
 /**
- * MEMP_NUM_SYS_TIMEOUT: the number of simulateously active timeouts.
+ * MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active timeouts.
  * (requires NO_SYS==0)
  */
 #define MEMP_NUM_SYS_TIMEOUT            8
