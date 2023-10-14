@@ -267,7 +267,7 @@ static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t
 #if LWIP_TCP
 static struct altcp_pcb *tcp_client_pcb;  /* a pcb for the TCP client */
 static struct altcp_pcb *tcp_server_pcb;  /* a pcb for the TCP server */
-static u16_t            tcp_remote_port;  /* a TCP port number of the destionation */
+static u16_t            tcp_remote_port;  /* a TCP port number of the destination */
 static u16_t            tcp_local_port;   /* a TCP port number of the local server */
 
 /**
@@ -519,7 +519,7 @@ udp_app_fuzz_input(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
        *     We use udp_send().
        *
        * server:
-       *     The pcb does NOT have infomation about the destionation.
+       *     The pcb does NOT have information about the destination.
        *     We use udp_sendto().
        */
       if (addr == NULL) {
