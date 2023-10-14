@@ -4,6 +4,7 @@
 *.exe
 *lwip_unittests.xml
 *.suo
+*.swp
 *.log
 .depend*
 
