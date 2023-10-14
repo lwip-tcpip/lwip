@@ -318,7 +318,7 @@ mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
 
   LWIP_ASSERT("mqtt_append_request: tail != NULL", tail != NULL);
 
-  /* Iterate trough queue to find head, and count total timeout time */
+  /* Iterate through queue to find head, and count total timeout time */
   for (iter = *tail; iter != NULL; iter = iter->next) {
     time_before += iter->timeout_diff;
     head = iter;
