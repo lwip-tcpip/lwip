@@ -633,7 +633,7 @@ httpc_init_connection_addr(httpc_state_t **connection, const httpc_connection_t 
  * @param settings connection settings (callbacks, proxy, etc.)
  * @param recv_fn the http body (not the headers) are passed to this callback
  * @param callback_arg argument passed to all the callbacks
- * @param connection retreives the connection handle (to match in callbacks)
+ * @param connection retrieves the connection handle (to match in callbacks)
  * @return ERR_OK if starting the request succeeds (callback_fn will be called later)
  *         or an error code
  */
@@ -678,7 +678,7 @@ httpc_get_file(const ip_addr_t* server_addr, u16_t port, const char* uri, const 
  * @param settings connection settings (callbacks, proxy, etc.)
  * @param recv_fn the http body (not the headers) are passed to this callback
  * @param callback_arg argument passed to all the callbacks
- * @param connection retreives the connection handle (to match in callbacks)
+ * @param connection retrieves the connection handle (to match in callbacks)
  * @return ERR_OK if starting the request succeeds (callback_fn will be called later)
  *         or an error code
  */
@@ -819,7 +819,7 @@ httpc_fs_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
  * @param uri uri to get from the server, remember leading "/"!
  * @param settings connection settings (callbacks, proxy, etc.)
  * @param callback_arg argument passed to all the callbacks
- * @param connection retreives the connection handle (to match in callbacks)
+ * @param connection retrieves the connection handle (to match in callbacks)
  * @return ERR_OK if starting the request succeeds (callback_fn will be called later)
  *         or an error code
  */
@@ -871,7 +871,7 @@ httpc_get_file_to_disk(const ip_addr_t* server_addr, u16_t port, const char* uri
  * @param uri uri to get from the server, remember leading "/"!
  * @param settings connection settings (callbacks, proxy, etc.)
  * @param callback_arg argument passed to all the callbacks
- * @param connection retreives the connection handle (to match in callbacks)
+ * @param connection retrieves the connection handle (to match in callbacks)
  * @return ERR_OK if starting the request succeeds (callback_fn will be called later)
  *         or an error code
  */
