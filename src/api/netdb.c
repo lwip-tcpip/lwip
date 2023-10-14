@@ -62,7 +62,7 @@ int h_errno;
 #endif /* LWIP_DNS_API_DECLARE_H_ERRNO */
 
 /** LWIP_DNS_API_HOSTENT_STORAGE: if set to 0 (default), lwip_gethostbyname()
- * returns the same global variabe for all calls (in all threads).
+ * returns the same global variable for all calls (in all threads).
  * When set to 1, your port should provide a function
  *      struct hostent* sys_thread_hostent( struct hostent* h);
  * which have to do a copy of "h" and return a pointer ont the "per-thread"

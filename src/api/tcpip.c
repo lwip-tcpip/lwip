@@ -428,7 +428,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 
 /**
  * Sends a message to TCPIP thread to call a function. Caller thread blocks on
- * on a provided semaphore, which ist NOT automatically signalled by TCPIP thread,
+ * on a provided semaphore, which is NOT automatically signalled by TCPIP thread,
  * this has to be done by the user.
  * It is recommended to use LWIP_TCPIP_CORE_LOCKING since this is the way
  * with least runtime overhead.
