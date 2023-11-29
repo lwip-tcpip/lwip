@@ -40,6 +40,7 @@
 #if LWIP_DNS && LWIP_SOCKET
 
 #include "lwip/err.h"
+#include "lwip/errno.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/ip_addr.h"
