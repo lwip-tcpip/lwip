@@ -895,6 +895,10 @@ static int is_ssi_file(const char *filename)
       /* build up the relative path to this file */
       size_t sublen = strlen(curSubdir);
       size_t freelen = sizeof(curSubdir) - sublen - 1;
+      if (sublen + strlen(filename) + 1 >= sizeof(curSubdir)) {
+        /* prevent buffer overflow */
+        return 0;
+      }
       strncat(curSubdir, "/", freelen);
       strncat(curSubdir, filename, freelen - 1);
       curSubdir[sizeof(curSubdir) - 1] = 0;
