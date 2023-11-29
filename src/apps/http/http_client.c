@@ -734,12 +734,17 @@ httpc_fs_init(httpc_filestate_t **filestate_out, const char* local_file_name,
 {
   httpc_filestate_t *filestate;
   size_t file_len, alloc_len;
+  mem_size_t alloc_mem_size;
   FILE *f;
 
   file_len = strlen(local_file_name);
   alloc_len = sizeof(httpc_filestate_t) + file_len + 1;
-
-  filestate = (httpc_filestate_t *)mem_malloc((mem_size_t)alloc_len);
+  alloc_mem_size = (mem_size_t)alloc_len;
+  if (alloc_mem_size < alloc_len) {
+    /* overflow */
+    return ERR_MEM;
+  }
+  filestate = (httpc_filestate_t *)mem_malloc(alloc_mem_size);
   if (filestate == NULL) {
     return ERR_MEM;
   }
