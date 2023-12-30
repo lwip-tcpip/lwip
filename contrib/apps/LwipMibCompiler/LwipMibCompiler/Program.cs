@@ -74,7 +74,7 @@ namespace LwipMibCompiler
 				string mibFileName = Path.GetFileNameWithoutExtension(mibFile).ToLowerInvariant();
 				destFile = Path.Combine(destFile, mibFileName + ".c");
 			}
-			
+
 			string destFileExt = Path.GetExtension(destFile);
 			if (!String.IsNullOrEmpty(destFileExt))
 			{
@@ -94,10 +94,10 @@ namespace LwipMibCompiler
 				}
 			}
 
-			
+
 			// read and resolve MIB
 			Console.WriteLine(" Reading MIB file...");
-			
+
 			MibDocument md = new MibDocument(mibFile);
 			MibTypesResolver.ResolveTypes(md.Modules[0]);
 			MibTree mt = new MibTree(md.Modules[0] as MibModule);
@@ -335,7 +335,7 @@ namespace LwipMibCompiler
 					{
 						Console.WriteLine(String.Format("Unsupported BaseType: Module='{0}', Name='{1}'!", mibType.Module, mibType.Name));
 					}
-					
+
 					return null;
 				}
 			}
@@ -353,7 +353,7 @@ namespace LwipMibCompiler
 			}
 			else if (ote.Access == MaxAccess.readCreate)
 			{
-				result.AccessMode = SnmpAccessMode.ReadOnly;
+				result.AccessMode = SnmpAccessMode.ReadWrite;
 			}
 			else if (ignoreAccessibleFlag && (ote.Access == MaxAccess.notAccessible))
 			{
@@ -426,7 +426,7 @@ namespace LwipMibCompiler
 			}
 
 			MibTreeNode rowNode = mibTreeNode.ChildNodes[0];
-			
+
 			ObjectType rot = rowNode.Entity as ObjectType;
 			if (rot != null)
 			{
