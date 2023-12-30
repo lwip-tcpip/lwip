@@ -371,7 +371,7 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
                                                        NULL,                            /* *next */
                                                        NULL,                            /* *prev */
                                                        {                                /* oid */
-                                                         10,                            /* oid len */
+                                                         11,                            /* oid len */
                                                          {1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0} /* oid for snmpTrapOID.0 */
                                                        },
                                                        SNMP_ASN1_TYPE_OBJECT_ID,        /* type */
