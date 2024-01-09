@@ -660,7 +660,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
   struct lwip_sock *sock, *nsock;
   struct netconn *newconn;
-  ip_addr_t naddr;
+  ip_addr_t naddr = {0};
   u16_t port = 0;
   int newsock;
   err_t err;
