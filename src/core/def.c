@@ -274,8 +274,8 @@ lwip_itoa(char *result, size_t bufsize, int number)
 int lwip_memcmp_consttime(const void* s1, const void* s2, size_t len)
 {
   size_t i;
-  const unsigned char* a1 = s1;
-  const unsigned char* a2 = s2;
+  const unsigned char* a1 = (const unsigned char*)s1;
+  const unsigned char* a2 = (const unsigned char*)s2;
   unsigned char ret = 0;
 
   for (i = 0; i < len; i++) {
