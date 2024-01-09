@@ -1058,7 +1058,7 @@ snmp_parse_inbound_frame(struct snmp_request *request)
       IF_PARSE_EXEC(snmpv3_get_user((char *)request->msg_user_name, &auth, key, NULL, NULL));
       IF_PARSE_EXEC(snmpv3_auth(&auth_stream, request->inbound_pbuf->tot_len, key, auth, hmac));
 
-      if (memcmp(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH)) {
+      if (lwip_memcmp_consttime(request->msg_authentication_parameters, hmac, SNMP_V3_MAX_AUTH_PARAM_LENGTH)) {
         snmp_stats.wrongdigests++;
         request->msg_flags = SNMP_V3_NOAUTHNOPRIV;
         request->error_status = SNMP_ERR_AUTHORIZATIONERROR;
