@@ -34,18 +34,10 @@
 
 #include "lwip/netif.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 err_t tapif_init(struct netif *netif);
 void tapif_poll(struct netif *netif);
 #if NO_SYS
 int tapif_select(struct netif *netif);
 #endif /* NO_SYS */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* LWIP_TAPIF_H */

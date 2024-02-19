@@ -6,10 +6,6 @@
 #include "netif/fifo.h"
 /*#include "netif/pppif.h"*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct sio_status_s {
 	int fd;
 	fifo_t myfifo;
@@ -59,10 +55,6 @@ void sio_flush( sio_status_t * siostat );
 * @param 	siostat siostatus struct, contains sio instance data, given by sio_open
 */
 void sio_change_baud( sioBaudrates baud, sio_status_t * siostat );
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 
