@@ -134,6 +134,11 @@ static u8_t dhcp6_pcb_refcount;
 /* receive, unfold, parse and free incoming messages */
 static void dhcp6_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
+#if LWIP_DHCP6_MUD_URL
+static u16_t dhcp6_option_mud_url(u16_t options_out_len, u8_t *options, char *mud_url, u16_t max_len);
+#endif /* LWIP_DHCP6_MUD_URL */
+
+
 /** Ensure DHCP PCB is allocated and bound */
 static err_t
 dhcp6_inc_pcb_refcount(void)
@@ -412,6 +417,13 @@ dhcp6_create_msg(struct netif *netif, struct dhcp6 *dhcp6, u8_t message_type,
 }
 
 static u16_t
+dhcp6_option_byte(u16_t options_out_len, u8_t *options, u16_t value)
+{
+  options[options_out_len++] = value;
+  return options_out_len;
+}
+
+static u16_t
 dhcp6_option_short(u16_t options_out_len, u8_t *options, u16_t value)
 {
   options[options_out_len++] = (u8_t)((value & 0xff00U) >> 8);
@@ -437,6 +449,33 @@ dhcp6_option_optionrequest(u16_t options_out_len, u8_t *options, const u16_t *re
   }
   return ret;
 }
+
+#if LWIP_DHCP6_MUD_URL
+static u16_t
+dhcp6_option_mud_url(u16_t options_out_len, u8_t *options, char *mud_url, u16_t max_len)
+{
+  size_t i;
+  u16_t ret;
+  size_t option_header_len = sizeof(u16_t) * 2;
+  size_t mud_url_len = strlen(mud_url);
+  const char *p = mud_url;
+
+  LWIP_ASSERT("dhcp6_option_mud_url: options_out_len + sizeof(struct dhcp6_msg) + mud_url_len <= max_len",
+    sizeof(struct dhcp6_msg) + options_out_len + option_header_len + mud_url_len <= max_len);
+  LWIP_ASSERT("DHCP: MUD URLs must start with https://",
+               strncmp(mud_url, "https://", 8) == 0);
+  LWIP_UNUSED_ARG(max_len);
+
+  ret = dhcp6_option_short(options_out_len, options, DHCP6_OPTION_MUD_URL_V6);
+  ret = dhcp6_option_short(ret, options, mud_url_len);
+
+  while (mud_url_len--) {
+    ret = dhcp6_option_byte(ret, options, *p++);
+  }
+
+  return ret;
+}
+#endif /* LWIP_DHCP6_MUD_URL */
 
 /* All options are added, shrink the pbuf to the required size */
 static void
@@ -475,6 +514,11 @@ dhcp6_information_request(struct netif *netif, struct dhcp6 *dhcp6)
 
     options_out_len = dhcp6_option_optionrequest(options_out_len, options, requested_options,
       LWIP_ARRAYSIZE(requested_options), p_out->len);
+
+#if LWIP_DHCP6_MUD_URL
+    options_out_len = dhcp6_option_mud_url(options_out_len, options, LWIP_MUD_URL_STRING, p_out->len);
+#endif /* LWIP_DHCP6_MUD_URL */
+
     LWIP_HOOK_DHCP6_APPEND_OPTIONS(netif, dhcp6, DHCP6_STATE_REQUESTING_CONFIG, msg_out,
       DHCP6_INFOREQUEST, options_out_len, p_out->len);
     dhcp6_msg_finalize(options_out_len, p_out);
