@@ -519,6 +519,7 @@ START_TEST(test_ip6_reass)
   test_ip6_reass_helper(130, t3, NUM_SEGS, 8);
   test_ip6_reass_helper(130, t4, NUM_SEGS, 1448);
 }
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
