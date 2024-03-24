@@ -2926,6 +2926,7 @@ lwip_sockopt_to_ipopt(int optname)
 static void
 lwip_getsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, void* optval)
 {
+  LWIP_UNUSED_ARG(s);
   if (sock->conn->pcb.raw->chksum_reqd == 0) {
     *(int*)optval = -1;
   }
@@ -2939,6 +2940,7 @@ lwip_getsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, void* optval)
 static int
 lwip_setsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, const void* optval, socklen_t optlen)
 {
+  LWIP_UNUSED_ARG(s);
   /* It should not be possible to disable the checksum generation with ICMPv6
    * as per RFC 3542 chapter 3.1 */
   if (sock->conn->pcb.raw->protocol == IPPROTO_ICMPV6) {
