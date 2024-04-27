@@ -35,7 +35,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#if defined(LWIP_UNIX_OPENBSD)
+#if defined(LWIP_UNIX_OPENBSD) || defined(LWIP_UNIX_MACH)
 #include <util.h>
 #endif
 #include <termios.h>
