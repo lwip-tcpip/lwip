@@ -77,7 +77,7 @@ static int deflate_level; /* default compression level, can be changed via comma
 #define CHDIR(path)                   SetCurrentDirectoryA(path)
 #define CHDIR_SUCCEEDED(ret)          (ret == TRUE)
 
-#elif __linux__
+#elif __linux__ || __APPLE__
 
 #define GETCWD(path, len)             getcwd(path, len)
 #define GETCWD_SUCCEEDED(ret)         (ret != NULL)
