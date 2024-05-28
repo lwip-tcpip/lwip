@@ -198,6 +198,8 @@ START_TEST(test_ip6_aton_ipv4mapped)
   const ip_addr_t addr_expected = IPADDR6_INIT_HOST(0, 0, 0xFFFF, 0xD4CC65D2);
   const char *full_ipv6_addr = "0:0:0:0:0:FFFF:D4CC:65D2";
   const char *shortened_ipv6_addr = "::FFFF:D4CC:65D2";
+  const char *shortened_ipv6_addr_unexpected_char = "::FFFF:D4CC:65DZ";
+  const char *shortened_ipv6_addr_invalid = "::GGGGGGGG";
   const char *full_ipv4_mapped_addr = "0:0:0:0:0:FFFF:212.204.101.210";
   const char *shortened_ipv4_mapped_addr = "::FFFF:212.204.101.210";
   const char *bogus_ipv4_mapped_addr = "::FFFF:212.204.101.2101";
@@ -222,6 +224,16 @@ START_TEST(test_ip6_aton_ipv4mapped)
   ret = ipaddr_aton(shortened_ipv6_addr, &addr);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
+
+  /* check shortened IPv6 with unexpected char */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(shortened_ipv6_addr_unexpected_char, &addr6);
+  fail_unless(ret == 0);
+
+  /* check shortened IPv6 that is clearly invalid */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(shortened_ipv6_addr_invalid, &addr6);
+  fail_unless(ret == 0);
 
   /* checked shortened mixed representation */
   memset(&addr6, 0, sizeof(addr6));
