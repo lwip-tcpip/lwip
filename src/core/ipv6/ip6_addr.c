@@ -96,7 +96,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       break;
 #endif /* LWIP_IPV4 */
     } else if (!lwip_isxdigit(*s)) {
-      break;
+      return 0;
     }
   }
 
@@ -166,7 +166,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
           (u32_t)(10 + (lwip_islower(*s) ? *s - 'a' : *s - 'A')));
     } else {
       /* unexpected digit, space? CRLF? */
-      break;
+      return 0;
     }
   }
 
