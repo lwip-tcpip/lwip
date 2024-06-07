@@ -73,6 +73,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
 {
   u32_t addr_index, zero_blocks, current_block_index, current_block_value;
   const char *s;
+  int block_length;
 #if LWIP_IPV4
   int check_ipv4_mapped = 0;
 #endif /* LWIP_IPV4 */
@@ -104,8 +105,12 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   addr_index = 0;
   current_block_index = 0;
   current_block_value = 0;
+  block_length = 0;
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
+      if (block_length > 4) {
+        return 0;  //invalid block length
+      }
       if (addr) {
         if (current_block_index & 0x1) {
           addr->addr[addr_index++] |= current_block_value;
@@ -132,6 +137,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       }
 #endif /* LWIP_IPV4 */
       current_block_value = 0;
+      block_length = 0;
       if (current_block_index > 7) {
         /* address too long! */
         return 0;
@@ -160,6 +166,10 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
         }
       }
     } else if (lwip_isxdigit(*s)) {
+      if (block_length == 4) {
+        return 0; //invalid block length
+      }
+      block_length++;
       /* add current digit */
       current_block_value = (current_block_value << 4) +
           (lwip_isdigit(*s) ? (u32_t)(*s - '0') :
@@ -168,6 +178,10 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       /* unexpected digit, space? CRLF? */
       return 0;
     }
+  }
+
+  if (block_length > 4) {
+    return 0; //invalid block length
   }
 
   if (addr) {

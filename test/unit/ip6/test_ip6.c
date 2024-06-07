@@ -203,7 +203,8 @@ START_TEST(test_ip6_aton_ipv4mapped)
   const char *full_ipv4_mapped_addr = "0:0:0:0:0:FFFF:212.204.101.210";
   const char *shortened_ipv4_mapped_addr = "::FFFF:212.204.101.210";
   const char *bogus_ipv4_mapped_addr = "::FFFF:212.204.101.2101";
-  LWIP_UNUSED_ARG(_i);
+  const char *ipv6_block_too_long = "1234:5678:9aBc:acDef:1122:3344:5566:7788";
+      LWIP_UNUSED_ARG(_i);
 
   /* check IPv6 representation */
   memset(&addr6, 0, sizeof(addr6));
@@ -261,6 +262,14 @@ START_TEST(test_ip6_aton_ipv4mapped)
   fail_unless(ret == 0);
   memset(&addr, 0, sizeof(addr));
   ret = ipaddr_aton(bogus_ipv4_mapped_addr, &addr);
+  fail_unless(ret == 0);
+
+  /* checking incorrect representation with a block containing 5 characters */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(ipv6_block_too_long, &addr6);
+  fail_unless(ret == 0);
+  memset(&addr, 0, sizeof(addr));
+  ret = ipaddr_aton(ipv6_block_too_long, &addr);
   fail_unless(ret == 0);
 }
 END_TEST
