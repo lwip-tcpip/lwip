@@ -57,7 +57,7 @@
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
 const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
-#define SMALLEST_POSSIBLE_IPV6_STRLEN 2  //"::" is the smallest possible
+#define SMALLEST_POSSIBLE_IPV6_STRLEN 2  /* "::" is the smallest possible ipv6 address */
 
 #define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
@@ -92,7 +92,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
     return 0;
   }
 
-  //if last character is a colon but not a double colon, invalid
+  /* if last character is a colon but not a double colon, invalid */
   if ((cp[len-1] == ':') && (cp[len-2] != ':')) {
     return 0;
   }
