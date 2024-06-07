@@ -204,7 +204,8 @@ START_TEST(test_ip6_aton_ipv4mapped)
   const char *shortened_ipv4_mapped_addr = "::FFFF:212.204.101.210";
   const char *bogus_ipv4_mapped_addr = "::FFFF:212.204.101.2101";
   const char *ipv6_block_too_long = "1234:5678:9aBc:acDef:1122:3344:5566:7788";
-      LWIP_UNUSED_ARG(_i);
+
+  LWIP_UNUSED_ARG(_i);
 
   /* check IPv6 representation */
   memset(&addr6, 0, sizeof(addr6));
