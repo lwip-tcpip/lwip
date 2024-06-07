@@ -57,6 +57,8 @@
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
 const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
+#define SMALLEST_POSSIBLE_IPV6_STRLEN 2  //"::" is the smallest possible
+
 #define lwip_xchar(i)        ((char)((i) < 10 ? '0' + (i) : 'A' + (i) - 10))
 
 /**
@@ -71,19 +73,40 @@ const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 int
 ip6addr_aton(const char *cp, ip6_addr_t *addr)
 {
-  u32_t addr_index, zero_blocks, current_block_index, current_block_value;
+  u32_t addr_index, current_block_index, current_block_value, double_colon_found;
+  s32_t zero_blocks;
+  size_t len;
   const char *s;
   int block_length;
 #if LWIP_IPV4
   int check_ipv4_mapped = 0;
 #endif /* LWIP_IPV4 */
 
+  if (!cp) {
+    return 0;
+  }
+
+  len = strlen(cp);
+
+  if (len < SMALLEST_POSSIBLE_IPV6_STRLEN) {
+    return 0;
+  }
+
+  //if last character is a colon but not a double colon, invalid
+  if ((cp[len-1] == ':') && (cp[len-2] != ':')) {
+    return 0;
+  }
+
   /* Count the number of colons, to count the number of blocks in a "::" sequence
      zero_blocks may be 1 even if there are no :: sequences */
   zero_blocks = 8;
+  double_colon_found = 0;
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
       zero_blocks--;
+      if (s[1] == ':') {
+        double_colon_found = 1;
+      }
 #if LWIP_IPV4
     } else if (*s == '.') {
       if ((zero_blocks == 5) ||(zero_blocks == 2)) {
@@ -101,6 +124,11 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
     }
   }
 
+  /* we found a double colon but it is impossible to populate it */
+  if (double_colon_found && zero_blocks <= 0) {
+    return 0;
+  }
+
   /* parse each block */
   addr_index = 0;
   current_block_index = 0;
@@ -109,7 +137,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
       if (block_length > 4) {
-        return 0;  //invalid block length
+        return 0;  /* invalid block length */
       }
       if (addr) {
         if (current_block_index & 0x1) {
@@ -167,7 +195,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       }
     } else if (lwip_isxdigit(*s)) {
       if (block_length == 4) {
-        return 0; //invalid block length
+        return 0; /* invalid block length */
       }
       block_length++;
       /* add current digit */
@@ -181,7 +209,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   }
 
   if (block_length > 4) {
-    return 0; //invalid block length
+    return 0; /* invalid block length */
   }
 
   if (addr) {
