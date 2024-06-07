@@ -277,22 +277,22 @@ START_TEST(test_ip6_aton_ipv4mapped)
   /* trailing single colon, invalid */
   memset(&addr6, 0, sizeof(addr6));
   ret = ip6addr_aton(ipv6_trailing_single_colon, &addr6);
-  fail_unless(ret == 0)
+  fail_unless(ret == 0);
 
   /* impossible to support compression, already enough blocks, invalid */
   memset(&addr6, 0, sizeof(addr6));
   ret = ip6addr_aton(ipv6_impossible_compression1, &addr6);
-  fail_unless(ret == 0)     
+  fail_unless(ret == 0);    
 
   /* impossible to support compression at the end of the address, already enough blocks, invalid */
   memset(&addr6, 0, sizeof(addr6));
   ret = ip6addr_aton(ipv6_impossible_compression2, &addr6);
-  fail_unless(ret == 0)      
+  fail_unless(ret == 0);     
 
   /* valid ipv6 with compression */
   memset(&addr6, 0, sizeof(addr6));
   ret = ip6addr_aton(ipv6_valid_compression, &addr6);
-  fail_unless(ret == 1)           
+  fail_unless(ret == 1);
 }
 END_TEST
 
