@@ -935,6 +935,9 @@ mem_malloc_adjust_lfree:
           lfree = cur;
           LWIP_ASSERT("mem_malloc: !lfree->used", ((lfree == ram_end) || (!lfree->used)));
         }
+        /* mem_link_valid ( called by MEM_SANITY() ) need to be called under protected conditions.
+        because, plug_holes which is called by mem_free will change data that used by mem_link_valid  */
+        MEM_SANITY();
         LWIP_MEM_ALLOC_UNPROTECT();
         sys_mutex_unlock(&mem_mutex);
         LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
@@ -947,7 +950,6 @@ mem_malloc_adjust_lfree:
 #if MEM_OVERFLOW_CHECK
         mem_overflow_init_element(mem, size_in);
 #endif
-        MEM_SANITY();
         return (u8_t *)mem + SIZEOF_STRUCT_MEM + MEM_SANITY_OFFSET;
       }
     }
