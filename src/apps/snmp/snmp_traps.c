@@ -343,6 +343,7 @@ snmp_send_msg(struct snmp_msg_trap *trap_msg, struct snmp_varbind *varbinds, u16
  * and .iso.org.dod.internet.private.enterprises.yourenterprise
  * (sysObjectID) for specific traps.
  */
+struct snmp_varbind snmp_copy;
 static err_t
 snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg, const struct snmp_obj_id *eoid, s32_t generic_trap, s32_t specific_trap, struct snmp_varbind *varbinds)
 {
@@ -398,7 +399,8 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
       snmp_v2_special_varbinds[1].value = snmp_trap_oid.id;
       if (varbinds != NULL) {
         original_prev = varbinds->prev;
-        varbinds->prev = &snmp_v2_special_varbinds[1];
+		memcpy(&snmp_copy, &snmp_v2_special_varbinds[1], sizeof(snmp_v2_special_varbinds[1]));
+        varbinds->prev = &snmp_copy;
       }
       varbinds = snmp_v2_special_varbinds;  /* After inserting two varbinds at the beginning of the list, make sure that pointer is pointing to the first element  */
     }
