@@ -626,6 +626,8 @@ etharp_get_entry(size_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth
   }
 }
 
+#define Swap(X,Y)  do{ __typeof__ (X) _T = X; X = Y; Y = _T; }while(0)
+
 /**
  * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache
  * send out queued IP packets. Updates cache with snooped address pairs.
@@ -635,11 +637,17 @@ etharp_get_entry(size_t i, ip4_addr_t **ipaddr, struct netif **netif, struct eth
  *
  * @param p The ARP packet that arrived on netif. Is freed by this function.
  * @param netif The lwIP network interface on which the ARP packet pbuf arrived.
+ * @param header_size_document pass ethernet header size to handle both arp and ethernet headers
+ * here for more effective memory usage (see LWIP_ARP_REUSE_MEMORY description in opts.h)
  *
  * @see pbuf_free()
  */
 void
-etharp_input(struct pbuf *p, struct netif *netif)
+etharp_input(struct pbuf *p, struct netif *netif
+#if LWIP_ARP_REUSE_MEMORY
+, size_t header_size_decrement
+#endif /* LWIP_ARP_REUSE_MEMORY */
+)
 {
   struct etharp_hdr *hdr;
   /* these are aligned properly, whereas the ARP header fields might not be */
@@ -650,7 +658,11 @@ etharp_input(struct pbuf *p, struct netif *netif)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
+#if LWIP_ARP_REUSE_MEMORY
+  hdr = (struct etharp_hdr *)((u8_t *)p->payload + header_size_decrement);
+#else
   hdr = (struct etharp_hdr *)p->payload;
+#endif /* LWIP_ARP_REUSE_MEMORY */
 
   /* RFC 826 "Packet Reception": */
   if ((hdr->hwtype != PP_HTONS(LWIP_IANA_HWTYPE_ETHERNET)) ||
@@ -714,11 +726,81 @@ etharp_input(struct pbuf *p, struct netif *netif)
       /* ARP request for our address? */
       if (for_us && !from_us) {
         /* send ARP response */
+#if !LWIP_ARP_REUSE_MEMORY
         etharp_raw(netif,
                    (struct eth_addr *)netif->hwaddr, &hdr->shwaddr,
                    (struct eth_addr *)netif->hwaddr, netif_ip4_addr(netif),
                    &hdr->shwaddr, &sipaddr,
                    ARP_REPLY);
+#else
+        struct eth_hdr *ethhdr;
+        u16_t eth_type_be;
+
+
+	      hdr->opcode = lwip_htons(ARP_REPLY);
+	      Swap(hdr->shwaddr, hdr->dhwaddr);
+	      Swap(hdr->sipaddr, hdr->dipaddr);
+	      SMEMCPY(&hdr->shwaddr, (struct eth_addr *)netif->hwaddr, ETH_HWADDR_LEN);
+
+
+
+
+        ethhdr = (struct eth_hdr *)p->payload;
+
+        eth_type_be = lwip_htons(ETHTYPE_ARP);
+
+
+#if ETHARP_SUPPORT_VLAN && (defined(LWIP_HOOK_VLAN_SET) || LWIP_VLAN_PCP)
+        s32_t vlan_prio_vid;
+#ifdef LWIP_HOOK_VLAN_SET
+        vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, ethhdr->src, ethhdr->dest, ETHTYPE_ARP);
+#elif LWIP_VLAN_PCP
+        vlan_prio_vid = -1;
+        if (netif->hints && (netif->hints->tci >= 0)) {
+          vlan_prio_vid = (u16_t)netif->hints->tci;
+        }
+#endif
+        if (vlan_prio_vid >= 0) {
+          struct eth_vlan_hdr *vlanhdr;
+
+          LWIP_ASSERT("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
+
+          vlanhdr = (struct eth_vlan_hdr *)(((u8_t *)p->payload) + SIZEOF_ETH_HDR);
+          vlanhdr->tpid     = eth_type_be;
+          vlanhdr->prio_vid = lwip_htons((u16_t)vlan_prio_vid);
+
+          eth_type_be = PP_HTONS(ETHTYPE_VLAN);
+        }
+#endif /* ETHARP_SUPPORT_VLAN && (defined(LWIP_HOOK_VLAN_SET) || LWIP_VLAN_PCP) */
+
+
+        LWIP_ASSERT_CORE_LOCKED();
+
+        ethhdr = (struct eth_hdr *)p->payload;
+        ethhdr->type = eth_type_be;
+        Swap(ethhdr->dest, ethhdr->src);
+#if LWIP_AUTOIP
+        /* If we are using Link-Local, all ARP packets that contain a Link-Local
+        * 'sender IP address' MUST be sent using link-layer broadcast instead of
+        * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
+        if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
+            SMEMCPY(&ethhdr->src, &ethbroadcast, ETH_HWADDR_LEN);
+        } else
+#endif /* LWIP_AUTOIP */
+        {
+            SMEMCPY(&ethhdr->src, &hdr->shwaddr, ETH_HWADDR_LEN);
+        }
+
+        LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
+              (netif->hwaddr_len == ETH_HWADDR_LEN));
+        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
+              ("ethernet_output: sending packet %p\n", (void *)p));
+
+        netif->linkoutput(netif, p);
+
+
+        ETHARP_STATS_INC(etharp.xmit);
+#endif /* !LWIP_ARP_REUSE_MEMORY */
         /* we are not configured? */
       } else if (ip4_addr_isany_val(*netif_ip4_addr(netif))) {
         /* { for_us == 0 and netif->ip_addr.addr == 0 } */
