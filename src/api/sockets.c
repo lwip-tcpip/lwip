@@ -2934,6 +2934,7 @@ lwip_getsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, void* optval)
   }
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_RAW, IPV6_CHECKSUM) = %d\n",
     s, (*(int*)optval)));
+  LWIP_UNUSED_ARG(s);
 }
 
 static int
@@ -2943,6 +2944,7 @@ lwip_setsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, const void* op
    * as per RFC 3542 chapter 3.1 */
   if (sock->conn->pcb.raw->protocol == IPPROTO_ICMPV6) {
     done_socket(sock);
+    LWIP_UNUSED_ARG(s);
     return EINVAL;
   }
 
@@ -2953,6 +2955,7 @@ lwip_setsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, const void* op
   else if (*(const int*)optval & 1) {
     /* Per RFC3542, odd offsets are not allowed */
     done_socket(sock);
+    LWIP_UNUSED_ARG(s);
     return EINVAL;
   }
   else {
@@ -2961,6 +2964,7 @@ lwip_setsockopt_impl_ipv6_checksum(int s, struct lwip_sock* sock, const void* op
   }
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_RAW, IPV6_CHECKSUM, ..) -> %d\n",
     s, sock->conn->pcb.raw->chksum_reqd));
+  LWIP_UNUSED_ARG(s);
   return 0;
 }
 #endif
