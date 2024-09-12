@@ -41,6 +41,8 @@
 #define LWIP_UNIX_MACH
 #elif defined __OpenBSD__
 #define LWIP_UNIX_OPENBSD
+#elif defined __FreeBSD__
+#define LWIP_UNIX_FREEBSD
 #elif defined __FreeBSD_kernel__ && __GLIBC__
 #define LWIP_UNIX_KFREEBSD
 #elif defined __CYGWIN__
