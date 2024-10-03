@@ -52,3 +52,19 @@ TESTFILES=$(TESTDIR)/lwip_unittests.c \
 	$(TESTDIR)/udp/test_udp.c \
 	$(TESTDIR)/ppp/test_pppos.c
 
+# add source file path in 
+HOSTCOM_SRC += $(TESTFILES)
+
+# include path in test/unit
+
+UNIT_INC := $(shell find -type d)
+
+# remove . in each path 
+UNIT_INC := $(patsubst .%, %, $(UNIT_INC))
+
+# ADD TESTDIR in each path 
+UNIT_INC := $(addprefix $(TESTDIR), $(UNIT_INC))
+
+# add -I
+UNIT_INC := $(addprefix -I, $(UNIT_INC))
+

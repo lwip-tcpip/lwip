@@ -206,3 +206,23 @@ LWIPAPPFILES=$(SNMPFILES) \
 	$(TFTPFILES) \
 	$(MQTTFILES) \
 	$(MBEDTLS_FILES)
+
+# add include path for header 
+
+FILELISTS_INC := $(shell find $(LWIPDIR)/include -type d)
+
+# add -I in each path
+
+FILELISTS_INC := $(addprefix -I, $(FILELISTS_INC))
+
+# adding all sources files in HOSTCOM_SRC 
+# (files without apps) + (files with apps)
+HOSTCOM_SRC += $(LWIPNOAPPSFILES)
+HOSTCOM_SRC += $(LWIPAPPFILES)
+
+# path for cc.h file (arch directory)
+
+FILELISTS_INC += -I$(HOSTCOM_ROOT)/src/3rd_party/lwip/contrib/ports/unix/port/include/
+
+# path for lwipopts.h
+# FILELISTS_INC += -I$(HOSTCOM_ROOT)/src/3rd_party/lwip/test/fuzz

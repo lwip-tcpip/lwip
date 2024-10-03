@@ -43,6 +43,7 @@
 extern "C" {
 #endif
 
+#define LWIP_PROVIDE_ERRNO
 #ifdef LWIP_PROVIDE_ERRNO
 
 #define  EPERM            1  /* Operation not permitted */
