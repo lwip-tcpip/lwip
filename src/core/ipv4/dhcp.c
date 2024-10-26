@@ -1394,6 +1394,11 @@ dhcp_release_and_stop(struct netif *netif)
     dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
     dhcp->pcb_allocated = 0;
   }
+
+#if LWIP_DHCP_AUTOIP_COOP
+  /* If autoip was started, stop it to avoid that it sets an ip address after conflict resolution */
+  autoip_stop(netif);
+#endif /* LWIP_DHCP_AUTOIP_COOP */
 }
 
 /**
