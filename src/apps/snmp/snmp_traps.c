@@ -348,6 +348,7 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
   u32_t timestamp = 0;
   struct snmp_varbind *original_varbinds = varbinds;
   struct snmp_varbind *original_prev = NULL;
+  struct snmp_obj_id snmp_trap_oid = { 0 };  /* used for converting SNMPv1 generic/specific trap parameter to SNMPv2 snmpTrapOID */
   struct snmp_varbind snmp_v2_special_varbinds[] = {
                                                      /* First varbind is used to store sysUpTime */
                                                      {
@@ -386,7 +387,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
 
   /* see rfc3584 */
   if (trap_msg->snmp_version == SNMP_VERSION_2c) {
-    struct snmp_obj_id snmp_trap_oid =  { 0 };  /* used for converting SNMPv1 generic/specific trap parameter to SNMPv2 snmpTrapOID */
     err = snmp_prepare_trap_oid(&snmp_trap_oid, eoid, generic_trap, specific_trap);
     if (err == ERR_OK) {
       snmp_v2_special_varbinds[1].value_len = snmp_trap_oid.len * sizeof(snmp_trap_oid.id[0]);
