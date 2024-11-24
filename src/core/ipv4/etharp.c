@@ -733,22 +733,16 @@ etharp_input(struct pbuf *p, struct netif *netif
                    &hdr->shwaddr, &sipaddr,
                    ARP_REPLY);
 #else
+        /* swapping addresses here so we don't need need to call any other functions or waste memory
+         * to create header for response packet */
         struct eth_hdr *ethhdr;
         u16_t eth_type_be;
-
-
-	      hdr->opcode = lwip_htons(ARP_REPLY);
-	      Swap(hdr->shwaddr, hdr->dhwaddr);
-	      Swap(hdr->sipaddr, hdr->dipaddr);
-	      SMEMCPY(&hdr->shwaddr, (struct eth_addr *)netif->hwaddr, ETH_HWADDR_LEN);
-
-
-
-
+        hdr->opcode = lwip_htons(ARP_REPLY);
+        Swap(hdr->shwaddr, hdr->dhwaddr);
+        Swap(hdr->sipaddr, hdr->dipaddr);
+        SMEMCPY(&hdr->shwaddr, (struct eth_addr *)netif->hwaddr, ETH_HWADDR_LEN);
         ethhdr = (struct eth_hdr *)p->payload;
-
         eth_type_be = lwip_htons(ETHTYPE_ARP);
-
 
 #if ETHARP_SUPPORT_VLAN && (defined(LWIP_HOOK_VLAN_SET) || LWIP_VLAN_PCP)
         s32_t vlan_prio_vid;
@@ -773,7 +767,6 @@ etharp_input(struct pbuf *p, struct netif *netif
         }
 #endif /* ETHARP_SUPPORT_VLAN && (defined(LWIP_HOOK_VLAN_SET) || LWIP_VLAN_PCP) */
 
-
         LWIP_ASSERT_CORE_LOCKED();
 
         ethhdr = (struct eth_hdr *)p->payload;
@@ -797,7 +790,6 @@ etharp_input(struct pbuf *p, struct netif *netif
               ("ethernet_output: sending packet %p\n", (void *)p));
 
         netif->linkoutput(netif, p);
-
 
         ETHARP_STATS_INC(etharp.xmit);
 #endif /* !LWIP_ARP_REUSE_MEMORY */
