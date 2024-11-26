@@ -137,7 +137,6 @@ static s32_t req_id = 1;
  * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
  * @param enable switch if 0 destination is disabled >0 enabled.
  *
- * @retval void
  */
 void
 snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
@@ -154,7 +153,6 @@ snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
  * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
  * @param dst IPv4 address in host order.
  *
- * @retval void
  */
 void
 snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
@@ -171,7 +169,6 @@ snmp_trap_dst_ip_set(u8_t dst_idx, const ip_addr_t *dst)
  *
  * @param enable enable SNMP traps
  *
- * @retval void
  */
 void
 snmp_set_auth_traps_enabled(u8_t enable)
@@ -200,7 +197,6 @@ snmp_get_auth_traps_enabled(void)
  *
  * @param snmp_version version that will be used for sending traps
  *
- * @retval void
  */
 void
 snmp_set_default_trap_version(u8_t snmp_version)
@@ -274,7 +270,6 @@ snmp_prepare_trap_oid(struct snmp_obj_id *dest_snmp_trap_oid, const struct snmp_
  * @param generic_trap SNMP v1 generic trap
  * @param specific_trap SNMP v1 specific trap
  * @param varbinds list of varbinds
- * @retval void
  */
 static void
 snmp_prepare_necessary_msg_fields(struct snmp_msg_trap *trap_msg, const struct snmp_obj_id *eoid, s32_t generic_trap, s32_t specific_trap, struct snmp_varbind *varbinds)
@@ -498,7 +493,6 @@ snmp_send_trap_specific(s32_t specific_trap, struct snmp_varbind *varbinds)
 /**
  * @ingroup snmp_traps
  * Send coldstart trap
- * @retval void
  */
 void
 snmp_coldstart_trap(void)
@@ -509,7 +503,6 @@ snmp_coldstart_trap(void)
 /**
  * @ingroup snmp_traps
  * Send authentication failure trap (used internally by agent)
- * @retval void
  */
 void
 snmp_authfail_trap(void)
@@ -727,7 +720,6 @@ snmp_trap_header_enc_pdu(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pb
  * Encodes trap header part that is SNMP v1 header specific.
  * @param trap Trap message
  * @param pbuf_stream stream used for storing data inside pbuf
- * @retval void
  */
 static err_t
 snmp_trap_header_enc_v1_specific(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream)
@@ -781,7 +773,6 @@ snmp_trap_header_enc_v1_specific(struct snmp_msg_trap *trap, struct snmp_pbuf_st
  *
  * @param trap Trap message
  * @param pbuf_stream stream used for storing data inside pbuf
- * @retval void
  */
 static err_t
 snmp_trap_header_enc_v2c_specific(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream)
@@ -814,7 +805,6 @@ snmp_trap_header_enc_v2c_specific(struct snmp_msg_trap *trap, struct snmp_pbuf_s
  *
  * @param trap Trap message
  * @param pbuf_stream stream used for storing data inside pbuf
- * @retval void
  */
 static err_t
 snmp_trap_header_enc(struct snmp_msg_trap *trap, struct snmp_pbuf_stream *pbuf_stream)
