@@ -270,15 +270,16 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 
     /* Check for empty block. */
     if (current_block_value == 0) {
-      if (current_block_index == 7 && empty_block_flag == 1) {
-        /* special case, we must render a ':' for the last block. */
-        buf[i++] = ':';
-        if (i >= buflen) {
-          return NULL;
+      if (current_block_index == 7) {
+        if (empty_block_flag == 1) {
+          /* special case, we must render a ':' for the last block. */
+          buf[i++] = ':';
+          if (i >= buflen) {
+            return NULL;
+          }
+          break;
         }
-        break;
-      }
-      if (empty_block_flag == 0) {
+      } else if (empty_block_flag == 0) {
         /* generate empty block "::", but only if more than one contiguous zero block,
          * according to current formatting suggestions RFC 5952. */
         next_block_value = lwip_htonl(addr->addr[(current_block_index + 1) >> 1]);
