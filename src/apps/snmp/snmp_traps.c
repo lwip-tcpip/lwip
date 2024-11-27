@@ -346,8 +346,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
   u16_t tot_len = 0;
   err_t err = ERR_OK;
   u32_t timestamp = 0;
-  struct snmp_varbind *original_varbinds = varbinds;
-  struct snmp_varbind *original_prev = NULL;
   struct snmp_obj_id snmp_trap_oid = { 0 };  /* used for converting SNMPv1 generic/specific trap parameter to SNMPv2 snmpTrapOID */
   struct snmp_varbind snmp_v2_special_varbinds[] = {
                                                      /* First varbind is used to store sysUpTime */
@@ -379,7 +377,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
   LWIP_ASSERT_SNMP_LOCKED();
 
   snmp_v2_special_varbinds[0].next = &snmp_v2_special_varbinds[1];
-  snmp_v2_special_varbinds[1].prev = &snmp_v2_special_varbinds[0];
 
   snmp_v2_special_varbinds[0].value = &timestamp;
 
@@ -391,10 +388,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
     if (err == ERR_OK) {
       snmp_v2_special_varbinds[1].value_len = snmp_trap_oid.len * sizeof(snmp_trap_oid.id[0]);
       snmp_v2_special_varbinds[1].value = snmp_trap_oid.id;
-      if (varbinds != NULL) {
-        original_prev = varbinds->prev;
-        varbinds->prev = &snmp_v2_special_varbinds[1];
-      }
       varbinds = snmp_v2_special_varbinds;  /* After inserting two varbinds at the beginning of the list, make sure that pointer is pointing to the first element  */
     }
   }
@@ -416,9 +409,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
         err = ERR_RTE;
       }
     }
-  }
-  if ((trap_msg->snmp_version == SNMP_VERSION_2c) && (original_varbinds != NULL)) {
-    original_varbinds->prev = original_prev;
   }
   req_id++;
   return err;
