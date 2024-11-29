@@ -328,7 +328,6 @@ snmp_receive(void *handle, struct pbuf *p, const ip_addr_t *source_ip, u16_t por
         struct snmp_varbind vb;
 
         vb.next = NULL;
-        vb.prev = NULL;
         vb.type = SNMP_ASN1_TYPE_COUNTER32;
         vb.value_len = sizeof(u32_t);
 
