@@ -356,7 +356,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
                                                      /* First varbind is used to store sysUpTime */
                                                      {
                                                        NULL,                            /* *next */
-                                                       NULL,                            /* *prev */
                                                        {                                /* oid */
                                                          8,                             /* oid len */
                                                          {1, 3, 6, 1, 2, 1, 1, 3}       /* oid for sysUpTime */
@@ -368,7 +367,6 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
                                                      /* Second varbind is used to store snmpTrapOID */
                                                      {
                                                        NULL,                            /* *next */
-                                                       NULL,                            /* *prev */
                                                        {                                /* oid */
                                                          10,                            /* oid len */
                                                          {1, 3, 6, 1, 6, 3, 1, 1, 4, 1} /* oid for snmpTrapOID */
