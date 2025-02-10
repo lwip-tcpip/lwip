@@ -290,7 +290,10 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
     case 5: { /* usmUserAuthProtocol */
       const struct snmp_obj_id *auth_algo;
       snmpv3_auth_algo_t auth_algo_val;
-      snmpv3_get_user((const char *)cell_instance->reference.ptr, &auth_algo_val, NULL, NULL, NULL);
+      if(snmpv3_get_user((const char *)cell_instance->reference.ptr, &auth_algo_val, NULL, NULL, NULL) != ERR_OK) {
+          LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmusertable_get_value(): not found user: %s\n", (const char *)cell_instance->reference.ptr));
+          return 0;
+      }
       auth_algo = snmp_auth_algo_to_oid(auth_algo_val);
       MEMCPY(value, auth_algo->id, auth_algo->len * sizeof(u32_t));
       return auth_algo->len * sizeof(u32_t);
@@ -302,7 +305,10 @@ static s16_t usmusertable_get_value(struct snmp_node_instance *cell_instance, vo
     case 8: { /* usmUserPrivProtocol */
       const struct snmp_obj_id *priv_algo;
       snmpv3_priv_algo_t priv_algo_val;
-      snmpv3_get_user((const char *)cell_instance->reference.ptr, NULL, NULL, &priv_algo_val, NULL);
+      if(snmpv3_get_user((const char *)cell_instance->reference.ptr, NULL, NULL, &priv_algo_val, NULL) != ERR_OK) {
+          LWIP_DEBUGF(SNMP_MIB_DEBUG, ("usmusertable_get_value(): not found user: %s\n", (const char *)cell_instance->reference.ptr));
+          return 0;
+      }
       priv_algo = snmp_priv_algo_to_oid(priv_algo_val);
       MEMCPY(value, priv_algo->id, priv_algo->len * sizeof(u32_t));
       return priv_algo->len * sizeof(u32_t);
