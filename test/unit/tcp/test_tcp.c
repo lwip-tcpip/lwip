@@ -534,15 +534,13 @@ START_TEST(test_tcp_fast_retx_recover)
   EXPECT_RET(txcounters.num_tx_calls == 0);
   EXPECT_RET(txcounters.num_tx_bytes == 0);
   memset(&txcounters, 0, sizeof(txcounters));
+
+  do
   {
-    int i = 0;
-    do
-    {
-      err = tcp_write(pcb, data6, TCP_MSS, TCP_WRITE_FLAG_COPY);
-      i++;
-    }while(err == ERR_OK);
-    EXPECT_RET(err != ERR_OK);
-  }
+    err = tcp_write(pcb, data6, TCP_MSS, TCP_WRITE_FLAG_COPY);
+  }while(err == ERR_OK);
+  EXPECT_RET(err != ERR_OK);
+
   err = tcp_output(pcb);
   EXPECT_RET(err == ERR_OK);
   /*EXPECT_RET(txcounters.num_tx_calls == 0);
