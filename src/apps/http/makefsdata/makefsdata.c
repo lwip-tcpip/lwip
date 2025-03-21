@@ -97,10 +97,14 @@ static int deflate_level; /* default compression level, can be changed via comma
 #define LWIP_PLATFORM_ASSERT(x) do {printf("Assertion \"%s\" failed at line %d in %s\n", \
                                      x, __LINE__, __FILE__); fflush(NULL); abort();} while(0)
 
+#include "lwip/init.h"
+
 /* define this to get the header variables we use to build HTTP headers */
+#undef LWIP_HTTPD_DYNAMIC_HEADERS
+#undef LWIP_HTTPD_SSI
 #define LWIP_HTTPD_DYNAMIC_HEADERS 1
 #define LWIP_HTTPD_SSI             1
-#include "lwip/init.h"
+
 #include "../httpd_structs.h"
 #include "lwip/apps/fs.h"
 
