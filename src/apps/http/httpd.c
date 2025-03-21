@@ -120,7 +120,6 @@
 #define CRLF "\r\n"
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
 #define HTTP11_CONNECTIONKEEPALIVE  "Connection: keep-alive"
-#define HTTP11_CONNECTIONKEEPALIVE2 "Connection: Keep-Alive"
 #endif
 
 #if LWIP_HTTPD_DYNAMIC_FILE_READ
@@ -2100,8 +2099,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
 #if LWIP_HTTPD_SUPPORT_11_KEEPALIVE
           /* This is HTTP/1.0 compatible: for strict 1.1, a connection
              would always be persistent unless "close" was specified. */
-          if (!is_09 && (lwip_strnistr(data, HTTP11_CONNECTIONKEEPALIVE, data_len) ||
-                         lwip_strnistr(data, HTTP11_CONNECTIONKEEPALIVE2, data_len))) {
+          if (!is_09 && lwip_strnistr(data, HTTP11_CONNECTIONKEEPALIVE, data_len)) {
             hs->keepalive = 1;
           } else {
             hs->keepalive = 0;
