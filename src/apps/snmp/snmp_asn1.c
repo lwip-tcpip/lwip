@@ -463,14 +463,8 @@ snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value
   if ((len > 0) && (len < 5)) {
     PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
 
-    if (data & 0x80) {
-      /* negative, start from -1 */
-      *value = -1;
-      *value = (*value << 8) | data;
-    } else {
-      /* positive, start from 0 */
-      *value = data;
-    }
+    /* sign extension */
+    *value = (s8_t)data;
     len--;
     /* shift in the remaining value */
     while (len > 0) {
