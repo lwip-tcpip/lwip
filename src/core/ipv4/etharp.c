@@ -940,9 +940,9 @@ etharp_query(struct netif *netif, const ip4_addr_t *ipaddr, struct pbuf *q)
   netif_addr_idx_t i;
 
   /* non-unicast address? */
-  if (ip4_addr_isbroadcast(ipaddr, netif) ||
-      ip4_addr_ismulticast(ipaddr) ||
-      ip4_addr_isany(ipaddr)) {
+  if (ip4_addr_isany(ipaddr) ||
+      ip4_addr_isbroadcast(ipaddr, netif) ||
+      ip4_addr_ismulticast(ipaddr)) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: will not add non-unicast IP address to ARP cache\n"));
     return ERR_ARG;
   }
