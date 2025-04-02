@@ -2118,6 +2118,12 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
             struct pbuf *q = inp;
 #endif /* LWIP_HTTPD_SUPPORT_REQUESTLIST */
             err = http_post_request(q, hs, data, data_len, uri, sp2);
+            if (err != ERR_OK) {
+              /* restore header for next try */
+              *sp1 = ' ';
+              *sp2 = ' ';
+              uri[uri_len] = ' ';
+            }
             if (err == ERR_ARG) {
               goto badrequest;
             }
