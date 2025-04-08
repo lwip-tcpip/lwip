@@ -1293,6 +1293,8 @@ altcp_mbedtls_bio_send(void *ctx, const unsigned char *dataptr, size_t size)
   while (size_left) {
     u16_t write_len = (u16_t)LWIP_MIN(size_left, 0xFFFF);
     err_t err = altcp_write(conn->inner_conn, (const void *)dataptr, write_len, apiflags);
+    /* try to send data... */
+    altcp_output(conn->inner_conn);
     if (err == ERR_OK) {
       written += write_len;
       size_left -= write_len;
