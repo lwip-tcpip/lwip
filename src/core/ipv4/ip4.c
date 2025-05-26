@@ -1126,7 +1126,9 @@ ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
 void
 ip4_debug_print(struct pbuf *p)
 {
+#if defined(LWIP_DEBUG) && (IP_DEBUG == LWIP_DBG_ON)
   struct ip_hdr *iphdr = (struct ip_hdr *)p->payload;
+#endif
 
   LWIP_DEBUGF(IP_DEBUG, ("IP header:\n"));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
