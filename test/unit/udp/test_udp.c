@@ -199,6 +199,7 @@ test_udp_create_test_packet(u16_t length, u16_t port, u32_t dst_addr)
   fail_unless(!ret);
   ih = (struct ip_hdr *)p->payload;
   memset(ih, 0, sizeof(*ih));
+  ih->src.addr = 0x08080808;
   ih->dest.addr = dst_addr;
   ih->_len = lwip_htons(p->tot_len);
   ih->_ttl = 32;
