@@ -6,6 +6,11 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
+  ++ Bugfixes:
+
+  2025-06-03: Simon Goldschmidt
+  * ip4_frag/ip6_frag: fix potential NULL-pointer access on memory errors
+
 (STABLE-2.2.1):
 
   ++ New features:
