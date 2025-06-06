@@ -181,8 +181,21 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
           break;
         val = (val * base) + (u32_t)(c - '0');
         c = *++cp;
+#if LWIP_NO_CTYPE_H
+      } else if (base == 16) {
+        u32_t a;
+        if (lwip_in_range(c, 'a', 'f')) {
+          a = 'a';
+        } else if (lwip_in_range(c, 'A', 'F')) {
+          a = 'A';
+        } else {
+          break;
+        }
+        val = (val << 4) | (u32_t)(c - a + 10);
+#else /* LWIP_NO_CTYPE_H */
       } else if (base == 16 && lwip_isxdigit(c)) {
         val = (val << 4) | (u32_t)(c + 10 - (lwip_islower(c) ? 'a' : 'A'));
+#endif /* LWIP_NO_CTYPE_H */
         c = *++cp;
       } else {
         break;
