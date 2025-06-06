@@ -17,6 +17,7 @@
 
 #include "netif/sio.h"
 #include "netif/fifo.h"
+#include "lwip/opt.h"
 #include "lwip/debug.h"
 #include "lwip/def.h"
 #include "lwip/sys.h"
