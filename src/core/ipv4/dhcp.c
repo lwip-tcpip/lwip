@@ -831,6 +831,8 @@ dhcp_start(struct netif *netif)
       return ERR_MEM;
     }
 
+    /* clear the flags, the rest is cleared below */
+    dhcp->flags = 0;
     /* store this dhcp client in the netif */
     netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): allocated dhcp\n"));
