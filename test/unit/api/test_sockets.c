@@ -10,6 +10,7 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/api.h"
 
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
 static int
 test_sockets_get_used_count(void)
@@ -255,7 +256,7 @@ static void test_sockets_msgapi_update_iovs(struct msghdr *msg, size_t bytes)
   /* note: this modifies the underlying iov_base and iov_len for a partial
      read for an individual vector. This updates the msg->msg_iov pointer
      to skip fully consumed vectors */
-  
+
   /* process fully consumed vectors */
   for (i = 0; i < msg->msg_iovlen; i++) {
     if (msg->msg_iov[i].iov_len <= bytes) {
@@ -395,7 +396,7 @@ static void test_sockets_msgapi_tcp(int domain)
       /* note: since we always receive after sending, there will be open
          space in the send buffer */
       fail_unless(ret > 0);
-    
+
       bytes_written += ret;
       if (bytes_written < TOTAL_DATA_SZ) {
         test_sockets_msgapi_update_iovs(&smsg, (size_t)ret);
@@ -432,7 +433,7 @@ static void test_sockets_msgapi_tcp(int domain)
       }
     } while(ret > 0);
   }
-  
+
   ret = lwip_close(s1);
   fail_unless(ret == 0);
   ret = lwip_close(s2);
@@ -544,7 +545,6 @@ static void test_sockets_msgapi_udp(int domain)
   fail_unless(ret == 0);
 }
 
-#if LWIP_IPV4
 static void test_sockets_msgapi_cmsg(int domain)
 {
   int s, ret, enable;
@@ -553,10 +553,10 @@ static void test_sockets_msgapi_cmsg(int domain)
   struct iovec iov;
   struct msghdr msg;
   struct cmsghdr *cmsg;
-  struct in_pktinfo *pktinfo;
   u8_t rcv_buf[4];
   u8_t snd_buf[4] = {0xDE, 0xAD, 0xBE, 0xEF};
-  u8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
+  u8_t cmsg_buf[CMSG_SPACE(MAX(sizeof(struct in_pktinfo),
+                               sizeof(struct in6_pktinfo)))];
 
   test_sockets_init_loopback_addr(domain, &addr_storage, &addr_size);
 
@@ -571,7 +571,15 @@ static void test_sockets_msgapi_cmsg(int domain)
   fail_unless(ret == 0);
 
   enable = 1;
-  ret = lwip_setsockopt(s, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+  if (domain == AF_INET) {
+#if LWIP_IPV4
+    ret = lwip_setsockopt(s, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+#endif
+  } else {
+#if LWIP_IPV6
+    ret = lwip_setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable, sizeof(enable));
+#endif
+  }
   fail_unless(ret == 0);
 
   /* Receive full message, including control message */
@@ -588,25 +596,42 @@ static void test_sockets_msgapi_cmsg(int domain)
   memset(rcv_buf, 0, sizeof(rcv_buf));
   ret = lwip_sendto(s, snd_buf, sizeof(snd_buf), 0, (struct sockaddr*)&addr_storage, addr_size);
   fail_unless(ret == sizeof(snd_buf));
-  
+
   tcpip_thread_poll_one();
 
   ret = lwip_recvmsg(s, &msg, 0);
   fail_unless(ret == sizeof(rcv_buf));
   fail_unless(!memcmp(rcv_buf, snd_buf, sizeof(rcv_buf)));
-  
+
   /* Verify message header */
   cmsg = CMSG_FIRSTHDR(&msg);
   fail_unless(cmsg != NULL);
   fail_unless(cmsg->cmsg_len > 0);
-  fail_unless(cmsg->cmsg_level == IPPROTO_IP);
-  fail_unless(cmsg->cmsg_type == IP_PKTINFO);
 
-  /* Verify message data */
-  pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
-  /* We only have loopback interface enabled */
-  fail_unless(pktinfo->ipi_ifindex == 1);
-  fail_unless(pktinfo->ipi_addr.s_addr == PP_HTONL(INADDR_LOOPBACK));
+  if (domain == AF_INET) {
+    struct in_pktinfo *pktinfo;
+
+    fail_unless(cmsg->cmsg_level == IPPROTO_IP);
+    fail_unless(cmsg->cmsg_type == IP_PKTINFO);
+
+    /* Verify message data */
+    pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsg);
+    /* We only have loopback interface enabled */
+    fail_unless(pktinfo->ipi_ifindex == 1);
+    fail_unless(pktinfo->ipi_addr.s_addr == PP_HTONL(INADDR_LOOPBACK));
+  } else {
+    struct in6_pktinfo *pktinfo;
+    struct in6_addr lo6 = IN6ADDR_LOOPBACK_INIT;
+
+    fail_unless(cmsg->cmsg_level == IPPROTO_IPV6);
+    fail_unless(cmsg->cmsg_type == IPV6_PKTINFO);
+
+    /* Verify message data */
+    pktinfo = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+    /* We only have loopback interface enabled */
+    fail_unless(pktinfo->ipi6_ifindex == 1);
+    fail_unless(!memcmp(&pktinfo->ipi6_addr, &lo6, sizeof(pktinfo->ipi6_addr)));
+  }
 
   /* Verify there are no additional messages */
   cmsg = CMSG_NXTHDR(&msg, cmsg);
@@ -632,7 +657,6 @@ static void test_sockets_msgapi_cmsg(int domain)
   ret = lwip_close(s);
   fail_unless(ret == 0);
 }
-#endif /* LWIP_IPV4 */
 
 START_TEST(test_sockets_msgapis)
 {
@@ -645,6 +669,7 @@ START_TEST(test_sockets_msgapis)
 #if LWIP_IPV6
   test_sockets_msgapi_udp(AF_INET6);
   test_sockets_msgapi_tcp(AF_INET6);
+  test_sockets_msgapi_cmsg(AF_INET6);
 #endif
 }
 END_TEST
