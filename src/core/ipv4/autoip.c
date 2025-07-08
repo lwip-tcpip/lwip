@@ -343,6 +343,11 @@ autoip_stop(struct netif *netif)
 
   LWIP_ASSERT_CORE_LOCKED();
   if (autoip != NULL) {
+    /* Stop and remove acd */
+    if (autoip->state != AUTOIP_STATE_OFF) {
+        acd_stop(&autoip->acd);
+        acd_remove(netif, &autoip->acd);
+    }
     autoip->state = AUTOIP_STATE_OFF;
     if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
       netif_set_addr(netif, IP4_ADDR_ANY4, IP4_ADDR_ANY4, IP4_ADDR_ANY4);
