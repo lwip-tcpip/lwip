@@ -59,6 +59,8 @@ test_netif_add(void)
     NULL, test_netif_init, NULL);
   netif_set_default(&test_netif);
   netif_set_up(&test_netif);
+  linkoutput_ctr = 0;
+  linkoutput_byte_ctr = 0;
 }
 
 static void
@@ -145,9 +147,6 @@ START_TEST(test_ip4_frag)
   ip_addr_t peer_ip = IPADDR4_INIT_BYTES(192,168,0,5);
   err_t err;
   LWIP_UNUSED_ARG(_i);
-
-  linkoutput_ctr = 0;
-  linkoutput_byte_ctr = 0;
 
   /* Verify that 8000 byte payload is split into six packets */
   fail_unless(data != NULL);
@@ -242,8 +241,6 @@ START_TEST(test_127_0_0_1)
   struct pbuf* p;
   LWIP_UNUSED_ARG(_i);
 
-  linkoutput_ctr = 0;
-
   test_netif_add();
   netif_set_down(netif_get_loopif());
 
@@ -257,9 +254,23 @@ START_TEST(test_127_0_0_1)
 }
 END_TEST
 
+START_TEST(test_ipaddr_addr)
+{
+  u32_t addr32;
+  LWIP_UNUSED_ARG(_i);
+
+  addr32 = ipaddr_addr("1.2.3.4");
+  fail_unless(addr32 == PP_HTONL(0x01020304UL));
+
+  addr32 = ipaddr_addr("foobar");
+  fail_unless(addr32 == PP_HTONL(0xffffffffUL));
+}
+END_TEST
+
 START_TEST(test_ip4addr_aton)
 {
   ip4_addr_t ip_addr;
+  u8_t ok;
 
   LWIP_UNUSED_ARG(_i);
 
@@ -270,6 +281,211 @@ START_TEST(test_ip4addr_aton)
   fail_unless(ip4addr_aton("192.168.0xd3", &ip_addr) == 1);
   fail_unless(ip4addr_aton("192.168.0xz5", &ip_addr) == 0);
   fail_unless(ip4addr_aton("192.168.095", &ip_addr) == 0);
+
+  ok = ip4addr_aton("foobar", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton(" ", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton(".", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x00000001UL));
+
+  ok = ip4addr_aton("01", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x00000001UL));
+
+  ok = ip4addr_aton("0y", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("0x!", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("0x?", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("0x[", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("0x{", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("0x", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x00000000UL));
+
+  ok = ip4addr_aton("0x0102030405", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x02030405UL));
+
+  ok = ip4addr_aton("0x01000000 ", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01000000UL));
+
+  ok = ip4addr_aton("0X01020000", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020000UL));
+
+  ok = ip4addr_aton("0x01020300", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020300UL));
+
+  ok = ip4addr_aton("0x0a0B0C0d", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x0a0b0c0dUL));
+
+  ok = ip4addr_aton("0x0F090c0x", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("0x0a0b0c0[", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.X", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("999.2", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.999999999", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2 ", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01000002UL));
+
+  ok = ip4addr_aton("1.2.X", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.999.3", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.999999", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("999.2.3", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.3 ", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020003UL));
+
+  ok = ip4addr_aton("1.2.3.X", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.999.X", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("999.2.3.4", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.999.3.4", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.999.4", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.3.999", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.3.4", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4 ", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4\f", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4\n", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4\r", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4\t", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4\v", &ip_addr);
+  fail_unless(ok == 1);
+  fail_unless(ip4_addr_get_u32(&ip_addr) == PP_HTONL(0x01020304UL));
+
+  ok = ip4addr_aton("1.2.3.4.5", &ip_addr);
+  fail_unless(ok == 0);
+
+  ok = ip4addr_aton("1.2.3.4", NULL);
+  fail_unless(ok == 1);
+}
+END_TEST
+
+START_TEST(test_ip4addr_ntoa)
+{
+  u8_t ok;
+  ip4_addr_t addr;
+  char *s;
+  char buf[9];
+  LWIP_UNUSED_ARG(_i);
+
+  ok = ip4addr_aton("1.2.3.4", &addr);
+  fail_unless(ok == 1);
+
+  s = ip4addr_ntoa(&addr);
+  fail_unless(s != NULL);
+
+  if (s != NULL) {
+    fail_unless(strcmp("1.2.3.4", s) == 0);
+  }
+
+  ok = ip4addr_aton("1.2.3.45", &addr);
+  fail_unless(ok == 1);
+
+  memset(buf, 0, sizeof(buf));
+  s = ip4addr_ntoa_r(&addr, buf, (int)sizeof(buf));
+  fail_unless(s != NULL);
+
+  if (s != NULL) {
+    fail_unless(strcmp("1.2.3.45", s) == 0);
+  }
+
+  s = ip4addr_ntoa_r(&addr, buf, 0);
+  fail_unless(s == NULL);
+
+  s = ip4addr_ntoa_r(&addr, buf, 1);
+  fail_unless(s == NULL);
+
+  s = ip4addr_ntoa_r(&addr, buf, 2);
+  fail_unless(s == NULL);
+}
+END_TEST
+
+START_TEST(test_ip4_addr_netmask_valid)
+{
+  u8_t ok;
+  LWIP_UNUSED_ARG(_i);
+
+  ok = ip4_addr_netmask_valid(PP_HTONL(0x00000000UL));
+  fail_unless(ok == 0);
+
+  ok = ip4_addr_netmask_valid(PP_HTONL(0xffffffffUL));
+  fail_unless(ok == 1);
+
+  ok = ip4_addr_netmask_valid(PP_HTONL(0x80000000UL));
+  fail_unless(ok == 1);
+
+  ok = ip4_addr_netmask_valid(PP_HTONL(0x80000001UL));
+  fail_unless(ok == 0);
 }
 END_TEST
 
@@ -284,8 +500,6 @@ START_TEST(test_ip4_icmp_replylen_short)
   struct pbuf *p;
   const int icmp_len = IP_HLEN + sizeof(struct icmp_hdr);
   LWIP_UNUSED_ARG(_i);
-
-  linkoutput_ctr = 0;
 
   test_netif_add();
   test_netif.output = arpless_output;
@@ -313,8 +527,6 @@ START_TEST(test_ip4_icmp_replylen_first_8)
   const int unreach_len = IP_HLEN + 8;
   LWIP_UNUSED_ARG(_i);
 
-  linkoutput_ctr = 0;
-
   test_netif_add();
   test_netif.output = arpless_output;
   p = pbuf_alloc(PBUF_IP, sizeof(unknown_proto), PBUF_RAM);
@@ -335,7 +547,10 @@ ip4_suite(void)
     TESTFUNC(test_ip4_frag),
     TESTFUNC(test_ip4_reass),
     TESTFUNC(test_127_0_0_1),
+    TESTFUNC(test_ipaddr_addr),
     TESTFUNC(test_ip4addr_aton),
+    TESTFUNC(test_ip4addr_ntoa),
+    TESTFUNC(test_ip4_addr_netmask_valid),
     TESTFUNC(test_ip4_icmp_replylen_short),
     TESTFUNC(test_ip4_icmp_replylen_first_8),
   };
