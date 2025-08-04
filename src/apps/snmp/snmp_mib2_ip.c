@@ -488,7 +488,9 @@ ip_NetToMediaTable_get_cell_value_core(size_t arp_table_index, const u32_t *colu
   struct netif *netif;
   struct eth_addr *ethaddr;
 
-  etharp_get_entry(arp_table_index, &ip, &netif, &ethaddr);
+  if(!etharp_get_entry(arp_table_index, &ip, &netif, &ethaddr)) {
+      return SNMP_ERR_NOSUCHINSTANCE;
+  }
 
   /* value */
   switch (*column) {
