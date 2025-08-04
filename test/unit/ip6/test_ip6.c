@@ -268,15 +268,18 @@ END_TEST
 
 struct test_addr_and_str {
   ip_addr_t addr;
+  u32_t bytes_after;
   const char *str;
 };
 
 START_TEST(test_ip6_ntoa)
 {
   struct test_addr_and_str tests[] = {
-    {IPADDR6_INIT_HOST(0xfe800000, 0x00000000, 0xb2a1a2ff, 0xfea3a4a5), "FE80::B2A1:A2FF:FEA3:A4A5"}, /* test shortened zeros */
-    {IPADDR6_INIT_HOST(0xfe800000, 0xff000000, 0xb2a1a2ff, 0xfea3a4a5), "FE80:0:FF00:0:B2A1:A2FF:FEA3:A4A5"}, /* don't omit single zero blocks */
-    {IPADDR6_INIT_HOST(0xfe800000, 0xff000000, 0xb2000000, 0x0000a4a5), "FE80:0:FF00:0:B200::A4A5"}, /* omit longest zero block */
+    {IPADDR6_INIT_HOST(0xfe800000, 0x00000000, 0xb2a1a2ff, 0xfea3a4a5), 0, "FE80::B2A1:A2FF:FEA3:A4A5"}, /* test shortened zeros */
+    {IPADDR6_INIT_HOST(0xfe800000, 0xff000000, 0xb2a1a2ff, 0xfea3a4a5), 0, "FE80:0:FF00:0:B2A1:A2FF:FEA3:A4A5"}, /* don't omit single zero blocks */
+    {IPADDR6_INIT_HOST(0xfe800000, 0xff000000, 0xb2000000, 0x0000a4a5), 0, "FE80:0:FF00:0:B200::A4A5"}, /* omit longest zero block */
+    {IPADDR6_INIT_HOST(0x20010db8, 0x00010002, 0x00030004, 0x00050000), 0, "2001:DB8:1:2:3:4:5:0"}, /* do not omit last zero due to out-of-bounds bug */
+    {IPADDR6_INIT_HOST(0x20010db8, 0x00010002, 0x00030004, 0x00050000), ~0, "2001:DB8:1:2:3:4:5:0"}, /* do not omit last zero due to out-of-bounds bug */
   };
   char buf[128];
   char *str;
