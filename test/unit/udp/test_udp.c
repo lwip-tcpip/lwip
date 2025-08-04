@@ -199,6 +199,7 @@ test_udp_create_test_packet(u16_t length, u16_t port, u32_t dst_addr)
   fail_unless(!ret);
   ih = (struct ip_hdr *)p->payload;
   memset(ih, 0, sizeof(*ih));
+  ih->src.addr = 0x08080808;
   ih->dest.addr = dst_addr;
   ih->_len = lwip_htons(p->tot_len);
   ih->_ttl = 32;
@@ -350,16 +351,24 @@ START_TEST(test_udp_bind)
   ip_addr_set_any_val(1, ip2);
 
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V4);
+#if LWIP_IPV6
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V6);
+#endif
 
   err1 = udp_bind(pcb1, &ip1, 2105);
+#if LWIP_IPV6
   err2 = udp_bind(pcb2, &ip2, 2105);
+#endif
 
   fail_unless(err1 == ERR_OK);
+#if LWIP_IPV6
   fail_unless(err2 == ERR_OK);
+#endif
 
   udp_remove(pcb1);
+#if LWIP_IPV6
   udp_remove(pcb2);
+#endif
 
   /* bind on same port using SAME IPv4 address type */
   ip_addr_set_any_val(0, ip1);
@@ -395,41 +404,65 @@ START_TEST(test_udp_bind)
 
   /* Bind with different IP address type */
   ip_addr_set_any_val(0, ip1);
+#if LWIP_IPV6
   ip_addr_set_any_val(1, ip2);
+#endif
 
+#if LWIP_IPV6
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+#endif
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
 
+#if LWIP_IPV6
   err1 = udp_bind(pcb1, &ip1, 2105);
+#endif
   err2 = udp_bind(pcb2, &ip2, 2105);
 
+#if LWIP_IPV6
   fail_unless(err1 == ERR_OK);
+#endif
   fail_unless(err2 == ERR_OK);
 
+#if LWIP_IPV6
   udp_remove(pcb1);
+#endif
   udp_remove(pcb2);
 
   /* Bind with different IP numbers */
+#if LWIP_IPV6
   IP_ADDR4(&ip1, 1, 2, 3, 4);
+#endif
   IP_ADDR4(&ip2, 4, 3, 2, 1);
 
+#if LWIP_IPV6
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+#endif
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
 
+#if LWIP_IPV6
   err1 = udp_bind(pcb1, &ip1, 2105);
+#endif
   err2 = udp_bind(pcb2, &ip2, 2105);
 
+#if LWIP_IPV6
   fail_unless(err1 == ERR_OK);
+#endif
   fail_unless(err2 == ERR_OK);
 
+#if LWIP_IPV6
   udp_remove(pcb1);
+#endif
   udp_remove(pcb2);
 
   /* Bind with same IP numbers */
   IP_ADDR4(&ip1, 1, 2, 3, 4);
   IP_ADDR4(&ip2, 1, 2, 3, 4);
 
+#if LWIP_IPV6
   pcb1 = udp_new_ip_type(IPADDR_TYPE_V6);
+#else
+  pcb1 = udp_new_ip_type(IPADDR_TYPE_V4);
+#endif
   pcb2 = udp_new_ip_type(IPADDR_TYPE_V4);
 
   err1 = udp_bind(pcb1, &ip1, 2105);

@@ -93,7 +93,11 @@ u8_t
 ip4_addr_netmask_valid(u32_t netmask)
 {
   u32_t mask;
-  u32_t nm_hostorder = lwip_htonl(netmask);
+  u32_t nm_hostorder = lwip_ntohl(netmask);
+
+  if (nm_hostorder == 0) {
+    return 0;
+  }
 
   /* first, check for the first zero */
   for (mask = 1UL << 31 ; mask != 0; mask >>= 1) {
@@ -177,8 +181,21 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
           break;
         val = (val * base) + (u32_t)(c - '0');
         c = *++cp;
+#if LWIP_NO_CTYPE_H
+      } else if (base == 16) {
+        u32_t a;
+        if (lwip_in_range(c, 'a', 'f')) {
+          a = 'a';
+        } else if (lwip_in_range(c, 'A', 'F')) {
+          a = 'A';
+        } else {
+          break;
+        }
+        val = (val << 4) | (u32_t)(c - a + 10);
+#else /* LWIP_NO_CTYPE_H */
       } else if (base == 16 && lwip_isxdigit(c)) {
         val = (val << 4) | (u32_t)(c + 10 - (lwip_islower(c) ? 'a' : 'A'));
+#endif /* LWIP_NO_CTYPE_H */
         c = *++cp;
       } else {
         break;
@@ -212,10 +229,8 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
    */
   switch (pp - parts + 1) {
 
-    case 0:
-      return 0;       /* initial nondigit */
-
-    case 1:             /* a -- 32 bits */
+    default:            /* a -- 32 bits */
+      LWIP_ASSERT("unhandled", pp == parts);
       break;
 
     case 2:             /* a.b -- 8.24 bits */
@@ -246,9 +261,6 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
         return 0;
       }
       val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
-      break;
-    default:
-      LWIP_ASSERT("unhandled", 0);
       break;
   }
   if (addr) {
