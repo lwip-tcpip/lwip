@@ -260,7 +260,7 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
       src->addr[i] = puc[datagram_offset + 7 - i];
     }
     datagram_offset += 8;
-  } else if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_SHORT) {
+  } else if (addr_mode == IEEE_802154_FC_SRC_ADDR_MODE_SHORT) {
     /* short address (16 bit) */
     if ((u32_t)datagram_offset + 2U > p->len) {
       return ERR_VAL;
