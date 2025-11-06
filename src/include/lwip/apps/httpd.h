@@ -242,6 +242,48 @@ void httpd_post_data_recved(void *connection, u16_t recved_len);
 
 #endif /* LWIP_HTTPD_SUPPORT_POST */
 
+#if LWIP_HTTPD_SUPPORT_WEBSOCKET
+
+#include "lwip/altcp.h" // must use for websockets
+
+typedef enum {
+  WS_TEXT_MODE = 0x01,
+  WS_BIN_MODE  = 0x02,
+} WS_MODE;
+
+typedef void (*tWsHandler)(struct altcp_pcb *pcb, uint8_t *data, u16_t data_len, uint8_t mode);
+typedef void (*tWsOpenHandler)(struct altcp_pcb *pcb, const char *uri);
+
+/**
+ * Write data into a websocket.
+ *
+ * @param pcb tcp_pcb to send.
+ * @param data data to send.
+ * @param len data length.
+ * @param mode WS_TEXT_MODE or WS_BIN_MODE.
+ * @return ERR_OK if write succeeded.
+ */
+err_t httpd_websocket_write(struct altcp_pcb *pcb, const uint8_t *data, uint16_t len, uint8_t mode);
+
+/**
+ * Broadcast a message to all connected WebSocket clients.
+ * 
+ * @param data data to send.
+ * @param len data length.
+ * @param mode WS_TEXT_MODE or WS_BIN_MODE.
+ * @return ERR_OK if write succeeded.
+ */
+err_t httpd_websocket_broadcast(const uint8_t *data, uint16_t len, uint8_t mode);
+
+/**
+ * Register websocket callback functions. Use NULL if callback is not needed.
+ *
+ * @param ws_open_cb called when new websocket is opened.
+ * @param ws_cb called when data is received from client.
+ */
+void httpd_websocket_register_callbacks(tWsOpenHandler ws_open_cb, tWsHandler ws_cb);
+#endif /* LWIP_HTTPD_SUPPORT_WEBSOCKET */
+
 void httpd_init(void);
 
 #if HTTPD_ENABLE_HTTPS

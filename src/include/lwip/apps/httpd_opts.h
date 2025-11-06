@@ -136,6 +136,11 @@
 #define LWIP_HTTPD_SUPPORT_POST   0
 #endif
 
+/** Set this to 1 to support Websockets */
+#if !defined LWIP_HTTPD_SUPPORT_WEBSOCKET || defined __DOXYGEN__
+#define LWIP_HTTPD_SUPPORT_WEBSOCKET 0
+#endif
+
 /* The maximum number of parameters that the CGI handler can be sent. */
 #if !defined LWIP_HTTPD_MAX_CGI_PARAMETERS || defined __DOXYGEN__
 #define LWIP_HTTPD_MAX_CGI_PARAMETERS 16
@@ -188,7 +193,8 @@
 /** Set this to 1 to use a memp pool for allocating
  * struct http_state instead of the heap.
  * If enabled, you'll need to define MEMP_NUM_PARALLEL_HTTPD_CONNS
- * (and MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS for SSI) to set the size of
+ * (and MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS for SSI,
+ * MEMP_NUM_PARALLEL_HTTPD_WEBSOCKET_CONNS for WebSockets) to set the size of
  * the pool(s).
  */
 #if !defined HTTPD_USE_MEM_POOL || defined __DOXYGEN__
