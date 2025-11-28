@@ -848,9 +848,14 @@ tcp_process(struct tcp_pcb *pcb)
   }
 
   if ((flags & TCP_SYN) && (pcb->state != SYN_SENT && pcb->state != SYN_RCVD)) {
-    /* Cope with new connection attempt after remote end crashed.
-     * NOTE: We don't process SYN payload here - this is an unexpected SYN
-     * on an already established connection, so we just ACK it and continue. */
+    #if SYN_WITH_PAYLOAD_ENABLED
+    /* RFC Compliance: Handle SYN with payload in unexpected states.
+     * Update rcv_nxt to account for SYN flag and any payload to maintain
+     * correct sequence tracking and generate proper ACK numbers.
+     * Note: Sequence nb could be the same becuase we don't intend a new seq nb  */
+    pcb->rcv_nxt += tcplen;
+    #endif
+    /* Cope with new connection attempt after remote end crashed */
     tcp_ack_now(pcb);
     return ERR_OK;
   }
