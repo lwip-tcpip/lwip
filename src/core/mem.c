@@ -585,8 +585,8 @@ mem_sanity(void)
     LWIP_ASSERT("heap element aligned", LWIP_MEM_ALIGN(mem) == mem);
     LWIP_ASSERT("heap element prev ptr valid", mem->prev <= MEM_SIZE_ALIGNED);
     LWIP_ASSERT("heap element next ptr valid", mem->next <= MEM_SIZE_ALIGNED);
-    LWIP_ASSERT("heap element prev ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->prev) == ptr_to_mem(mem->prev)));
-    LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next) == ptr_to_mem(mem->next)));
+    LWIP_ASSERT("heap element prev ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->prev)) == ptr_to_mem(mem->prev));
+    LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next)) == ptr_to_mem(mem->next));
 
     if (last_used == 0) {
       /* 2 unused elements in a row? */
