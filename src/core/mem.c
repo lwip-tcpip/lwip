@@ -576,7 +576,7 @@ mem_sanity(void)
   last_used = mem->used;
   LWIP_ASSERT("heap element prev ptr valid", mem->prev == 0);
   LWIP_ASSERT("heap element next ptr valid", mem->next <= MEM_SIZE_ALIGNED);
-  LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next) == ptr_to_mem(mem->next)));
+  LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next)) == ptr_to_mem(mem->next));
 
   /* check all elements before the end of the heap */
   for (mem = ptr_to_mem(mem->next);
@@ -585,8 +585,8 @@ mem_sanity(void)
     LWIP_ASSERT("heap element aligned", LWIP_MEM_ALIGN(mem) == mem);
     LWIP_ASSERT("heap element prev ptr valid", mem->prev <= MEM_SIZE_ALIGNED);
     LWIP_ASSERT("heap element next ptr valid", mem->next <= MEM_SIZE_ALIGNED);
-    LWIP_ASSERT("heap element prev ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->prev) == ptr_to_mem(mem->prev)));
-    LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next) == ptr_to_mem(mem->next)));
+    LWIP_ASSERT("heap element prev ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->prev)) == ptr_to_mem(mem->prev));
+    LWIP_ASSERT("heap element next ptr aligned", LWIP_MEM_ALIGN(ptr_to_mem(mem->next)) == ptr_to_mem(mem->next));
 
     if (last_used == 0) {
       /* 2 unused elements in a row? */
@@ -948,6 +948,7 @@ mem_malloc_adjust_lfree:
           lfree = cur;
           LWIP_ASSERT("mem_malloc: !lfree->used", ((lfree == ram_end) || (!lfree->used)));
         }
+        MEM_SANITY();
         LWIP_MEM_ALLOC_UNPROTECT();
         sys_mutex_unlock(&mem_mutex);
         LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
@@ -960,7 +961,6 @@ mem_malloc_adjust_lfree:
 #if MEM_OVERFLOW_CHECK
         mem_overflow_init_element(mem, size_in);
 #endif
-        MEM_SANITY();
         return (u8_t *)mem + SIZEOF_STRUCT_MEM + MEM_SANITY_OFFSET;
       }
     }
