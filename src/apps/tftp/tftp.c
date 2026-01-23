@@ -398,13 +398,17 @@ tftp_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr
 
       break;
     }
-    case PP_HTONS(TFTP_ERROR):
+
+    case PP_HTONS(TFTP_ERROR): {
+      u16_t err = lwip_ntohs(sbuf[1]);
+
       if (tftp_state.handle != NULL) {
         pbuf_remove_header(p, TFTP_HEADER_LENGTH);
-        tftp_state.ctx->error(tftp_state.handle, sbuf[1], (const char*)p->payload, p->len);
+        tftp_state.ctx->error(tftp_state.handle, err, (const char*)p->payload, p->len);
         close_handle();
       }
       break;
+    }
     default:
       send_error(addr, port, TFTP_ERROR_ILLEGAL_OPERATION, "Unknown operation");
       break;
