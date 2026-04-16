@@ -242,6 +242,73 @@ void httpd_post_data_recved(void *connection, u16_t recved_len);
 
 #endif /* LWIP_HTTPD_SUPPORT_POST */
 
+#if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
+
+/**
+ * @ingroup httpd
+ * Callback to process HTTP headers before the file is opened.
+ *
+ * Called for each HTTP GET request after the request line is parsed but
+ * before fs_open() is called. This allows the application to inspect
+ * HTTP headers (cookies, authorization, etc.) and optionally replace the
+ * requested URI.
+ *
+ * The return value is an opaque object that will be passed to
+ * httpd_headers_after_file_open() if that callback is enabled. This can
+ * be used to pass parsed header data to the post-open callback without
+ * storing it globally.
+ *
+ * @param headers Pointer to the HTTP headers section (after request line).
+ *                This points to the first character after the CRLF that
+ *                terminates the request line (e.g., "Host: ...\r\n...").
+ * @param headers_len Length of the headers data.
+ * @param uri The requested URI from the request line.
+ * @param replace_uri Buffer to optionally provide a different URI. If the
+ *                    first character is non-zero, this URI will be used
+ *                    instead of the original request URI.
+ * @param replace_uri_len Size of the replace_uri buffer.
+ * @return Opaque object pointer passed to httpd_headers_after_file_open(),
+ *         or NULL if no object is needed.
+ */
+extern void* httpd_headers_before_file_open(const char* headers, u16_t headers_len,
+                                           const char *uri, char *replace_uri,
+                                           u16_t replace_uri_len);
+#endif /* LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN */
+
+#if LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN
+/* we have to prototype this struct here to make it available for the handler */
+struct fs_file;
+
+/**
+ * @ingroup httpd
+ * Callback to process HTTP headers after the file is opened.
+ *
+ * Called for each HTTP GET request after fs_open() succeeds and after CGI
+ * handling (if enabled). This allows the application to inspect HTTP headers
+ * (cookies, authorization, etc.) and optionally store state in the file
+ * structure for later use in SSI or dynamic file generation.
+ *
+ * The application can access file->state or file->pextension to retrieve or
+ * store per-request connection data that was initialized by fs_state_init().
+ *
+ * @param file The opened file handle (from fs_open()).
+ * @param headers Pointer to the HTTP headers section (after request line).
+ *                This points to the first character after the CRLF that
+ *                terminates the request line (e.g., "Host: ...\r\n...").
+ * @param headers_len Length of the headers data.
+ * @param state The opaque object pointer returned from
+ *              httpd_headers_before_file_open(), if that callback is enabled.
+ *              This can be used to pass parsed header data from the pre-open
+ *              callback without storing it globally.
+ */
+extern void httpd_headers_after_file_open(struct fs_file *file, const char* headers,
+                                           u16_t headers_len
+#if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
+                                           , void *state
+#endif
+                                          );
+#endif /* LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN */
+
 void httpd_init(void);
 
 #if HTTPD_ENABLE_HTTPS

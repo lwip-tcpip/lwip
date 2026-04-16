@@ -163,6 +163,37 @@
 #define LWIP_HTTPD_MAX_TAG_INSERT_LEN 192
 #endif
 
+/** Set this to 1 to add a callback for HTTP headers processing.
+ *
+ * The httpd_headers_before_file_open() function is called for each HTTP GET
+ * request received, before the file is opened.
+ * The callback can parse headers and replace the URI for file to be opened.
+ * It can also pass an object to httpd_headers_after_file_open() if it is
+ * enabled (see below).
+ */
+#if !defined LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN || defined __DOXYGEN__
+#define LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN 0
+#endif
+
+/** Maximum length of the filename to replace the original URI in the
+ * httpd_headers_before_file_open() callback.
+ * This buffer is allocated on the stack.
+ */
+#if !defined LWIP_HTTPD_HEADERS_URI_REPLACE_LEN || defined __DOXYGEN__
+#define LWIP_HTTPD_HEADERS_URI_REPLACE_LEN 63
+#endif
+
+/** Set this to 1 to add a callback for HTTP headers processing.
+ *
+ * The httpd_headers_after_file_open() function is called for each HTTP GET
+ * request received, after the file is opened, and after CGI handling,
+ * if it is enabled.
+ * The callback can parse headers and store state in the file structure.
+ */
+#if !defined LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN || defined __DOXYGEN__
+#define LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN 0
+#endif
+
 #if !defined LWIP_HTTPD_POST_MANUAL_WND || defined __DOXYGEN__
 #define LWIP_HTTPD_POST_MANUAL_WND  0
 #endif

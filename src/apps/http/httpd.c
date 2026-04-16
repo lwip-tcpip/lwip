@@ -2131,7 +2131,29 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
           } else
 #endif /* LWIP_HTTPD_SUPPORT_POST */
           {
-            return http_find_file(hs, uri, is_09);
+#if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
+            err_t err;
+            void *obj;
+            char replace_uri[LWIP_HTTPD_HEADERS_URI_REPLACE_LEN + 1];
+            replace_uri[0] = 0;
+            obj = httpd_headers_before_file_open(crlf + 2, data_len - (crlf + 2 - data),
+                                                uri, replace_uri,
+                                                LWIP_HTTPD_HEADERS_URI_REPLACE_LEN);
+            if (replace_uri[0] != 0) {
+              uri = replace_uri;
+            }
+#endif /* LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN */
+            err = http_find_file(hs, uri, is_09);
+#if LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN
+            if (err == ERR_OK) {
+              httpd_headers_after_file_open(hs->handle, crlf + 2, data_len - (crlf + 2 - data)
+#if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
+                                             , obj
+#endif /* LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN */
+                                            );
+            }
+#endif /* LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN */
+            return err;
           }
         }
       } else {
