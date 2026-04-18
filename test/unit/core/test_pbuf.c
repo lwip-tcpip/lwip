@@ -2,6 +2,7 @@
 
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
+#include "lwip/tcpip.h"
 
 #if !LWIP_STATS || !MEM_STATS ||!MEMP_STATS
 #error "This tests needs MEM- and MEMP-statistics enabled"
@@ -24,6 +25,145 @@ pbuf_teardown(void)
   lwip_check_ensure_no_alloc(SKIP_POOL(MEMP_SYS_TIMEOUT));
 }
 
+#if LWIP_SUPPORT_CUSTOM_PBUF
+static struct pbuf *custom_free_p;
+
+static void
+custom_free(struct pbuf *p)
+{
+  custom_free_p = p;
+}
+
+START_TEST(test_pbuf_alloced_custom)
+{
+  struct pbuf_custom cp;
+  struct pbuf *p;
+
+  memset(&cp, 0, sizeof(cp));
+  cp.custom_free_function = custom_free;
+
+  p = pbuf_alloced_custom(PBUF_IP, 0xffffU, PBUF_POOL, &cp, NULL, 0);
+  fail_unless(p == NULL);
+
+  p = pbuf_alloced_custom(PBUF_IP, 0U, PBUF_POOL, &cp, NULL, 100);
+  fail_unless(p != NULL && p->payload == NULL);
+
+  custom_free_p = NULL;
+  pbuf_free(p);
+  fail_unless(custom_free_p == p);
+
+  p = pbuf_alloced_custom(PBUF_IP, 0U, PBUF_POOL, &cp, &cp, 100);
+  fail_unless(p != NULL && p->payload != NULL);
+
+  pbuf_realloc(p, 0U);
+
+  custom_free_p = NULL;
+  pbuf_ref(p);
+  pbuf_free(p);
+  fail_unless(custom_free_p == NULL);
+  pbuf_free(p);
+  fail_unless(custom_free_p == p);
+}
+#endif
+
+static void
+free_allocated_pbufs(struct pbuf *head)
+{
+  struct pbuf *p;
+
+  while (head != NULL) {
+    p = head;
+    head = (struct pbuf *)p->payload;
+    pbuf_free(p);
+  }
+}
+
+START_TEST(test_pbuf_alloc_failures)
+{
+  struct pbuf *head;
+  struct pbuf *p;
+  struct pbuf *q;
+  struct pbuf *r;
+  int ret;
+  LWIP_UNUSED_ARG(_i);
+
+  if (sizeof(u16_t) == sizeof(mem_size_t)) {
+    /* Payload length overflow */
+    p = pbuf_alloc(PBUF_IP, 0xffffU, PBUF_RAM);
+    fail_unless(p == NULL);
+
+    /* Allocation length overflow */
+    p = pbuf_alloc(PBUF_RAW, 0xffffU, PBUF_RAM);
+    fail_unless(p == NULL);
+  }
+
+  /* Exhaust MEMP_PBUF_POOL */
+
+  head = NULL;
+
+  while (1) {
+    p = pbuf_alloc(PBUF_RAW, 0xffffU, PBUF_POOL);
+    if (p == NULL) {
+      break;
+    }
+
+    p->payload = head;
+    head = p;
+  }
+
+  free_allocated_pbufs(head);
+
+  do {
+    ret = tcpip_thread_poll_one();
+  } while (ret == 0);
+
+  /* Exhaust MEMP_PBUF */
+
+  head = NULL;
+
+  while (1) {
+    p = pbuf_alloc_reference(NULL, 0, PBUF_ROM);
+    if (p == NULL) {
+      break;
+    }
+
+    p->payload = head;
+    head = p;
+  }
+
+  free_allocated_pbufs(head);
+
+  /* Exhaust mem_malloc() */
+
+  head = NULL;
+
+  while (1) {
+    p = pbuf_alloc(PBUF_RAW, 0x8000U, PBUF_RAM);
+
+    if (p == NULL) {
+      q = pbuf_alloc(PBUF_RAW, 0xffffU, PBUF_POOL);
+      fail_unless(q != NULL);
+
+      if (q != NULL) {
+        r = pbuf_coalesce(q, PBUF_RAW);
+        fail_unless(r == q);
+
+        r = pbuf_clone(PBUF_RAW, PBUF_RAM, q);
+        fail_unless(r == NULL);
+
+        pbuf_free(q);
+      }
+
+      break;
+    }
+
+    p->payload = head;
+    head = p;
+  }
+
+  free_allocated_pbufs(head);
+}
+END_TEST
 
 #define TESTBUFSIZE_1 65535
 #define TESTBUFSIZE_2 65530
@@ -32,7 +172,7 @@ static u8_t testbuf_1[TESTBUFSIZE_1];
 static u8_t testbuf_1a[TESTBUFSIZE_1];
 static u8_t testbuf_2[TESTBUFSIZE_2];
 static u8_t testbuf_2a[TESTBUFSIZE_2];
-static u8_t testbuf_3[TESTBUFSIZE_3];
+static u8_t testbuf_3[TESTBUFSIZE_3 + 1];
 static u8_t testbuf_3a[TESTBUFSIZE_3];
 
 /* Test functions */
@@ -62,6 +202,254 @@ START_TEST(test_pbuf_alloc_zero_pbufs)
   p = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   fail_unless(p != NULL);
   if (p != NULL) {
+    pbuf_free(p);
+  }
+}
+END_TEST
+
+START_TEST(test_pbuf_realloc)
+{
+  struct pbuf *p;
+  LWIP_UNUSED_ARG(_i);
+
+  p = pbuf_alloc(PBUF_RAW, 0xffffU, PBUF_POOL);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    pbuf_realloc(p, 0xffffU);
+    pbuf_realloc(p, 0x8000U);
+    pbuf_realloc(p, 0U);
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_RAW, 100, PBUF_RAM);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    pbuf_realloc(p, 100U);
+    pbuf_realloc(p, 50U);
+    pbuf_realloc(p, 0U);
+    pbuf_free(p);
+  }
+}
+END_TEST
+
+START_TEST(test_pbuf_header)
+{
+  struct pbuf *p;
+  struct pbuf *q;
+  u8_t err;
+  u8_t *payload;
+  LWIP_UNUSED_ARG(_i);
+
+  p = pbuf_alloc(PBUF_IP, 100, PBUF_RAM);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    payload = (u8_t *)p->payload;
+
+#ifdef LWIP_NOASSERT
+    err = pbuf_add_header(NULL, 0);
+    fail_unless(err == 1);
+#endif
+
+    err = pbuf_add_header(p, 0x10000U);
+    fail_unless(err == 1);
+
+    err = pbuf_add_header(p, 0xffffU);
+    fail_unless(err == 1);
+
+    err = pbuf_add_header(p, 200);
+    fail_unless(err == 1);
+
+    err = pbuf_add_header(p, 0);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload);
+
+    err = pbuf_header(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 1);
+
+    err = pbuf_header_force(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 2);
+
+    err = pbuf_add_header(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 3);
+
+    err = pbuf_add_header_force(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 4);
+
+    err = pbuf_header_force(p, -1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 3);
+
+    err = pbuf_header(p, -1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 2);
+
+    err = pbuf_remove_header(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 1);
+
+    err = pbuf_remove_header(p, 0);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 1);
+
+#ifdef LWIP_NOASSERT
+    err = pbuf_remove_header(NULL, 0);
+    fail_unless(err == 1);
+#endif
+
+    err = pbuf_remove_header(p, 0x10000U);
+    fail_unless(err == 1);
+
+    err = pbuf_remove_header(p, 0xffffU);
+    fail_unless(err == 1);
+
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_IP, 100, PBUF_REF);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    payload = (u8_t *)p->payload;
+
+    err = pbuf_add_header(p, 1);
+    fail_unless(err == 1);
+
+    err = pbuf_add_header_force(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload - 1);
+
+    err = pbuf_remove_header(p, 1);
+    fail_unless(err == 0);
+    fail_unless(p->payload == payload);
+
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_RAW, 0xffffU, PBUF_POOL);
+
+  if (p != NULL) {
+    q = pbuf_free_header(p, 0x8000U);
+    fail_unless(q != NULL);
+
+    p = pbuf_free_header(q, 0x8000U);
+    fail_unless(p == NULL);
+  }
+}
+END_TEST
+
+START_TEST(test_pbuf_chain)
+{
+  struct pbuf *p;
+  struct pbuf *q;
+  struct pbuf *r;
+  u16_t p_clen;
+  u16_t q_clen;
+  LWIP_UNUSED_ARG(_i);
+
+  pbuf_ref(NULL);
+  pbuf_cat(NULL, NULL);
+
+  p = pbuf_alloc(PBUF_IP, 100, PBUF_RAM);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    p_clen = pbuf_clen(p);
+    pbuf_cat(NULL, p);
+    pbuf_cat(p, NULL);
+
+    q = pbuf_alloc(PBUF_IP, 100, PBUF_RAM);
+    fail_unless(q != NULL);
+
+    if (q != NULL) {
+      q_clen = pbuf_clen(q);
+      pbuf_cat(p, q);
+      fail_unless(pbuf_clen(p) == p_clen + q_clen);
+      p_clen += q_clen;
+    }
+
+    q = pbuf_alloc(PBUF_IP, 100, PBUF_RAM);
+    fail_unless(q != NULL);
+
+    if (q != NULL) {
+      q_clen = pbuf_clen(q);
+      pbuf_chain(p, q);
+      fail_unless(pbuf_clen(p) == p_clen + q_clen);
+      pbuf_free(q);
+    }
+
+    pbuf_free(p);
+  }
+
+  p = pbuf_alloc(PBUF_IP, 100, PBUF_RAM);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    q = pbuf_alloc(PBUF_IP, 100, PBUF_RAM);
+    fail_unless(q != NULL);
+
+    if (q != NULL) {
+      pbuf_chain(p, q);
+      r = pbuf_dechain(p);
+      fail_unless(r == q);
+
+      r = pbuf_dechain(p);
+      fail_unless(r == NULL);
+
+      pbuf_free(q);
+    }
+
+    pbuf_free(p);
+  }
+}
+END_TEST
+
+START_TEST(test_pbuf_get_contiguous)
+{
+  u8_t buf[128];
+  struct pbuf *p;
+  struct pbuf *q;
+  u8_t *b;
+  LWIP_UNUSED_ARG(_i);
+
+  b = (u8_t *)pbuf_get_contiguous(NULL, NULL, 0, 0, 0);
+  fail_unless(b == NULL);
+
+  p = pbuf_alloc(PBUF_RAW, 64, PBUF_RAM);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    b = (u8_t *)pbuf_get_contiguous(p, buf, 0, 1, 0);
+    fail_unless(b == NULL);
+
+    b = (u8_t *)pbuf_get_contiguous(p, buf, 128, 128, 0);
+    fail_unless(b == NULL);
+
+    b = (u8_t *)pbuf_get_contiguous(p, buf, 128, 1, 1);
+    fail_unless(b - 1 == p->payload);
+
+    b = (u8_t *)pbuf_get_contiguous(p, buf, 128, 1, 100);
+    fail_unless(b == NULL);
+
+    q = pbuf_alloc(PBUF_RAW, 64, PBUF_RAM);
+    fail_unless(q != NULL);
+
+    if (q != NULL) {
+      pbuf_cat(p, q);
+
+      b = (u8_t *)pbuf_get_contiguous(p, NULL, 0, 200, 1);
+      fail_unless(b == NULL);
+
+      b = (u8_t *)pbuf_get_contiguous(p, buf, 128, 128, 0);
+      fail_unless(b == buf);
+    }
+
     pbuf_free(p);
   }
 }
@@ -165,6 +553,12 @@ START_TEST(test_pbuf_copy_partial_pbuf)
   fail_unless(dest != NULL);
   memset(dest->payload, 0, dest->len);
 
+  /* From is NULL */
+  err = pbuf_copy_partial_pbuf(dest, NULL, a->tot_len, 4);
+  fail_unless(err == ERR_ARG);
+  /* To is NULL */
+  err = pbuf_copy_partial_pbuf(NULL, a, a->tot_len, 1);
+  fail_unless(err == ERR_ARG);
   /* Don't copy if data will not fit */
   err = pbuf_copy_partial_pbuf(dest, a, a->tot_len, 4);
   fail_unless(err == ERR_ARG);
@@ -229,10 +623,16 @@ START_TEST(test_pbuf_queueing_bigger_than_64k)
   fail_unless(p2 != NULL);
   p3 = pbuf_alloc(PBUF_RAW, TESTBUFSIZE_3, PBUF_POOL);
   fail_unless(p3 != NULL);
+  err = pbuf_take(NULL, testbuf_1, TESTBUFSIZE_1);
+  fail_unless(err == ERR_ARG);
+  err = pbuf_take(p1, NULL, TESTBUFSIZE_1);
+  fail_unless(err == ERR_ARG);
   err = pbuf_take(p1, testbuf_1, TESTBUFSIZE_1);
   fail_unless(err == ERR_OK);
   err = pbuf_take(p2, testbuf_2, TESTBUFSIZE_2);
   fail_unless(err == ERR_OK);
+  err = pbuf_take(p3, testbuf_3, TESTBUFSIZE_3 + 1);
+  fail_unless(err == ERR_MEM);
   err = pbuf_take(p3, testbuf_3, TESTBUFSIZE_3);
   fail_unless(err == ERR_OK);
 
@@ -353,19 +753,85 @@ START_TEST(test_pbuf_get_put_at_edge)
 }
 END_TEST
 
+START_TEST(test_pbuf_memstr)
+{
+  u8_t buf[2];
+  char str[2];
+  struct pbuf *p;
+  u16_t result;
+  LWIP_UNUSED_ARG(_i);
+
+  p = pbuf_alloc(PBUF_RAW, 0x8000U, PBUF_POOL);
+  fail_unless(p != NULL);
+
+  if (p != NULL) {
+    result = pbuf_memcmp(p, 0xffffU, buf, 0);
+    fail_unless(result == 0xffff);
+
+    pbuf_put_at(p, 0x0U, 0);
+    pbuf_put_at(p, 0x1U, 1);
+    pbuf_put_at(p, 0x2U, 2);
+    pbuf_put_at(p, 0x7ffeU, 1);
+    pbuf_put_at(p, 0x7fffU, 2);
+
+    buf[0] = 1;
+    buf[1] = 2;
+    result = pbuf_memcmp(p, 0x7ffeU, buf, 2);
+    fail_unless(result == 0);
+
+    result = pbuf_memfind(p, buf, 2, 0x7ffeU);
+    fail_unless(result == 0x7ffe);
+
+    result = pbuf_strstr(p, NULL);
+    fail_unless(result == 0xffff);
+
+    str[0] = 0;
+    result = pbuf_strstr(p, str);
+    fail_unless(result == 0xffff);
+
+    str[0] = 1;
+    str[1] = 0;
+    result = pbuf_strstr(p, str);
+    fail_unless(result == 0x1);
+
+    buf[0] = 3;
+
+    result = pbuf_memfind(p, buf, 2, 0x7ffeU);
+    fail_unless(result == 0xffff);
+
+    result = pbuf_memfind(p, buf, 2, 0x9000U);
+    fail_unless(result == 0xffff);
+
+    result = pbuf_memcmp(p, 0x7ffeU, buf, 2);
+    fail_unless(result == 1);
+
+    pbuf_free(p);
+  }
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 pbuf_suite(void)
 {
   testfunc tests[] = {
+#if LWIP_SUPPORT_CUSTOM_PBUF
+    TESTFUNC(test_pbuf_alloced_custom),
+#endif
+    TESTFUNC(test_pbuf_alloc_failures),
     TESTFUNC(test_pbuf_alloc_zero_pbufs),
+    TESTFUNC(test_pbuf_realloc),
+    TESTFUNC(test_pbuf_header),
+    TESTFUNC(test_pbuf_chain),
+    TESTFUNC(test_pbuf_get_contiguous),
     TESTFUNC(test_pbuf_copy_zero_pbuf),
     TESTFUNC(test_pbuf_copy_unmatched_chains),
     TESTFUNC(test_pbuf_copy_partial_pbuf),
     TESTFUNC(test_pbuf_split_64k_on_small_pbufs),
     TESTFUNC(test_pbuf_queueing_bigger_than_64k),
     TESTFUNC(test_pbuf_take_at_edge),
-    TESTFUNC(test_pbuf_get_put_at_edge)
+    TESTFUNC(test_pbuf_get_put_at_edge),
+    TESTFUNC(test_pbuf_memstr)
   };
   return create_suite("PBUF", tests, sizeof(tests)/sizeof(testfunc), pbuf_setup, pbuf_teardown);
 }
