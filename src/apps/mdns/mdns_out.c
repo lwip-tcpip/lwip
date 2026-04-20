@@ -62,7 +62,7 @@ static void mdns_clear_outmsg(struct mdns_outmsg *outmsg);
 void
 mdns_prepare_txtdata(struct mdns_service *service)
 {
-  memset(&service->txtdata, 0, sizeof(struct mdns_domain));
+  memset(&service->txtdata, 0, sizeof(struct mdns_txtdata));
   if (service->txt_fn) {
     service->txt_fn(service, service->txt_userdata);
   }
@@ -508,7 +508,7 @@ mdns_add_txt_answer(struct mdns_outpacket *reply, struct mdns_outmsg *msg,
   }
   LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Responding with TXT record\n"));
   return mdns_add_answer(reply, &service_instance, DNS_RRTYPE_TXT, DNS_RRCLASS_IN,
-                         msg->cache_flush, ttl, (u8_t *) &service->txtdata.name,
+                         msg->cache_flush, ttl, service->txtdata.rdata,
                          service->txtdata.length, NULL);
 }
 

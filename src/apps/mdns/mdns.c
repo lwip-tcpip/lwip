@@ -1272,7 +1272,7 @@ mdns_parse_pkt_known_answers(struct netif *netif, struct mdns_packet *pkt,
         } else if (match & REPLY_SERVICE_TXT) {
           mdns_prepare_txtdata(service);
           if (service->txtdata.length == ans.rd_length &&
-              pbuf_memcmp(pkt->pbuf, ans.rd_offset, service->txtdata.name, ans.rd_length) == 0) {
+              pbuf_memcmp(pkt->pbuf, ans.rd_offset, service->txtdata.rdata, ans.rd_length) == 0) {
             LWIP_DEBUGF(MDNS_DEBUG, ("MDNS: Skipping known answer: TXT\n"));
             reply->serv_replies[i] &= ~REPLY_SERVICE_TXT;
           }
@@ -2050,7 +2050,7 @@ mdns_handle_response(struct mdns_packet *pkt, struct netif *netif)
           } else if (ans.info.type == DNS_RRTYPE_TXT) {
             mdns_prepare_txtdata(service);
             if (service->txtdata.length == ans.rd_length &&
-                pbuf_memcmp(pkt->pbuf, ans.rd_offset, service->txtdata.name, ans.rd_length) == 0) {
+                pbuf_memcmp(pkt->pbuf, ans.rd_offset, service->txtdata.rdata, ans.rd_length) == 0) {
               LWIP_DEBUGF(MDNS_DEBUG, ("mDNS: response equals our own TXT record -> no conflict\n"));
               conflict = 0;
             }
@@ -2614,12 +2614,44 @@ mdns_resp_rename_service(struct netif *netif, u8_t slot, const char *name)
 }
 
 /**
+ * Encodes a string as an RFC 1035 'character-string' and appends the result to
+ * an mdns_txtdata buffer.
+ *
+ * @param txtdata Destination struct mdns_txtdata
+ * @param txt String to add to the TXT field.
+ * @param txt_len Length of string (maximum 255)
+ * @return ERR_OK if the string was added, an err_t otherwise
+ */
+static err_t
+mdns_txt_add_charstr(struct mdns_txtdata *txtdata, const char *value, u8_t len)
+{
+#if 0   /* implied by u8_t length type */
+  if (len > 255) {
+    return ERR_VAL;
+  }
+#endif
+  if (txtdata->length + 1 + len > MDNS_TXT_RDATA_SIZE) {
+    LWIP_DEBUGF(MDNS_DEBUG, ("mdns_txt_add_charstr: adding string would exceed buffer (%d+1+%d > %d). Consider increasing MDNS_TXT_RDATA_SIZE.\n",
+                             txtdata->length, len, MDNS_TXT_RDATA_SIZE));
+    return ERR_MEM;
+  }
+  txtdata->rdata[txtdata->length] = len;
+  txtdata->length++;
+  if (len) {
+    MEMCPY(&txtdata->rdata[txtdata->length], value, len);
+    txtdata->length += len;
+  }
+  return ERR_OK;
+}
+
+/**
  * @ingroup mdns
  * Call this function from inside the service_get_txt_fn_t callback to add text data.
- * Buffer for TXT data is 256 bytes, and each field is prefixed with a length byte.
+ * Buffer for TXT data is MDNS_TXT_RDATA_SIZE (default 256) bytes, and each
+ * field is prefixed with a length byte.
  * @param service The service provided to the get_txt callback
  * @param txt String to add to the TXT field.
- * @param txt_len Length of string
+ * @param txt_len Length of string (maximum 255)
  * @return ERR_OK if the string was added to the reply, an err_t otherwise
  */
 err_t
@@ -2629,7 +2661,7 @@ mdns_resp_add_service_txtitem(struct mdns_service *service, const char *txt, u8_
   LWIP_ASSERT("mdns_resp_add_service_txtitem: service != NULL", service);
 
   /* Use a mdns_domain struct to store txt chunks since it is the same encoding */
-  return mdns_domain_add_label(&service->txtdata, txt, txt_len);
+  return mdns_txt_add_charstr(&service->txtdata, txt, txt_len);
 }
 
 #if LWIP_MDNS_SEARCH

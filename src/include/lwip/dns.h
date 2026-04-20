@@ -3,7 +3,7 @@
  * DNS API
  */
 
-/**
+/*
  * lwip DNS resolver header file.
 
  * Author: Jim Pettinato
