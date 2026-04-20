@@ -49,6 +49,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/etharp.h"
 #include "netif/ethernet.h"
+#include "network/pbuf_pool_canary.h"
 
 #define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
 #define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
@@ -659,6 +660,8 @@ void
 tcpip_init(tcpip_init_done_fn initfunc, void *arg)
 {
   lwip_init();
+  pbuf_pool_canary_init();
+  pbuf_pool_canary_setup_watchpoints();
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
