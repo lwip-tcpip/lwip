@@ -353,6 +353,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         if (!ip6_addr_isinvalid(netif_ip6_addr_state(inp, i)) &&
             !ip6_addr_isduplicated(netif_ip6_addr_state(inp, i)) &&
+            !ip6_addr_eq(ip6_current_src_addr(), netif_ip6_addr(inp, i)) &&
             ip6_addr_eq(&target_address, netif_ip6_addr(inp, i))) {
           /* We are using a duplicate address. */
           nd6_duplicate_addr_detected(inp, i);
