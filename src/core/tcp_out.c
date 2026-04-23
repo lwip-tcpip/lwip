@@ -80,6 +80,8 @@
 
 #include <string.h>
 
+typedef u32_t u32_opt_t __attribute__((aligned(1)));
+
 #ifdef LWIP_HOOK_FILENAME
 #include LWIP_HOOK_FILENAME
 #endif
@@ -1140,7 +1142,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
  * @param opts option pointer where to store the timestamp option
  */
 static void
-tcp_build_timestamp_option(const struct tcp_pcb *pcb, u32_t *opts)
+tcp_build_timestamp_option(const struct tcp_pcb *pcb, u32_opt_t *opts)
 {
   LWIP_ASSERT("tcp_build_timestamp_option: invalid pcb", pcb != NULL);
 
@@ -1220,7 +1222,7 @@ tcp_build_sack_option(const struct tcp_pcb *pcb, u32_t *opts, u8_t num_sacks)
  * @param opts option pointer where to store the window scale option
  */
 static void
-tcp_build_wnd_scale_option(u32_t *opts)
+tcp_build_wnd_scale_option(u32_opt_t *opts)
 {
   LWIP_ASSERT("tcp_build_wnd_scale_option: invalid opts", opts != NULL);
 
@@ -1460,7 +1462,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
 {
   err_t err;
   u16_t len;
-  u32_t *opts;
+  u32_opt_t *opts;
 #if TCP_CHECKSUM_ON_COPY
   int seg_chksum_was_swapped = 0;
 #endif
@@ -1497,7 +1499,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb, struct netif *netif
   /* Add any requested options.  NB MSS option is only set on SYN
      packets, so ignore it here */
   /* cast through void* to get rid of alignment warnings */
-  opts = (u32_t *)(void *)(seg->tcphdr + 1);
+  opts = (u32_opt_t *)(void *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
     u16_t mss;
 #if TCP_CALCULATE_EFF_SEND_MSS
