@@ -552,6 +552,11 @@ snmp_oid_assign(struct snmp_obj_id *target, const u32_t *oid, u8_t oid_len)
 {
   LWIP_ASSERT("oid_len <= SNMP_MAX_OBJ_ID_LEN", oid_len <= SNMP_MAX_OBJ_ID_LEN);
 
+  /* Runtime bounds check: clamp to prevent buffer overflow (Finding 13/100) */
+  if (oid_len > SNMP_MAX_OBJ_ID_LEN) {
+    oid_len = SNMP_MAX_OBJ_ID_LEN;
+  }
+
   target->len = oid_len;
 
   if (oid_len > 0) {
@@ -569,6 +574,11 @@ void
 snmp_oid_prefix(struct snmp_obj_id *target, const u32_t *oid, u8_t oid_len)
 {
   LWIP_ASSERT("target->len + oid_len <= SNMP_MAX_OBJ_ID_LEN", (target->len + oid_len) <= SNMP_MAX_OBJ_ID_LEN);
+
+  /* Runtime bounds check: reject if overflow would occur (Finding 38/39/40/41) */
+  if (((u16_t)target->len + (u16_t)oid_len) > SNMP_MAX_OBJ_ID_LEN) {
+    return;
+  }
 
   if (oid_len > 0) {
     /* move existing OID to make room at the beginning for OID to insert */
@@ -607,6 +617,11 @@ void
 snmp_oid_append(struct snmp_obj_id *target, const u32_t *oid, u8_t oid_len)
 {
   LWIP_ASSERT("offset + oid_len <= SNMP_MAX_OBJ_ID_LEN", (target->len + oid_len) <= SNMP_MAX_OBJ_ID_LEN);
+
+  /* Runtime bounds check: reject if overflow would occur (Finding 14/81/82) */
+  if (((u16_t)target->len + (u16_t)oid_len) > SNMP_MAX_OBJ_ID_LEN) {
+    return;
+  }
 
   if (oid_len > 0) {
     MEMCPY(&target->id[target->len], oid, oid_len * sizeof(u32_t));
