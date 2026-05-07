@@ -106,7 +106,8 @@ static snmp_err_t usmusertable_get_instance(const u32_t *column, const u32_t *ro
     return SNMP_ERR_NOSUCHINSTANCE;
   }
 
-  if (engineid_len > row_oid_len) {
+  /* Need at least engineid_len + 2 elements: [0]=eid_len, [1..eid_len]=eid, [eid_len+1]=name_len */
+  if (engineid_len + 2 > row_oid_len) {
     /* row OID doesn't contain enough data according to engineid_len.*/
     return SNMP_ERR_NOSUCHINSTANCE;
   }
