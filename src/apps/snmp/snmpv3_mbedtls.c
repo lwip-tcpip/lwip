@@ -248,6 +248,11 @@ snmpv3_password_to_key_md5(
   u8_t i;
   u32_t count = 0;
 
+  /* Reject zero-length password to prevent division by zero in modulo operation */
+  if (passwordlen == 0) {
+    return;
+  }
+
   mbedtls_md5_init(&MD); /* initialize MD5 */
   mbedtls_md5_starts(&MD);
 
@@ -293,6 +298,11 @@ snmpv3_password_to_key_sha(
   u32_t password_index = 0;
   u8_t i;
   u32_t count = 0;
+
+  /* Reject zero-length password to prevent division by zero in modulo operation */
+  if (passwordlen == 0) {
+    return;
+  }
 
   mbedtls_sha1_init(&SH); /* initialize SHA */
   mbedtls_sha1_starts(&SH);
