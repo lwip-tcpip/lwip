@@ -761,11 +761,12 @@ static void fix_filename_for_c(char *qualifiedName, size_t max_len)
 {
   struct file_entry *f;
   size_t len = strlen(qualifiedName);
-  char *new_name = (char *)malloc(len + 2);
+  /* Need room for up to 3 digits (cnt goes up to 999) plus null terminator */
+  char *new_name = (char *)malloc(len + 4);
   int filename_ok;
   int cnt = 0;
   size_t i;
-  if (len + 3 == max_len) {
+  if (len + 3 >= max_len) {
     printf("File name too long: \"%s\"\n", qualifiedName);
     exit(-1);
   }
