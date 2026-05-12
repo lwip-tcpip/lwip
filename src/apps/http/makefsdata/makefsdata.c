@@ -132,7 +132,7 @@ int process_sub(FILE *data_file, FILE *struct_file);
 int process_file(FILE *data_file, FILE *struct_file, const char *filename);
 int file_write_http_header(FILE *data_file, const char *filename, int file_size, u16_t *http_hdr_len,
                            u16_t *http_hdr_chksum, u8_t provide_content_len, int is_compressed);
-int file_put_ascii(FILE *file, const char *ascii_string, int len, int *i);
+int file_put_ascii(FILE *file, const char *ascii_string, size_t len, int *i);
 int s_put_ascii(char *buf, const char *ascii_string, int len, int *i);
 void concat_files(const char *file1, const char *file2, const char *targetfile);
 int check_path(char *path, size_t size);
@@ -590,7 +590,7 @@ static u8_t *get_file_data(const char *filename, int *file_size, int can_be_comp
   LWIP_ASSERT("buf != NULL", buf != NULL);
   r = fread(buf, 1, fsize, inFile);
   LWIP_ASSERT("r == fsize", r == fsize);
-  *file_size = fsize;
+  *file_size = rs;
   *is_compressed = 0;
 #if MAKEFS_SUPPORT_DEFLATE
   overallDataBytes += fsize;
@@ -715,6 +715,9 @@ static int write_checksums(FILE *struct_file, const char *varname,
 #if LWIP_TCP_TIMESTAMPS
   /* when timestamps are used, usable space is 12 bytes less per segment */
   chunk_size -= 12;
+#if TCP_MSS <= 12
+#error TCP_MSS <= 12
+#endif
 #endif
 
   fprintf(struct_file, "#if HTTPD_PRECALCULATED_CHECKSUM" NEWLINE);
@@ -726,7 +729,7 @@ static int write_checksums(FILE *struct_file, const char *varname,
     i++;
   }
   src_offset = 0;
-  for (offset = hdr_len; ; offset += len) {
+  for (offset = hdr_len; ; offset += (int)len) {
     unsigned short chksum;
     const void *data = (const void *)&file_data[src_offset];
     len = LWIP_MIN(chunk_size, (int)file_size - src_offset);
@@ -1281,9 +1284,12 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   return written;
 }
 
-int file_put_ascii(FILE *file, const char *ascii_string, int len, int *i)
+int file_put_ascii(FILE *file, const char *ascii_string, size_t len, int *i)
 {
-  int x;
+  if (len > INT_MAX) {
+    return -1;
+  }
+  size_t x;
   for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
     fprintf(file, "0x%02x,", cur);
@@ -1291,7 +1297,7 @@ int file_put_ascii(FILE *file, const char *ascii_string, int len, int *i)
       fprintf(file, NEWLINE);
     }
   }
-  return len;
+  return (int)len;
 }
 
 int s_put_ascii(char *buf, const char *ascii_string, int len, int *i)

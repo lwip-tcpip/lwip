@@ -289,7 +289,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 	    if (fillch == '0' && prec >= 0) {
 		n = prec;
 	    } else {
-		n = strlen((const char *)p);
+		n = (int)strlen((const char *)p);
 		if (prec >= 0 && n > prec)
 		    n = prec;
 	    }
@@ -378,7 +378,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 	    }
 	    len = num + sizeof(num) - 1 - str;
 	} else {
-	    len = strlen(str);
+	    len = (int)strlen(str);
 	    if (prec >= 0 && len > prec)
 		len = prec;
 	}

@@ -480,7 +480,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	memset(secret, 0, secret_len);
 
 	clen = *outp;
-	nlen = strlen(pcb->chap_client.name);
+	nlen = (int)strlen(pcb->chap_client.name);
 	memcpy(outp + clen + 1, pcb->chap_client.name, nlen);
 
 	outp = (u_char*)p->payload + PPP_HDRLEN;
