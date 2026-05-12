@@ -1061,8 +1061,13 @@ smtp_prepare_auth_or_mail(struct smtp_session *s, u16_t *tx_buf_len)
   if (auth != 0xFFFF) {
     u16_t crlf = pbuf_memfind(s->p, SMTP_CRLF, SMTP_CRLF_LEN, auth);
     if ((crlf != 0xFFFF) && (crlf > auth)) {
-      /* use tx_buf temporarily */
-      u16_t copied = pbuf_copy_partial(s->p, s->tx_buf, (u16_t)(crlf - auth), auth);
+      /* Use tx_buf temporarily:
+       * clamp copy length to tx_buf capacity. (crlf - auth) is derived from
+       * the server response and can exceed SMTP_TX_BUF_LEN if a malicious
+       * server sends an AUTH capabilities line longer than 255 bytes. */
+      u16_t auth_line_len = (u16_t)(crlf - auth);
+      u16_t safe_auth_line_len = (auth_line_len < SMTP_TX_BUF_LEN) ? auth_line_len : SMTP_TX_BUF_LEN;
+      u16_t copied = pbuf_copy_partial(s->p, s->tx_buf, safe_auth_line_len, auth);
       if (copied != 0) {
         char *sep = s->tx_buf + SMTP_KEYWORD_AUTH_LEN;
         s->tx_buf[copied] = 0;
