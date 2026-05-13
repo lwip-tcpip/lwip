@@ -1286,10 +1286,10 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
 
 int file_put_ascii(FILE *file, const char *ascii_string, size_t len, int *i)
 {
+  size_t x;
   if (len > INT_MAX) {
     return -1;
   }
-  size_t x;
   for (x = 0; x < len; x++) {
     unsigned char cur = ascii_string[x];
     fprintf(file, "0x%02x,", cur);
