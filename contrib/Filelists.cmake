@@ -39,6 +39,7 @@ set(lwipcontribapps_SRCS
     ${LWIP_CONTRIB_DIR}/apps/shell/shell.c
     ${LWIP_CONTRIB_DIR}/apps/udpecho_raw/udpecho_raw.c
     ${LWIP_CONTRIB_DIR}/apps/tcpecho_raw/tcpecho_raw.c
+    ${LWIP_CONTRIB_DIR}/apps/tcpecho_altcp/tcpecho_altcp.c
     ${LWIP_CONTRIB_DIR}/apps/netio/netio.c
     ${LWIP_CONTRIB_DIR}/apps/ping/ping.c
     ${LWIP_CONTRIB_DIR}/apps/socket_examples/socket_examples.c
