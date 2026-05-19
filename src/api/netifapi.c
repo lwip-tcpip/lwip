@@ -9,6 +9,10 @@
  * @defgroup netifapi_netif NETIF related
  * @ingroup netifapi
  * To be called from non-TCPIP threads
+ *
+ * @defgroup netifapi_arp NETIF ARP
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads
  */
 
 /*
