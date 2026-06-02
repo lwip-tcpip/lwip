@@ -293,6 +293,37 @@ nd6_process_autoconfig_prefix(struct netif *netif,
 #endif /* LWIP_IPV6_AUTOCONFIG */
 
 /**
+ * Return a pointer to the first instance of a specific ICMP option in a pbuf,
+ * starting from a specific offset.
+ *
+ * @param p the nd packet, p->payload pointing to the icmpv6 header
+ * @param offset the byte offset for the start of icmpv6 options
+ * @param wanted_type the option type to search for
+ * @return A pointer into p->payload where the option starts,
+ * or NULL if option is not found, option was not fully inside p->payload,
+ * or a zero-length option was found.
+ */
+static void *
+nd6_find_option(struct pbuf *p, int offset, int wanted_type)
+{
+  while ((p->tot_len - offset) >= 2) {
+    u8_t option_type;
+    u16_t option_len;
+    int option_len8 = pbuf_try_get_at(p, offset + 1);
+    if (option_len8 <= 0) {
+      break;
+    }
+    option_len = ((u8_t)option_len8) << 3;
+    option_type = pbuf_get_at(p, offset);
+    if (p->len >= (offset + option_len) && option_type == wanted_type) {
+      return ((u8_t*)p->payload + offset);
+    }
+    offset += option_len;
+  }
+  return NULL;
+}
+
+/**
  * Process an incoming neighbor discovery message
  *
  * @param p the nd packet, p->payload pointing to the icmpv6 header
@@ -363,19 +394,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
 #endif /* LWIP_IPV6_DUP_DETECT_ATTEMPTS */
 
-      /* Check that link-layer address option also fits in packet. */
-      if (p->len < (sizeof(struct na_header) + 2)) {
-        /* @todo debug message */
-        pbuf_free(p);
-        ND6_STATS_INC(nd6.lenerr);
-        ND6_STATS_INC(nd6.drop);
-        return;
-      }
-
-      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
-
-      if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
-        /* @todo debug message */
+      lladdr_opt = nd6_find_option(p, sizeof(*na_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
+      if (!lladdr_opt) {
+        /* Missing target lladdr option, or did not fully fit inside p */
         pbuf_free(p);
         ND6_STATS_INC(nd6.lenerr);
         ND6_STATS_INC(nd6.drop);
@@ -405,19 +426,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
       /* Update cache entry. */
       if ((na_hdr->flags & ND6_FLAG_OVERRIDE) ||
           (neighbor_cache[i].state == ND6_INCOMPLETE)) {
-        /* Check that link-layer address option also fits in packet. */
-        if (p->len < (sizeof(struct na_header) + 2)) {
-          /* @todo debug message */
-          pbuf_free(p);
-          ND6_STATS_INC(nd6.lenerr);
-          ND6_STATS_INC(nd6.drop);
-          return;
-        }
-
-        lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
-
-        if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
-          /* @todo debug message */
+        lladdr_opt = nd6_find_option(p, sizeof(*na_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
+        if (!lladdr_opt) {
+          /* Missing target lladdr option, or did not fully fit inside p */
           pbuf_free(p);
           ND6_STATS_INC(nd6.lenerr);
           ND6_STATS_INC(nd6.drop);
@@ -475,14 +486,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     /* @todo RFC MUST: if IP source is 'any', there is no source LL address option */
 
     /* Check if there is a link-layer address provided. Only point to it if in this buffer. */
-    if (p->len >= (sizeof(struct ns_header) + 2)) {
-      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct ns_header));
-      if (p->len < (sizeof(struct ns_header) + (lladdr_opt->length << 3))) {
-        lladdr_opt = NULL;
-      }
-    } else {
-      lladdr_opt = NULL;
-    }
+    lladdr_opt = nd6_find_option(p, sizeof(*ns_hdr), ND6_OPTION_TYPE_SOURCE_LLADDR);
 
     /* Check if the target address is configured on the receiving netif. */
     accepted = 0;
@@ -853,14 +857,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     /* @todo RFC MUST: ICMP target address is either link-local address or same as destination_address */
     /* @todo RFC MUST: all included options have a length greater than zero */
 
-    if (p->len >= (sizeof(struct redirect_header) + 2)) {
-      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct redirect_header));
-      if (p->len < (sizeof(struct redirect_header) + (lladdr_opt->length << 3))) {
-        lladdr_opt = NULL;
-      }
-    } else {
-      lladdr_opt = NULL;
-    }
+    /* Check if there is a link-layer address provided. Only point to it if in this buffer. */
+    lladdr_opt = nd6_find_option(p, sizeof(*redir_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
 
     /* Find dest address in cache */
     dest_idx = nd6_find_destination_cache_entry(&destination_address);
@@ -879,29 +877,27 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* If Link-layer address of other router is given, try to add to neighbor cache. */
     if (lladdr_opt != NULL) {
-      if (lladdr_opt->type == ND6_OPTION_TYPE_TARGET_LLADDR) {
-        i = nd6_find_neighbor_cache_entry(&target_address);
-        if (i < 0) {
-          i = nd6_new_neighbor_cache_entry();
-          if (i >= 0) {
-            neighbor_cache[i].netif = inp;
-            MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
-            ip6_addr_copy(neighbor_cache[i].next_hop_address, target_address);
-
-            /* Receiving a message does not prove reachability: only in one direction.
-             * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
-            neighbor_cache[i].state = ND6_DELAY;
-            neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
-          }
-        }
+      i = nd6_find_neighbor_cache_entry(&target_address);
+      if (i < 0) {
+        i = nd6_new_neighbor_cache_entry();
         if (i >= 0) {
-          if (neighbor_cache[i].state == ND6_INCOMPLETE) {
-            MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
-            /* Receiving a message does not prove reachability: only in one direction.
-             * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
-            neighbor_cache[i].state = ND6_DELAY;
-            neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
-          }
+          neighbor_cache[i].netif = inp;
+          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          ip6_addr_copy(neighbor_cache[i].next_hop_address, target_address);
+
+          /* Receiving a message does not prove reachability: only in one direction.
+            * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
+          neighbor_cache[i].state = ND6_DELAY;
+          neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
+        }
+      }
+      if (i >= 0) {
+        if (neighbor_cache[i].state == ND6_INCOMPLETE) {
+          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          /* Receiving a message does not prove reachability: only in one direction.
+            * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
+          neighbor_cache[i].state = ND6_DELAY;
+          neighbor_cache[i].counter.delay_time = LWIP_ND6_DELAY_FIRST_PROBE_TIME / ND6_TMR_INTERVAL;
         }
       }
     }
