@@ -279,8 +279,6 @@ tftp_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr
         break;
       }
 
-      sys_timeout(TFTP_TIMER_MSECS, tftp_tmr, NULL);
-
       /* find \0 in pbuf -> end of filename string */
       filename_end_offset = pbuf_memfind(p, &tftp_null, sizeof(tftp_null), 2);
       if ((u16_t)(filename_end_offset - 1) > sizeof(filename)) {
@@ -304,6 +302,10 @@ tftp_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr
         send_error(addr, port, TFTP_ERROR_FILE_NOT_FOUND, "Unable to open requested file.");
         break;
       }
+
+      /* Request accepted: arm the session timer only now, so the rejected
+         requests above cannot each leak a MEMP_SYS_TIMEOUT pool entry. */
+      sys_timeout(TFTP_TIMER_MSECS, tftp_tmr, NULL);
 
       LWIP_DEBUGF(TFTP_DEBUG | LWIP_DBG_STATE, ("tftp: %s request from ", (opcode == PP_HTONS(TFTP_WRQ)) ? "write" : "read"));
       ip_addr_debug_print(TFTP_DEBUG | LWIP_DBG_STATE, addr);
