@@ -489,6 +489,18 @@ smtp_send_mail_alloced(struct smtp_session *s)
 
   LWIP_ASSERT("no smtp_session supplied", s != NULL);
 
+  /* Reject fields that would overflow the fixed-size tx_buf. The MAIL FROM and
+     RCPT TO commands and the combined message header must each fit
+     SMTP_TX_BUF_LEN; otherwise smtp_prepare_mail()/_rcpt()/_header() overflow
+     tx_buf when LWIP_ASSERT is disabled (CWE-120/CWE-787). */
+  if ((s->from_len > (u16_t)(SMTP_TX_BUF_LEN - SMTP_CMD_MAIL_1_LEN - SMTP_CMD_MAIL_2_LEN)) ||
+      (s->to_len   > (u16_t)(SMTP_TX_BUF_LEN - SMTP_CMD_RCPT_1_LEN - SMTP_CMD_RCPT_2_LEN)) ||
+      ((u32_t)SMTP_CMD_HEADER_1_LEN + SMTP_CMD_HEADER_2_LEN + SMTP_CMD_HEADER_3_LEN +
+       SMTP_CMD_HEADER_4_LEN + s->from_len + s->to_len + s->subject_len > SMTP_TX_BUF_LEN)) {
+    err = ERR_ARG;
+    goto leave;
+  }
+
 #if SMTP_CHECK_DATA
   /* check that body conforms to RFC:
    * - convert all single-CR or -LF in body to CRLF
