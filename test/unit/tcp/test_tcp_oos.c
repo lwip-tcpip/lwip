@@ -630,6 +630,66 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin_edge)
 }
 END_TEST
 
+/** An out-of-sequence FIN at the receive-window edge must not be merged
+ * into an in-sequence segment that already fills the receive window. */
+START_TEST(test_tcp_recv_ooseq_fin_at_rxwin_edge)
+{
+#if TCP_WND <= (0xFFFF - IP_HLEN - TCP_HLEN - 1)
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf *p_fin, *p_ovr;
+  struct netif netif;
+  u32_t initial_rcv_nxt;
+  int i;
+
+  for (i = 0; i < (int)(TCP_WND + 1); i++) {
+    data_full_wnd[i] = (char)i;
+  }
+
+  test_tcp_init_netif(&netif, NULL, &test_local_ip, &test_netmask);
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = TCP_WND - 1;
+  counters.expected_data = data_full_wnd;
+
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT, TEST_REMOTE_PORT);
+  pcb->rcv_wnd = TCP_WND;
+  initial_rcv_nxt = pcb->rcv_nxt;
+
+  /* Queue a FIN at the last sequence number currently inside the window. */
+  p_fin = tcp_create_rx_segment(pcb, NULL, 0, TCP_WND - 1, 0, TCP_ACK | TCP_FIN);
+  EXPECT_RET(p_fin != NULL);
+  if (p_fin != NULL) {
+    test_tcp_input(p_fin, &netif);
+    EXPECT_OOSEQ(tcp_oos_count(pcb) == 1);
+    EXPECT_OOSEQ(tcp_oos_seg_seqno(pcb, 0) == initial_rcv_nxt + TCP_WND - 1);
+    EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 1);
+  }
+
+  /* This in-sequence segment exceeds the window. Trimming it to the queued
+   * FIN's sequence number must leave the FIN available for normal dequeue. */
+  p_ovr = tcp_create_rx_segment(pcb, data_full_wnd, TCP_WND + 1, 0, 0, TCP_ACK);
+  EXPECT_RET(p_ovr != NULL);
+  if (p_ovr != NULL) {
+    test_tcp_input(p_ovr, &netif);
+    EXPECT(pcb->ooseq == NULL);
+    EXPECT(pcb->rcv_nxt == initial_rcv_nxt + TCP_WND);
+    EXPECT(pcb->rcv_wnd == 1);
+    EXPECT(counters.recv_calls == 1);
+    EXPECT(counters.recved_bytes == TCP_WND - 1);
+    EXPECT(counters.close_calls == 1);
+    EXPECT(counters.err_calls == 0);
+  }
+
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 1);
+  tcp_abort(pcb);
+  EXPECT(MEMP_STATS_GET(used, MEMP_TCP_PCB) == 0);
+#endif /* TCP_WND <= (0xFFFF - IP_HLEN - TCP_HLEN - 1) */
+  LWIP_UNUSED_ARG(_i);
+}
+END_TEST
+
 START_TEST(test_tcp_recv_ooseq_max_bytes)
 {
 #if TCP_OOSEQ_MAX_BYTES && (TCP_OOSEQ_MAX_BYTES < (TCP_WND + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
@@ -1060,6 +1120,7 @@ tcp_oos_suite(void)
     TESTFUNC(test_tcp_recv_ooseq_FIN_INSEQ),
     TESTFUNC(test_tcp_recv_ooseq_overrun_rxwin),
     TESTFUNC(test_tcp_recv_ooseq_overrun_rxwin_edge),
+    TESTFUNC(test_tcp_recv_ooseq_fin_at_rxwin_edge),
     TESTFUNC(test_tcp_recv_ooseq_straddle_rxwin),
     TESTFUNC(test_tcp_recv_ooseq_max_bytes),
     TESTFUNC(test_tcp_recv_ooseq_max_pbufs),

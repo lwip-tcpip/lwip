@@ -1537,6 +1537,14 @@ tcp_receive(struct tcp_pcb *pcb)
               /* inseg cannot have FIN here (already processed above) */
               if ((TCPH_FLAGS(next->tcphdr) & TCP_FIN) != 0 &&
                   (TCPH_FLAGS(inseg.tcphdr) & TCP_SYN) == 0) {
+                /* Copying the FIN consumes one more sequence number. If inseg
+                   was already trimmed to fill the receive window, that extra
+                   byte would push tcplen past rcv_wnd and underflow the window
+                   update below. Leave the FIN segment on ooseq to be processed
+                   once the window has advanced. */
+                if (tcplen >= pcb->rcv_wnd) {
+                  break;
+                }
                 TCPH_SET_FLAG(inseg.tcphdr, TCP_FIN);
                 tcplen = TCP_TCPLEN(&inseg);
               }
