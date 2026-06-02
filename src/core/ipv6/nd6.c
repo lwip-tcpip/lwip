@@ -394,7 +394,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
 #endif /* LWIP_IPV6_DUP_DETECT_ATTEMPTS */
 
-      lladdr_opt = nd6_find_option(p, sizeof(*na_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
+      lladdr_opt = (struct lladdr_option *)
+        nd6_find_option(p, sizeof(*na_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
       if (!lladdr_opt) {
         /* Missing target lladdr option, or did not fully fit inside p */
         pbuf_free(p);
@@ -426,7 +427,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
       /* Update cache entry. */
       if ((na_hdr->flags & ND6_FLAG_OVERRIDE) ||
           (neighbor_cache[i].state == ND6_INCOMPLETE)) {
-        lladdr_opt = nd6_find_option(p, sizeof(*na_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
+        lladdr_opt = (struct lladdr_option *)
+          nd6_find_option(p, sizeof(*na_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
         if (!lladdr_opt) {
           /* Missing target lladdr option, or did not fully fit inside p */
           pbuf_free(p);
@@ -486,7 +488,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     /* @todo RFC MUST: if IP source is 'any', there is no source LL address option */
 
     /* Check if there is a link-layer address provided. Only point to it if in this buffer. */
-    lladdr_opt = nd6_find_option(p, sizeof(*ns_hdr), ND6_OPTION_TYPE_SOURCE_LLADDR);
+    lladdr_opt = (struct lladdr_option*)
+      nd6_find_option(p, sizeof(*ns_hdr), ND6_OPTION_TYPE_SOURCE_LLADDR);
 
     /* Check if the target address is configured on the receiving netif. */
     accepted = 0;
@@ -858,7 +861,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     /* @todo RFC MUST: all included options have a length greater than zero */
 
     /* Check if there is a link-layer address provided. Only point to it if in this buffer. */
-    lladdr_opt = nd6_find_option(p, sizeof(*redir_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
+    lladdr_opt = (struct lladdr_option *)
+      nd6_find_option(p, sizeof(*redir_hdr), ND6_OPTION_TYPE_TARGET_LLADDR);
 
     /* Find dest address in cache */
     dest_idx = nd6_find_destination_cache_entry(&destination_address);
