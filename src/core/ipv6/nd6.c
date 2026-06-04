@@ -323,6 +323,15 @@ nd6_find_option(struct pbuf *p, int offset, int wanted_type)
   return NULL;
 }
 
+static void
+nd6_store_neighbor_lladdr(struct nd6_neighbor_cache_entry *entry,
+                          struct lladdr_option *opt, struct netif *netif)
+{
+  u16_t copy_len = LWIP_MIN((opt->length << 3) - ND6_LLADDR_OPTION_MIN_LENGTH,
+                            netif->hwaddr_len);
+  SMEMCPY(entry->lladdr, opt->addr, LWIP_MIN(copy_len, NETIF_MAX_HWADDR_LEN));
+}
+
 /**
  * Process an incoming neighbor discovery message
  *
@@ -408,7 +417,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       i = nd6_find_neighbor_cache_entry(&target_address);
       if (i >= 0) {
         if (na_hdr->flags & ND6_FLAG_OVERRIDE) {
-          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          nd6_store_neighbor_lladdr(&neighbor_cache[i], lladdr_opt, inp);
         }
       }
     } else {
@@ -437,7 +446,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
           return;
         }
 
-        MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+        nd6_store_neighbor_lladdr(&neighbor_cache[i], lladdr_opt, inp);
       }
 
       neighbor_cache[i].netif = inp;
@@ -539,7 +548,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         /* We already have a record for the solicitor. */
         if (neighbor_cache[i].state == ND6_INCOMPLETE) {
           neighbor_cache[i].netif = inp;
-          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          nd6_store_neighbor_lladdr(&neighbor_cache[i], lladdr_opt, inp);
 
           /* Delay probe in case we get confirmation of reachability from upper layer (TCP). */
           neighbor_cache[i].state = ND6_DELAY;
@@ -558,7 +567,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
           return;
         }
         neighbor_cache[i].netif = inp;
-        MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+        nd6_store_neighbor_lladdr(&neighbor_cache[i], lladdr_opt, inp);
         ip6_addr_set(&(neighbor_cache[i].next_hop_address), ip6_current_src_addr());
 
         /* Receiving a message does not prove reachability: only in one direction.
@@ -700,7 +709,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         lladdr_opt = (struct lladdr_option *)buffer;
         if ((default_router_list[i].neighbor_entry != NULL) &&
             (default_router_list[i].neighbor_entry->state == ND6_INCOMPLETE)) {
-          SMEMCPY(default_router_list[i].neighbor_entry->lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          nd6_store_neighbor_lladdr(default_router_list[i].neighbor_entry, lladdr_opt, inp);
           default_router_list[i].neighbor_entry->state = ND6_REACHABLE;
           default_router_list[i].neighbor_entry->counter.reachable_time = reachable_time;
         }
@@ -886,7 +895,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         i = nd6_new_neighbor_cache_entry();
         if (i >= 0) {
           neighbor_cache[i].netif = inp;
-          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          nd6_store_neighbor_lladdr(&neighbor_cache[i], lladdr_opt, inp);
           ip6_addr_copy(neighbor_cache[i].next_hop_address, target_address);
 
           /* Receiving a message does not prove reachability: only in one direction.
@@ -897,7 +906,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
       if (i >= 0) {
         if (neighbor_cache[i].state == ND6_INCOMPLETE) {
-          MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
+          nd6_store_neighbor_lladdr(&neighbor_cache[i], lladdr_opt, inp);
           /* Receiving a message does not prove reachability: only in one direction.
             * Delay probe in case we get confirmation of reachability from upper layer (TCP). */
           neighbor_cache[i].state = ND6_DELAY;
