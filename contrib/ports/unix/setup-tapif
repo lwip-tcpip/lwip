@@ -12,6 +12,9 @@
 # Enter 192.168.1.200 or "http://lwip.local/" (Zeroconf)
 # in your webbrowser to see example_app webpage.
 
+# N.b. you must disable USE_DHCP and USE_AUTOIP in lwipcfg.h for the static 
+# ip 192.168.1.200 to work in tapif
+
 export PRECONFIGURED_TAPIF=tap0
 
 sudo ip tuntap add dev $PRECONFIGURED_TAPIF mode tap user `whoami`
