@@ -1904,6 +1904,10 @@ static u8_t
 tcp_get_next_optbyte(void)
 {
   u16_t optidx = tcp_optidx++;
+  if (optidx >= tcphdr_optlen) {
+    /* Return 0 for any excess reads (like length fields) */
+    return LWIP_TCP_OPT_EOL;
+  }
   if ((tcphdr_opt2 == NULL) || (optidx < tcphdr_opt1len)) {
     u8_t *opts = (u8_t *)tcphdr + TCP_HLEN;
     return opts[optidx];
