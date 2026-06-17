@@ -211,6 +211,19 @@ ip4_route(const ip4_addr_t *dest)
     return netif;
   }
 #endif
+
+#else
+#if LWIP_NETIF_LOOPBACK
+  /* in single netif mode, loopback traffic should be passed through default netif (if defined and up) */
+  if (ip4_addr_isloopback(dest)) {
+    /* don't check for link on loopback traffic */
+    if ((netif_default != NULL) && netif_is_up(netif_default)) {
+      return netif_default;
+    }
+    return NULL;
+  }
+#endif /* LWIP_NETIF_LOOPBACK */
+
 #endif /* !LWIP_SINGLE_NETIF */
 
   if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default) ||
