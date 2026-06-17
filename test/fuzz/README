@@ -1,4 +1,3 @@
-
 Fuzzing the lwIP stack (afl-fuzz requires linux/unix or similar)
 
 This directory contains small apps that read Ethernet frames from stdin and
@@ -32,3 +31,15 @@ file to simplify viewing in wireshark.
 The lwipopts.h file needs to have checksum checking off, otherwise almost every
 packet will be discarded because of that. The other options can be tuned to
 expose different parts of the code.
+
+To reproduce crashes or hangs, it's useful to build the fuzz targets locally
+(without AFL) and feed them with the saved output files (supplied as command
+line arguments), for example:
+
+make clean && CC=gcc make
+./lwip_fuzz output/default/crashes/id:000001,sig:11,src:000254,time:13211,execs:374294,op:havoc,rep:3
+
+Note: It's convenient to run AFL++ in a container:
+
+docker pull aflplusplus/aflplusplus:latest
+docker run -ti -v /your-local-lwip-repo/:/lwip aflplusplus/aflplusplus
