@@ -731,6 +731,16 @@
 #if !defined ETHARP_TABLE_MATCH_NETIF || defined __DOXYGEN__
 #define ETHARP_TABLE_MATCH_NETIF        !LWIP_SINGLE_NETIF
 #endif
+
+/** LWIP_ARP_REUSE_MEMORY==1: Reuse pbuf used for arp request to send an
+ * arp reply as described in RFC 826.
+ * If disabled, new pbuf will be allocated and all required data from request
+ * packet will be copied with SMEMCPY (better if you want to separate layers
+ * but worse in terms of memory usage)
+ */
+#if !defined LWIP_ARP_REUSE_MEMORY || defined __DOXYGEN__
+#define LWIP_ARP_REUSE_MEMORY           1
+#endif
 /**
  * @}
  */

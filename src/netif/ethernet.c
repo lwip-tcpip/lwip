@@ -192,6 +192,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
         goto free_and_return;
       }
       /* skip Ethernet header (min. size checked above) */
+#if !LWIP_ARP_REUSE_MEMORY
       if (pbuf_remove_header(p, next_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
                     ("ethernet_input: ARP response packet dropped, too short (%"U16_F"/%"U16_F")\n",
@@ -204,6 +205,9 @@ ethernet_input(struct pbuf *p, struct netif *netif)
         /* pass p to ARP module */
         etharp_input(p, netif);
       }
+#else
+      etharp_input(p, netif, next_hdr_offset);
+#endif /* !LWIP_ARP_REUSE_MEMORY  */
       break;
 #endif /* LWIP_IPV4 && LWIP_ARP */
 #if PPPOE_SUPPORT
