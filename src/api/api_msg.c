@@ -981,14 +981,14 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
 #if LWIP_SO_LINGER
     /* check linger possibilities before calling tcp_close */
     err = ERR_OK;
-    /* linger enabled/required at all? (i.e. is there untransmitted data left?) */
-    if ((conn->linger >= 0) && (conn->pcb.tcp->unsent || conn->pcb.tcp->unacked)) {
+    /* linger enabled? */
+    if (conn->linger >= 0) {
       if ((conn->linger == 0)) {
-        /* data left but linger prevents waiting */
+        /* 0-timeout linger prevents waiting */
         tcp_abort(tpcb);
         tpcb = NULL;
-      } else if (conn->linger > 0) {
-        /* data left and linger says we should wait */
+      } else if (conn->pcb.tcp->unsent || conn->pcb.tcp->unacked) {
+        /* data left and nonzero linger says we should wait */
         if (netconn_is_nonblocking(conn)) {
           /* data left on a nonblocking netconn -> cannot linger */
           err = ERR_WOULDBLOCK;
