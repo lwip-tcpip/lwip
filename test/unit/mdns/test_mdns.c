@@ -35,6 +35,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/apps/mdns.h"
 #include "lwip/apps/mdns_domain.h"
+#include "lwip/apps/mdns_out.h"
 #include "lwip/apps/mdns_priv.h"
 
 START_TEST(readname_basic)
@@ -573,14 +574,14 @@ START_TEST(domain_eq_length)
   LWIP_UNUSED_ARG(_i);
 
   memset(&domain1, 0, sizeof(domain1));
-  memset(domain1.name, 0xAA, sizeof(MDNS_DOMAIN_MAXLEN));
+  memset(domain1.name, 0xAA, MDNS_DOMAIN_MAXLEN);
   res = mdns_domain_add_label(&domain1, "multi", 5);
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain1, "cast", 4);
   fail_unless(res == ERR_OK);
 
   memset(&domain2, 0, sizeof(domain2));
-  memset(domain2.name, 0xBB, sizeof(MDNS_DOMAIN_MAXLEN));
+  memset(domain2.name, 0xBB, MDNS_DOMAIN_MAXLEN);
   res = mdns_domain_add_label(&domain2, "multi", 5);
   fail_unless(res == ERR_OK);
   res = mdns_domain_add_label(&domain2, "cast", 4);
@@ -876,6 +877,291 @@ START_TEST(compress_long_match)
 }
 END_TEST
 
+/* Some string constants for the txt_* tests */
+
+#define TXT_STRING_0 ""
+#define TXT_LENGTH_0 0
+#define TXT_LENSTR_0 "\000"
+
+#define TXT_STRING_6 "path=/"
+#define TXT_LENGTH_6 6
+#define TXT_LENSTR_6 "\006"
+
+#define TXT_STRING_62 "This sentence is sixty-two octets long, including punctuation."
+#define TXT_LENGTH_62 62
+#define TXT_LENSTR_62 "\076"
+
+#define TXT_STRING_63 "This sentence is sixty-three bytes long, including punctuation."
+#define TXT_LENGTH_63 63
+#define TXT_LENSTR_63 "\077"
+
+#define TXT_STRING_103 "This tests whether mdns_resp_add_service_txtitem can properly handle strings longer than 63 characters."
+#define TXT_LENGTH_103 103
+#define TXT_LENSTR_103 "\147"
+
+#define TXT_STRING_255 "This is a string of length 255 used to test whether mdns_resp_add_service_txtitem can properly handle strings up to 255 characters, which is the maximum that any DNS TXT record should be able to contain in a single character-string, according to RFC 1035."
+#define TXT_LENGTH_255 255
+#define TXT_LENSTR_255 "\377"
+
+START_TEST(txt_small_item)
+{
+  const char *expected_txtdata = TXT_LENSTR_6 TXT_STRING_6;
+  const size_t expected_txtdata_length = 1 + TXT_LENGTH_6;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at least 7 bytes */
+  ck_assert_uint_ge(sizeof(service.txtdata.rdata), 7);
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_6, TXT_LENGTH_6));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_63byte_item)
+{
+  const char *expected_txtdata = TXT_LENSTR_63 TXT_STRING_63;
+  const size_t expected_txtdata_length = 1 + TXT_LENGTH_63;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at least 64 bytes */
+  ck_assert_uint_ge(sizeof(service.txtdata.rdata), 64);
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_103byte_item)
+{
+  const char *expected_txtdata = TXT_LENSTR_103 TXT_STRING_103;
+  const size_t expected_txtdata_length = 1 + TXT_LENGTH_103;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at least 104 bytes */
+  ck_assert_uint_ge(sizeof(service.txtdata.rdata), 104);
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_103, TXT_LENGTH_103));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_255byte_item)
+{
+  const char *expected_txtdata = TXT_LENSTR_255 TXT_STRING_255;
+  const size_t expected_txtdata_length = 1 + TXT_LENGTH_255;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at least 256 bytes */
+  ck_assert_uint_ge(sizeof(service.txtdata.rdata), 256);
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_255, TXT_LENGTH_255));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_multiple_items)
+{
+  const char *expected_txtdata = (
+    TXT_LENSTR_6 TXT_STRING_6
+    TXT_LENSTR_62 TXT_STRING_62
+    TXT_LENSTR_63 TXT_STRING_63
+    TXT_LENSTR_6 TXT_STRING_6
+  );
+  const size_t expected_txtdata_length = (
+    1 + TXT_LENGTH_6
+    + 1 + TXT_LENGTH_62
+    + 1 + TXT_LENGTH_63
+    + 1 + TXT_LENGTH_6
+  );
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at least 141 bytes */
+  ck_assert_uint_ge(sizeof(service.txtdata.rdata), 141);
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_6, TXT_LENGTH_6));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_62, TXT_LENGTH_62));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_6, TXT_LENGTH_6));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_empty_item)
+{
+  const char *expected_txtdata = TXT_LENSTR_0 TXT_STRING_0;
+  const size_t expected_txtdata_length = 1 + TXT_LENGTH_0;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at least 16 bytes */
+  ck_assert_uint_ge(sizeof(service.txtdata.rdata), 16);
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_0, TXT_LENGTH_0));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_empty_between_nonempty_items)
+{
+  const char *expected_txtdata = (
+    TXT_LENSTR_6 TXT_STRING_6
+    TXT_LENSTR_0 TXT_STRING_0
+    TXT_LENSTR_63 TXT_STRING_63
+    TXT_LENSTR_0 TXT_STRING_0
+    TXT_LENSTR_6 TXT_STRING_6
+  );
+  const size_t expected_txtdata_length = (
+    1 + TXT_LENGTH_6
+    + 1 + TXT_LENGTH_0
+    + 1 + TXT_LENGTH_63
+    + 1 + TXT_LENGTH_0
+    + 1 + TXT_LENGTH_6
+  );
+  struct mdns_service service;
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_6, TXT_LENGTH_6));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_0, TXT_LENGTH_0));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_0, TXT_LENGTH_0));
+
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_6, TXT_LENGTH_6));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_reject_buffer_overflow)
+{
+  const char *expected_txtdata = TXT_LENSTR_0 TXT_STRING_0;
+  const size_t expected_txtdata_length = 1 + TXT_LENGTH_0;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of _exactly_ 256 bytes */
+  if (sizeof(service.txtdata.rdata) != 256) {
+    ck_abort_msg("Test skipped");
+  }
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  /* Add one byte to the buffer (length + 0 bytes) */
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_0, TXT_LENGTH_0));
+
+  ck_assert_int_eq(1, service.txtdata.length);
+
+  /* This would add 255 bytes to a buffer with already 1 byte in it; it should
+   * return an error. */
+  ck_assert_int_ne(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_255, TXT_LENGTH_255));
+
+  ck_assert_uint_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
+START_TEST(txt_buffer_fill)
+{
+  const char *expected_txtdata = (
+    TXT_LENSTR_63 TXT_STRING_63
+    TXT_LENSTR_63 TXT_STRING_63
+    TXT_LENSTR_63 TXT_STRING_63
+    TXT_LENSTR_63 TXT_STRING_63
+  );
+  const size_t expected_txtdata_length = 256;
+  struct mdns_service service;
+
+  /* This test assumes a buffer size of at _exactly_ 256 bytes */
+  if (sizeof(service.txtdata.rdata) != 256) {
+    ck_abort_msg("Test skipped");
+  }
+
+  memset(&service, 0, sizeof(struct mdns_service));
+  mdns_prepare_txtdata(&service);
+
+  /* Add 64+64+64+64 bytes = 256 bytes */
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+  ck_assert_int_eq(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_63, TXT_LENGTH_63));
+
+  /* Length value should never exceed size of the actual buffer. */
+  ck_assert_uint_le(service.txtdata.length, sizeof(service.txtdata.rdata));
+
+  /* Check if the length is what we expect. */
+  ck_assert_uint_eq(service.txtdata.length, 64+64+64+64);
+
+  /* Try to add a few more strings while the buffer is full. These should fail
+   * unless the buffer size has been increased. */
+  ck_assert_int_ne(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_0, TXT_LENGTH_0));
+  ck_assert_int_ne(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_6, TXT_LENGTH_6));
+  ck_assert_int_ne(ERR_OK,
+    mdns_resp_add_service_txtitem(&service, TXT_STRING_0, TXT_LENGTH_0));
+
+  /* Check that the content matches what we expect */
+  ck_assert_int_eq(expected_txtdata_length, service.txtdata.length);
+  ck_assert_mem_eq(expected_txtdata, service.txtdata.rdata, expected_txtdata_length);
+}
+END_TEST
+
 Suite* mdns_suite(void)
 {
   testfunc tests[] = {
@@ -911,6 +1197,16 @@ Suite* mdns_suite(void)
     TESTFUNC(compress_2nd_label_short),
     TESTFUNC(compress_jump_to_jump),
     TESTFUNC(compress_long_match),
+
+    TESTFUNC(txt_small_item),
+    TESTFUNC(txt_63byte_item),
+    TESTFUNC(txt_103byte_item),
+    TESTFUNC(txt_255byte_item),
+    TESTFUNC(txt_multiple_items),
+    TESTFUNC(txt_empty_item),
+    TESTFUNC(txt_empty_between_nonempty_items),
+    TESTFUNC(txt_reject_buffer_overflow),
+    TESTFUNC(txt_buffer_fill),
   };
   return create_suite("MDNS", tests, sizeof(tests)/sizeof(testfunc), NULL, NULL);
 }
