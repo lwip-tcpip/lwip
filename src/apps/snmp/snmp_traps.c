@@ -338,6 +338,17 @@ snmp_send_msg(struct snmp_msg_trap *trap_msg, struct snmp_varbind *varbinds, u16
  * and .iso.org.dod.internet.private.enterprises.yourenterprise
  * (sysObjectID) for specific traps.
  */
+
+// *** SPAN ***
+// Disable dangling pointer for this function until it's improved upstream.
+// Does not compile on armgcc 13.2 otherwise.
+#if defined(__GNUC__) || defined(__GNUG__)
+#if __GNUC__ >= 13
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
+#endif
+#endif
+
 static err_t
 snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg, const struct snmp_obj_id *eoid, s32_t generic_trap, s32_t specific_trap, struct snmp_varbind *varbinds)
 {
@@ -411,6 +422,9 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
   req_id++;
   return err;
 }
+#if defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 
 /**
  * @ingroup snmp_traps

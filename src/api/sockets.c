@@ -1161,6 +1161,12 @@ lwip_recvfrom_udp_raw(struct lwip_sock *sock, int flags, struct msghdr *msg, u16
   buflen = buf->p->tot_len;
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom_udp_raw: buflen=%"U16_F"\n", buflen));
 
+  if (buf->p->payload == NULL) {
+    LWIP_DEBUGF(SOCKETS_DEBUG | LWIP_DBG_LEVEL_SEVERE, 
+                ("lwip_recvfrom_udp_raw: NULL payload detected! pbuf=%p\n", (void*)buf->p));
+    asm volatile("bkpt #0");
+  }
+
   copied = 0;
   /* copy the pbuf payload into the iovs */
   for (i = 0; (i < msg->msg_iovlen) && (copied < buflen); i++) {
