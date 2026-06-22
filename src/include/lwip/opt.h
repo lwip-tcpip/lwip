@@ -1456,6 +1456,25 @@
 #endif
 
 /**
+ * LIMIT_PAYLOAD_THRESHOLD_ENABLE: Graceful RX pool exhaustion handling to prevent
+ * socket application deadlock.
+ * 
+ * Security: When enabled, prevents resource exhaustion attacks and application hangs
+ * by dropping incoming payload (while still ACKing it) when PBUF_POOL approaches
+ * exhaustion. This reserves 2 buffers for critical TCP control messages (SYN, FIN)
+ * which are released immediately within the same ethernet_input call, ensuring the
+ * stack can always process connection state changes even under memory pressure.
+ * 
+ * Only effective with Socket/Netconn API where payload is queued and can cause
+ * deadlock if the application cannot read due to buffer starvation.
+ * Requires MEMP_STATS to be enabled for buffer usage tracking.
+ * Define to 0 to disable this feature.
+ */
+#if !defined LIMIT_PAYLOAD_THRESHOLD_ENABLE || defined __DOXYGEN__
+#define LIMIT_PAYLOAD_THRESHOLD_ENABLE  0
+#endif
+
+/**
  * TCP_LISTEN_BACKLOG: Enable the backlog option for tcp listen pcb.
  */
 #if !defined TCP_LISTEN_BACKLOG || defined __DOXYGEN__

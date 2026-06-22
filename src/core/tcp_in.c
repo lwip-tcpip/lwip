@@ -992,6 +992,23 @@ tcp_process(struct tcp_pcb *pcb)
     case CLOSE_WAIT:
     /* FALLTHROUGH */
     case ESTABLISHED:
+      #if LIMIT_PAYLOAD_THRESHOLD_ENABLE && (LWIP_SOCKET || LWIP_NETCONN)
+      /* Security: Gracefully handle RX pool exhaustion to prevent socket application
+       * deadlock. Drop payload data (but ACK it) when approaching pool limit, reserving
+       * 2 buffers for critical TCP control messages (SYN, FIN) which have minimal payload,
+       * are not queued to application layer, and are released within the same ethernet_input
+       * call. This ensures the stack can process connection state changes under memory
+       * pressure, preventing resource exhaustion attacks and application hangs.
+       * NOTE: Only active with Socket/Netconn API where queued payload can cause deadlock.
+       * NOTE: Assumes statistics are enabled (MEMP_STATS).
+       * NOTE: Assumes no custom buffer allocation. */
+      if (MEMP_STATS_GET(used, MEMP_PBUF_POOL) > MEMP_STATS_GET(max, MEMP_PBUF_POOL) - 2) {
+        if (tcplen > 0) {
+          pcb->rcv_nxt += tcplen;
+        }
+        return ERR_OK;
+      }
+      #endif
       tcp_receive(pcb);
       if (recv_flags & TF_GOT_FIN) { /* passive close */
         tcp_ack_now(pcb);
