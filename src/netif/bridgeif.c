@@ -355,7 +355,7 @@ bridgeif_input(struct pbuf *p, struct netif *netif)
     /* group address -> flood + cpu? */
     dstports = bridgeif_find_dst_ports(br, dst);
     bridgeif_send_to_ports(br, p, dstports);
-    if (dstports & (1 << BRIDGEIF_MAX_PORTS)) {
+    if (dstports & ((bridgeif_portmask_t)1 << BRIDGEIF_MAX_PORTS)) {
       /* we pass the reference to ->input or have to free it */
       LWIP_DEBUGF(BRIDGEIF_FW_DEBUG, ("br -> input(%p)\n", (void *)p));
       if (br->netif->input(p, br->netif) != ERR_OK) {
