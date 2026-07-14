@@ -897,6 +897,11 @@ typedef struct _lwiperf_udp_server_report {
 #define LWIPERF_UDP_CLIENT_RATE_KBPS  1000U
 #endif
 
+/** Upper bound for datagrams sent per lwiperf_udp_client_poll() call */
+#ifndef LWIPERF_UDP_MAX_DATAGRAMS_PER_POLL
+#define LWIPERF_UDP_MAX_DATAGRAMS_PER_POLL  16U
+#endif
+
 /** Connection handle for a UDP iperf server session */
 typedef struct _lwiperf_state_udp {
   lwiperf_state_base_t base;
@@ -918,6 +923,59 @@ typedef struct _lwiperf_state_udp {
   u16_t rate_kbitpsec;
   s32_t udp_seq;
 } lwiperf_state_udp_t;
+
+/** Send one UDP client datagram and update counters on success. */
+static err_t
+lwiperf_udp_client_send_datagram(lwiperf_state_udp_t *conn, s32_t datagram_id, u32_t now)
+{
+  struct pbuf *p;
+  lwiperf_udp_hdr_t hdr;
+  err_t err;
+
+  p = pbuf_alloc(PBUF_TRANSPORT, LWIPERF_UDP_DATAGRAM_SIZE, PBUF_RAM);
+  if (p == NULL) {
+    return ERR_MEM;
+  }
+
+  memset(p->payload, '0', p->tot_len);
+
+  hdr.id = (s32_t)lwip_htonl((u32_t)datagram_id);
+  hdr.tv_sec = lwip_htonl(now / 1000U);
+  hdr.tv_usec = lwip_htonl((now % 1000U) * 1000U);
+  pbuf_take_at(p, &hdr, sizeof(hdr), 0);
+
+  err = udp_send(conn->pcb, p);
+  if (err == ERR_OK) {
+    conn->bytes_transferred += p->tot_len;
+  }
+  pbuf_free(p);
+  return err;
+}
+
+/** Report completion and free a UDP client session. */
+static void
+lwiperf_udp_client_done(lwiperf_state_udp_t *conn, enum lwiperf_report_type report_type, u32_t duration_ms)
+{
+  u32_t bandwidth_kbitpsec;
+
+  if (duration_ms == 0) {
+    bandwidth_kbitpsec = 0;
+  } else {
+    bandwidth_kbitpsec = (conn->bytes_transferred / duration_ms) * 8U;
+  }
+
+  if (conn->report_fn != NULL) {
+    conn->report_fn(conn->report_arg, report_type,
+                    &conn->pcb->local_ip, conn->pcb->local_port,
+                    &conn->remote_addr, conn->remote_port,
+                    conn->bytes_transferred, duration_ms, bandwidth_kbitpsec);
+  }
+
+  conn->test_running = 0;
+  lwiperf_list_remove(&conn->base);
+  udp_remove(conn->pcb);
+  LWIPERF_FREE(lwiperf_state_udp_t, conn);
+}
 
 /** UDP server receive callback */
 static void
@@ -1202,11 +1260,12 @@ u8_t
 lwiperf_udp_client_poll(void *session)
 {
   lwiperf_state_udp_t *conn = (lwiperf_state_udp_t *)session;
-  struct pbuf *p;
-  lwiperf_udp_hdr_t hdr;
   u32_t now;
   u32_t elapsed_ms;
-  u16_t dgram_size;
+  err_t err;
+  u64_t target_bytes;
+  u64_t bytes_due;
+  u16_t sent_count;
 
   if ((conn == NULL) || (conn->base.tcp != 0) || (conn->base.server != 0)) {
     return 0;
@@ -1218,68 +1277,35 @@ lwiperf_udp_client_poll(void *session)
 
   now = sys_now();
   elapsed_ms = now - conn->time_started;
-
-  dgram_size = LWIPERF_UDP_DATAGRAM_SIZE;
+  target_bytes = ((u64_t)conn->rate_kbitpsec * 125U * elapsed_ms) / 1000U;
 
   if (elapsed_ms >= conn->duration_ms) {
+    u32_t duration_ms = now - conn->time_started;
     /* Test duration exceeded - send final datagram with negative ID */
-    p = pbuf_alloc(PBUF_TRANSPORT, dgram_size, PBUF_RAM);
-    if (p != NULL) {
-      u32_t duration_ms = now - conn->time_started;
-      u32_t bandwidth_kbitpsec;
-
-      /* Fill with pattern data */
-      memset(p->payload, '0', p->tot_len);
-
-      /* Write header with negative sequence number to signal end */
-      hdr.id = (s32_t)lwip_htonl((u32_t)(-(conn->udp_seq + 1)));
-      hdr.tv_sec = lwip_htonl(now / 1000U);
-      hdr.tv_usec = lwip_htonl((now % 1000U) * 1000U);
-      pbuf_take_at(p, &hdr, sizeof(hdr), 0);
-
-      udp_send(conn->pcb, p);
-      conn->bytes_transferred += p->tot_len;
-      pbuf_free(p);
-
-      /* Report done */
-      if (duration_ms == 0) {
-        bandwidth_kbitpsec = 0;
-      } else {
-        bandwidth_kbitpsec = (conn->bytes_transferred / duration_ms) * 8U;
-      }
-
-      if (conn->report_fn != NULL) {
-        conn->report_fn(conn->report_arg, LWIPERF_UDP_DONE_CLIENT,
-                        &conn->pcb->local_ip, conn->pcb->local_port,
-                        &conn->remote_addr, conn->remote_port,
-                        conn->bytes_transferred, duration_ms, bandwidth_kbitpsec);
-      }
-
-      /* Clean up */
-      conn->test_running = 0;
-      lwiperf_list_remove(&conn->base);
-      udp_remove(conn->pcb);
-      LWIPERF_FREE(lwiperf_state_udp_t, conn);
+    err = lwiperf_udp_client_send_datagram(conn, -(conn->udp_seq + 1), now);
+    if (err == ERR_OK) {
+      lwiperf_udp_client_done(conn, LWIPERF_UDP_DONE_CLIENT, duration_ms);
+    } else {
+      lwiperf_udp_client_done(conn, LWIPERF_UDP_ABORTED_LOCAL, duration_ms);
     }
     return 0;
   }
 
-  /* Send a datagram */
-  p = pbuf_alloc(PBUF_TRANSPORT, dgram_size, PBUF_RAM);
-  if (p != NULL) {
-    /* Fill payload with pattern */
-    memset(p->payload, '0', p->tot_len);
-
-    /* Write iPerf2 header */
-    hdr.id = (s32_t)lwip_htonl((u32_t)conn->udp_seq);
-    hdr.tv_sec = lwip_htonl(now / 1000U);
-    hdr.tv_usec = lwip_htonl((now % 1000U) * 1000U);
-    pbuf_take_at(p, &hdr, sizeof(hdr), 0);
-
-    udp_send(conn->pcb, p);
-    conn->bytes_transferred += p->tot_len;
+  if (target_bytes <= conn->bytes_transferred) {
+    return 1;
+  }
+  bytes_due = target_bytes - conn->bytes_transferred;
+  sent_count = 0;
+  while ((bytes_due >= LWIPERF_UDP_DATAGRAM_SIZE) &&
+         (sent_count < LWIPERF_UDP_MAX_DATAGRAMS_PER_POLL)) {
+    err = lwiperf_udp_client_send_datagram(conn, conn->udp_seq, now);
+    if (err != ERR_OK) {
+      lwiperf_udp_client_done(conn, LWIPERF_UDP_ABORTED_LOCAL, elapsed_ms);
+      return 0;
+    }
     conn->udp_seq++;
-    pbuf_free(p);
+    bytes_due -= LWIPERF_UDP_DATAGRAM_SIZE;
+    sent_count++;
   }
 
   return 1;
