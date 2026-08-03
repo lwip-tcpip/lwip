@@ -1,10 +1,12 @@
 #include "test_ip4.h"
 
 #include "lwip/icmp.h"
+#include "lwip/igmp.h"
 #include "lwip/ip4.h"
 #include "lwip/etharp.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/stats.h"
+#include "lwip/prot/igmp.h"
 #include "lwip/prot/ip.h"
 #include "lwip/prot/ip4.h"
 
@@ -327,6 +329,59 @@ START_TEST(test_ip4_icmp_replylen_first_8)
 }
 END_TEST
 
+START_TEST(test_igmp_v1_report_suppression)
+{
+  ip4_addr_t group_addr;
+  ip4_addr_t peer_addr;
+  struct igmp_group *group;
+  struct pbuf *p;
+  struct ip_hdr *iphdr;
+  struct igmp_msg *igmp;
+  LWIP_UNUSED_ARG(_i);
+
+  linkoutput_ctr = 0;
+  test_netif_add();
+  test_netif.output = arpless_output;
+  test_netif.flags |= NETIF_FLAG_IGMP;
+
+  fail_unless(igmp_start(&test_netif) == ERR_OK);
+  IP4_ADDR(&group_addr, 239, 1, 2, 3);
+  fail_unless(igmp_joingroup_netif(&test_netif, &group_addr) == ERR_OK);
+  group = igmp_lookfor_group(&test_netif, &group_addr);
+  fail_unless(group != NULL);
+  fail_unless(group->group_state == IGMP_GROUP_DELAYING_MEMBER);
+  group->timer = 5;
+  group->last_reporter_flag = 1;
+
+  p = pbuf_alloc(PBUF_RAW, IP_HLEN + IGMP_MINLEN, PBUF_RAM);
+  fail_unless(p != NULL);
+  memset(p->payload, 0, p->len);
+
+  IP4_ADDR(&peer_addr, 192, 168, 0, 2);
+  iphdr = (struct ip_hdr *)p->payload;
+  IPH_VHL_SET(iphdr, 4, IP_HLEN / 4);
+  IPH_LEN_SET(iphdr, lwip_htons(p->tot_len));
+  IPH_TTL_SET(iphdr, 1);
+  IPH_PROTO_SET(iphdr, IP_PROTO_IGMP);
+  ip4_addr_copy(iphdr->src, peer_addr);
+  ip4_addr_copy(iphdr->dest, group_addr);
+  IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+
+  igmp = (struct igmp_msg *)((u8_t *)p->payload + IP_HLEN);
+  igmp->igmp_msgtype = IGMP_V1_MEMB_REPORT;
+  ip4_addr_copy(igmp->igmp_group_address, group_addr);
+  igmp->igmp_checksum = inet_chksum(igmp, IGMP_MINLEN);
+
+  fail_unless(ip4_input(p, &test_netif) == ERR_OK);
+  fail_unless(group->timer == 0);
+  fail_unless(group->group_state == IGMP_GROUP_IDLE_MEMBER);
+  fail_unless(group->last_reporter_flag == 0);
+
+  fail_unless(igmp_stop(&test_netif) == ERR_OK);
+  test_netif_remove();
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 ip4_suite(void)
@@ -338,6 +393,7 @@ ip4_suite(void)
     TESTFUNC(test_ip4addr_aton),
     TESTFUNC(test_ip4_icmp_replylen_short),
     TESTFUNC(test_ip4_icmp_replylen_first_8),
+    TESTFUNC(test_igmp_v1_report_suppression),
   };
   return create_suite("IPv4", tests, sizeof(tests)/sizeof(testfunc), ip4_setup, ip4_teardown);
 }
