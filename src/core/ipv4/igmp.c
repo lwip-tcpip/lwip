@@ -261,6 +261,7 @@ igmp_lookup_group(struct netif *ifp, const ip4_addr_t *addr)
     group->group_state        = IGMP_GROUP_NON_MEMBER;
     group->last_reporter_flag = 0;
     group->use                = 0;
+    group->v1_router_present_tmr = 0;
 
     /* Ensure allsystems group is always first in list */
     if (list_head == NULL) {
@@ -371,9 +372,15 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: General IGMP_MEMB_QUERY on \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
 
         if (igmp->igmp_maxresp == 0) {
+          struct igmp_group *igmp_group_head = netif_igmp_data(inp);
           IGMP_STATS_INC(igmp.rx_v1);
           LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: got an all hosts query with time== 0 - this is V1 and not implemented - treat as v2\n"));
           igmp->igmp_maxresp = IGMP_V1_DELAYING_MEMBER_TMR;
+          /* A v1 router is present: (re)start the interface-level
+           * Version 1 Router Present Timeout (RFC 2236, Section 4). */
+          if (igmp_group_head != NULL) {
+            igmp_group_head->v1_router_present_tmr = IGMP_V1_ROUTER_PRESENT_TIMEOUT;
+          }
         } else {
           IGMP_STATS_INC(igmp.rx_general);
         }
@@ -517,7 +524,14 @@ igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
       }
 
       IGMP_STATS_INC(igmp.tx_join);
-      igmp_send(netif, group, IGMP_V2_MEMB_REPORT);
+      /* RFC 2236, Section 4: while an IGMPv1 router is present on
+       * this interface, send Version 1 Membership Reports */
+      if ((netif_igmp_data(netif) != NULL) &&
+          (netif_igmp_data(netif)->v1_router_present_tmr > 0)) {
+        igmp_send(netif, group, IGMP_V1_MEMB_REPORT);
+      } else {
+        igmp_send(netif, group, IGMP_V2_MEMB_REPORT);
+      }
 
       igmp_start_timer(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
 
@@ -607,9 +621,17 @@ igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
 
       /* If we are the last reporter for this group */
       if (group->last_reporter_flag) {
-        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: sending leaving group\n"));
-        IGMP_STATS_INC(igmp.tx_leave);
-        igmp_send(netif, group, IGMP_LEAVE_GROUP);
+        /* RFC 2236, Section 8.11: no IGMPv2 message may be sent
+         * within 400 seconds of a v1 query; the v1 router cannot
+         * process a Leave */
+        struct igmp_group *igmp_group_head = netif_igmp_data(netif);
+        if ((igmp_group_head == NULL) || (igmp_group_head->v1_router_present_tmr == 0)) {
+          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: sending leaving group\n"));
+          IGMP_STATS_INC(igmp.tx_leave);
+          igmp_send(netif, group, IGMP_LEAVE_GROUP);
+        } else {
+          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: IGMPv1 router present, not sending Leave\n"));
+        }
       }
 
       /* Disable the group at the MAC level */
@@ -645,6 +667,13 @@ igmp_tmr(void)
   NETIF_FOREACH(netif) {
     struct igmp_group *group = netif_igmp_data(netif);
 
+    /* Decrement the interface-level IGMPv1 router present timer kept
+     * in the list head (RFC 2236, Section 4).  When it reaches zero
+     * the interface reverts to IGMPv2 behaviour. */
+    if ((group != NULL) && (group->v1_router_present_tmr > 0)) {
+      group->v1_router_present_tmr--;
+    }
+
     while (group != NULL) {
       if (group->timer > 0) {
         group->timer--;
@@ -677,7 +706,14 @@ igmp_timeout(struct netif *netif, struct igmp_group *group)
     group->group_state = IGMP_GROUP_IDLE_MEMBER;
 
     IGMP_STATS_INC(igmp.tx_report);
-    igmp_send(netif, group, IGMP_V2_MEMB_REPORT);
+    /* RFC 2236, Section 4: while an IGMPv1 router is present on
+     * this interface, send Version 1 Membership Reports */
+    if ((netif_igmp_data(netif) != NULL) &&
+        (netif_igmp_data(netif)->v1_router_present_tmr > 0)) {
+      igmp_send(netif, group, IGMP_V1_MEMB_REPORT);
+    } else {
+      igmp_send(netif, group, IGMP_V2_MEMB_REPORT);
+    }
   }
 }
 
@@ -771,18 +807,16 @@ igmp_send(struct netif *netif, struct igmp_group *group, u8_t type)
                 (p->len >= sizeof(struct igmp_msg)));
     ip4_addr_copy(src, *netif_ip4_addr(netif));
 
-    if (type == IGMP_V2_MEMB_REPORT) {
+    if ((type == IGMP_V1_MEMB_REPORT) || (type == IGMP_V2_MEMB_REPORT)) {
       dest = &(group->group_address);
       ip4_addr_copy(igmp->igmp_group_address, group->group_address);
       group->last_reporter_flag = 1; /* Remember we were the last to report */
-    } else {
-      if (type == IGMP_LEAVE_GROUP) {
-        dest = &allrouters;
-        ip4_addr_copy(igmp->igmp_group_address, group->group_address);
-      }
+    } else if (type == IGMP_LEAVE_GROUP) {
+      dest = &allrouters;
+      ip4_addr_copy(igmp->igmp_group_address, group->group_address);
     }
 
-    if ((type == IGMP_V2_MEMB_REPORT) || (type == IGMP_LEAVE_GROUP)) {
+    if ((type == IGMP_V1_MEMB_REPORT) || (type == IGMP_V2_MEMB_REPORT) || (type == IGMP_LEAVE_GROUP)) {
       igmp->igmp_msgtype  = type;
       igmp->igmp_maxresp  = 0;
       igmp->igmp_checksum = 0;
