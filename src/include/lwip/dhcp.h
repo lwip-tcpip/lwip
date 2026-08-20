@@ -84,6 +84,9 @@ struct dhcp
 {
   /** transaction identifier of last sent request */
   u32_t xid;
+  /** seconds elapsed since start of the current acquisition/renewal transaction,
+      reused by the DHCPREQUEST matching a DHCPDISCOVER */
+  u16_t secs;
   /** track PCB allocation state */
   u8_t pcb_allocated;
   /** current DHCP state machine state */
