@@ -244,6 +244,7 @@ static err_t dhcp_decline(struct netif *netif);
 static err_t dhcp_rebind(struct netif *netif);
 static err_t dhcp_reboot(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state);
+static void dhcp_inform_no_wait(struct netif *netif);
 
 /* receive, unfold, parse and free incoming messages */
 static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
@@ -601,6 +602,17 @@ dhcp_timeout(struct netif *netif)
     } else {
       dhcp_discover(netif);
     }
+  } else if (dhcp->state == DHCP_STATE_INFORMING) {
+    /* no DHCPACK received for the DHCPINFORM (RFC 2131 section 4.4.3):
+       retry a few times, then give up */
+    if (dhcp->tries <= 5) {
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_timeout(): INFORMING, DHCP request timed out, retrying\n"));
+      dhcp_inform(netif);
+    } else {
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_timeout(): INFORMING, giving up\n"));
+      dhcp_set_state(dhcp, DHCP_STATE_OFF);
+      dhcp->request_timeout = 0; /* stop timer */
+    }
   }
 }
 
@@ -889,17 +901,96 @@ dhcp_start(struct netif *netif)
  * by sending an INFORM message. It does not involve DHCP address
  * configuration, it is just here to be nice to the network.
  *
+ * The server replies with a DHCPACK carrying the local configuration
+ * parameters requested in the INFORM.  The reply is received on the
+ * dhcp struct of the interface (created on demand), the parameters are
+ * applied (DNS servers, NTP servers, gateway, ...) and the INFORM is
+ * retried until the ACK arrives or a few attempts have been made
+ * (RFC 2131 section 4.4.3).
+ *
  * @param netif The lwIP network interface
  */
 void
 dhcp_inform(struct netif *netif)
 {
-  struct dhcp dhcp;
+  struct dhcp *dhcp = netif_dhcp_data(netif);
   struct pbuf *p_out;
   u16_t options_out_len;
+  u16_t msecs;
 
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
+
+  if (dhcp == NULL) {
+    /* No DHCP client on this interface: create a transaction context
+       that dhcp_recv() can find so that the DHCPACK reply to this
+       INFORM is received, matched by transaction id and parsed. */
+    dhcp = (struct dhcp *)mem_malloc(sizeof(struct dhcp));
+    if (dhcp == NULL) {
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform: could not allocate dhcp\n"));
+      return;
+    }
+    dhcp->flags = 0;
+    netif_set_client_data(netif, LWIP_NETIF_CLIENT_DATA_INDEX_DHCP, dhcp);
+  } else if ((dhcp->state != DHCP_STATE_OFF) &&
+             (dhcp->state != DHCP_STATE_INFORMING)) {
+    /* A DHCP client is running on this interface and owns the dhcp
+       struct, so no matching transaction context is available.  Keep
+       the old behaviour of sending the INFORM without waiting for the
+       reply. */
+    dhcp_inform_no_wait(netif);
+    return;
+  }
+
+  if (dhcp->pcb_allocated == 0) {
+    if (dhcp_inc_pcb_refcount() != ERR_OK) { /* ensure DHCP PCB is allocated */
+      return;
+    }
+    dhcp->pcb_allocated = 1;
+  }
+
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
+  dhcp_set_state(dhcp, DHCP_STATE_INFORMING);
+
+  /* create and initialize the DHCP message header */
+  p_out = dhcp_create_msg(netif, dhcp, DHCP_INFORM, &options_out_len);
+  if (p_out != NULL) {
+    struct dhcp_msg *msg_out = (struct dhcp_msg *)p_out->payload;
+    options_out_len = dhcp_option(options_out_len, msg_out->options, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
+    options_out_len = dhcp_option_short(options_out_len, msg_out->options, DHCP_MAX_MSG_LEN(netif));
+
+    LWIP_HOOK_DHCP_APPEND_OPTIONS(netif, dhcp, DHCP_STATE_INFORMING, msg_out, DHCP_INFORM, &options_out_len);
+    dhcp_option_trailer(options_out_len, msg_out->options, p_out);
+
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
+
+    udp_sendto_if(dhcp_pcb, p_out, IP_ADDR_BROADCAST, LWIP_IANA_PORT_DHCP_SERVER, netif);
+
+    pbuf_free(p_out);
+  } else {
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_inform: could not allocate DHCP request\n"));
+  }
+
+  /* wait for the DHCPACK: grow the retry timeout like the other
+     DHCP transactions (RFC 2131 section 4.4.3) */
+  msecs = (u16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
+  dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
+  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_inform(): set request timeout %"U16_F" msecs\n", msecs));
+}
+
+/**
+ * Send a DHCPINFORM without keeping a transaction context, so the
+ * reply, if any, is not received.  Used when a DHCP client already
+ * runs on the interface and owns the dhcp struct.
+ */
+static void
+dhcp_inform_no_wait(struct netif *netif)
+{
+  struct dhcp dhcp;
+  struct pbuf *p_out;
+  u16_t options_out_len;
 
   if (dhcp_inc_pcb_refcount() != ERR_OK) { /* ensure DHCP PCB is allocated */
     return;
@@ -1853,6 +1944,15 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
              (dhcp->state == DHCP_STATE_RENEWING)) {
       dhcp_handle_ack(netif, msg_in);
       dhcp_bind(netif);
+    }
+    /* reply to a DHCPINFORM (RFC 2131 section 4.4): the ACK carries
+       the requested local configuration parameters, which
+       dhcp_handle_ack() applies and keeps in the dhcp struct */
+    else if (dhcp->state == DHCP_STATE_INFORMING) {
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("DHCP_ACK received in INFORMING state\n"));
+      dhcp_handle_ack(netif, msg_in);
+      dhcp_set_state(dhcp, DHCP_STATE_OFF);
+      dhcp->request_timeout = 0; /* stop the retry timer */
     }
   }
   /* received a DHCP_NAK in appropriate state? */
