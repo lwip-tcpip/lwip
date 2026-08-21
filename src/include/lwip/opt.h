@@ -1132,6 +1132,15 @@
 #define LWIP_IGMP                       0
 #endif
 /**
+ * LWIP_IGMP_UNSOLICITED_REPORT_INTERVAL==n: time in milliseconds between
+ * a host's initial unsolicited Membership Report for a group and its
+ * repetitions, both when joining the group and when the link comes back
+ * up. RFC 2236 section 8.10 specifies a default of 10 seconds.
+ */
+#if !defined LWIP_IGMP_UNSOLICITED_REPORT_INTERVAL || defined __DOXYGEN__
+#define LWIP_IGMP_UNSOLICITED_REPORT_INTERVAL   10000
+#endif
+/**
  * @}
  */
 
