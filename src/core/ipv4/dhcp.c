@@ -1036,6 +1036,12 @@ dhcp_discover(struct netif *netif)
 
   ip4_addr_set_any(&dhcp->offered_ip_addr);
   dhcp_set_state(dhcp, DHCP_STATE_SELECTING);
+  /* start of a new transaction: fix the secs value that every message of
+     this transaction (DHCPDISCOVER retransmissions and the matching
+     DHCPREQUEST, RFC 2131 section 3.1 step 3) has to reuse */
+  if (dhcp->tries == 0) {
+    dhcp->secs = 1;
+  }
   /* create and initialize the DHCP message header */
   p_out = dhcp_create_msg(netif, dhcp, DHCP_DISCOVER, &options_out_len);
   if (p_out != NULL) {
@@ -1938,6 +1944,9 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type, u16_t
   msg_out->htype = LWIP_IANA_HWTYPE_ETHERNET;
   msg_out->hlen = netif->hwaddr_len;
   msg_out->xid = lwip_htonl(dhcp->xid);
+  /* reuse the secs value recorded at the start of this transaction so the
+     DHCPREQUEST always matches the DHCPDISCOVER (RFC 2131 section 3.1 step 3) */
+  msg_out->secs = lwip_htons(dhcp->secs);
   /* we don't need the broadcast flag since we can receive unicast traffic
      before being fully configured! */
   /* set ciaddr to netif->ip_addr based on message_type and state */
