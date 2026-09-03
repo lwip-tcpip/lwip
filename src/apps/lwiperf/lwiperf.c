@@ -236,7 +236,9 @@ lwip_tcp_conn_report(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_
     if (duration_ms == 0) {
       bandwidth_kbitpsec = 0;
     } else {
-      bandwidth_kbitpsec = (conn->bytes_transferred / duration_ms) * 8U;
+      u64_t bits = (u64_t)conn->bytes_transferred * 8U;
+      /* bandwidth in kbit/s (bits/ms; 1 kbit/s == 1 bit/ms) */
+      bandwidth_kbitpsec = (u32_t)(bits / duration_ms);
     }
     conn->report_fn(conn->report_arg, report_type,
                     &conn->conn_pcb->local_ip, conn->conn_pcb->local_port,
