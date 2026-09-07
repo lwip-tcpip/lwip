@@ -416,8 +416,11 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
         }
       }
       break;
+    case IGMP_V1_MEMB_REPORT:
+      IGMP_STATS_INC(igmp.rx_v1);
+      /* fall through */
     case IGMP_V2_MEMB_REPORT:
-      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_V2_MEMB_REPORT\n"));
+      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_MEMB_REPORT\n"));
       IGMP_STATS_INC(igmp.rx_report);
       if (group->group_state == IGMP_GROUP_DELAYING_MEMBER) {
         /* This is on a specific group we have already looked up */
