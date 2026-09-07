@@ -148,8 +148,9 @@ fs_open_custom(struct fs_file *file, const char *name)
       strcat((char *)pcBuf, "<br>--------------------------------------------------<br>");
         
       /* The list of tasks and their status */
-      osThreadList((unsigned char *)(pcBuf + strlen(pcBuf)));
-
+      //osThreadList((unsigned char *)(pcBuf + strlen(pcBuf)));
+      vTaskList(pcBuf + strlen(pcBuf));
+      
       strcat((char *)pcBuf, "<br>--------------------------------------------------");
       strcat((char *)pcBuf, "<br>B : Blocked, R : Ready, D : Deleted, S : Suspended<br>");
       //strcat((char *)pcBuf, "<br><a href='/'>Back to main</a>");  // TODO: BUG!! maybe buffer too small!
