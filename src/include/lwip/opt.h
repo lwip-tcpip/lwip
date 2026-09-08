@@ -1314,6 +1314,27 @@
 #endif
 
 /**
+ * SYN_WITH_PAYLOAD_ENABLED: Handle SYN packets with payload according to RFC standards.
+ *
+ * RFC Compliance: When enabled (set to 1), lwIP correctly processes SYN packets that
+ * contain payload data by setting rcv_nxt to account for both the SYN flag and the
+ * payload length. According to TCP RFC specifications, the ACK number should reflect
+ * the sequence number incremented by the size of the received payload, even in the
+ * rare case of a SYN packet carrying data.
+ *
+ * By default (disabled), lwIP ignores payload in SYN packets and responds with ACK=1,
+ * which may not comply with strict RFC interpretations. Some robustness testing tools
+ * and security scanners specifically check for this behavior to validate TCP stack
+ * correctness.
+ *
+ * Enable this for improved RFC compliance and interoperability with testing tools.
+ * Default is 0 (disabled for backward compatibility and typical usage).
+ */
+#if !defined SYN_WITH_PAYLOAD_ENABLED || defined __DOXYGEN__
+#define SYN_WITH_PAYLOAD_ENABLED        0
+#endif
+
+/**
  * TCP_QUEUE_OOSEQ==1: TCP will queue segments that arrive out of order.
  * Define to 0 if your device is low on memory.
  */
