@@ -403,11 +403,12 @@ acd_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
       case ACD_STATE_ANNOUNCE_WAIT:
         /* RFC 5227 Section 2.1.1:
          * from beginning to after ANNOUNCE_WAIT seconds we have a conflict if
-         * ip.src == ipaddr (someone is already using the address)
+         * ip.src == ipaddr && hw.src != own hwaddr (someone is already using the address)
          * OR
          * ip.dst == ipaddr && hw.src != own hwaddr (someone else is probing it)
          */
-        if ((ip4_addr_eq(&sipaddr, &acd->ipaddr)) ||
+        if ((ip4_addr_eq(&sipaddr, &acd->ipaddr) &&
+             !eth_addr_eq(&netifaddr, &hdr->shwaddr)) ||
             (ip4_addr_isany_val(sipaddr) &&
              ip4_addr_eq(&dipaddr, &acd->ipaddr) &&
              !eth_addr_eq(&netifaddr, &hdr->shwaddr))) {
