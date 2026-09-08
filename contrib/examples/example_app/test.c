@@ -72,6 +72,7 @@
 #include "apps/tcpecho/tcpecho.h"
 #include "apps/udpecho/udpecho.h"
 #include "apps/tcpecho_raw/tcpecho_raw.h"
+#include "apps/tcpecho_altcp/tcpecho_altcp.h"
 #include "apps/socket_examples/socket_examples.h"
 
 #include "examples/lwiperf/lwiperf_example.h"
@@ -558,6 +559,8 @@ apps_init(void)
 #if LWIP_TCPECHO_APP
 #if LWIP_NETCONN && defined(LWIP_TCPECHO_APP_NETCONN)
   tcpecho_init();
+#elif LWIP_ALTCP
+  tcpecho_altcp_init();
 #else /* LWIP_NETCONN && defined(LWIP_TCPECHO_APP_NETCONN) */
   tcpecho_raw_init();
 #endif
