@@ -252,7 +252,7 @@ snmp_prepare_trap_oid(struct snmp_obj_id *dest_snmp_trap_oid, const struct snmp_
     if (sizeof(dest_snmp_trap_oid->id) >= sizeof(snmpTrapOID)) {
       MEMCPY(&dest_snmp_trap_oid->id, snmpTrapOID , sizeof(snmpTrapOID));
       dest_snmp_trap_oid->len = LWIP_ARRAYSIZE(snmpTrapOID);
-      dest_snmp_trap_oid->id[dest_snmp_trap_oid->len++] = specific_trap + 1;
+      dest_snmp_trap_oid->id[dest_snmp_trap_oid->len++] = generic_trap + 1;
     } else {
       err = ERR_MEM;
     }
@@ -352,8 +352,8 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
                                                      {
                                                        NULL,                            /* *next */
                                                        {                                /* oid */
-                                                         8,                             /* oid len */
-                                                         {1, 3, 6, 1, 2, 1, 1, 3}       /* oid for sysUpTime */
+                                                         9,                             /* oid len */
+                                                         {1, 3, 6, 1, 2, 1, 1, 3, 0}       /* oid for sysUpTime.0 */
                                                        },
                                                        SNMP_ASN1_TYPE_TIMETICKS,        /* type */
                                                        sizeof(u32_t),                   /* value_len */
@@ -363,8 +363,8 @@ snmp_send_trap_or_notification_or_inform_generic(struct snmp_msg_trap *trap_msg,
                                                      {
                                                        NULL,                            /* *next */
                                                        {                                /* oid */
-                                                         10,                            /* oid len */
-                                                         {1, 3, 6, 1, 6, 3, 1, 1, 4, 1} /* oid for snmpTrapOID */
+                                                         11,                            /* oid len */
+                                                         {1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0} /* oid for snmpTrapOID.0 */
                                                        },
                                                        SNMP_ASN1_TYPE_OBJECT_ID,        /* type */
                                                        0,                               /* value_len */
