@@ -298,6 +298,8 @@ struct linger {
  */
 #define IPV6_CHECKSUM       7  /* RFC3542: calculate and insert the ICMPv6 checksum for raw sockets. */
 #define IPV6_V6ONLY         27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
+#define IPV6_RECVPKTINFO    49 /* RFC3542: enables the receiving of ancillary data via setsockopt() */
+#define IPV6_PKTINFO        50 /* RFC3542: ancillary data in recvmsg() received */
 #endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
@@ -337,6 +339,13 @@ struct in_pktinfo {
   struct in_addr ipi_addr;     /* Destination (from header) address */
 };
 #endif /* LWIP_IPV4 */
+
+#if LWIP_IPV6
+struct in6_pktinfo {
+  unsigned int    ipi6_ifindex;  /* Interface index */
+  struct in6_addr ipi6_addr;     /* Destination (from header) address */
+};
+#endif /* LWIP_IPV6 */
 
 #if LWIP_IPV6_MLD
 /*
