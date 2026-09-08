@@ -112,19 +112,19 @@ err_t tcpip_api_call(tcpip_api_call_fn fn, struct tcpip_api_call_data *call);
 
 enum tcpip_msg_type {
 #if !LWIP_TCPIP_CORE_LOCKING
-  TCPIP_MSG_API,
-  TCPIP_MSG_API_CALL,
+  TCPIP_MSG_API                 = 1,
+  TCPIP_MSG_API_CALL            = 2,
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
-  TCPIP_MSG_INPKT,
+  TCPIP_MSG_INPKT               = 3,
 #endif /* !LWIP_TCPIP_CORE_LOCKING_INPUT */
 #if LWIP_TCPIP_TIMEOUT && LWIP_TIMERS
-  TCPIP_MSG_TIMEOUT,
-  TCPIP_MSG_UNTIMEOUT,
+  TCPIP_MSG_TIMEOUT              = 4,
+  TCPIP_MSG_UNTIMEOUT            = 5,
 #endif /* LWIP_TCPIP_TIMEOUT && LWIP_TIMERS */
-  TCPIP_MSG_CALLBACK,
-  TCPIP_MSG_CALLBACK_STATIC,
-  TCPIP_MSG_CALLBACK_STATIC_WAIT
+  TCPIP_MSG_CALLBACK             = 6,
+  TCPIP_MSG_CALLBACK_STATIC      = 7,
+  TCPIP_MSG_CALLBACK_STATIC_WAIT = 8
 };
 
 struct tcpip_msg {
