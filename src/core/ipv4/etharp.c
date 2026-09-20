@@ -650,6 +650,20 @@ etharp_input(struct pbuf *p, struct netif *netif)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
+  /* drop short ARP packets: we have to check for p->len instead of p->tot_len
+     here since a struct etharp_hdr is pointed to p->payload, so it musn't be
+     chained! (regression re-fix: this check existed prior to commit 31778193
+     in 2016 and was accidentally dropped during a refactor) */
+  if (p->len < SIZEOF_ETHARP_HDR) {
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+                ("etharp_input: packet dropped, too short (%"U16_F"/%"U16_F")\n",
+                 p->tot_len, (u16_t)SIZEOF_ETHARP_HDR));
+    ETHARP_STATS_INC(etharp.lenerr);
+    ETHARP_STATS_INC(etharp.drop);
+    pbuf_free(p);
+    return;
+  }
+
   hdr = (struct etharp_hdr *)p->payload;
 
   /* RFC 826 "Packet Reception": */
