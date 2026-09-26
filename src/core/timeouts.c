@@ -347,8 +347,11 @@ sys_untimeout(sys_timeout_handler handler, void *arg)
  * handler functions when timeouts expire.
  *
  * Must be called periodically from your main loop.
+ *
+ * @return the time left before the next timeout is due. If no timeouts are
+ * enqueued, returns 0xffffffff
  */
-void
+u32_t
 sys_check_timeouts(void)
 {
   u32_t now;
@@ -367,11 +370,13 @@ sys_check_timeouts(void)
 
     tmptimeout = next_timeout;
     if (tmptimeout == NULL) {
-      return;
+      return SYS_TIMEOUTS_SLEEPTIME_INFINITE;
     }
 
     if (TIME_LESS_THAN(now, tmptimeout->time)) {
-      return;
+      u32_t ret = (u32_t)(tmptimeout->time - now);
+      LWIP_ASSERT("invalid sleeptime", ret <= LWIP_MAX_TIMEOUT);
+      return ret;
     }
 
     /* Timeout has expired */

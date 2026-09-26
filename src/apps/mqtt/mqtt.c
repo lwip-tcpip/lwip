@@ -859,7 +859,11 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
         /* parse header from this pbuf and save it in client->rx_buffer in case
            it comes in segmented */
         b = pbuf_get_at(p, in_offset++);
-        client->rx_buffer[client->msg_idx++] = b;
+        if (client->msg_idx < MQTT_VAR_HEADER_BUFFER_LEN) {
+          client->rx_buffer[client->msg_idx++] = b;
+        } else {
+          return MQTT_CONNECT_DISCONNECTED;
+        }
       }
       fixed_hdr_len++;
 

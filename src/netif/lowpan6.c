@@ -726,7 +726,8 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       if (lrh->reass == NULL) {
         /* decompression failed */
         mem_free(lrh);
-        goto lowpan6_input_discard;
+        MIB2_STATS_NETIF_INC(netif, ifindiscards);
+        return ERR_OK;
       }
     }
     /* TODO: handle the case where we already have FRAGN received */

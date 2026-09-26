@@ -85,11 +85,11 @@ tftp_close(void* handle)
 static int
 tftp_read(void* handle, void* buf, int bytes)
 {
-  int ret = fread(buf, 1, bytes, (FILE*)handle);
-  if (ret <= 0) {
+  size_t ret = fread(buf, 1, bytes, (FILE*)handle);
+  if ((ret == 0) || (ret > INT_MAX)) {
     return -1;
   }
-  return ret;
+  return (int)ret;
 }
 
 static int

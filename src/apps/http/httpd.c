@@ -2289,6 +2289,30 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
             {
               return http_find_file(hs, uri, is_09);
             }
+          {
+            err_t err;
+#if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
+            void *obj;
+            char replace_uri[LWIP_HTTPD_HEADERS_URI_REPLACE_LEN + 1];
+            replace_uri[0] = 0;
+            obj = httpd_headers_before_file_open(crlf + 2, (uint16_t)(data_len - (crlf + 2 - data)),
+                                                uri, replace_uri,
+                                                LWIP_HTTPD_HEADERS_URI_REPLACE_LEN);
+            if (replace_uri[0] != 0) {
+              uri = replace_uri;
+            }
+#endif /* LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN */
+            err = http_find_file(hs, uri, is_09);
+#if LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN
+            if (err == ERR_OK) {
+              httpd_headers_after_file_open(hs->handle, crlf + 2, (uint16_t)(data_len - (crlf + 2 - data))
+#if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
+                                             , obj
+#endif /* LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN */
+                                            );
+            }
+#endif /* LWIP_HTTPD_HEADERS_AFTER_FILE_OPEN */
+            return err;
           }
         }
       } else {
@@ -2850,11 +2874,11 @@ httpd_websocket_parse(struct altcp_pcb *pcb, struct pbuf *p)
       case 0x08: // close
         LWIP_DEBUGF(HTTPD_DEBUG, ("[ws_parse] close request\n"));
         return ERR_CLSD;
-      
+
       case 0x09: // ping ?
         LWIP_DEBUGF(HTTPD_DEBUG, ("[ws_parse] ping!\n"));
         return ERR_CLSD;
-      
+
       default:
         LWIP_DEBUGF(HTTPD_DEBUG, ("[ws_parse] unsupported opcode 0x%hX\n", opcode));
         break;

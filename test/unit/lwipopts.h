@@ -35,6 +35,7 @@
 #define LWIP_TESTMODE                   1
 
 #define LWIP_IPV6                       1
+#define NETIF_MAX_HWADDR_LEN            8U /* for 6LoWPAN tests */
 
 #define LWIP_CHECKSUM_ON_COPY           1
 #define TCP_CHECKSUM_ON_COPY_SANITY_CHECK 1

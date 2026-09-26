@@ -961,11 +961,21 @@ ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *d
     chk_sum += iphdr->_len;
 #endif /* CHECKSUM_GEN_IP_INLINE */
     IPH_OFFSET_SET(iphdr, 0);
-    IPH_ID_SET(iphdr, lwip_htons(ip_id));
+    if ((proto == IP_PROTO_TCP) && (p->tot_len <= IP4_MIN_MTU_LENGTH))
+    {
+      /* For small TCP packets, e.g. protocol handshake,
+       * do not bother generating IP_ID (just use 0 ip_id)
+       */
+      IPH_ID_SET(iphdr, lwip_htons(0));
+    }
+    else
+    {
+      IPH_ID_SET(iphdr, lwip_htons(ip_id));
+      ++ip_id;
+    }
 #if CHECKSUM_GEN_IP_INLINE
     chk_sum += iphdr->_id;
 #endif /* CHECKSUM_GEN_IP_INLINE */
-    ++ip_id;
 
     if (src == NULL) {
       ip4_addr_copy(iphdr->src, *IP4_ADDR_ANY4);

@@ -946,9 +946,9 @@ snmp_parse_inbound_frame(struct snmp_request *request)
     inbound_msgAuthenticationParameters_offset = pbuf_stream.offset;
     LWIP_UNUSED_ARG(inbound_msgAuthenticationParameters_offset);
     /* Read auth parameters */
-    /* IF_PARSE_ASSERT(tlv.value_len <= SNMP_V3_MAX_AUTH_PARAM_LENGTH); */
+    IF_PARSE_ASSERT(tlv.value_len <= SNMP_V3_MAX_AUTH_PARAM_LENGTH);
     IF_PARSE_EXEC(snmp_asn1_dec_raw(&pbuf_stream, tlv.value_len, request->msg_authentication_parameters,
-                                    &u16_value, tlv.value_len));
+                                    &u16_value, SNMP_V3_MAX_AUTH_PARAM_LENGTH));
     request->msg_authentication_parameters_len = (u8_t)u16_value;
 
     /* msgPrivacyParameters */

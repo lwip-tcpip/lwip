@@ -388,6 +388,8 @@ netif_add(struct netif *netif,
   if (init(netif) != ERR_OK) {
     return NULL;
   }
+  LWIP_ASSERT("netif->hwaddr_len <= NETIF_MAX_HWADDR_LEN",
+              (netif->hwaddr_len <= NETIF_MAX_HWADDR_LEN));
 #if LWIP_IPV6 && LWIP_ND6_ALLOW_RA_UPDATES
   /* Initialize the MTU for IPv6 to the one set by the netif driver.
      This can be updated later by RA. */

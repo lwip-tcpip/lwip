@@ -1919,7 +1919,7 @@ int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secre
   }
 
   MEMCPY(secret, pcb->settings.passwd, len);
-  *secret_len = len;
+  *secret_len = (int)len;
   return 1;
 
 #if 0 /* UNUSED */

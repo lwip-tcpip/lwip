@@ -165,6 +165,7 @@
     <ClCompile Include="..\..\..\..\test\unit\core\test_timers.c" />
     <ClCompile Include="..\..\..\..\test\unit\ip4\test_ip4.c" />
     <ClCompile Include="..\..\..\..\test\unit\ip6\test_ip6.c" />
+    <ClCompile Include="..\..\..\..\test\unit\lowpan6\test_lowpan6.c" />
     <ClCompile Include="..\..\..\..\test\unit\mdns\test_mdns.c" />
     <ClCompile Include="..\..\..\..\test\unit\mqtt\test_mqtt.c" />
     <ClCompile Include="..\..\..\..\test\unit\ppp\test_pppos.c" />
@@ -188,6 +189,7 @@
     <ClInclude Include="..\..\..\..\test\unit\core\test_timers.h" />
     <ClInclude Include="..\..\..\..\test\unit\ip4\test_ip4.h" />
     <ClInclude Include="..\..\..\..\test\unit\ip6\test_ip6.h" />
+    <ClInclude Include="..\..\..\..\test\unit\lowpan6\test_lowpan6.h" />
     <ClInclude Include="..\..\..\..\test\unit\mdns\test_mdns.h" />
     <ClInclude Include="..\..\..\..\test\unit\mqtt\test_mqtt.h" />
     <ClInclude Include="..\..\..\..\test\unit\ppp\test_pppos.h" />
