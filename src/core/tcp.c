@@ -1285,6 +1285,10 @@ tcp_slowtmr_start:
              still execute the backoff calculations below, as this means we somehow
              failed to send segment. */
           if ((tcp_rexmit_rto_prepare(pcb) == ERR_OK) || ((pcb->unacked == NULL) && (pcb->unsent != NULL))) {
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY
+            /* A timeout abandons the previous fast-recovery episode. */
+            tcp_clear_flags(pcb, TF_INFR);
+#endif
             /* Double retransmission time-out unless we are trying to
              * connect to somebody (i.e., we are in SYN_SENT). */
             if (pcb->state != SYN_SENT) {
