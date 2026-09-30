@@ -1810,6 +1810,10 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
       }
 
       pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY
+      pcb->partial_recovery_end = pcb->snd_nxt;
+      pcb->partial_recovery_seen = 0;
+#endif
       tcp_set_flags(pcb, TF_INFR);
 
       /* Reset the retransmission timer to prevent immediate rto retransmissions */
