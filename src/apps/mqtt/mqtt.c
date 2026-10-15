@@ -866,6 +866,12 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
         }
       }
       fixed_hdr_len++;
+      /* MQTT 3.1.1 sec 2.2.3: Remaining Length is at most 4 bytes.
+       fixed_hdr_len = 1 (type) + up to 4 (remaining-length) = 5 max. */
+      if (fixed_hdr_len > 5) {
+        LWIP_DEBUGF(MQTT_DEBUG_WARN, ("mqtt_parse_incoming: malformed remaining-length\n"));
+        return MQTT_CONNECT_DISCONNECTED;
+      }
 
       if (fixed_hdr_len >= 2) {
         /* fixed header contains at least 2 bytes but can contain more, depending on
