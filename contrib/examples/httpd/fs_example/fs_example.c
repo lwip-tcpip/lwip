@@ -100,6 +100,7 @@ struct fs_custom_data {
   int delay_read;
   fs_wait_cb callback_fn;
   void *callback_arg;
+  u8_t closed; /* closed while fs_example_read_cb() was still queued */
 #endif
 };
 
@@ -132,6 +133,9 @@ fs_open_custom(struct fs_file *file, const char *name)
 #if LWIP_HTTPD_EXAMPLE_CUSTOMFILES_DELAYED
         file->len = 0; /* read size delayed */
         data->delay_read = 3;
+        data->callback_fn = NULL;
+        data->callback_arg = NULL;
+        data->closed = 0;
         LWIP_UNUSED_ARG(len);
 #else
         file->len = len;
@@ -156,6 +160,17 @@ fs_close_custom(struct fs_file *file)
       fclose(data->f);
       data->f = NULL;
     }
+#if LWIP_HTTPD_EXAMPLE_CUSTOMFILES_DELAYED
+    if (data->callback_fn != NULL) {
+      /* fs_example_read_cb() is still queued and httpd frees callback_arg
+         after this returns: let the callback free 'data' instead */
+      data->callback_fn = NULL;
+      data->callback_arg = NULL;
+      data->closed = 1;
+      file->pextension = NULL;
+      return;
+    }
+#endif
     mem_free(data);
   }
 }
@@ -206,8 +221,16 @@ static void
 fs_example_read_cb(void *arg)
 {
   struct fs_custom_data *data = (struct fs_custom_data *)arg;
-  fs_wait_cb callback_fn = data->callback_fn;
-  void *callback_arg = data->callback_arg;
+  fs_wait_cb callback_fn;
+  void *callback_arg;
+
+  if (data->closed) {
+    /* file was closed while this callback was queued */
+    mem_free(data);
+    return;
+  }
+  callback_fn = data->callback_fn;
+  callback_arg = data->callback_arg;
   data->callback_fn = NULL;
   data->callback_arg = NULL;
 

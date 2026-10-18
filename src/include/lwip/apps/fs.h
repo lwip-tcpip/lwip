@@ -124,6 +124,11 @@ struct fsdata_file {
 int fs_open_custom(struct fs_file *file, const char *name);
 void fs_close_custom(struct fs_file *file);
 #if LWIP_HTTPD_FS_ASYNC_READ
+/* fs_wait_read_custom() and fs_read_async_custom() may delay and later call
+ * callback_fn(callback_arg) (e.g. via tcpip_callback()). httpd may call
+ * fs_close_custom() while such a callback is still pending (e.g. when the
+ * client closes the connection) and frees callback_arg after that, so
+ * fs_close_custom() must make sure callback_fn is not called any more. */
 u8_t fs_canread_custom(struct fs_file *file);
 u8_t fs_wait_read_custom(struct fs_file *file, fs_wait_cb callback_fn, void *callback_arg);
 int fs_read_async_custom(struct fs_file *file, char *buffer, int count, fs_wait_cb callback_fn, void *callback_arg);
