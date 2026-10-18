@@ -316,6 +316,13 @@ const struct protent lcp_protent = {
 #endif /* LQR_SUPPORT */
 #define CILEN_CBCP	3
 
+/* Longest Nak'd CI lcp_reqci() may add to its Nak buffer */
+#if LQR_SUPPORT
+#define CILEN_MAXNAK	CILEN_LQR
+#else /* LQR_SUPPORT */
+#define CILEN_MAXNAK	CILEN_LONG
+#endif /* LQR_SUPPORT */
+
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
@@ -1860,6 +1867,16 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
     while (l) {
 	orc = CONFACK;			/* Assume success */
 	cip = p = next;			/* Remember beginning of CI */
+	/*
+	 * The Nak buffer has a fixed size.  Stop processing CIs if it
+	 * could not hold the longest Nak we may add.  We only get here
+	 * after having Nak'd or rejected earlier CIs, so we never Ack a
+	 * request whose remaining CIs were not checked.
+	 */
+	if (nakoutp - (u_char*)nakp->payload + CILEN_MAXNAK > nakp->len) {
+	    LCPDEBUG(("lcp_reqci: Nak buffer full!"));
+	    break;
+	}
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */
