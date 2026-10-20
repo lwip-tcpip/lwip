@@ -40,6 +40,7 @@ TESTFILES=$(TESTDIR)/lwip_unittests.c \
 	$(TESTDIR)/core/test_pbuf.c \
 	$(TESTDIR)/core/test_timers.c \
 	$(TESTDIR)/dhcp/test_dhcp.c \
+	$(TESTDIR)/autoip/test_autoip.c \
 	$(TESTDIR)/etharp/test_etharp.c \
 	$(TESTDIR)/ip4/test_ip4.c \
 	$(TESTDIR)/ip6/test_ip6.c \
