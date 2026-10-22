@@ -871,6 +871,10 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
         /* fixed header contains at least 2 bytes but can contain more, depending on
            'remaining length'. All bytes but the last of this have 0x80 set to
            indicate more bytes are coming. */
+        /* Remaining Length uses at most four bytes (MQTT 3.1.1, 2.2.3). */
+        if ((fixed_hdr_len == 5) && ((b & 0x80) != 0)) {
+          return MQTT_CONNECT_DISCONNECTED;
+        }
         msg_rem_len |= (u32_t)(b & 0x7f) << ((fixed_hdr_len - 2) * 7);
         if ((b & 0x80) == 0) {
           /* fixed header is done */
