@@ -729,6 +729,12 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
         MIB2_STATS_NETIF_INC(netif, ifindiscards);
         return ERR_OK;
       }
+    } else {
+      /* unsupported type */
+      mem_free(lrh);
+      pbuf_free(p);
+      MIB2_STATS_NETIF_INC(netif, ifindiscards);
+      return ERR_OK;
     }
     /* TODO: handle the case where we already have FRAGN received */
     lrh->next_packet = lowpan6_data.reass_list;
