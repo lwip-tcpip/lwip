@@ -191,6 +191,11 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
   u16_t frame_control, addr_mode;
   u16_t datagram_offset;
 
+  /* Frame control is the first two bytes of every supported MAC header. */
+  if (p->len < 2) {
+    return ERR_VAL;
+  }
+
   /* Parse IEEE 802.15.4 header */
   puc = (u8_t *)p->payload;
   frame_control = puc[0] | (puc[1] << 8);
@@ -203,10 +208,17 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
   } else {
     datagram_offset++;
   }
+  /* Destination PAN ID is present in the header format handled here. */
+  if ((u32_t)datagram_offset + 2U > p->len) {
+    return ERR_VAL;
+  }
   datagram_offset += 2; /* Skip destination PAN ID */
   addr_mode = frame_control & IEEE_802154_FC_DST_ADDR_MODE_MASK;
   if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_EXT) {
     /* extended address (64 bit) */
+    if ((u32_t)datagram_offset + 8U > p->len) {
+      return ERR_VAL;
+    }
     dest->addr_len = 8;
     /* reverse memcpy: */
     for (i = 0; i < 8; i++) {
@@ -215,6 +227,9 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
     datagram_offset += 8;
   } else if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_SHORT) {
     /* short address (16 bit) */
+    if ((u32_t)datagram_offset + 2U > p->len) {
+      return ERR_VAL;
+    }
     dest->addr_len = 2;
     /* reverse memcpy: */
     dest->addr[0] = puc[datagram_offset + 1];
@@ -227,12 +242,18 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
 
   if (!(frame_control & IEEE_802154_FC_PANID_COMPR)) {
     /* No PAN ID compression, skip source PAN ID */
+    if ((u32_t)datagram_offset + 2U > p->len) {
+      return ERR_VAL;
+    }
     datagram_offset += 2;
   }
 
   addr_mode = frame_control & IEEE_802154_FC_SRC_ADDR_MODE_MASK;
   if (addr_mode == IEEE_802154_FC_SRC_ADDR_MODE_EXT) {
     /* extended address (64 bit) */
+    if ((u32_t)datagram_offset + 8U > p->len) {
+      return ERR_VAL;
+    }
     src->addr_len = 8;
     /* reverse memcpy: */
     for (i = 0; i < 8; i++) {
@@ -241,6 +262,9 @@ lowpan6_parse_iee802154_header(struct pbuf *p, struct lowpan6_link_addr *src,
     datagram_offset += 8;
   } else if (addr_mode == IEEE_802154_FC_DST_ADDR_MODE_SHORT) {
     /* short address (16 bit) */
+    if ((u32_t)datagram_offset + 2U > p->len) {
+      return ERR_VAL;
+    }
     src->addr_len = 2;
     src->addr[0] = puc[datagram_offset + 1];
     src->addr[1] = puc[datagram_offset];
@@ -669,11 +693,17 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
   }
 
   /* Check dispatch. */
+  if (p->len < 1) {
+    goto lowpan6_input_discard;
+  }
   puc = (u8_t *)p->payload;
 
   b = *puc;
   if ((b & 0xf8) == 0xc0) {
     /* FRAG1 dispatch. add this packet to reassembly list. */
+    if (p->len < 5) { /* 4-byte FRAG1 header plus at least one payload byte */
+      goto lowpan6_input_discard;
+    }
     datagram_size = ((u16_t)(puc[0] & 0x07) << 8) | (u16_t)puc[1];
     datagram_tag = ((u16_t)puc[2] << 8) | (u16_t)puc[3];
 
@@ -703,7 +733,10 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
       lrh = lrh_next;
     }
 
-    pbuf_remove_header(p, 4); /* hide frag1 dispatch */
+    /* hide frag1 dispatch */
+    if (pbuf_remove_header(p, 4)) {
+      goto lowpan6_input_discard;
+    }
 
     lrh = (struct lowpan6_reass_helper *) mem_malloc(sizeof(struct lowpan6_reass_helper));
     if (lrh == NULL) {
@@ -716,7 +749,12 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     }
     lrh->datagram_size = datagram_size;
     lrh->datagram_tag = datagram_tag;
+    lrh->reass = NULL;
     lrh->frags = NULL;
+    if (p->len < 1) {
+      mem_free(lrh);
+      goto lowpan6_input_discard;
+    }
     if (*(u8_t *)p->payload == 0x41) {
       /* This is a complete IPv6 packet, just skip dispatch byte. */
       pbuf_remove_header(p, 1); /* hide dispatch byte. */
@@ -732,9 +770,7 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     } else {
       /* unsupported type */
       mem_free(lrh);
-      pbuf_free(p);
-      MIB2_STATS_NETIF_INC(netif, ifindiscards);
-      return ERR_OK;
+      goto lowpan6_input_discard;
     }
     /* TODO: handle the case where we already have FRAGN received */
     lrh->next_packet = lowpan6_data.reass_list;
@@ -744,10 +780,15 @@ lowpan6_input(struct pbuf *p, struct netif *netif)
     return ERR_OK;
   } else if ((b & 0xf8) == 0xe0) {
     /* FRAGN dispatch, find packet being reassembled. */
+    if (p->len < 6) { /* 5-byte FRAGN header plus at least one data byte */
+      goto lowpan6_input_discard;
+    }
     datagram_size = ((u16_t)(puc[0] & 0x07) << 8) | (u16_t)puc[1];
     datagram_tag = ((u16_t)puc[2] << 8) | (u16_t)puc[3];
     datagram_offset = (u16_t)puc[4] << 3;
-    pbuf_remove_header(p, 4); /* hide frag1 dispatch but keep datagram offset for reassembly */
+    if (pbuf_remove_header(p, 4)) { /* hide frag1 dispatch but keep datagram offset for reassembly */
+      goto lowpan6_input_discard;
+    }
 
     for (lrh = lowpan6_data.reass_list; lrh != NULL; lrh_prev = lrh, lrh = lrh->next_packet) {
       if ((lrh->sender_addr.addr_len == src.addr_len) &&
