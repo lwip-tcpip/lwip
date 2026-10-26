@@ -903,8 +903,12 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
       }
       /* Adjust cpy_len to ensure zero-copy operation for remaining parts of current message */
       if (client->msg_idx >= MQTT_VAR_HEADER_BUFFER_LEN) {
-        if (cpy_len > (p->len - in_offset))
+        /* Only clamp while in_offset is still inside the first pbuf. At a pbuf
+           boundary (in_offset == p->len) this would set cpy_len to 0 and the
+           outer loop would spin forever on a chained pbuf (tot_len > len). */
+        if ((in_offset < p->len) && (cpy_len > (u16_t)(p->len - in_offset))) {
           cpy_len = p->len - in_offset;
+        }
       }
       var_hdr_payload = (u8_t*)pbuf_get_contiguous(p, client->rx_buffer + fixed_hdr_len,
                                                    buffer_space, cpy_len, in_offset);
