@@ -151,7 +151,7 @@ PACK_STRUCT_END
 
 /*
  * vj_compress_tcp - Attempt to do Van Jacobson header compression on a
- * packet.  This assumes that nb and comp are not null and that the first
+ * packet.  This assumes that pb, *pb and comp are not null and that the first
  * buffer of the chain contains a valid IP header.
  * Return the VJ type code indicating whether or not the packet was
  * compressed.
@@ -185,6 +185,11 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf **pb)
    * set).
    */
   if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || np->tot_len < 40) {
+    return (TYPE_IP);
+  }
+  /* Verify that the IP header length plus a minimum TCP header fit in the
+   * first pbuf BEFORE dereferencing the TCP header pointer. */
+  if (np->len < (u16_t)((ilen << 2) + sizeof(struct tcp_hdr))) {
     return (TYPE_IP);
   }
   th = (struct tcp_hdr *)&((struct vj_u32_t*)ip)[ilen];
