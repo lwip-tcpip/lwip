@@ -229,7 +229,9 @@ lwiperf_list_find(lwiperf_state_base_t *item)
 static void
 lwip_tcp_conn_report(lwiperf_state_tcp_t *conn, enum lwiperf_report_type report_type)
 {
-  if ((conn != NULL) && (conn->report_fn != NULL)) {
+  /* Some paths (e.g., error callback on aborted PCBs or listeners) may have no conn_pcb.
+   * Avoid dereferencing NULL here; callers that do not want a report should set report_fn = NULL. */
+  if ((conn != NULL) && (conn->report_fn != NULL) && (conn->conn_pcb == NULL)) {
     u32_t now, duration_ms, bandwidth_kbitpsec;
     now = sys_now();
     duration_ms = now - conn->time_started;
@@ -825,22 +827,23 @@ void* lwiperf_start_tcp_client(const ip_addr_t* remote_addr, u16_t remote_port,
 void
 lwiperf_abort(void *lwiperf_session)
 {
-  lwiperf_state_base_t *i, *dealloc, *last = NULL;
+  lwiperf_state_base_t* iter;
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  for (i = lwiperf_all_connections; i != NULL; ) {
-    if ((i == lwiperf_session) || (i->related_master_state == lwiperf_session)) {
-      dealloc = i;
-      i = i->next;
-      if (last != NULL) {
-        last->next = i;
+  /* Walk the list safely and close matching sessions properly. */
+  for (iter = lwiperf_all_connections; iter != NULL; ) {
+    lwiperf_state_base_t* next = iter->next;
+    if ((iter == (lwiperf_state_base_t*)lwiperf_session) ||
+      (iter->related_master_state == (lwiperf_state_base_t*)lwiperf_session)) {
+      lwiperf_state_tcp_t* conn = (lwiperf_state_tcp_t*)iter; /* TCP only in lwiperf for now */
+      /* Prevent reporting from dereferencing a NULL conn_pcb (e.g., listeners). */
+      if (conn->conn_pcb == NULL) {
+        conn->report_fn = NULL;
       }
-      LWIPERF_FREE(lwiperf_state_tcp_t, dealloc); /* @todo: type? */
-    } else {
-      last = i;
-      i = i->next;
+      lwiperf_tcp_close(conn, LWIPERF_TCP_ABORTED_LOCAL);
     }
+    iter = next;
   }
 }
 
