@@ -1382,7 +1382,7 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
   LWIP_ASSERT("chksum != NULL", chksum != NULL);
   LWIP_ASSERT("len != 0", len != 0);
 
-  if ((start_offset >= p->len) || (start_offset + len > p->len)) {
+  if ((start_offset >= p->len) || ((u32_t)start_offset + len > p->len)) {
     return ERR_ARG;
   }
 
