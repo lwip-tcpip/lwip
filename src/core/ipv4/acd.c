@@ -453,10 +453,11 @@ acd_handle_arp_conflict(struct netif *netif, struct acd *acd)
      able to retain its address. while we are flexible enough to help network
      performance
 
-     We use option a) when the acd module does not represent the netif address,
-     since we cannot have the acd module announcing or restarting. This
-     situation occurs for the LL acd module when a routable address is used on
-     the netif but the LL address is still open in the background. */
+     We use option a) when the acd module does not represent the netif address
+     (no defend/announce): retreat immediately. This situation occurs for the
+     LL acd module when a routable address is used on the netif but the LL
+     address is still open in the background. The client is still told to
+     restart so AutoIP can select and probe a new LL address. */
 
   if (acd->state == ACD_STATE_PASSIVE_ONGOING) {
     /* Immediately back off on a conflict. */
@@ -464,6 +465,8 @@ acd_handle_arp_conflict(struct netif *netif, struct acd *acd)
       ("acd_handle_arp_conflict(): conflict when we are in passive mode -> back off\n"));
     acd_stop(acd);
     acd->acd_conflict_callback(netif, ACD_DECLINE);
+    /* Decline alone leaves AutoIP stopped with no new LL selection. */
+    acd->acd_conflict_callback(netif, ACD_RESTART_CLIENT);
   }
   else {
     if (acd->lastconflict > 0) {
