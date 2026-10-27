@@ -117,19 +117,25 @@ close_handle(void)
   }
 }
 
-static struct pbuf*
-init_packet(u16_t opcode, u16_t extra, size_t size)
+static err_t
+init_packet(u16_t opcode, u16_t extra, size_t size, struct pbuf** p_out)
 {
-  struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(TFTP_HEADER_LENGTH + size), PBUF_RAM);
+  struct pbuf* p;
   u16_t* payload;
-
-  if (p != NULL) {
-    payload = (u16_t*) p->payload;
-    payload[0] = PP_HTONS(opcode);
-    payload[1] = lwip_htons(extra);
+  size_t alloc_size = TFTP_HEADER_LENGTH + size;
+  if (alloc_size > 0xffff) {
+    return ERR_VAL;
   }
+  p = pbuf_alloc(PBUF_TRANSPORT, (u16_t)alloc_size, PBUF_RAM);
 
-  return p;
+  if (p == NULL) {
+    return ERR_MEM;
+  }
+  payload = (u16_t*) p->payload;
+  payload[0] = PP_HTONS(opcode);
+  payload[1] = lwip_htons(extra);
+  *p_out = p;
+  return ERR_OK;
 }
 
 static err_t
@@ -137,13 +143,15 @@ send_request(const ip_addr_t *addr, u16_t port, u16_t opcode, const char* fname,
 {
   size_t fname_length = strlen(fname)+1;
   size_t mode_length = strlen(mode)+1;
-  struct pbuf* p = init_packet(opcode, 0, fname_length + mode_length - 2);
+  struct pbuf* p = NULL;
   char* payload;
   err_t ret;
 
-  if (p == NULL) {
-    return ERR_MEM;
+  ret = init_packet(opcode, 0, fname_length + mode_length - 2, &p);
+  if (ret != ERR_OK) {
+    return ret;
   }
+  LWIP_ASSERT("pbuf not allocated", p != NULL);
 
   payload = (char*) p->payload;
   MEMCPY(payload+2,              fname, fname_length);
@@ -158,14 +166,15 @@ static err_t
 send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *str)
 {
   size_t str_length = strlen(str);
-  struct pbuf *p;
+  struct pbuf *p = NULL;
   u16_t *payload;
   err_t ret;
 
-  p = init_packet(TFTP_ERROR, code, str_length + 1);
-  if (p == NULL) {
-    return ERR_MEM;
+  ret = init_packet(TFTP_ERROR, code, str_length + 1, &p);
+  if (ret != ERR_OK) {
+    return ret;
   }
+  LWIP_ASSERT("pbuf not allocated", p != NULL);
 
   payload = (u16_t *) p->payload;
   MEMCPY(&payload[2], str, str_length + 1);
@@ -178,13 +187,14 @@ send_error(const ip_addr_t *addr, u16_t port, enum tftp_error code, const char *
 static err_t
 send_ack(const ip_addr_t *addr, u16_t port, u16_t blknum)
 {
-  struct pbuf *p;
+  struct pbuf *p= NULL;
   err_t ret;
 
-  p = init_packet(TFTP_ACK, blknum, 0);
-  if (p == NULL) {
-    return ERR_MEM;
+  ret = init_packet(TFTP_ACK, blknum, 0, &p);
+  if (ret != ERR_OK) {
+    return ret;
   }
+  LWIP_ASSERT("pbuf not allocated", p != NULL);
 
   ret = udp_sendto(tftp_state.upcb, p, addr, port);
   pbuf_free(p);
@@ -219,12 +229,13 @@ send_data(const ip_addr_t *addr, u16_t port)
 
   if (tftp_state.last_data != NULL) {
     pbuf_free(tftp_state.last_data);
+    tftp_state.last_data = NULL;
   }
 
-  tftp_state.last_data = init_packet(TFTP_DATA, tftp_state.blknum, TFTP_MAX_PAYLOAD_SIZE);
-  if (tftp_state.last_data == NULL) {
+  if (init_packet(TFTP_DATA, tftp_state.blknum, TFTP_MAX_PAYLOAD_SIZE, &tftp_state.last_data) != ERR_OK) {
     return;
   }
+  LWIP_ASSERT("pbuf not allocated", tftp_state.last_data != NULL);
 
   payload = (u16_t *) tftp_state.last_data->payload;
 
