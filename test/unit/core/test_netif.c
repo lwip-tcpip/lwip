@@ -2,6 +2,8 @@
 
 #include "lwip/netif.h"
 #include "lwip/stats.h"
+#include "lwip/udp.h"
+#include "lwip/tcpip.h"
 #include "lwip/etharp.h"
 #include "netif/ethernet.h"
 
@@ -272,6 +274,57 @@ START_TEST(test_netif_find)
 }
 END_TEST
 
+#if LWIP_HAVE_LOOPIF && LWIP_NETIF_LOOPBACK_MULTITHREADING && LWIP_IPV4 && LWIP_UDP
+static void
+test_netif_loopback_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p,
+                         const ip_addr_t *addr, u16_t port)
+{
+  unsigned int *received = (unsigned int *)arg;
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(addr);
+  LWIP_UNUSED_ARG(port);
+  fail_unless(p->tot_len == 1);
+  fail_unless(pbuf_get_at(p, 0) == *received);
+  (*received)++;
+  pbuf_free(p);
+}
+
+START_TEST(test_netif_loopback_callback)
+{
+  struct udp_pcb *pcb;
+  struct pbuf *p;
+  struct netif *loopif = netif_get_loopif();
+  ip_addr_t loop_addr;
+  unsigned int received = 0;
+  u8_t sequence;
+  LWIP_UNUSED_ARG(_i);
+
+  while (tcpip_thread_poll_one());
+  fail_unless(loopif->loop_first == NULL);
+  IP_ADDR4(&loop_addr, 127, 0, 0, 1);
+  pcb = udp_new_ip_type(IPADDR_TYPE_V4);
+  fail_unless(pcb != NULL);
+  fail_unless(udp_bind(pcb, &loop_addr, 0) == ERR_OK);
+  udp_recv(pcb, test_netif_loopback_recv, &received);
+
+  /* One queued poll must deliver the entire batch through the TCP/IP thread. */
+  for (sequence = 0; sequence < 3; sequence++) {
+    p = pbuf_alloc(PBUF_TRANSPORT, 1, PBUF_RAM);
+    fail_unless(p != NULL);
+    fail_unless(pbuf_take(p, &sequence, 1) == ERR_OK);
+    fail_unless(udp_sendto(pcb, p, &loop_addr, pcb->local_port) == ERR_OK);
+    pbuf_free(p);
+  }
+  fail_unless(received == 0);
+  fail_unless(loopif->loop_first != NULL);
+  while (tcpip_thread_poll_one());
+  fail_unless(received == 3);
+  fail_unless(loopif->loop_first == NULL && loopif->loop_last == NULL);
+  udp_remove(pcb);
+}
+END_TEST
+#endif
+
 /** Create the suite including all tests for this module */
 Suite *
 netif_suite(void)
@@ -279,7 +332,10 @@ netif_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_netif_extcallbacks),
     TESTFUNC(test_netif_flag_set),
-    TESTFUNC(test_netif_find)
+    TESTFUNC(test_netif_find),
+#if LWIP_HAVE_LOOPIF && LWIP_NETIF_LOOPBACK_MULTITHREADING && LWIP_IPV4 && LWIP_UDP
+    TESTFUNC(test_netif_loopback_callback),
+#endif
   };
   return create_suite("NETIF", tests, sizeof(tests)/sizeof(testfunc), netif_setup, netif_teardown);
 }
