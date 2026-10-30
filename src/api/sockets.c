@@ -1409,7 +1409,8 @@ lwip_recvmsg(int s, struct msghdr *message, int flags)
 
     set_errno(0);
     done_socket(sock);
-    return (int)datagram_len;
+    /* Return copied bytes, not the original datagram length. */
+    return (ssize_t)LWIP_MIN((size_t)datagram_len, (size_t)buflen);
   }
 #else /* LWIP_UDP || LWIP_RAW */
   set_errno(err_to_errno(ERR_ARG));
