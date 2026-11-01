@@ -68,7 +68,17 @@ extern "C" {
  * if this setting is disabled, but if it is enabled, we need to save a bit
  * more data (up to the size of a pointer) because we overwrite more. */
 #ifndef IPV6_FRAG_COPYHEADER
+/* On 64-bit platforms "struct ip6_reass_helper" (it contains a pointer) is
+ * larger than the IPv6 fragment header. With IPV6_FRAG_COPYHEADER==0 the
+ * helper overwrites adjacent header data, and ip6_reass()'s LWIP_ASSERT
+ * ("set IPV6_FRAG_COPYHEADER to 1") aborts the whole process on the first
+ * received IPv6 fragment. Default to the correct mode on 64-bit platforms so
+ * a stock build with IPv6 enabled does not crash. */
+#if defined(__LP64__) || defined(_LP64) || defined(_WIN64) || defined(__64BIT__)
+#define IPV6_FRAG_COPYHEADER   1
+#else
 #define IPV6_FRAG_COPYHEADER   0
+#endif
 #endif
 
 /* With IPV6_FRAG_COPYHEADER==1, a helper structure may (or, depending on the
