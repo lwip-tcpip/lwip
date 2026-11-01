@@ -1995,9 +1995,7 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
 #if LWIP_HTTPD_SUPPORT_REQUESTLIST
   u16_t clen;
 #endif /* LWIP_HTTPD_SUPPORT_REQUESTLIST */
-#if LWIP_HTTPD_SUPPORT_POST
   err_t err;
-#endif /* LWIP_HTTPD_SUPPORT_POST */
 
   LWIP_UNUSED_ARG(pcb); /* only used for post */
   LWIP_ASSERT("p != NULL", p != NULL);
@@ -2131,7 +2129,6 @@ http_parse_request(struct pbuf *inp, struct http_state *hs, struct altcp_pcb *pc
           } else
 #endif /* LWIP_HTTPD_SUPPORT_POST */
           {
-            err_t err;
 #if LWIP_HTTPD_HEADERS_BEFORE_FILE_OPEN
             void *obj;
             char replace_uri[LWIP_HTTPD_HEADERS_URI_REPLACE_LEN + 1];
