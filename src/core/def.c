@@ -132,8 +132,11 @@ lwip_strnistr(const char *buffer, const char *token, size_t n)
   if (tokenlen == 0) {
     return LWIP_CONST_CAST(char *, buffer);
   }
+  char token_upc = *token | 0x20;
+  if (token_upc < 'a' || token_upc > 'z') token_upc = '\0';
   for (p = buffer; *p && (p + tokenlen <= buffer + n); p++) {
-    if (lwip_strnicmp(p, token, tokenlen) == 0) {
+    if ((*p == *token || (token_upc && (*p | 0x20) == token_upc)) &&
+        (lwip_strnicmp(p, token, tokenlen) == 0)) {
       return LWIP_CONST_CAST(char *, p);
     }
   }
@@ -181,11 +184,20 @@ lwip_stricmp(const char *str1, const char *str2)
  * @ingroup sys_nonstandard
  * lwIP default implementation for strnicmp() non-standard function.
  * This can be \#defined to strnicmp() depending on your platform port.
+ * FIXED version with len=0:
+ * --len happens first: len=-1 (wraps to SIZE_MAX)
+ * check (SIZE_MAX != 0) → would continue, but...
+ * Actually, with --len at the end of do-while, it decrements BEFORE the check
+ * So the condition is evaluated with the NEW value
  */
 int
 lwip_strnicmp(const char *str1, const char *str2, size_t len)
 {
   char c1, c2;
+
+  if (len == 0) {
+    return 0;  // Explicit check prevents underflow
+  }
 
   do {
     c1 = *str1++;
@@ -206,7 +218,7 @@ lwip_strnicmp(const char *str1, const char *str2, size_t len)
         return 1;
       }
     }
-    len--;
+    --len; // CORRECT: Decrements BEFORE the check
   } while ((len != 0) && (c1 != 0));
   return 0;
 }
