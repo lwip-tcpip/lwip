@@ -642,6 +642,7 @@ void
 etharp_input(struct pbuf *p, struct netif *netif)
 {
   struct etharp_hdr *hdr;
+  struct etharp_hdr hdr_copy;
   /* these are aligned properly, whereas the ARP header fields might not be */
   ip4_addr_t sipaddr, dipaddr;
   u8_t for_us, from_us;
@@ -650,7 +651,29 @@ etharp_input(struct pbuf *p, struct netif *netif)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
-  hdr = (struct etharp_hdr *)p->payload;
+  /* ARP header must exist in the packet (may be chained) */
+  if (p->tot_len < SIZEOF_ETHARP_HDR) {
+    ETHARP_STATS_INC(etharp.proterr);
+    ETHARP_STATS_INC(etharp.drop);
+    pbuf_free(p);
+    return;
+  }
+
+  if (p->len >= SIZEOF_ETHARP_HDR)
+  {
+    hdr = (struct etharp_hdr *)p->payload;
+  }
+  else
+  {
+    hdr = (struct etharp_hdr *)pbuf_get_contiguous(p, &hdr_copy, sizeof(hdr_copy), SIZEOF_ETHARP_HDR, 0);
+  }
+
+  if (hdr == NULL) {
+    ETHARP_STATS_INC(etharp.proterr);
+    ETHARP_STATS_INC(etharp.drop);
+    pbuf_free(p);
+    return;
+  }
 
   /* RFC 826 "Packet Reception": */
   if ((hdr->hwtype != PP_HTONS(LWIP_IANA_HWTYPE_ETHERNET)) ||
