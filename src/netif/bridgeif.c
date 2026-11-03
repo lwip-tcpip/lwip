@@ -299,6 +299,7 @@ bridgeif_output(struct netif *netif, struct pbuf *p)
 {
   err_t err;
   bridgeif_private_t *br = (bridgeif_private_t *)netif->state;
+  bridgeif_portmask_t dstports;
   struct eth_addr *dst = (struct eth_addr *)(p->payload);
 
   /* This pbuf is being sent by the bridge's own IP stack (e.g. an ICMP echo
@@ -307,7 +308,7 @@ bridgeif_output(struct netif *netif, struct pbuf *p)
    * loop-prevention check mistakes it for a loop and silently drops it. */
   p->if_idx = NETIF_NO_INDEX;
 
-  bridgeif_portmask_t dstports = bridgeif_find_dst_ports(br, dst);
+  dstports = bridgeif_find_dst_ports(br, dst);
   err = bridgeif_send_to_ports(br, p, dstports);
 
   MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p->tot_len);
