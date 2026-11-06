@@ -1104,6 +1104,14 @@ netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callb
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #if ENABLE_LOOPBACK
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+static void
+netif_poll_callback(void *arg)
+{
+  netif_poll((struct netif *)arg);
+}
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
+
 /**
  * @ingroup netif
  * Send an IP packet to be received on the same netif (loopif-like).
@@ -1212,7 +1220,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
   if (schedule_poll) {
-    if (tcpip_try_callback((tcpip_callback_fn)netif_poll, netif) != ERR_OK) {
+    if (tcpip_try_callback(netif_poll_callback, netif) != ERR_OK) {
       SYS_ARCH_PROTECT(lev);
       netif->reschedule_poll = 1;
       SYS_ARCH_UNPROTECT(lev);
