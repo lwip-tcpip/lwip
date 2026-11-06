@@ -265,6 +265,17 @@ autoip_start(struct netif *netif)
   }
 
   if (autoip->state == AUTOIP_STATE_OFF) {
+    /* ACD_DECLINE during rate limiting leaves AutoIP OFF while ACD stays in
+     * ACD_STATE_RATE_LIMIT until acd_tmr() sends ACD_RESTART_CLIENT.
+     * With LWIP_DHCP_AUTOIP_COOP, dhcp_discover() may call autoip_start() on
+     * every discover in the meantime; do not call acd_start() or the
+     * rate-limit wait is wiped. */
+    if (autoip->acd.state == ACD_STATE_RATE_LIMIT) {
+      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
+                  ("autoip_start(): ACD rate-limited, defer until ACD_RESTART_CLIENT\n"));
+      return ERR_OK;
+    }
+
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
                 ("autoip_start(netif=%p) %c%c%"U16_F"\n", (void *)netif, netif->name[0],
                  netif->name[1], (u16_t)netif->num));

@@ -55,6 +55,14 @@
 /* Enable DHCP to test it */
 #define LWIP_DHCP                       1
 
+/* Enable AutoIP + ACD for DHCP/AutoIP cooperation regression tests.
+ * Keep LWIP_DHCP_AUTOIP_COOP off so existing DHCP TX-count tests are unchanged;
+ * the AutoIP suite calls autoip_start() directly to simulate coop re-entry. */
+#define LWIP_AUTOIP                     1
+#define LWIP_DHCP_AUTOIP_COOP           0
+#define LWIP_AUTOIP_MAX_CONFLICTS       2
+#define LWIP_AUTOIP_RATE_LIMIT_INTERVAL 60
+
 /* Enable DNS, with random source port to avoid alloc in dns_init */
 #define LWIP_DNS                        1
 #define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_RAND_SRC_PORT)
