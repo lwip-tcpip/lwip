@@ -1234,14 +1234,31 @@ tcp_receive(struct tcp_pcb *pcb)
     } else if (TCP_SEQ_BETWEEN(ackno, pcb->lastack + 1, pcb->snd_nxt)) {
       /* We come here when the ACK acknowledges new data. */
       tcpwnd_size_t acked;
+      u8_t partial_recovery = 0;
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY
+      u8_t preserve_rtime = 0;
+#endif
 
-      /* Reset the "IN Fast Retransmit" flag, since we are no longer
-         in fast retransmit. Also reset the congestion window to the
-         slow start threshold. */
+      /* The opt-in recovery retains the entry boundary across partial ACKs. */
       if (pcb->flags & TF_INFR) {
-        tcp_clear_flags(pcb, TF_INFR);
-        pcb->cwnd = pcb->ssthresh;
-        pcb->bytes_acked = 0;
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY
+        if (TCP_SEQ_LT(ackno, pcb->partial_recovery_end)) {
+          tcpwnd_size_t newly_acked = (tcpwnd_size_t)(ackno - pcb->lastack);
+          partial_recovery = 1;
+          preserve_rtime = pcb->partial_recovery_seen;
+          pcb->partial_recovery_seen = 1;
+          pcb->cwnd = pcb->cwnd > newly_acked ? pcb->cwnd - newly_acked : 0;
+          if (newly_acked >= pcb->mss) {
+            TCP_WND_INC(pcb->cwnd, pcb->mss);
+          }
+          pcb->cwnd = LWIP_MAX(pcb->cwnd, pcb->mss);
+        } else
+#endif
+        {
+          tcp_clear_flags(pcb, TF_INFR);
+          pcb->cwnd = pcb->ssthresh;
+          pcb->bytes_acked = 0;
+        }
       }
 
       /* Reset the number of retransmissions. */
@@ -1259,7 +1276,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
       /* Update the congestion control variables (cwnd and
          ssthresh). */
-      if (pcb->state >= ESTABLISHED) {
+      if (!partial_recovery && pcb->state >= ESTABLISHED) {
         if (pcb->cwnd < pcb->ssthresh) {
           tcpwnd_size_t increase;
           /* limit to 1 SMSS segment during period following RTO */
@@ -1301,6 +1318,9 @@ tcp_receive(struct tcp_pcb *pcb)
       if (pcb->unacked == NULL) {
         pcb->rtime = -1;
       } else {
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY
+        if (!preserve_rtime)
+#endif
         pcb->rtime = 0;
       }
 
@@ -1334,6 +1354,12 @@ tcp_receive(struct tcp_pcb *pcb)
         } else if (TCP_SEQ_LEQ(pcb->rto_end, lwip_ntohl(pcb->unacked->tcphdr->seqno))) {
           tcp_clear_flags(pcb, TF_RTO);
         }
+      }
+      /* Retire acknowledged segments before selecting the next missing one.
+       * tcp_input() performs output after ACK processing. Output failure keeps
+       * the segment queued for the existing retry path. */
+      if (partial_recovery) {
+        tcp_rexmit(pcb);
       }
       /* End of ACK for new data processing. */
     } else {

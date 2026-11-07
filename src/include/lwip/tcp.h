@@ -386,6 +386,11 @@ struct tcp_pcb {
   u8_t snd_scale;
   u8_t rcv_scale;
 #endif
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY
+  /* Sequence boundary and first-partial-ACK state for fast recovery. */
+  u32_t partial_recovery_end;
+  u8_t partial_recovery_seen;
+#endif
 };
 
 #if LWIP_EVENT_API
