@@ -100,7 +100,7 @@
 #define PTR32
 #endif
 #elif defined(__GNUC__)
-#if defined(__x86_64__) || defined(__ppc64__)
+#if __SIZEOF_POINTER__ > 4
 #define PTR64
 #else
 #define PTR32
