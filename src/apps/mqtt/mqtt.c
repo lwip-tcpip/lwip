@@ -698,6 +698,9 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
         if (client->connect_cb != NULL) {
           client->connect_cb(client, client->connect_arg, res);
         }
+        if (client->free_pending || (client->conn_state == TCP_DISCONNECTED)) {
+          return MQTT_CONNECT_DISCONNECTED;
+        }
       }
     } else {
       LWIP_DEBUGF(MQTT_DEBUG_WARN, ("mqtt_message_received: Received CONNACK in connected state\n"));
@@ -762,6 +765,9 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
       if (client->pub_cb != NULL) {
         client->pub_cb(client->inpub_arg, (const char *)topic, remaining_length + payload_length);
       }
+      if (client->free_pending || (client->conn_state == TCP_DISCONNECTED)) {
+        return MQTT_CONNECT_DISCONNECTED;
+      }
       /* Restore byte after topic */
       topic[topic_len] = bkp;
     }
@@ -772,6 +778,9 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
       }
       if (client->data_cb != NULL) {
         client->data_cb(client->inpub_arg, var_hdr_payload + payload_offset, payload_length, remaining_length == 0 ? MQTT_DATA_FLAG_LAST : 0);
+      }
+      if (client->free_pending || (client->conn_state == TCP_DISCONNECTED)) {
+        return MQTT_CONNECT_DISCONNECTED;
       }
       /* Reply if QoS > 0 */
       if (remaining_length == 0 && qos > 0) {
@@ -807,6 +816,9 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
       struct mqtt_request_t *r = mqtt_take_request(&client->pend_req_queue, pkt_id);
       if (r != NULL) {
         LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_message_received: %s response with id %d\n", mqtt_msg_type_to_str(pkt_type), pkt_id));
+        /* Detach the request before its callback can disconnect or free the
+           client. */
+        mqtt_delete_request(r);
         if (pkt_type == MQTT_MSG_TYPE_SUBACK) {
           if (length < 3) {
             LWIP_DEBUGF(MQTT_DEBUG_WARN, ("mqtt_message_received: To small SUBACK packet\n"));
@@ -817,7 +829,9 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
         } else if (r->cb != NULL) {
           r->cb(r->arg, ERR_OK);
         }
-        mqtt_delete_request(r);
+        if (client->free_pending || (client->conn_state == TCP_DISCONNECTED)) {
+          return MQTT_CONNECT_DISCONNECTED;
+        }
       } else {
         LWIP_DEBUGF(MQTT_DEBUG_WARN, ( "mqtt_message_received: Received %s reply, with wrong pkt_id: %d\n", mqtt_msg_type_to_str(pkt_type), pkt_id));
       }
@@ -883,7 +897,9 @@ mqtt_parse_incoming(mqtt_client_t *client, struct pbuf *p)
           LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_parse_incoming: Remaining length after fixed header: %"U32_F"\n", msg_rem_len));
           if (msg_rem_len == 0) {
             /* Complete message with no extra headers of payload received */
-            mqtt_message_received(client, fixed_hdr_len, 0, 0, NULL);
+            if (mqtt_message_received(client, fixed_hdr_len, 0, 0, NULL) != MQTT_CONNECT_ACCEPTED) {
+              return MQTT_CONNECT_DISCONNECTED;
+            }
             client->msg_idx = 0;
             fixed_hdr_len = 0;
           } else {
@@ -969,9 +985,15 @@ mqtt_tcp_recv_cb(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
 
     /* Tell remote that data has been received */
     altcp_recved(pcb, p->tot_len);
+    client->input_active = 1;
     res = mqtt_parse_incoming(client, p);
     pbuf_free(p);
 
+    if (client->free_pending) {
+      /* Destruction was requested from a parser callback. Tear down the
+         transport without issuing another callback into the object. */
+      client->conn_state = TCP_DISCONNECTED;
+    }
     if (res != MQTT_CONNECT_ACCEPTED) {
       mqtt_close(client, res);
     }
@@ -979,6 +1001,11 @@ mqtt_tcp_recv_cb(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
     if (client->keep_alive != 0) {
       /* Reset server alive watchdog */
       client->server_watchdog = 0;
+    }
+    client->input_active = 0;
+    if (client->free_pending) {
+      mem_free(client);
+      return ERR_OK;
     }
 
   }
@@ -1286,6 +1313,15 @@ mqtt_client_new(void)
 void
 mqtt_client_free(mqtt_client_t *client)
 {
+  if (client == NULL) {
+    return;
+  }
+  if (client->input_active) {
+    /* Parser callbacks run inside mqtt_tcp_recv_cb(), which still owns the
+       client until parsing and receive-buffer cleanup have completed. */
+    client->free_pending = 1;
+    return;
+  }
   mem_free(client);
 }
 

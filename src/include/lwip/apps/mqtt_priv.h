@@ -79,6 +79,9 @@ struct mqtt_client_s
   u16_t inpub_pkt_id;
   /** Connection state */
   u8_t conn_state;
+  /** Protect parser callbacks that request client destruction. */
+  u8_t input_active;
+  u8_t free_pending;
   struct altcp_pcb *conn;
   /** Connection callback */
   void *connect_arg;
