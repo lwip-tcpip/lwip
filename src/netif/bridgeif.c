@@ -299,9 +299,16 @@ bridgeif_output(struct netif *netif, struct pbuf *p)
 {
   err_t err;
   bridgeif_private_t *br = (bridgeif_private_t *)netif->state;
+  bridgeif_portmask_t dstports;
   struct eth_addr *dst = (struct eth_addr *)(p->payload);
 
-  bridgeif_portmask_t dstports = bridgeif_find_dst_ports(br, dst);
+  /* This pbuf is being sent by the bridge's own IP stack (e.g. an ICMP echo
+   * reply built in-place over the RX pbuf), not forwarded from a port. Clear
+   * any stale rx-port hint left over from ingress, or bridgeif_send_to_port()'s
+   * loop-prevention check mistakes it for a loop and silently drops it. */
+  p->if_idx = NETIF_NO_INDEX;
+
+  dstports = bridgeif_find_dst_ports(br, dst);
   err = bridgeif_send_to_ports(br, p, dstports);
 
   MIB2_STATS_NETIF_ADD(netif, ifoutoctets, p->tot_len);

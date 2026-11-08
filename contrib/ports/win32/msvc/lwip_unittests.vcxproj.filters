@@ -37,6 +37,9 @@
     <Filter Include="ppp">
       <UniqueIdentifier>{4d24c808-c024-4aba-a214-e5bc276e124d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lowpan6">
+      <UniqueIdentifier>{7b1a7667-b6c5-4f47-85ff-edfe74a7f7c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\test\unit\core\test_mem.c">
@@ -99,6 +102,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\test\unit\tcp\test_tcp_state.c">
       <Filter>tcp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\test\unit\lowpan6\test_lowpan6.c">
+      <Filter>lowpan6</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -163,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\test\unit\tcp\test_tcp_state.h">
       <Filter>tcp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\test\unit\lowpan6\test_lowpan6.h">
+      <Filter>lowpan6</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

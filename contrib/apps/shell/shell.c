@@ -324,7 +324,7 @@ com_clos(struct command *com)
 
   i = strtol(com->args[0], NULL, 10);
 
-  if (i > NCONNS) {
+  if ((i < 0) || (i >= NCONNS)) {
     sendstr("Connection identifier too high."NEWLINE, com->conn);
     return ESUCCESS;
   }
@@ -367,7 +367,7 @@ com_acpt(struct command *com)
 
   i = strtol(com->args[0], NULL, 10);
 
-  if (i > NCONNS) {
+  if ((i < 0) || (i >= NCONNS)) {
     sendstr("Connection identifier too high."NEWLINE, com->conn);
     return ESUCCESS;
   }
@@ -494,10 +494,11 @@ com_send(struct command *com)
   int i;
   err_t err;
   size_t len;
+  char sendbuf[BUFSIZE + 2];
 
   i = strtol(com->args[0], NULL, 10);
 
-  if (i > NCONNS) {
+  if ((i < 0) || (i >= NCONNS)) {
     sendstr("Connection identifier too high."NEWLINE, com->conn);
     return ESUCCESS;
   }
@@ -508,11 +509,15 @@ com_send(struct command *com)
   }
 
   len = strlen(com->args[1]);
-  com->args[1][len] = '\r';
-  com->args[1][len + 1] = '\n';
-  com->args[1][len + 2] = 0;
+  if (len > sizeof(sendbuf) - 2) {
+    sendstr("Data too long."NEWLINE, com->conn);
+    return ESUCCESS;
+  }
+  MEMCPY(sendbuf, com->args[1], len);
+  sendbuf[len] = '\r';
+  sendbuf[len + 1] = '\n';
 
-  err = netconn_write(conns[i], com->args[1], len + 3, NETCONN_COPY);
+  err = netconn_write(conns[i], sendbuf, len + 2, NETCONN_COPY);
   if (err != ERR_OK) {
     sendstr("Could not send data: ", com->conn);
 #ifdef LWIP_DEBUG
@@ -538,7 +543,7 @@ com_recv(struct command *com)
 
   i = strtol(com->args[0], NULL, 10);
 
-  if (i > NCONNS) {
+  if ((i < 0) || (i >= NCONNS)) {
     sendstr("Connection identifier too high."NEWLINE, com->conn);
     return ESUCCESS;
   }
@@ -924,7 +929,7 @@ com_usnd(struct command *com)
 
   i = strtol(com->args[0], NULL, 10);
 
-  if (i > NCONNS) {
+  if ((i < 0) || (i >= NCONNS)) {
     sendstr("Connection identifier too high."NEWLINE, com->conn);
     return ESUCCESS;
   }
@@ -1033,6 +1038,11 @@ parse_command(struct command *com, u32_t len)
   u16_t i;
   u16_t bufp;
 
+  /* A full buffer has no room for the NUL terminator inserted below. */
+  if (len >= BUFSIZE) {
+    return ESYNTAX;
+  }
+
   if (strncmp((const char *)buffer, "open", 4) == 0) {
     com->exec = com_open;
     com->nargs = 2;
@@ -1101,6 +1111,9 @@ parse_command(struct command *com, u32_t len)
   for(; bufp < len && buffer[bufp] != ' '; bufp++);
   for(i = 0; i < 10; i++) {
     for(; bufp < len && buffer[bufp] == ' '; bufp++);
+    if (bufp >= len) {
+      return ETOOFEW;
+    }
     if (buffer[bufp] == '\r' ||
        buffer[bufp] == '\n') {
       buffer[bufp] = 0;

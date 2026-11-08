@@ -114,11 +114,14 @@ snmp_pbuf_stream_writeto(struct snmp_pbuf_stream *pbuf_stream, struct snmp_pbuf_
     u16_t target_offset;
     struct pbuf *pbuf = pbuf_skip(pbuf_stream->pbuf, pbuf_stream->offset, &target_offset);
 
-    if ((pbuf == NULL) || (pbuf->len == 0)) {
+    if ((pbuf == NULL) || (pbuf->len == 0) || (target_offset >= pbuf->len)) {
       return ERR_BUF;
     }
 
-    chunk_len = LWIP_MIN(len, pbuf->len);
+    /* Only the bytes after target_offset belong to this pbuf; bounding the copy
+       by pbuf->len alone would copy target_offset bytes of adjacent buffer
+       memory past the end of the current pbuf into the response. */
+    chunk_len = LWIP_MIN(len, (u16_t)(pbuf->len - target_offset));
     err = snmp_pbuf_stream_writebuf(target_pbuf_stream, &((u8_t *)pbuf->payload)[target_offset], chunk_len);
     if (err != ERR_OK) {
       return err;

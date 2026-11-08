@@ -18,6 +18,7 @@
 #include "mqtt/test_mqtt.h"
 #include "api/test_sockets.h"
 #include "ppp/test_pppos.h"
+#include "lowpan6//test_lowpan6.h"
 
 #include "lwip/init.h"
 #if !NO_SYS
@@ -83,6 +84,7 @@ int main(void)
   suite_getter_fn* suites[] = {
     ip4_suite,
     ip6_suite,
+    lowpan6_suite,
     udp_suite,
     tcp_suite,
     tcp_oos_suite,

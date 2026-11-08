@@ -304,7 +304,7 @@ nd6_process_autoconfig_prefix(struct netif *netif,
  * or a zero-length option was found.
  */
 static void *
-nd6_find_option(struct pbuf *p, int offset, int wanted_type)
+nd6_find_option(struct pbuf *p, u16_t offset, int wanted_type)
 {
   while ((p->tot_len - offset) >= 2) {
     u8_t option_type;
@@ -947,9 +947,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
       return;
     }
 
+    pmtu = lwip_htonl(icmp6hdr->data) & 0xFFFF;
+    if (pmtu < IP6_MIN_MTU_LENGTH) {
+      /* MTU too small */
+      pbuf_free(p);
+      return;
+    }
     /* Change the Path MTU. */
-    pmtu = lwip_htonl(icmp6hdr->data);
-    destination_cache[dest_idx].pmtu = (u16_t)LWIP_MIN(pmtu, 0xFFFF);
+    destination_cache[dest_idx].pmtu = (u16_t)pmtu;
 
     break; /* ICMP6_TYPE_PTB */
   }

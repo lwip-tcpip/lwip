@@ -106,10 +106,50 @@ START_TEST(basic_connect)
 }
 END_TEST
 
+START_TEST(rx_overflow)
+{
+  mqtt_client_t* client;
+  struct netif netif;
+  err_t err;
+  struct mqtt_connect_client_info_t client_info = {
+    "dumm",
+    NULL, NULL,
+    10,
+    NULL, NULL, 0, 0, 0
+  };
+  struct pbuf* p;
+  unsigned char rxbuf[400];
+  LWIP_UNUSED_ARG(_i);
+
+  test_mqtt_init_netif(&netif, &test_mqtt_local_ip, &test_mqtt_netmask);
+
+  client = mqtt_client_new();
+  fail_unless(client != NULL);
+  err = mqtt_client_connect(client, &test_mqtt_remote_ip, 1234, test_mqtt_connection_cb, NULL, &client_info);
+  fail_unless(err == ERR_OK);
+
+  client->conn->connected(client->conn->callback_arg, client->conn, ERR_OK);
+  memset(rxbuf, 0xff, sizeof(rxbuf));
+  p = pbuf_alloc(PBUF_RAW, sizeof(rxbuf), PBUF_REF);
+  fail_unless(p != NULL);
+  p->payload = rxbuf;
+  /* since we hack the rx path, we have to hack the rx window, too: */
+  client->conn->rcv_wnd -= p->tot_len;
+  if (client->conn->recv(client->conn->callback_arg, client->conn, p, ERR_OK) != ERR_OK) {
+    pbuf_free(p);
+  }
+
+  mqtt_disconnect(client);
+  /* fixme: mqtt_client_fre() is missing... */
+  mem_free(client);
+}
+END_TEST
+
 Suite* mqtt_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(basic_connect),
+    TESTFUNC(rx_overflow),
   };
   return create_suite("MQTT", tests, sizeof(tests)/sizeof(testfunc), mqtt_setup, mqtt_teardown);
 }

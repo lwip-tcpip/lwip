@@ -344,6 +344,9 @@ udp_input(struct pbuf *p, struct netif *inp)
                checksum! (Again, see RFC 3828 chap. 3.1) */
             goto chkerr;
           }
+        } else if ((chklen != 0) && (chklen > p->tot_len)) {
+          /* chklen exceeds received packet */
+          goto chkerr;
         }
         if (ip_chksum_pseudo_partial(p, IP_PROTO_UDPLITE,
                                      p->tot_len, chklen,

@@ -377,7 +377,11 @@ static void chapms_make_response(ppp_pcb *pcb, unsigned char *response, int id, 
 	LWIP_UNUSED_ARG(id);
 	LWIP_UNUSED_ARG(our_name);
 	LWIP_UNUSED_ARG(private_);
-	challenge++;	/* skip length, should be 8 */
+	/* Make sure the challenge is at least 8 bytes (we only use 8) */
+	if (*challenge++ < 8) {
+		*response = 0;	/* generate 0-length response */
+		return;
+	}
 	*response++ = MS_CHAP_RESPONSE_LEN;
 	ChapMS(pcb, challenge, secret, secret_len, response);
 }
@@ -386,7 +390,11 @@ static void chapms2_make_response(ppp_pcb *pcb, unsigned char *response, int id,
 		      const unsigned char *challenge, const char *secret, int secret_len,
 		      unsigned char *private_) {
 	LWIP_UNUSED_ARG(id);
-	challenge++;	/* skip length, should be 16 */
+	/* Make sure the challenge is at least 16 bytes (we only use 16) */
+	if (*challenge++ < 16) {
+		*response = 0;	/* generate 0-length response */
+		return;
+	}
 	*response++ = MS_CHAP2_RESPONSE_LEN;
 	ChapMS2(pcb, challenge,
 #ifdef DEBUGMPPEKEY
@@ -564,6 +572,16 @@ static void ChallengeHash(const u_char PeerChallenge[16], const u_char *rchallen
 static void ascii2unicode(const char ascii[], int ascii_len, u_char unicode[]) {
     int i;
 
+    /*
+     * This check should never trigger, because ascii[] is always a
+     * secret returned from get_secret(), which limits secret_len
+     * (i.e. ascii_len) to MAXSECRETLEN, which is 256, the same as
+     * MAX_NT_PASSWORD.  But let's be defensive anyway.
+     */
+    if (ascii_len > MAX_NT_PASSWORD)
+	ascii_len = MAX_NT_PASSWORD;
+    if (ascii_len <= 0)
+	return;
     BZERO(unicode, ascii_len * 2);
     for (i = 0; i < ascii_len; i++)
 	unicode[i * 2] = (u_char) ascii[i];

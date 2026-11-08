@@ -1694,18 +1694,16 @@ decode_next:
         }
       }
     }
-    if (offset >= q->len) {
+    while ((q != NULL) && (offset >= q->len)) {
       offset = (u16_t)(offset - q->len);
       offset_max = (u16_t)(offset_max - q->len);
-      if (offset < offset_max) {
-        q = q->next;
-        LWIP_DHCP_INPUT_ERROR("next pbuf was null", q != NULL, return ERR_VAL;);
-        options = (u8_t *)q->payload;
-      } else {
-        /* We've run out of bytes, probably no end marker. Don't proceed. */
-        return ERR_BUF;
-      }
+      q = q->next;
     }
+    if (q == NULL) {
+      /* We've run out of bytes, probably no end marker. Don't proceed. */
+      return ERR_BUF;
+    }
+    options = (u8_t *)q->payload;
   }
   /* is this an overloaded message? */
   if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_OVERLOAD)) {

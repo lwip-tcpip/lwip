@@ -1761,9 +1761,12 @@ netif_find(const char *name)
 
   LWIP_ASSERT_CORE_LOCKED();
 
-  if (name == NULL) {
+  if ((name == NULL) ||
+      (name[0] == '\0') ||
+      (name[1] == '\0') ||
+      (name[2] == '\0')) {
     return NULL;
-  }
+}
 
   num = (u8_t)atoi(&name[2]);
   if (!num && (name[2] != '0')) {
