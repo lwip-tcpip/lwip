@@ -447,6 +447,13 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
 
   /* Control packet */
   if (hflags & PPPOL2TP_HEADERFLAG_CONTROL) {
+    /* Keep the caller's pbuf pointer in sync: pbuf_coalesce() can free the
+       original chain and return a replacement pbuf. */
+    p = pbuf_coalesce(p, PBUF_RAW);
+    if (p->next != NULL) {
+      PPPDEBUG(LOG_DEBUG, ("pppol2tp: pbuf_coalesce failed: %d\n", p->tot_len));
+      goto free_and_return;
+    }
     pppol2tp_dispatch_control_packet(l2tp, port, p, ns, nr);
     goto free_and_return;
   }
@@ -539,12 +546,6 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   }
   /* A ZLB packet does not consume a NS slot thus we don't record the NS value for ZLB packets */
   l2tp->peer_ns = ns+1;
-
-  p = pbuf_coalesce(p, PBUF_RAW);
-  if (p->next != NULL) {
-    PPPDEBUG(LOG_DEBUG, ("pppol2tp: pbuf_coalesce failed: %d\n", p->tot_len));
-    return;
-  }
 
   inp = (u8_t*)p->payload;
   /* Decode AVPs */
