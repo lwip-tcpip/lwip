@@ -851,7 +851,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
     /* Correct header */
-    last = (left <= netif->mtu - IP_HLEN);
+    last = (left <= fragsize);
 
     /* Set new offset and MF flag */
     tmp = (IP_OFFMASK & (ofo));
