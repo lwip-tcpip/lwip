@@ -704,6 +704,23 @@ dhcp_handle_ack(struct netif *netif, struct dhcp_msg *msg_in)
     dhcp->offered_t2_rebind = (dhcp->offered_t0_lease * 7U) / 8U;
   }
 
+  /*
+   * RFC 2131, Section 4.4.5: the client must maintain
+   * T1 < T2 < lease expiration.  A misconfigured server can provide
+   * invalid T1/T2 values, so fall back to the RFC defaults when the
+   * ordering would be violated.
+   */
+  if ((dhcp->offered_t1_renew != 0xffffffffUL) &&
+      ((dhcp->offered_t1_renew >= dhcp->offered_t2_rebind) ||
+       (dhcp->offered_t1_renew >= dhcp->offered_t0_lease))) {
+    dhcp->offered_t1_renew = dhcp->offered_t0_lease / 2;
+  }
+  if ((dhcp->offered_t2_rebind != 0xffffffffUL) &&
+      ((dhcp->offered_t2_rebind <= dhcp->offered_t1_renew) ||
+       (dhcp->offered_t2_rebind >= dhcp->offered_t0_lease))) {
+    dhcp->offered_t2_rebind = (dhcp->offered_t0_lease * 7U) / 8U;
+  }
+
   /* (y)our internet address */
   ip4_addr_copy(dhcp->offered_ip_addr, msg_in->yiaddr);
 
@@ -1116,9 +1133,22 @@ dhcp_bind(struct netif *netif)
     dhcp->t2_rebind_time = dhcp->t2_timeout;
   }
 
-  /* If we have sub 1 minute lease, t2 and t1 will kick in at the same time. */
-  if ((dhcp->t1_timeout >= dhcp->t2_timeout) && (dhcp->t2_timeout > 0)) {
-    dhcp->t1_timeout = 0;
+  /*
+   * RFC 2131, Section 4.4.5: T1 must be strictly earlier than T2,
+   * and T2 strictly earlier than lease expiry.  Quantization to
+   * minute ticks can collapse T1 and T2 onto the same tick
+   * (sub-minute leases) or push T2 onto the expiry tick, so
+   * re-derive the active countdowns to keep them strictly ordered.
+   * If T2 already runs on the earliest tick, T1 cannot be ordered
+   * before it and is disabled rather than firing after REBINDING.
+   */
+  if ((dhcp->t2_rebind_time > 0) && (dhcp->t1_renew_time >= dhcp->t2_rebind_time)) {
+    dhcp->t1_renew_time = (dhcp_timeout_t)(dhcp->t2_rebind_time - 1);
+    dhcp->t1_timeout = dhcp->t1_renew_time;
+  }
+  if ((dhcp->t0_timeout > 1) && (dhcp->t2_rebind_time >= dhcp->t0_timeout)) {
+    dhcp->t2_rebind_time = (dhcp_timeout_t)(dhcp->t0_timeout - 1);
+    dhcp->t2_timeout = dhcp->t2_rebind_time;
   }
 
   if (dhcp->flags & DHCP_FLAG_SUBNET_MASK_GIVEN) {
