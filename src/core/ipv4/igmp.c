@@ -441,6 +441,14 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
  * @ingroup igmp
  * Join a group on one network interface.
  *
+ * Each successful call acquires one reference to the group membership
+ * on the matching interface(s).  Joining a group the host is already a
+ * member of is allowed and only acquires another reference; per the
+ * RFC 2236 host state diagram no new Membership Report is sent and the
+ * per-group state is not changed.  Each join must be paired with a
+ * leave, otherwise the group membership and its MAC filter entry stay
+ * alive until the interface is removed.
+ *
  * @param ifaddr ip address of the network interface which should join a new group
  * @param groupaddr the ip address of the group which to join
  * @return ERR_OK if group was joined on the netif(s), an err_t otherwise
@@ -501,7 +509,7 @@ igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
   if (group != NULL) {
     /* This should create a new group, check the state to make sure */
     if (group->group_state != IGMP_GROUP_NON_MEMBER) {
-      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: join to group not in state IGMP_GROUP_NON_MEMBER\n"));
+      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: group already a member, acquiring another reference\n"));
     } else {
       /* OK - it was new group */
       LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: join to new group: "));
@@ -572,6 +580,14 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 /**
  * @ingroup igmp
  * Leave a group on one network interface.
+ *
+ * Releases one reference to the group membership acquired by a previous
+ * igmp_joingroup()/igmp_joingroup_netif() call.  Only when the last
+ * reference is released is the group membership actually dropped: the
+ * group state is removed and, if the host was the last reporter, a
+ * Leave Group message is sent (RFC 2236 section 6).  Leaving a group
+ * with outstanding references keeps the membership and its MAC filter
+ * entry alive.
  *
  * @param netif the network interface which should leave a group
  * @param groupaddr the ip address of the group which to leave
