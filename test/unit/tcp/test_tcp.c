@@ -1667,6 +1667,67 @@ START_TEST(test_tcp_persist_split)
 }
 END_TEST
 
+#if LWIP_TCP_TIMESTAMPS
+static const u32_t tcp_timestamp_values[] = {0,
+                                             0x01020304UL,
+                                             0x7fffffffUL,
+                                             0x80000000UL,
+                                             0x00800000UL,
+                                             0x00008000UL,
+                                             0x00000080UL,
+                                             0x89abcdefUL,
+                                             0xffffffffUL};
+
+/** Decode and echo timestamp bytes without signed-shift overflow. */
+START_TEST(test_tcp_timestamp_parsing)
+{
+  struct test_tcp_counters counters;
+  struct test_tcp_txcounters txcounters;
+  struct netif netif;
+  struct tcp_pcb *pcb;
+  struct pbuf *p;
+  struct tcp_hdr *tcphdr;
+  u32_t echoed;
+  u32_t options[3] = {PP_HTONL(0x0101080aUL), 0, 0};
+  const u32_t timestamp = tcp_timestamp_values[_i];
+
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+  memset(&counters, 0, sizeof(counters));
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT,
+                TEST_REMOTE_PORT);
+  tcp_set_flags(pcb, TF_TIMESTAMP);
+  pcb->ts_lastacksent = pcb->rcv_nxt;
+
+  options[1] = lwip_htonl(timestamp);
+  p = tcp_create_rx_segment(pcb, options, sizeof(options), 0, 0, TCP_ACK);
+  EXPECT_RET(p != NULL);
+  /* The segment helper copied the options as data; extend the TCP header. */
+  EXPECT(pbuf_header(p, -IP_HLEN) == 0);
+  tcphdr = (struct tcp_hdr *)p->payload;
+  TCPH_HDRLEN_SET(tcphdr, (TCP_HLEN + sizeof(options)) / 4);
+  tcphdr->chksum = 0;
+  tcphdr->chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len, &pcb->remote_ip, &pcb->local_ip);
+  EXPECT(pbuf_header(p, IP_HLEN) == 0);
+  test_tcp_input(p, &netif);
+  EXPECT(pcb->ts_recent == timestamp);
+
+  txcounters.copy_tx_packets = 1;
+  EXPECT(tcp_send_empty_ack(pcb) == ERR_OK);
+  EXPECT_RET(txcounters.tx_packets != NULL);
+  EXPECT(txcounters.tx_packets->tot_len == IP_HLEN + TCP_HLEN + 12);
+  EXPECT(pbuf_copy_partial(txcounters.tx_packets, &echoed, sizeof(echoed),
+                           IP_HLEN + TCP_HLEN + 8) == sizeof(echoed));
+  EXPECT(lwip_ntohl(echoed) == timestamp);
+  pbuf_free(txcounters.tx_packets);
+  txcounters.tx_packets = NULL;
+  txcounters.copy_tx_packets = 0;
+  tcp_abort(pcb);
+}
+END_TEST
+#endif /* LWIP_TCP_TIMESTAMPS */
+
 /** Create the suite including all tests for this module */
 Suite *
 tcp_suite(void)
@@ -1694,5 +1755,12 @@ tcp_suite(void)
     TESTFUNC(test_tcp_zwp_timeout_link_down),
     TESTFUNC(test_tcp_persist_split)
   };
-  return create_suite("TCP", tests, sizeof(tests)/sizeof(testfunc), tcp_setup, tcp_teardown);
+  Suite *s = create_suite("TCP", tests, sizeof(tests) / sizeof(testfunc), tcp_setup, tcp_teardown);
+#if LWIP_TCP_TIMESTAMPS
+  TCase *tc = tcase_create("TCP timestamp parsing");
+  tcase_add_checked_fixture(tc, tcp_setup, tcp_teardown);
+  tcase_add_loop_test(tc, test_tcp_timestamp_parsing, 0, LWIP_ARRAYSIZE(tcp_timestamp_values));
+  suite_add_tcase(s, tc);
+#endif
+  return s;
 }
