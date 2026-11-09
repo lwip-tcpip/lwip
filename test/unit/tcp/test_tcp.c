@@ -1667,6 +1667,80 @@ START_TEST(test_tcp_persist_split)
 }
 END_TEST
 
+#if LWIP_TCP_TIMESTAMPS
+static const struct {
+  u16_t mss, wnd, max_payload;
+} tcp_timestamp_send_cases[] = {
+    {11, TCP_WND, 1}, {12, TCP_WND, 1}, {13, TCP_WND, 1}, {TCP_MSS, 24, 1}, {TCP_MSS, TCP_WND, 4}};
+
+/** Timestamp padding must leave room for payload at small MSS/window boundaries. */
+START_TEST(test_tcp_write_timestamp_padding)
+{
+  struct test_tcp_counters counters;
+  struct test_tcp_txcounters txcounters;
+  struct netif netif;
+  struct tcp_pcb *pcb;
+  const u8_t data[] = {0x5a, 0xc3, 0x17, 0xe9};
+  u16_t offset = 0, received = 0;
+  u32_t sequence;
+  unsigned int packets = 0;
+  const size_t case_index = (size_t)_i / 2;
+  const int timestamps = _i % 2;
+  const u16_t max_payload = timestamps ? tcp_timestamp_send_cases[case_index].max_payload : 4;
+
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+  memset(&counters, 0, sizeof(counters));
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT,
+                TEST_REMOTE_PORT);
+  pcb->mss = tcp_timestamp_send_cases[case_index].mss;
+  pcb->snd_wnd = pcb->snd_wnd_max = pcb->cwnd = tcp_timestamp_send_cases[case_index].wnd;
+  if (timestamps) {
+    tcp_set_flags(pcb, TF_TIMESTAMP);
+  }
+  tcp_nagle_disable(pcb);
+  sequence = pcb->snd_nxt;
+  txcounters.copy_tx_packets = 1;
+
+  EXPECT(tcp_write(pcb, data, sizeof(data), TCP_WRITE_FLAG_COPY) == ERR_OK);
+  EXPECT(tcp_output(pcb) == ERR_OK);
+  EXPECT_RET(txcounters.tx_packets != NULL);
+  while (offset < txcounters.tx_packets->tot_len) {
+    struct ip_hdr iphdr;
+    struct tcp_hdr tcphdr;
+    u16_t packet_len, header_len, data_len;
+    u8_t sent[sizeof(data)];
+
+    EXPECT(++packets <= sizeof(data));
+    EXPECT(pbuf_copy_partial(txcounters.tx_packets, &iphdr, IP_HLEN, offset) == IP_HLEN);
+    EXPECT(pbuf_copy_partial(txcounters.tx_packets, &tcphdr, TCP_HLEN, (u16_t)(offset + IP_HLEN)) ==
+           TCP_HLEN);
+    packet_len = lwip_ntohs(IPH_LEN(&iphdr));
+    header_len = (u16_t)(IP_HLEN + TCPH_HDRLEN_BYTES(&tcphdr));
+    EXPECT(header_len == IP_HLEN + TCP_HLEN + (timestamps ? 12 : 0));
+    EXPECT(packet_len > header_len);
+    data_len = (u16_t)(packet_len - header_len);
+    EXPECT(data_len <= max_payload && received + data_len <= sizeof(data));
+    EXPECT(lwip_ntohl(tcphdr.seqno) == sequence + received);
+    EXPECT(pbuf_copy_partial(txcounters.tx_packets, sent, data_len, (u16_t)(offset + header_len)) ==
+           data_len);
+    EXPECT(memcmp(sent, data + received, data_len) == 0);
+    received = (u16_t)(received + data_len);
+    offset = (u16_t)(offset + packet_len);
+  }
+  EXPECT(received == sizeof(data));
+  EXPECT(offset == txcounters.tx_packets->tot_len);
+  EXPECT(packets == txcounters.num_tx_calls);
+  pbuf_free(txcounters.tx_packets);
+  txcounters.tx_packets = NULL;
+  txcounters.copy_tx_packets = 0;
+  tcp_abort(pcb);
+}
+END_TEST
+
+#endif /* LWIP_TCP_TIMESTAMPS */
+
 /** Create the suite including all tests for this module */
 Suite *
 tcp_suite(void)
@@ -1694,5 +1768,13 @@ tcp_suite(void)
     TESTFUNC(test_tcp_zwp_timeout_link_down),
     TESTFUNC(test_tcp_persist_split)
   };
-  return create_suite("TCP", tests, sizeof(tests)/sizeof(testfunc), tcp_setup, tcp_teardown);
+  Suite *s = create_suite("TCP", tests, sizeof(tests) / sizeof(testfunc), tcp_setup, tcp_teardown);
+#if LWIP_TCP_TIMESTAMPS
+  TCase *tc = tcase_create("TCP timestamp padding");
+  tcase_add_checked_fixture(tc, tcp_setup, tcp_teardown);
+  tcase_add_loop_test(tc, test_tcp_write_timestamp_padding, 0,
+                      2 * LWIP_ARRAYSIZE(tcp_timestamp_send_cases));
+  suite_add_tcase(s, tc);
+#endif
+  return s;
 }
