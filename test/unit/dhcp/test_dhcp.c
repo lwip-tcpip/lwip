@@ -1093,6 +1093,67 @@ START_TEST(test_dhcp_invalid_overload)
 }
 END_TEST
 
+#if LWIP_DHCP_DOES_ACD_CHECK
+static void acd_test_callback(struct netif *netif, acd_callback_enum_t state)
+{
+  LWIP_UNUSED_ARG(netif);
+  LWIP_UNUSED_ARG(state);
+}
+
+/*
+ * Check that restarting DHCP keeps the other acd entries of the netif:
+ * dhcp_start() clears struct dhcp, including its acd struct, while that acd
+ * struct is still linked in netif->acd_list.
+ */
+START_TEST(test_dhcp_restart_keeps_acd_list)
+{
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
+  struct acd other_acd;
+  struct acd *acd;
+  int found;
+  LWIP_UNUSED_ARG(_i);
+
+  tcase = TEST_NONE;
+  setdebug(0);
+
+  IP4_ADDR(&addr, 0, 0, 0, 0);
+  IP4_ADDR(&netmask, 0, 0, 0, 0);
+  IP4_ADDR(&gw, 0, 0, 0, 0);
+
+  netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
+  netif_set_up(&net_test);
+
+  /* another acd user (e.g. AutoIP), added before DHCP */
+  memset(&other_acd, 0, sizeof(other_acd));
+  acd_add(&net_test, &other_acd, acd_test_callback);
+
+  dhcp_start(&net_test);
+  /* the acd struct of DHCP is now in front of other_acd */
+  fail_unless(net_test.acd_list == &netif_dhcp_data(&net_test)->acd);
+  fail_unless(net_test.acd_list->next == &other_acd);
+
+  /* restart DHCP while its acd struct is in the list */
+  dhcp_start(&net_test);
+
+  found = 0;
+  for (acd = net_test.acd_list; acd != NULL; acd = acd->next) {
+    if (acd == &other_acd) {
+      found = 1;
+    }
+  }
+  fail_unless(found);
+
+  acd_remove(&net_test, &other_acd);
+  dhcp_stop(&net_test);
+  dhcp_cleanup(&net_test);
+  netif_remove(&net_test);
+}
+END_TEST
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
+
 /** Create the suite including all tests for this module */
 Suite *
 dhcp_suite(void)
@@ -1103,6 +1164,9 @@ dhcp_suite(void)
     TESTFUNC(test_dhcp_relayed),
     TESTFUNC(test_dhcp_nak_no_endmarker),
     TESTFUNC(test_dhcp_invalid_overload)
+#if LWIP_DHCP_DOES_ACD_CHECK
+    , TESTFUNC(test_dhcp_restart_keeps_acd_list)
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
   };
   return create_suite("DHCP", tests, sizeof(tests)/sizeof(testfunc), dhcp_setup, dhcp_teardown);
 }
