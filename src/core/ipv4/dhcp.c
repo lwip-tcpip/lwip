@@ -809,6 +809,9 @@ dhcp_start(struct netif *netif)
   struct dhcp *dhcp;
   err_t result;
   u8_t saved_flags;
+#if LWIP_DHCP_DOES_ACD_CHECK
+  struct acd *acd_next = NULL;
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
 
   LWIP_ASSERT_CORE_LOCKED();
   LWIP_ERROR("netif != NULL", (netif != NULL), return ERR_ARG;);
@@ -844,6 +847,12 @@ dhcp_start(struct netif *netif)
       dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
     }
     /* dhcp is cleared below, no need to reset flag*/
+#if LWIP_DHCP_DOES_ACD_CHECK
+    /* dhcp->acd may still be linked in netif->acd_list: keep its link, so that
+       clearing the data structure below does not cut off the acd entries behind
+       it (e.g. the one of AutoIP) */
+    acd_next = dhcp->acd.next;
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
   }
 
   /* clear data structure but preserve DHCP_FLAG_EXTERNAL_MEM for dhcp_cleanup() */
@@ -853,6 +862,8 @@ dhcp_start(struct netif *netif)
 
 
 #if LWIP_DHCP_DOES_ACD_CHECK
+  /* restore the link, acd_add() keeps it when the acd struct is already in the list */
+  dhcp->acd.next = acd_next;
   /* add acd struct to list*/
   acd_add(netif, &dhcp->acd, dhcp_conflict_callback);
 #endif /* LWIP_DHCP_DOES_ACD_CHECK */
