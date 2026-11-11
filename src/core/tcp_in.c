@@ -664,7 +664,13 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       err_t err;
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
       TCP_STATS_INC(tcp.memerr);
+      #if !DISABLE_TCPIP_EVENT_ACCEPT_AT_MEM_ERR
+      /* Notify application of connection refusal due to memory exhaustion.
+       * NOTE: Can cause instability during resource exhaustion as the application
+       * may attempt connection management while the stack is at resource limits.
+       * Consider enabling DISABLE_TCPIP_EVENT_ACCEPT_AT_MEM_ERR if unstable. */
       TCP_EVENT_ACCEPT(pcb, NULL, pcb->callback_arg, ERR_MEM, err);
+      #endif
       LWIP_UNUSED_ARG(err); /* err not useful here */
       return;
     }
