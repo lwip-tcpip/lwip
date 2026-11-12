@@ -32,6 +32,7 @@
 
 #ifndef linux  /* Apparently, this doesn't work under Linux. */
 
+#include "lwip/opt.h"
 #include "lwip/debug.h"
 
 #include <fcntl.h>
