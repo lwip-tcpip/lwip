@@ -65,6 +65,28 @@
 
 #if LWIP_HTTPD_EXAMPLE_HTTPS && LWIP_ALTCP_TLS
 
+#ifndef LWIP_HTTPD_EXAMPLE_HTTPS_USE_ADD_CERT_API
+#define LWIP_HTTPD_EXAMPLE_HTTPS_USE_ADD_CERT_API 0
+#endif
+
+#ifndef LWIP_HTTPD_EXAMPLE_HTTPS_ALPN
+#define LWIP_HTTPD_EXAMPLE_HTTPS_ALPN 0
+#endif
+
+#ifndef LWIP_HTTPD_EXAMPLE_HTTPS_INIT_HITLS
+#define LWIP_HTTPD_EXAMPLE_HTTPS_INIT_HITLS LWIP_ALTCP_TLS_HITLS
+#endif
+
+#if LWIP_HTTPD_EXAMPLE_HTTPS_ALPN
+#ifndef LWIP_HTTPD_EXAMPLE_HTTPS_ALPN_PROTO
+#define LWIP_HTTPD_EXAMPLE_HTTPS_ALPN_PROTO "http/1.1"
+#endif
+static const char *https_ex_alpn_protos[] = {
+  LWIP_HTTPD_EXAMPLE_HTTPS_ALPN_PROTO,
+  NULL
+};
+#endif
+
 #ifndef LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE
 #error "define LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE to the created server private key"
 #endif
@@ -105,10 +127,48 @@ static u8_t *read_file(const char *filename, size_t *file_size)
 
   buf[fsize] = 0;
   if (file_size) {
-    /* Note: the '+ 1' is required for mbedTLS to correctly parse the buffer */
+    /* Note: the '+ 1' is required by TLS backends that parse PEM as C strings. */
     *file_size = (size_t)(fsize + 1);
   }
   return buf;
+}
+
+static struct altcp_tls_config *
+https_ex_create_config(const u8_t *privkey, size_t privkey_size,
+                       const u8_t *cert, size_t cert_size)
+{
+  struct altcp_tls_config *conf;
+
+#if LWIP_HTTPD_EXAMPLE_HTTPS_USE_ADD_CERT_API
+  err_t err;
+
+  conf = altcp_tls_create_config_server(1);
+  if (conf == NULL) {
+    return NULL;
+  }
+
+  err = altcp_tls_config_server_add_privkey_cert(conf, privkey, privkey_size,
+    LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE_PASS, LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE_PASS_LEN, cert, cert_size);
+  if (err != ERR_OK) {
+    altcp_tls_free_config(conf);
+    return NULL;
+  }
+#else
+  conf = altcp_tls_create_config_server_privkey_cert(privkey, privkey_size,
+    LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE_PASS, LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE_PASS_LEN, cert, cert_size);
+  if (conf == NULL) {
+    return NULL;
+  }
+#endif
+
+#if LWIP_HTTPD_EXAMPLE_HTTPS_ALPN
+  if (altcp_tls_configure_alpn_protocols(conf, https_ex_alpn_protos) != 0) {
+    altcp_tls_free_config(conf);
+    return NULL;
+  }
+#endif
+
+  return conf;
 }
 
 /** This function loads a server certificate and private key as x509 from disk.
@@ -125,13 +185,16 @@ https_ex_init(void)
   u8_t *privkey, *cert;
   size_t privkey_size, cert_size;
 
+#if LWIP_HTTPD_EXAMPLE_HTTPS_INIT_HITLS
+  LWIP_ASSERT("Failed to initialize openHiTLS", altcp_tls_hitls_init() == ERR_OK);
+#endif
+
   privkey = read_file(LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE, &privkey_size);
   LWIP_ASSERT("Failed to open https server private key", privkey != NULL);
   cert = read_file(LWIP_HTTPD_EXAMPLE_HTTPS_CERT_FILE, &cert_size);
   LWIP_ASSERT("Failed to open https server certificate", cert != NULL);
 
-  conf = altcp_tls_create_config_server_privkey_cert(privkey, privkey_size,
-    LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE_PASS, LWIP_HTTPD_EXAMPLE_HTTPS_KEY_FILE_PASS_LEN, cert, cert_size);
+  conf = https_ex_create_config(privkey, privkey_size, cert, cert_size);
   LWIP_ASSERT("Failed to create https server config", conf != NULL);
 
   httpd_inits(conf);
