@@ -98,14 +98,18 @@ struct mdns_service {
   char name[MDNS_LABEL_MAXLEN + 1];
   /** Type of service, like '_http' */
   char service[MDNS_LABEL_MAXLEN + 1];
-  /** Callback function and userdata
-   * to update txtdata buffer */
+  /** SubType of service, like '_printer' */
+  char subTypes[MDNS_MAX_SERVICES_SUBTYPES][MDNS_LABEL_MAXLEN + 1];
+  /** Callback function and userdata/*
+   /* to update txtdata buffer */
   service_get_txt_fn_t txt_fn;
   void *txt_userdata;
   /** Protocol, TCP or UDP */
   u16_t proto;
   /** Port of the service */
   u16_t port;
+  /** Number of the subtypes of a service */
+  u16_t subtypes_nbr;
 };
 
 /** mDNS output packet */
