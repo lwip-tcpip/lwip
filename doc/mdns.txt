@@ -92,9 +92,9 @@ If this call returns successfully, the following queries will be answered:
      LWIP_ERROR("mdns add service txt failed\n", (res == ERR_OK), return);
    }
 
-  Since a hostname struct is used for TXT storage each single item can be max
-  63 bytes long, and  the total max length (including length bytes for each
-  item) is 255 bytes.
+  Each item is encoded as a length byte followed by the data, so each single
+  item can be max 255 bytes long, and the total max length (including length
+  bytes for each item) is defined by MDNS_TXT_RDATA_SIZE (default 255).
 
 If your device runs a webserver on port 80, an example call might be:
 

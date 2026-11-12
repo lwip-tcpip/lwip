@@ -90,10 +90,16 @@ struct mdns_request {
 };
 #endif
 
+/** TXT record data */
+struct mdns_txtdata {
+  u8_t rdata[MDNS_TXT_RDATA_SIZE];
+  u16_t length;
+};
+
 /** Description of a service */
 struct mdns_service {
   /** TXT record to answer with */
-  struct mdns_domain txtdata;
+  struct mdns_txtdata txtdata;
   /** Name of service, like 'myweb' */
   char name[MDNS_LABEL_MAXLEN + 1];
   /** Type of service, like '_http' */

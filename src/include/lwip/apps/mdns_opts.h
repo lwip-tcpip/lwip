@@ -78,6 +78,12 @@
 #define MDNS_MAX_STORED_PKTS            4
 #endif
 
+/** The maximum size of TXT RDATA per service.
+ */
+#ifndef MDNS_TXT_RDATA_SIZE
+# define MDNS_TXT_RDATA_SIZE 256
+#endif
+
 /** Payload size allocated for each outgoing UDP packet. Will be allocated with
  * PBUF_RAM and freed after packet was sent.
  * According to RFC 6762, there is no reason to retain the 512 bytes restriction
