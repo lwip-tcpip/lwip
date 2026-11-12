@@ -245,6 +245,7 @@
     <ClCompile Include="..\..\..\addons\ipv6_static_routing\ip6_route_table.c" />
     <ClCompile Include="..\..\..\addons\tcp_isn\tcp_isn.c" />
     <ClCompile Include="..\..\..\apps\tcpecho_raw\tcpecho_raw.c" />
+    <ClCompile Include="..\..\..\apps\tcpecho_altcp\tcpecho_altcp.c" />
     <ClCompile Include="..\..\..\apps\udpecho_raw\udpecho_raw.c" />
     <ClCompile Include="..\..\..\examples\example_app\test.c" />
     <ClCompile Include="..\..\..\examples\httpd\cgi_example\cgi_example.c" />
@@ -285,6 +286,7 @@
     <ClInclude Include="..\..\..\apps\socket_examples\socket_examples.h" />
     <ClInclude Include="..\..\..\apps\tcpecho\tcpecho.h" />
     <ClInclude Include="..\..\..\apps\tcpecho_raw\tcpecho_raw.h" />
+    <ClInclude Include="..\..\..\apps\tcpecho_altcp\tcpecho_altcp.h" />
     <ClInclude Include="..\..\..\apps\udpecho\udpecho.h" />
     <ClInclude Include="..\..\..\apps\udpecho_raw\udpecho_raw.h" />
     <ClInclude Include="..\..\..\examples\httpd\cgi_example\cgi_example.h" />
