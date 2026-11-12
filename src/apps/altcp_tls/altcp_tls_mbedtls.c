@@ -60,6 +60,8 @@
 
 #if LWIP_ALTCP_TLS && LWIP_ALTCP_TLS_MBEDTLS
 
+#include "lwip/errno.h"
+
 #include "lwip/altcp.h"
 #include "lwip/altcp_tls.h"
 #include "lwip/priv/altcp_priv.h"
@@ -299,6 +301,10 @@ altcp_mbedtls_lower_recv_process(struct altcp_pcb *conn, altcp_mbedtls_state_t *
     if (ret != 0) {
       LWIP_DEBUGF(ALTCP_MBEDTLS_DEBUG, ("mbedtls_ssl_handshake failed: %d\n", ret));
       /* handshake failed, connection has to be closed */
+      if (ret == MBEDTLS_ERR_X509_CERT_VERIFY_FAILED) {
+        /* provide a cause for why the connection is closed to the caller */
+        errno = EPERM;
+      }
       if (conn->err) {
         conn->err(conn->arg, ERR_CLSD);
       }
