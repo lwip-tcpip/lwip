@@ -1343,6 +1343,26 @@
 #endif
 
 /**
+ * TCP_VALIDATE_FLAGS_ENABLED: Enable TCP flag combination validation.
+ *
+ * Security: When enabled (set to 1), validates incoming TCP flag combinations and
+ * rejects packets with uncommon/invalid flag patterns by sending RST. This hardens
+ * the stack against:
+ * - Malformed packets
+ * - Port scanning attempts (e.g., SYN+FYN)
+ * - Non-compliant TCP implementations
+ *
+ * The filter allows all standard RFC-regulated flag combinations while rejecting
+ * unusual patterns that may indicate malicious intent or implementation errors.
+ *
+ * Enable this for improved security in hostile network environments.
+ * Default is 0 (disabled for backward compatibility and performance).
+ */
+#if !defined TCP_VALIDATE_FLAGS_ENABLED || defined __DOXYGEN__
+#define TCP_VALIDATE_FLAGS_ENABLED      0
+#endif
+
+/**
  * TCP_MSS: TCP Maximum segment size. (default is 536, a conservative default,
  * you might want to increase this.)
  * For the receive side, this MSS is advertised to the remote side

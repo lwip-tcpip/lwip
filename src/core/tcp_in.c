@@ -97,6 +97,58 @@ static void tcp_timewait_input(struct tcp_pcb *pcb);
 
 static int tcp_input_delayed_close(struct tcp_pcb *pcb);
 
+#if TCP_VALIDATE_FLAGS_ENABLED
+/**
+ * Validates TCP flags to filter uncommon/invalid flag combinations.
+ *
+ * Security: Filters out unusual flag combinations that may indicate:
+ * - Malformed packets
+ * - Port scanning attempts
+ * - Protocol fuzzing/testing
+ * - Non-compliant TCP implementations
+ *
+ * @param pcb the tcp_pcb for the connection (can be NULL for stateless RST)
+ * @return 0 if flags are valid, 1 if invalid (should send RST)
+ */
+static int
+tcp_validate_flags(struct tcp_pcb *pcb)
+{
+  LWIP_UNUSED_ARG(pcb);
+
+  /* Filter valid flag combinations */
+  switch (flags) {
+    case TCP_SYN:
+    case (TCP_SYN | TCP_ACK):
+    case TCP_ACK:
+    case TCP_PSH:
+    case (TCP_PSH | TCP_ACK):
+    case TCP_FIN:
+    case (TCP_FIN | TCP_ACK):
+    case (TCP_FIN | TCP_PSH | TCP_ACK):
+    case TCP_RST:
+    case (TCP_RST | TCP_ACK):
+    #ifdef USE_FLAGS_URG_CWR_ECE
+    case TCP_URG:
+    case (TCP_URG | TCP_ACK):
+    case (TCP_URG | TCP_PSH | TCP_ACK):
+    case TCP_ECE:
+    case (TCP_ECE | TCP_ACK):
+    case TCP_CWR:
+    case (TCP_CWR | TCP_ACK):
+    case (TCP_ECE | TCP_CWR):
+    case (TCP_ECE | TCP_CWR | TCP_ACK):
+    #endif
+      /* Valid flag combination */
+      return 0;
+
+    default:
+      /* Invalid/uncommon flag combination - reject with RST */
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_validate_flags: invalid flag combination 0x%02x\n", flags));
+      return 1;
+  }
+}
+#endif /* TCP_VALIDATE_FLAGS_ENABLED */
+
 #if LWIP_TCP_SACK_OUT
 static void tcp_add_sack(struct tcp_pcb *pcb, u32_t left, u32_t right);
 static void tcp_remove_sacks_lt(struct tcp_pcb *pcb, u32_t seq);
@@ -434,6 +486,20 @@ tcp_input(struct pbuf *p, struct netif *inp)
         goto aborted;
       }
     }
+
+    #if TCP_VALIDATE_FLAGS_ENABLED
+    /* Validate TCP flags before processing */
+    if (tcp_validate_flags(pcb) != 0) {
+      /* Invalid flag combination detected - send RST and drop segment */
+      LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_input: invalid flags 0x%02x, sending reset\n", flags));
+      tcp_rst(pcb, ackno, seqno + tcplen, ip_current_dest_addr(),
+              ip_current_src_addr(), tcphdr->dest, tcphdr->src);
+      TCP_STATS_INC(tcp.proterr);
+      TCP_STATS_INC(tcp.drop);
+      goto aborted;
+    }
+    #endif /* TCP_VALIDATE_FLAGS_ENABLED */
+
     tcp_input_pcb = pcb;
     err = tcp_process(pcb);
     /* A return value of ERR_ABRT means that tcp_abort() was called
