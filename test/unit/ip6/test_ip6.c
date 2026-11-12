@@ -198,9 +198,17 @@ START_TEST(test_ip6_aton_ipv4mapped)
   const ip_addr_t addr_expected = IPADDR6_INIT_HOST(0, 0, 0xFFFF, 0xD4CC65D2);
   const char *full_ipv6_addr = "0:0:0:0:0:FFFF:D4CC:65D2";
   const char *shortened_ipv6_addr = "::FFFF:D4CC:65D2";
+  const char *shortened_ipv6_addr_unexpected_char = "::FFFF:D4CC:65DZ";
+  const char *shortened_ipv6_addr_invalid = "::GGGGGGGG";
   const char *full_ipv4_mapped_addr = "0:0:0:0:0:FFFF:212.204.101.210";
   const char *shortened_ipv4_mapped_addr = "::FFFF:212.204.101.210";
   const char *bogus_ipv4_mapped_addr = "::FFFF:212.204.101.2101";
+  const char *ipv6_block_too_long = "1234:5678:9aBc:acDef:1122:3344:5566:7788";
+  const char *ipv6_trailing_single_colon = "fE80::1:";
+  const char *ipv6_impossible_compression1 = "1234:5678:9aBc::cDef:1122:3344:5566:7788";
+  const char *ipv6_impossible_compression2 = "1234:5678:9aBc:cDef:1122:3344:5566:7788::";
+  const char *ipv6_valid_compression = "fE80::1:1";
+
   LWIP_UNUSED_ARG(_i);
 
   /* check IPv6 representation */
@@ -222,6 +230,16 @@ START_TEST(test_ip6_aton_ipv4mapped)
   ret = ipaddr_aton(shortened_ipv6_addr, &addr);
   fail_unless(ret == 1);
   fail_unless(memcmp(&addr, &addr_expected, 16) == 0);
+
+  /* check shortened IPv6 with unexpected char */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(shortened_ipv6_addr_unexpected_char, &addr6);
+  fail_unless(ret == 0);
+
+  /* check shortened IPv6 that is clearly invalid */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(shortened_ipv6_addr_invalid, &addr6);
+  fail_unless(ret == 0);
 
   /* checked shortened mixed representation */
   memset(&addr6, 0, sizeof(addr6));
@@ -250,6 +268,31 @@ START_TEST(test_ip6_aton_ipv4mapped)
   memset(&addr, 0, sizeof(addr));
   ret = ipaddr_aton(bogus_ipv4_mapped_addr, &addr);
   fail_unless(ret == 0);
+
+  /* checking incorrect representation with a block containing 5 characters */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(ipv6_block_too_long, &addr6);
+  fail_unless(ret == 0);
+
+  /* trailing single colon, invalid */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(ipv6_trailing_single_colon, &addr6);
+  fail_unless(ret == 0);
+
+  /* impossible to support compression, already enough blocks, invalid */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(ipv6_impossible_compression1, &addr6);
+  fail_unless(ret == 0);    
+
+  /* impossible to support compression at the end of the address, already enough blocks, invalid */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(ipv6_impossible_compression2, &addr6);
+  fail_unless(ret == 0);     
+
+  /* valid ipv6 with compression */
+  memset(&addr6, 0, sizeof(addr6));
+  ret = ip6addr_aton(ipv6_valid_compression, &addr6);
+  fail_unless(ret == 1);
 }
 END_TEST
 
