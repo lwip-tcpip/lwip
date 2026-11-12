@@ -678,7 +678,17 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->local_port = pcb->local_port;
     npcb->remote_port = tcphdr->src;
     npcb->state = SYN_RCVD;
+    #if SYN_WITH_PAYLOAD_ENABLED
+    /* RFC Compliance: Account for both SYN flag and any payload in the SYN packet.
+     * Some implementations send data with SYN (SYN+data), and the ACK number must
+     * correctly reflect seqno + 1 (for SYN) + payload_length to comply with RFC.
+     * This ensures proper interoperability and passes robustness testing tools. */
+    npcb->rcv_nxt = seqno + tcplen;
+    #else
+    /* Standard behavior: Only account for SYN flag, ignore any payload.
+     * This is the traditional lwIP behavior - SYN payload is discarded. */
     npcb->rcv_nxt = seqno + 1;
+    #endif
     npcb->rcv_ann_right_edge = npcb->rcv_nxt;
     iss = tcp_next_iss(npcb);
     npcb->snd_wl2 = iss;
@@ -838,6 +848,13 @@ tcp_process(struct tcp_pcb *pcb)
   }
 
   if ((flags & TCP_SYN) && (pcb->state != SYN_SENT && pcb->state != SYN_RCVD)) {
+    #if SYN_WITH_PAYLOAD_ENABLED
+    /* RFC Compliance: Handle SYN with payload in unexpected states.
+     * Update rcv_nxt to account for SYN flag and any payload to maintain
+     * correct sequence tracking and generate proper ACK numbers.
+     * Note: Sequence nb could be the same becuase we don't intend a new seq nb  */
+    pcb->rcv_nxt += tcplen;
+    #endif
     /* Cope with new connection attempt after remote end crashed */
     tcp_ack_now(pcb);
     return ERR_OK;
