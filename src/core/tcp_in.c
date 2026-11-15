@@ -1997,9 +1997,9 @@ tcp_parseopt(struct tcp_pcb *pcb)
             return;
           }
           /* TCP timestamp option with valid length */
-          tsval = (tcp_get_next_optbyte() << 24);
-          tsval |= (tcp_get_next_optbyte() << 16);
-          tsval |= (tcp_get_next_optbyte() << 8);
+          tsval = ((u32_t)tcp_get_next_optbyte() << 24);
+          tsval |= ((u32_t)tcp_get_next_optbyte() << 16);
+          tsval |= ((u32_t)tcp_get_next_optbyte() << 8);
           tsval |= tcp_get_next_optbyte();
           if (flags & TCP_SYN) {
             pcb->ts_recent = tsval;
