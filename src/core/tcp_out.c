@@ -445,7 +445,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
     optflags = TF_SEG_OPTS_TS;
     optlen = LWIP_TCP_OPT_LENGTH_SEGMENT(TF_SEG_OPTS_TS, pcb);
     /* ensure that segments can hold at least one data byte... */
-    mss_local = LWIP_MAX(mss_local, LWIP_TCP_OPT_LEN_TS + 1);
+    mss_local = LWIP_MAX(mss_local, optlen + 1);
   } else
 #endif /* LWIP_TCP_TIMESTAMPS */
   {
