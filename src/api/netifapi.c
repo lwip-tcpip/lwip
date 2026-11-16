@@ -12,7 +12,7 @@
  */
 
 /*
- * Copyright (c) 2007 Frédéric Bernon
+ * Copyright (c) 2007 Frederic Bernon
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,

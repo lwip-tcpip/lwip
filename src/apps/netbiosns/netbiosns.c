@@ -1,4 +1,4 @@
-  /**
+/**
  * @file
  * NetBIOS name service responder
  */
@@ -16,7 +16,7 @@
  */
 
 /*
- * Copyright (c) 2009 Frédéric Bernon, Simon Goldschmidt, Dirk Ziegelmeier
+ * Copyright (c) 2009 Frederic Bernon, Simon Goldschmidt, Dirk Ziegelmeier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
