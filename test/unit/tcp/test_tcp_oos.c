@@ -986,6 +986,71 @@ FIN_TEST(test_tcp_recv_ooseq_double_FIN_14, 14)
 FIN_TEST(test_tcp_recv_ooseq_double_FIN_15, 15)
 
 
+START_TEST(test_tcp_recv_ooseq_straddle_rxwin)
+{
+#if !TCP_OOSEQ_MAX_BYTES && !TCP_OOSEQ_MAX_PBUFS
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf *p_straddle, *pinseq;
+  struct netif netif;
+  u16_t straddle_off, straddle_len, fill_len;
+  u32_t seg_end, win_edge;
+  int i;
+
+  for(i = 0; i < (int)sizeof(data_full_wnd); i++) {
+    data_full_wnd[i] = (char)i;
+  }
+
+  test_tcp_init_netif(&netif, NULL, &test_local_ip, &test_netmask);
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = TCP_WND;
+  counters.expected_data = data_full_wnd;
+
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &test_local_ip, &test_remote_ip, TEST_LOCAL_PORT, TEST_REMOTE_PORT);
+  pcb->rcv_nxt = 0x8000;
+
+  /* Out-of-order segment that STARTS inside the receive window but ENDS past
+     its right edge (starts 200 bytes before rcv_nxt+rcv_wnd, length 500, so
+     it ends 300 bytes beyond the edge). lwIP queues the first ooseq segment
+     with tcp_seg_copy() and never trims its tail to the window (the
+     in-sequence path does trim). */
+  straddle_off = (u16_t)(pcb->rcv_wnd - 200);
+  straddle_len = 500;
+  p_straddle = tcp_create_rx_segment(pcb, &data_full_wnd[straddle_off], straddle_len, straddle_off, 0, TCP_ACK);
+  EXPECT_RET(p_straddle != NULL);
+  test_tcp_input(p_straddle, &netif);
+  EXPECT(tcp_oos_count(pcb) == 1);
+
+  /* A correct stack trims the queued segment's tail to the window edge.
+     Reported (not EXPECTed) so the test goes on to show the consequence. */
+  seg_end = tcp_oos_seg_seqno(pcb, 0) + tcp_oos_seg_tcplen(pcb, 0);
+  win_edge = pcb->rcv_nxt + pcb->rcv_wnd;
+  if (!TCP_SEQ_LEQ(seg_end, win_edge)) {
+    printf("straddle_rxwin: queued ooseq segment ends %"U32_F" bytes past the receive window edge\n",
+           (u32_t)(seg_end - win_edge));
+    fflush(stdout);
+  }
+
+  /* One large in-order segment fills the gap in a single tcp_receive() call.
+     It is trimmed to meet the queued segment, advancing rcv_nxt so the queued
+     (still oversized) segment is dequeued in sequence and underflows rcv_wnd,
+     tripping LWIP_ASSERT("tcp_receive: ooseq tcplen > rcv_wnd"). */
+  fill_len = (u16_t)(pcb->rcv_wnd - 100);
+  pinseq = tcp_create_rx_segment(pcb, &data_full_wnd[0], fill_len, 0, 0, TCP_ACK);
+  EXPECT_RET(pinseq != NULL);
+  test_tcp_input(pinseq, &netif);
+
+  /* Only reached when the stack is fixed: the whole window was received. */
+  EXPECT(counters.err_calls == 0);
+  EXPECT(pcb->ooseq == NULL);
+  tcp_abort(pcb);
+#endif /* !TCP_OOSEQ_MAX_BYTES && !TCP_OOSEQ_MAX_PBUFS */
+  LWIP_UNUSED_ARG(_i);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 tcp_oos_suite(void)
@@ -995,6 +1060,7 @@ tcp_oos_suite(void)
     TESTFUNC(test_tcp_recv_ooseq_FIN_INSEQ),
     TESTFUNC(test_tcp_recv_ooseq_overrun_rxwin),
     TESTFUNC(test_tcp_recv_ooseq_overrun_rxwin_edge),
+    TESTFUNC(test_tcp_recv_ooseq_straddle_rxwin),
     TESTFUNC(test_tcp_recv_ooseq_max_bytes),
     TESTFUNC(test_tcp_recv_ooseq_max_pbufs),
     TESTFUNC(test_tcp_recv_ooseq_double_FIN_0),

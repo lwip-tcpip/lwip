@@ -1672,7 +1672,21 @@ tcp_receive(struct tcp_pcb *pcb)
         /* We get here if the incoming segment is out-of-sequence. */
 
 #if TCP_QUEUE_OOSEQ
-        /* We queue the segment on the ->ooseq queue. */
+        /* The segment start was checked against the receive window, but its
+         * right edge may still extend beyond it. Trim before queuing so that
+         * dequeuing the segment cannot consume more than the remaining window. */
+         right_wnd_edge = pcb->rcv_nxt + pcb->rcv_wnd - seqno;
+         if ((TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) && (inseg.len >= right_wnd_edge)) {
+           /* FIN consumes one sequence number after the payload. */
+           TCPH_FLAGS_SET(inseg.tcphdr, TCPH_FLAGS(inseg.tcphdr) & ~(unsigned int)TCP_FIN);
+         }
+         if (inseg.len > right_wnd_edge) {
+           inseg.len = (u16_t)right_wnd_edge;
+           pbuf_realloc(inseg.p, inseg.len);
+         }
+         tcplen = TCP_TCPLEN(&inseg);
+
+         /* We queue the segment on the ->ooseq queue. */
         if (pcb->ooseq == NULL) {
           pcb->ooseq = tcp_seg_copy(&inseg);
 #if LWIP_TCP_SACK_OUT
