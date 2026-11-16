@@ -937,6 +937,27 @@ tcp_process(struct tcp_pcb *pcb)
           tcp_rexmit(pcb);
         }
       } else if (flags & TCP_ACK) {
+        /* Check sequence-number acceptability before completing the
+         * handshake or notifying the application. */
+        if (pcb->rcv_wnd == 0) {
+          /* Window cannot be 0 here, just drop the packet. */
+          LWIP_DEBUGF(TCP_DEBUG, ("TCP has zero rcv_wnd in SYN_RCVD.\n"));
+          return ERR_OK;
+        } else {
+          u32_t wnd_end = pcb->rcv_nxt + pcb->rcv_wnd - 1;
+          u32_t seq_end = seqno + tcplen - 1;
+
+          if (tcplen == 0) {
+            if (!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, wnd_end)) {
+              tcp_ack_now(pcb);
+              return ERR_OK;
+            }
+          } else if (!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, wnd_end) &&
+                     !TCP_SEQ_BETWEEN(seq_end, pcb->rcv_nxt, wnd_end)) {
+            tcp_ack_now(pcb);
+            return ERR_OK;
+          }
+        }
         /* expected ACK number? */
         if (TCP_SEQ_BETWEEN(ackno, pcb->lastack + 1, pcb->snd_nxt)) {
           pcb->state = ESTABLISHED;
@@ -1886,7 +1907,7 @@ tcp_receive(struct tcp_pcb *pcb)
         /* We send the ACK packet after we've (potentially) dealt with SACKs,
            so they can be included in the acknowledgment. */
         tcp_send_empty_ack(pcb);
-      }
+      } 
     } else {
       /* The incoming segment is not within the window. */
       tcp_send_empty_ack(pcb);

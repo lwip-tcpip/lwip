@@ -1667,6 +1667,120 @@ START_TEST(test_tcp_persist_split)
 }
 END_TEST
 
+/* Count successful passive opens. */
+static err_t
+test_tcp_accept_count(void* arg, struct tcp_pcb* newpcb, err_t err)
+{
+  if ((err == ERR_OK) && (newpcb != NULL)) {
+    (*(u8_t*)arg)++;
+  }
+  return ERR_OK;
+}
+
+/** Verify that SYN_RCVD does not complete the handshake for ACKs whose
+ * sequence number is outside the receive window.
+ */
+START_TEST(test_tcp_syn_rcvd_ack_seq_window)
+{
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct tcp_pcb* pcb, * listen_pcb;
+  struct tcp_pcb_listen* lpcb;
+  struct pbuf* p;
+  ip_addr_t src_addr;
+  u8_t accept_count = 0;
+  u16_t remote_port = 12345;
+  u32_t ack_seq;
+  int i;
+  /* One below the left edge, the left edge, the last byte in the window,
+   * the excluded right edge, and one beyond the right edge. */
+  static const u8_t out_of_window[] = { 1, 0, 0, 1, 1 };
+
+  LWIP_UNUSED_ARG(_i);
+  test_tcp_init_netif(&netif, &txcounters, &test_local_ip, &test_netmask);
+  ip_addr_copy(src_addr, test_remote_ip);
+
+  listen_pcb = tcp_new();
+  EXPECT_RET(listen_pcb != NULL);
+  EXPECT(tcp_bind(listen_pcb, &netif.ip_addr, 1234) == ERR_OK);
+  listen_pcb = tcp_listen(listen_pcb);
+  EXPECT_RET(listen_pcb != NULL);
+  lpcb = (struct tcp_pcb_listen*)listen_pcb;
+  tcp_arg(listen_pcb, &accept_count);
+  tcp_accept(listen_pcb, test_tcp_accept_count);
+
+  for (i = 0; i < 5; i++, remote_port++) {
+    /* Start a fresh passive open for each sequence position. */
+    p = tcp_create_segment(&src_addr, &lpcb->local_ip, remote_port,
+      lpcb->local_port, NULL, 0, 100000, 0, TCP_SYN);
+    EXPECT_RET(p != NULL);
+    test_tcp_input(p, &netif);
+
+    /* Find the half-open child created by the SYN. */
+    for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+      if (pcb->remote_port == remote_port) {
+        break;
+      }
+    }
+    EXPECT_RET(pcb != NULL);
+    EXPECT(pcb->state == SYN_RCVD);
+
+    switch (i) {
+    case 0: ack_seq = pcb->rcv_nxt - 1; break;
+    case 1: ack_seq = pcb->rcv_nxt; break;
+    case 2: ack_seq = pcb->rcv_nxt + pcb->rcv_wnd - 1; break;
+    case 3: ack_seq = pcb->rcv_nxt + pcb->rcv_wnd; break;
+    default: ack_seq = pcb->rcv_nxt + pcb->rcv_wnd + 1; break;
+    }
+
+    /* Discard the SYN-ACK transmit count. An unacceptable ACK must cause
+     * one response ACK; an acceptable ACK needs no reply. */
+    txcounters.num_tx_calls = 0;
+    p = tcp_create_segment(&src_addr, &lpcb->local_ip, remote_port,
+      lpcb->local_port, NULL, 0, ack_seq,
+      pcb->snd_nxt, TCP_ACK);
+    EXPECT_RET(p != NULL);
+    test_tcp_input(p, &netif);
+
+    if (out_of_window[i]) {
+      EXPECT(pcb->state == SYN_RCVD);
+      EXPECT(accept_count == (u8_t)i);
+      EXPECT(txcounters.num_tx_calls == 1);
+
+      /* The rejected ACK must not consume the half-open PCB. A subsequent
+       * in-window ACK should complete this same connection. */
+      txcounters.num_tx_calls = 0;
+      p = tcp_create_segment(&src_addr, &lpcb->local_ip, remote_port,
+        lpcb->local_port, NULL, 0, pcb->rcv_nxt,
+        pcb->snd_nxt, TCP_ACK);
+      EXPECT_RET(p != NULL);
+      test_tcp_input(p, &netif);
+    }
+
+    EXPECT(pcb->state == ESTABLISHED);
+    EXPECT(accept_count == (u8_t)(i + 1));
+    tcp_abort(pcb);
+  }
+
+  /* Half-open control: without the third ACK, the callback must not run. */
+  p = tcp_create_segment(&src_addr, &lpcb->local_ip, remote_port,
+    lpcb->local_port, NULL, 0, 100000, 0, TCP_SYN);
+  EXPECT_RET(p != NULL);
+  test_tcp_input(p, &netif);
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+    if (pcb->remote_port == remote_port) {
+      break;
+    }
+  }
+  EXPECT_RET(pcb != NULL);
+  EXPECT(pcb->state == SYN_RCVD);
+  EXPECT(accept_count == 5);
+  tcp_abort(pcb);
+
+  tcp_close(listen_pcb);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 tcp_suite(void)
@@ -1692,7 +1806,8 @@ tcp_suite(void)
     TESTFUNC(test_tcp_rto_timeout_syn_sent_link_down),
     TESTFUNC(test_tcp_zwp_timeout),
     TESTFUNC(test_tcp_zwp_timeout_link_down),
-    TESTFUNC(test_tcp_persist_split)
+    TESTFUNC(test_tcp_persist_split),
+    TESTFUNC(test_tcp_syn_rcvd_ack_seq_window)
   };
   return create_suite("TCP", tests, sizeof(tests)/sizeof(testfunc), tcp_setup, tcp_teardown);
 }
