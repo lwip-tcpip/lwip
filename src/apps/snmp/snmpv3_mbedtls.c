@@ -268,18 +268,11 @@ snmpv3_password_to_key_md5(
   }
   mbedtls_md5_finish(&MD, key); /* tell MD5 we're done */
 
-  /*****************************************************/
-  /* Now localize the key with the engineID and pass   */
-  /* through MD5 to produce final key                  */
-  /* May want to ensure that engineLength <= 32,       */
-  /* otherwise need to use a buffer larger than 64     */
-  /*****************************************************/
-  SMEMCPY(password_buf, key, 16);
-  MEMCPY(password_buf + 16, engineID, engineLength);
-  SMEMCPY(password_buf + 16 + engineLength, key, 16);
-
+  /* Localize the key: MD5(Ku || engineID || Ku). */
   mbedtls_md5_starts(&MD);
-  mbedtls_md5_update(&MD, password_buf, 32 + engineLength);
+  mbedtls_md5_update(&MD, key, 16);
+  mbedtls_md5_update(&MD, engineID, engineLength);
+  mbedtls_md5_update(&MD, key, 16);
   mbedtls_md5_finish(&MD, key);
 
   mbedtls_md5_free(&MD);
@@ -321,18 +314,11 @@ snmpv3_password_to_key_sha(
   }
   mbedtls_sha1_finish(&SH, key); /* tell SHA we're done */
 
-  /*****************************************************/
-  /* Now localize the key with the engineID and pass   */
-  /* through SHA to produce final key                  */
-  /* May want to ensure that engineLength <= 32,       */
-  /* otherwise need to use a buffer larger than 72     */
-  /*****************************************************/
-  SMEMCPY(password_buf, key, 20);
-  MEMCPY(password_buf + 20, engineID, engineLength);
-  SMEMCPY(password_buf + 20 + engineLength, key, 20);
-
+  /* Localize the key: SHA-1(Ku || engineID || Ku). */
   mbedtls_sha1_starts(&SH);
-  mbedtls_sha1_update(&SH, password_buf, 40 + engineLength);
+  mbedtls_sha1_update(&SH, key, 20);
+  mbedtls_sha1_update(&SH, engineID, engineLength);
+  mbedtls_sha1_update(&SH, key, 20);
   mbedtls_sha1_finish(&SH, key);
 
   mbedtls_sha1_free(&SH);
