@@ -55,6 +55,8 @@ extern "C" {
 #define IGMP_TMR_INTERVAL              100 /* Milliseconds */
 #define IGMP_V1_DELAYING_MEMBER_TMR   (1000/IGMP_TMR_INTERVAL)
 #define IGMP_JOIN_DELAYING_MEMBER_TMR (500 /IGMP_TMR_INTERVAL)
+/* Version 1 Router Present Timeout per RFC 2236, Section 8.11 */
+#define IGMP_V1_ROUTER_PRESENT_TIMEOUT (400 * 1000 / IGMP_TMR_INTERVAL)
 
 /* Compatibility defines (don't use for new code) */
 #define IGMP_DEL_MAC_FILTER            NETIF_DEL_MAC_FILTER
@@ -84,6 +86,11 @@ struct igmp_group {
   u16_t              timer;
   /** counter of simultaneous uses */
   u8_t               use;
+  /** Interface-level IGMPv1 router present timer, kept in the list
+   * head (allsystems group).  While non-zero, membership reports must
+   * be sent as IGMPv1 and no IGMPv2 messages (e.g. Leave) may be
+   * sent.  RFC 2236, Sections 4 and 8.11. */
+  u16_t              v1_router_present_tmr;
 };
 
 /*  Prototypes */
