@@ -1017,6 +1017,12 @@ netconn_write_vectors_partly(struct netconn *conn, struct netvector *vectors, u1
     return ERR_VAL;
   }
 
+  if (conn->flags & NETCONN_FLAG_MBOXCLOSED) {
+    /* don't write if closed: this might block the application task
+       waiting on sendmbox forever! */
+    return ERR_CONN;
+  }
+
   /* sum up the total size */
   size = 0;
   for (i = 0; i < vectorcnt; i++) {
