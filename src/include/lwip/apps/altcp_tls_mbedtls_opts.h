@@ -36,19 +36,12 @@
  * Author: Simon Goldschmidt <goldsimon@gmx.de>
  *
  */
-#ifndef LWIP_HDR_ALTCP_TLS_OPTS_H
-#define LWIP_HDR_ALTCP_TLS_OPTS_H
+#ifndef LWIP_HDR_ALTCP_TLS_MBEDTLS_OPTS_H
+#define LWIP_HDR_ALTCP_TLS_MBEDTLS_OPTS_H
 
 #include "lwip/opt.h"
 
 #if LWIP_ALTCP /* don't build if not configured for use in lwipopts.h */
-
-/** LWIP_ALTCP_TLS_MBEDTLS==1: use mbedTLS for TLS support for altcp API
- * mbedtls include directory must be reachable via include search path
- */
-#ifndef LWIP_ALTCP_TLS_MBEDTLS
-#define LWIP_ALTCP_TLS_MBEDTLS                        0
-#endif
 
 /** Configure debug level of this file */
 #ifndef ALTCP_MBEDTLS_DEBUG
@@ -108,4 +101,4 @@
 
 #endif /* LWIP_ALTCP */
 
-#endif /* LWIP_HDR_ALTCP_TLS_OPTS_H */
+#endif /* LWIP_HDR_ALTCP_TLS_MBEDTLS_OPTS_H */

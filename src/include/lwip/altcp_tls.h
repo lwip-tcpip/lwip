@@ -7,6 +7,8 @@
  * This file contains function prototypes for a TLS layer.
  * A port to ARM mbedtls is provided in the apps/ tree
  * (LWIP_ALTCP_TLS_MBEDTLS option).
+ * A port to openHiTLS is also provided in the apps/ tree
+ * (LWIP_ALTCP_TLS_HITLS option).
  */
 
 /*
@@ -51,11 +53,15 @@
 
 #include "lwip/altcp.h"
 
-/* check if mbedtls port is enabled */
-#include "lwip/apps/altcp_tls_mbedtls_opts.h"
+/* check if mbedtls or openHiTLS port is enabled */
+#include "lwip/apps/altcp_tls_opts.h"
+
 /* allow session structure to be fully defined when using mbedtls port */
 #if LWIP_ALTCP_TLS_MBEDTLS
 #include "mbedtls/ssl.h"
+#elif LWIP_ALTCP_TLS_HITLS
+/* allow session structure to be fully defined when using openHiTLS port */
+#include "hitls_type.h"
 #endif
 
 #ifdef __cplusplus
@@ -63,9 +69,34 @@ extern "C" {
 #endif
 
 /** @ingroup altcp_tls
- * ALTCP_TLS configuration handle, content depends on port (e.g. mbedtls)
+ * ALTCP_TLS configuration handle, content depends on port (e.g. mbedtls or openHiTLS)
  */
 struct altcp_tls_config;
+
+#if LWIP_ALTCP_TLS_HITLS
+/** @ingroup altcp_tls
+ * openHiTLS port notes:
+ * - Enable LWIP_ALTCP_TLS=1 and LWIP_ALTCP_TLS_HITLS=1, and link openHiTLS.
+ * - Call altcp_tls_hitls_init() before creating configs unless openHiTLS is
+ *   initialized by the application.
+ * - Configure ALPN on the config before use; set a saved session before
+ *   altcp_connect() when using session resumption.
+ */
+
+/** @ingroup altcp_tls
+ * Initialize openHiTLS global state used by the ALTCP_TLS openHiTLS port.
+ * Call this before creating openHiTLS based TLS configs unless the application
+ * has already initialized openHiTLS itself.
+ */
+err_t altcp_tls_hitls_init(void);
+
+/** @ingroup altcp_tls
+ * Deinitialize openHiTLS global state initialized by altcp_tls_hitls_init().
+ * This is a thin wrapper around openHiTLS cleanup. Do not call this if openHiTLS
+ * is owned and initialized by application code.
+ */
+void altcp_tls_hitls_deinit(void);
+#endif
 
 /** @ingroup altcp_tls
  * Create an ALTCP_TLS server configuration handle prepared for multiple certificates
@@ -106,7 +137,7 @@ struct altcp_tls_config *altcp_tls_create_config_client_2wayauth(const u8_t *ca,
  * Example:<br>
  * static const char *g_alpn_protocols[] = { "x-amzn-mqtt-ca", NULL };<br>
  * tls_config = altcp_tls_create_config_client(ca, ca_len);<br>
- * altcp_tls_conf_alpn_protocols(tls_config, g_alpn_protocols);<br>
+ * altcp_tls_configure_alpn_protocols(tls_config, g_alpn_protocols);<br>
  */
 int altcp_tls_configure_alpn_protocols(struct altcp_tls_config *conf, const char **protos);
 
@@ -115,6 +146,7 @@ int altcp_tls_configure_alpn_protocols(struct altcp_tls_config *conf, const char
  */
 void altcp_tls_free_config(struct altcp_tls_config *conf);
 
+#if LWIP_ALTCP_TLS_MBEDTLS
 /** @ingroup altcp_tls
  * Free an ALTCP_TLS global entropy instance.
  * All ALTCP_TLS configuration are linked to one altcp_tls_entropy_rng structure
@@ -125,6 +157,7 @@ void altcp_tls_free_config(struct altcp_tls_config *conf);
  * active.
  */
 void altcp_tls_free_entropy(void);
+#endif
 
 /** @ingroup altcp_tls
  * Create new ALTCP_TLS layer wrapping an existing pcb as inner connection (e.g. TLS over TCP)
@@ -146,44 +179,48 @@ struct altcp_pcb *altcp_tls_alloc(void *arg, u8_t ip_type);
 
 /** @ingroup altcp_tls
  * Return pointer to internal TLS context so application can tweak it.
- * Real type depends on port (e.g. mbedtls)
+ * Real type depends on port (e.g. mbedtls or openHiTLS)
  */
 void *altcp_tls_context(struct altcp_pcb *conn);
 
 /** @ingroup altcp_tls
- * ALTCP_TLS session handle, content depends on port (e.g. mbedtls)
+ * ALTCP_TLS session handle, content depends on port (e.g. mbedtls or openHiTLS)
  */
 struct altcp_tls_session
 #if LWIP_ALTCP_TLS_MBEDTLS
 {
     mbedtls_ssl_session data;
 }
+#elif LWIP_ALTCP_TLS_HITLS
+{
+    HITLS_Session *hitls_session;
+}
 #endif
 ;
 
 /** @ingroup altcp_tls
  * Initialise a TLS session buffer.
- * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session, openHiTLS uses HITLS_Session)
  */
 void altcp_tls_init_session(struct altcp_tls_session *dest);
 
 /** @ingroup altcp_tls
  * Save current connected session to reuse it later. Should be called after altcp_connect() succeeded.
  * Return error if saving session fail.
- * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session, openHiTLS uses HITLS_Session)
  */
 err_t altcp_tls_get_session(struct altcp_pcb *conn, struct altcp_tls_session *dest);
 
 /** @ingroup altcp_tls
  * Restore a previously saved session. Must be called before altcp_connect().
  * Return error if cannot restore session.
- * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session, openHiTLS uses HITLS_Session)
  */
 err_t altcp_tls_set_session(struct altcp_pcb *conn, struct altcp_tls_session *from);
 
 /** @ingroup altcp_tls
  * Free allocated data inside a TLS session buffer.
- * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session)
+ * Real type depends on port (e.g. mbedtls use mbedtls_ssl_session, openHiTLS uses HITLS_Session)
  */
 void altcp_tls_free_session(struct altcp_tls_session *dest);
 
