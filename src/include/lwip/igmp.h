@@ -53,7 +53,10 @@ extern "C" {
 
 /* IGMP timer */
 #define IGMP_TMR_INTERVAL              100 /* Milliseconds */
-#define IGMP_V1_DELAYING_MEMBER_TMR   (1000/IGMP_TMR_INTERVAL)
+/* IGMPv1 General Query carries Max Response Time 0, which must be
+ * interpreted as the protocol value 100, i.e. 10 seconds (RFC 2236,
+ * Section 4).  The field is in units of 0.1 s. */
+#define IGMP_V1_DELAYING_MEMBER_TMR   (10 * 1000 / IGMP_TMR_INTERVAL)
 #define IGMP_JOIN_DELAYING_MEMBER_TMR (500 /IGMP_TMR_INTERVAL)
 
 /* Compatibility defines (don't use for new code) */
