@@ -1343,6 +1343,18 @@
 #endif
 
 /**
+ * LWIP_TCP_PARTIAL_ACK_RECOVERY: experimental partial ACK retransmission
+ * during fast recovery. This is not a complete NewReno implementation.
+ * Enabling this option changes struct tcp_pcb; rebuild all users.
+ */
+#ifndef LWIP_TCP_PARTIAL_ACK_RECOVERY
+#define LWIP_TCP_PARTIAL_ACK_RECOVERY 0
+#endif
+#if LWIP_TCP_PARTIAL_ACK_RECOVERY != 0 && LWIP_TCP_PARTIAL_ACK_RECOVERY != 1
+#error Invalid LWIP_TCP_PARTIAL_ACK_RECOVERY
+#endif
+
+/**
  * TCP_MSS: TCP Maximum segment size. (default is 536, a conservative default,
  * you might want to increase this.)
  * For the receive side, this MSS is advertised to the remote side
