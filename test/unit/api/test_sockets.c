@@ -828,6 +828,125 @@ cleanup:
 }
 END_TEST
 
+/* A truncated datagram reports copied bytes, including scatter/gather and
+ * peeking; MSG_TRUNC in msg_flags describes the uncopied remainder. */
+static void
+test_sockets_recvmsg_truncation_family(int domain)
+{
+  static const u8_t payload[] = {0xDE, 0xAD, 0xBE, 0xEF};
+  static const size_t capacities[] = {0, 1, 2, 3, 4, 8};
+  struct sockaddr_storage addr;
+  socklen_t addrlen;
+  int s, ret, parts, peek;
+  size_t k, i, firstlen, copied;
+  u8_t first[10], second[10];
+  struct iovec iov[2];
+  struct msghdr msg;
+
+  test_sockets_init_loopback_addr(domain, &addr, &addrlen);
+  s = test_sockets_alloc_socket_nonblocking(domain, SOCK_DGRAM);
+  fail_unless(s >= 0);
+  fail_unless(lwip_bind(s, (struct sockaddr *)&addr, addrlen) == 0);
+  fail_unless(lwip_getsockname(s, (struct sockaddr *)&addr, &addrlen) == 0);
+
+  for (parts = 1; parts <= 2; parts++) {
+    for (k = 0; k < LWIP_ARRAYSIZE(capacities); k++) {
+      ret = lwip_sendto(s, payload, sizeof(payload), 0,
+                        (struct sockaddr *)&addr, addrlen);
+      fail_unless(ret == sizeof(payload));
+      while (tcpip_thread_poll_one());
+      firstlen = parts == 1 ? capacities[k] : capacities[k] / 2;
+      copied = LWIP_MIN(capacities[k], sizeof(payload));
+      for (peek = 1; peek >= 0; peek--) {
+        memset(first, 0xA5, sizeof(first));
+        memset(second, 0xA5, sizeof(second));
+        memset(&msg, 0, sizeof(msg));
+        iov[0].iov_base = first + 1;
+        iov[0].iov_len = firstlen;
+        iov[1].iov_base = second + 1;
+        iov[1].iov_len = capacities[k] - firstlen;
+        msg.msg_iov = iov;
+        msg.msg_iovlen = parts;
+        ret = lwip_recvmsg(s, &msg, peek ? MSG_PEEK : 0);
+        if (firstlen == 0 || (parts == 2 && capacities[k] == firstlen)) {
+          fail_unless(ret == -1);
+          fail_unless(errno == EINVAL);
+          continue;
+        }
+        fail_unless(ret >= 0);
+        ck_assert_msg((size_t)ret == copied,
+                    "domain=%d iovecs=%d capacity=%u peek=%d: got %d, expected %u",
+                    domain, parts, (unsigned)capacities[k], peek, ret, (unsigned)copied);
+        fail_unless(!!(msg.msg_flags & MSG_TRUNC) ==
+                    (capacities[k] < sizeof(payload)));
+        for (i = 0; i < sizeof(first); i++) {
+          fail_unless(first[i] ==
+            ((i > 0 && i <= LWIP_MIN(firstlen, copied)) ? payload[i - 1] : 0xA5));
+          fail_unless(second[i] ==
+            ((i > 0 && firstlen + i <= copied) ? payload[firstlen + i - 1] : 0xA5));
+        }
+      }
+      ret = lwip_recv(s, first, sizeof(first), MSG_DONTWAIT);
+      if (firstlen == 0 || (parts == 2 && capacities[k] == firstlen)) {
+        fail_unless(ret == sizeof(payload));
+      } else {
+        fail_unless(ret == -1);
+        fail_unless(errno == EWOULDBLOCK);
+      }
+    }
+  }
+  /* A zero-length datagram is data, not a would-block indication. */
+  fail_unless(lwip_sendto(s, payload, 0, 0, (struct sockaddr *)&addr, addrlen) == 0);
+  while (tcpip_thread_poll_one());
+  memset(&msg, 0, sizeof(msg));
+  iov[0].iov_base = first;
+  iov[0].iov_len = sizeof(first);
+  msg.msg_iov = iov;
+  msg.msg_iovlen = 1;
+  fail_unless(lwip_recvmsg(s, &msg, MSG_PEEK) == 0);
+  fail_unless((msg.msg_flags & MSG_TRUNC) == 0);
+  fail_unless(lwip_recvmsg(s, &msg, 0) == 0);
+  fail_unless((msg.msg_flags & MSG_TRUNC) == 0);
+  fail_unless(lwip_recv(s, first, sizeof(first), MSG_DONTWAIT) == -1);
+  fail_unless(errno == EWOULDBLOCK);
+
+  /* Unsupported input flags must not consume the datagram. readv uses recvmsg. */
+  fail_unless(lwip_sendto(s, payload, sizeof(payload), 0,
+                        (struct sockaddr *)&addr, addrlen) == sizeof(payload));
+  while (tcpip_thread_poll_one());
+  iov[0].iov_base = first;
+  iov[0].iov_len = 1;
+  iov[1].iov_base = second;
+  iov[1].iov_len = 2;
+  msg.msg_iovlen = 2;
+  fail_unless(lwip_recvmsg(s, &msg, MSG_TRUNC) == -1);
+  fail_unless(errno == EOPNOTSUPP);
+  fail_unless(lwip_readv(s, iov, 2) == 3);
+  fail_unless(first[0] == payload[0]);
+  fail_unless(second[0] == payload[1] && second[1] == payload[2]);
+  fail_unless(lwip_recv(s, first, sizeof(first), MSG_DONTWAIT) == -1);
+  fail_unless(errno == EWOULDBLOCK);
+  fail_unless(lwip_close(s) == 0);
+}
+
+#if LWIP_IPV4
+START_TEST(test_sockets_recvmsg_truncation_ipv4)
+{
+  LWIP_UNUSED_ARG(_i);
+  test_sockets_recvmsg_truncation_family(AF_INET);
+}
+END_TEST
+#endif
+
+#if LWIP_IPV6
+START_TEST(test_sockets_recvmsg_truncation_ipv6)
+{
+  LWIP_UNUSED_ARG(_i);
+  test_sockets_recvmsg_truncation_family(AF_INET6);
+}
+END_TEST
+#endif
+
 /** Create the suite including all tests for this module */
 Suite *
 sockets_suite(void)
@@ -836,6 +955,12 @@ sockets_suite(void)
     TESTFUNC(test_sockets_basics),
     TESTFUNC(test_sockets_allfunctions_basic),
     TESTFUNC(test_sockets_msgapis),
+#if LWIP_IPV4
+    TESTFUNC(test_sockets_recvmsg_truncation_ipv4),
+#endif
+#if LWIP_IPV6
+    TESTFUNC(test_sockets_recvmsg_truncation_ipv6),
+#endif
     TESTFUNC(test_sockets_select),
     TESTFUNC(test_sockets_recv_after_rst),
   };
