@@ -46,6 +46,7 @@
  */
 #define _GNU_SOURCE /* pull in pthread_setname_np() on Linux */
 
+#include "lwip/opt.h"
 #include "lwip/debug.h"
 
 #include <string.h>
@@ -64,7 +65,6 @@
 #endif
 
 #include "lwip/sys.h"
-#include "lwip/opt.h"
 #include "lwip/stats.h"
 #include "lwip/tcpip.h"
 
