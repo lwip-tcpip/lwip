@@ -114,6 +114,36 @@ create_arp_response(ip4_addr_t *adr)
   ethernet_input(p, &test_netif);
 }
 
+/* WHS4 vuln-verify: reproduce CWE-125 OOB read in etharp_input().
+   ethernet_input() only checks p->len against SIZEOF_ETH_HDR (14) before
+   stripping the ethernet header and calling etharp_input(), which then
+   immediately reads a 28-byte struct etharp_hdr with no further length
+   check. A 15-byte ethernet frame (14-byte eth hdr + 1 byte) with
+   EtherType=ARP reaches etharp_input() with p->len == 1, so hdr->hwtype
+   (and, if that happens to compare equal, further fields) are read up to
+   27 bytes past the end of the allocated pbuf payload. */
+static void
+create_truncated_arp_packet(void)
+{
+  struct eth_hdr *ethhdr;
+  /* exactly SIZEOF_ETH_HDR + 1: after ethernet_input() strips the 14-byte
+     eth header, etharp_input() is left with a 1-byte payload */
+  struct pbuf *p = pbuf_alloc(PBUF_RAW, SIZEOF_ETH_HDR + 1, PBUF_RAM);
+  if (p == NULL) {
+    FAIL_RET();
+  }
+  ethhdr = (struct eth_hdr *)p->payload;
+  ethhdr->dest = test_ethaddr;
+  ethhdr->src = test_ethaddr2;
+  ethhdr->type = htons(ETHTYPE_ARP);
+  /* the 1 trailing byte is whatever pbuf_alloc happened to give us --
+     that's exactly the point: etharp_input() must never read it as if it
+     were part of a full struct etharp_hdr */
+  ((u8_t *)p->payload)[SIZEOF_ETH_HDR] = 0x00;
+
+  ethernet_input(p, &test_netif);
+}
+
 /* Setups/teardown functions */
 
 static void
@@ -261,13 +291,30 @@ START_TEST(test_etharp_table)
 }
 END_TEST
 
+/* WHS4 vuln-verify: CWE-125 OOB read regression test for etharp_input().
+   Before the fix: ASan reports heap-buffer-overflow READ while
+   etharp_input() reads struct etharp_hdr fields past the 1-byte payload.
+   After the fix: the short packet must be dropped cleanly, with no OOB
+   access and no crash. */
+START_TEST(test_etharp_short_packet_no_oob)
+{
+  LWIP_UNUSED_ARG(_i);
+  if (netif_default != &test_netif) {
+    fail("This test needs a default netif");
+  }
+  create_truncated_arp_packet();
+  /* reaching this line without ASan aborting is the pass condition */
+}
+END_TEST
+
 
 /** Create the suite including all tests for this module */
 Suite *
 etharp_suite(void)
 {
   testfunc tests[] = {
-    TESTFUNC(test_etharp_table)
+    TESTFUNC(test_etharp_table),
+    TESTFUNC(test_etharp_short_packet_no_oob)
   };
   return create_suite("ETHARP", tests, sizeof(tests)/sizeof(testfunc), etharp_setup, etharp_teardown);
 }
