@@ -497,6 +497,8 @@ dhcp_select(struct netif *netif)
     dhcp->tries++;
   }
   msecs = (u16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
+  /* RFC2131 §4.1: add randomized jitter to avoid synchronized retransmissions. */
+  msecs = (u16_t)(msecs + (LWIP_RAND() % 1000));
   dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_select(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
@@ -1069,6 +1071,8 @@ dhcp_discover(struct netif *netif)
     dhcp->tries++;
   }
   msecs = DHCP_REQUEST_BACKOFF_SEQUENCE(dhcp->tries);
+  /* RFC2131 §4.1: add randomized jitter to avoid synchronized retransmissions. */
+  msecs = (u16_t)(msecs + (LWIP_RAND() % 1000));
   dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
@@ -1253,7 +1257,9 @@ dhcp_rebind(struct netif *netif)
   if (dhcp->tries < 255) {
     dhcp->tries++;
   }
-  msecs = (u16_t)(dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000);
+  /* RFC2131 §4.1: use exponential backoff with randomized jitter. */
+  msecs = (u16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
+  msecs = (u16_t)(msecs + (LWIP_RAND() % 1000));
   dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
@@ -1310,7 +1316,9 @@ dhcp_reboot(struct netif *netif)
   if (dhcp->tries < 255) {
     dhcp->tries++;
   }
-  msecs = (u16_t)(dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000);
+  /* RFC2131 §4.1: use exponential backoff with randomized jitter. */
+  msecs = (u16_t)((dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000);
+  msecs = (u16_t)(msecs + (LWIP_RAND() % 1000));
   dhcp->request_timeout = (u16_t)((msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
