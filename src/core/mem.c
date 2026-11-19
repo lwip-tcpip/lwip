@@ -741,7 +741,7 @@ mem_trim(void *rmem, mem_size_t new_size)
   if (mem2->used == 0) {
     /* The next struct is unused, we can simply move it at little */
     mem_size_t next;
-    LWIP_ASSERT("invalid next ptr", mem->next != MEM_SIZE_ALIGNED);
+    LWIP_ASSERT("invalid next ptr", mem2->next != MEM_SIZE_ALIGNED);
     /* remember the old next pointer */
     next = mem2->next;
     /* create new struct mem which is moved directly after the shrunk mem */
