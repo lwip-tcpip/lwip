@@ -1144,6 +1144,11 @@ dhcp_bind(struct netif *netif)
      to ensure the callback can use dhcp_supplied_address() */
   dhcp_set_state(dhcp, DHCP_STATE_BOUND);
 
+#if LWIP_DHCP_AUTOIP_COOP
+  /* If autoip was started, stop it to avoid that it sets an ip address after conflict resolution */
+  autoip_stop(netif);
+#endif /* LWIP_DHCP_AUTOIP_COOP */
+
   netif_set_addr(netif, &dhcp->offered_ip_addr, &sn_mask, &gw_addr);
   /* interface is used by routing now that an address is set */
 }
@@ -1390,6 +1395,11 @@ dhcp_release_and_stop(struct netif *netif)
     dhcp_dec_pcb_refcount(); /* free DHCP PCB if not needed any more */
     dhcp->pcb_allocated = 0;
   }
+
+#if LWIP_DHCP_AUTOIP_COOP
+  /* If autoip was started, stop it to avoid that it sets an ip address after conflict resolution */
+  autoip_stop(netif);
+#endif /* LWIP_DHCP_AUTOIP_COOP */
 }
 
 /**
