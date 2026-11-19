@@ -1472,6 +1472,26 @@
 #endif
 
 /**
+ * DISABLE_TCPIP_EVENT_ACCEPT_AT_MEM_ERR: Disable TCP_EVENT_ACCEPT notification
+ * when PCB allocation fails due to memory exhaustion (MEMP_NUM_TCP_PCB limit reached).
+ *
+ * Security/Stability: When enabled (set to 1), prevents the accept event callback from
+ * being invoked when tcp_alloc() fails to allocate a new PCB for an incoming connection.
+ * This avoids triggering application-layer logic during critical resource exhaustion,
+ * which can cause instability as the stack attempts to release and restore connections
+ * while already operating at resource limits.
+ *
+ * The remote peer will simply retransmit the SYN when resources become available.
+ * Enable this if your application does not handle ERR_MEM in accept callbacks or if
+ * you experience instability during high connection load.
+ *
+ * Default is 0 (accept event is called with ERR_MEM for backward compatibility).
+ */
+#if !defined DISABLE_TCPIP_EVENT_ACCEPT_AT_MEM_ERR || defined __DOXYGEN__
+#define DISABLE_TCPIP_EVENT_ACCEPT_AT_MEM_ERR  0
+#endif
+
+/**
  * TCP_OVERSIZE: The maximum number of bytes that tcp_write may
  * allocate ahead of time in an attempt to create shorter pbuf chains
  * for transmission. The meaningful range is 0 to TCP_MSS. Some
