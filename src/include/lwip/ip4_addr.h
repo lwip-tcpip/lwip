@@ -103,6 +103,9 @@ struct netif;
 /** Set an IP address given by the four byte-parts */
 #define IP4_ADDR(ipaddr, a,b,c,d)  (ipaddr)->addr = PP_HTONL(LWIP_MAKEU32(a,b,c,d))
 
+/** Initialization of IP address during variable definition */
+#define IP4_ADDR_INIT(a,b,c,d) { .addr = PP_HTONL(LWIP_MAKEU32(a,b,c,d)) }
+
 /** Copy IP address - faster than ip4_addr_set: no NULL check */
 #define ip4_addr_copy(dest, src) ((dest).addr = (src).addr)
 /** Safely copy one IP address to another (src may be NULL) */
