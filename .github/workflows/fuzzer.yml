@@ -1,0 +1,41 @@
+name: "fuzzing lwip with afl++"
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: '*'
+
+jobs:
+  fuzz_test:
+    name: Fuzzer tests for lwip
+
+    runs-on: ubuntu-22.04
+    container: aflplusplus/aflplusplus
+    steps:
+      - name: Checkout lwip
+        uses: actions/checkout@v4
+
+      - name: Run AFL++
+        shell: bash
+        run: |
+          cd test/fuzz
+          CC=afl-gcc-fast CCDEP=gcc make -j 4
+          timeout 10m afl-fuzz -i inputs -o out -- ./lwip_fuzz || \
+          if [ $? -eq 124 ]; then  # timeout exit code
+            if [ -n "$(find out/default/crashes -type f 2>/dev/null)" ]; then
+              echo "Crashes found!";
+              tar -czf out/default/crashes.tar.gz -C out/default crashes;
+              exit 1;
+            fi
+          else
+            exit 1;
+          fi
+
+      - name: Upload Crash Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes
+          path: test/fuzz/out/default/crashes.tar.gz
+          if-no-files-found: ignore
