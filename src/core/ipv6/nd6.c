@@ -947,14 +947,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
       return;
     }
 
-    pmtu = lwip_htonl(icmp6hdr->data) & 0xFFFF;
+    pmtu = lwip_htonl(icmp6hdr->data);
     if (pmtu < IP6_MIN_MTU_LENGTH) {
       /* MTU too small */
       pbuf_free(p);
       return;
     }
     /* Change the Path MTU. */
-    destination_cache[dest_idx].pmtu = (u16_t)pmtu;
+    destination_cache[dest_idx].pmtu = (u16_t)LWIP_MIN(pmtu, 0xFFFF);
 
     break; /* ICMP6_TYPE_PTB */
   }
@@ -2024,7 +2024,7 @@ nd6_get_next_hop_entry(const ip6_addr_t *ip6addr, struct netif *netif)
 #ifdef LWIP_HOOK_ND6_GET_GW
       } else if ((next_hop_addr = LWIP_HOOK_ND6_GET_GW(netif, ip6addr)) != NULL) {
         /* Next hop for destination provided by hook function. */
-        dest->pmtu = netif->mtu;
+        dest->pmtu = netif_mtu6(netif);
         ip6_addr_set(&dest->next_hop_addr, next_hop_addr);
 #endif /* LWIP_HOOK_ND6_GET_GW */
       } else {
@@ -2344,12 +2344,14 @@ nd6_get_destination_mtu(const ip6_addr_t *ip6addr, struct netif *netif)
   i = nd6_find_destination_cache_entry(ip6addr);
   if (i >= 0) {
     if (destination_cache[i].pmtu > 0) {
-      return destination_cache[i].pmtu;
+      /* MTU must be at least 1280 */
+      return LWIP_MAX(IP6_MIN_MTU_LENGTH, destination_cache[i].pmtu);
     }
   }
 
   if (netif != NULL) {
-    return netif_mtu6(netif);
+    /* MTU must be at least 1280 */
+    return LWIP_MAX(IP6_MIN_MTU_LENGTH, netif_mtu6(netif));
   }
 
   return IP6_MIN_MTU_LENGTH; /* Minimum MTU */
