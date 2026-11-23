@@ -754,6 +754,8 @@ typedef struct _httpc_filestate
   httpc_connection_t settings;
   const httpc_connection_t *client_settings;
   void *callback_arg;
+  u32_t content_len;
+  u32_t written;
 } httpc_filestate_t;
 
 static void httpc_fs_result(void *arg, httpc_result_t httpc_result, u32_t rx_content_len,
@@ -788,6 +790,7 @@ httpc_fs_init(httpc_filestate_t **filestate_out, const char* local_file_name,
   filestate->file = NULL;
   filestate->client_settings = settings;
   filestate->callback_arg = callback_arg;
+  filestate->content_len = HTTPC_CONTENT_LEN_INVALID;
   /* copy client settings but override the callbacks that get the callback argument */
   memcpy(&filestate->settings, settings, sizeof(httpc_connection_t));
   filestate->settings.result_fn = httpc_fs_result;
@@ -838,6 +841,7 @@ httpc_fs_headers(httpc_state_t *connection, void *arg, struct pbuf *hdr, u16_t h
                  u32_t content_len)
 {
   httpc_filestate_t *filestate = (httpc_filestate_t *)arg;
+  filestate->content_len = content_len;
   if (filestate->client_settings->headers_done_fn != NULL) {
     return filestate->client_settings->headers_done_fn(connection, filestate->callback_arg, hdr,
       hdr_len, content_len);
@@ -856,7 +860,14 @@ httpc_fs_tcp_recv(void *arg, struct altcp_pcb *pcb, struct pbuf *p, err_t err)
   LWIP_ASSERT("p != NULL", p != NULL);
 
   for (q = p; q != NULL; q = q->next) {
-    fwrite(q->payload, 1, q->len, filestate->file);
+    u16_t len = q->len;
+    /* keep bytes past Content-Length out of the file */
+    if ((filestate->content_len != HTTPC_CONTENT_LEN_INVALID) &&
+        (filestate->content_len - filestate->written < len)) {
+      len = (u16_t)(filestate->content_len - filestate->written);
+    }
+    fwrite(q->payload, 1, len, filestate->file);
+    filestate->written += len;
   }
   altcp_recved(pcb, p->tot_len);
   pbuf_free(p);
