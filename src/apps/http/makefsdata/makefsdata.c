@@ -442,6 +442,10 @@ static void copy_file(const char *filename_in, FILE *fout)
     exit(-1);
   }
   buf = malloc(COPY_BUFSIZE);
+  if (buf == NULL) {
+    printf("Failed allocate buffer\n");
+    exit(-1);
+  }
   while ((len = fread(buf, 1, COPY_BUFSIZE, fin)) > 0) {
     fwrite(buf, 1, len, fout);
   }
@@ -766,6 +770,10 @@ static void fix_filename_for_c(char *qualifiedName, size_t max_len)
   int filename_ok;
   int cnt = 0;
   size_t i;
+  if (new_name == NULL) {
+    printf("failed to allocate memory\n");
+    exit(-1);
+  }
   if (len + 3 >= max_len) {
     printf("File name too long: \"%s\"\n", qualifiedName);
     exit(-1);
@@ -799,6 +807,10 @@ static void fix_filename_for_c(char *qualifiedName, size_t max_len)
 static void register_filename(const char *qualifiedName)
 {
   struct file_entry *fe = (struct file_entry *)malloc(sizeof(struct file_entry));
+  if (fe == NULL) {
+    printf("failed to allocate memory\n");
+    exit(-1);
+  }
   fe->filename_c = strdup(qualifiedName);
   fe->next = NULL;
   if (first_file == NULL) {
@@ -1143,11 +1155,9 @@ int file_write_http_header(FILE *data_file, const char *filename, int file_size,
   }
 
   file_ext = filename;
-  if (file_ext != NULL) {
-    while (strstr(file_ext, ".") != NULL) {
-      file_ext = strstr(file_ext, ".");
-      file_ext++;
-    }
+  while ((file_ext != NULL) && (strstr(file_ext, ".") != NULL)) {
+    file_ext = strstr(file_ext, ".");
+    file_ext++;
   }
   if ((file_ext == NULL) || (*file_ext == 0)) {
     printf("failed to get extension for file \"%s\", using default.\n", filename);
