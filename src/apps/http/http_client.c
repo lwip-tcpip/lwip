@@ -246,6 +246,40 @@ http_parse_response_status(struct pbuf *p, u16_t *http_version, u16_t *http_stat
   return ERR_VAL;
 }
 
+/** Find a header line by its name and return the offset of its value, or
+ * 0xFFFF. A field name is case-insensitive (RFC 9110, 5.1) and whitespace
+ * before the value is optional (RFC 9112, 5). 'name' is in lower case, 'end'
+ * is the offset of the end of the headers. */
+static u16_t
+http_find_header(struct pbuf *p, const char *name, u16_t end)
+{
+  u16_t name_len = (u16_t)strlen(name);
+  /* the first line is the status line */
+  u16_t pos = pbuf_memfind(p, "\r\n", 2, 0);
+
+  while (pos < end) {
+    u16_t i;
+    char c;
+
+    pos = (u16_t)(pos + 2);
+    for (i = 0; i < name_len; i++) {
+      c = (char)pbuf_get_at(p, (u16_t)(pos + i));
+      if (lwip_tolower(c) != name[i]) {
+        break;
+      }
+    }
+    if ((i == name_len) && (pbuf_get_at(p, (u16_t)(pos + i)) == ':')) {
+      pos = (u16_t)(pos + name_len + 1);
+      while ((pbuf_get_at(p, pos) == ' ') || (pbuf_get_at(p, pos) == '\t')) {
+        pos++;
+      }
+      return pos;
+    }
+    pos = pbuf_memfind(p, "\r\n", 2, pos);
+  }
+  return 0xFFFF;
+}
+
 /** Wait for all headers to be received, return its length and content-length (if available) */
 static err_t
 http_wait_headers(struct pbuf *p, u32_t *content_length, u16_t *total_header_len)
@@ -253,19 +287,19 @@ http_wait_headers(struct pbuf *p, u32_t *content_length, u16_t *total_header_len
   u16_t end1 = pbuf_memfind(p, "\r\n\r\n", 4, 0);
   if (end1 < (0xFFFF - 2)) {
     /* all headers received */
-    /* check if we have a content length (@todo: case insensitive?) */
+    /* check if we have a content length */
     u16_t content_len_hdr;
     *content_length = HTTPC_CONTENT_LEN_INVALID;
     *total_header_len = end1 + 4;
 
-    content_len_hdr = pbuf_memfind(p, "Content-Length: ", 16, 0);
+    content_len_hdr = http_find_header(p, "content-length", end1);
     if (content_len_hdr != 0xFFFF) {
       u16_t content_len_line_end = pbuf_memfind(p, "\r\n", 2, content_len_hdr);
       if (content_len_line_end != 0xFFFF) {
         char content_len_num[16];
-        u16_t content_len_num_len = (u16_t)(content_len_line_end - content_len_hdr - 16);
+        u16_t content_len_num_len = (u16_t)(content_len_line_end - content_len_hdr);
         if (content_len_num_len < sizeof(content_len_num)) {
-          if (pbuf_copy_partial(p, content_len_num, content_len_num_len, content_len_hdr + 16) == content_len_num_len) {
+          if (pbuf_copy_partial(p, content_len_num, content_len_num_len, content_len_hdr) == content_len_num_len) {
             int len;
             content_len_num[content_len_num_len] = 0;
             len = atoi(content_len_num);
