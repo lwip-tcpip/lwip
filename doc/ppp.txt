@@ -10,6 +10,7 @@ Table of Contents:
 4 - Thread safe PPP API (PPPAPI)
 5 - Notify phase callback (PPP_NOTIFY_PHASE)
 6 - Upgrading from lwIP <= 1.4.x to lwIP >= 2.0.x
+7 - Windows Direct Cable Connection handshake
 
 
 
@@ -527,3 +528,43 @@ from previous lwIP version is pretty easy:
   output callback in place of sio_write
 
 * PPP_MAXIDLEFLAG is now in ms instead of jiffies
+
+
+7 Windows Direct Cable Connection handshake
+===========================================
+
+Some Windows serial direct-connection clients send the ASCII preamble
+"CLIENT" and wait for "CLIENTSERVER" before starting PPP negotiation.
+PPPoS listeners can handle this preamble by enabling these lwipopts.h options:
+
+#define PPP_SUPPORT                    1
+#define PPPOS_SUPPORT                  1
+#define PPP_SERVER                     1
+#define PPPOS_CLIENTSERVER_SUPPORT     1
+
+Create the PPPoS interface and call ppp_listen() as usual. Configure IP
+addresses and authentication separately using the existing PPP APIs.
+This option implements only the pre-PPP handshake, not modem AT commands.
+
+The matcher preserves partial requests across input calls and answers repeated
+requests until the first PPP flag. Peers that start directly with PPP framing
+are also accepted. Once framing begins, the regular PPP input parser handles
+all subsequent bytes, including any "CLIENT" string inside a PPP frame.
+Outbound connections started with ppp_connect() do not use the handshake.
+
+The output callback must return the number of bytes accepted for transmission.
+A short or zero write is retried after 25 ms without blocking. The feature
+reserves one additional sys_timeout per PPP PCB; applications overriding
+MEMP_NUM_SYS_TIMEOUT must allow for this. Pending retries are cancelled on
+disconnect, destruction and session restart.
+
+Input must run in the lwIP core context (NO_SYS=1 main loop or the TCPIP
+thread/core lock). PPP_INPROC_IRQ_SAFE=1 is not supported with this option.
+With NO_SYS=1, keep calling sys_check_timeouts() from the main loop.
+
+A listener is rearmed on subsequent serial input after a failed PPP session
+reaches PPP_PHASE_DEAD. Calling ppp_close() explicitly prevents this automatic
+rearming; call ppp_listen() explicitly to start listening again.
+
+PPPOS_CLIENTSERVER_SUPPORT defaults to 0. When disabled, the existing PPPoS
+input path, control-block layout and timeout reservation are unchanged.

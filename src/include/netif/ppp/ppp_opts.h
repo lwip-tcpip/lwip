@@ -73,6 +73,17 @@
 #endif
 
 /**
+ * PPPOS_CLIENTSERVER_SUPPORT==1: Accept the Windows Direct Cable
+ * Connection "CLIENT" preamble and reply "CLIENTSERVER" before PPP.
+ * Only affects PPPoS listeners; regular PPP peers remain supported.
+ * Requires PPP_SERVER=1 and PPP_INPROC_IRQ_SAFE=0. Input and retry
+ * timeouts must run in the lwIP core context. Disabled by default.
+ */
+#ifndef PPPOS_CLIENTSERVER_SUPPORT
+#define PPPOS_CLIENTSERVER_SUPPORT      0
+#endif
+
+/**
  * LWIP_PPP_API==1: Enable PPP API (in pppapi.c)
  */
 #ifndef LWIP_PPP_API
@@ -99,7 +110,9 @@
 #endif
 
 /* The number of sys_timeouts required for the PPP module */
-#define PPP_NUM_TIMEOUTS                (PPP_SUPPORT * PPP_NUM_TIMEOUTS_PER_PCB * MEMP_NUM_PPP_PCB)
+/* Reserve an extra timeout per PPP PCB for optional serial reply retries. */
+#define PPP_NUM_TIMEOUTS                (PPP_SUPPORT * (PPP_NUM_TIMEOUTS_PER_PCB + \
+                                        (PPP_SERVER && PPPOS_SUPPORT && PPPOS_CLIENTSERVER_SUPPORT)) * MEMP_NUM_PPP_PCB)
 
 /**
  * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
