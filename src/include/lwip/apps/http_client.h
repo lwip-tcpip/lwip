@@ -69,6 +69,13 @@ extern "C" {
 
 /**
  * @ingroup httpc
+ * Content length that the headers callback gets when the client read none
+ * from the reply
+ */
+#define HTTPC_CONTENT_LEN_INVALID 0xFFFFFFFF
+
+/**
+ * @ingroup httpc
  * HTTP client result codes
  */
 typedef enum ehttpc_result {
@@ -117,7 +124,8 @@ typedef void (*httpc_result_fn)(void *arg, httpc_result_t httpc_result, u32_t rx
  * @param arg argument specified when initiating the request
  * @param hdr header pbuf(s) (may contain data also)
  * @param hdr_len length of the headers in 'hdr'
- * @param content_len content length as received in the headers (-1 if not received)
+ * @param content_len content length as received in the headers
+ *                    (HTTPC_CONTENT_LEN_INVALID if not received)
  * @return if != ERR_OK is returned, the connection is aborted
  */
 typedef err_t (*httpc_headers_done_fn)(httpc_state_t *connection, void *arg, struct pbuf *hdr, u16_t hdr_len, u32_t content_len);

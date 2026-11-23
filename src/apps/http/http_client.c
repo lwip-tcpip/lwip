@@ -87,8 +87,6 @@
 #define HTTPC_POLL_INTERVAL     1
 #define HTTPC_POLL_TIMEOUT      30 /* 15 seconds */
 
-#define HTTPC_CONTENT_LEN_INVALID 0xFFFFFFFF
-
 /* GET request basic */
 #define HTTPC_REQ_11 "GET %s HTTP/1.1\r\n" /* URI */\
     "User-Agent: %s\r\n" /* User-Agent */ \
