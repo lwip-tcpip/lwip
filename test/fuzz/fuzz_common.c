@@ -31,6 +31,7 @@
  *
  */
 
+#define _GNU_SOURCE
 #include "fuzz_common.h"
 
 #include "lwip/altcp_tcp.h"
@@ -54,7 +55,68 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef __AFL_FUZZ_INIT
+#include <unistd.h>
+__AFL_FUZZ_INIT()
+#endif
+
+#if defined(__AFL_LOOP) && defined(__AFL_FUZZ_TESTCASE_BUF)
+#include <stdlib.h>
+#include <dlfcn.h>
+#define LWIP_FUZZ_PERSISTENT 1
+extern u8_t __lwip_state_start[];
+extern u8_t __lwip_state_end[];
+
+typedef void *(*raw_memcpy_fn)(void *, const void *, size_t);
+static raw_memcpy_fn real_memcpy;
+
+static void
+lwip_state_copy_init(void)
+{
+  /* Resolve libc memcpy directly so ASan's interceptor doesn't trip on the
+   * global redzones inside .lwip_state. */
+  void *sym = dlsym(RTLD_NEXT, "memcpy");
+  memcpy(&real_memcpy, &sym, sizeof(real_memcpy));
+  if (real_memcpy == NULL) {
+    real_memcpy = memcpy;
+  }
+}
+
+static void
+lwip_state_copy(u8_t *dst, const u8_t *src, size_t len)
+{
+  real_memcpy(dst, src, len);
+}
+#else
+#define LWIP_FUZZ_PERSISTENT 0
+#endif
+
 static u8_t pktbuf[200000];
+
+struct fuzz_state {
+  struct netif net_test;
+#if LWIP_TCP
+  struct altcp_pcb *tcp_client_pcb;  /* a pcb for the TCP client */
+  struct altcp_pcb *tcp_server_pcb;  /* a pcb for the TCP server */
+  u16_t             tcp_remote_port; /* a TCP port number of the destination */
+  u16_t             tcp_local_port;  /* a TCP port number of the local server */
+#endif /* LWIP_TCP */
+#if LWIP_UDP
+  struct udp_pcb   *udp_client_pcb;  /* a pcb for the UDP client */
+  struct udp_pcb   *udp_server_pcb;  /* a pcb for the UDP server */
+  u16_t             udp_remote_port; /* a UDP port number of the destination */
+  u16_t             udp_local_port;  /* a UDP port number of the local server */
+#endif /* LWIP_UDP */
+#ifdef LWIP_RAND_FOR_FUZZ
+#ifdef LWIP_RAND_FOR_FUZZ_SIMULATE_GLIBC
+  unsigned rand_idx;
+#else
+  s32_t rand_state;
+#endif
+#endif /* LWIP_RAND_FOR_FUZZ */
+};
+
+static struct fuzz_state fuzz_state;
 static const u8_t *remfuzz_ptr; /* remaining fuzz pointer */
 static size_t     remfuzz_len;  /* remaining fuzz length  */
 
@@ -214,7 +276,6 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
 
 static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t *data, size_t len)
 {
-  size_t packet_nr = 0;
   remfuzz_ptr = data;
   remfuzz_len = len;
 
@@ -222,9 +283,11 @@ static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t
     input_pkt(netif, data, len);
   } else {
     const u16_t max_packet_size = 1514;
+    const size_t max_packets = 32;
     const size_t minlen = sizeof(u16_t) + (type == LWIP_FUZZ_MULTIPACKET_TIME ? sizeof(u32_t) : 0);
+    size_t packet_nr = 0;
 
-    while (remfuzz_len > minlen) {
+    while ((remfuzz_len > minlen) && (packet_nr < max_packets)) {
       u16_t frame_len;
 #ifdef LWIP_FUZZ_SYS_NOW
       u32_t external_delay = 0;
@@ -265,11 +328,6 @@ static void input_pkts(enum lwip_fuzz_type type, struct netif *netif, const u8_t
 }
 
 #if LWIP_TCP
-static struct altcp_pcb *tcp_client_pcb;  /* a pcb for the TCP client */
-static struct altcp_pcb *tcp_server_pcb;  /* a pcb for the TCP server */
-static u16_t            tcp_remote_port;  /* a TCP port number of the destination */
-static u16_t            tcp_local_port;   /* a TCP port number of the local server */
-
 /**
  * tcp_app_fuzz_input
  * Input fuzz with a write function for TCP.
@@ -468,11 +526,6 @@ tcp_server_accept(void *arg, struct altcp_pcb *pcb, err_t err)
 #endif /* LWIP_TCP */
 
 #if LWIP_UDP
-static struct udp_pcb   *udp_client_pcb;  /* a pcb for the UDP client */
-static struct udp_pcb   *udp_server_pcb;  /* a pcb for the UDP server */
-static u16_t            udp_remote_port;  /* a UDP port number of the destination */
-static u16_t            udp_local_port;   /* a UDP port number of the local server*/
-
 /**
  * udp_app_fuzz_input
  * Input fuzz with write functions for UDP.
@@ -577,25 +630,28 @@ udp_server_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t 
 
 int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_apps)
 {
-  struct netif net_test;
   ip4_addr_t addr;
   ip4_addr_t netmask;
   ip4_addr_t gw;
   size_t len;
+  const u8_t *buf;
   err_t err;
   ip_addr_t remote_addr;      /* a IPv4 addr of the destination */
   struct eth_addr remote_mac = ETH_ADDR(0x28, 0x00, 0x00, 0x22, 0x2b, 0x38); /* a MAC addr of the destination */
 
   pcap_dump_init();
+#if defined(LWIP_RAND_FOR_FUZZ) && !defined(LWIP_RAND_FOR_FUZZ_SIMULATE_GLIBC)
+  fuzz_state.rand_state = (s32_t)0xdeadbeef;
+#endif
   lwip_init();
 
   IP4_ADDR(&addr, 172, 30, 115, 84);
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   IP4_ADDR(&gw, 172, 30, 115, 1);
 
-  netif_add(&net_test, &addr, &netmask, &gw, &net_test, testif_init, ethernet_input);
-  netif_set_up(&net_test);
-  netif_set_link_up(&net_test);
+  netif_add(&fuzz_state.net_test, &addr, &netmask, &gw, &fuzz_state.net_test, testif_init, ethernet_input);
+  netif_set_up(&fuzz_state.net_test);
+  netif_set_link_up(&fuzz_state.net_test);
 
   if (test_apps & LWIP_FUZZ_STATICARP) {
     /* Add the ARP entry */
@@ -606,51 +662,51 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
 #if LWIP_IPV6
   nd6_tmr(); /* tick nd to join multicast groups */
 #endif
-  dns_setserver(0, &net_test.gw);
+  dns_setserver(0, &fuzz_state.net_test.gw);
 
   if (test_apps & LWIP_FUZZ_DEFAULT) {
     /* initialize apps */
     httpd_init();
     lwiperf_start_tcp_server_default(NULL, NULL);
     mdns_resp_init();
-    mdns_resp_add_netif(&net_test, "hostname");
+    mdns_resp_add_netif(&fuzz_state.net_test, "hostname");
     snmp_init();
   }
   if (test_apps & LWIP_FUZZ_TCP_CLIENT) {
-    tcp_client_pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
-    LWIP_ASSERT("Error: altcp_new() failed", tcp_client_pcb != NULL);
-    tcp_remote_port = 80;
-    err = altcp_connect(tcp_client_pcb, &remote_addr, tcp_remote_port, tcp_client_connected);
+    fuzz_state.tcp_client_pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
+    LWIP_ASSERT("Error: altcp_new() failed", fuzz_state.tcp_client_pcb != NULL);
+    fuzz_state.tcp_remote_port = 80;
+    err = altcp_connect(fuzz_state.tcp_client_pcb, &remote_addr, fuzz_state.tcp_remote_port, tcp_client_connected);
     LWIP_ASSERT("Error: altcp_connect() failed", err == ERR_OK);
-    altcp_recv(tcp_client_pcb, tcp_client_recv);
-    altcp_err(tcp_client_pcb, tcp_client_err);
-    altcp_poll(tcp_client_pcb, tcp_client_poll, 10);
-    altcp_sent(tcp_client_pcb, tcp_client_sent);
+    altcp_recv(fuzz_state.tcp_client_pcb, tcp_client_recv);
+    altcp_err(fuzz_state.tcp_client_pcb, tcp_client_err);
+    altcp_poll(fuzz_state.tcp_client_pcb, tcp_client_poll, 10);
+    altcp_sent(fuzz_state.tcp_client_pcb, tcp_client_sent);
   }
   if (test_apps & LWIP_FUZZ_TCP_SERVER) {
-    tcp_server_pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
-    LWIP_ASSERT("Error: altcp_new() failed", tcp_server_pcb != NULL);
-    altcp_setprio(tcp_server_pcb, TCP_PRIO_MIN);
-    tcp_local_port = 80;
-    err = altcp_bind(tcp_server_pcb, IP_ANY_TYPE, tcp_local_port);
+    fuzz_state.tcp_server_pcb = altcp_tcp_new_ip_type(IPADDR_TYPE_ANY);
+    LWIP_ASSERT("Error: altcp_new() failed", fuzz_state.tcp_server_pcb != NULL);
+    altcp_setprio(fuzz_state.tcp_server_pcb, TCP_PRIO_MIN);
+    fuzz_state.tcp_local_port = 80;
+    err = altcp_bind(fuzz_state.tcp_server_pcb, IP_ANY_TYPE, fuzz_state.tcp_local_port);
     LWIP_ASSERT("Error: altcp_bind() failed", err == ERR_OK);
-    tcp_server_pcb = altcp_listen(tcp_server_pcb);
+    fuzz_state.tcp_server_pcb = altcp_listen(fuzz_state.tcp_server_pcb);
     LWIP_ASSERT("Error: altcp_listen() failed", err == ERR_OK);
-    altcp_accept(tcp_server_pcb, tcp_server_accept);
+    altcp_accept(fuzz_state.tcp_server_pcb, tcp_server_accept);
   }
   if (test_apps & LWIP_FUZZ_UDP_CLIENT) {
-    udp_client_pcb = udp_new();
+    fuzz_state.udp_client_pcb = udp_new();
     udp_new_ip_type(IPADDR_TYPE_ANY);
-    udp_recv(udp_client_pcb, udp_client_recv, NULL);
-    udp_remote_port = 161;
-    udp_connect(udp_client_pcb, &remote_addr, udp_remote_port);
+    udp_recv(fuzz_state.udp_client_pcb, udp_client_recv, NULL);
+    fuzz_state.udp_remote_port = 161;
+    udp_connect(fuzz_state.udp_client_pcb, &remote_addr, fuzz_state.udp_remote_port);
   }
   if (test_apps & LWIP_FUZZ_UDP_SERVER) {
-    udp_server_pcb = udp_new();
+    fuzz_state.udp_server_pcb = udp_new();
     udp_new_ip_type(IPADDR_TYPE_ANY);
-    udp_local_port = 161;
-    udp_bind(udp_server_pcb, IP_ANY_TYPE, udp_local_port);
-    udp_recv(udp_server_pcb, udp_server_recv, NULL);
+    fuzz_state.udp_local_port = 161;
+    udp_bind(fuzz_state.udp_server_pcb, IP_ANY_TYPE, fuzz_state.udp_local_port);
+    udp_recv(fuzz_state.udp_server_pcb, udp_server_recv, NULL);
   }
 
   if(argc > 1) {
@@ -665,10 +721,44 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
     len = fread(pktbuf, 1, sizeof(pktbuf), f);
     fclose(f);
     printf("testing file: \"%s\"...\r\n", filename);
+    buf = pktbuf;
+    input_pkts(type, &fuzz_state.net_test, buf, len);
   } else {
+#if LWIP_FUZZ_PERSISTENT
+    size_t state_size = (size_t)(__lwip_state_end - __lwip_state_start);
+    u8_t *snapshot = (u8_t *)malloc(state_size);
+    struct fuzz_state fuzz_snapshot = fuzz_state;
+    LWIP_ASSERT("snapshot alloc failed", snapshot != NULL);
+    lwip_state_copy_init();
+    lwip_state_copy(snapshot, __lwip_state_start, state_size);
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    __AFL_INIT();
+#endif
+    while (__extension__ __AFL_LOOP(10000)) {
+      buf = __AFL_FUZZ_TESTCASE_BUF;
+      len = __AFL_FUZZ_TESTCASE_LEN;
+      input_pkts(type, &fuzz_state.net_test, buf, len);
+      lwip_state_copy(__lwip_state_start, snapshot, state_size);
+      fuzz_state = fuzz_snapshot;
+#ifdef LWIP_FUZZ_SYS_NOW
+      sys_now_offset = 0;
+#endif
+    }
+    free(snapshot);
+#else
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+    __AFL_INIT();
+#endif
+#ifdef __AFL_FUZZ_TESTCASE_BUF
+    buf = __AFL_FUZZ_TESTCASE_BUF;
+    len = __AFL_FUZZ_TESTCASE_LEN;
+#else
     len = fread(pktbuf, 1, sizeof(pktbuf), stdin);
+    buf = pktbuf;
+#endif
+    input_pkts(type, &fuzz_state.net_test, buf, len);
+#endif
   }
-  input_pkts(type, &net_test, pktbuf, len);
 
   pcap_dump_stop();
   return 0;
@@ -683,20 +773,18 @@ u32_t lwip_fuzz_rand(void)
     0x19495cff, 0x2ae8944a, 0x625558ec, 0x238e1f29, 0x46e87ccd,
     0x3d1b58ba, 0x507ed7ab, 0x2eb141f2, 0x41b71efb, 0x79e2a9e3,
     0x7545e146, 0x515f007c, 0x5bd062c2, 0x12200854, 0x4db127f8};
-  static unsigned idx = 0;
-  u32_t ret = rand_nrs[idx];
-  idx++;
-  if (idx >= sizeof(rand_nrs)/sizeof((rand_nrs)[0])) {
-    idx = 0;
+  u32_t ret = rand_nrs[fuzz_state.rand_idx];
+  fuzz_state.rand_idx++;
+  if (fuzz_state.rand_idx >= sizeof(rand_nrs)/sizeof((rand_nrs)[0])) {
+    fuzz_state.rand_idx = 0;
   }
   return ret;
 #else
   /* a simple LCG, unsafe but should give the same result for every execution (best for fuzzing) */
   u32_t result;
-  static s32_t state[1] = {0xdeadbeef};
-  uint64_t val = state[0] & 0xffffffff;
+  uint64_t val = (u32_t)fuzz_state.rand_state;
   val = ((val * 1103515245) + 12345) & 0x7fffffff;
-  state[0] = (s32_t)val;
+  fuzz_state.rand_state = (s32_t)val;
   result = (u32_t)val;
   return result;
 #endif
