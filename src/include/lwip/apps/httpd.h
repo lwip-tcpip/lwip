@@ -96,7 +96,7 @@ typedef struct
 } tCGI;
 
 /** Set the array of cgi handlers. */
-void http_set_cgi_handlers(const tCGI *pCGIs, int iNumHandlers);
+void http_set_cgi_handlers(const tCGI *cgis, int num_handlers);
 
 #endif /* LWIP_HTTPD_CGI */
 
@@ -172,8 +172,8 @@ typedef u16_t (*tSSIHandler)(
 /** Set the SSI handler function
  * (if LWIP_HTTPD_SSI_RAW==1, only the first argument is used)
  */
-void http_set_ssi_handler(tSSIHandler pfnSSIHandler,
-                          const char **ppcTags, int iNumTags);
+void http_set_ssi_handler(tSSIHandler ssi_handler,
+                          const char **tags, int num_tags);
 
 /** For LWIP_HTTPD_SSI_RAW==1, return this to indicate the tag is unknown.
  * In this case, the webserver writes a warning into the page.
