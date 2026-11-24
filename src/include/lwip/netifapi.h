@@ -56,6 +56,12 @@ enum netifapi_arp_entry {
   /* Other entry types can be added here */
 };
 
+/**
+ * @defgroup netifapi_arp ARP
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads
+ */
+
 /** @ingroup netifapi_arp */
 err_t netifapi_arp_add(const ip4_addr_t *ipaddr, struct eth_addr *ethaddr, enum netifapi_arp_entry type);
 /** @ingroup netifapi_arp */
