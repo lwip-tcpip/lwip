@@ -469,7 +469,7 @@ snmp_asn1_dec_s32t(struct snmp_pbuf_stream *pbuf_stream, u16_t len, s32_t *value
     /* shift in the remaining value */
     while (len > 0) {
       PBUF_OP_EXEC(snmp_pbuf_stream_read(pbuf_stream, &data));
-      *value = (*value << 8) | data;
+      *value = (s32_t)(((u32_t)*value << 8) | data);
       len--;
     }
     return ERR_OK;
