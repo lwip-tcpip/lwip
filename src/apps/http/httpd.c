@@ -306,7 +306,7 @@ LWIP_MEMPOOL_DECLARE(HTTPD_SSI_STATE, MEMP_NUM_PARALLEL_HTTPD_SSI_CONNS, sizeof(
 
 static err_t http_close_conn(struct altcp_pcb *pcb, struct http_state *hs);
 static err_t http_close_or_abort_conn(struct altcp_pcb *pcb, struct http_state *hs, u8_t abort_conn);
-static err_t http_find_file(struct http_state *hs, const char *uri, int is_09);
+static err_t http_find_file(struct http_state *hs, char *uri, int is_09);
 static err_t http_init_file(struct http_state *hs, struct fs_file *file, int is_09, const char *uri, u8_t tag_check, char *params);
 static err_t http_poll(void *arg, struct altcp_pcb *pcb);
 static u8_t http_check_eof(struct altcp_pcb *pcb, struct http_state *hs);
@@ -2228,11 +2228,12 @@ http_uri_is_ssi(struct fs_file *file, const char *uri)
  *         another err_t otherwise
  */
 static err_t
-http_find_file(struct http_state *hs, const char *uri, int is_09)
+http_find_file(struct http_state *hs, char *uri_in, int is_09)
 {
   size_t loop;
   struct fs_file *file = NULL;
   char *params = NULL;
+  const char* uri = uri_in;
   err_t err;
 #if LWIP_HTTPD_CGI
   int i;
@@ -2291,7 +2292,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
   if (file == NULL) {
     /* No - we've been asked for a specific file. */
     /* First, isolate the base URI (without any parameters) */
-    params = (char *)strchr(uri, '?');
+    params = (char *)strchr(uri_in, '?');
     if (params != NULL) {
       /* URI contains parameters. NULL-terminate the base URI */
       *params = '\0';
