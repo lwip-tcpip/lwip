@@ -185,7 +185,7 @@ sys_arch_unprotect(sys_prot_t pval)
   LWIP_UNUSED_ARG(pval);
 #if LWIP_SYS_ARCH_CHECK_NESTED_PROTECT
   LWIP_ASSERT("missing SYS_ARCH_PROTECT", protection_depth == 1);
-#else
+#elif LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER
   LWIP_ASSERT("missing SYS_ARCH_PROTECT", protection_depth > 0);
 #endif
 #if LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER
