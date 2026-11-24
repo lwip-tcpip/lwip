@@ -21,6 +21,13 @@ static int linkoutput_byte_ctr;
 static u16_t linkoutput_pkt_len;
 static u8_t linkoutput_pkt[100];
 
+struct frag_info {
+  u16_t tot_len;
+  u16_t offset;
+};
+
+static struct frag_info frag_infos[8];
+
 /* reference internal lwip variable in netif.c */
 
 static err_t
@@ -28,10 +35,16 @@ test_netif_linkoutput(struct netif *netif, struct pbuf *p)
 {
   fail_unless(netif == &test_netif);
   fail_unless(p != NULL);
-  linkoutput_ctr++;
-  linkoutput_byte_ctr += p->tot_len;
   /* Copy start of packet into buffer */
   linkoutput_pkt_len = pbuf_copy_partial(p, linkoutput_pkt, sizeof(linkoutput_pkt), 0);
+  if ((linkoutput_ctr < (int)LWIP_ARRAYSIZE(frag_infos)) && (linkoutput_pkt_len >= IP_HLEN)) {
+    struct ip_hdr iphdr;
+    SMEMCPY(&iphdr, linkoutput_pkt, IP_HLEN);
+    frag_infos[linkoutput_ctr].tot_len = p->tot_len;
+    frag_infos[linkoutput_ctr].offset = lwip_ntohs(IPH_OFFSET(&iphdr));
+  }
+  linkoutput_ctr++;
+  linkoutput_byte_ctr += p->tot_len;
   return ERR_OK;
 }
 
@@ -160,6 +173,57 @@ START_TEST(test_ip4_frag)
   fail_unless(linkoutput_byte_ctr == (8000 + (6 * IP_HLEN)));
   pbuf_free(data);
   test_netif_remove();
+}
+END_TEST
+
+START_TEST(test_ip4_frag_last_flag)
+{
+  /* MTU 576 -> max 8-byte aligned fragment payload is ((576 - 20) / 8) * 8 = 552.
+   * With 1106 bytes payload, after the first 552-byte fragment, 554 bytes remain,
+   * which is > 552 but <= 556 (mtu - IP_HLEN). */
+  const u16_t payload_len = 1106;
+  struct pbuf *data = pbuf_alloc(PBUF_IP, payload_len, PBUF_RAM);
+  ip_addr_t peer_ip = IPADDR4_INIT_BYTES(192,168,0,5);
+  err_t err;
+  int i;
+  u16_t expected_off = 0;
+  LWIP_UNUSED_ARG(_i);
+
+  linkoutput_ctr = 0;
+  linkoutput_byte_ctr = 0;
+  memset(frag_infos, 0, sizeof(frag_infos));
+
+  fail_unless(data != NULL);
+  test_netif_add();
+  test_netif.mtu = 576;
+  test_netif.output = arpless_output;
+
+  err = ip4_output_if_src(data, &test_ipaddr, ip_2_ip4(&peer_ip),
+                          16, 0, IP_PROTO_UDP, &test_netif);
+  pbuf_free(data);
+  test_netif_remove();
+
+  fail_unless(err == ERR_OK);
+  fail_unless(linkoutput_ctr >= 2);
+  fail_unless(linkoutput_ctr <= (int)LWIP_ARRAYSIZE(frag_infos));
+  fail_unless(linkoutput_byte_ctr == (payload_len + (linkoutput_ctr * IP_HLEN)));
+
+  for (i = 0; i < linkoutput_ctr; i++) {
+    u16_t frag_payload = (u16_t)(frag_infos[i].tot_len - IP_HLEN);
+    u16_t frag_off_bytes = (u16_t)((frag_infos[i].offset & IP_OFFMASK) * 8);
+    int mf = (frag_infos[i].offset & IP_MF) != 0;
+
+    fail_unless(frag_infos[i].tot_len <= 576);
+    fail_unless(frag_off_bytes == expected_off);
+    if (i < linkoutput_ctr - 1) {
+      fail_unless(mf);
+      fail_unless((frag_payload & 7) == 0);
+    } else {
+      fail_unless(!mf);
+    }
+    expected_off = (u16_t)(expected_off + frag_payload);
+  }
+  fail_unless(expected_off == payload_len);
 }
 END_TEST
 
@@ -333,6 +397,7 @@ ip4_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_ip4_frag),
+    TESTFUNC(test_ip4_frag_last_flag),
     TESTFUNC(test_ip4_reass),
     TESTFUNC(test_127_0_0_1),
     TESTFUNC(test_ip4addr_aton),
