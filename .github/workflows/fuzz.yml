@@ -1,0 +1,38 @@
+name: fuzz
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: '*'
+
+jobs:
+  fuzz_multipacket:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install deps
+      run: sudo apt-get update && sudo apt-get install afl++
+
+    - name: build fuzzer
+      run: make -C test/fuzz/ -j $(nproc)
+    - name: fuzz
+      env:
+        AFL_BENCH_UNTIL_CRASH: "1"
+        AFL_NO_UI: "1"
+        AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: "1"
+        AFL_SKIP_CPUFREQ: "1"
+      run: |
+        afl-fuzz -V 180 -i test/fuzz/inputs/ -o fuzzed -- ./test/fuzz/lwip_fuzz2
+        cat fuzzed/default/fuzzer_stats
+        if ! grep -q '^saved_crashes *: 0$' fuzzed/default/fuzzer_stats; then
+          for f in fuzzed/default/crashes/id:*; do
+            echo "=== Crash input in base64: $f ==="
+            base64 "$f"
+            echo
+            echo "=== Reproducing: $f ==="
+            UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./test/fuzz/lwip_fuzz2 "$f" || true
+          done
+          exit 1
+        fi
