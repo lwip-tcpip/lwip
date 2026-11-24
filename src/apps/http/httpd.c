@@ -2222,7 +2222,7 @@ http_uri_is_ssi(struct fs_file *file, const char *uri)
  * accordingly.
  *
  * @param hs the connection state
- * @param uri the HTTP header URI
+ * @param uri_in the HTTP header URI
  * @param is_09 1 if the request is HTTP/0.9 (no HTTP headers in response)
  * @return ERR_OK if file was found and hs has been initialized correctly
  *         another err_t otherwise
