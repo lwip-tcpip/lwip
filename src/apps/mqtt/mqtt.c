@@ -388,8 +388,9 @@ mqtt_take_request(struct mqtt_request_t **tail, u16_t pkt_id)
  * @param t Time since last call in seconds
  */
 static void
-mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
+mqtt_request_time_elapsed(mqtt_client_t *client, u8_t t)
 {
+  struct mqtt_request_t **tail = &client->pend_req_queue;
   struct mqtt_request_t *r;
   LWIP_ASSERT("mqtt_request_time_elapsed: tail != NULL", tail != NULL);
   r = *tail;
@@ -398,11 +399,15 @@ mqtt_request_time_elapsed(struct mqtt_request_t **tail, u8_t t)
       t -= (u8_t)r->timeout_diff;
       /* Unchain */
       *tail = r->next;
+      /* Detach before the callback: it may disconnect or free the client */
+      mqtt_delete_request(r);
       /* Notify upper layer about timeout */
       if (r->cb != NULL) {
         r->cb(r->arg, ERR_TIMEOUT);
       }
-      mqtt_delete_request(r);
+      if (client->free_pending || (client->conn_state == TCP_DISCONNECTED)) {
+        return;
+      }
       /* Tail might be be modified in callback, so re-read it in every iteration */
       r = *(struct mqtt_request_t *const volatile *)tail;
     } else {
@@ -589,7 +594,16 @@ mqtt_cyclic_timer(void *arg)
     }
   } else if (client->conn_state == MQTT_CONNECTED) {
     /* Handle timeout for pending requests */
-    mqtt_request_time_elapsed(&client->pend_req_queue, MQTT_CYCLIC_TIMER_INTERVAL);
+    client->input_active = 1;
+    mqtt_request_time_elapsed(client, MQTT_CYCLIC_TIMER_INTERVAL);
+    client->input_active = 0;
+    if (client->free_pending) {
+      mem_free(client);
+      return;
+    }
+    if (client->conn_state != MQTT_CONNECTED) {
+      return;
+    }
 
     /* keep_alive > 0 means keep alive functionality shall be used */
     if (client->keep_alive > 0) {
@@ -1024,23 +1038,35 @@ static err_t
 mqtt_tcp_sent_cb(void *arg, struct altcp_pcb *tpcb, u16_t len)
 {
   mqtt_client_t *client = (mqtt_client_t *)arg;
+  struct mqtt_request_t *r;
 
   LWIP_UNUSED_ARG(tpcb);
   LWIP_UNUSED_ARG(len);
 
   if (client->conn_state == MQTT_CONNECTED) {
-    struct mqtt_request_t *r;
-
     /* Reset keep-alive send timer and server watchdog */
     client->cyclic_tick = 0;
     client->server_watchdog = 0;
+    client->input_active = 1;
     /* QoS 0 publish has no response from server, so call its callbacks here */
     while ((r = mqtt_take_request(&client->pend_req_queue, 0)) != NULL) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_tcp_sent_cb: Calling QoS 0 publish complete callback\n"));
+      /* Detach before the callback: it may disconnect or free the client */
+      mqtt_delete_request(r);
       if (r->cb != NULL) {
         r->cb(r->arg, ERR_OK);
       }
-      mqtt_delete_request(r);
+      if (client->free_pending || (client->conn_state == TCP_DISCONNECTED)) {
+        break;
+      }
+    }
+    client->input_active = 0;
+    if (client->free_pending) {
+      mem_free(client);
+      return ERR_OK;
+    }
+    if (client->conn_state != MQTT_CONNECTED) {
+      return ERR_OK;
     }
     /* Try send any remaining buffers from output queue */
     mqtt_output_send(&client->output, client->conn);
