@@ -1837,20 +1837,32 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
       if ((netif->flags & NETIF_FLAG_ETHARP) != 0) {
         /* check if the acknowledged lease address is already in use */
         dhcp_check(netif);
-      } else {
+      } else
+#endif
+      {
         /* bind interface to the acknowledged lease address */
         dhcp_bind(netif);
       }
-#else
-      /* bind interface to the acknowledged lease address */
-      dhcp_bind(netif);
-#endif
     }
     /* already bound to the given lease address and using it? */
     else if ((dhcp->state == DHCP_STATE_REBINDING) ||
              (dhcp->state == DHCP_STATE_RENEWING)) {
       dhcp_handle_ack(netif, msg_in);
-      dhcp_bind(netif);
+#if LWIP_DHCP_DOES_ACD_CHECK
+      if (((netif->flags & NETIF_FLAG_ETHARP) != 0) &&
+          (!ip4_addr_cmp(&dhcp->offered_ip_addr, netif_ip4_addr(netif)) ||
+           !ip4_addr_cmp(&dhcp->acd.ipaddr, &dhcp->offered_ip_addr))) {
+        /* The ACK changed the address, or ACD is still monitoring another
+           address. Do not bind until the acknowledged address has passed ACD. */
+        acd_stop(&dhcp->acd);
+        /* check if the acknowledged lease address is already in use */
+        dhcp_check(netif);
+      } else
+#endif
+      {
+        /* bind interface to the acknowledged lease address */
+        dhcp_bind(netif);
+      }
     }
   }
   /* received a DHCP_NAK in appropriate state? */

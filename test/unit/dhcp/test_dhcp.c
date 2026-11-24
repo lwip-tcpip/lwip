@@ -547,6 +547,77 @@ START_TEST(test_dhcp)
 }
 END_TEST
 
+#if LWIP_DHCP_DOES_ACD_CHECK
+/* A renewal ACK that changes the lease address must restart ACD for the new
+   address. A conflict for the old address must not affect the new lease. */
+START_TEST(test_dhcp_renew_changed_ip_restarts_acd)
+{
+  static const u8_t new_yiaddr[4] = { 10, 0, 0, 60 };
+  struct dhcp *dhcp;
+  ip4_addr_t old_ip, netmask, gw, new_ip;
+  u8_t old_ip_arp[sizeof(arpreply)];
+  u8_t saved_yiaddr[sizeof(new_yiaddr)];
+  u32_t xid;
+  int tx_before_acd;
+  int i;
+  LWIP_UNUSED_ARG(_i);
+
+  tcase = TEST_NONE;
+  setdebug(0);
+  IP4_ADDR(&old_ip, 10, 0, 0, 50);
+  IP4_ADDR(&new_ip, 10, 0, 0, 60);
+  IP4_ADDR(&netmask, 255, 255, 255, 0);
+  IP4_ADDR(&gw, 10, 0, 0, 1);
+  netif_add(&net_test, &old_ip, &netmask, &gw, &net_test, testif_init, ethernet_input);
+  netif_set_link_up(&net_test);
+  netif_set_up(&net_test);
+  dhcp_start(&net_test);
+
+  dhcp = netif_dhcp_data(&net_test);
+  fail_unless(dhcp != NULL);
+  dhcp->state = DHCP_STATE_RENEWING;
+  ip4_addr_copy(dhcp->acd.ipaddr, old_ip);
+  dhcp->acd.state = ACD_STATE_ONGOING;
+
+  memcpy(old_ip_arp, arpreply, sizeof(old_ip_arp));
+  old_ip_arp[28] = 10;
+  old_ip_arp[29] = 0;
+  old_ip_arp[30] = 0;
+  old_ip_arp[31] = 50;
+
+  memcpy(saved_yiaddr, &dhcp_ack[58], sizeof(saved_yiaddr));
+  memcpy(&dhcp_ack[58], new_yiaddr, sizeof(new_yiaddr));
+  xid = htonl(dhcp->xid);
+  memcpy(&dhcp_ack[46], &xid, sizeof(xid));
+  send_pkt(&net_test, dhcp_ack, sizeof(dhcp_ack));
+  memcpy(&dhcp_ack[58], saved_yiaddr, sizeof(saved_yiaddr));
+
+  fail_unless(dhcp->state == DHCP_STATE_CHECKING);
+  fail_unless(dhcp->acd.state == ACD_STATE_PROBE_WAIT);
+  fail_unless(ip4_addr_cmp(&dhcp->acd.ipaddr, &new_ip));
+  fail_unless(ip4_addr_cmp(netif_ip4_addr(&net_test), &old_ip));
+
+  /* A conflict for the address we have relinquished must be ignored. */
+  send_pkt(&net_test, old_ip_arp, sizeof(old_ip_arp));
+  fail_unless(dhcp->state == DHCP_STATE_CHECKING);
+  fail_unless(dhcp->acd.state == ACD_STATE_PROBE_WAIT);
+  fail_unless(ip4_addr_cmp(&dhcp->acd.ipaddr, &new_ip));
+
+  tx_before_acd = txpacket;
+  for (i = 0; i < 200; i++) {
+    tick_lwip();
+  }
+  fail_unless(txpacket == (tx_before_acd + DHCP_TEST_NUM_ARP_FRAMES));
+  fail_unless(dhcp->state == DHCP_STATE_BOUND);
+  fail_unless(ip4_addr_cmp(netif_ip4_addr(&net_test), &new_ip));
+
+  dhcp_stop(&net_test);
+  dhcp_cleanup(&net_test);
+  netif_remove(&net_test);
+}
+END_TEST
+#endif /* LWIP_DHCP_DOES_ACD_CHECK */
+
 /*
  * Test that IP address is not taken and NAK is sent if someone
  * replies to ARP requests for the offered address.
@@ -1099,6 +1170,9 @@ dhcp_suite(void)
 {
   testfunc tests[] = {
     TESTFUNC(test_dhcp),
+#if LWIP_DHCP_DOES_ACD_CHECK
+    TESTFUNC(test_dhcp_renew_changed_ip_restarts_acd),
+#endif
     TESTFUNC(test_dhcp_nak),
     TESTFUNC(test_dhcp_relayed),
     TESTFUNC(test_dhcp_nak_no_endmarker),
