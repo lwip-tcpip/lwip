@@ -524,6 +524,13 @@ ip6_input(struct pbuf *p, struct netif *inp)
 
   IP6_STATS_INC(ip6.recv);
 
+  if (p->len < IP6_HLEN) {
+    pbuf_free(p);
+    IP6_STATS_INC(ip6.lenerr);
+    IP6_STATS_INC(ip6.drop);
+    return ERR_OK;
+  }
+
   /* identify the IP header */
   ip6hdr = (struct ip6_hdr *)p->payload;
   if (IP6H_V(ip6hdr) != 6) {
