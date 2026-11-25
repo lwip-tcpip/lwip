@@ -475,6 +475,13 @@ ip4_input(struct pbuf *p, struct netif *inp)
   IP_STATS_INC(ip.recv);
   MIB2_STATS_INC(mib2.ipinreceives);
 
+  if (p->len < IP_HLEN) {
+    pbuf_free(p);
+    IP6_STATS_INC(ip.lenerr);
+    IP6_STATS_INC(ip.drop);
+    return ERR_OK;
+  }
+
   /* identify the IP header */
   iphdr = (struct ip_hdr *)p->payload;
   if (IPH_V(iphdr) != 4) {
