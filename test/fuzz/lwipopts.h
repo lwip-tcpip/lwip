@@ -32,6 +32,14 @@
 #ifndef LWIP_HDR_LWIPOPTS_H__
 #define LWIP_HDR_LWIPOPTS_H__
 
+#include "fuzz_mem.h"
+
+#define MEM_CUSTOM_ALLOCATOR            1
+#define MEM_CUSTOM_MALLOC               fuzz_malloc
+#define MEM_CUSTOM_CALLOC               fuzz_calloc
+#define MEM_CUSTOM_FREE                 fuzz_free
+#define MEMP_MEM_MALLOC                 1
+
 #define MEMP_NUM_SYS_TIMEOUT    17
 #define LWIP_FUZZ_SYS_NOW
 #define LWIP_RAND_FOR_FUZZ

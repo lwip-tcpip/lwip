@@ -33,6 +33,7 @@
 
 #define _GNU_SOURCE
 #include "fuzz_common.h"
+#include "fuzz_mem.h"
 
 #include "lwip/altcp_tcp.h"
 #include "lwip/dns.h"
@@ -259,7 +260,7 @@ static void input_pkt(struct netif *netif, const u8_t *data, size_t len)
     return;
   }
 
-  p = pbuf_alloc(PBUF_RAW, (u16_t)len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, (u16_t)len, PBUF_RAM);
   LWIP_ASSERT("alloc failed", p);
   for(q = p; q != NULL; q = q->next) {
     MEMCPY(q->payload, data, q->len);
@@ -555,7 +556,7 @@ udp_app_fuzz_input(struct udp_pcb *pcb, const ip_addr_t *addr, u16_t port)
     if (data_len != 0) {
       struct pbuf *p, *q;
 
-      p = pbuf_alloc(PBUF_RAW, (u16_t)data_len, PBUF_POOL);
+      p = pbuf_alloc(PBUF_RAW, (u16_t)data_len, PBUF_RAM);
       LWIP_ASSERT("alloc failed", p);
 
       for (q = p; q != NULL; q = q->next) {
@@ -731,6 +732,7 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
     LWIP_ASSERT("snapshot alloc failed", snapshot != NULL);
     lwip_state_copy_init();
     lwip_state_copy(snapshot, __lwip_state_start, state_size);
+    fuzz_mem_snapshot();
 #ifdef __AFL_HAVE_MANUAL_CONTROL
     __AFL_INIT();
 #endif
@@ -738,12 +740,14 @@ int lwip_fuzztest(int argc, char** argv, enum lwip_fuzz_type type, u32_t test_ap
       buf = __AFL_FUZZ_TESTCASE_BUF;
       len = __AFL_FUZZ_TESTCASE_LEN;
       input_pkts(type, &fuzz_state.net_test, buf, len);
+      fuzz_mem_reset();
       lwip_state_copy(__lwip_state_start, snapshot, state_size);
       fuzz_state = fuzz_snapshot;
 #ifdef LWIP_FUZZ_SYS_NOW
       sys_now_offset = 0;
 #endif
     }
+    fuzz_mem_cleanup();
     free(snapshot);
 #else
 #ifdef __AFL_HAVE_MANUAL_CONTROL

@@ -56,18 +56,18 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(DEPFILES)
 endif
 
-.depend_fuzz: fuzz.c fuzz2.c fuzz3.c fuzz_common.c
+.depend_fuzz: fuzz.c fuzz2.c fuzz3.c fuzz_common.c fuzz_mem.c
 	$(CCDEP) $(CFLAGS) -MM $^ > .depend_fuzz || rm -f .depend_fuzz
 .depend_lwip: $(LWIPFILES)
 	$(CCDEP) $(CFLAGS) -MM $^ > .depend_lwip || rm -f .depend_lwip
 .depend_app: $(APPFILES)
 	$(CCDEP) $(CFLAGS) -MM $^ > .depend_app || rm -f .depend_app
 
-lwip_fuzz: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz.o fuzz_common.o lwip_state.ld
-	$(CC) $(CFLAGS) -Wl,-T,lwip_state.ld -o lwip_fuzz fuzz.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
+lwip_fuzz: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz.o fuzz_common.o fuzz_mem.o lwip_state.ld
+	$(CC) $(CFLAGS) -Wl,-T,lwip_state.ld -o lwip_fuzz fuzz.o fuzz_common.o fuzz_mem.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
 
-lwip_fuzz2: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz2.o fuzz_common.o lwip_state.ld
-	$(CC) $(CFLAGS) -Wl,-T,lwip_state.ld -o lwip_fuzz2 fuzz2.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
+lwip_fuzz2: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz2.o fuzz_common.o fuzz_mem.o lwip_state.ld
+	$(CC) $(CFLAGS) -Wl,-T,lwip_state.ld -o lwip_fuzz2 fuzz2.o fuzz_common.o fuzz_mem.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
 
-lwip_fuzz3: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz3.o fuzz_common.o lwip_state.ld
-	$(CC) $(CFLAGS) -Wl,-T,lwip_state.ld -o lwip_fuzz3 fuzz3.o fuzz_common.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
+lwip_fuzz3: $(DEPFILES) $(LWIPLIBCOMMON) $(APPLIB) fuzz3.o fuzz_common.o fuzz_mem.o lwip_state.ld
+	$(CC) $(CFLAGS) -Wl,-T,lwip_state.ld -o lwip_fuzz3 fuzz3.o fuzz_common.o fuzz_mem.o $(APPLIB) $(LWIPLIBCOMMON) $(LDFLAGS)
