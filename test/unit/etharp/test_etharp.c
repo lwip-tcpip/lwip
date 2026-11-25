@@ -261,13 +261,46 @@ START_TEST(test_etharp_table)
 }
 END_TEST
 
+START_TEST(test_etharp_short_packet)
+{
+  u8_t buf[SIZEOF_ETH_HDR + 1];
+  struct eth_hdr *ethhdr;
+  struct pbuf *p;
+  STAT_COUNTER lenerr, drop, proterr, recv;
+  LWIP_UNUSED_ARG(_i);
+
+  memset(buf, 0, sizeof(buf));
+  ethhdr = (struct eth_hdr *)(void *)buf;
+  ethhdr->dest = test_ethaddr;
+  ethhdr->src = test_ethaddr2;
+  ethhdr->type = PP_HTONS(ETHTYPE_ARP);
+
+  p = pbuf_alloc(PBUF_RAW, sizeof(buf), PBUF_REF);
+  fail_unless(p != NULL);
+  p->payload = buf;
+
+  lenerr = lwip_stats.etharp.lenerr;
+  drop = lwip_stats.etharp.drop;
+  proterr = lwip_stats.etharp.proterr;
+  recv = lwip_stats.etharp.recv;
+
+  ethernet_input(p, &test_netif);
+
+  fail_unless(lwip_stats.etharp.lenerr == lenerr + 1);
+  fail_unless(lwip_stats.etharp.drop == drop + 1);
+  fail_unless(lwip_stats.etharp.proterr == proterr);
+  fail_unless(lwip_stats.etharp.recv == recv);
+}
+END_TEST
+
 
 /** Create the suite including all tests for this module */
 Suite *
 etharp_suite(void)
 {
   testfunc tests[] = {
-    TESTFUNC(test_etharp_table)
+    TESTFUNC(test_etharp_table),
+    TESTFUNC(test_etharp_short_packet)
   };
   return create_suite("ETHARP", tests, sizeof(tests)/sizeof(testfunc), etharp_setup, etharp_teardown);
 }
