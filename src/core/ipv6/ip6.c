@@ -771,12 +771,20 @@ netif_found:
 
         opt_hdr = (struct ip6_opt_hdr *)((u8_t *)hbh_hdr + opt_offset);
 
+        if (IP6_OPT_TYPE(opt_hdr) == IP6_PAD1_OPTION) {
+          /* PAD1 option doesn't have length and value field */
+          opt_offset++;
+          continue;
+        }
+        if (opt_offset + IP6_OPT_HLEN > hlen) {
+          pbuf_free(p);
+          IP6_STATS_INC(ip6.lenerr);
+          IP6_STATS_INC(ip6.drop);
+          goto ip6_input_cleanup;
+        }
+
         switch (IP6_OPT_TYPE(opt_hdr)) {
         /* @todo: process IPV6 Hop-by-Hop option data */
-        case IP6_PAD1_OPTION:
-          /* PAD1 option doesn't have length and value field */
-          opt_dlen = -1;
-          break;
         case IP6_PADN_OPTION:
           opt_dlen = IP6_OPT_DLEN(opt_hdr);
           break;
@@ -852,13 +860,21 @@ netif_found:
 
         opt_hdr = (struct ip6_opt_hdr *)((u8_t *)dest_hdr + opt_offset);
 
+        if (IP6_OPT_TYPE(opt_hdr) == IP6_PAD1_OPTION) {
+          /* PAD1 option doesn't have length and value field */
+          opt_offset++;
+          continue;
+        }
+        if (opt_offset + IP6_OPT_HLEN > hlen) {
+          pbuf_free(p);
+          IP6_STATS_INC(ip6.lenerr);
+          IP6_STATS_INC(ip6.drop);
+          goto ip6_input_cleanup;
+        }
+
         switch (IP6_OPT_TYPE(opt_hdr))
         {
         /* @todo: process IPV6 Destination option data */
-        case IP6_PAD1_OPTION:
-          /* PAD1 option deosn't have length and value field */
-          opt_dlen = -1;
-          break;
         case IP6_PADN_OPTION:
           opt_dlen = IP6_OPT_DLEN(opt_hdr);
           break;
