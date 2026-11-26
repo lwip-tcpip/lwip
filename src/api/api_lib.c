@@ -490,15 +490,18 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
     /* return pending error */
     return err;
   }
-  if (!NETCONN_ACCEPTMBOX_WAITABLE(conn)) {
-    /* don't accept if closed: this might block the application task
-       waiting on acceptmbox forever! */
-    return ERR_CLSD;
-  }
 
   API_MSG_VAR_ALLOC_ACCEPT(msg);
 
+  /* count before checking: netconn_mark_mbox_invalid() only wakes counted threads */
   NETCONN_MBOX_WAITING_INC(conn);
+  if (!NETCONN_ACCEPTMBOX_WAITABLE(conn)) {
+    /* don't accept if closed: this might block the application task
+       waiting on acceptmbox forever! */
+    NETCONN_MBOX_WAITING_DEC(conn);
+    API_MSG_VAR_FREE_ACCEPT(msg);
+    return ERR_CLSD;
+  }
   if (netconn_is_nonblocking(conn)) {
     if (sys_arch_mbox_tryfetch(&conn->acceptmbox, &accept_ptr) == SYS_MBOX_EMPTY) {
       API_MSG_VAR_FREE_ACCEPT(msg);
@@ -585,8 +588,11 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
 
+  /* count before checking: netconn_mark_mbox_invalid() only wakes counted threads */
+  NETCONN_MBOX_WAITING_INC(conn);
   if (!NETCONN_RECVMBOX_WAITABLE(conn)) {
     err_t err = netconn_err(conn);
+    NETCONN_MBOX_WAITING_DEC(conn);
     if (err != ERR_OK) {
       /* return pending error */
       return err;
@@ -594,7 +600,6 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
     return ERR_CONN;
   }
 
-  NETCONN_MBOX_WAITING_INC(conn);
   if (netconn_is_nonblocking(conn) || (apiflags & NETCONN_DONTBLOCK) ||
       (conn->flags & NETCONN_FLAG_MBOXCLOSED) || (conn->pending_err != ERR_OK)) {
     if (sys_arch_mbox_tryfetch(&conn->recvmbox, &buf) == SYS_MBOX_EMPTY) {
