@@ -384,7 +384,7 @@ mqtt_take_request(struct mqtt_request_t **tail, u16_t pkt_id)
 
 /**
  * Handle requests timeout
- * @param tail Pointer to request queue tail pointer
+ * @param client Pointer to mqtt client
  * @param t Time since last call in seconds
  */
 static void
