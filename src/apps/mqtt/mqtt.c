@@ -335,11 +335,11 @@ mqtt_append_request(struct mqtt_request_t **tail, struct mqtt_request_t *r)
 
 
 /**
- * Delete request item
- * @param r Request item to delete
+ * Remove request item
+ * @param r Request item to remove
  */
 static void
-mqtt_delete_request(struct mqtt_request_t *r)
+mqtt_remove_request(struct mqtt_request_t *r)
 {
   if (r != NULL) {
     r->next = r;
@@ -400,7 +400,7 @@ mqtt_request_time_elapsed(mqtt_client_t *client, u8_t t)
       /* Unchain */
       *tail = r->next;
       /* Detach before the callback: it may disconnect or free the client */
-      mqtt_delete_request(r);
+      mqtt_remove_request(r);
       /* Notify upper layer about timeout */
       if (r->cb != NULL) {
         r->cb(r->arg, ERR_TIMEOUT);
@@ -428,7 +428,7 @@ mqtt_clear_requests(struct mqtt_request_t **tail)
   LWIP_ASSERT("mqtt_clear_requests: tail != NULL", tail != NULL);
   for (iter = *tail; iter != NULL; iter = next) {
     next = iter->next;
-    mqtt_delete_request(iter);
+    mqtt_remove_request(iter);
   }
   *tail = NULL;
 }
@@ -832,7 +832,7 @@ mqtt_message_received(mqtt_client_t *client, u8_t fixed_hdr_len, u16_t length, u
         LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_message_received: %s response with id %d\n", mqtt_msg_type_to_str(pkt_type), pkt_id));
         /* Detach the request before its callback can disconnect or free the
            client. */
-        mqtt_delete_request(r);
+        mqtt_remove_request(r);
         if (pkt_type == MQTT_MSG_TYPE_SUBACK) {
           if (length < 3) {
             LWIP_DEBUGF(MQTT_DEBUG_WARN, ("mqtt_message_received: To small SUBACK packet\n"));
@@ -1052,7 +1052,7 @@ mqtt_tcp_sent_cb(void *arg, struct altcp_pcb *tpcb, u16_t len)
     while ((r = mqtt_take_request(&client->pend_req_queue, 0)) != NULL) {
       LWIP_DEBUGF(MQTT_DEBUG_TRACE, ("mqtt_tcp_sent_cb: Calling QoS 0 publish complete callback\n"));
       /* Detach before the callback: it may disconnect or free the client */
-      mqtt_delete_request(r);
+      mqtt_remove_request(r);
       if (r->cb != NULL) {
         r->cb(r->arg, ERR_OK);
       }
@@ -1207,7 +1207,7 @@ mqtt_publish(mqtt_client_t *client, const char *topic, const void *payload, u16_
   }
 
   if (mqtt_output_check_space(&client->output, remaining_length) == 0) {
-    mqtt_delete_request(r);
+    mqtt_remove_request(r);
     return ERR_MEM;
   }
   /* Append fixed header */
@@ -1278,7 +1278,7 @@ mqtt_sub_unsub(mqtt_client_t *client, const char *topic, u8_t qos, mqtt_request_
   }
 
   if (mqtt_output_check_space(&client->output, remaining_length) == 0) {
-    mqtt_delete_request(r);
+    mqtt_remove_request(r);
     return ERR_MEM;
   }
 
