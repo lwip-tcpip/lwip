@@ -7,7 +7,7 @@
 
 #if PPP_SUPPORT && PPPOS_SUPPORT
 #ifdef PPP_INCLUDE_SETTINGS_HEADER
-#undef PPP_INCLUDE_SETTINGS_HEADER // including ppp_settings.h does not work at least for win32 port
+#undef PPP_INCLUDE_SETTINGS_HEADER /* including ppp_settings.h does not work at least for win32 port */
 #endif
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/fsm.h"
