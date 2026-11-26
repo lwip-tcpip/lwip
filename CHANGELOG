@@ -8,8 +8,134 @@ HISTORY
 
   ++ Bugfixes:
 
+  2026-11-26: Julio Fort
+  * ppp: lcp: do not overflow the Configure-Nak buffer in lcp_reqci()
+    (bug #68801)
+
+  2026-11-24: Simon Goldschmidt
+  * dhcp/acd: fix that renew ACK with a new address leaves ACD guarding the old one
+    (bug #68960)
+
+  2026-11-18: Erik Ekman/Simon Goldschmidt
+  * nd6: ensure min MTU is never < 1280 (bug #68610)
+
+  2026-11-17: Stanislav Dashevskyi
+  * tcp: fix Denial-of-Service via FIN-copy after window trimming in tcp_receive()
+    (bug #68416)
+
+  2026-11-17: xchglabs
+  * snmp: fix some oid bounds checks with asserts disabled
+    (bug #68324)
+
+  2026-11-17: xchglabs
+  * snmp: snmpv3_mbedtls: fix division by zero on empty password
+    (bug #68323)
+
+  2026-11-17: Simon Goldschmidt
+  * snmp: snmpv3_mbedtls: fix stack buffer overflow if engineLength > 32
+    (bug #68322)
+
+  2026-11-16: Simon Goldschmidt
+  * tcp: fix receiving out-of-window segment with TCP_QUEUE_OOSEQ==1
+    (bug #68925 #68900)
+
+  2026-11-16: Simon Goldschmidt
+  * tcp_in: implement missing seqno cecks in SYN_RCVD state + add unit test
+    (bug #68927)
+
+  2026-11-15: xchglabs
+  * snmp: v2 usm: add bounds check to snmp_name_to_oid / snmp_oid_to_name
+    (bug #68321)
+
+  2026-11-08: xchglabs
+  * snmp: v2 usm: fixed off-by-one OOB read in usmusertable_get_instance
+    (bug #68320)
+
+  2026-11-08: Simon Goldschmidt
+  * mqtt: fix use-after-free when callback frees client (bug #68893)
+
+  2026-11-08: Simon Goldschmidt
+  * shell: fix Off-by-one NUL Write in parse_command() (bug #68892)
+
+  2026-11-08: Simon Goldschmidt
+  * ppp: pppol2tp: fix double-free of pbuf when an L2TP control message arrives
+    in more than one pbuf (bug #68751)
+
+  2026-11-08: Simon Goldschmidt
+  * mdns: reject too short SRV records
+
+  2026-11-04: Ray Canzanese
+  * netbiosns: fix netbiosns_name_decode reading oob of the receive buffer
+    (bug #68780)
+
+  2026-11-04: Ray Canzanese
+  * dhcp: fixed out-of-bounds read if a single DHCP option spans over more than
+    2 pbufs (bug #68779)
+
+  2026-11-01: Isigrist
+  * httpd: post: fix that POST header length was reported 4 bytes too long
+    (bug #68709)
+
+  2026-11-01: Raul Chen
+  * sockets: LWIP_NETCONN_FULLDUPLEX: fix assertion on stale fd (bug #68700) 
+
+  2026-11-01: Ingrid, Chia-Te Kuan
+  * bridgeif: fix that locally generated replies that reuse the RX pbuf were
+    dropped on the port the request arrived on (bug #68691)
+
+  2026-10-27: Simon Goldschmidt
+  * tftp: fix pbuf overflow for too long filenames (> 65531 bytes)
+    (bug #68421)
+
+  2026-10-27: Stanislav Dashevskyi
+  * tftp server: fix "sys_timeout" pool exhaustion via rejected RRQ/WRQ requests
+    (bug #68419)
+
+  2026-10-27: Stanislav Dashevskyi
+  * smtp: fix heap buffer overflow when application provides oversized to/from/subject
+    (bug #68418)
+
+  2026-10-26: Stanislav Dashevskyi
+  * mqtt: fix infinte loop via crafted publish for some pbuf configurations
+    (bug #68417)
+
+  2026-10-26: xchglabs
+  * vj.c: PPP VJ compression: TCP header read before length check (bug #68317)
+
+  2026-10-26: Maurits van der Hoorn
+  * lowpan6: not able to parse short 802.15.4 src addr (bug #67585)
+
+  2026-10-26: Stanislav Fort
+  * lwiperf: Use-after-free in lwiperf_abort() leading to TCP callbacks on
+    freed memory (bug #67721)
+
+  2026-10-26: Simon Goldschmidt
+  * udp_lite: do not crash on invalid chklen (bug #67118)
+
+  2026-10-26: Simon Goldschmidt
+  * pbuf: fixed potential pbuf overflow in pbuf_fill_chksum on 16-bit platforms
+    (bug #64942)
+
+  2026-10-25: Simon Goldschmidt
+  * 6LowPAN: fixed out-of-bounds reads in RX packet parser (bug #68466)
+
+  2026-10-25: Adam K
+  * 6lowPAN: a FRAG1 frame with an unknown inner dispatch byte leaves the
+    reassembly entry's pbuf pointer uninitialised, and lwIP later dereferences
+    and frees it (bugs #68757, #68469, #68673)
+
+  2026-10-25: Julio Fort
+  * snmp: fixed out-of-bounds read when creating response (bug #68802)
+
+  2026-10-25: Julio Fort
+  * httpd/fs: fix potential use-after-free with async fs reads (bug #68800)
+
   2025-06-03: Simon Goldschmidt
   * ip4_frag/ip6_frag: fix potential NULL-pointer access on memory errors
+
+  2025-05-13: 0rbitingZer0
+  * snmpv3: fix handling packets with invalid msgAuthenticationParameters length
+    (bug #68194)
 
 (STABLE-2.2.1):
 
