@@ -38,7 +38,10 @@
 #define LWIP_HDR_DEBUG_H
 
 #include "lwip/arch.h"
-#include "lwip/opt.h"
+
+#ifndef LWIP_HDR_OPT_H
+#error "lwip/opt.h must be included before this header file"
+#endif
 
 /**
  * @defgroup debugging_levels LWIP_DBG_MIN_LEVEL and LWIP_DBG_TYPES_ON values
