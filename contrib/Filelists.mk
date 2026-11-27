@@ -37,6 +37,7 @@ CONTRIBAPPFILES=$(CONTRIBDIR)/apps/httpserver/httpserver-netconn.c \
 	$(CONTRIBDIR)/apps/shell/shell.c \
 	$(CONTRIBDIR)/apps/udpecho_raw/udpecho_raw.c \
 	$(CONTRIBDIR)/apps/tcpecho_raw/tcpecho_raw.c \
+	$(CONTRIBDIR)/apps/tcpecho_altcp/tcpecho_altcp.c \
 	$(CONTRIBDIR)/apps/netio/netio.c \
 	$(CONTRIBDIR)/apps/ping/ping.c \
 	$(CONTRIBDIR)/apps/socket_examples/socket_examples.c \
