@@ -52,12 +52,14 @@
  * transport. IGMP is needed for IPv4 multicast.
  */
 #ifndef LWIP_MDNS_RESPONDER
-#define LWIP_MDNS_RESPONDER             0
+#define LWIP_MDNS_RESPONDER             1
 #endif /* LWIP_MDNS_RESPONDER */
 
 /** The maximum number of services per netif */
 #ifndef MDNS_MAX_SERVICES
 #define MDNS_MAX_SERVICES               1
+/** The maximum number of subtypes per service */
+#define MDNS_MAX_SERVICES_SUBTYPES      4
 #endif
 
 /** The minimum delay between probes in ms. RFC 6762 require 250ms.

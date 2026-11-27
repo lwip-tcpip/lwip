@@ -632,4 +632,30 @@ mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain)
   return ERR_OK;
 }
 
+/**
+ * Build domain name for a subtype service
+ * @param domain Where to write the domain name
+ * @param service The service struct, containing service name, type and protocol
+ * @param include_name Whether to include the service name in the domain
+ * @return ERR_OK if domain was written. If service name is included,
+ *         \<subType\>.\<_sub\>.\<type\>.\<proto\>.local. will be written, otherwise \<type\>.\<proto\>.local.
+ *         An err_t is returned on error.
+ */
+err_t
+mdns_build_subtype_service_domain(struct mdns_domain *domain, struct mdns_service *service, int subTypes_index)
+{
+  err_t res;
+  LWIP_UNUSED_ARG(res);
+  memset(domain, 0, sizeof(struct mdns_domain));
+  res = mdns_domain_add_label(domain, service->subTypes[subTypes_index], strlen(service->subTypes[subTypes_index]));
+  LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
+  res = mdns_domain_add_label(domain, "_sub", 4);
+  LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
+  res = mdns_domain_add_label(domain, service->service, (u8_t)strlen(service->service));
+  LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
+  res = mdns_domain_add_label(domain, dnssd_protos[service->proto], (u8_t)strlen(dnssd_protos[service->proto]));
+  LWIP_ERROR("mdns_build_service_domain: Failed to add label", (res == ERR_OK), return res);
+  return mdns_add_dotlocal(domain);
+}
+
 #endif /* LWIP_MDNS_RESPONDER */

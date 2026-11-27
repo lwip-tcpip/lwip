@@ -70,7 +70,7 @@ err_t mdns_build_request_domain(struct mdns_domain *domain, struct mdns_request 
 #endif
 u16_t mdns_compress_domain(struct pbuf *pbuf, u16_t *offset, struct mdns_domain *domain);
 err_t mdns_write_domain(struct mdns_outpacket *outpkt, struct mdns_domain *domain);
-
+err_t mdns_build_subtype_service_domain(struct mdns_domain *domain, struct mdns_service *service, int subTypes_index);
 #endif /* LWIP_MDNS_RESPONDER */
 
 #ifdef __cplusplus
