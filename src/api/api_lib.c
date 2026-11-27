@@ -655,6 +655,12 @@ netconn_recv_data(struct netconn *conn, void **new_buf, u8_t apiflags)
 #if (LWIP_UDP || LWIP_RAW)
   {
     LWIP_ASSERT("buf != NULL", buf != NULL);
+    struct netbuf *netbuf_ptr = (struct netbuf *)buf;
+    if (netbuf_ptr->p != NULL && netbuf_ptr->p->payload == NULL) {
+      LWIP_DEBUGF(NETCONN_DEBUG | LWIP_DBG_LEVEL_SEVERE, 
+                  ("netconn_recv_data: NULL payload in netbuf pbuf=%p\n", (void*)netbuf_ptr->p));
+      asm volatile("bkpt #2");
+    }
     len = netbuf_len((struct netbuf *)buf);
   }
 #endif /* (LWIP_UDP || LWIP_RAW) */

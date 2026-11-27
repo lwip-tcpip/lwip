@@ -8,10 +8,6 @@
 # The intention is to provide greater flexibility to users to
 # create their own targets using the *_SRCS variables.
 
-if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
-    include_guard(GLOBAL)
-endif()
-
 set(LWIP_VERSION_MAJOR    "2")
 set(LWIP_VERSION_MINOR    "2")
 set(LWIP_VERSION_REVISION "2")
@@ -57,6 +53,7 @@ set(lwipcore_SRCS
     ${LWIP_DIR}/src/core/timeouts.c
     ${LWIP_DIR}/src/core/udp.c
 )
+
 set(lwipcore4_SRCS
     ${LWIP_DIR}/src/core/ipv4/acd.c
     ${LWIP_DIR}/src/core/ipv4/autoip.c
@@ -251,6 +248,10 @@ set(lwipallapps_SRCS
     ${lwiptftp_SRCS}
     ${lwipmqtt_SRCS}
 )
+
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.10.0")
+    include_guard(GLOBAL)
+endif()
 
 # Generate lwip/init.h (version info)
 configure_file(${LWIP_DIR}/src/include/lwip/init.h.cmake.in ${LWIP_DIR}/src/include/lwip/init.h)

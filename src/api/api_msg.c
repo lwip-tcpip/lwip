@@ -1538,6 +1538,13 @@ lwip_netconn_do_send(void *m)
   struct api_msg *msg = (struct api_msg *)m;
 
   err_t err = netconn_err(msg->conn);
+  if (msg->msg.b != NULL && msg->msg.b->p != NULL) {
+    if (msg->msg.b->p->payload == NULL) {
+      LWIP_DEBUGF(NETCONN_DEBUG | LWIP_DBG_LEVEL_SEVERE, 
+                  ("lwip_netconn_do_send: NULL payload in send pbuf=%p\n", (void*)msg->msg.b->p));
+      asm volatile("bkpt #3");
+    }
+  }
   if (err == ERR_OK) {
     if (msg->conn->pcb.tcp != NULL) {
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
